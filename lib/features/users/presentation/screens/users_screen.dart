@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
 import 'package:postfolio/features/users/presentation/widgets/user_card.dart';
 
-class UsersScreen extends StatelessWidget {
+class UsersScreen extends ConsumerWidget {
   const UsersScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 1. Watch the Controller state
+    final usersState = ref.watch(usersControllerProvider);
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -27,20 +32,39 @@ class UsersScreen extends StatelessWidget {
         actions: [
           IconButton(icon: const Icon(Icons.search), onPressed: () {}),
           IconButton(icon: const Icon(Icons.check_box_outlined), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.refresh), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.refresh), 
+            // Trigger a manual refresh from the controller
+            onPressed: () => ref.refresh(usersControllerProvider),
+          ),
         ],
       ),
-      body: ListView.separated(
-        itemCount: 5, // Placeholder count
-        separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey[300]),
-        itemBuilder: (context, index) {
-          return UserCard(
-            name: 'Abdul Khalandar $index',
-            phone: '914817320$index',
-            onTap: () => context.push('/users/$index'), // Navigate to detail
-            onEdit: () => context.push('/users/$index/edit'), // Navigate to edit
+      // 2. Handle the AsyncValue UI states smoothly
+      body: usersState.when(
+        data: (users) {
+          if (users.isEmpty) {
+            return const Center(child: Text('No users found. Add one!'));
+          }
+          return ListView.separated(
+            itemCount: users.length,
+            separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey[300]),
+            itemBuilder: (context, index) {
+              final user = users[index];
+              return UserCard(
+                name: user.name,
+                phone: user.phone ?? 'No Phone',
+                onTap: () => context.push('/users/${user.id}'),
+                onEdit: () => context.push('/users/${user.id}/edit'),
+                onDelete: () {
+                  // Call the controller directly to delete
+                  ref.read(usersControllerProvider.notifier).deleteUser(user.id);
+                },
+              );
+            },
           );
         },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(child: Text('Error: $error')),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/users/new'),

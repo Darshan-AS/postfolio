@@ -6,6 +6,7 @@ class UserCard extends StatelessWidget {
   final String phone;
   final VoidCallback onTap;
   final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const UserCard({
     super.key,
@@ -13,6 +14,7 @@ class UserCard extends StatelessWidget {
     required this.phone,
     required this.onTap,
     required this.onEdit,
+    required this.onDelete,
   });
 
   Future<void> _launchUrl(String urlString) async {
@@ -57,6 +59,11 @@ class UserCard extends StatelessWidget {
                   icon: const Icon(Icons.edit_outlined),
                   color: Colors.grey[700],
                   onPressed: onEdit,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  color: Colors.red[400],
+                  onPressed: onDelete,
                 ),
                 IconButton(
                   icon: const Icon(Icons.phone_outlined),
