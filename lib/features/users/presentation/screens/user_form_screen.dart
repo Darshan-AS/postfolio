@@ -58,21 +58,14 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
 
   void _save() {
     if (_formKey.currentState!.validate()) {
-      final isUpdating = _existingUser != null;
-
-      final user = User(
-        id: isUpdating ? _existingUser!.id : '', // ID is overwritten by repository on create
+      // The UI is now perfectly "dumb". It just reads strings and passes them to the Controller.
+      ref.read(usersControllerProvider.notifier).saveUser(
+        id: _existingUser?.id,
         name: _nameController.text.trim(),
         email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
         phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
         address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
       );
-
-      if (isUpdating) {
-        ref.read(usersControllerProvider.notifier).updateUser(user);
-      } else {
-        ref.read(usersControllerProvider.notifier).createUser(user);
-      }
 
       // Pop back to the list screen
       context.pop();

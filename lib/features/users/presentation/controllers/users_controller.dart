@@ -16,23 +16,35 @@ class UsersController extends _$UsersController {
     return repository.fetchUsers();
   }
 
-  Future<void> createUser(User user) async {
+  Future<void> saveUser({
+    String? id,
+    required String name,
+    String? email,
+    String? phone,
+    String? address,
+  }) async {
     // Set state to loading while we perform the network request
     state = const AsyncValue.loading();
     // guard safely catches any errors and sets state to AsyncError if it fails
     state = await AsyncValue.guard(() async {
       final repository = ref.read(userRepositoryProvider);
-      await repository.createUser(user);
-      // Re-fetch the list to ensure our state matches the database exactly
-      return _fetchUsers();
-    });
-  }
+      
+      // Domain Construction & Validation Logic happens here, NOT in the UI
+      final user = User(
+        id: id ?? '', // FakeRepo will assign a real ID if creating
+        name: name,
+        email: email,
+        phone: phone,
+        address: address,
+      );
 
-  Future<void> updateUser(User user) async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final repository = ref.read(userRepositoryProvider);
-      await repository.updateUser(user);
+      if (id != null) {
+        await repository.updateUser(user);
+      } else {
+        await repository.createUser(user);
+      }
+      
+      // Re-fetch the list to ensure our state matches the database exactly
       return _fetchUsers();
     });
   }
