@@ -1,0 +1,22 @@
+# Postfolio Project Guidelines
+
+These guidelines apply to all code generated and modified in this workspace. Adhere to these architectural and design choices at all times.
+
+## Architecture & State Management
+- **Riverpod**: Use Riverpod for state management and dependency injection. Prefer `Notifier` or `AsyncNotifier` (or `@riverpod` code generation if set up) over `StateNotifier`.
+- **Dependency Injection**: Use Riverpod providers to inject dependencies (e.g., Repositories, Services) into other providers or controllers. This ensures easily mockable and testable code.
+- **Feature-First Structure**: Organize code by feature (e.g., `lib/features/auth/`, `lib/features/post/`). Each feature should contain its own `data`, `domain`, and `presentation` layers.
+
+## Functional Programming & Purity
+- **Immutability**: Use immutable data structures exclusively. We use the **`freezed`** package for all data classes, state representations, and unions to ensure strict immutability, `copyWith` functionality, and safe JSON serialization. Never mutate state directly in place.
+- **Pure Functions**: Keep business logic in pure functions inside your Notifiers/Controllers. State should be replaced with newly computed objects rather than mutated.
+- **One-Way Data Flow**: 
+  - UI reads state from Providers.
+  - UI dispatches intents/events to the Notifier.
+  - Notifier computes the new immutable state and updates the Provider.
+  - UI rebuilds via `ref.watch`.
+
+## UI & Presentation Layer
+- **Dumb Widgets**: Widgets should be completely "dumb". They are strictly responsible for displaying data and capturing user input. Never perform API calls, complex logic, or database operations directly inside a widget.
+- **ConsumerWidget**: Prefer `ConsumerWidget` or `ConsumerStatefulWidget` (via Riverpod) over vanilla `StatefulWidget` unless handling ephemeral UI-only state (like an animation controller or a text field focus).
+- **Seamless Cross-Platform UI**: Ensure the UI is seamless across all supported platforms (iOS, Android, Web, Desktop). Use responsive design principles (e.g., `LayoutBuilder`, `MediaQuery`) and platform-aware styling where appropriate to ensure the app feels native and polished everywhere.
