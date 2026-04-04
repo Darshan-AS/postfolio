@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:postfolio/core/routing/route_names.dart';
 import 'package:postfolio/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:postfolio/features/deposits/presentation/screens/deposits_screen.dart';
 import 'package:postfolio/features/main_shell/presentation/screens/main_shell_scaffold.dart';
@@ -15,7 +16,7 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/users', // Defaulting to users tab
+    initialLocation: RouteNames.users, // Defaulting to users tab
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -25,7 +26,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/dashboard',
+                path: RouteNames.dashboard,
                 builder: (context, state) => const DashboardScreen(),
               ),
             ],
@@ -33,7 +34,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/deposits',
+                path: RouteNames.deposits,
                 builder: (context, state) => const DepositsScreen(),
               ),
             ],
@@ -41,7 +42,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/rd',
+                path: RouteNames.rd,
                 builder: (context, state) => const RdScreen(),
               ),
             ],
@@ -49,11 +50,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/users',
+                path: RouteNames.users,
                 builder: (context, state) => const UsersScreen(),
                 routes: [
                   GoRoute(
-                    path: 'new',
+                    path: 'new', // Note: GoRouter sub-routes should not start with a slash
                     builder: (context, state) => const UserFormScreen(),
                   ),
                   GoRoute(

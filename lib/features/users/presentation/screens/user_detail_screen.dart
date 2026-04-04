@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:postfolio/core/routing/route_names.dart';
 import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
 
 class UserDetailScreen extends ConsumerWidget {
@@ -45,7 +46,7 @@ class UserDetailScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () => context.push('/users/$userId/edit'),
+            onPressed: () => context.push(RouteNames.userEdit(userId)),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),

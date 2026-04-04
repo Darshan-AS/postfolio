@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:postfolio/core/routing/route_names.dart';
 import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
 import 'package:postfolio/features/users/presentation/widgets/user_card.dart';
 
@@ -53,8 +54,8 @@ class UsersScreen extends ConsumerWidget {
               return UserCard(
                 name: user.name,
                 phone: user.phone ?? 'No Phone',
-                onTap: () => context.push('/users/${user.id}'),
-                onEdit: () => context.push('/users/${user.id}/edit'),
+                onTap: () => context.push(RouteNames.userDetail(user.id)),
+                onEdit: () => context.push(RouteNames.userEdit(user.id)),
                 onDelete: () {
                   // Call the controller directly to delete
                   ref.read(usersControllerProvider.notifier).deleteUser(user.id);
@@ -67,7 +68,7 @@ class UsersScreen extends ConsumerWidget {
         error: (error, stack) => Center(child: Text('Error: $error')),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/users/new'),
+        onPressed: () => context.push(RouteNames.userCreate),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),

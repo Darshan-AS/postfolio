@@ -18,7 +18,7 @@
 - [ ] Refactor `UserCard` native intents (SMS/Phone/Map) into an injected `IntentService`.
 - [x] Refactor `UsersController` to accept raw strings, validate, and construct the Domain model.
 - [x] Implement Domain Validation (e.g., Extension methods on Freezed models).
-- [ ] Centralize hardcoded route paths into a constants file.
+- [x] Centralize hardcoded route paths into a constants file.
 - [ ] Centralize hardcoded colors into `lib/core/theme/`.
 
 ## Phase 4: Deposits & RD Features (Pending)
