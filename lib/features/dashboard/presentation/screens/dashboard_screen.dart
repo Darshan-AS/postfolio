@@ -10,10 +10,10 @@ class DashboardScreen extends StatelessWidget {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text(t.dashboard),
+        title: Text(t.nav.dashboard),
       ),
       body: Center(
-        child: Text(t.dashboardCharts),
+        child: Text(t.dashboard.charts),
       ),
     );
   }

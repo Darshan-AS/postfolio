@@ -1,0 +1,43 @@
+appTitle: "Postfolio"
+
+common:
+  loading: "Loading..."
+  saving: "Saving..."
+  delete: "Delete"
+  cancel: "Cancel"
+  error: "Error"
+  retry: "Retry"
+  notProvided: "Not provided"
+
+nav:
+  dashboard: "Dashboard"
+  deposits: "Deposits"
+  recurringDeposits: "Recurring Deposits"
+  rd: "RD"
+  users: "Users"
+
+users:
+  title: "Users"
+  newUser: "New User"
+  editUser: "Edit User"
+  saveUser: "Save User"
+  noUsersFound: "No users found. Add one!"
+  userNotFound: "User not found"
+  deleteUser: "Delete User"
+  deleteUserConfirmation: "Are you sure you want to delete this user?"
+  failedToSaveUser: "Failed to save user: ${error}"
+  failedToDeleteUser: "Failed to delete user: ${error}"
+  fields:
+    fullName: "Full Name *"
+    phoneNumber: "Phone Number"
+    emailAddress: "Email Address"
+    homeAddress: "Home Address"
+
+dashboard:
+  charts: "Dashboard Charts Go Here"
+
+deposits:
+  list: "Deposits List Goes Here"
+
+rd:
+  list: "RD List Goes Here"

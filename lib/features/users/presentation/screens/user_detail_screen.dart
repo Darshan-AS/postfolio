@@ -18,12 +18,12 @@ class UserDetailScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(t.deleteUser),
-        content: Text(t.deleteUserConfirmation),
+        title: Text(t.users.deleteUser),
+        content: Text(t.users.deleteUserConfirmation),
         actions: [
           TextButton(
             onPressed: () => ctx.pop(),
-            child: Text(t.cancel),
+            child: Text(t.common.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -38,11 +38,11 @@ class UserDetailScreen extends ConsumerWidget {
                 case Failure(error: final err):
                   ctx.pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(t.failedToDeleteUser(error: err.toString()))),
+                    SnackBar(content: Text(t.users.failedToDeleteUser(error: err.toString()))),
                   );
               }
             },
-            child: Text(t.delete, style: const TextStyle(color: AppTheme.error)),
+            child: Text(t.common.delete, style: const TextStyle(color: AppTheme.error)),
           ),
         ],
       ),
@@ -74,7 +74,7 @@ class UserDetailScreen extends ConsumerWidget {
           final user = users.where((u) => u.id == userId).firstOrNull;
 
           if (user == null) {
-            return Center(child: Text(t.userNotFound));
+            return Center(child: Text(t.users.userNotFound));
           }
 
           return ListView(
@@ -96,11 +96,11 @@ class UserDetailScreen extends ConsumerWidget {
               Card(
                 child: Column(
                   children: [
-                    _buildInfoTile(Icons.phone_outlined, t.phoneNumber, user.phone ?? t.notProvided),
+                    _buildInfoTile(Icons.phone_outlined, t.users.fields.phoneNumber, user.phone ?? t.common.notProvided),
                     const Divider(),
-                    _buildInfoTile(Icons.email_outlined, t.emailAddress, user.email ?? t.notProvided),
+                    _buildInfoTile(Icons.email_outlined, t.users.fields.emailAddress, user.email ?? t.common.notProvided),
                     const Divider(),
-                    _buildInfoTile(Icons.home_outlined, t.homeAddress, user.address ?? t.notProvided),
+                    _buildInfoTile(Icons.home_outlined, t.users.fields.homeAddress, user.address ?? t.common.notProvided),
                   ],
                 ),
               ),

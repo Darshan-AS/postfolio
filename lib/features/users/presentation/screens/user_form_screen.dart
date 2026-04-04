@@ -28,20 +28,20 @@ class UserFormScreen extends ConsumerWidget {
         final user = users.where((u) => u.id == userId).firstOrNull;
         if (user == null) {
           return Scaffold(
-            appBar: AppBar(title: Text(t.error)),
+            appBar: AppBar(title: Text(t.common.error)),
             body: ErrorStateView(
-              message: t.userNotFound,
+              message: t.users.userNotFound,
             ),
           );
         }
         return _UserForm(existingUser: user);
       },
       loading: () => Scaffold(
-        appBar: AppBar(title: Text(t.loading)),
+        appBar: AppBar(title: Text(t.common.loading)),
         body: const Center(child: CircularProgressIndicator()),
       ),
       error: (error, stack) => Scaffold(
-        appBar: AppBar(title: Text(t.error)),
+        appBar: AppBar(title: Text(t.common.error)),
         body: ErrorStateView(
           message: error.toString(),
           onRetry: () => ref.invalidate(usersControllerProvider),
@@ -103,7 +103,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
           context.pop();
         case Failure(error: final err):
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(t.failedToSaveUser(error: err.toString()))),
+            SnackBar(content: Text(t.users.failedToSaveUser(error: err.toString()))),
           );
       }
     }
@@ -117,7 +117,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isUpdating ? t.editUser : t.newUser),
+        title: Text(isUpdating ? t.users.editUser : t.users.newUser),
         actions: [
           if (isLoading)
             const Padding(
@@ -135,7 +135,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
               icon: const Icon(Icons.check),
               color: AppTheme.primary,
               onPressed: _save,
-              tooltip: t.saveUser,
+              tooltip: t.users.saveUser,
             ),
         ],
       ),
@@ -147,7 +147,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
             TextFormField(
               controller: _nameController,
               decoration: InputDecoration(
-                labelText: t.fullName,
+                labelText: t.users.fields.fullName,
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.person_outline),
               ),
@@ -158,7 +158,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
             TextFormField(
               controller: _phoneController,
               decoration: InputDecoration(
-                labelText: t.phoneNumber,
+                labelText: t.users.fields.phoneNumber,
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.phone_outlined),
               ),
@@ -170,7 +170,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
             TextFormField(
               controller: _emailController,
               decoration: InputDecoration(
-                labelText: t.emailAddress,
+                labelText: t.users.fields.emailAddress,
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.email_outlined),
               ),
@@ -182,7 +182,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
             TextFormField(
               controller: _addressController,
               decoration: InputDecoration(
-                labelText: t.homeAddress,
+                labelText: t.users.fields.homeAddress,
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.home_outlined),
               ),
@@ -193,8 +193,8 @@ class _UserFormState extends ConsumerState<_UserForm> {
             ElevatedButton(
               onPressed: isLoading ? null : _save,
               child: isLoading 
-                  ? Text(t.saving) 
-                  : Text(t.saveUser),
+                  ? Text(t.common.saving) 
+                  : Text(t.users.saveUser),
             ),
           ],
         ),

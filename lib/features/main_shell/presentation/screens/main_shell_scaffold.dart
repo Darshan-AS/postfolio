@@ -27,22 +27,22 @@ class MainShellScaffold extends StatelessWidget {
           NavigationDestination(
             icon: const Icon(Icons.dashboard_outlined),
             selectedIcon: const Icon(Icons.dashboard),
-            label: t.dashboard,
+            label: t.nav.dashboard,
           ),
           NavigationDestination(
             icon: const Icon(Icons.receipt_long_outlined),
             selectedIcon: const Icon(Icons.receipt_long),
-            label: t.deposits,
+            label: t.nav.deposits,
           ),
           NavigationDestination(
             icon: const Icon(Icons.swap_horiz_outlined),
             selectedIcon: const Icon(Icons.swap_horiz),
-            label: t.rd,
+            label: t.nav.rd,
           ),
           NavigationDestination(
             icon: const Icon(Icons.people_outline),
             selectedIcon: const Icon(Icons.people),
-            label: t.users,
+            label: t.nav.users,
           ),
         ],
       ),

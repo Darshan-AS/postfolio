@@ -28,7 +28,7 @@ class UsersScreen extends ConsumerWidget {
           children: [
             const Icon(Icons.groups_outlined, color: AppTheme.primary),
             AppSpacings.gapSm,
-            Text(t.users, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(t.nav.users, style: const TextStyle(fontWeight: FontWeight.w600)),
           ],
         ),
         actions: [
@@ -45,7 +45,7 @@ class UsersScreen extends ConsumerWidget {
       body: usersState.when(
         data: (users) {
           if (users.isEmpty) {
-            return Center(child: Text(t.noUsersFound));
+            return Center(child: Text(t.users.noUsersFound));
           }
           return ListView.separated(
             itemCount: users.length,
@@ -54,7 +54,7 @@ class UsersScreen extends ConsumerWidget {
               final user = users[index];
               return UserCard(
                 name: user.name,
-                phone: user.phone ?? t.notProvided,
+                phone: user.phone ?? t.common.notProvided,
                 onTap: () => context.push(RouteNames.userDetail(user.id)),
                 onEdit: () => context.push(RouteNames.userEdit(user.id)),
                 onDelete: () {

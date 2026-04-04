@@ -10,10 +10,10 @@ class DepositsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(t.deposits),
+        title: Text(t.nav.deposits),
       ),
       body: Center(
-        child: Text(t.depositsList),
+        child: Text(t.deposits.list),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},

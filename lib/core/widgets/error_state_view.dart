@@ -39,7 +39,7 @@ class ErrorStateView extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: Text(t.retry),
+                label: Text(t.common.retry),
               ),
             ]
           ],

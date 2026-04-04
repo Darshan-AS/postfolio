@@ -10,10 +10,10 @@ class RdScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(t.recurringDeposits),
+        title: Text(t.nav.recurringDeposits),
       ),
       body: Center(
-        child: Text(t.rdList),
+        child: Text(t.rd.list),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
