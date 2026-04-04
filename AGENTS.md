@@ -8,7 +8,7 @@ These guidelines apply to all code generated and modified in this workspace. Adh
 - **Feature-First Structure**: Organize code by feature (e.g., `lib/features/auth/`, `lib/features/post/`). Each feature should contain its own `data`, `domain`, and `presentation` layers.
 
 ## Functional Programming & Purity
-- **Immutability**: Use immutable data structures exclusively. We use the **`freezed`** package for all data classes, state representations, and unions to ensure strict immutability, `copyWith` functionality, and safe JSON serialization. Never mutate state directly in place.
+- **Immutability**: Use immutable data structures exclusively. We use the **`freezed`** package for all data classes, state representations, and unions to ensure strict immutability, `copyWith` functionality, and safe JSON serialization. Never mutate state directly in place. **Always declare Freezed classes as `sealed class`** rather than `abstract class` to leverage Dart 3's exhaustive pattern matching and prevent external subclassing.
 - **Modern Dart 3 Features**: Avoid heavyweight functional packages like `dartz`. Instead, use native Dart 3 **Records**, **Pattern Matching**, and **Sealed Classes** (via Freezed) for error handling and state unions.
 - **Validation**: Avoid over-engineered Value Objects for primitive types. Use extension methods or factory constructors on Freezed models for data validation.
 - **Pure Functions**: Keep business logic in pure functions inside your Notifiers/Controllers. State should be replaced with newly computed objects rather than mutated.

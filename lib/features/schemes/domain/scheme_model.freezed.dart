@@ -120,10 +120,7 @@ return $default(_that);case _:
 final _that = this;
 switch (_that) {
 case _Scheme():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return $default(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -182,10 +179,7 @@ return $default(_that.id,_that.name,_that.isVariableTerm,_that.termYears,_that.t
 @optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  bool isVariableTerm,  int termYears,  int termMonths,  double baseInterestRate)  $default,) {final _that = this;
 switch (_that) {
 case _Scheme():
-return $default(_that.id,_that.name,_that.isVariableTerm,_that.termYears,_that.termMonths,_that.baseInterestRate);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return $default(_that.id,_that.name,_that.isVariableTerm,_that.termYears,_that.termMonths,_that.baseInterestRate);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///

@@ -4,7 +4,7 @@ part 'scheme_model.freezed.dart';
 part 'scheme_model.g.dart';
 
 @freezed
-abstract class Scheme with _$Scheme {
+sealed class Scheme with _$Scheme {
   const factory Scheme({
     required String id,
     required String name,

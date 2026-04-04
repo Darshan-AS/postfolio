@@ -6,7 +6,7 @@ part 'recurring_deposit_model.freezed.dart';
 part 'recurring_deposit_model.g.dart';
 
 @freezed
-abstract class RecurringDeposit with _$RecurringDeposit {
+sealed class RecurringDeposit with _$RecurringDeposit {
   const factory RecurringDeposit({
     required String id,
     required String accountNo,

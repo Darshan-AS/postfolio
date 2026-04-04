@@ -118,10 +118,7 @@ return $default(_that);case _:
 final _that = this;
 switch (_that) {
 case _Nominee():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return $default(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -180,10 +177,7 @@ return $default(_that.name,_that.relationship,_that.phone);case _:
 @optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String relationship,  String? phone)  $default,) {final _that = this;
 switch (_that) {
 case _Nominee():
-return $default(_that.name,_that.relationship,_that.phone);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return $default(_that.name,_that.relationship,_that.phone);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -398,10 +392,7 @@ return $default(_that);case _:
 final _that = this;
 switch (_that) {
 case _Deposit():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return $default(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -460,10 +451,7 @@ return $default(_that.id,_that.rowId,_that.accountNo,_that.amount,_that.termYear
 @optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String rowId,  String accountNo,  double amount,  int termYears,  int termMonths,  double interestRate,  String customerId,  String schemeId,  double maturityAmount,  DateTime depositDate,  DateTime maturityDate,  List<Nominee> nominees)  $default,) {final _that = this;
 switch (_that) {
 case _Deposit():
-return $default(_that.id,_that.rowId,_that.accountNo,_that.amount,_that.termYears,_that.termMonths,_that.interestRate,_that.customerId,_that.schemeId,_that.maturityAmount,_that.depositDate,_that.maturityDate,_that.nominees);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return $default(_that.id,_that.rowId,_that.accountNo,_that.amount,_that.termYears,_that.termMonths,_that.interestRate,_that.customerId,_that.schemeId,_that.maturityAmount,_that.depositDate,_that.maturityDate,_that.nominees);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///

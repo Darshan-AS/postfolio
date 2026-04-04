@@ -4,7 +4,7 @@ part 'deposit_model.freezed.dart';
 part 'deposit_model.g.dart';
 
 @freezed
-abstract class Nominee with _$Nominee {
+sealed class Nominee with _$Nominee {
   const factory Nominee({
     required String name,
     required String relationship, // e.g., "Spouse", "Son"
@@ -16,7 +16,7 @@ abstract class Nominee with _$Nominee {
 }
 
 @freezed
-abstract class Deposit with _$Deposit {
+sealed class Deposit with _$Deposit {
   const factory Deposit({
     required String id,
     required String rowId,

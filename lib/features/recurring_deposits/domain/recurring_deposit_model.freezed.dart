@@ -126,10 +126,7 @@ return $default(_that);case _:
 final _that = this;
 switch (_that) {
 case _RecurringDeposit():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return $default(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -188,10 +185,7 @@ return $default(_that.id,_that.accountNo,_that.installmentAmount,_that.termYears
 @optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String accountNo,  double installmentAmount,  int termYears,  int termMonths,  double interestRate,  String customerId,  String schemeId,  double maturityAmount,  DateTime startDate,  DateTime maturityDate,  List<Nominee> nominees)  $default,) {final _that = this;
 switch (_that) {
 case _RecurringDeposit():
-return $default(_that.id,_that.accountNo,_that.installmentAmount,_that.termYears,_that.termMonths,_that.interestRate,_that.customerId,_that.schemeId,_that.maturityAmount,_that.startDate,_that.maturityDate,_that.nominees);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return $default(_that.id,_that.accountNo,_that.installmentAmount,_that.termYears,_that.termMonths,_that.interestRate,_that.customerId,_that.schemeId,_that.maturityAmount,_that.startDate,_that.maturityDate,_that.nominees);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
