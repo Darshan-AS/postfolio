@@ -6,6 +6,7 @@ import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
+import 'package:intl/intl.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -120,6 +121,55 @@ class CustomerDetailScreen extends ConsumerWidget {
                   leading: const Icon(Icons.location_on_outlined),
                   title: Text(t.customers.fields.homeAddress),
                   subtitle: Text(customer.address!),
+                ),
+              ],
+              if (customer.cifNumber != null) ...[
+                ListTile(
+                  leading: const Icon(Icons.confirmation_number_outlined),
+                  title: const Text('CIF'),
+                  subtitle: Text(customer.cifNumber!),
+                ),
+              ],
+              if (customer.dateOfBirth != null) ...[
+                ListTile(
+                  leading: const Icon(Icons.calendar_today_outlined),
+                  title: const Text('Date of Birth'),
+                  subtitle: Text(DateFormat.yMMMd().format(customer.dateOfBirth!)),
+                ),
+              ],
+              if (customer.aadhaarNumber != null) ...[
+                ListTile(
+                  leading: const Icon(Icons.badge_outlined),
+                  title: const Text('Aadhaar Number'),
+                  subtitle: Text(customer.aadhaarNumber!),
+                ),
+              ],
+              if (customer.panNumber != null) ...[
+                ListTile(
+                  leading: const Icon(Icons.credit_card_outlined),
+                  title: const Text('PAN Number'),
+                  subtitle: Text(customer.panNumber!),
+                ),
+              ],
+              if (customer.savingsAccount?.accountNumber != null) ...[
+                ListTile(
+                  leading: const Icon(Icons.account_balance_outlined),
+                  title: const Text('SB Account No.'),
+                  subtitle: Text(customer.savingsAccount!.accountNumber),
+                ),
+              ],
+              if (customer.savingsAccount?.nominee?.name != null) ...[
+                ListTile(
+                  leading: const Icon(Icons.person_pin_outlined),
+                  title: const Text('SB Nominee Name'),
+                  subtitle: Text(customer.savingsAccount!.nominee!.name),
+                ),
+              ],
+              if (customer.savingsAccount?.nominee?.relationship != null) ...[
+                ListTile(
+                  leading: const Icon(Icons.people_alt_outlined),
+                  title: const Text('SB Nominee Relationship'),
+                  subtitle: Text(customer.savingsAccount!.nominee!.relationship),
                 ),
               ],
             ],

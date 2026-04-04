@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Customer {
 
- String get id; String get name; String? get email; String? get phone; String? get address;
+ String get id; String get name; String? get email; String? get phone; String? get address; String? get cifNumber; DateTime? get dateOfBirth; String? get aadhaarNumber; String? get panNumber; SavingsAccount? get savingsAccount;
 /// Create a copy of Customer
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $CustomerCopyWith<Customer> get copyWith => _$CustomerCopyWithImpl<Customer>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Customer&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Customer&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.cifNumber, cifNumber) || other.cifNumber == cifNumber)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&(identical(other.aadhaarNumber, aadhaarNumber) || other.aadhaarNumber == aadhaarNumber)&&(identical(other.panNumber, panNumber) || other.panNumber == panNumber)&&(identical(other.savingsAccount, savingsAccount) || other.savingsAccount == savingsAccount));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,email,phone,address);
+int get hashCode => Object.hash(runtimeType,id,name,email,phone,address,cifNumber,dateOfBirth,aadhaarNumber,panNumber,savingsAccount);
 
 @override
 String toString() {
-  return 'Customer(id: $id, name: $name, email: $email, phone: $phone, address: $address)';
+  return 'Customer(id: $id, name: $name, email: $email, phone: $phone, address: $address, cifNumber: $cifNumber, dateOfBirth: $dateOfBirth, aadhaarNumber: $aadhaarNumber, panNumber: $panNumber, savingsAccount: $savingsAccount)';
 }
 
 
@@ -48,11 +48,11 @@ abstract mixin class $CustomerCopyWith<$Res>  {
   factory $CustomerCopyWith(Customer value, $Res Function(Customer) _then) = _$CustomerCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String? email, String? phone, String? address
+ String id, String name, String? email, String? phone, String? address, String? cifNumber, DateTime? dateOfBirth, String? aadhaarNumber, String? panNumber, SavingsAccount? savingsAccount
 });
 
 
-
+$SavingsAccountCopyWith<$Res>? get savingsAccount;
 
 }
 /// @nodoc
@@ -65,17 +65,34 @@ class _$CustomerCopyWithImpl<$Res>
 
 /// Create a copy of Customer
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? email = freezed,Object? phone = freezed,Object? address = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? email = freezed,Object? phone = freezed,Object? address = freezed,Object? cifNumber = freezed,Object? dateOfBirth = freezed,Object? aadhaarNumber = freezed,Object? panNumber = freezed,Object? savingsAccount = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String?,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
 as String?,address: freezed == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,cifNumber: freezed == cifNumber ? _self.cifNumber : cifNumber // ignore: cast_nullable_to_non_nullable
+as String?,dateOfBirth: freezed == dateOfBirth ? _self.dateOfBirth : dateOfBirth // ignore: cast_nullable_to_non_nullable
+as DateTime?,aadhaarNumber: freezed == aadhaarNumber ? _self.aadhaarNumber : aadhaarNumber // ignore: cast_nullable_to_non_nullable
+as String?,panNumber: freezed == panNumber ? _self.panNumber : panNumber // ignore: cast_nullable_to_non_nullable
+as String?,savingsAccount: freezed == savingsAccount ? _self.savingsAccount : savingsAccount // ignore: cast_nullable_to_non_nullable
+as SavingsAccount?,
   ));
 }
+/// Create a copy of Customer
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SavingsAccountCopyWith<$Res>? get savingsAccount {
+    if (_self.savingsAccount == null) {
+    return null;
+  }
 
+  return $SavingsAccountCopyWith<$Res>(_self.savingsAccount!, (value) {
+    return _then(_self.copyWith(savingsAccount: value));
+  });
+}
 }
 
 
@@ -154,10 +171,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? email,  String? phone,  String? address)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? email,  String? phone,  String? address,  String? cifNumber,  DateTime? dateOfBirth,  String? aadhaarNumber,  String? panNumber,  SavingsAccount? savingsAccount)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Customer() when $default != null:
-return $default(_that.id,_that.name,_that.email,_that.phone,_that.address);case _:
+return $default(_that.id,_that.name,_that.email,_that.phone,_that.address,_that.cifNumber,_that.dateOfBirth,_that.aadhaarNumber,_that.panNumber,_that.savingsAccount);case _:
   return orElse();
 
 }
@@ -175,10 +192,10 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.address);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? email,  String? phone,  String? address)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? email,  String? phone,  String? address,  String? cifNumber,  DateTime? dateOfBirth,  String? aadhaarNumber,  String? panNumber,  SavingsAccount? savingsAccount)  $default,) {final _that = this;
 switch (_that) {
 case _Customer():
-return $default(_that.id,_that.name,_that.email,_that.phone,_that.address);}
+return $default(_that.id,_that.name,_that.email,_that.phone,_that.address,_that.cifNumber,_that.dateOfBirth,_that.aadhaarNumber,_that.panNumber,_that.savingsAccount);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -192,10 +209,10 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.address);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? email,  String? phone,  String? address)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? email,  String? phone,  String? address,  String? cifNumber,  DateTime? dateOfBirth,  String? aadhaarNumber,  String? panNumber,  SavingsAccount? savingsAccount)?  $default,) {final _that = this;
 switch (_that) {
 case _Customer() when $default != null:
-return $default(_that.id,_that.name,_that.email,_that.phone,_that.address);case _:
+return $default(_that.id,_that.name,_that.email,_that.phone,_that.address,_that.cifNumber,_that.dateOfBirth,_that.aadhaarNumber,_that.panNumber,_that.savingsAccount);case _:
   return null;
 
 }
@@ -207,7 +224,7 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.address);case 
 @JsonSerializable()
 
 class _Customer extends Customer {
-  const _Customer({required this.id, required this.name, this.email, this.phone, this.address}): super._();
+  const _Customer({required this.id, required this.name, this.email, this.phone, this.address, this.cifNumber, this.dateOfBirth, this.aadhaarNumber, this.panNumber, this.savingsAccount}): super._();
   factory _Customer.fromJson(Map<String, dynamic> json) => _$CustomerFromJson(json);
 
 @override final  String id;
@@ -215,6 +232,11 @@ class _Customer extends Customer {
 @override final  String? email;
 @override final  String? phone;
 @override final  String? address;
+@override final  String? cifNumber;
+@override final  DateTime? dateOfBirth;
+@override final  String? aadhaarNumber;
+@override final  String? panNumber;
+@override final  SavingsAccount? savingsAccount;
 
 /// Create a copy of Customer
 /// with the given fields replaced by the non-null parameter values.
@@ -229,16 +251,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Customer&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Customer&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address)&&(identical(other.cifNumber, cifNumber) || other.cifNumber == cifNumber)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&(identical(other.aadhaarNumber, aadhaarNumber) || other.aadhaarNumber == aadhaarNumber)&&(identical(other.panNumber, panNumber) || other.panNumber == panNumber)&&(identical(other.savingsAccount, savingsAccount) || other.savingsAccount == savingsAccount));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,email,phone,address);
+int get hashCode => Object.hash(runtimeType,id,name,email,phone,address,cifNumber,dateOfBirth,aadhaarNumber,panNumber,savingsAccount);
 
 @override
 String toString() {
-  return 'Customer(id: $id, name: $name, email: $email, phone: $phone, address: $address)';
+  return 'Customer(id: $id, name: $name, email: $email, phone: $phone, address: $address, cifNumber: $cifNumber, dateOfBirth: $dateOfBirth, aadhaarNumber: $aadhaarNumber, panNumber: $panNumber, savingsAccount: $savingsAccount)';
 }
 
 
@@ -249,11 +271,11 @@ abstract mixin class _$CustomerCopyWith<$Res> implements $CustomerCopyWith<$Res>
   factory _$CustomerCopyWith(_Customer value, $Res Function(_Customer) _then) = __$CustomerCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String? email, String? phone, String? address
+ String id, String name, String? email, String? phone, String? address, String? cifNumber, DateTime? dateOfBirth, String? aadhaarNumber, String? panNumber, SavingsAccount? savingsAccount
 });
 
 
-
+@override $SavingsAccountCopyWith<$Res>? get savingsAccount;
 
 }
 /// @nodoc
@@ -266,18 +288,35 @@ class __$CustomerCopyWithImpl<$Res>
 
 /// Create a copy of Customer
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? email = freezed,Object? phone = freezed,Object? address = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? email = freezed,Object? phone = freezed,Object? address = freezed,Object? cifNumber = freezed,Object? dateOfBirth = freezed,Object? aadhaarNumber = freezed,Object? panNumber = freezed,Object? savingsAccount = freezed,}) {
   return _then(_Customer(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String?,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
 as String?,address: freezed == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,cifNumber: freezed == cifNumber ? _self.cifNumber : cifNumber // ignore: cast_nullable_to_non_nullable
+as String?,dateOfBirth: freezed == dateOfBirth ? _self.dateOfBirth : dateOfBirth // ignore: cast_nullable_to_non_nullable
+as DateTime?,aadhaarNumber: freezed == aadhaarNumber ? _self.aadhaarNumber : aadhaarNumber // ignore: cast_nullable_to_non_nullable
+as String?,panNumber: freezed == panNumber ? _self.panNumber : panNumber // ignore: cast_nullable_to_non_nullable
+as String?,savingsAccount: freezed == savingsAccount ? _self.savingsAccount : savingsAccount // ignore: cast_nullable_to_non_nullable
+as SavingsAccount?,
   ));
 }
 
+/// Create a copy of Customer
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SavingsAccountCopyWith<$Res>? get savingsAccount {
+    if (_self.savingsAccount == null) {
+    return null;
+  }
 
+  return $SavingsAccountCopyWith<$Res>(_self.savingsAccount!, (value) {
+    return _then(_self.copyWith(savingsAccount: value));
+  });
+}
 }
 
 // dart format on

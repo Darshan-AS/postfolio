@@ -8,6 +8,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:intl/intl.dart';
 
 class CustomerFormScreen extends ConsumerWidget {
   final String? customerId;
@@ -63,17 +64,42 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   late final TextEditingController _addressController;
+  late final TextEditingController _cifNumberController;
+  late final TextEditingController _dateOfBirthController;
+  late final TextEditingController _aadhaarNumberController;
+  late final TextEditingController _panNumberController;
+  late final TextEditingController _savingsAccountNumberController;
+  late final TextEditingController _savingsNomineeNameController;
+  late final TextEditingController _savingsNomineeRelationshipController;
 
+  DateTime? _selectedDate;
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.existingCustomer?.name);
-    _emailController = TextEditingController(text: widget.existingCustomer?.email);
-    _phoneController = TextEditingController(text: widget.existingCustomer?.phone);
+    final customer = widget.existingCustomer;
+    _nameController = TextEditingController(text: customer?.name);
+    _emailController = TextEditingController(text: customer?.email);
+    _phoneController = TextEditingController(text: customer?.phone);
     _addressController = TextEditingController(
-      text: widget.existingCustomer?.address,
+      text: customer?.address,
+    );
+    _cifNumberController = TextEditingController(text: customer?.cifNumber);
+    _aadhaarNumberController = TextEditingController(text: customer?.aadhaarNumber);
+    _panNumberController = TextEditingController(text: customer?.panNumber);
+    _savingsAccountNumberController =
+        TextEditingController(text: customer?.savingsAccount?.accountNumber);
+    _savingsNomineeNameController =
+        TextEditingController(text: customer?.savingsAccount?.nominee?.name);
+    _savingsNomineeRelationshipController = TextEditingController(
+        text: customer?.savingsAccount?.nominee?.relationship);
+
+    _selectedDate = customer?.dateOfBirth;
+    _dateOfBirthController = TextEditingController(
+      text: _selectedDate != null
+          ? DateFormat.yMMMd().format(_selectedDate!)
+          : '',
     );
   }
 
@@ -83,7 +109,29 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
     _emailController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
+    _cifNumberController.dispose();
+    _dateOfBirthController.dispose();
+    _aadhaarNumberController.dispose();
+    _panNumberController.dispose();
+    _savingsAccountNumberController.dispose();
+    _savingsNomineeNameController.dispose();
+    _savingsNomineeRelationshipController.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _dateOfBirthController.text = DateFormat.yMMMd().format(_selectedDate!);
+      });
+    }
   }
 
   Future<void> _save() async {
@@ -103,6 +151,26 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
             address: _addressController.text.trim().isEmpty
                 ? null
                 : _addressController.text.trim(),
+            cifNumber: _cifNumberController.text.trim().isEmpty
+                ? null
+                : _cifNumberController.text.trim(),
+            dateOfBirth: _selectedDate,
+            aadhaarNumber: _aadhaarNumberController.text.trim().isEmpty
+                ? null
+                : _aadhaarNumberController.text.trim(),
+            panNumber: _panNumberController.text.trim().isEmpty
+                ? null
+                : _panNumberController.text.trim(),
+            savingsAccountNumber: _savingsAccountNumberController.text.trim().isEmpty
+                ? null
+                : _savingsAccountNumberController.text.trim(),
+            savingsNomineeName: _savingsNomineeNameController.text.trim().isEmpty
+                ? null
+                : _savingsNomineeNameController.text.trim(),
+            savingsNomineeRelationship:
+                _savingsNomineeRelationshipController.text.trim().isEmpty
+                    ? null
+                    : _savingsNomineeRelationshipController.text.trim(),
           );
 
       if (!mounted) return;
@@ -191,12 +259,78 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               ),
               AppSpacings.gapMd,
               TextFormField(
+                controller: _cifNumberController,
+                decoration: InputDecoration(
+                  labelText: 'CIF',
+                  prefixIcon: const Icon(Icons.confirmation_number_outlined),
+                ),
+                textInputAction: TextInputAction.next,
+              ),
+              AppSpacings.gapMd,
+              TextFormField(
+                controller: _dateOfBirthController,
+                decoration: InputDecoration(
+                  labelText: 'Date of Birth',
+                  prefixIcon: const Icon(Icons.calendar_today_outlined),
+                ),
+                readOnly: true,
+                onTap: () => _selectDate(context),
+              ),
+              AppSpacings.gapMd,
+              TextFormField(
                 controller: _addressController,
                 decoration: InputDecoration(
                   labelText: t.customers.fields.homeAddress,
                   prefixIcon: const Icon(Icons.home_outlined),
                 ),
                 maxLines: 3,
+              ),
+              AppSpacings.gapMd,
+              TextFormField(
+                controller: _aadhaarNumberController,
+                decoration: InputDecoration(
+                  labelText: 'Aadhaar',
+                  prefixIcon: const Icon(Icons.badge_outlined),
+                ),
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.next,
+              ),
+              AppSpacings.gapMd,
+              TextFormField(
+                controller: _panNumberController,
+                decoration: InputDecoration(
+                  labelText: 'PAN',
+                  prefixIcon: const Icon(Icons.credit_card_outlined),
+                ),
+                textInputAction: TextInputAction.next,
+              ),
+              AppSpacings.gapMd,
+              TextFormField(
+                controller: _savingsAccountNumberController,
+                decoration: InputDecoration(
+                  labelText: 'SB Account No.',
+                  prefixIcon: const Icon(Icons.account_balance_outlined),
+                ),
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.next,
+              ),
+              AppSpacings.gapMd,
+              TextFormField(
+                controller: _savingsNomineeNameController,
+                decoration: InputDecoration(
+                  labelText: 'SB Nominee Name',
+                  prefixIcon: const Icon(Icons.person_pin_outlined),
+                ),
+                textInputAction: TextInputAction.next,
+              ),
+              AppSpacings.gapMd,
+              TextFormField(
+                controller: _savingsNomineeRelationshipController,
+                decoration: InputDecoration(
+                  labelText: 'SB Nominee Relationship',
+                  prefixIcon: const Icon(Icons.people_alt_outlined),
+                ),
+                textInputAction: TextInputAction.done,
               ),
               AppSpacings.gapXxl,
               ElevatedButton(

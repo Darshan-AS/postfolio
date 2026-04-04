@@ -38,7 +38,7 @@ final class CustomersControllerProvider
 }
 
 String _$customersControllerHash() =>
-    r'fcfdd3b9bcba692d2017146239528506810271a1';
+    r'4a78774774e483530b76654f881d0e2e58e62380';
 
 abstract class _$CustomersController
     extends $AsyncNotifier<UnmodifiableListView<Customer>> {

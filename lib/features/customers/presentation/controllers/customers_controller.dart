@@ -30,6 +30,13 @@ class CustomersController extends _$CustomersController {
     String? email,
     String? phone,
     String? address,
+    String? cifNumber,
+    DateTime? dateOfBirth,
+    String? aadhaarNumber,
+    String? panNumber,
+    String? savingsAccountNumber,
+    String? savingsNomineeName,
+    String? savingsNomineeRelationship,
   }) async {
     final (error, customer) = Customer.create(
       id: id ?? '', // FakeRepo will assign a real ID if creating
@@ -37,6 +44,13 @@ class CustomersController extends _$CustomersController {
       email: email,
       phone: phone,
       address: address,
+      cifNumber: cifNumber,
+      dateOfBirth: dateOfBirth,
+      aadhaarNumber: aadhaarNumber,
+      panNumber: panNumber,
+      savingsAccountNumber: savingsAccountNumber,
+      savingsNomineeName: savingsNomineeName,
+      savingsNomineeRelationship: savingsNomineeRelationship,
     );
 
     if (error != null || customer == null) {
