@@ -9,6 +9,8 @@ These guidelines apply to all code generated and modified in this workspace. Adh
 
 ## Functional Programming & Purity
 - **Immutability**: Use immutable data structures exclusively. We use the **`freezed`** package for all data classes, state representations, and unions to ensure strict immutability, `copyWith` functionality, and safe JSON serialization. Never mutate state directly in place.
+- **Modern Dart 3 Features**: Avoid heavyweight functional packages like `dartz`. Instead, use native Dart 3 **Records**, **Pattern Matching**, and **Sealed Classes** (via Freezed) for error handling and state unions.
+- **Validation**: Avoid over-engineered Value Objects for primitive types. Use extension methods or factory constructors on Freezed models for data validation.
 - **Pure Functions**: Keep business logic in pure functions inside your Notifiers/Controllers. State should be replaced with newly computed objects rather than mutated.
 - **One-Way Data Flow**: 
   - UI reads state from Providers.
@@ -20,3 +22,7 @@ These guidelines apply to all code generated and modified in this workspace. Adh
 - **Dumb Widgets**: Widgets should be completely "dumb". They are strictly responsible for displaying data and capturing user input. Never perform API calls, complex logic, or database operations directly inside a widget.
 - **ConsumerWidget**: Prefer `ConsumerWidget` or `ConsumerStatefulWidget` (via Riverpod) over vanilla `StatefulWidget` unless handling ephemeral UI-only state (like an animation controller or a text field focus).
 - **Seamless Cross-Platform UI**: Ensure the UI is seamless across all supported platforms (iOS, Android, Web, Desktop). Use responsive design principles (e.g., `LayoutBuilder`, `MediaQuery`) and platform-aware styling where appropriate to ensure the app feels native and polished everywhere.
+
+## Routing & Infrastructure
+- **Routing**: Use **`go_router`** for declarative routing without the need for code generation.
+- **Backend & Database**: Use **Firebase (Firestore)** as the Backend-as-a-Service. Rely on Firestore's native offline-persistence instead of maintaining a separate local database (like Isar/Drift). All data repositories should interact directly with Firestore.
