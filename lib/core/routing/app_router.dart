@@ -6,6 +6,7 @@ import 'package:postfolio/features/dashboard/presentation/screens/dashboard_scre
 import 'package:postfolio/features/deposits/presentation/screens/deposits_screen.dart';
 import 'package:postfolio/features/main_shell/presentation/screens/main_shell_scaffold.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/screens/rd_screen.dart';
+import 'package:postfolio/features/users/presentation/screens/user_detail_screen.dart';
 import 'package:postfolio/features/users/presentation/screens/user_form_screen.dart';
 import 'package:postfolio/features/users/presentation/screens/users_screen.dart';
 
@@ -57,7 +58,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   ),
                   GoRoute(
                     path: ':id',
-                    builder: (context, state) => Scaffold(appBar: AppBar(title: Text('User Detail ${state.pathParameters['id']}'))),
+                    builder: (context, state) => UserDetailScreen(userId: state.pathParameters['id']!),
                   ),
                   GoRoute(
                     path: ':id/edit',
