@@ -5,47 +5,65 @@ import 'package:postfolio/features/users/domain/user_model.dart';
 import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 
-class UserFormScreen extends ConsumerStatefulWidget {
+class UserFormScreen extends ConsumerWidget {
   final String? userId;
 
   const UserFormScreen({super.key, this.userId});
 
   @override
-  ConsumerState<UserFormScreen> createState() => _UserFormScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (userId == null) {
+      return const _UserForm(existingUser: null);
+    }
+
+    final usersState = ref.watch(usersControllerProvider);
+
+    return usersState.when(
+      data: (users) {
+        final user = users.where((u) => u.id == userId).firstOrNull;
+        if (user == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Error')),
+            body: const Center(child: Text('User not found')),
+          );
+        }
+        return _UserForm(existingUser: user);
+      },
+      loading: () => Scaffold(
+        appBar: AppBar(title: const Text('Loading...')),
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stack) => Scaffold(
+        appBar: AppBar(title: const Text('Error')),
+        body: Center(child: Text('Error: $error')),
+      ),
+    );
+  }
 }
 
-class _UserFormScreenState extends ConsumerState<UserFormScreen> {
+class _UserForm extends ConsumerStatefulWidget {
+  final User? existingUser;
+
+  const _UserForm({this.existingUser});
+
+  @override
+  ConsumerState<_UserForm> createState() => _UserFormState();
+}
+
+class _UserFormState extends ConsumerState<_UserForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   late final TextEditingController _addressController;
-  User? _existingUser;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController();
-    _emailController = TextEditingController();
-    _phoneController = TextEditingController();
-    _addressController = TextEditingController();
-
-    // If an ID was provided, fetch the existing user to pre-fill the form
-    if (widget.userId != null) {
-      final usersState = ref.read(usersControllerProvider);
-      final users = usersState.value; // AsyncValue.value contains the data if available
-      if (users != null) {
-        try {
-          _existingUser = users.firstWhere((u) => u.id == widget.userId);
-          _nameController.text = _existingUser!.name;
-          _emailController.text = _existingUser!.email ?? '';
-          _phoneController.text = _existingUser!.phone ?? '';
-          _addressController.text = _existingUser!.address ?? '';
-        } catch (e) {
-          // User not found in state
-        }
-      }
-    }
+    _nameController = TextEditingController(text: widget.existingUser?.name);
+    _emailController = TextEditingController(text: widget.existingUser?.email);
+    _phoneController = TextEditingController(text: widget.existingUser?.phone);
+    _addressController = TextEditingController(text: widget.existingUser?.address);
   }
 
   @override
@@ -57,36 +75,57 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (_formKey.currentState!.validate()) {
-      // The UI is now perfectly "dumb". It just reads strings and passes them to the Controller.
-      ref.read(usersControllerProvider.notifier).saveUser(
-        id: _existingUser?.id,
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-        address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-      );
+      try {
+        await ref.read(usersControllerProvider.notifier).saveUser(
+          id: widget.existingUser?.id,
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+          phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+          address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+        );
 
-      // Pop back to the list screen
-      context.pop();
+        if (mounted) {
+          context.pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save user: $e')),
+          );
+        }
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isUpdating = widget.userId != null;
+    final isUpdating = widget.existingUser != null;
+    final isLoading = ref.watch(usersControllerProvider).isLoading;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(isUpdating ? 'Edit User' : 'New User'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            color: AppTheme.primary,
-            onPressed: _save,
-            tooltip: 'Save',
-          ),
+          if (isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.check),
+              color: AppTheme.primary,
+              onPressed: _save,
+              tooltip: 'Save',
+            ),
         ],
       ),
       body: Form(
@@ -141,8 +180,10 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
             ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: _save,
-              child: const Text('Save User'),
+              onPressed: isLoading ? null : _save,
+              child: isLoading 
+                  ? const Text('Saving...') 
+                  : const Text('Save User'),
             ),
           ],
         ),

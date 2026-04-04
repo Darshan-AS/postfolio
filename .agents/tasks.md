@@ -21,8 +21,8 @@
 - [x] Centralize hardcoded route paths into a constants file.
 - [x] Centralize hardcoded colors into `lib/core/theme/`.
 - [ ] Centralize hardcoded dimensions and spacings into `AppSpacings` and `AppDimensions`.
-- [ ] Fix `UserFormScreen` initialization (avoid synchronously reading controller state).
-- [ ] Implement robust loading states in `UserFormScreen` (disable buttons during save).
+- [x] Fix `UserFormScreen` initialization (avoid synchronously reading controller state).
+- [x] Implement robust loading states in `UserFormScreen` (disable buttons during save).
 - [ ] Create a reusable `ErrorStateView` widget for consistent error handling and retries.
 - [ ] Refactor Controllers to return strongly-typed `Result` types instead of throwing exceptions.
 - [ ] Add strict domain validation and factory constructors to `Deposit`, `Scheme`, and `RecurringDeposit` models.
