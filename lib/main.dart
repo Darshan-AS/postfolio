@@ -10,11 +10,7 @@ void main() {
   LocaleSettings.useDeviceLocale();
 
   runApp(
-    ProviderScope(
-      child: TranslationProvider(
-        child: const PostfolioApp(),
-      ),
-    ),
+    ProviderScope(child: TranslationProvider(child: const PostfolioApp())),
   );
 }
 

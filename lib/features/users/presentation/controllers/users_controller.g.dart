@@ -34,7 +34,7 @@ final class UsersControllerProvider
   UsersController create() => UsersController();
 }
 
-String _$usersControllerHash() => r'2d52c3504521bf98bd5ac2c808dad6725f0d4f82';
+String _$usersControllerHash() => r'2bd2c087f60141beb5cbd3f209206c8c3bf68baf';
 
 abstract class _$UsersController
     extends $AsyncNotifier<UnmodifiableListView<User>> {

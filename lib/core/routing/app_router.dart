@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:postfolio/core/routing/route_names.dart';
 import 'package:postfolio/features/dashboard/presentation/screens/dashboard_screen.dart';
-import 'package:postfolio/features/deposits/presentation/screens/deposits_screen.dart';
+import 'package:postfolio/features/fixed_deposits/presentation/screens/fd_screen.dart';
 import 'package:postfolio/features/main_shell/presentation/screens/main_shell_scaffold.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/screens/rd_screen.dart';
 import 'package:postfolio/features/users/presentation/screens/user_detail_screen.dart';
@@ -35,7 +35,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RouteNames.deposits,
-                builder: (context, state) => const DepositsScreen(),
+                builder: (context, state) => const FixedDepositsScreen(),
               ),
             ],
           ),
@@ -54,16 +54,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const UsersScreen(),
                 routes: [
                   GoRoute(
-                    path: 'new', // Note: GoRouter sub-routes should not start with a slash
+                    path:
+                        'new', // Note: GoRouter sub-routes should not start with a slash
                     builder: (context, state) => const UserFormScreen(),
                   ),
                   GoRoute(
                     path: ':id',
-                    builder: (context, state) => UserDetailScreen(userId: state.pathParameters['id']!),
+                    builder: (context, state) =>
+                        UserDetailScreen(userId: state.pathParameters['id']!),
                   ),
                   GoRoute(
                     path: ':id/edit',
-                    builder: (context, state) => UserFormScreen(userId: state.pathParameters['id']),
+                    builder: (context, state) =>
+                        UserFormScreen(userId: state.pathParameters['id']),
                   ),
                 ],
               ),

@@ -7,16 +7,10 @@ class ErrorStateView extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
 
-  const ErrorStateView({
-    super.key,
-    required this.message,
-    this.onRetry,
-  });
+  const ErrorStateView({super.key, required this.message, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
-    
-    
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppDimensions.paddingLg),
@@ -24,8 +18,8 @@ class ErrorStateView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.error_outline, 
-              size: AppDimensions.iconXl, 
+              Icons.error_outline,
+              size: AppDimensions.iconXl,
               color: AppTheme.error,
             ),
             AppSpacings.gapLg,
@@ -41,7 +35,7 @@ class ErrorStateView extends StatelessWidget {
                 icon: const Icon(Icons.refresh),
                 label: Text(t.common.retry),
               ),
-            ]
+            ],
           ],
         ),
       ),

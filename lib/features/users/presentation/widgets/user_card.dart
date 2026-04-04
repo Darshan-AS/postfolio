@@ -26,7 +26,10 @@ class UserCard extends ConsumerWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingLg,
+          vertical: AppDimensions.paddingMd,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -63,20 +66,23 @@ class UserCard extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.phone_outlined),
                   color: AppTheme.textSecondary,
-                  onPressed: () => ref.read(intentServiceProvider).launchPhone(phone),
+                  onPressed: () =>
+                      ref.read(intentServiceProvider).launchPhone(phone),
                 ),
                 IconButton(
                   icon: const Icon(Icons.message_outlined),
                   color: AppTheme.textSecondary,
-                  onPressed: () => ref.read(intentServiceProvider).launchSms(phone),
+                  onPressed: () =>
+                      ref.read(intentServiceProvider).launchSms(phone),
                 ),
                 IconButton(
                   icon: const Icon(Icons.location_on_outlined),
                   color: AppTheme.textSecondary,
-                  onPressed: () => ref.read(intentServiceProvider).launchMapSearch(name),
+                  onPressed: () =>
+                      ref.read(intentServiceProvider).launchMapSearch(name),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

@@ -17,7 +17,7 @@ class UsersController extends _$UsersController {
   Future<UnmodifiableListView<User>> _fetchUsers() async {
     final repository = ref.read(userRepositoryProvider);
     final result = await repository.fetchUsers();
-    
+
     return switch (result) {
       Success(value: final users) => UnmodifiableListView(users),
       Failure(error: final error) => throw Exception(error),
@@ -44,8 +44,8 @@ class UsersController extends _$UsersController {
     }
 
     final repository = ref.read(userRepositoryProvider);
-    final Result<void, String> result = id != null 
-        ? await repository.updateUser(user) 
+    final Result<void, String> result = id != null
+        ? await repository.updateUser(user)
         : await repository.createUser(user);
 
     return switch (result) {
@@ -60,7 +60,7 @@ class UsersController extends _$UsersController {
   Future<Result<void, String>> deleteUser(String id) async {
     final repository = ref.read(userRepositoryProvider);
     final result = await repository.deleteUser(id);
-    
+
     return switch (result) {
       Success() => () {
         ref.invalidateSelf();

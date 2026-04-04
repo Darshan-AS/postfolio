@@ -6,15 +6,9 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-    
     return Scaffold(
-      appBar: AppBar(
-        title: Text(t.nav.dashboard),
-      ),
-      body: Center(
-        child: Text(t.dashboard.charts),
-      ),
+      appBar: AppBar(title: Text(t.nav.dashboard)),
+      body: Center(child: Text(t.dashboard.charts)),
     );
   }
 }

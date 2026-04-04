@@ -6,15 +6,9 @@ class RdScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(t.nav.recurringDeposits),
-      ),
-      body: Center(
-        child: Text(t.rd.list),
-      ),
+      appBar: AppBar(title: Text(t.nav.recurringDeposits)),
+      body: Center(child: Text(t.rd.list)),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         child: const Icon(Icons.add),

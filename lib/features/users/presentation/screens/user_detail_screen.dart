@@ -21,16 +21,15 @@ class UserDetailScreen extends ConsumerWidget {
         title: Text(t.users.deleteUser),
         content: Text(t.users.deleteUserConfirmation),
         actions: [
-          TextButton(
-            onPressed: () => ctx.pop(),
-            child: Text(t.common.cancel),
-          ),
+          TextButton(onPressed: () => ctx.pop(), child: Text(t.common.cancel)),
           TextButton(
             onPressed: () async {
-              final result = await ref.read(usersControllerProvider.notifier).deleteUser(userId);
-              
+              final result = await ref
+                  .read(usersControllerProvider.notifier)
+                  .deleteUser(userId);
+
               if (!context.mounted) return;
-              
+
               switch (result) {
                 case Success():
                   ctx.pop(); // Dismiss dialog
@@ -38,11 +37,18 @@ class UserDetailScreen extends ConsumerWidget {
                 case Failure(error: final err):
                   ctx.pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(t.users.failedToDeleteUser(error: err.toString()))),
+                    SnackBar(
+                      content: Text(
+                        t.users.failedToDeleteUser(error: err.toString()),
+                      ),
+                    ),
                   );
               }
             },
-            child: Text(t.common.delete, style: const TextStyle(color: AppTheme.error)),
+            child: Text(
+              t.common.delete,
+              style: const TextStyle(color: AppTheme.error),
+            ),
           ),
         ],
       ),
@@ -52,7 +58,6 @@ class UserDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final usersState = ref.watch(usersControllerProvider);
-    
 
     return Scaffold(
       appBar: AppBar(
@@ -90,17 +95,32 @@ class UserDetailScreen extends ConsumerWidget {
               Text(
                 user.name,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               AppSpacings.gapXxl,
               Card(
                 child: Column(
                   children: [
-                    _buildInfoTile(Icons.phone_outlined, t.users.fields.phoneNumber, user.phone ?? t.common.notProvided),
+                    _buildInfoTile(
+                      Icons.phone_outlined,
+                      t.users.fields.phoneNumber,
+                      user.phone ?? t.common.notProvided,
+                    ),
                     const Divider(),
-                    _buildInfoTile(Icons.email_outlined, t.users.fields.emailAddress, user.email ?? t.common.notProvided),
+                    _buildInfoTile(
+                      Icons.email_outlined,
+                      t.users.fields.emailAddress,
+                      user.email ?? t.common.notProvided,
+                    ),
                     const Divider(),
-                    _buildInfoTile(Icons.home_outlined, t.users.fields.homeAddress, user.address ?? t.common.notProvided),
+                    _buildInfoTile(
+                      Icons.home_outlined,
+                      t.users.fields.homeAddress,
+                      user.address ?? t.common.notProvided,
+                    ),
                   ],
                 ),
               ),
@@ -119,8 +139,14 @@ class UserDetailScreen extends ConsumerWidget {
   Widget _buildInfoTile(IconData icon, String title, String subtitle) {
     return ListTile(
       leading: Icon(icon, color: AppTheme.primary),
-      title: Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 16, color: AppTheme.textPrimary)),
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(fontSize: 16, color: AppTheme.textPrimary),
+      ),
     );
   }
 }

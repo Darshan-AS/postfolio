@@ -20,11 +20,17 @@ sealed class Scheme with _$Scheme {
 
   static String? validateName(String? name) {
     if (name == null || name.trim().isEmpty) return 'Scheme name is required';
-    if (name.trim().length < 2) return 'Scheme name must be at least 2 characters';
+    if (name.trim().length < 2) {
+      return 'Scheme name must be at least 2 characters';
+    }
     return null;
   }
 
-  static String? validateTerm(bool isVariableTerm, int termYears, int termMonths) {
+  static String? validateTerm(
+    bool isVariableTerm,
+    int termYears,
+    int termMonths,
+  ) {
     if (!isVariableTerm && termYears == 0 && termMonths == 0) {
       return 'Fixed term schemes must specify a term greater than 0';
     }
@@ -34,7 +40,9 @@ sealed class Scheme with _$Scheme {
 
   static String? validateInterestRate(double? rate) {
     if (rate == null) return 'Interest rate is required';
-    if (rate < 0 || rate > 100) return 'Interest rate must be between 0 and 100';
+    if (rate < 0 || rate > 100) {
+      return 'Interest rate must be between 0 and 100';
+    }
     return null;
   }
 
@@ -64,7 +72,7 @@ sealed class Scheme with _$Scheme {
         termYears: termYears,
         termMonths: termMonths,
         baseInterestRate: baseInterestRate,
-      )
+      ),
     );
   }
 }

@@ -21,7 +21,6 @@ class UserFormScreen extends ConsumerWidget {
     }
 
     final usersState = ref.watch(usersControllerProvider);
-    
 
     return usersState.when(
       data: (users) {
@@ -29,9 +28,7 @@ class UserFormScreen extends ConsumerWidget {
         if (user == null) {
           return Scaffold(
             appBar: AppBar(title: Text(t.common.error)),
-            body: ErrorStateView(
-              message: t.users.userNotFound,
-            ),
+            body: ErrorStateView(message: t.users.userNotFound),
           );
         }
         return _UserForm(existingUser: user);
@@ -75,7 +72,9 @@ class _UserFormState extends ConsumerState<_UserForm> {
     _nameController = TextEditingController(text: widget.existingUser?.name);
     _emailController = TextEditingController(text: widget.existingUser?.email);
     _phoneController = TextEditingController(text: widget.existingUser?.phone);
-    _addressController = TextEditingController(text: widget.existingUser?.address);
+    _addressController = TextEditingController(
+      text: widget.existingUser?.address,
+    );
   }
 
   @override
@@ -90,24 +89,33 @@ class _UserFormState extends ConsumerState<_UserForm> {
   Future<void> _save() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isSaving = true);
-      final result = await ref.read(usersControllerProvider.notifier).saveUser(
-        id: widget.existingUser?.id,
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-        address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-      );
+      final result = await ref
+          .read(usersControllerProvider.notifier)
+          .saveUser(
+            id: widget.existingUser?.id,
+            name: _nameController.text.trim(),
+            email: _emailController.text.trim().isEmpty
+                ? null
+                : _emailController.text.trim(),
+            phone: _phoneController.text.trim().isEmpty
+                ? null
+                : _phoneController.text.trim(),
+            address: _addressController.text.trim().isEmpty
+                ? null
+                : _addressController.text.trim(),
+          );
 
       if (!mounted) return;
       setState(() => _isSaving = false);
-      
 
       switch (result) {
         case Success():
           context.pop();
         case Failure(error: final err):
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(t.users.failedToSaveUser(error: err.toString()))),
+            SnackBar(
+              content: Text(t.users.failedToSaveUser(error: err.toString())),
+            ),
           );
       }
     }
@@ -116,7 +124,6 @@ class _UserFormState extends ConsumerState<_UserForm> {
   @override
   Widget build(BuildContext context) {
     final isUpdating = widget.existingUser != null;
-    
 
     return Scaffold(
       appBar: AppBar(
@@ -124,7 +131,9 @@ class _UserFormState extends ConsumerState<_UserForm> {
         actions: [
           if (_isSaving)
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingLg,
+              ),
               child: Center(
                 child: SizedBox(
                   width: AppDimensions.iconMd,
@@ -195,9 +204,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
             AppSpacings.gapXxl,
             ElevatedButton(
               onPressed: _isSaving ? null : _save,
-              child: _isSaving 
-                  ? Text(t.common.saving) 
-                  : Text(t.users.saveUser),
+              child: _isSaving ? Text(t.common.saving) : Text(t.users.saveUser),
             ),
           ],
         ),

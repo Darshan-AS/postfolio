@@ -23,10 +23,28 @@ class AppDimensions {
 }
 
 class AppSpacings {
-  static const SizedBox gapXs = SizedBox(height: AppDimensions.paddingXs, width: AppDimensions.paddingXs);
-  static const SizedBox gapSm = SizedBox(height: AppDimensions.paddingSm, width: AppDimensions.paddingSm);
-  static const SizedBox gapMd = SizedBox(height: AppDimensions.paddingMd, width: AppDimensions.paddingMd);
-  static const SizedBox gapLg = SizedBox(height: AppDimensions.paddingLg, width: AppDimensions.paddingLg);
-  static const SizedBox gapXl = SizedBox(height: AppDimensions.paddingXl, width: AppDimensions.paddingXl);
-  static const SizedBox gapXxl = SizedBox(height: AppDimensions.paddingXxl, width: AppDimensions.paddingXxl);
+  static const SizedBox gapXs = SizedBox(
+    height: AppDimensions.paddingXs,
+    width: AppDimensions.paddingXs,
+  );
+  static const SizedBox gapSm = SizedBox(
+    height: AppDimensions.paddingSm,
+    width: AppDimensions.paddingSm,
+  );
+  static const SizedBox gapMd = SizedBox(
+    height: AppDimensions.paddingMd,
+    width: AppDimensions.paddingMd,
+  );
+  static const SizedBox gapLg = SizedBox(
+    height: AppDimensions.paddingLg,
+    width: AppDimensions.paddingLg,
+  );
+  static const SizedBox gapXl = SizedBox(
+    height: AppDimensions.paddingXl,
+    width: AppDimensions.paddingXl,
+  );
+  static const SizedBox gapXxl = SizedBox(
+    height: AppDimensions.paddingXxl,
+    width: AppDimensions.paddingXxl,
+  );
 }

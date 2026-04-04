@@ -2,73 +2,73 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/models/nominee.dart';
 
-part 'recurring_deposit_model.freezed.dart';
-part 'recurring_deposit_model.g.dart';
+part 'fixed_deposit_model.freezed.dart';
+part 'fixed_deposit_model.g.dart';
 
 @freezed
-sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
-  const RecurringDeposit._();
+sealed class FixedDeposit with _$FixedDeposit implements BaseDeposit {
+  const FixedDeposit._();
 
-  const factory RecurringDeposit({
+  const factory FixedDeposit({
     required String id,
+    required String rowId,
     required String accountNo,
-    required double installmentAmount,
+    required double amount,
     required int termYears,
     required int termMonths,
-    required double interestRate,
+    @Default(0.0) double interestRate,
     required String customerId,
     required String schemeId,
     required double maturityAmount,
-    required DateTime startDate,
+    required DateTime depositDate,
     required DateTime maturityDate,
     @Default([]) List<Nominee> nominees, // Embedded List of Nominees
-  }) = _RecurringDeposit;
+  }) = _FixedDeposit;
 
-  factory RecurringDeposit.fromJson(Map<String, dynamic> json) =>
-      _$RecurringDepositFromJson(json);
+  factory FixedDeposit.fromJson(Map<String, dynamic> json) =>
+      _$FixedDepositFromJson(json);
 
-  static (String?, RecurringDeposit?) create({
+  static (String?, FixedDeposit?) create({
     required String id,
+    required String rowId,
     required String accountNo,
-    required double installmentAmount,
+    required double amount,
     required int termYears,
     required int termMonths,
-    required double interestRate,
+    double interestRate = 0.0,
     required String customerId,
     required String schemeId,
     required double maturityAmount,
-    required DateTime startDate,
+    required DateTime depositDate,
     required DateTime maturityDate,
     List<Nominee> nominees = const [],
   }) {
     final accountError = BaseDeposit.validateAccountNo(accountNo);
     if (accountError != null) return (accountError, null);
 
-    final amountError = BaseDeposit.validateAmount(
-      installmentAmount,
-      'Installment amount',
-    );
+    final amountError = BaseDeposit.validateAmount(amount, 'Amount');
     if (amountError != null) return (amountError, null);
 
     final termError = BaseDeposit.validateTerm(termYears, termMonths);
     if (termError != null) return (termError, null);
 
-    final dateError = BaseDeposit.validateDates(startDate, maturityDate);
+    final dateError = BaseDeposit.validateDates(depositDate, maturityDate);
     if (dateError != null) return (dateError, null);
 
     return (
       null,
-      RecurringDeposit(
+      FixedDeposit(
         id: id,
+        rowId: rowId,
         accountNo: accountNo.trim(),
-        installmentAmount: installmentAmount,
+        amount: amount,
         termYears: termYears,
         termMonths: termMonths,
         interestRate: interestRate,
         customerId: customerId,
         schemeId: schemeId,
         maturityAmount: maturityAmount,
-        startDate: startDate,
+        depositDate: depositDate,
         maturityDate: maturityDate,
         nominees: List.unmodifiable(nominees),
       ),

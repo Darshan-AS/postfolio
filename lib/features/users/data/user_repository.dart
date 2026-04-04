@@ -19,7 +19,9 @@ class FakeUserRepository implements UserRepository {
 
   @override
   Future<Result<List<User>, String>> fetchUsers() async {
-    await Future.delayed(const Duration(seconds: 1)); // Simulate network latency
+    await Future.delayed(
+      const Duration(seconds: 1),
+    ); // Simulate network latency
     return Success([..._users]);
   }
 

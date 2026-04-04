@@ -16,26 +16,28 @@ class UsersScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // 1. Watch the Controller state
     final usersState = ref.watch(usersControllerProvider);
-    
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {},
-        ),
+        leading: IconButton(icon: const Icon(Icons.menu), onPressed: () {}),
         title: Row(
           children: [
             const Icon(Icons.groups_outlined, color: AppTheme.primary),
             AppSpacings.gapSm,
-            Text(t.nav.users, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+              t.nav.users,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
           ],
         ),
         actions: [
           IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.check_box_outlined), onPressed: () {}),
           IconButton(
-            icon: const Icon(Icons.refresh), 
+            icon: const Icon(Icons.check_box_outlined),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
             // Trigger a manual refresh from the controller
             onPressed: () => ref.refresh(usersControllerProvider),
           ),
@@ -59,7 +61,9 @@ class UsersScreen extends ConsumerWidget {
                 onEdit: () => context.push(RouteNames.userEdit(user.id)),
                 onDelete: () {
                   // Call the controller directly to delete
-                  ref.read(usersControllerProvider.notifier).deleteUser(user.id);
+                  ref
+                      .read(usersControllerProvider.notifier)
+                      .deleteUser(user.id);
                 },
               );
             },

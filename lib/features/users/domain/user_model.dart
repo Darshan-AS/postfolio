@@ -35,7 +35,9 @@ sealed class User with _$User {
   static String? validatePhone(String? phone) {
     if (phone == null || phone.trim().isEmpty) return null; // Optional field
     final regex = RegExp(r'^\+?[0-9]{7,15}$');
-    if (!regex.hasMatch(phone.trim())) return 'Invalid phone number (7-15 digits)';
+    if (!regex.hasMatch(phone.trim())) {
+      return 'Invalid phone number (7-15 digits)';
+    }
     return null;
   }
 
@@ -64,7 +66,7 @@ sealed class User with _$User {
         email: email?.trim().isEmpty == true ? null : email?.trim(),
         phone: phone?.trim().isEmpty == true ? null : phone?.trim(),
         address: address?.trim().isEmpty == true ? null : address?.trim(),
-      )
+      ),
     );
   }
 }
