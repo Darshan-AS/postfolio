@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/features/customers/presentation/widgets/customer_selection_field.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
@@ -66,9 +67,10 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
   late final TextEditingController _termYearsController;
   late final TextEditingController _termMonthsController;
   late final TextEditingController _interestRateController;
-  late final TextEditingController _customerIdController;
   late final TextEditingController _maturityAmountController;
   late final TextEditingController _linkedAccountController;
+
+  String? _selectedCustomerId;
 
   RecurringSchemeType _selectedScheme = RecurringSchemeType.recurringDeposit;
   DateTime _startDate = DateTime.now();
@@ -94,9 +96,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
     _interestRateController = TextEditingController(
       text: widget.existingDeposit?.interestRate.toString(),
     );
-    _customerIdController = TextEditingController(
-      text: widget.existingDeposit?.customerId,
-    );
+    _selectedCustomerId = widget.existingDeposit?.customerId;
     _maturityAmountController = TextEditingController(
       text: widget.existingDeposit?.maturityAmount.toString(),
     );
@@ -118,7 +118,6 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
     _termYearsController.dispose();
     _termMonthsController.dispose();
     _interestRateController.dispose();
-    _customerIdController.dispose();
     _maturityAmountController.dispose();
     _linkedAccountController.dispose();
     super.dispose();
@@ -126,6 +125,13 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
 
   Future<void> _save() async {
     if (_formKey.currentState!.validate()) {
+      if (_selectedCustomerId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a customer')),
+        );
+        return;
+      }
+
       setState(() => _isSaving = true);
       final result = await ref
           .read(recurringDepositsControllerProvider.notifier)
@@ -139,7 +145,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
             termMonths: int.tryParse(_termMonthsController.text.trim()) ?? 0,
             interestRate:
                 double.tryParse(_interestRateController.text.trim()) ?? 0.0,
-            customerId: _customerIdController.text.trim(),
+            customerId: _selectedCustomerId ?? '',
             schemeType: _selectedScheme,
             maturityAmount:
                 double.tryParse(_maturityAmountController.text.trim()) ?? 0.0,
@@ -272,16 +278,13 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
-            TextFormField(
-              controller: _customerIdController,
-              decoration: InputDecoration(
-                labelText: t.recurringDeposits.fields.customerId,
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.person_outline),
-              ),
-              validator: (val) =>
-                  val == null || val.trim().isEmpty ? 'Required' : null,
-              textInputAction: TextInputAction.next,
+            CustomerSelectionField(
+              initialCustomerId: _selectedCustomerId,
+              onCustomerSelected: (customer) {
+                setState(() {
+                  _selectedCustomerId = customer?.id;
+                });
+              },
             ),
             AppSpacings.gapLg,
             DropdownButtonFormField<RecurringSchemeType>(
