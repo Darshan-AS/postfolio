@@ -15,11 +15,17 @@
 - [x] Build `UserDetailScreen` (Read/Delete).
 
 ## Phase 3: Architectural Cleanup (Pending)
-- [ ] Refactor `UserCard` native intents (SMS/Phone/Map) into an injected `IntentService`.
+- [x] Refactor `UserCard` native intents (SMS/Phone/Map) into an injected `IntentService`.
 - [x] Refactor `UsersController` to accept raw strings, validate, and construct the Domain model.
 - [x] Implement Domain Validation (e.g., Extension methods on Freezed models).
 - [x] Centralize hardcoded route paths into a constants file.
-- [ ] Centralize hardcoded colors into `lib/core/theme/`.
+- [x] Centralize hardcoded colors into `lib/core/theme/`.
+- [ ] Centralize hardcoded dimensions and spacings into `AppSpacings` and `AppDimensions`.
+- [ ] Fix `UserFormScreen` initialization (avoid synchronously reading controller state).
+- [ ] Implement robust loading states in `UserFormScreen` (disable buttons during save).
+- [ ] Create a reusable `ErrorStateView` widget for consistent error handling and retries.
+- [ ] Refactor Controllers to return strongly-typed `Result` types instead of throwing exceptions.
+- [ ] Add strict domain validation and factory constructors to `Deposit`, `Scheme`, and `RecurringDeposit` models.
 
 ## Phase 4: Deposits & RD Features (Pending)
 - [ ] Build `DepositsRepository` and `DepositsController`.

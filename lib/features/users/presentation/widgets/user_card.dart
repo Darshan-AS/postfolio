@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/intent_service.dart';
 
-class UserCard extends StatelessWidget {
+class UserCard extends ConsumerWidget {
   final String name;
   final String phone;
   final VoidCallback onTap;
@@ -19,17 +20,8 @@ class UserCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  Future<void> _launchUrl(String urlString) async {
-    final url = Uri.parse(urlString);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    } else {
-      debugPrint('Could not launch $url');
-    }
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -70,18 +62,17 @@ class UserCard extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.phone_outlined),
                   color: AppTheme.textSecondary,
-                  onPressed: () => _launchUrl('tel:$phone'),
+                  onPressed: () => ref.read(intentServiceProvider).launchPhone(phone),
                 ),
                 IconButton(
                   icon: const Icon(Icons.message_outlined),
                   color: AppTheme.textSecondary,
-                  onPressed: () => _launchUrl('sms:$phone'),
+                  onPressed: () => ref.read(intentServiceProvider).launchSms(phone),
                 ),
                 IconButton(
                   icon: const Icon(Icons.location_on_outlined),
                   color: AppTheme.textSecondary,
-                  // Example map query based on name or address, using a generic geo url
-                  onPressed: () => _launchUrl('https://maps.google.com/?q=$name'),
+                  onPressed: () => ref.read(intentServiceProvider).launchMapSearch(name),
                 ),
               ],
             )
