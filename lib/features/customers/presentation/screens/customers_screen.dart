@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/routing/route_names.dart';
-import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
-import 'package:postfolio/features/users/presentation/widgets/user_card.dart';
+import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
+import 'package:postfolio/features/customers/presentation/widgets/customer_card.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-class UsersScreen extends ConsumerWidget {
-  const UsersScreen({super.key});
+class CustomersScreen extends ConsumerWidget {
+  const CustomersScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // 1. Watch the Controller state
-    final usersState = ref.watch(usersControllerProvider);
+    final customersState = ref.watch(customersControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -25,7 +25,7 @@ class UsersScreen extends ConsumerWidget {
             const Icon(Icons.groups_outlined, color: AppTheme.primary),
             AppSpacings.gapSm,
             Text(
-              t.nav.users,
+              t.nav.customers,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ],
@@ -39,31 +39,31 @@ class UsersScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.refresh),
             // Trigger a manual refresh from the controller
-            onPressed: () => ref.refresh(usersControllerProvider),
+            onPressed: () => ref.refresh(customersControllerProvider),
           ),
         ],
       ),
       // 2. Handle the AsyncValue UI states smoothly
-      body: usersState.when(
-        data: (users) {
-          if (users.isEmpty) {
-            return Center(child: Text(t.users.noUsersFound));
+      body: customersState.when(
+        data: (customers) {
+          if (customers.isEmpty) {
+            return Center(child: Text(t.customers.noCustomersFound));
           }
           return ListView.separated(
-            itemCount: users.length,
+            itemCount: customers.length,
             separatorBuilder: (context, index) => const Divider(),
             itemBuilder: (context, index) {
-              final user = users[index];
-              return UserCard(
-                name: user.name,
-                phone: user.phone ?? t.common.notProvided,
-                onTap: () => context.push(RouteNames.userDetail(user.id)),
-                onEdit: () => context.push(RouteNames.userEdit(user.id)),
+              final customer = customers[index];
+              return CustomerCard(
+                name: customer.name,
+                phone: customer.phone ?? t.common.notProvided,
+                onTap: () => context.push(RouteNames.customerDetail(customer.id)),
+                onEdit: () => context.push(RouteNames.customerEdit(customer.id)),
                 onDelete: () {
                   // Call the controller directly to delete
                   ref
-                      .read(usersControllerProvider.notifier)
-                      .deleteUser(user.id);
+                      .read(customersControllerProvider.notifier)
+                      .deleteCustomer(customer.id);
                 },
               );
             },
@@ -72,11 +72,11 @@ class UsersScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => ErrorStateView(
           message: error.toString(),
-          onRetry: () => ref.invalidate(usersControllerProvider),
+          onRetry: () => ref.invalidate(customersControllerProvider),
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(RouteNames.userCreate),
+        onPressed: () => context.push(RouteNames.customerCreate),
         child: const Icon(Icons.add),
       ),
     );

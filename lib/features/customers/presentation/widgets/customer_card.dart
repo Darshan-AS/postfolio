@@ -5,14 +5,14 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/utils/intent_service.dart';
 
-class UserCard extends ConsumerWidget {
+class CustomerCard extends ConsumerWidget {
   final String name;
   final String phone;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const UserCard({
+  const CustomerCard({
     super.key,
     required this.name,
     required this.phone,

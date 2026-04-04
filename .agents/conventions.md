@@ -23,5 +23,5 @@
 1. **Committing Erroring States**: Never commit code that does not compile or pass the analyzer (`dart analyze`). Always format, build, and analyze before committing.
 2. **List Controller Mutation Spoilage**: DO NOT manually set `state = const AsyncValue.loading()` inside mutation methods (like `save()` or `delete()`) within a list controller. This wipes out the data and causes massive UI rebuild bugs (e.g., destroying form state).
    *Solution*: Handle form submission loading states locally via `setState` in a `ConsumerStatefulWidget`, OR use a separate mutation controller.
-3. **Inline Filtering in UI**: Avoid doing complex filtering like `users.where((u) => u.id == id)` inside `build()`. 
-   *Solution*: Create a separate provider or selector (e.g., `userProvider(id)`) to keep the UI clean.
+3. **Inline Filtering in UI**: Avoid doing complex filtering like `customers.where((c) => c.id == id)` inside `build()`. 
+   *Solution*: Create a separate provider or selector (e.g., `customerProvider(id)`) to keep the UI clean.

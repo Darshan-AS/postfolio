@@ -40,7 +40,7 @@ class MainShellScaffold extends StatelessWidget {
           NavigationDestination(
             icon: const Icon(Icons.people_outline),
             selectedIcon: const Icon(Icons.people),
-            label: t.nav.users,
+            label: t.nav.customers,
           ),
         ],
       ),

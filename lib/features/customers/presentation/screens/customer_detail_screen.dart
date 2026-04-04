@@ -6,40 +6,40 @@ import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
-import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
+import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-class UserDetailScreen extends ConsumerWidget {
-  final String userId;
+class CustomerDetailScreen extends ConsumerWidget {
+  final String customerId;
 
-  const UserDetailScreen({super.key, required this.userId});
+  const CustomerDetailScreen({super.key, required this.customerId});
 
   void _confirmDelete(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(t.users.deleteUser),
-        content: Text(t.users.deleteUserConfirmation),
+        title: Text(t.customers.deleteCustomer),
+        content: Text(t.customers.deleteCustomerConfirmation),
         actions: [
           TextButton(onPressed: () => ctx.pop(), child: Text(t.common.cancel)),
           TextButton(
             onPressed: () async {
               final result = await ref
-                  .read(usersControllerProvider.notifier)
-                  .deleteUser(userId);
+                  .read(customersControllerProvider.notifier)
+                  .deleteCustomer(customerId);
 
               if (!context.mounted) return;
 
               switch (result) {
                 case Success():
                   ctx.pop(); // Dismiss dialog
-                  context.pop(); // Pop back to user list
+                  context.pop(); // Pop back to customer list
                 case Failure(error: final err):
                   ctx.pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        t.users.failedToDeleteUser(error: err.toString()),
+                        t.customers.failedToDeleteCustomer(error: err.toString()),
                       ),
                     ),
                   );
@@ -57,14 +57,14 @@ class UserDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final usersState = ref.watch(usersControllerProvider);
+    final customersState = ref.watch(customersControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () => context.push(RouteNames.userEdit(userId)),
+            onPressed: () => context.push(RouteNames.customerEdit(customerId)),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
@@ -73,13 +73,13 @@ class UserDetailScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: usersState.when(
-        data: (users) {
-          // Find the specific user from the state
-          final user = users.where((u) => u.id == userId).firstOrNull;
+      body: customersState.when(
+        data: (customers) {
+          // Find the specific customer from the state
+          final customer = customers.where((u) => u.id == customerId).firstOrNull;
 
-          if (user == null) {
-            return Center(child: Text(t.users.userNotFound));
+          if (customer == null) {
+            return Center(child: Text(t.customers.customerNotFound));
           }
 
           return ListView(
@@ -93,59 +93,43 @@ class UserDetailScreen extends ConsumerWidget {
               ),
               AppSpacings.gapLg,
               Text(
-                user.name,
+                customer.name,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              AppSpacings.gapXxl,
-              Card(
-                child: Column(
-                  children: [
-                    _buildInfoTile(
-                      Icons.phone_outlined,
-                      t.users.fields.phoneNumber,
-                      user.phone ?? t.common.notProvided,
-                    ),
-                    const Divider(),
-                    _buildInfoTile(
-                      Icons.email_outlined,
-                      t.users.fields.emailAddress,
-                      user.email ?? t.common.notProvided,
-                    ),
-                    const Divider(),
-                    _buildInfoTile(
-                      Icons.home_outlined,
-                      t.users.fields.homeAddress,
-                      user.address ?? t.common.notProvided,
-                    ),
-                  ],
+              AppSpacings.gapSm,
+              if (customer.phone != null)
+                Text(
+                  customer.phone!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppTheme.textSecondary),
                 ),
-              ),
+              if (customer.email != null)
+                Text(
+                  customer.email!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppTheme.textSecondary),
+                ),
+              AppSpacings.gapLg,
+              const Divider(),
+              if (customer.address != null) ...[
+                ListTile(
+                  leading: const Icon(Icons.location_on_outlined),
+                  title: Text(t.customers.fields.homeAddress),
+                  subtitle: Text(customer.address!),
+                ),
+              ],
             ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => ErrorStateView(
           message: error.toString(),
-          onRetry: () => ref.invalidate(usersControllerProvider),
+          onRetry: () => ref.invalidate(customersControllerProvider),
         ),
-      ),
-    );
-  }
-
-  Widget _buildInfoTile(IconData icon, String title, String subtitle) {
-    return ListTile(
-      leading: Icon(icon, color: AppTheme.primary),
-      title: Text(
-        title,
-        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: const TextStyle(fontSize: 16, color: AppTheme.textPrimary),
       ),
     );
   }

@@ -12,11 +12,11 @@ class RouteNames {
   static String rdDetail(String id) => '/rd/$id';
   static String rdEdit(String id) => '/rd/$id/edit';
 
-  // Users
-  static const users = '/users';
-  static const userCreate = '/users/new';
+  // Customers
+  static const customers = '/customers';
+  static const customerCreate = '/customers/new';
 
   // Dynamic Route Builders
-  static String userDetail(String id) => '/users/$id';
-  static String userEdit(String id) => '/users/$id/edit';
+  static String customerDetail(String id) => '/customers/$id';
+  static String customerEdit(String id) => '/customers/$id/edit';
 }

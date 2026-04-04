@@ -46,7 +46,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 
 	late final TranslationsCommonEn common = TranslationsCommonEn.internal(_root);
 	late final TranslationsNavEn nav = TranslationsNavEn.internal(_root);
-	late final TranslationsUsersEn users = TranslationsUsersEn.internal(_root);
+	late final TranslationsCustomersEn customers = TranslationsCustomersEn.internal(_root);
 	late final TranslationsDashboardEn dashboard = TranslationsDashboardEn.internal(_root);
 	late final TranslationsOneTimeDepositsEn oneTimeDeposits = TranslationsOneTimeDepositsEn.internal(_root);
 	late final TranslationsRecurringDepositsEn recurringDeposits = TranslationsRecurringDepositsEn.internal(_root);
@@ -99,49 +99,49 @@ class TranslationsNavEn {
 	/// en: 'Recurring Deposits'
 	String get recurringDeposits => 'Recurring Deposits';
 
-	/// en: 'Users'
-	String get users => 'Users';
+	/// en: 'Customers'
+	String get customers => 'Customers';
 }
 
-// Path: users
-class TranslationsUsersEn {
-	TranslationsUsersEn.internal(this._root);
+// Path: customers
+class TranslationsCustomersEn {
+	TranslationsCustomersEn.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
 
-	/// en: 'Users'
-	String get title => 'Users';
+	/// en: 'Customers'
+	String get title => 'Customers';
 
-	/// en: 'New User'
-	String get newUser => 'New User';
+	/// en: 'New Customer'
+	String get newCustomer => 'New Customer';
 
-	/// en: 'Edit User'
-	String get editUser => 'Edit User';
+	/// en: 'Edit Customer'
+	String get editCustomer => 'Edit Customer';
 
-	/// en: 'Save User'
-	String get saveUser => 'Save User';
+	/// en: 'Save Customer'
+	String get saveCustomer => 'Save Customer';
 
-	/// en: 'No users found. Add one!'
-	String get noUsersFound => 'No users found. Add one!';
+	/// en: 'No customers found. Add one!'
+	String get noCustomersFound => 'No customers found. Add one!';
 
-	/// en: 'User not found'
-	String get userNotFound => 'User not found';
+	/// en: 'Customer not found'
+	String get customerNotFound => 'Customer not found';
 
-	/// en: 'Delete User'
-	String get deleteUser => 'Delete User';
+	/// en: 'Delete Customer'
+	String get deleteCustomer => 'Delete Customer';
 
-	/// en: 'Are you sure you want to delete this user?'
-	String get deleteUserConfirmation => 'Are you sure you want to delete this user?';
+	/// en: 'Are you sure you want to delete this customer?'
+	String get deleteCustomerConfirmation => 'Are you sure you want to delete this customer?';
 
-	/// en: 'Failed to save user: ${error}'
-	String failedToSaveUser({required Object error}) => 'Failed to save user: ${error}';
+	/// en: 'Failed to save customer: ${error}'
+	String failedToSaveCustomer({required Object error}) => 'Failed to save customer: ${error}';
 
-	/// en: 'Failed to delete user: ${error}'
-	String failedToDeleteUser({required Object error}) => 'Failed to delete user: ${error}';
+	/// en: 'Failed to delete customer: ${error}'
+	String failedToDeleteCustomer({required Object error}) => 'Failed to delete customer: ${error}';
 
-	late final TranslationsUsersFieldsEn fields = TranslationsUsersFieldsEn.internal(_root);
+	late final TranslationsCustomersFieldsEn fields = TranslationsCustomersFieldsEn.internal(_root);
 }
 
 // Path: dashboard
@@ -238,9 +238,9 @@ class TranslationsRecurringDepositsEn {
 	late final TranslationsRecurringDepositsFieldsEn fields = TranslationsRecurringDepositsFieldsEn.internal(_root);
 }
 
-// Path: users.fields
-class TranslationsUsersFieldsEn {
-	TranslationsUsersFieldsEn.internal(this._root);
+// Path: customers.fields
+class TranslationsCustomersFieldsEn {
+	TranslationsCustomersFieldsEn.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -356,21 +356,21 @@ extension on Translations {
 			'nav.dashboard' => 'Dashboard',
 			'nav.oneTimeDeposits' => 'One-Time Deposits',
 			'nav.recurringDeposits' => 'Recurring Deposits',
-			'nav.users' => 'Users',
-			'users.title' => 'Users',
-			'users.newUser' => 'New User',
-			'users.editUser' => 'Edit User',
-			'users.saveUser' => 'Save User',
-			'users.noUsersFound' => 'No users found. Add one!',
-			'users.userNotFound' => 'User not found',
-			'users.deleteUser' => 'Delete User',
-			'users.deleteUserConfirmation' => 'Are you sure you want to delete this user?',
-			'users.failedToSaveUser' => ({required Object error}) => 'Failed to save user: ${error}',
-			'users.failedToDeleteUser' => ({required Object error}) => 'Failed to delete user: ${error}',
-			'users.fields.fullName' => 'Full Name *',
-			'users.fields.phoneNumber' => 'Phone Number',
-			'users.fields.emailAddress' => 'Email Address',
-			'users.fields.homeAddress' => 'Home Address',
+			'nav.customers' => 'Customers',
+			'customers.title' => 'Customers',
+			'customers.newCustomer' => 'New Customer',
+			'customers.editCustomer' => 'Edit Customer',
+			'customers.saveCustomer' => 'Save Customer',
+			'customers.noCustomersFound' => 'No customers found. Add one!',
+			'customers.customerNotFound' => 'Customer not found',
+			'customers.deleteCustomer' => 'Delete Customer',
+			'customers.deleteCustomerConfirmation' => 'Are you sure you want to delete this customer?',
+			'customers.failedToSaveCustomer' => ({required Object error}) => 'Failed to save customer: ${error}',
+			'customers.failedToDeleteCustomer' => ({required Object error}) => 'Failed to delete customer: ${error}',
+			'customers.fields.fullName' => 'Full Name *',
+			'customers.fields.phoneNumber' => 'Phone Number',
+			'customers.fields.emailAddress' => 'Email Address',
+			'customers.fields.homeAddress' => 'Home Address',
 			'dashboard.charts' => 'Dashboard Charts Go Here',
 			'oneTimeDeposits.title' => 'One-Time Deposits',
 			'oneTimeDeposits.newDeposit' => 'New Deposit',

@@ -11,16 +11,16 @@ import 'package:postfolio/features/main_shell/presentation/screens/main_shell_sc
 import 'package:postfolio/features/recurring_deposits/presentation/screens/recurring_deposits_screen.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/screens/recurring_deposit_form_screen.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/screens/recurring_deposit_detail_screen.dart';
-import 'package:postfolio/features/users/presentation/screens/user_detail_screen.dart';
-import 'package:postfolio/features/users/presentation/screens/user_form_screen.dart';
-import 'package:postfolio/features/users/presentation/screens/users_screen.dart';
+import 'package:postfolio/features/customers/presentation/screens/customer_detail_screen.dart';
+import 'package:postfolio/features/customers/presentation/screens/customer_form_screen.dart';
+import 'package:postfolio/features/customers/presentation/screens/customers_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: RouteNames.users, // Defaulting to users tab
+    initialLocation: RouteNames.customers, // Defaulting to customers tab
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -92,23 +92,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: RouteNames.users,
-                builder: (context, state) => const UsersScreen(),
+                path: RouteNames.customers,
+                builder: (context, state) => const CustomersScreen(),
                 routes: [
                   GoRoute(
                     path:
                         'new', // Note: GoRouter sub-routes should not start with a slash
-                    builder: (context, state) => const UserFormScreen(),
+                    builder: (context, state) => const CustomerFormScreen(),
                   ),
                   GoRoute(
                     path: ':id',
                     builder: (context, state) =>
-                        UserDetailScreen(userId: state.pathParameters['id']!),
+                        CustomerDetailScreen(customerId: state.pathParameters['id']!),
                   ),
                   GoRoute(
                     path: ':id/edit',
                     builder: (context, state) =>
-                        UserFormScreen(userId: state.pathParameters['id']),
+                        CustomerFormScreen(customerId: state.pathParameters['id']),
                   ),
                 ],
               ),

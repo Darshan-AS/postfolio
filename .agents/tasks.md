@@ -7,22 +7,22 @@
 - [x] Configure Firebase as BaaS (decided against local DBs like Isar/Drift).
 - [x] Set up GoRouter with `StatefulShellRoute` (Main Bottom Nav).
 
-## Phase 2: Users Feature (Completed)
-- [x] Implement `UserRepository` interface and `FakeUserRepository`.
-- [x] Implement `UsersController` (Riverpod).
-- [x] Build `UsersScreen` (List View).
-- [x] Build `UserFormScreen` (Create/Update).
-- [x] Build `UserDetailScreen` (Read/Delete).
+## Phase 2: Customers Feature (Completed)
+- [x] Implement `CustomerRepository` interface and `FakeCustomerRepository`.
+- [x] Implement `CustomersController` (Riverpod).
+- [x] Build `CustomersScreen` (List View).
+- [x] Build `CustomerFormScreen` (Create/Update).
+- [x] Build `CustomerDetailScreen` (Read/Delete).
 
 ## Phase 3: Architectural Cleanup (Completed)
-- [x] Refactor `UserCard` native intents (SMS/Phone/Map) into an injected `IntentService`.
-- [x] Refactor `UsersController` to accept raw strings, validate, and construct the Domain model.
+- [x] Refactor `CustomerCard` native intents (SMS/Phone/Map) into an injected `IntentService`.
+- [x] Refactor `CustomersController` to accept raw strings, validate, and construct the Domain model.
 - [x] Implement Domain Validation (e.g., Extension methods on Freezed models).
 - [x] Centralize hardcoded route paths into a constants file.
 - [x] Centralize hardcoded colors into `lib/core/theme/`.
 - [x] Centralize hardcoded dimensions and spacings into `AppSpacings` and `AppDimensions`.
-- [x] Fix `UserFormScreen` initialization (avoid synchronously reading controller state).
-- [x] Implement robust loading states in `UserFormScreen` (disable buttons during save).
+- [x] Fix `CustomerFormScreen` initialization (avoid synchronously reading controller state).
+- [x] Implement robust loading states in `CustomerFormScreen` (disable buttons during save).
 - [x] Create a reusable `ErrorStateView` widget for consistent error handling and retries.
 - [x] Refactor Controllers to return strongly-typed `Result` types instead of throwing exceptions.
 - [x] Add strict domain validation and factory constructors to `Deposit`, `Scheme`, and `RecurringDeposit` models.
@@ -40,5 +40,5 @@
 
 ## Phase 5: Firebase Integration (Pending)
 - [ ] Run `flutterfire configure`.
-- [ ] Build `FirestoreUserRepository` and swap out the Fake repository.
+- [ ] Build `FirestoreCustomerRepository` and swap out the Fake repository.
 - [ ] Build Firestore repositories for Deposits, RD, and Schemes.

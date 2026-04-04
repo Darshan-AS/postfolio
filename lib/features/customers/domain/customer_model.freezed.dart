@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'user_model.dart';
+part of 'customer_model.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -13,22 +13,22 @@ part of 'user_model.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
-mixin _$User {
+mixin _$Customer {
 
  String get id; String get name; String? get email; String? get phone; String? get address;
-/// Create a copy of User
+/// Create a copy of Customer
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$UserCopyWith<User> get copyWith => _$UserCopyWithImpl<User>(this as User, _$identity);
+$CustomerCopyWith<Customer> get copyWith => _$CustomerCopyWithImpl<Customer>(this as Customer, _$identity);
 
-  /// Serializes this User to a JSON map.
+  /// Serializes this Customer to a JSON map.
   Map<String, dynamic> toJson();
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is User&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Customer&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -37,15 +37,15 @@ int get hashCode => Object.hash(runtimeType,id,name,email,phone,address);
 
 @override
 String toString() {
-  return 'User(id: $id, name: $name, email: $email, phone: $phone, address: $address)';
+  return 'Customer(id: $id, name: $name, email: $email, phone: $phone, address: $address)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $UserCopyWith<$Res>  {
-  factory $UserCopyWith(User value, $Res Function(User) _then) = _$UserCopyWithImpl;
+abstract mixin class $CustomerCopyWith<$Res>  {
+  factory $CustomerCopyWith(Customer value, $Res Function(Customer) _then) = _$CustomerCopyWithImpl;
 @useResult
 $Res call({
  String id, String name, String? email, String? phone, String? address
@@ -56,14 +56,14 @@ $Res call({
 
 }
 /// @nodoc
-class _$UserCopyWithImpl<$Res>
-    implements $UserCopyWith<$Res> {
-  _$UserCopyWithImpl(this._self, this._then);
+class _$CustomerCopyWithImpl<$Res>
+    implements $CustomerCopyWith<$Res> {
+  _$CustomerCopyWithImpl(this._self, this._then);
 
-  final User _self;
-  final $Res Function(User) _then;
+  final Customer _self;
+  final $Res Function(Customer) _then;
 
-/// Create a copy of User
+/// Create a copy of Customer
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? email = freezed,Object? phone = freezed,Object? address = freezed,}) {
   return _then(_self.copyWith(
@@ -79,8 +79,8 @@ as String?,
 }
 
 
-/// Adds pattern-matching-related methods to [User].
-extension UserPatterns on User {
+/// Adds pattern-matching-related methods to [Customer].
+extension CustomerPatterns on Customer {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
@@ -93,10 +93,10 @@ extension UserPatterns on User {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _User value)?  $default,{required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _Customer value)?  $default,{required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case _User() when $default != null:
+case _Customer() when $default != null:
 return $default(_that);case _:
   return orElse();
 
@@ -115,10 +115,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _User value)  $default,){
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _Customer value)  $default,){
 final _that = this;
 switch (_that) {
-case _User():
+case _Customer():
 return $default(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -133,10 +133,10 @@ return $default(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _User value)?  $default,){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _Customer value)?  $default,){
 final _that = this;
 switch (_that) {
-case _User() when $default != null:
+case _Customer() when $default != null:
 return $default(_that);case _:
   return null;
 
@@ -156,7 +156,7 @@ return $default(_that);case _:
 
 @optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? email,  String? phone,  String? address)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case _User() when $default != null:
+case _Customer() when $default != null:
 return $default(_that.id,_that.name,_that.email,_that.phone,_that.address);case _:
   return orElse();
 
@@ -177,7 +177,7 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.address);case 
 
 @optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? email,  String? phone,  String? address)  $default,) {final _that = this;
 switch (_that) {
-case _User():
+case _Customer():
 return $default(_that.id,_that.name,_that.email,_that.phone,_that.address);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -194,7 +194,7 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.address);}
 
 @optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? email,  String? phone,  String? address)?  $default,) {final _that = this;
 switch (_that) {
-case _User() when $default != null:
+case _Customer() when $default != null:
 return $default(_that.id,_that.name,_that.email,_that.phone,_that.address);case _:
   return null;
 
@@ -206,9 +206,9 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.address);case 
 /// @nodoc
 @JsonSerializable()
 
-class _User extends User {
-  const _User({required this.id, required this.name, this.email, this.phone, this.address}): super._();
-  factory _User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
+class _Customer extends Customer {
+  const _Customer({required this.id, required this.name, this.email, this.phone, this.address}): super._();
+  factory _Customer.fromJson(Map<String, dynamic> json) => _$CustomerFromJson(json);
 
 @override final  String id;
 @override final  String name;
@@ -216,20 +216,20 @@ class _User extends User {
 @override final  String? phone;
 @override final  String? address;
 
-/// Create a copy of User
+/// Create a copy of Customer
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-_$UserCopyWith<_User> get copyWith => __$UserCopyWithImpl<_User>(this, _$identity);
+_$CustomerCopyWith<_Customer> get copyWith => __$CustomerCopyWithImpl<_Customer>(this, _$identity);
 
 @override
 Map<String, dynamic> toJson() {
-  return _$UserToJson(this, );
+  return _$CustomerToJson(this, );
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _User&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Customer&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.address, address) || other.address == address));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -238,15 +238,15 @@ int get hashCode => Object.hash(runtimeType,id,name,email,phone,address);
 
 @override
 String toString() {
-  return 'User(id: $id, name: $name, email: $email, phone: $phone, address: $address)';
+  return 'Customer(id: $id, name: $name, email: $email, phone: $phone, address: $address)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class _$UserCopyWith<$Res> implements $UserCopyWith<$Res> {
-  factory _$UserCopyWith(_User value, $Res Function(_User) _then) = __$UserCopyWithImpl;
+abstract mixin class _$CustomerCopyWith<$Res> implements $CustomerCopyWith<$Res> {
+  factory _$CustomerCopyWith(_Customer value, $Res Function(_Customer) _then) = __$CustomerCopyWithImpl;
 @override @useResult
 $Res call({
  String id, String name, String? email, String? phone, String? address
@@ -257,17 +257,17 @@ $Res call({
 
 }
 /// @nodoc
-class __$UserCopyWithImpl<$Res>
-    implements _$UserCopyWith<$Res> {
-  __$UserCopyWithImpl(this._self, this._then);
+class __$CustomerCopyWithImpl<$Res>
+    implements _$CustomerCopyWith<$Res> {
+  __$CustomerCopyWithImpl(this._self, this._then);
 
-  final _User _self;
-  final $Res Function(_User) _then;
+  final _Customer _self;
+  final $Res Function(_Customer) _then;
 
-/// Create a copy of User
+/// Create a copy of Customer
 /// with the given fields replaced by the non-null parameter values.
 @override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? email = freezed,Object? phone = freezed,Object? address = freezed,}) {
-  return _then(_User(
+  return _then(_Customer(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable

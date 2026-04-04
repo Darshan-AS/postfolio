@@ -1,21 +1,21 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'user_model.freezed.dart';
-part 'user_model.g.dart';
+part 'customer_model.freezed.dart';
+part 'customer_model.g.dart';
 
 @freezed
-sealed class User with _$User {
-  const User._(); // Added to allow custom methods/extensions on Freezed models
+sealed class Customer with _$Customer {
+  const Customer._(); // Added to allow custom methods/extensions on Freezed models
 
-  const factory User({
+  const factory Customer({
     required String id,
     required String name,
     String? email,
     String? phone,
     String? address,
-  }) = _User;
+  }) = _Customer;
 
-  factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
+  factory Customer.fromJson(Map<String, dynamic> json) => _$CustomerFromJson(json);
 
   // --- Domain Validation Rules ---
 
@@ -42,7 +42,7 @@ sealed class User with _$User {
   }
 
   // Smart Factory that enforces validation, returning a Record: (ErrorMessage?, ValidUser?)
-  static (String?, User?) create({
+  static (String?, Customer?) create({
     required String id,
     required String name,
     String? email,
@@ -60,7 +60,7 @@ sealed class User with _$User {
 
     return (
       null,
-      User(
+      Customer(
         id: id,
         name: name.trim(),
         email: email?.trim().isEmpty == true ? null : email?.trim(),
