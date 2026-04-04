@@ -17,7 +17,7 @@
 ## Phase 3: Architectural Cleanup (Pending)
 - [ ] Refactor `UserCard` native intents (SMS/Phone/Map) into an injected `IntentService`.
 - [x] Refactor `UsersController` to accept raw strings, validate, and construct the Domain model.
-- [ ] Implement Domain Validation (e.g., Extension methods on Freezed models).
+- [x] Implement Domain Validation (e.g., Extension methods on Freezed models).
 - [ ] Centralize hardcoded route paths into a constants file.
 - [ ] Centralize hardcoded colors into `lib/core/theme/`.
 

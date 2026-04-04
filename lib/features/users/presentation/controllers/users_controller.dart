@@ -30,13 +30,17 @@ class UsersController extends _$UsersController {
       final repository = ref.read(userRepositoryProvider);
       
       // Domain Construction & Validation Logic happens here, NOT in the UI
-      final user = User(
+      final (error, user) = User.create(
         id: id ?? '', // FakeRepo will assign a real ID if creating
         name: name,
         email: email,
         phone: phone,
         address: address,
       );
+
+      if (error != null || user == null) {
+        throw ArgumentError(error ?? 'Invalid user data provided');
+      }
 
       if (id != null) {
         await repository.updateUser(user);
