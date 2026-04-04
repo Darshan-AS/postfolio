@@ -5,6 +5,9 @@ import 'package:postfolio/core/routing/route_names.dart';
 import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
 import 'package:postfolio/features/users/presentation/widgets/user_card.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/widgets/error_state_view.dart';
+import 'package:postfolio/l10n/app_localizations.dart';
 
 class UsersScreen extends ConsumerWidget {
   const UsersScreen({super.key});
@@ -13,6 +16,7 @@ class UsersScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // 1. Watch the Controller state
     final usersState = ref.watch(usersControllerProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
@@ -20,11 +24,11 @@ class UsersScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu),
           onPressed: () {},
         ),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.groups_outlined, color: AppTheme.primary),
-            SizedBox(width: 8),
-            Text('Users', style: TextStyle(fontWeight: FontWeight.w600)),
+            const Icon(Icons.groups_outlined, color: AppTheme.primary),
+            AppSpacings.gapSm,
+            Text(l10n.users, style: const TextStyle(fontWeight: FontWeight.w600)),
           ],
         ),
         actions: [
@@ -41,7 +45,7 @@ class UsersScreen extends ConsumerWidget {
       body: usersState.when(
         data: (users) {
           if (users.isEmpty) {
-            return const Center(child: Text('No users found. Add one!'));
+            return Center(child: Text(l10n.noUsersFound));
           }
           return ListView.separated(
             itemCount: users.length,
@@ -50,7 +54,7 @@ class UsersScreen extends ConsumerWidget {
               final user = users[index];
               return UserCard(
                 name: user.name,
-                phone: user.phone ?? 'No Phone',
+                phone: user.phone ?? l10n.notProvided,
                 onTap: () => context.push(RouteNames.userDetail(user.id)),
                 onEdit: () => context.push(RouteNames.userEdit(user.id)),
                 onDelete: () {
@@ -62,7 +66,10 @@ class UsersScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        error: (error, stack) => ErrorStateView(
+          message: error.toString(),
+          onRetry: () => ref.invalidate(usersControllerProvider),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push(RouteNames.userCreate),

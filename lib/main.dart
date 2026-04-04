@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:postfolio/l10n/app_localizations.dart';
 
 void main() {
   runApp(const ProviderScope(child: PostfolioApp()));
@@ -18,6 +20,15 @@ class PostfolioApp extends ConsumerWidget {
       title: 'Postfolio',
       theme: AppTheme.lightTheme, // Apply centralized theme
       routerConfig: goRouter,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''), // English, no country code
+      ],
     );
   }
 }

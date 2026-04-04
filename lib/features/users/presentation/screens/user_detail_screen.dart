@@ -3,24 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/routing/route_names.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
+import 'package:postfolio/l10n/app_localizations.dart';
 
 class UserDetailScreen extends ConsumerWidget {
   final String userId;
 
   const UserDetailScreen({super.key, required this.userId});
 
-  void _confirmDelete(BuildContext context, WidgetRef ref) {
+  void _confirmDelete(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete User'),
-        content: const Text('Are you sure you want to delete this user?'),
+        title: Text(l10n.deleteUser),
+        content: Text(l10n.deleteUserConfirmation),
         actions: [
           TextButton(
             onPressed: () => ctx.pop(),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -35,11 +38,11 @@ class UserDetailScreen extends ConsumerWidget {
                 case Failure(error: final err):
                   ctx.pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to delete user: $err')),
+                    SnackBar(content: Text(l10n.failedToDeleteUser(err))),
                   );
               }
             },
-            child: const Text('Delete', style: TextStyle(color: AppTheme.error)),
+            child: Text(l10n.delete, style: const TextStyle(color: AppTheme.error)),
           ),
         ],
       ),
@@ -49,6 +52,7 @@ class UserDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final usersState = ref.watch(usersControllerProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
@@ -60,7 +64,7 @@ class UserDetailScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.delete_outline),
             color: AppTheme.error,
-            onPressed: () => _confirmDelete(context, ref),
+            onPressed: () => _confirmDelete(context, ref, l10n),
           ),
         ],
       ),
@@ -70,33 +74,33 @@ class UserDetailScreen extends ConsumerWidget {
           final user = users.where((u) => u.id == userId).firstOrNull;
 
           if (user == null) {
-            return const Center(child: Text('User not found.'));
+            return Center(child: Text(l10n.userNotFound));
           }
 
           return ListView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(AppDimensions.paddingLg),
             children: [
               const CircleAvatar(
-                radius: 48,
+                radius: AppDimensions.iconXl,
                 backgroundColor: AppTheme.primary,
                 foregroundColor: AppTheme.surface,
-                child: Icon(Icons.person, size: 48),
+                child: Icon(Icons.person, size: AppDimensions.iconXl),
               ),
-              const SizedBox(height: 16),
+              AppSpacings.gapLg,
               Text(
                 user.name,
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 32),
+              AppSpacings.gapXxl,
               Card(
                 child: Column(
                   children: [
-                    _buildInfoTile(Icons.phone_outlined, 'Phone Number', user.phone ?? 'Not provided'),
+                    _buildInfoTile(Icons.phone_outlined, l10n.phoneNumber, user.phone ?? l10n.notProvided),
                     const Divider(),
-                    _buildInfoTile(Icons.email_outlined, 'Email Address', user.email ?? 'Not provided'),
+                    _buildInfoTile(Icons.email_outlined, l10n.emailAddress, user.email ?? l10n.notProvided),
                     const Divider(),
-                    _buildInfoTile(Icons.home_outlined, 'Home Address', user.address ?? 'Not provided'),
+                    _buildInfoTile(Icons.home_outlined, l10n.homeAddress, user.address ?? l10n.notProvided),
                   ],
                 ),
               ),
@@ -104,7 +108,10 @@ class UserDetailScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        error: (error, stack) => ErrorStateView(
+          message: error.toString(),
+          onRetry: () => ref.invalidate(usersControllerProvider),
+        ),
       ),
     );
   }

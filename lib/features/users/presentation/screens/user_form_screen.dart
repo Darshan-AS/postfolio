@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:postfolio/features/users/domain/user_model.dart';
 import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/error_state_view.dart';
+import 'package:postfolio/l10n/app_localizations.dart';
 
 class UserFormScreen extends ConsumerWidget {
   final String? userId;
@@ -18,25 +21,31 @@ class UserFormScreen extends ConsumerWidget {
     }
 
     final usersState = ref.watch(usersControllerProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return usersState.when(
       data: (users) {
         final user = users.where((u) => u.id == userId).firstOrNull;
         if (user == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Error')),
-            body: const Center(child: Text('User not found')),
+            appBar: AppBar(title: Text(l10n.error)),
+            body: ErrorStateView(
+              message: l10n.userNotFound,
+            ),
           );
         }
         return _UserForm(existingUser: user);
       },
       loading: () => Scaffold(
-        appBar: AppBar(title: const Text('Loading...')),
+        appBar: AppBar(title: Text(l10n.loading)),
         body: const Center(child: CircularProgressIndicator()),
       ),
       error: (error, stack) => Scaffold(
-        appBar: AppBar(title: const Text('Error')),
-        body: Center(child: Text('Error: $error')),
+        appBar: AppBar(title: Text(l10n.error)),
+        body: ErrorStateView(
+          message: error.toString(),
+          onRetry: () => ref.invalidate(usersControllerProvider),
+        ),
       ),
     );
   }
@@ -87,13 +96,14 @@ class _UserFormState extends ConsumerState<_UserForm> {
       );
 
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context)!;
 
       switch (result) {
         case Success():
           context.pop();
         case Failure(error: final err):
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to save user: $err')),
+            SnackBar(content: Text(l10n.failedToSaveUser(err))),
           );
       }
     }
@@ -103,18 +113,19 @@ class _UserFormState extends ConsumerState<_UserForm> {
   Widget build(BuildContext context) {
     final isUpdating = widget.existingUser != null;
     final isLoading = ref.watch(usersControllerProvider).isLoading;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isUpdating ? 'Edit User' : 'New User'),
+        title: Text(isUpdating ? l10n.editUser : l10n.newUser),
         actions: [
           if (isLoading)
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
               child: Center(
                 child: SizedBox(
-                  width: 20,
-                  height: 20,
+                  width: AppDimensions.iconMd,
+                  height: AppDimensions.iconMd,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               ),
@@ -124,66 +135,66 @@ class _UserFormState extends ConsumerState<_UserForm> {
               icon: const Icon(Icons.check),
               color: AppTheme.primary,
               onPressed: _save,
-              tooltip: 'Save',
+              tooltip: l10n.saveUser,
             ),
         ],
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(AppDimensions.paddingLg),
           children: [
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Full Name *',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person_outline),
+              decoration: InputDecoration(
+                labelText: l10n.fullName,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.person_outline),
               ),
               validator: User.validateName,
               textInputAction: TextInputAction.next,
             ),
-            const SizedBox(height: 16),
+            AppSpacings.gapLg,
             TextFormField(
               controller: _phoneController,
-              decoration: const InputDecoration(
-                labelText: 'Phone Number',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.phone_outlined),
+              decoration: InputDecoration(
+                labelText: l10n.phoneNumber,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.phone_outlined),
               ),
               keyboardType: TextInputType.phone,
               validator: User.validatePhone,
               textInputAction: TextInputAction.next,
             ),
-            const SizedBox(height: 16),
+            AppSpacings.gapLg,
             TextFormField(
               controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email Address',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email_outlined),
+              decoration: InputDecoration(
+                labelText: l10n.emailAddress,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.email_outlined),
               ),
               keyboardType: TextInputType.emailAddress,
               validator: User.validateEmail,
               textInputAction: TextInputAction.next,
             ),
-            const SizedBox(height: 16),
+            AppSpacings.gapLg,
             TextFormField(
               controller: _addressController,
-              decoration: const InputDecoration(
-                labelText: 'Home Address',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.home_outlined),
+              decoration: InputDecoration(
+                labelText: l10n.homeAddress,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.home_outlined),
               ),
               maxLines: 3,
               textInputAction: TextInputAction.done,
             ),
-            const SizedBox(height: 32),
+            AppSpacings.gapXxl,
             ElevatedButton(
               onPressed: isLoading ? null : _save,
               child: isLoading 
-                  ? const Text('Saving...') 
-                  : const Text('Save User'),
+                  ? Text(l10n.saving) 
+                  : Text(l10n.saveUser),
             ),
           ],
         ),

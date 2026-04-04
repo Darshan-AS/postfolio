@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/utils/intent_service.dart';
 
 class UserCard extends ConsumerWidget {
@@ -25,7 +26,7 @@ class UserCard extends ConsumerWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg, vertical: AppDimensions.paddingMd),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -37,7 +38,7 @@ class UserCard extends ConsumerWidget {
                 color: AppTheme.textPrimary,
               ),
             ),
-            const SizedBox(height: 4),
+            AppSpacings.gapXs,
             Text(
               phone,
               style: const TextStyle(
@@ -45,7 +46,7 @@ class UserCard extends ConsumerWidget {
                 fontSize: 14,
               ),
             ),
-            const SizedBox(height: 8),
+            AppSpacings.gapSm,
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [

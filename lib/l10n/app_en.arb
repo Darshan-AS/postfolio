@@ -1,0 +1,45 @@
+{
+  "appTitle": "Postfolio",
+  "users": "Users",
+  "dashboard": "Dashboard",
+  "deposits": "Deposits",
+  "recurringDeposits": "Recurring Deposits",
+  "rd": "RD",
+  "newUser": "New User",
+  "editUser": "Edit User",
+  "saveUser": "Save User",
+  "saving": "Saving...",
+  "loading": "Loading...",
+  "noUsersFound": "No users found. Add one!",
+  "dashboardCharts": "Dashboard Charts Go Here",
+  "depositsList": "Deposits List Goes Here",
+  "rdList": "RD List Goes Here",
+  "fullName": "Full Name *",
+  "phoneNumber": "Phone Number",
+  "emailAddress": "Email Address",
+  "homeAddress": "Home Address",
+  "delete": "Delete",
+  "deleteUser": "Delete User",
+  "deleteUserConfirmation": "Are you sure you want to delete this user?",
+  "cancel": "Cancel",
+  "error": "Error",
+  "retry": "Retry",
+  "userNotFound": "User not found",
+  "notProvided": "Not provided",
+  "failedToSaveUser": "Failed to save user: {error}",
+  "@failedToSaveUser": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteUser": "Failed to delete user: {error}",
+  "@failedToDeleteUser": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
+}
