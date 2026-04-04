@@ -204,7 +204,16 @@ class _UserFormState extends ConsumerState<_UserForm> {
             AppSpacings.gapXxl,
             ElevatedButton(
               onPressed: _isSaving ? null : _save,
-              child: _isSaving ? Text(t.common.saving) : Text(t.users.saveUser),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(50),
+              ),
+              child: _isSaving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(t.users.saveUser),
             ),
           ],
         ),

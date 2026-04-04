@@ -30,6 +30,20 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
   factory OneTimeDeposit.fromJson(Map<String, dynamic> json) =>
       _$OneTimeDepositFromJson(json);
 
+  // --- Domain Validation Rules ---
+
+  static String? validateAccountNo(String? accountNo) =>
+      BaseDeposit.validateAccountNo(accountNo);
+
+  static String? validateAmount(double? amount, String fieldName) =>
+      BaseDeposit.validateAmount(amount, fieldName);
+
+  static String? validateTerm(int years, int months) =>
+      BaseDeposit.validateTerm(years, months);
+
+  static String? validateDates(DateTime startDate, DateTime maturityDate) =>
+      BaseDeposit.validateDates(startDate, maturityDate);
+
   static (String?, OneTimeDeposit?) create({
     required String id,
     required String rowId,

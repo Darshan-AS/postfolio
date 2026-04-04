@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:uuid/uuid.dart';
@@ -11,7 +12,34 @@ abstract class RecurringDepositRepository {
 }
 
 class FakeRecurringDepositRepository implements RecurringDepositRepository {
-  final List<RecurringDeposit> _deposits = [];
+  final List<RecurringDeposit> _deposits = [
+    RecurringDeposit(
+      id: '201',
+      accountNo: 'RD-9021345',
+      installmentAmount: 5000.0,
+      termYears: 5,
+      termMonths: 0,
+      interestRate: 6.7,
+      customerId: '1', // Abdul Khalandar
+      schemeType: RecurringSchemeType.recurringDeposit,
+      maturityAmount: 350000.0,
+      startDate: DateTime(2025, 2, 1),
+      maturityDate: DateTime(2030, 2, 1),
+    ),
+    RecurringDeposit(
+      id: '202',
+      accountNo: 'RD-9025678',
+      installmentAmount: 10000.0,
+      termYears: 1,
+      termMonths: 0,
+      interestRate: 6.0,
+      customerId: '2', // Darshan A S
+      schemeType: RecurringSchemeType.recurringDeposit,
+      maturityAmount: 124000.0,
+      startDate: DateTime(2024, 11, 1),
+      maturityDate: DateTime(2025, 11, 1),
+    ),
+  ];
 
   @override
   Future<Result<List<RecurringDeposit>, String>>

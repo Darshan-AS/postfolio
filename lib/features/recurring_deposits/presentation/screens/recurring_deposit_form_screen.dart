@@ -68,6 +68,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
   late final TextEditingController _interestRateController;
   late final TextEditingController _customerIdController;
   late final TextEditingController _maturityAmountController;
+  late final TextEditingController _linkedAccountController;
 
   RecurringSchemeType _selectedScheme = RecurringSchemeType.recurringDeposit;
   DateTime _startDate = DateTime.now();
@@ -99,6 +100,9 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
     _maturityAmountController = TextEditingController(
       text: widget.existingDeposit?.maturityAmount.toString(),
     );
+    _linkedAccountController = TextEditingController(
+      text: widget.existingDeposit?.linkedAutoDebitAccountNo,
+    );
 
     if (widget.existingDeposit != null) {
       _selectedScheme = widget.existingDeposit!.schemeType;
@@ -116,6 +120,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
     _interestRateController.dispose();
     _customerIdController.dispose();
     _maturityAmountController.dispose();
+    _linkedAccountController.dispose();
     super.dispose();
   }
 
@@ -140,6 +145,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                 double.tryParse(_maturityAmountController.text.trim()) ?? 0.0,
             startDate: _startDate,
             maturityDate: _maturityDate,
+            linkedAutoDebitAccountNo: _linkedAccountController.text.trim(),
           );
 
       if (!mounted) return;
@@ -203,21 +209,28 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
               controller: _accountNoController,
               decoration: InputDecoration(
                 labelText: t.recurringDeposits.fields.accountNo,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.numbers_outlined),
               ),
-              validator: (val) =>
-                  val == null || val.isEmpty ? 'Required' : null,
+              validator: RecurringDeposit.validateAccountNo,
+              textInputAction: TextInputAction.next,
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             TextFormField(
               controller: _installmentAmountController,
               decoration: InputDecoration(
                 labelText: t.recurringDeposits.fields.installmentAmount,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.money_outlined),
               ),
               keyboardType: TextInputType.number,
-              validator: (val) =>
-                  val == null || val.isEmpty ? 'Required' : null,
+              validator: (val) => RecurringDeposit.validateAmount(
+                double.tryParse(val ?? ''),
+                'Installment Amount',
+              ),
+              textInputAction: TextInputAction.next,
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             Row(
               children: [
                 Expanded(
@@ -225,8 +238,11 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                     controller: _termYearsController,
                     decoration: InputDecoration(
                       labelText: t.recurringDeposits.fields.termYears,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.calendar_today_outlined),
                     ),
                     keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.next,
                   ),
                 ),
                 AppSpacings.gapMd,
@@ -235,34 +251,45 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                     controller: _termMonthsController,
                     decoration: InputDecoration(
                       labelText: t.recurringDeposits.fields.termMonths,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.calendar_month_outlined),
                     ),
                     keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.next,
                   ),
                 ),
               ],
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             TextFormField(
               controller: _interestRateController,
               decoration: InputDecoration(
                 labelText: t.recurringDeposits.fields.interestRate,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.percent_outlined),
               ),
               keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.next,
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             TextFormField(
               controller: _customerIdController,
               decoration: InputDecoration(
                 labelText: t.recurringDeposits.fields.customerId,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.person_outline),
               ),
               validator: (val) =>
-                  val == null || val.isEmpty ? 'Required' : null,
+                  val == null || val.trim().isEmpty ? 'Required' : null,
+              textInputAction: TextInputAction.next,
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             DropdownButtonFormField<RecurringSchemeType>(
               initialValue: _selectedScheme,
               decoration: InputDecoration(
                 labelText: t.recurringDeposits.fields.schemeType,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.category_outlined),
               ),
               items: RecurringSchemeType.values.map((s) {
                 return DropdownMenuItem(value: s, child: Text(s.displayName));
@@ -271,15 +298,77 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                 if (val != null) setState(() => _selectedScheme = val);
               },
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             TextFormField(
               controller: _maturityAmountController,
               decoration: InputDecoration(
                 labelText: t.recurringDeposits.fields.maturityAmount,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.savings_outlined),
               ),
               keyboardType: TextInputType.number,
-              validator: (val) =>
-                  val == null || val.isEmpty ? 'Required' : null,
+              validator: (val) => RecurringDeposit.validateAmount(
+                double.tryParse(val ?? ''),
+                'Maturity Amount',
+              ),
+              textInputAction: TextInputAction.next,
+            ),
+            AppSpacings.gapLg,
+            TextFormField(
+              controller: _linkedAccountController,
+              decoration: const InputDecoration(
+                labelText: 'Linked Savings Account',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.account_balance_outlined),
+              ),
+              textInputAction: TextInputAction.next,
+            ),
+            AppSpacings.gapLg,
+            ListTile(
+              title: Text(t.recurringDeposits.fields.startDate),
+              subtitle: Text(
+                '${_startDate.day}/${_startDate.month}/${_startDate.year}',
+              ),
+              leading: const Icon(Icons.event),
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: _startDate,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (date != null) setState(() => _startDate = date);
+              },
+            ),
+            ListTile(
+              title: Text(t.recurringDeposits.fields.maturityDate),
+              subtitle: Text(
+                '${_maturityDate.day}/${_maturityDate.month}/${_maturityDate.year}',
+              ),
+              leading: const Icon(Icons.event_available),
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: _maturityDate,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (date != null) setState(() => _maturityDate = date);
+              },
+            ),
+            AppSpacings.gapXxl,
+            ElevatedButton(
+              onPressed: _isSaving ? null : _save,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(50),
+              ),
+              child: _isSaving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(t.recurringDeposits.saveDeposit),
             ),
           ],
         ),

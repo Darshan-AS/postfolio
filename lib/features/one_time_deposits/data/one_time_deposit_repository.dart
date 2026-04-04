@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:uuid/uuid.dart';
@@ -11,7 +12,36 @@ abstract class OneTimeDepositRepository {
 }
 
 class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
-  final List<OneTimeDeposit> _deposits = [];
+  final List<OneTimeDeposit> _deposits = [
+    OneTimeDeposit(
+      id: '101',
+      rowId: 'OTD-001',
+      accountNo: '3045678912',
+      principalAmount: 50000.0,
+      termYears: 1,
+      termMonths: 6,
+      interestRate: 6.5,
+      customerId: '1', // Abdul Khalandar
+      schemeType: OneTimeSchemeType.timeDeposit,
+      maturityAmount: 55000.0,
+      startDate: DateTime(2025, 1, 1),
+      maturityDate: DateTime(2026, 7, 1),
+    ),
+    OneTimeDeposit(
+      id: '102',
+      rowId: 'OTD-002',
+      accountNo: '3089123456',
+      principalAmount: 25000.0,
+      termYears: 5,
+      termMonths: 0,
+      interestRate: 7.0,
+      customerId: '2', // Darshan A S
+      schemeType: OneTimeSchemeType.nationalSavingsCertificate,
+      maturityAmount: 35000.0,
+      startDate: DateTime(2024, 6, 15),
+      maturityDate: DateTime(2029, 6, 15),
+    ),
+  ];
 
   @override
   Future<Result<List<OneTimeDeposit>, String>> fetchOneTimeDeposits() async {

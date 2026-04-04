@@ -66,8 +66,10 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
   late final TextEditingController _principalAmountController;
   late final TextEditingController _termYearsController;
   late final TextEditingController _termMonthsController;
+  late final TextEditingController _interestRateController;
   late final TextEditingController _customerIdController;
   late final TextEditingController _maturityAmountController;
+  late final TextEditingController _linkedAccountController;
 
   OneTimeSchemeType _selectedScheme = OneTimeSchemeType.timeDeposit;
   DateTime _startDate = DateTime.now();
@@ -93,11 +95,17 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
     _termMonthsController = TextEditingController(
       text: widget.existingDeposit?.termMonths.toString(),
     );
+    _interestRateController = TextEditingController(
+      text: widget.existingDeposit?.interestRate.toString(),
+    );
     _customerIdController = TextEditingController(
       text: widget.existingDeposit?.customerId,
     );
     _maturityAmountController = TextEditingController(
       text: widget.existingDeposit?.maturityAmount.toString(),
+    );
+    _linkedAccountController = TextEditingController(
+      text: widget.existingDeposit?.linkedSavingsAccountNo,
     );
 
     if (widget.existingDeposit != null) {
@@ -114,8 +122,10 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
     _principalAmountController.dispose();
     _termYearsController.dispose();
     _termMonthsController.dispose();
+    _interestRateController.dispose();
     _customerIdController.dispose();
     _maturityAmountController.dispose();
+    _linkedAccountController.dispose();
     super.dispose();
   }
 
@@ -132,12 +142,15 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                 double.tryParse(_principalAmountController.text.trim()) ?? 0.0,
             termYears: int.tryParse(_termYearsController.text.trim()) ?? 0,
             termMonths: int.tryParse(_termMonthsController.text.trim()) ?? 0,
+            interestRate:
+                double.tryParse(_interestRateController.text.trim()) ?? 0.0,
             customerId: _customerIdController.text.trim(),
             schemeType: _selectedScheme,
             maturityAmount:
                 double.tryParse(_maturityAmountController.text.trim()) ?? 0.0,
             startDate: _startDate,
             maturityDate: _maturityDate,
+            linkedSavingsAccountNo: _linkedAccountController.text.trim(),
           );
 
       if (!mounted) return;
@@ -201,30 +214,40 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
               controller: _rowIdController,
               decoration: InputDecoration(
                 labelText: t.oneTimeDeposits.fields.rowId,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.tag_outlined),
               ),
               validator: (val) =>
-                  val == null || val.isEmpty ? 'Required' : null,
+                  val == null || val.trim().isEmpty ? 'Required' : null,
+              textInputAction: TextInputAction.next,
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             TextFormField(
               controller: _accountNoController,
               decoration: InputDecoration(
                 labelText: t.oneTimeDeposits.fields.accountNo,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.numbers_outlined),
               ),
-              validator: (val) =>
-                  val == null || val.isEmpty ? 'Required' : null,
+              validator: OneTimeDeposit.validateAccountNo,
+              textInputAction: TextInputAction.next,
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             TextFormField(
               controller: _principalAmountController,
               decoration: InputDecoration(
                 labelText: t.oneTimeDeposits.fields.principalAmount,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.money_outlined),
               ),
               keyboardType: TextInputType.number,
-              validator: (val) =>
-                  val == null || val.isEmpty ? 'Required' : null,
+              validator: (val) => OneTimeDeposit.validateAmount(
+                double.tryParse(val ?? ''),
+                'Principal Amount',
+              ),
+              textInputAction: TextInputAction.next,
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             Row(
               children: [
                 Expanded(
@@ -232,8 +255,11 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                     controller: _termYearsController,
                     decoration: InputDecoration(
                       labelText: t.oneTimeDeposits.fields.termYears,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.calendar_today_outlined),
                     ),
                     keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.next,
                   ),
                 ),
                 AppSpacings.gapMd,
@@ -242,26 +268,45 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                     controller: _termMonthsController,
                     decoration: InputDecoration(
                       labelText: t.oneTimeDeposits.fields.termMonths,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.calendar_month_outlined),
                     ),
                     keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.next,
                   ),
                 ),
               ],
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
+            TextFormField(
+              controller: _interestRateController,
+              decoration: const InputDecoration(
+                labelText: 'Interest Rate (%)',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.percent_outlined),
+              ),
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.next,
+            ),
+            AppSpacings.gapLg,
             TextFormField(
               controller: _customerIdController,
               decoration: InputDecoration(
                 labelText: t.oneTimeDeposits.fields.customerId,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.person_outline),
               ),
               validator: (val) =>
-                  val == null || val.isEmpty ? 'Required' : null,
+                  val == null || val.trim().isEmpty ? 'Required' : null,
+              textInputAction: TextInputAction.next,
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             DropdownButtonFormField<OneTimeSchemeType>(
               initialValue: _selectedScheme,
               decoration: InputDecoration(
                 labelText: t.oneTimeDeposits.fields.schemeType,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.category_outlined),
               ),
               items: OneTimeSchemeType.values.map((s) {
                 return DropdownMenuItem(value: s, child: Text(s.displayName));
@@ -270,15 +315,77 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                 if (val != null) setState(() => _selectedScheme = val);
               },
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             TextFormField(
               controller: _maturityAmountController,
               decoration: InputDecoration(
                 labelText: t.oneTimeDeposits.fields.maturityAmount,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.savings_outlined),
               ),
               keyboardType: TextInputType.number,
-              validator: (val) =>
-                  val == null || val.isEmpty ? 'Required' : null,
+              validator: (val) => OneTimeDeposit.validateAmount(
+                double.tryParse(val ?? ''),
+                'Maturity Amount',
+              ),
+              textInputAction: TextInputAction.next,
+            ),
+            AppSpacings.gapLg,
+            TextFormField(
+              controller: _linkedAccountController,
+              decoration: const InputDecoration(
+                labelText: 'Linked Savings Account',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.account_balance_outlined),
+              ),
+              textInputAction: TextInputAction.next,
+            ),
+            AppSpacings.gapLg,
+            ListTile(
+              title: Text(t.oneTimeDeposits.fields.startDate),
+              subtitle: Text(
+                '${_startDate.day}/${_startDate.month}/${_startDate.year}',
+              ),
+              leading: const Icon(Icons.event),
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: _startDate,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (date != null) setState(() => _startDate = date);
+              },
+            ),
+            ListTile(
+              title: Text(t.oneTimeDeposits.fields.maturityDate),
+              subtitle: Text(
+                '${_maturityDate.day}/${_maturityDate.month}/${_maturityDate.year}',
+              ),
+              leading: const Icon(Icons.event_available),
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: _maturityDate,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (date != null) setState(() => _maturityDate = date);
+              },
+            ),
+            AppSpacings.gapXxl,
+            ElevatedButton(
+              onPressed: _isSaving ? null : _save,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(50),
+              ),
+              child: _isSaving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(t.oneTimeDeposits.saveDeposit),
             ),
           ],
         ),
