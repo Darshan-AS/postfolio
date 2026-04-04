@@ -14,7 +14,8 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   final List<RecurringDeposit> _deposits = [];
 
   @override
-  Future<Result<List<RecurringDeposit>, String>> fetchRecurringDeposits() async {
+  Future<Result<List<RecurringDeposit>, String>>
+  fetchRecurringDeposits() async {
     await Future.delayed(
       const Duration(seconds: 1),
     ); // Simulate network latency
@@ -22,7 +23,9 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   }
 
   @override
-  Future<Result<void, String>> createRecurringDeposit(RecurringDeposit deposit) async {
+  Future<Result<void, String>> createRecurringDeposit(
+    RecurringDeposit deposit,
+  ) async {
     await Future.delayed(const Duration(milliseconds: 500));
     final newDeposit = deposit.copyWith(id: const Uuid().v4());
     _deposits.add(newDeposit);
@@ -30,7 +33,9 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   }
 
   @override
-  Future<Result<void, String>> updateRecurringDeposit(RecurringDeposit deposit) async {
+  Future<Result<void, String>> updateRecurringDeposit(
+    RecurringDeposit deposit,
+  ) async {
     await Future.delayed(const Duration(milliseconds: 500));
     final index = _deposits.indexWhere((d) => d.id == deposit.id);
     if (index != -1) {
@@ -53,6 +58,8 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 }
 
 // Global Provider for the Repository.
-final recurringDepositRepositoryProvider = Provider<RecurringDepositRepository>((ref) {
-  return FakeRecurringDepositRepository();
-});
+final recurringDepositRepositoryProvider = Provider<RecurringDepositRepository>(
+  (ref) {
+    return FakeRecurringDepositRepository();
+  },
+);

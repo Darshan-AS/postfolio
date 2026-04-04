@@ -164,8 +164,37 @@ class TranslationsOneTimeDepositsEn {
 
 	// Translations
 
-	/// en: 'One-Time Deposits List Goes Here'
-	String get list => 'One-Time Deposits List Goes Here';
+	/// en: 'One-Time Deposits'
+	String get title => 'One-Time Deposits';
+
+	/// en: 'New Deposit'
+	String get newDeposit => 'New Deposit';
+
+	/// en: 'Edit Deposit'
+	String get editDeposit => 'Edit Deposit';
+
+	/// en: 'Save Deposit'
+	String get saveDeposit => 'Save Deposit';
+
+	/// en: 'No one-time deposits found. Add one!'
+	String get noDepositsFound => 'No one-time deposits found. Add one!';
+
+	/// en: 'Deposit not found'
+	String get depositNotFound => 'Deposit not found';
+
+	/// en: 'Delete Deposit'
+	String get deleteDeposit => 'Delete Deposit';
+
+	/// en: 'Are you sure you want to delete this deposit?'
+	String get deleteDepositConfirmation => 'Are you sure you want to delete this deposit?';
+
+	/// en: 'Failed to save deposit: ${error}'
+	String failedToSaveDeposit({required Object error}) => 'Failed to save deposit: ${error}';
+
+	/// en: 'Failed to delete deposit: ${error}'
+	String failedToDeleteDeposit({required Object error}) => 'Failed to delete deposit: ${error}';
+
+	late final TranslationsOneTimeDepositsFieldsEn fields = TranslationsOneTimeDepositsFieldsEn.internal(_root);
 }
 
 // Path: recurringDeposits
@@ -176,8 +205,37 @@ class TranslationsRecurringDepositsEn {
 
 	// Translations
 
-	/// en: 'Recurring Deposits List Goes Here'
-	String get list => 'Recurring Deposits List Goes Here';
+	/// en: 'Recurring Deposits'
+	String get title => 'Recurring Deposits';
+
+	/// en: 'New RD'
+	String get newDeposit => 'New RD';
+
+	/// en: 'Edit RD'
+	String get editDeposit => 'Edit RD';
+
+	/// en: 'Save RD'
+	String get saveDeposit => 'Save RD';
+
+	/// en: 'No recurring deposits found. Add one!'
+	String get noDepositsFound => 'No recurring deposits found. Add one!';
+
+	/// en: 'RD not found'
+	String get depositNotFound => 'RD not found';
+
+	/// en: 'Delete RD'
+	String get deleteDeposit => 'Delete RD';
+
+	/// en: 'Are you sure you want to delete this RD?'
+	String get deleteDepositConfirmation => 'Are you sure you want to delete this RD?';
+
+	/// en: 'Failed to save RD: ${error}'
+	String failedToSaveDeposit({required Object error}) => 'Failed to save RD: ${error}';
+
+	/// en: 'Failed to delete RD: ${error}'
+	String failedToDeleteDeposit({required Object error}) => 'Failed to delete RD: ${error}';
+
+	late final TranslationsRecurringDepositsFieldsEn fields = TranslationsRecurringDepositsFieldsEn.internal(_root);
 }
 
 // Path: users.fields
@@ -199,6 +257,84 @@ class TranslationsUsersFieldsEn {
 
 	/// en: 'Home Address'
 	String get homeAddress => 'Home Address';
+}
+
+// Path: oneTimeDeposits.fields
+class TranslationsOneTimeDepositsFieldsEn {
+	TranslationsOneTimeDepositsFieldsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Row ID *'
+	String get rowId => 'Row ID *';
+
+	/// en: 'Account No *'
+	String get accountNo => 'Account No *';
+
+	/// en: 'Principal Amount *'
+	String get principalAmount => 'Principal Amount *';
+
+	/// en: 'Term (Years) *'
+	String get termYears => 'Term (Years) *';
+
+	/// en: 'Term (Months) *'
+	String get termMonths => 'Term (Months) *';
+
+	/// en: 'Customer ID *'
+	String get customerId => 'Customer ID *';
+
+	/// en: 'Scheme Type'
+	String get schemeType => 'Scheme Type';
+
+	/// en: 'Maturity Amount *'
+	String get maturityAmount => 'Maturity Amount *';
+
+	/// en: 'Start Date'
+	String get startDate => 'Start Date';
+
+	/// en: 'Maturity Date'
+	String get maturityDate => 'Maturity Date';
+}
+
+// Path: recurringDeposits.fields
+class TranslationsRecurringDepositsFieldsEn {
+	TranslationsRecurringDepositsFieldsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Account No *'
+	String get accountNo => 'Account No *';
+
+	/// en: 'Installment Amount *'
+	String get installmentAmount => 'Installment Amount *';
+
+	/// en: 'Term (Years) *'
+	String get termYears => 'Term (Years) *';
+
+	/// en: 'Term (Months) *'
+	String get termMonths => 'Term (Months) *';
+
+	/// en: 'Interest Rate *'
+	String get interestRate => 'Interest Rate *';
+
+	/// en: 'Customer ID *'
+	String get customerId => 'Customer ID *';
+
+	/// en: 'Scheme Type'
+	String get schemeType => 'Scheme Type';
+
+	/// en: 'Maturity Amount *'
+	String get maturityAmount => 'Maturity Amount *';
+
+	/// en: 'Start Date'
+	String get startDate => 'Start Date';
+
+	/// en: 'Maturity Date'
+	String get maturityDate => 'Maturity Date';
 }
 
 /// The flat map containing all translations for locale <en>.
@@ -236,8 +372,46 @@ extension on Translations {
 			'users.fields.emailAddress' => 'Email Address',
 			'users.fields.homeAddress' => 'Home Address',
 			'dashboard.charts' => 'Dashboard Charts Go Here',
-			'oneTimeDeposits.list' => 'One-Time Deposits List Goes Here',
-			'recurringDeposits.list' => 'Recurring Deposits List Goes Here',
+			'oneTimeDeposits.title' => 'One-Time Deposits',
+			'oneTimeDeposits.newDeposit' => 'New Deposit',
+			'oneTimeDeposits.editDeposit' => 'Edit Deposit',
+			'oneTimeDeposits.saveDeposit' => 'Save Deposit',
+			'oneTimeDeposits.noDepositsFound' => 'No one-time deposits found. Add one!',
+			'oneTimeDeposits.depositNotFound' => 'Deposit not found',
+			'oneTimeDeposits.deleteDeposit' => 'Delete Deposit',
+			'oneTimeDeposits.deleteDepositConfirmation' => 'Are you sure you want to delete this deposit?',
+			'oneTimeDeposits.failedToSaveDeposit' => ({required Object error}) => 'Failed to save deposit: ${error}',
+			'oneTimeDeposits.failedToDeleteDeposit' => ({required Object error}) => 'Failed to delete deposit: ${error}',
+			'oneTimeDeposits.fields.rowId' => 'Row ID *',
+			'oneTimeDeposits.fields.accountNo' => 'Account No *',
+			'oneTimeDeposits.fields.principalAmount' => 'Principal Amount *',
+			'oneTimeDeposits.fields.termYears' => 'Term (Years) *',
+			'oneTimeDeposits.fields.termMonths' => 'Term (Months) *',
+			'oneTimeDeposits.fields.customerId' => 'Customer ID *',
+			'oneTimeDeposits.fields.schemeType' => 'Scheme Type',
+			'oneTimeDeposits.fields.maturityAmount' => 'Maturity Amount *',
+			'oneTimeDeposits.fields.startDate' => 'Start Date',
+			'oneTimeDeposits.fields.maturityDate' => 'Maturity Date',
+			'recurringDeposits.title' => 'Recurring Deposits',
+			'recurringDeposits.newDeposit' => 'New RD',
+			'recurringDeposits.editDeposit' => 'Edit RD',
+			'recurringDeposits.saveDeposit' => 'Save RD',
+			'recurringDeposits.noDepositsFound' => 'No recurring deposits found. Add one!',
+			'recurringDeposits.depositNotFound' => 'RD not found',
+			'recurringDeposits.deleteDeposit' => 'Delete RD',
+			'recurringDeposits.deleteDepositConfirmation' => 'Are you sure you want to delete this RD?',
+			'recurringDeposits.failedToSaveDeposit' => ({required Object error}) => 'Failed to save RD: ${error}',
+			'recurringDeposits.failedToDeleteDeposit' => ({required Object error}) => 'Failed to delete RD: ${error}',
+			'recurringDeposits.fields.accountNo' => 'Account No *',
+			'recurringDeposits.fields.installmentAmount' => 'Installment Amount *',
+			'recurringDeposits.fields.termYears' => 'Term (Years) *',
+			'recurringDeposits.fields.termMonths' => 'Term (Months) *',
+			'recurringDeposits.fields.interestRate' => 'Interest Rate *',
+			'recurringDeposits.fields.customerId' => 'Customer ID *',
+			'recurringDeposits.fields.schemeType' => 'Scheme Type',
+			'recurringDeposits.fields.maturityAmount' => 'Maturity Amount *',
+			'recurringDeposits.fields.startDate' => 'Start Date',
+			'recurringDeposits.fields.maturityDate' => 'Maturity Date',
 			_ => null,
 		};
 	}

@@ -16,7 +16,8 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     return _fetchRecurringDeposits();
   }
 
-  Future<UnmodifiableListView<RecurringDeposit>> _fetchRecurringDeposits() async {
+  Future<UnmodifiableListView<RecurringDeposit>>
+  _fetchRecurringDeposits() async {
     final repository = ref.read(recurringDepositRepositoryProvider);
     final result = await repository.fetchRecurringDeposits();
 

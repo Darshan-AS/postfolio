@@ -28,15 +28,15 @@
 - [x] Add strict domain validation and factory constructors to `Deposit`, `Scheme`, and `RecurringDeposit` models.
 - [x] Remove Hardcoded Strings by setting up Slang localizations (`.i18n.yaml` files).
 
-## Phase 4: Deposits & RD Features (In Progress)
+## Phase 4: Deposits & RD Features (Completed)
 - [x] Build `OneTimeDepositRepository` and `OneTimeDepositsController`.
 - [x] Build `RecurringDepositRepository` and `RecurringDepositsController`.
-- [ ] Build `OneTimeScreen` (List) and `OneTimeDepositCard`.
-- [ ] Build `OneTimeDepositFormScreen` (Create/Update).
-- [ ] Build `OneTimeDepositDetailScreen`.
-- [ ] Build `RecurringDepositsScreen` (List) and `RecurringDepositCard`.
-- [ ] Build `RecurringDepositFormScreen` (Create/Update).
-- [ ] Build `RecurringDepositDetailScreen`.
+- [x] Build `OneTimeScreen` (List) and `OneTimeDepositCard`.
+- [x] Build `OneTimeDepositFormScreen` (Create/Update).
+- [x] Build `OneTimeDepositDetailScreen`.
+- [x] Build `RecurringDepositsScreen` (List) and `RecurringDepositCard`.
+- [x] Build `RecurringDepositFormScreen` (Create/Update).
+- [x] Build `RecurringDepositDetailScreen`.
 
 ## Phase 5: Firebase Integration (Pending)
 - [ ] Run `flutterfire configure`.

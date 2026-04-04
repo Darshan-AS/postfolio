@@ -22,7 +22,9 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
   }
 
   @override
-  Future<Result<void, String>> createOneTimeDeposit(OneTimeDeposit deposit) async {
+  Future<Result<void, String>> createOneTimeDeposit(
+    OneTimeDeposit deposit,
+  ) async {
     await Future.delayed(const Duration(milliseconds: 500));
     final newDeposit = deposit.copyWith(id: const Uuid().v4());
     _deposits.add(newDeposit);
@@ -30,7 +32,9 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
   }
 
   @override
-  Future<Result<void, String>> updateOneTimeDeposit(OneTimeDeposit deposit) async {
+  Future<Result<void, String>> updateOneTimeDeposit(
+    OneTimeDeposit deposit,
+  ) async {
     await Future.delayed(const Duration(milliseconds: 500));
     final index = _deposits.indexWhere((d) => d.id == deposit.id);
     if (index != -1) {
@@ -53,6 +57,8 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
 }
 
 // Global Provider for the Repository.
-final oneTimeDepositRepositoryProvider = Provider<OneTimeDepositRepository>((ref) {
+final oneTimeDepositRepositoryProvider = Provider<OneTimeDepositRepository>((
+  ref,
+) {
   return FakeOneTimeDepositRepository();
 });
