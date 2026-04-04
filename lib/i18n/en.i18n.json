@@ -26,20 +26,6 @@
   "retry": "Retry",
   "userNotFound": "User not found",
   "notProvided": "Not provided",
-  "failedToSaveUser": "Failed to save user: {error}",
-  "@failedToSaveUser": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "failedToDeleteUser": "Failed to delete user: {error}",
-  "@failedToDeleteUser": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  }
+  "failedToSaveUser": "Failed to save user: ${error}",
+  "failedToDeleteUser": "Failed to delete user: ${error}"
 }

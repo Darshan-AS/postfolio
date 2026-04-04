@@ -7,7 +7,7 @@ import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
-import 'package:postfolio/l10n/app_localizations.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 class UserFormScreen extends ConsumerWidget {
   final String? userId;
@@ -21,27 +21,27 @@ class UserFormScreen extends ConsumerWidget {
     }
 
     final usersState = ref.watch(usersControllerProvider);
-    final l10n = AppLocalizations.of(context)!;
+    
 
     return usersState.when(
       data: (users) {
         final user = users.where((u) => u.id == userId).firstOrNull;
         if (user == null) {
           return Scaffold(
-            appBar: AppBar(title: Text(l10n.error)),
+            appBar: AppBar(title: Text(t.error)),
             body: ErrorStateView(
-              message: l10n.userNotFound,
+              message: t.userNotFound,
             ),
           );
         }
         return _UserForm(existingUser: user);
       },
       loading: () => Scaffold(
-        appBar: AppBar(title: Text(l10n.loading)),
+        appBar: AppBar(title: Text(t.loading)),
         body: const Center(child: CircularProgressIndicator()),
       ),
       error: (error, stack) => Scaffold(
-        appBar: AppBar(title: Text(l10n.error)),
+        appBar: AppBar(title: Text(t.error)),
         body: ErrorStateView(
           message: error.toString(),
           onRetry: () => ref.invalidate(usersControllerProvider),
@@ -96,14 +96,14 @@ class _UserFormState extends ConsumerState<_UserForm> {
       );
 
       if (!mounted) return;
-      final l10n = AppLocalizations.of(context)!;
+      
 
       switch (result) {
         case Success():
           context.pop();
         case Failure(error: final err):
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.failedToSaveUser(err))),
+            SnackBar(content: Text(t.failedToSaveUser(error: err.toString()))),
           );
       }
     }
@@ -113,11 +113,11 @@ class _UserFormState extends ConsumerState<_UserForm> {
   Widget build(BuildContext context) {
     final isUpdating = widget.existingUser != null;
     final isLoading = ref.watch(usersControllerProvider).isLoading;
-    final l10n = AppLocalizations.of(context)!;
+    
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isUpdating ? l10n.editUser : l10n.newUser),
+        title: Text(isUpdating ? t.editUser : t.newUser),
         actions: [
           if (isLoading)
             const Padding(
@@ -135,7 +135,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
               icon: const Icon(Icons.check),
               color: AppTheme.primary,
               onPressed: _save,
-              tooltip: l10n.saveUser,
+              tooltip: t.saveUser,
             ),
         ],
       ),
@@ -147,7 +147,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
             TextFormField(
               controller: _nameController,
               decoration: InputDecoration(
-                labelText: l10n.fullName,
+                labelText: t.fullName,
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.person_outline),
               ),
@@ -158,7 +158,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
             TextFormField(
               controller: _phoneController,
               decoration: InputDecoration(
-                labelText: l10n.phoneNumber,
+                labelText: t.phoneNumber,
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.phone_outlined),
               ),
@@ -170,7 +170,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
             TextFormField(
               controller: _emailController,
               decoration: InputDecoration(
-                labelText: l10n.emailAddress,
+                labelText: t.emailAddress,
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.email_outlined),
               ),
@@ -182,7 +182,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
             TextFormField(
               controller: _addressController,
               decoration: InputDecoration(
-                labelText: l10n.homeAddress,
+                labelText: t.homeAddress,
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.home_outlined),
               ),
@@ -193,8 +193,8 @@ class _UserFormState extends ConsumerState<_UserForm> {
             ElevatedButton(
               onPressed: isLoading ? null : _save,
               child: isLoading 
-                  ? Text(l10n.saving) 
-                  : Text(l10n.saveUser),
+                  ? Text(t.saving) 
+                  : Text(t.saveUser),
             ),
           ],
         ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
-import 'package:postfolio/l10n/app_localizations.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 class ErrorStateView extends StatelessWidget {
   final String message;
@@ -15,7 +15,7 @@ class ErrorStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    
     
     return Center(
       child: Padding(
@@ -39,7 +39,7 @@ class ErrorStateView extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: Text(l10n.retry),
+                label: Text(t.retry),
               ),
             ]
           ],

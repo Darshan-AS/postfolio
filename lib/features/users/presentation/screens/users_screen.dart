@@ -7,7 +7,7 @@ import 'package:postfolio/features/users/presentation/widgets/user_card.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
-import 'package:postfolio/l10n/app_localizations.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 class UsersScreen extends ConsumerWidget {
   const UsersScreen({super.key});
@@ -16,7 +16,7 @@ class UsersScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // 1. Watch the Controller state
     final usersState = ref.watch(usersControllerProvider);
-    final l10n = AppLocalizations.of(context)!;
+    
 
     return Scaffold(
       appBar: AppBar(
@@ -28,7 +28,7 @@ class UsersScreen extends ConsumerWidget {
           children: [
             const Icon(Icons.groups_outlined, color: AppTheme.primary),
             AppSpacings.gapSm,
-            Text(l10n.users, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(t.users, style: const TextStyle(fontWeight: FontWeight.w600)),
           ],
         ),
         actions: [
@@ -45,7 +45,7 @@ class UsersScreen extends ConsumerWidget {
       body: usersState.when(
         data: (users) {
           if (users.isEmpty) {
-            return Center(child: Text(l10n.noUsersFound));
+            return Center(child: Text(t.noUsersFound));
           }
           return ListView.separated(
             itemCount: users.length,
@@ -54,7 +54,7 @@ class UsersScreen extends ConsumerWidget {
               final user = users[index];
               return UserCard(
                 name: user.name,
-                phone: user.phone ?? l10n.notProvided,
+                phone: user.phone ?? t.notProvided,
                 onTap: () => context.push(RouteNames.userDetail(user.id)),
                 onEdit: () => context.push(RouteNames.userEdit(user.id)),
                 onDelete: () {

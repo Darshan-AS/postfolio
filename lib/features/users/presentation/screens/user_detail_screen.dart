@@ -7,23 +7,23 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
-import 'package:postfolio/l10n/app_localizations.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 class UserDetailScreen extends ConsumerWidget {
   final String userId;
 
   const UserDetailScreen({super.key, required this.userId});
 
-  void _confirmDelete(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
+  void _confirmDelete(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n.deleteUser),
-        content: Text(l10n.deleteUserConfirmation),
+        title: Text(t.deleteUser),
+        content: Text(t.deleteUserConfirmation),
         actions: [
           TextButton(
             onPressed: () => ctx.pop(),
-            child: Text(l10n.cancel),
+            child: Text(t.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -38,11 +38,11 @@ class UserDetailScreen extends ConsumerWidget {
                 case Failure(error: final err):
                   ctx.pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.failedToDeleteUser(err))),
+                    SnackBar(content: Text(t.failedToDeleteUser(error: err.toString()))),
                   );
               }
             },
-            child: Text(l10n.delete, style: const TextStyle(color: AppTheme.error)),
+            child: Text(t.delete, style: const TextStyle(color: AppTheme.error)),
           ),
         ],
       ),
@@ -52,7 +52,7 @@ class UserDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final usersState = ref.watch(usersControllerProvider);
-    final l10n = AppLocalizations.of(context)!;
+    
 
     return Scaffold(
       appBar: AppBar(
@@ -64,7 +64,7 @@ class UserDetailScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.delete_outline),
             color: AppTheme.error,
-            onPressed: () => _confirmDelete(context, ref, l10n),
+            onPressed: () => _confirmDelete(context, ref),
           ),
         ],
       ),
@@ -74,7 +74,7 @@ class UserDetailScreen extends ConsumerWidget {
           final user = users.where((u) => u.id == userId).firstOrNull;
 
           if (user == null) {
-            return Center(child: Text(l10n.userNotFound));
+            return Center(child: Text(t.userNotFound));
           }
 
           return ListView(
@@ -96,11 +96,11 @@ class UserDetailScreen extends ConsumerWidget {
               Card(
                 child: Column(
                   children: [
-                    _buildInfoTile(Icons.phone_outlined, l10n.phoneNumber, user.phone ?? l10n.notProvided),
+                    _buildInfoTile(Icons.phone_outlined, t.phoneNumber, user.phone ?? t.notProvided),
                     const Divider(),
-                    _buildInfoTile(Icons.email_outlined, l10n.emailAddress, user.email ?? l10n.notProvided),
+                    _buildInfoTile(Icons.email_outlined, t.emailAddress, user.email ?? t.notProvided),
                     const Divider(),
-                    _buildInfoTile(Icons.home_outlined, l10n.homeAddress, user.address ?? l10n.notProvided),
+                    _buildInfoTile(Icons.home_outlined, t.homeAddress, user.address ?? t.notProvided),
                   ],
                 ),
               ),
