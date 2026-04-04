@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:uuid/uuid.dart';
@@ -21,11 +22,15 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       termYears: 1,
       termMonths: 6,
       interestRate: 6.5,
-      customerId: '1', // Abdul Khalandar
+      customerId: '1', // Bruce Wayne
       schemeType: OneTimeSchemeType.timeDeposit,
       maturityAmount: 55000.0,
       startDate: DateTime(2025, 1, 1),
       maturityDate: DateTime(2026, 7, 1),
+      linkedSavingsAccountNo: 'SA987654321',
+      nominees: const [
+        Nominee(name: 'Alfred Pennyworth', relationship: 'Butler', phone: '9876543211'),
+      ],
     ),
     OneTimeDeposit(
       id: '102',
@@ -35,11 +40,69 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       termYears: 5,
       termMonths: 0,
       interestRate: 7.0,
-      customerId: '2', // Darshan A S
+      customerId: '2', // Clark Kent
       schemeType: OneTimeSchemeType.nationalSavingsCertificate,
       maturityAmount: 35000.0,
       startDate: DateTime(2024, 6, 15),
       maturityDate: DateTime(2029, 6, 15),
+      linkedSavingsAccountNo: 'SA123456789',
+      nominees: const [
+        Nominee(name: 'Lois Lane', relationship: 'Spouse', phone: '9876543212'),
+      ],
+    ),
+    OneTimeDeposit(
+      id: '103',
+      rowId: 'OTD-003',
+      accountNo: '3099887766',
+      principalAmount: 100000.0,
+      termYears: 3,
+      termMonths: 0,
+      interestRate: 6.8,
+      customerId: '3', // Diana Prince
+      schemeType: OneTimeSchemeType.timeDeposit,
+      maturityAmount: 122000.0,
+      startDate: DateTime(2025, 3, 1),
+      maturityDate: DateTime(2028, 3, 1),
+      linkedSavingsAccountNo: 'SA456789123',
+      nominees: const [
+        Nominee(name: 'Hippolyta', relationship: 'Mother', phone: '9123456781'),
+      ],
+    ),
+    OneTimeDeposit(
+      id: '104',
+      rowId: 'OTD-004',
+      accountNo: '3077665544',
+      principalAmount: 15000.0,
+      termYears: 1,
+      termMonths: 0,
+      interestRate: 5.5,
+      customerId: '4', // Barry Allen
+      schemeType: OneTimeSchemeType.monthlyIncomeScheme,
+      maturityAmount: 15000.0,
+      startDate: DateTime(2024, 10, 10),
+      maturityDate: DateTime(2025, 10, 10),
+      linkedSavingsAccountNo: 'SA567890123',
+      nominees: const [
+        Nominee(name: 'Iris West', relationship: 'Spouse', phone: '9988776656'),
+      ],
+    ),
+    OneTimeDeposit(
+      id: '105',
+      rowId: 'OTD-005',
+      accountNo: '3055443322',
+      principalAmount: 75000.0,
+      termYears: 2,
+      termMonths: 6,
+      interestRate: 6.2,
+      customerId: '5', // Arthur Curry
+      schemeType: OneTimeSchemeType.kisanVikasPatra,
+      maturityAmount: 90000.0,
+      startDate: DateTime(2025, 4, 1),
+      maturityDate: DateTime(2027, 10, 1),
+      linkedSavingsAccountNo: 'SA678901234',
+      nominees: const [
+        Nominee(name: 'Mera', relationship: 'Spouse', phone: '9876543213'),
+      ],
     ),
   ];
 

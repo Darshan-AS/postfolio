@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:uuid/uuid.dart';
@@ -20,11 +21,15 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       termYears: 5,
       termMonths: 0,
       interestRate: 6.7,
-      customerId: '1', // Abdul Khalandar
+      customerId: '1', // Bruce Wayne
       schemeType: RecurringSchemeType.recurringDeposit,
       maturityAmount: 350000.0,
       startDate: DateTime(2025, 2, 1),
       maturityDate: DateTime(2030, 2, 1),
+      linkedAutoDebitAccountNo: 'SA987654321',
+      nominees: const [
+        Nominee(name: 'Alfred Pennyworth', relationship: 'Butler', phone: '9876543211'),
+      ],
     ),
     RecurringDeposit(
       id: '202',
@@ -33,11 +38,66 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       termYears: 1,
       termMonths: 0,
       interestRate: 6.0,
-      customerId: '2', // Darshan A S
+      customerId: '2', // Clark Kent
       schemeType: RecurringSchemeType.recurringDeposit,
       maturityAmount: 124000.0,
       startDate: DateTime(2024, 11, 1),
       maturityDate: DateTime(2025, 11, 1),
+      linkedAutoDebitAccountNo: 'SA123456789',
+      nominees: const [
+        Nominee(name: 'Lois Lane', relationship: 'Spouse', phone: '9876543212'),
+      ],
+    ),
+    RecurringDeposit(
+      id: '203',
+      accountNo: 'RD-9029988',
+      installmentAmount: 2000.0,
+      termYears: 3,
+      termMonths: 0,
+      interestRate: 6.5,
+      customerId: '3', // Diana Prince
+      schemeType: RecurringSchemeType.recurringDeposit,
+      maturityAmount: 78000.0,
+      startDate: DateTime(2025, 1, 15),
+      maturityDate: DateTime(2028, 1, 15),
+      linkedAutoDebitAccountNo: 'SA456789123',
+      nominees: const [
+        Nominee(name: 'Hippolyta', relationship: 'Mother', phone: '9123456781'),
+      ],
+    ),
+    RecurringDeposit(
+      id: '204',
+      accountNo: 'RD-9027766',
+      installmentAmount: 15000.0,
+      termYears: 2,
+      termMonths: 0,
+      interestRate: 6.8,
+      customerId: '4', // Barry Allen
+      schemeType: RecurringSchemeType.recurringDeposit,
+      maturityAmount: 390000.0,
+      startDate: DateTime(2024, 8, 1),
+      maturityDate: DateTime(2026, 8, 1),
+      linkedAutoDebitAccountNo: 'SA567890123',
+      nominees: const [
+        Nominee(name: 'Iris West', relationship: 'Spouse', phone: '9988776656'),
+      ],
+    ),
+    RecurringDeposit(
+      id: '205',
+      accountNo: 'RD-9025544',
+      installmentAmount: 3000.0,
+      termYears: 5,
+      termMonths: 0,
+      interestRate: 7.0,
+      customerId: '5', // Arthur Curry
+      schemeType: RecurringSchemeType.recurringDeposit,
+      maturityAmount: 210000.0,
+      startDate: DateTime(2025, 4, 10),
+      maturityDate: DateTime(2030, 4, 10),
+      linkedAutoDebitAccountNo: 'SA678901234',
+      nominees: const [
+        Nominee(name: 'Mera', relationship: 'Spouse', phone: '9876543213'),
+      ],
     ),
   ];
 
