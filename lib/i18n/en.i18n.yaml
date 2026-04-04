@@ -11,9 +11,8 @@ common:
 
 nav:
   dashboard: "Dashboard"
-  deposits: "Deposits"
+  oneTimeDeposits: "One-Time Deposits"
   recurringDeposits: "Recurring Deposits"
-  rd: "RD"
   users: "Users"
 
 users:
@@ -36,8 +35,8 @@ users:
 dashboard:
   charts: "Dashboard Charts Go Here"
 
-deposits:
-  list: "Deposits List Goes Here"
+oneTimeDeposits:
+  list: "One-Time Deposits List Goes Here"
 
-rd:
-  list: "RD List Goes Here"
+recurringDeposits:
+  list: "Recurring Deposits List Goes Here"

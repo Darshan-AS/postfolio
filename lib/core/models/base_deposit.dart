@@ -8,6 +8,7 @@ abstract interface class BaseDeposit {
   double get interestRate;
   String get customerId;
   double get maturityAmount;
+  DateTime get startDate;
   DateTime get maturityDate;
   List<Nominee> get nominees;
 

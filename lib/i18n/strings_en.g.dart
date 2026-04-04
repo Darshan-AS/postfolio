@@ -48,8 +48,8 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsNavEn nav = TranslationsNavEn.internal(_root);
 	late final TranslationsUsersEn users = TranslationsUsersEn.internal(_root);
 	late final TranslationsDashboardEn dashboard = TranslationsDashboardEn.internal(_root);
-	late final TranslationsDepositsEn deposits = TranslationsDepositsEn.internal(_root);
-	late final TranslationsRdEn rd = TranslationsRdEn.internal(_root);
+	late final TranslationsOneTimeDepositsEn oneTimeDeposits = TranslationsOneTimeDepositsEn.internal(_root);
+	late final TranslationsRecurringDepositsEn recurringDeposits = TranslationsRecurringDepositsEn.internal(_root);
 }
 
 // Path: common
@@ -93,14 +93,11 @@ class TranslationsNavEn {
 	/// en: 'Dashboard'
 	String get dashboard => 'Dashboard';
 
-	/// en: 'Deposits'
-	String get deposits => 'Deposits';
+	/// en: 'One-Time Deposits'
+	String get oneTimeDeposits => 'One-Time Deposits';
 
 	/// en: 'Recurring Deposits'
 	String get recurringDeposits => 'Recurring Deposits';
-
-	/// en: 'RD'
-	String get rd => 'RD';
 
 	/// en: 'Users'
 	String get users => 'Users';
@@ -159,28 +156,28 @@ class TranslationsDashboardEn {
 	String get charts => 'Dashboard Charts Go Here';
 }
 
-// Path: deposits
-class TranslationsDepositsEn {
-	TranslationsDepositsEn.internal(this._root);
+// Path: oneTimeDeposits
+class TranslationsOneTimeDepositsEn {
+	TranslationsOneTimeDepositsEn.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
 
-	/// en: 'Deposits List Goes Here'
-	String get list => 'Deposits List Goes Here';
+	/// en: 'One-Time Deposits List Goes Here'
+	String get list => 'One-Time Deposits List Goes Here';
 }
 
-// Path: rd
-class TranslationsRdEn {
-	TranslationsRdEn.internal(this._root);
+// Path: recurringDeposits
+class TranslationsRecurringDepositsEn {
+	TranslationsRecurringDepositsEn.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
 
-	/// en: 'RD List Goes Here'
-	String get list => 'RD List Goes Here';
+	/// en: 'Recurring Deposits List Goes Here'
+	String get list => 'Recurring Deposits List Goes Here';
 }
 
 // Path: users.fields
@@ -221,9 +218,8 @@ extension on Translations {
 			'common.retry' => 'Retry',
 			'common.notProvided' => 'Not provided',
 			'nav.dashboard' => 'Dashboard',
-			'nav.deposits' => 'Deposits',
+			'nav.oneTimeDeposits' => 'One-Time Deposits',
 			'nav.recurringDeposits' => 'Recurring Deposits',
-			'nav.rd' => 'RD',
 			'nav.users' => 'Users',
 			'users.title' => 'Users',
 			'users.newUser' => 'New User',
@@ -240,8 +236,8 @@ extension on Translations {
 			'users.fields.emailAddress' => 'Email Address',
 			'users.fields.homeAddress' => 'Home Address',
 			'dashboard.charts' => 'Dashboard Charts Go Here',
-			'deposits.list' => 'Deposits List Goes Here',
-			'rd.list' => 'RD List Goes Here',
+			'oneTimeDeposits.list' => 'One-Time Deposits List Goes Here',
+			'recurringDeposits.list' => 'Recurring Deposits List Goes Here',
 			_ => null,
 		};
 	}

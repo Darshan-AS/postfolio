@@ -7,8 +7,8 @@ class OneTimeDepositsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(t.nav.deposits)),
-      body: Center(child: Text(t.deposits.list)),
+      appBar: AppBar(title: Text(t.nav.oneTimeDeposits)),
+      body: Center(child: Text(t.oneTimeDeposits.list)),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         child: const Icon(Icons.add),

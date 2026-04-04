@@ -30,12 +30,12 @@ class MainShellScaffold extends StatelessWidget {
           NavigationDestination(
             icon: const Icon(Icons.receipt_long_outlined),
             selectedIcon: const Icon(Icons.receipt_long),
-            label: t.nav.deposits,
+            label: t.nav.oneTimeDeposits,
           ),
           NavigationDestination(
             icon: const Icon(Icons.swap_horiz_outlined),
             selectedIcon: const Icon(Icons.swap_horiz),
-            label: t.nav.rd,
+            label: t.nav.recurringDeposits,
           ),
           NavigationDestination(
             icon: const Icon(Icons.people_outline),
