@@ -26,3 +26,17 @@ These guidelines apply to all code generated and modified in this workspace. Adh
 ## Routing & Infrastructure
 - **Routing**: Use **`go_router`** for declarative routing without the need for code generation.
 - **Backend & Database**: Use **Firebase (Firestore)** as the Backend-as-a-Service. Rely on Firestore's native offline-persistence instead of maintaining a separate local database (like Isar/Drift). All data repositories should interact directly with Firestore.
+
+## Build and Test
+{Commands to install, build, test—agents will attempt to run these}
+
+## Agent Memory & Handoff
+All progress, tasks, and architectural conventions are stored in the `.agents/` folder. 
+**CRITICAL INSTRUCTION FOR ALL AI AGENTS:** 
+When starting a new conversation or picking up this repository, you MUST immediately read the following files before making any changes:
+1. `.agents/progress.md` (To understand current state and immediate next steps)
+2. `.agents/tasks.md` (To understand the project roadmap)
+3. `.agents/conventions.md` (To understand strict coding rules)
+
+## Conventions
+{Patterns that differ from common practices—include specific examples}
