@@ -1,4 +1,7 @@
+import 'dart:collection';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/users/domain/user_model.dart';
 import 'package:postfolio/features/users/data/user_repository.dart';
 
@@ -7,58 +10,76 @@ part 'users_controller.g.dart';
 @riverpod
 class UsersController extends _$UsersController {
   @override
-  FutureOr<List<User>> build() async {
+  FutureOr<UnmodifiableListView<User>> build() async {
     return _fetchUsers();
   }
 
-  Future<List<User>> _fetchUsers() async {
+  Future<UnmodifiableListView<User>> _fetchUsers() async {
     final repository = ref.read(userRepositoryProvider);
-    return repository.fetchUsers();
+    final result = await repository.fetchUsers();
+    
+    return switch (result) {
+      Success(value: final users) => UnmodifiableListView(users),
+      Failure(error: final error) => throw Exception(error),
+    };
   }
 
-  Future<void> saveUser({
+  Future<Result<void, String>> saveUser({
     String? id,
     required String name,
     String? email,
     String? phone,
     String? address,
   }) async {
-    // Set state to loading while we perform the network request
+    final previousState = state;
     state = const AsyncValue.loading();
-    // guard safely catches any errors and sets state to AsyncError if it fails
-    state = await AsyncValue.guard(() async {
-      final repository = ref.read(userRepositoryProvider);
-      
-      // Domain Construction & Validation Logic happens here, NOT in the UI
-      final (error, user) = User.create(
-        id: id ?? '', // FakeRepo will assign a real ID if creating
-        name: name,
-        email: email,
-        phone: phone,
-        address: address,
-      );
+    
+    final (error, user) = User.create(
+      id: id ?? '', // FakeRepo will assign a real ID if creating
+      name: name,
+      email: email,
+      phone: phone,
+      address: address,
+    );
 
-      if (error != null || user == null) {
-        throw ArgumentError(error ?? 'Invalid user data provided');
-      }
+    if (error != null || user == null) {
+      state = previousState;
+      return Failure(error ?? 'Invalid user data provided');
+    }
 
-      if (id != null) {
-        await repository.updateUser(user);
-      } else {
-        await repository.createUser(user);
-      }
-      
-      // Re-fetch the list to ensure our state matches the database exactly
-      return _fetchUsers();
-    });
+    final repository = ref.read(userRepositoryProvider);
+    final Result<void, String> result = id != null 
+        ? await repository.updateUser(user) 
+        : await repository.createUser(user);
+
+    return switch (result) {
+      Success() => () {
+        ref.invalidateSelf(); // Triggers a re-fetch and rebuild
+        return const Success<void, String>(null);
+      }(),
+      Failure(error: final err) => () {
+        state = previousState;
+        return Failure<void, String>(err);
+      }(),
+    };
   }
 
-  Future<void> deleteUser(String id) async {
+  Future<Result<void, String>> deleteUser(String id) async {
+    final previousState = state;
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final repository = ref.read(userRepositoryProvider);
-      await repository.deleteUser(id);
-      return _fetchUsers();
-    });
+    
+    final repository = ref.read(userRepositoryProvider);
+    final result = await repository.deleteUser(id);
+    
+    return switch (result) {
+      Success() => () {
+        ref.invalidateSelf();
+        return const Success<void, String>(null);
+      }(),
+      Failure(error: final err) => () {
+        state = previousState;
+        return Failure<void, String>(err);
+      }(),
+    };
   }
 }

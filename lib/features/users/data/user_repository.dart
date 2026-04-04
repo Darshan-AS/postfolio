@@ -1,12 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/users/domain/user_model.dart';
 import 'package:uuid/uuid.dart';
 
 abstract class UserRepository {
-  Future<List<User>> fetchUsers();
-  Future<void> createUser(User user);
-  Future<void> updateUser(User user);
-  Future<void> deleteUser(String id);
+  Future<Result<List<User>, String>> fetchUsers();
+  Future<Result<void, String>> createUser(User user);
+  Future<Result<void, String>> updateUser(User user);
+  Future<Result<void, String>> deleteUser(String id);
 }
 
 class FakeUserRepository implements UserRepository {
@@ -17,31 +18,39 @@ class FakeUserRepository implements UserRepository {
   ];
 
   @override
-  Future<List<User>> fetchUsers() async {
+  Future<Result<List<User>, String>> fetchUsers() async {
     await Future.delayed(const Duration(seconds: 1)); // Simulate network latency
-    return [..._users];
+    return Success([..._users]);
   }
 
   @override
-  Future<void> createUser(User user) async {
+  Future<Result<void, String>> createUser(User user) async {
     await Future.delayed(const Duration(milliseconds: 500));
     final newUser = user.copyWith(id: const Uuid().v4());
     _users.add(newUser);
+    return const Success(null);
   }
 
   @override
-  Future<void> updateUser(User user) async {
+  Future<Result<void, String>> updateUser(User user) async {
     await Future.delayed(const Duration(milliseconds: 500));
     final index = _users.indexWhere((u) => u.id == user.id);
     if (index != -1) {
       _users[index] = user;
+      return const Success(null);
     }
+    return const Failure('User not found');
   }
 
   @override
-  Future<void> deleteUser(String id) async {
+  Future<Result<void, String>> deleteUser(String id) async {
     await Future.delayed(const Duration(milliseconds: 500));
+    final initialLength = _users.length;
     _users.removeWhere((u) => u.id == id);
+    if (_users.length < initialLength) {
+      return const Success(null);
+    }
+    return const Failure('User not found');
   }
 }
 

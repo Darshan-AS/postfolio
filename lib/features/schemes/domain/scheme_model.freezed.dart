@@ -207,8 +207,8 @@ return $default(_that.id,_that.name,_that.isVariableTerm,_that.termYears,_that.t
 /// @nodoc
 @JsonSerializable()
 
-class _Scheme implements Scheme {
-  const _Scheme({required this.id, required this.name, required this.isVariableTerm, this.termYears = 0, this.termMonths = 0, this.baseInterestRate = 0.0});
+class _Scheme extends Scheme {
+  const _Scheme({required this.id, required this.name, required this.isVariableTerm, this.termYears = 0, this.termMonths = 0, this.baseInterestRate = 0.0}): super._();
   factory _Scheme.fromJson(Map<String, dynamic> json) => _$SchemeFromJson(json);
 
 @override final  String id;

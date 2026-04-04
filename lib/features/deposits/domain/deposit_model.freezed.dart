@@ -205,8 +205,8 @@ return $default(_that.name,_that.relationship,_that.phone);case _:
 /// @nodoc
 @JsonSerializable()
 
-class _Nominee implements Nominee {
-  const _Nominee({required this.name, required this.relationship, this.phone});
+class _Nominee extends Nominee {
+  const _Nominee({required this.name, required this.relationship, this.phone}): super._();
   factory _Nominee.fromJson(Map<String, dynamic> json) => _$NomineeFromJson(json);
 
 @override final  String name;
@@ -479,8 +479,8 @@ return $default(_that.id,_that.rowId,_that.accountNo,_that.amount,_that.termYear
 /// @nodoc
 @JsonSerializable()
 
-class _Deposit implements Deposit {
-  const _Deposit({required this.id, required this.rowId, required this.accountNo, required this.amount, required this.termYears, required this.termMonths, this.interestRate = 0.0, required this.customerId, required this.schemeId, required this.maturityAmount, required this.depositDate, required this.maturityDate, final  List<Nominee> nominees = const []}): _nominees = nominees;
+class _Deposit extends Deposit {
+  const _Deposit({required this.id, required this.rowId, required this.accountNo, required this.amount, required this.termYears, required this.termMonths, this.interestRate = 0.0, required this.customerId, required this.schemeId, required this.maturityAmount, required this.depositDate, required this.maturityDate, final  List<Nominee> nominees = const []}): _nominees = nominees,super._();
   factory _Deposit.fromJson(Map<String, dynamic> json) => _$DepositFromJson(json);
 
 @override final  String id;

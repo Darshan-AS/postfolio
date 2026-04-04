@@ -24,8 +24,8 @@
 - [x] Fix `UserFormScreen` initialization (avoid synchronously reading controller state).
 - [x] Implement robust loading states in `UserFormScreen` (disable buttons during save).
 - [ ] Create a reusable `ErrorStateView` widget for consistent error handling and retries.
-- [ ] Refactor Controllers to return strongly-typed `Result` types instead of throwing exceptions.
-- [ ] Add strict domain validation and factory constructors to `Deposit`, `Scheme`, and `RecurringDeposit` models.
+- [x] Refactor Controllers to return strongly-typed `Result` types instead of throwing exceptions.
+- [x] Add strict domain validation and factory constructors to `Deposit`, `Scheme`, and `RecurringDeposit` models.
 
 ## Phase 4: Deposits & RD Features (Pending)
 - [ ] Build `DepositsRepository` and `DepositsController`.

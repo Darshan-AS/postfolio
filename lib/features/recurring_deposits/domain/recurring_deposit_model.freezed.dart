@@ -213,8 +213,8 @@ return $default(_that.id,_that.accountNo,_that.installmentAmount,_that.termYears
 /// @nodoc
 @JsonSerializable()
 
-class _RecurringDeposit implements RecurringDeposit {
-  const _RecurringDeposit({required this.id, required this.accountNo, required this.installmentAmount, required this.termYears, required this.termMonths, required this.interestRate, required this.customerId, required this.schemeId, required this.maturityAmount, required this.startDate, required this.maturityDate, final  List<Nominee> nominees = const []}): _nominees = nominees;
+class _RecurringDeposit extends RecurringDeposit {
+  const _RecurringDeposit({required this.id, required this.accountNo, required this.installmentAmount, required this.termYears, required this.termMonths, required this.interestRate, required this.customerId, required this.schemeId, required this.maturityAmount, required this.startDate, required this.maturityDate, final  List<Nominee> nominees = const []}): _nominees = nominees,super._();
   factory _RecurringDeposit.fromJson(Map<String, dynamic> json) => _$RecurringDepositFromJson(json);
 
 @override final  String id;

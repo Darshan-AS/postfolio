@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:postfolio/features/users/domain/user_model.dart';
 import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/utils/result.dart';
 
 class UserFormScreen extends ConsumerWidget {
   final String? userId;
@@ -77,24 +78,23 @@ class _UserFormState extends ConsumerState<_UserForm> {
 
   Future<void> _save() async {
     if (_formKey.currentState!.validate()) {
-      try {
-        await ref.read(usersControllerProvider.notifier).saveUser(
-          id: widget.existingUser?.id,
-          name: _nameController.text.trim(),
-          email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-          phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-          address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-        );
+      final result = await ref.read(usersControllerProvider.notifier).saveUser(
+        id: widget.existingUser?.id,
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+      );
 
-        if (mounted) {
+      if (!mounted) return;
+
+      switch (result) {
+        case Success():
           context.pop();
-        }
-      } catch (e) {
-        if (mounted) {
+        case Failure(error: final err):
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to save user: $e')),
+            SnackBar(content: Text('Failed to save user: $err')),
           );
-        }
       }
     }
   }

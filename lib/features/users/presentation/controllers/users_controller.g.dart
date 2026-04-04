@@ -13,7 +13,8 @@ part of 'users_controller.dart';
 final usersControllerProvider = UsersControllerProvider._();
 
 final class UsersControllerProvider
-    extends $AsyncNotifierProvider<UsersController, List<User>> {
+    extends
+        $AsyncNotifierProvider<UsersController, UnmodifiableListView<User>> {
   UsersControllerProvider._()
     : super(
         from: null,
@@ -33,19 +34,28 @@ final class UsersControllerProvider
   UsersController create() => UsersController();
 }
 
-String _$usersControllerHash() => r'983a467cf3ee2355842c73c1ae2a1f216f8d8847';
+String _$usersControllerHash() => r'2d52c3504521bf98bd5ac2c808dad6725f0d4f82';
 
-abstract class _$UsersController extends $AsyncNotifier<List<User>> {
-  FutureOr<List<User>> build();
+abstract class _$UsersController
+    extends $AsyncNotifier<UnmodifiableListView<User>> {
+  FutureOr<UnmodifiableListView<User>> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<List<User>>, List<User>>;
+    final ref =
+        this.ref
+            as $Ref<
+              AsyncValue<UnmodifiableListView<User>>,
+              UnmodifiableListView<User>
+            >;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<List<User>>, List<User>>,
-              AsyncValue<List<User>>,
+              AnyNotifier<
+                AsyncValue<UnmodifiableListView<User>>,
+                UnmodifiableListView<User>
+              >,
+              AsyncValue<UnmodifiableListView<User>>,
               Object?,
               Object?
             >;

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/routing/route_names.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
 
 class UserDetailScreen extends ConsumerWidget {
@@ -22,10 +23,21 @@ class UserDetailScreen extends ConsumerWidget {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              ref.read(usersControllerProvider.notifier).deleteUser(userId);
-              ctx.pop(); // Dismiss dialog
-              context.pop(); // Pop back to user list
+            onPressed: () async {
+              final result = await ref.read(usersControllerProvider.notifier).deleteUser(userId);
+              
+              if (!context.mounted) return;
+              
+              switch (result) {
+                case Success():
+                  ctx.pop(); // Dismiss dialog
+                  context.pop(); // Pop back to user list
+                case Failure(error: final err):
+                  ctx.pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to delete user: $err')),
+                  );
+              }
             },
             child: const Text('Delete', style: TextStyle(color: AppTheme.error)),
           ),
