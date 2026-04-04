@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:postfolio/core/routing/route_names.dart';
 import 'package:postfolio/features/dashboard/presentation/screens/dashboard_screen.dart';
-import 'package:postfolio/features/fixed_deposits/presentation/screens/fd_screen.dart';
+import 'package:postfolio/features/one_time_deposits/presentation/screens/one_time_screen.dart';
 import 'package:postfolio/features/main_shell/presentation/screens/main_shell_scaffold.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/screens/rd_screen.dart';
 import 'package:postfolio/features/users/presentation/screens/user_detail_screen.dart';
@@ -35,7 +35,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RouteNames.deposits,
-                builder: (context, state) => const FixedDepositsScreen(),
+                builder: (context, state) => const OneTimeDepositsScreen(),
               ),
             ],
           ),

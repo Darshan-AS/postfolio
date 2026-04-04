@@ -15,10 +15,11 @@ _RecurringDeposit _$RecurringDepositFromJson(Map<String, dynamic> json) =>
       termMonths: (json['termMonths'] as num).toInt(),
       interestRate: (json['interestRate'] as num).toDouble(),
       customerId: json['customerId'] as String,
-      schemeId: json['schemeId'] as String,
+      schemeType: $enumDecode(_$RecurringSchemeTypeEnumMap, json['schemeType']),
       maturityAmount: (json['maturityAmount'] as num).toDouble(),
       startDate: DateTime.parse(json['startDate'] as String),
       maturityDate: DateTime.parse(json['maturityDate'] as String),
+      linkedAutoDebitAccountNo: json['linkedAutoDebitAccountNo'] as String?,
       nominees:
           (json['nominees'] as List<dynamic>?)
               ?.map((e) => Nominee.fromJson(e as Map<String, dynamic>))
@@ -35,9 +36,14 @@ Map<String, dynamic> _$RecurringDepositToJson(_RecurringDeposit instance) =>
       'termMonths': instance.termMonths,
       'interestRate': instance.interestRate,
       'customerId': instance.customerId,
-      'schemeId': instance.schemeId,
+      'schemeType': _$RecurringSchemeTypeEnumMap[instance.schemeType]!,
       'maturityAmount': instance.maturityAmount,
       'startDate': instance.startDate.toIso8601String(),
       'maturityDate': instance.maturityDate.toIso8601String(),
+      'linkedAutoDebitAccountNo': instance.linkedAutoDebitAccountNo,
       'nominees': instance.nominees,
     };
+
+const _$RecurringSchemeTypeEnumMap = {
+  RecurringSchemeType.recurringDeposit: 'recurringDeposit',
+};

@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/models/nominee.dart';
+import 'package:postfolio/core/enums/scheme_type.dart';
 
 part 'recurring_deposit_model.freezed.dart';
 part 'recurring_deposit_model.g.dart';
@@ -17,11 +18,12 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required int termMonths,
     required double interestRate,
     required String customerId,
-    required String schemeId,
+    required RecurringSchemeType schemeType,
     required double maturityAmount,
     required DateTime startDate,
     required DateTime maturityDate,
-    @Default([]) List<Nominee> nominees, // Embedded List of Nominees
+    String? linkedAutoDebitAccountNo,
+    @Default([]) List<Nominee> nominees,
   }) = _RecurringDeposit;
 
   factory RecurringDeposit.fromJson(Map<String, dynamic> json) =>
@@ -35,10 +37,11 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required int termMonths,
     required double interestRate,
     required String customerId,
-    required String schemeId,
+    required RecurringSchemeType schemeType,
     required double maturityAmount,
     required DateTime startDate,
     required DateTime maturityDate,
+    String? linkedAutoDebitAccountNo,
     List<Nominee> nominees = const [],
   }) {
     final accountError = BaseDeposit.validateAccountNo(accountNo);
@@ -66,10 +69,11 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
         termMonths: termMonths,
         interestRate: interestRate,
         customerId: customerId,
-        schemeId: schemeId,
+        schemeType: schemeType,
         maturityAmount: maturityAmount,
         startDate: startDate,
         maturityDate: maturityDate,
+        linkedAutoDebitAccountNo: linkedAutoDebitAccountNo?.trim(),
         nominees: List.unmodifiable(nominees),
       ),
     );

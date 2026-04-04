@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-class FixedDepositsScreen extends StatelessWidget {
-  const FixedDepositsScreen({super.key});
+class OneTimeDepositsScreen extends StatelessWidget {
+  const OneTimeDepositsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

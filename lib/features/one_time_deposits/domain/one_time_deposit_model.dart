@@ -1,75 +1,79 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/models/nominee.dart';
+import 'package:postfolio/core/enums/scheme_type.dart';
 
-part 'fixed_deposit_model.freezed.dart';
-part 'fixed_deposit_model.g.dart';
+part 'one_time_deposit_model.freezed.dart';
+part 'one_time_deposit_model.g.dart';
 
 @freezed
-sealed class FixedDeposit with _$FixedDeposit implements BaseDeposit {
-  const FixedDeposit._();
+sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
+  const OneTimeDeposit._();
 
-  const factory FixedDeposit({
+  const factory OneTimeDeposit({
     required String id,
     required String rowId,
     required String accountNo,
-    required double amount,
+    required double principalAmount,
     required int termYears,
     required int termMonths,
     @Default(0.0) double interestRate,
     required String customerId,
-    required String schemeId,
+    required OneTimeSchemeType schemeType,
     required double maturityAmount,
-    required DateTime depositDate,
+    required DateTime startDate,
     required DateTime maturityDate,
-    @Default([]) List<Nominee> nominees, // Embedded List of Nominees
-  }) = _FixedDeposit;
+    String? linkedSavingsAccountNo,
+    @Default([]) List<Nominee> nominees,
+  }) = _OneTimeDeposit;
 
-  factory FixedDeposit.fromJson(Map<String, dynamic> json) =>
-      _$FixedDepositFromJson(json);
+  factory OneTimeDeposit.fromJson(Map<String, dynamic> json) =>
+      _$OneTimeDepositFromJson(json);
 
-  static (String?, FixedDeposit?) create({
+  static (String?, OneTimeDeposit?) create({
     required String id,
     required String rowId,
     required String accountNo,
-    required double amount,
+    required double principalAmount,
     required int termYears,
     required int termMonths,
     double interestRate = 0.0,
     required String customerId,
-    required String schemeId,
+    required OneTimeSchemeType schemeType,
     required double maturityAmount,
-    required DateTime depositDate,
+    required DateTime startDate,
     required DateTime maturityDate,
+    String? linkedSavingsAccountNo,
     List<Nominee> nominees = const [],
   }) {
     final accountError = BaseDeposit.validateAccountNo(accountNo);
     if (accountError != null) return (accountError, null);
 
-    final amountError = BaseDeposit.validateAmount(amount, 'Amount');
+    final amountError = BaseDeposit.validateAmount(principalAmount, 'Principal Amount');
     if (amountError != null) return (amountError, null);
 
     final termError = BaseDeposit.validateTerm(termYears, termMonths);
     if (termError != null) return (termError, null);
 
-    final dateError = BaseDeposit.validateDates(depositDate, maturityDate);
+    final dateError = BaseDeposit.validateDates(startDate, maturityDate);
     if (dateError != null) return (dateError, null);
 
     return (
       null,
-      FixedDeposit(
+      OneTimeDeposit(
         id: id,
         rowId: rowId,
         accountNo: accountNo.trim(),
-        amount: amount,
+        principalAmount: principalAmount,
         termYears: termYears,
         termMonths: termMonths,
         interestRate: interestRate,
         customerId: customerId,
-        schemeId: schemeId,
+        schemeType: schemeType,
         maturityAmount: maturityAmount,
-        depositDate: depositDate,
+        startDate: startDate,
         maturityDate: maturityDate,
+        linkedSavingsAccountNo: linkedSavingsAccountNo?.trim(),
         nominees: List.unmodifiable(nominees),
       ),
     );
