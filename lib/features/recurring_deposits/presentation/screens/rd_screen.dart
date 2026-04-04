@@ -8,8 +8,6 @@ class RdScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Recurring Deposits'),
-        backgroundColor: Colors.white,
-        elevation: 0,
       ),
       body: const Center(
         child: Text('RD List Goes Here'),

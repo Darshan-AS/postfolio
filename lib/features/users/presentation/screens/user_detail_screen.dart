@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/routing/route_names.dart';
+import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
 
 class UserDetailScreen extends ConsumerWidget {
@@ -26,7 +27,7 @@ class UserDetailScreen extends ConsumerWidget {
               ctx.pop(); // Dismiss dialog
               context.pop(); // Pop back to user list
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete', style: TextStyle(color: AppTheme.error)),
           ),
         ],
       ),
@@ -38,11 +39,7 @@ class UserDetailScreen extends ConsumerWidget {
     final usersState = ref.watch(usersControllerProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black87,
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
@@ -50,7 +47,7 @@ class UserDetailScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            color: Colors.red[400],
+            color: AppTheme.error,
             onPressed: () => _confirmDelete(context, ref),
           ),
         ],
@@ -69,8 +66,8 @@ class UserDetailScreen extends ConsumerWidget {
             children: [
               const CircleAvatar(
                 radius: 48,
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
+                backgroundColor: AppTheme.primary,
+                foregroundColor: AppTheme.surface,
                 child: Icon(Icons.person, size: 48),
               ),
               const SizedBox(height: 16),
@@ -81,17 +78,12 @@ class UserDetailScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 32),
               Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  side: BorderSide(color: Colors.grey[300]!, width: 1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
                 child: Column(
                   children: [
                     _buildInfoTile(Icons.phone_outlined, 'Phone Number', user.phone ?? 'Not provided'),
-                    const Divider(height: 1),
+                    const Divider(),
                     _buildInfoTile(Icons.email_outlined, 'Email Address', user.email ?? 'Not provided'),
-                    const Divider(height: 1),
+                    const Divider(),
                     _buildInfoTile(Icons.home_outlined, 'Home Address', user.address ?? 'Not provided'),
                   ],
                 ),
@@ -107,9 +99,9 @@ class UserDetailScreen extends ConsumerWidget {
 
   Widget _buildInfoTile(IconData icon, String title, String subtitle) {
     return ListTile(
-      leading: Icon(icon, color: Colors.blue),
-      title: Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 16, color: Colors.black87)),
+      leading: Icon(icon, color: AppTheme.primary),
+      title: Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 16, color: AppTheme.textPrimary)),
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/routing/route_names.dart';
 import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
 import 'package:postfolio/features/users/presentation/widgets/user_card.dart';
+import 'package:postfolio/core/theme/app_theme.dart';
 
 class UsersScreen extends ConsumerWidget {
   const UsersScreen({super.key});
@@ -14,18 +15,14 @@ class UsersScreen extends ConsumerWidget {
     final usersState = ref.watch(usersControllerProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () {},
         ),
         title: const Row(
           children: [
-            Icon(Icons.groups_outlined, color: Colors.blue),
+            Icon(Icons.groups_outlined, color: AppTheme.primary),
             SizedBox(width: 8),
             Text('Users', style: TextStyle(fontWeight: FontWeight.w600)),
           ],
@@ -48,7 +45,7 @@ class UsersScreen extends ConsumerWidget {
           }
           return ListView.separated(
             itemCount: users.length,
-            separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey[300]),
+            separatorBuilder: (context, index) => const Divider(),
             itemBuilder: (context, index) {
               final user = users[index];
               return UserCard(
@@ -69,8 +66,6 @@ class UsersScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push(RouteNames.userCreate),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),
     );

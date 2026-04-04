@@ -8,8 +8,6 @@ class DepositsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Deposits'),
-        backgroundColor: Colors.white,
-        elevation: 0,
       ),
       body: const Center(
         child: Text('Deposits List Goes Here'),

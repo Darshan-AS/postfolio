@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/features/users/domain/user_model.dart';
 import 'package:postfolio/features/users/presentation/controllers/users_controller.dart';
+import 'package:postfolio/core/theme/app_theme.dart';
 
 class UserFormScreen extends ConsumerStatefulWidget {
   final String? userId;
@@ -77,16 +78,12 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
     final isUpdating = widget.userId != null;
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(isUpdating ? 'Edit User' : 'New User'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black87,
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
-            color: Colors.blue,
+            color: AppTheme.primary,
             onPressed: _save,
             tooltip: 'Save',
           ),
@@ -145,15 +142,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: _save,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Save User', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: const Text('Save User'),
             ),
           ],
         ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/theme/app_theme.dart';
+
 class UserCard extends StatelessWidget {
   final String name;
   final String phone;
@@ -40,14 +42,14 @@ class UserCard extends StatelessWidget {
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: Colors.black87,
+                color: AppTheme.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               phone,
-              style: TextStyle(
-                color: Colors.grey[600],
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
                 fontSize: 14,
               ),
             ),
@@ -57,27 +59,27 @@ class UserCard extends StatelessWidget {
               children: [
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
-                  color: Colors.grey[700],
+                  color: AppTheme.textSecondary,
                   onPressed: onEdit,
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
-                  color: Colors.red[400],
+                  color: AppTheme.error,
                   onPressed: onDelete,
                 ),
                 IconButton(
                   icon: const Icon(Icons.phone_outlined),
-                  color: Colors.grey[700],
+                  color: AppTheme.textSecondary,
                   onPressed: () => _launchUrl('tel:$phone'),
                 ),
                 IconButton(
                   icon: const Icon(Icons.message_outlined),
-                  color: Colors.grey[700],
+                  color: AppTheme.textSecondary,
                   onPressed: () => _launchUrl('sms:$phone'),
                 ),
                 IconButton(
                   icon: const Icon(Icons.location_on_outlined),
-                  color: Colors.grey[700],
+                  color: AppTheme.textSecondary,
                   // Example map query based on name or address, using a generic geo url
                   onPressed: () => _launchUrl('https://maps.google.com/?q=$name'),
                 ),

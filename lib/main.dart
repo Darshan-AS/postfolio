@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
+import 'package:postfolio/core/theme/app_theme.dart';
 
 void main() {
   runApp(const ProviderScope(child: PostfolioApp()));
@@ -15,11 +16,7 @@ class PostfolioApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'Postfolio',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-        scaffoldBackgroundColor: Colors.grey[50],
-      ),
+      theme: AppTheme.lightTheme, // Apply centralized theme
       routerConfig: goRouter,
     );
   }

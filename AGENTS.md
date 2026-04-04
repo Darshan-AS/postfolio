@@ -38,5 +38,10 @@ When starting a new conversation or picking up this repository, you MUST immedia
 2. `.agents/tasks.md` (To understand the project roadmap)
 3. `.agents/conventions.md` (To understand strict coding rules)
 
+## Agent Workflow Rules
+- **Build Before Commit:** Ensure everything builds successfully before making a commit.
+- **Logical Commits:** Commits should only be made at logical stages, and only when the codebase is in a building/working state.
+- **Maintain Markdown State:** Keep all markdown files (like `progress.md`, `tasks.md`, `conventions.md`, and `AGENTS.md`) updated based on the conversations so the next agent is fully informed.
+
 ## Conventions
 {Patterns that differ from common practices—include specific examples}
