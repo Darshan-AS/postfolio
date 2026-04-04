@@ -67,6 +67,8 @@ class _UserFormState extends ConsumerState<_UserForm> {
   late final TextEditingController _phoneController;
   late final TextEditingController _addressController;
 
+  bool _isSaving = false;
+
   @override
   void initState() {
     super.initState();
@@ -87,6 +89,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
 
   Future<void> _save() async {
     if (_formKey.currentState!.validate()) {
+      setState(() => _isSaving = true);
       final result = await ref.read(usersControllerProvider.notifier).saveUser(
         id: widget.existingUser?.id,
         name: _nameController.text.trim(),
@@ -96,6 +99,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
       );
 
       if (!mounted) return;
+      setState(() => _isSaving = false);
       
 
       switch (result) {
@@ -112,14 +116,13 @@ class _UserFormState extends ConsumerState<_UserForm> {
   @override
   Widget build(BuildContext context) {
     final isUpdating = widget.existingUser != null;
-    final isLoading = ref.watch(usersControllerProvider).isLoading;
     
 
     return Scaffold(
       appBar: AppBar(
         title: Text(isUpdating ? t.users.editUser : t.users.newUser),
         actions: [
-          if (isLoading)
+          if (_isSaving)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
               child: Center(
@@ -191,8 +194,8 @@ class _UserFormState extends ConsumerState<_UserForm> {
             ),
             AppSpacings.gapXxl,
             ElevatedButton(
-              onPressed: isLoading ? null : _save,
-              child: isLoading 
+              onPressed: _isSaving ? null : _save,
+              child: _isSaving 
                   ? Text(t.common.saving) 
                   : Text(t.users.saveUser),
             ),

@@ -31,9 +31,6 @@ class UsersController extends _$UsersController {
     String? phone,
     String? address,
   }) async {
-    final previousState = state;
-    state = const AsyncValue.loading();
-    
     final (error, user) = User.create(
       id: id ?? '', // FakeRepo will assign a real ID if creating
       name: name,
@@ -43,7 +40,6 @@ class UsersController extends _$UsersController {
     );
 
     if (error != null || user == null) {
-      state = previousState;
       return Failure(error ?? 'Invalid user data provided');
     }
 
@@ -57,17 +53,11 @@ class UsersController extends _$UsersController {
         ref.invalidateSelf(); // Triggers a re-fetch and rebuild
         return const Success<void, String>(null);
       }(),
-      Failure(error: final err) => () {
-        state = previousState;
-        return Failure<void, String>(err);
-      }(),
+      Failure(error: final err) => Failure<void, String>(err),
     };
   }
 
   Future<Result<void, String>> deleteUser(String id) async {
-    final previousState = state;
-    state = const AsyncValue.loading();
-    
     final repository = ref.read(userRepositoryProvider);
     final result = await repository.deleteUser(id);
     
@@ -76,10 +66,7 @@ class UsersController extends _$UsersController {
         ref.invalidateSelf();
         return const Success<void, String>(null);
       }(),
-      Failure(error: final err) => () {
-        state = previousState;
-        return Failure<void, String>(err);
-      }(),
+      Failure(error: final err) => Failure<void, String>(err),
     };
   }
 }

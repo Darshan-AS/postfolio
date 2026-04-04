@@ -26,7 +26,7 @@
 - [x] Create a reusable `ErrorStateView` widget for consistent error handling and retries.
 - [x] Refactor Controllers to return strongly-typed `Result` types instead of throwing exceptions.
 - [x] Add strict domain validation and factory constructors to `Deposit`, `Scheme`, and `RecurringDeposit` models.
-- [x] Remove Hardcoded Strings by setting up Flutter Localizations (`.arb` files).
+- [x] Remove Hardcoded Strings by setting up Slang localizations (`.i18n.yaml` files).
 
 ## Phase 4: Deposits & RD Features (Pending)
 - [ ] Build `DepositsRepository` and `DepositsController`.
