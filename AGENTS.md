@@ -37,6 +37,8 @@ When starting a new conversation or picking up this repository, you MUST immedia
 1. `.agents/progress.md` (To understand current state and immediate next steps)
 2. `.agents/tasks.md` (To understand the project roadmap)
 3. `.agents/conventions.md` (To understand strict coding rules)
+4. `docs/product_requirements.md` (To understand feature specifications)
+5. `docs/deposit_schemes.md` & `docs/domain_knowledge.md` (To understand the business context and financial logic)
 
 ## Agent Workflow Rules
 - **Build Before Commit:** Ensure everything builds successfully before making a commit.
