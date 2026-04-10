@@ -47,14 +47,15 @@ class OneTimeDepositsScreen extends ConsumerWidget {
           }
           return ListView.separated(
             itemCount: deposits.length,
-            separatorBuilder: (context, index) => const Divider(),
+            separatorBuilder: (context, index) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final deposit = deposits[index];
               return OneTimeDepositCard(
                 accountNo: deposit.accountNo,
-                schemeName: deposit.schemeType.displayName,
+                schemeName: deposit.schemeType.shortName,
                 principalAmount: deposit.principalAmount,
                 status: deposit.status,
+                maturityDate: deposit.maturityDate,
                 onTap: () => context.push(RouteNames.oneTimeDetail(deposit.id)),
                 onEdit: () => context.push(RouteNames.oneTimeEdit(deposit.id)),
                 onDelete: () {

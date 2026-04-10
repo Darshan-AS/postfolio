@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+
+import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
 
 class OneTimeDepositCard extends StatelessWidget {
   final String accountNo;
   final String schemeName;
   final double principalAmount;
   final DepositStatus status;
+  final DateTime maturityDate;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -17,6 +21,7 @@ class OneTimeDepositCard extends StatelessWidget {
     required this.schemeName,
     required this.principalAmount,
     required this.status,
+    required this.maturityDate,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -25,45 +30,89 @@ class OneTimeDepositCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: const CircleAvatar(
-        backgroundColor: AppTheme.primary,
-        foregroundColor: AppTheme.surface,
-        child: Icon(Icons.account_balance_wallet_outlined),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16.0,
+        vertical: 8.0,
+      ),
+      leading: CircleAvatar(
+        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+        child: const Icon(Icons.account_balance_wallet_outlined),
       ),
       title: Text(
         accountNo,
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
-      subtitle: Text('$schemeName • ₹${principalAmount.toStringAsFixed(2)} • ${status.displayName}'),
-      onTap: onTap,
-      trailing: PopupMenuButton<String>(
-        onSelected: (value) {
-          if (value == 'edit') {
-            onEdit();
-          } else if (value == 'delete') {
-            onDelete();
-          }
-        },
-        itemBuilder: (context) => [
-          const PopupMenuItem(
-            value: 'edit',
-            child: Row(
-              children: [
-                Icon(Icons.edit_outlined, size: 20),
-                SizedBox(width: 8),
-                Text('Edit'),
-              ],
+      subtitle: Row(
+        children: [
+          Text(
+            schemeName,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const PopupMenuItem(
-            value: 'delete',
-            child: Row(
-              children: [
-                Icon(Icons.delete_outline, size: 20, color: AppTheme.error),
-                SizedBox(width: 8),
-                Text('Delete', style: TextStyle(color: AppTheme.error)),
-              ],
+          const SizedBox(width: 8),
+          StatusBadge(status: status.displayName, compact: true),
+          const SizedBox(width: 8),
+          Text(
+            '• ${DateFormat('MMM dd, yyyy').format(maturityDate)}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
+          ),
+        ],
+      ),
+      onTap: onTap,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '₹${principalAmount.toStringAsFixed(0)}',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              if (value == 'edit') {
+                onEdit();
+              } else if (value == 'delete') {
+                onDelete();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit_outlined, size: 20),
+                    SizedBox(width: 8),
+                    Text('Edit'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.delete_outline,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Delete',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

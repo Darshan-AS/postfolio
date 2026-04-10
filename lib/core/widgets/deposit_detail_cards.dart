@@ -160,8 +160,9 @@ class DetailAmountCard extends StatelessWidget {
 
 class StatusBadge extends StatelessWidget {
   final String status;
+  final bool compact;
 
-  const StatusBadge({super.key, required this.status});
+  const StatusBadge({super.key, required this.status, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
@@ -181,20 +182,23 @@ class StatusBadge extends StatelessWidget {
               : colorScheme.onPrimaryContainer);
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingMd,
-        vertical: AppDimensions.paddingXs,
-      ),
+      padding: compact
+          ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2)
+          : const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingMd,
+              vertical: AppDimensions.paddingXs,
+            ),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(compact ? 6 : 12),
       ),
       child: Text(
         status.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: fgColor,
           fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
+          fontSize: compact ? 9 : null,
+          letterSpacing: compact ? 0.2 : 0.5,
         ),
       ),
     );
