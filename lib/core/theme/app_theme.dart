@@ -73,9 +73,6 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: surface,
-          padding: const EdgeInsets.symmetric(
-            vertical: AppDimensions.paddingLg,
-          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           ),
@@ -86,9 +83,6 @@ class AppTheme {
       // FilledButton Theme
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(
-            vertical: AppDimensions.paddingLg,
-          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           ),

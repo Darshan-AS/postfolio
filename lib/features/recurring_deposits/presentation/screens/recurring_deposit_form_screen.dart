@@ -250,6 +250,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                 context,
                 labelText: t.recurringDeposits.fields.serialNo,
                 prefixIcon: Icons.tag_outlined,
+                isRequired: true,
               ),
               validator: (val) =>
                   val == null || val.trim().isEmpty ? 'Required' : null,
@@ -262,6 +263,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                 context,
                 labelText: t.recurringDeposits.fields.accountNo,
                 prefixIcon: Icons.numbers_outlined,
+                isRequired: true,
               ),
               validator: RecurringDeposit.validateAccountNo,
               textInputAction: TextInputAction.next,
@@ -271,7 +273,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
               initialValue: _selectedStatus,
               decoration: AppInputDecoration.m3(
                 context,
-                labelText: 'Status',
+                labelText: t.recurringDeposits.fields.status,
                 prefixIcon: Icons.info_outline,
               ),
               items: DepositStatus.values.map((status) {
@@ -315,6 +317,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                 context,
                 labelText: t.recurringDeposits.fields.installmentAmount,
                 prefixIcon: Icons.money_outlined,
+                isRequired: true,
               ),
               keyboardType: TextInputType.number,
               validator: (val) => RecurringDeposit.validateAmount(
@@ -333,6 +336,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                       context,
                       labelText: t.recurringDeposits.fields.termYears,
                       prefixIcon: Icons.calendar_today_outlined,
+                      isRequired: true,
                     ),
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
@@ -346,6 +350,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                       context,
                       labelText: t.recurringDeposits.fields.termMonths,
                       prefixIcon: Icons.calendar_month_outlined,
+                      isRequired: true,
                     ),
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
@@ -360,6 +365,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                 context,
                 labelText: t.recurringDeposits.fields.interestRate,
                 prefixIcon: Icons.percent_outlined,
+                isRequired: true,
               ),
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.next,
@@ -371,6 +377,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                 context,
                 labelText: t.recurringDeposits.fields.maturityAmount,
                 prefixIcon: Icons.savings_outlined,
+                isRequired: true,
               ),
               keyboardType: TextInputType.number,
               validator: (val) => RecurringDeposit.validateAmount(
@@ -384,7 +391,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
               controller: _linkedAccountController,
               decoration: AppInputDecoration.m3(
                 context,
-                labelText: 'Linked Savings Account',
+                labelText: t.recurringDeposits.fields.linkedSavingsAccount,
                 prefixIcon: Icons.account_balance_outlined,
               ),
               textInputAction: TextInputAction.next,

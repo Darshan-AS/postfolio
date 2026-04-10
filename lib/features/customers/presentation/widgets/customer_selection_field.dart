@@ -85,6 +85,7 @@ class _CustomerSelectionFieldState
           labelText: t.oneTimeDeposits.fields.customerId,
           prefixIcon: Icons.person_outline,
           errorText: widget.errorText,
+          isRequired: true,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

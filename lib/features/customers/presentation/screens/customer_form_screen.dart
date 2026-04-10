@@ -238,6 +238,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                   context,
                   labelText: t.customers.fields.fullName,
                   prefixIcon: Icons.person_outline,
+                  isRequired: true,
                 ),
                 validator: Customer.validateName,
                 textInputAction: TextInputAction.next,
@@ -271,7 +272,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 controller: _dateOfBirthController,
                 decoration: AppInputDecoration.m3(
                   context,
-                  labelText: 'Date of Birth',
+                  labelText: t.customers.fields.dateOfBirth,
                   prefixIcon: Icons.calendar_today_outlined,
                 ),
                 readOnly: true,
@@ -300,7 +301,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 controller: _cifNumberController,
                 decoration: AppInputDecoration.m3(
                   context,
-                  labelText: 'CIF',
+                  labelText: t.customers.fields.cif,
                   prefixIcon: Icons.confirmation_number_outlined,
                 ),
                 textInputAction: TextInputAction.next,
@@ -310,7 +311,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 controller: _aadhaarNumberController,
                 decoration: AppInputDecoration.m3(
                   context,
-                  labelText: 'Aadhaar',
+                  labelText: t.customers.fields.aadhaarNumber,
                   prefixIcon: Icons.badge_outlined,
                 ),
                 keyboardType: TextInputType.number,
@@ -321,7 +322,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 controller: _panNumberController,
                 decoration: AppInputDecoration.m3(
                   context,
-                  labelText: 'PAN',
+                  labelText: t.customers.fields.panNumber,
                   prefixIcon: Icons.credit_card_outlined,
                 ),
                 textInputAction: TextInputAction.next,
@@ -339,7 +340,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 controller: _savingsAccountNumberController,
                 decoration: AppInputDecoration.m3(
                   context,
-                  labelText: 'SB Account No.',
+                  labelText: t.customers.fields.sbAccountNumber,
                   prefixIcon: Icons.account_balance_outlined,
                 ),
                 keyboardType: TextInputType.number,

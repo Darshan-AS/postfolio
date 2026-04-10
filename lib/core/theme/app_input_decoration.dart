@@ -9,10 +9,33 @@ class AppInputDecoration {
     String? hintText,
     String? errorText,
     IconData? prefixIcon,
+    bool isRequired = false,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+
+    Widget? label;
+    if (labelText != null) {
+      label = isRequired
+          ? RichText(
+              text: TextSpan(
+                text: labelText,
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 16,
+                ),
+                children: [
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(color: colorScheme.error),
+                  ),
+                ],
+              ),
+            )
+          : Text(labelText);
+    }
+
     return InputDecoration(
-      labelText: labelText,
+      label: label,
       hintText: hintText,
       errorText: errorText,
       prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,

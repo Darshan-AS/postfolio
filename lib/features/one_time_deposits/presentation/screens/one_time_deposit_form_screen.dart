@@ -252,7 +252,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
               initialValue: _selectedStatus,
               decoration: AppInputDecoration.m3(
                 context,
-                labelText: 'Status',
+                labelText: t.oneTimeDeposits.fields.status,
                 prefixIcon: Icons.info_outline,
               ),
               items: DepositStatus.values.map((status) {
@@ -314,6 +314,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                       context,
                       labelText: t.oneTimeDeposits.fields.termYears,
                       prefixIcon: Icons.calendar_today_outlined,
+                      isRequired: true,
                     ),
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
@@ -327,6 +328,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                       context,
                       labelText: t.oneTimeDeposits.fields.termMonths,
                       prefixIcon: Icons.calendar_month_outlined,
+                      isRequired: true,
                     ),
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
@@ -339,8 +341,9 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
               controller: _interestRateController,
               decoration: AppInputDecoration.m3(
                 context,
-                labelText: 'Interest Rate (%)',
+                labelText: t.oneTimeDeposits.fields.interestRate,
                 prefixIcon: Icons.percent_outlined,
+                isRequired: true,
               ),
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.next,
@@ -352,6 +355,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                 context,
                 labelText: t.oneTimeDeposits.fields.maturityAmount,
                 prefixIcon: Icons.savings_outlined,
+                isRequired: true,
               ),
               keyboardType: TextInputType.number,
               validator: (val) => OneTimeDeposit.validateAmount(
@@ -365,7 +369,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
               controller: _linkedAccountController,
               decoration: AppInputDecoration.m3(
                 context,
-                labelText: 'Linked Savings Account',
+                labelText: t.oneTimeDeposits.fields.linkedSavingsAccount,
                 prefixIcon: Icons.account_balance_outlined,
               ),
               textInputAction: TextInputAction.next,

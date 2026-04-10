@@ -181,6 +181,7 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
                           context,
                           labelText: t.nominees.name,
                           prefixIcon: Icons.person_pin_outlined,
+                          isRequired: true,
                         ),
                         validator: Nominee.validateName,
                         textInputAction: TextInputAction.next,
@@ -192,6 +193,7 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
                           context,
                           labelText: t.nominees.relationship,
                           prefixIcon: Icons.people_alt_outlined,
+                          isRequired: true,
                         ),
                         validator: Nominee.validateRelationship,
                         textInputAction: TextInputAction.next,
@@ -203,6 +205,7 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
                           context,
                           labelText: t.nominees.percentage,
                           prefixIcon: Icons.percent_outlined,
+                          isRequired: true,
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,

@@ -264,14 +264,14 @@ class TranslationsNomineesEn {
 	/// en: 'Delete Nominee'
 	String get deleteNominee => 'Delete Nominee';
 
-	/// en: 'Nominee Name *'
-	String get name => 'Nominee Name *';
+	/// en: 'Nominee Name'
+	String get name => 'Nominee Name';
 
-	/// en: 'Relationship *'
-	String get relationship => 'Relationship *';
+	/// en: 'Relationship'
+	String get relationship => 'Relationship';
 
-	/// en: 'Percentage (%) *'
-	String get percentage => 'Percentage (%) *';
+	/// en: 'Percentage (%)'
+	String get percentage => 'Percentage (%)';
 
 	/// en: 'No nominees added yet.'
 	String get noNominees => 'No nominees added yet.';
@@ -321,8 +321,8 @@ class TranslationsCustomersFieldsEn {
 
 	// Translations
 
-	/// en: 'Full Name *'
-	String get fullName => 'Full Name *';
+	/// en: 'Full Name'
+	String get fullName => 'Full Name';
 
 	/// en: 'Phone Number'
 	String get phoneNumber => 'Phone Number';
@@ -378,17 +378,20 @@ class TranslationsOneTimeDepositsFieldsEn {
 
 	// Translations
 
-	/// en: 'Account No *'
-	String get accountNo => 'Account No *';
+	/// en: 'Status'
+	String get status => 'Status';
 
-	/// en: 'Principal Amount *'
-	String get principalAmount => 'Principal Amount *';
+	/// en: 'Account No.'
+	String get accountNo => 'Account No.';
 
-	/// en: 'Term (Years) *'
-	String get termYears => 'Term (Years) *';
+	/// en: 'Principal Amount'
+	String get principalAmount => 'Principal Amount';
 
-	/// en: 'Term (Months) *'
-	String get termMonths => 'Term (Months) *';
+	/// en: 'Term (Years)'
+	String get termYears => 'Term (Years)';
+
+	/// en: 'Term (Months)'
+	String get termMonths => 'Term (Months)';
 
 	/// en: 'Customer'
 	String get customerId => 'Customer';
@@ -396,14 +399,20 @@ class TranslationsOneTimeDepositsFieldsEn {
 	/// en: 'Scheme Type'
 	String get schemeType => 'Scheme Type';
 
-	/// en: 'Maturity Amount *'
-	String get maturityAmount => 'Maturity Amount *';
+	/// en: 'Interest Rate (%)'
+	String get interestRate => 'Interest Rate (%)';
+
+	/// en: 'Maturity Amount'
+	String get maturityAmount => 'Maturity Amount';
 
 	/// en: 'Start Date'
 	String get startDate => 'Start Date';
 
 	/// en: 'Maturity Date'
 	String get maturityDate => 'Maturity Date';
+
+	/// en: 'Linked Savings Account'
+	String get linkedSavingsAccount => 'Linked Savings Account';
 }
 
 // Path: recurringDeposits.fields
@@ -414,23 +423,26 @@ class TranslationsRecurringDepositsFieldsEn {
 
 	// Translations
 
-	/// en: 'Serial No. *'
-	String get serialNo => 'Serial No. *';
+	/// en: 'Status'
+	String get status => 'Status';
 
-	/// en: 'Account No *'
-	String get accountNo => 'Account No *';
+	/// en: 'Serial No.'
+	String get serialNo => 'Serial No.';
 
-	/// en: 'Installment Amount *'
-	String get installmentAmount => 'Installment Amount *';
+	/// en: 'Account No.'
+	String get accountNo => 'Account No.';
 
-	/// en: 'Term (Years) *'
-	String get termYears => 'Term (Years) *';
+	/// en: 'Installment Amount'
+	String get installmentAmount => 'Installment Amount';
 
-	/// en: 'Term (Months) *'
-	String get termMonths => 'Term (Months) *';
+	/// en: 'Term (Years)'
+	String get termYears => 'Term (Years)';
 
-	/// en: 'Interest Rate *'
-	String get interestRate => 'Interest Rate *';
+	/// en: 'Term (Months)'
+	String get termMonths => 'Term (Months)';
+
+	/// en: 'Interest Rate (%)'
+	String get interestRate => 'Interest Rate (%)';
 
 	/// en: 'Customer'
 	String get customerId => 'Customer';
@@ -438,14 +450,17 @@ class TranslationsRecurringDepositsFieldsEn {
 	/// en: 'Scheme Type'
 	String get schemeType => 'Scheme Type';
 
-	/// en: 'Maturity Amount *'
-	String get maturityAmount => 'Maturity Amount *';
+	/// en: 'Maturity Amount'
+	String get maturityAmount => 'Maturity Amount';
 
 	/// en: 'Start Date'
 	String get startDate => 'Start Date';
 
 	/// en: 'Maturity Date'
 	String get maturityDate => 'Maturity Date';
+
+	/// en: 'Linked Savings Account'
+	String get linkedSavingsAccount => 'Linked Savings Account';
 }
 
 /// The flat map containing all translations for locale <en>.
@@ -485,7 +500,7 @@ extension on Translations {
 			'customers.sections.personalInfo' => 'Personal Information',
 			'customers.sections.identityDocuments' => 'Identity Documents',
 			'customers.sections.savingsBank' => 'Savings Bank',
-			'customers.fields.fullName' => 'Full Name *',
+			'customers.fields.fullName' => 'Full Name',
 			'customers.fields.phoneNumber' => 'Phone Number',
 			'customers.fields.emailAddress' => 'Email Address',
 			'customers.fields.homeAddress' => 'Home Address',
@@ -512,15 +527,18 @@ extension on Translations {
 			'oneTimeDeposits.deleteDepositConfirmation' => 'Are you sure you want to delete this deposit?',
 			'oneTimeDeposits.failedToSaveDeposit' => ({required Object error}) => 'Failed to save deposit: ${error}',
 			'oneTimeDeposits.failedToDeleteDeposit' => ({required Object error}) => 'Failed to delete deposit: ${error}',
-			'oneTimeDeposits.fields.accountNo' => 'Account No *',
-			'oneTimeDeposits.fields.principalAmount' => 'Principal Amount *',
-			'oneTimeDeposits.fields.termYears' => 'Term (Years) *',
-			'oneTimeDeposits.fields.termMonths' => 'Term (Months) *',
+			'oneTimeDeposits.fields.status' => 'Status',
+			'oneTimeDeposits.fields.accountNo' => 'Account No.',
+			'oneTimeDeposits.fields.principalAmount' => 'Principal Amount',
+			'oneTimeDeposits.fields.termYears' => 'Term (Years)',
+			'oneTimeDeposits.fields.termMonths' => 'Term (Months)',
 			'oneTimeDeposits.fields.customerId' => 'Customer',
 			'oneTimeDeposits.fields.schemeType' => 'Scheme Type',
-			'oneTimeDeposits.fields.maturityAmount' => 'Maturity Amount *',
+			'oneTimeDeposits.fields.interestRate' => 'Interest Rate (%)',
+			'oneTimeDeposits.fields.maturityAmount' => 'Maturity Amount',
 			'oneTimeDeposits.fields.startDate' => 'Start Date',
 			'oneTimeDeposits.fields.maturityDate' => 'Maturity Date',
+			'oneTimeDeposits.fields.linkedSavingsAccount' => 'Linked Savings Account',
 			'recurringDeposits.title' => 'Recurring Deposits',
 			'recurringDeposits.newDeposit' => 'New RD',
 			'recurringDeposits.editDeposit' => 'Edit RD',
@@ -531,24 +549,26 @@ extension on Translations {
 			'recurringDeposits.deleteDepositConfirmation' => 'Are you sure you want to delete this RD?',
 			'recurringDeposits.failedToSaveDeposit' => ({required Object error}) => 'Failed to save RD: ${error}',
 			'recurringDeposits.failedToDeleteDeposit' => ({required Object error}) => 'Failed to delete RD: ${error}',
-			'recurringDeposits.fields.serialNo' => 'Serial No. *',
-			'recurringDeposits.fields.accountNo' => 'Account No *',
-			'recurringDeposits.fields.installmentAmount' => 'Installment Amount *',
-			'recurringDeposits.fields.termYears' => 'Term (Years) *',
-			'recurringDeposits.fields.termMonths' => 'Term (Months) *',
-			'recurringDeposits.fields.interestRate' => 'Interest Rate *',
+			'recurringDeposits.fields.status' => 'Status',
+			'recurringDeposits.fields.serialNo' => 'Serial No.',
+			'recurringDeposits.fields.accountNo' => 'Account No.',
+			'recurringDeposits.fields.installmentAmount' => 'Installment Amount',
+			'recurringDeposits.fields.termYears' => 'Term (Years)',
+			'recurringDeposits.fields.termMonths' => 'Term (Months)',
+			'recurringDeposits.fields.interestRate' => 'Interest Rate (%)',
 			'recurringDeposits.fields.customerId' => 'Customer',
 			'recurringDeposits.fields.schemeType' => 'Scheme Type',
-			'recurringDeposits.fields.maturityAmount' => 'Maturity Amount *',
+			'recurringDeposits.fields.maturityAmount' => 'Maturity Amount',
 			'recurringDeposits.fields.startDate' => 'Start Date',
 			'recurringDeposits.fields.maturityDate' => 'Maturity Date',
+			'recurringDeposits.fields.linkedSavingsAccount' => 'Linked Savings Account',
 			'nominees.title' => 'Nominees',
 			'nominees.addNominee' => 'Add Nominee',
 			'nominees.editNominee' => 'Edit Nominee',
 			'nominees.deleteNominee' => 'Delete Nominee',
-			'nominees.name' => 'Nominee Name *',
-			'nominees.relationship' => 'Relationship *',
-			'nominees.percentage' => 'Percentage (%) *',
+			'nominees.name' => 'Nominee Name',
+			'nominees.relationship' => 'Relationship',
+			'nominees.percentage' => 'Percentage (%)',
 			'nominees.noNominees' => 'No nominees added yet.',
 			_ => null,
 		};
