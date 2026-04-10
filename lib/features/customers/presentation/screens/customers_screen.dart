@@ -7,6 +7,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/core/utils/intent_service.dart';
+import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class CustomersScreen extends ConsumerWidget {
@@ -80,9 +81,21 @@ class CustomersScreen extends ConsumerWidget {
                       content: t.customers.deleteCustomerConfirmation,
                     );
                     if (confirmed == true) {
-                      ref
+                      final result = await ref
                           .read(customersControllerProvider.notifier)
                           .deleteCustomer(customer.id);
+
+                      if (result is Failure && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              t.customers.failedToDeleteCustomer(
+                                error: (result as Failure).error.toString(),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
                     }
                   },
                   onPhoneTapped: () => ref

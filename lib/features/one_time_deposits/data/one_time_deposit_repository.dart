@@ -17,7 +17,7 @@ abstract class OneTimeDepositRepository {
 }
 
 class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
-  final List<OneTimeDeposit> _deposits = [
+  static final List<OneTimeDeposit> _deposits = [
     OneTimeDeposit(
       id: '101',
       accountNo: '3045678912',

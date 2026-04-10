@@ -16,7 +16,7 @@ abstract class CustomerRepository {
 }
 
 class FakeCustomerRepository implements CustomerRepository {
-  final List<Customer> _customers = [
+  static final List<Customer> _customers = [
     Customer(
       id: '1',
       name: 'Bruce Wayne',

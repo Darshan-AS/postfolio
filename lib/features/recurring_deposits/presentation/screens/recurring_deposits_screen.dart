@@ -6,6 +6,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/widgets/recur
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/app_dialogs.dart';
+import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class RecurringDepositsScreen extends ConsumerWidget {
@@ -69,9 +70,21 @@ class RecurringDepositsScreen extends ConsumerWidget {
                       content: t.recurringDeposits.deleteDepositConfirmation,
                     );
                     if (confirmed == true) {
-                      ref
+                      final result = await ref
                           .read(recurringDepositsControllerProvider.notifier)
                           .deleteRecurringDeposit(deposit.id);
+
+                      if (result is Failure && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              t.recurringDeposits.failedToDeleteDeposit(
+                                error: (result as Failure).error.toString(),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
                     }
                   },
                 );
@@ -85,9 +98,10 @@ class RecurringDepositsScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => const RecurringDepositCreateRoute().push(context),
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: Text(t.recurringDeposits.newDeposit),
       ),
     );
   }

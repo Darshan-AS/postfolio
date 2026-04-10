@@ -17,7 +17,7 @@ abstract class RecurringDepositRepository {
 }
 
 class FakeRecurringDepositRepository implements RecurringDepositRepository {
-  final List<RecurringDeposit> _deposits = [
+  static final List<RecurringDeposit> _deposits = [
     RecurringDeposit(
       id: '201',
       serialNo: 'RD-001',

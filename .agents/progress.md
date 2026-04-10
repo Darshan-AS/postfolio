@@ -34,3 +34,6 @@ The immediate next step is to proceed to **Phase 5 (Firebase Integration)** from
 - Refactored `AsyncEntityFormBuilder` to `AsyncEntityBuilder` for generic usage across forms and details.
 - Abstracted `NomineesDetailSection` for reuse.
 - Refactored all Detail screens to utilize the new common scaffold.
+
+- Fixed an issue where deleted records would reappear due to FakeRepository instance resets (made data lists static).
+- Standardized delete handling in list screens to await results and handle errors.

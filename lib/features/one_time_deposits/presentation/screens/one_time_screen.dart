@@ -6,6 +6,7 @@ import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_ti
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/app_dialogs.dart';
+import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class OneTimeDepositsScreen extends ConsumerWidget {
@@ -68,9 +69,21 @@ class OneTimeDepositsScreen extends ConsumerWidget {
                       content: t.oneTimeDeposits.deleteDepositConfirmation,
                     );
                     if (confirmed == true) {
-                      ref
+                      final result = await ref
                           .read(oneTimeDepositsControllerProvider.notifier)
                           .deleteOneTimeDeposit(deposit.id);
+
+                      if (result is Failure && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              t.oneTimeDeposits.failedToDeleteDeposit(
+                                error: (result as Failure).error.toString(),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
                     }
                   },
                 );
@@ -84,9 +97,10 @@ class OneTimeDepositsScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => const OneTimeDepositCreateRoute().push(context),
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: Text(t.oneTimeDeposits.newDeposit),
       ),
     );
   }
