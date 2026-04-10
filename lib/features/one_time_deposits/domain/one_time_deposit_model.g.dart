@@ -26,6 +26,9 @@ _OneTimeDeposit _$OneTimeDepositFromJson(Map<String, dynamic> json) =>
               ?.map((e) => Nominee.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
+      status:
+          $enumDecodeNullable(_$DepositStatusEnumMap, json['status']) ??
+          DepositStatus.active,
     );
 
 Map<String, dynamic> _$OneTimeDepositToJson(_OneTimeDeposit instance) =>
@@ -44,6 +47,7 @@ Map<String, dynamic> _$OneTimeDepositToJson(_OneTimeDeposit instance) =>
       'maturityDate': instance.maturityDate.toIso8601String(),
       'linkedSavingsAccountNo': instance.linkedSavingsAccountNo,
       'nominees': instance.nominees,
+      'status': _$DepositStatusEnumMap[instance.status]!,
     };
 
 const _$OneTimeSchemeTypeEnumMap = {
@@ -51,4 +55,10 @@ const _$OneTimeSchemeTypeEnumMap = {
   OneTimeSchemeType.monthlyIncomeScheme: 'monthlyIncomeScheme',
   OneTimeSchemeType.nationalSavingsCertificate: 'nationalSavingsCertificate',
   OneTimeSchemeType.kisanVikasPatra: 'kisanVikasPatra',
+};
+
+const _$DepositStatusEnumMap = {
+  DepositStatus.active: 'active',
+  DepositStatus.matured: 'matured',
+  DepositStatus.closed: 'closed',
 };

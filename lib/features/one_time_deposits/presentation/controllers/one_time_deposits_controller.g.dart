@@ -38,7 +38,7 @@ final class OneTimeDepositsControllerProvider
 }
 
 String _$oneTimeDepositsControllerHash() =>
-    r'93ebe19db2f5a3b72367b928d34b3438e9e67253';
+    r'77bc0a7f94de67f54cdcd04a947d29f8e88ca80e';
 
 abstract class _$OneTimeDepositsController
     extends $AsyncNotifier<UnmodifiableListView<OneTimeDeposit>> {

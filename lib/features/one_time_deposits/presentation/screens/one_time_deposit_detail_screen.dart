@@ -121,6 +121,12 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                     ),
                     const Divider(),
                     _buildInfoTile(
+                      Icons.info_outline,
+                      'Status',
+                      deposit.status.displayName,
+                    ),
+                    const Divider(),
+                    _buildInfoTile(
                       Icons.category_outlined,
                       t.oneTimeDeposits.fields.schemeType,
                       deposit.schemeType.displayName,

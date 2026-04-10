@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
@@ -27,6 +28,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       startDate: DateTime(2025, 2, 1),
       maturityDate: DateTime(2030, 2, 1),
       linkedAutoDebitAccountNo: 'SA987654321',
+      status: DepositStatus.active,
       nominees: const [
         Nominee(
           name: 'Alfred Pennyworth',
@@ -55,6 +57,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       startDate: DateTime(2024, 11, 1),
       maturityDate: DateTime(2025, 11, 1),
       linkedAutoDebitAccountNo: 'SA123456789',
+      status: DepositStatus.matured,
       nominees: const [
         Nominee(
           name: 'Lois Lane',
@@ -83,6 +86,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       startDate: DateTime(2025, 1, 15),
       maturityDate: DateTime(2028, 1, 15),
       linkedAutoDebitAccountNo: 'SA456789123',
+      status: DepositStatus.closed,
       nominees: const [
         Nominee(
           name: 'Hippolyta',
@@ -105,6 +109,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       startDate: DateTime(2024, 8, 1),
       maturityDate: DateTime(2026, 8, 1),
       linkedAutoDebitAccountNo: 'SA567890123',
+      status: DepositStatus.active,
       nominees: const [
         Nominee(
           name: 'Iris West',
@@ -127,6 +132,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       startDate: DateTime(2025, 4, 10),
       maturityDate: DateTime(2030, 4, 10),
       linkedAutoDebitAccountNo: 'SA678901234',
+      status: DepositStatus.active,
       nominees: const [
         Nominee(
           name: 'Mera',

@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 
 part 'one_time_deposit_model.freezed.dart';
 part 'one_time_deposit_model.g.dart';
@@ -25,6 +26,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     required DateTime maturityDate,
     String? linkedSavingsAccountNo,
     @Default([]) List<Nominee> nominees,
+    @Default(DepositStatus.active) DepositStatus status,
   }) = _OneTimeDeposit;
 
   factory OneTimeDeposit.fromJson(Map<String, dynamic> json) =>
@@ -59,6 +61,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     required DateTime maturityDate,
     String? linkedSavingsAccountNo,
     List<Nominee> nominees = const [],
+    DepositStatus status = DepositStatus.active,
   }) {
     final accountError = BaseDeposit.validateAccountNo(accountNo);
     if (accountError != null) return (accountError, null);
@@ -92,6 +95,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
         maturityDate: maturityDate,
         linkedSavingsAccountNo: linkedSavingsAccountNo?.trim(),
         nominees: List.unmodifiable(nominees),
+        status: status,
       ),
     );
   }

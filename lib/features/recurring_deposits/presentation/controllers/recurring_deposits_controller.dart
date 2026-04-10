@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 
@@ -36,6 +37,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     required double interestRate,
     required String customerId,
     required RecurringSchemeType schemeType,
+    DepositStatus status = DepositStatus.active,
     required double maturityAmount,
     required DateTime startDate,
     required DateTime maturityDate,
@@ -51,6 +53,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
       interestRate: interestRate,
       customerId: customerId,
       schemeType: schemeType,
+      status: status,
       maturityAmount: maturityAmount,
       startDate: startDate,
       maturityDate: maturityDate,

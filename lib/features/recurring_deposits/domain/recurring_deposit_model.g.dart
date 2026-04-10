@@ -25,6 +25,9 @@ _RecurringDeposit _$RecurringDepositFromJson(Map<String, dynamic> json) =>
               ?.map((e) => Nominee.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
+      status:
+          $enumDecodeNullable(_$DepositStatusEnumMap, json['status']) ??
+          DepositStatus.active,
     );
 
 Map<String, dynamic> _$RecurringDepositToJson(_RecurringDeposit instance) =>
@@ -42,8 +45,15 @@ Map<String, dynamic> _$RecurringDepositToJson(_RecurringDeposit instance) =>
       'maturityDate': instance.maturityDate.toIso8601String(),
       'linkedAutoDebitAccountNo': instance.linkedAutoDebitAccountNo,
       'nominees': instance.nominees,
+      'status': _$DepositStatusEnumMap[instance.status]!,
     };
 
 const _$RecurringSchemeTypeEnumMap = {
   RecurringSchemeType.recurringDeposit: 'recurringDeposit',
+};
+
+const _$DepositStatusEnumMap = {
+  DepositStatus.active: 'active',
+  DepositStatus.matured: 'matured',
+  DepositStatus.closed: 'closed',
 };

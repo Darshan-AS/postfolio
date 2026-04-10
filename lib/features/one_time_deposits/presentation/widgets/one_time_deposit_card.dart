@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 
 class OneTimeDepositCard extends StatelessWidget {
   final String accountNo;
   final String schemeName;
   final double principalAmount;
+  final DepositStatus status;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -14,6 +16,7 @@ class OneTimeDepositCard extends StatelessWidget {
     required this.accountNo,
     required this.schemeName,
     required this.principalAmount,
+    required this.status,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -31,7 +34,7 @@ class OneTimeDepositCard extends StatelessWidget {
         accountNo,
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
-      subtitle: Text('$schemeName • ₹${principalAmount.toStringAsFixed(2)}'),
+      subtitle: Text('$schemeName • ₹${principalAmount.toStringAsFixed(2)} • ${status.displayName}'),
       onTap: onTap,
       trailing: PopupMenuButton<String>(
         onSelected: (value) {

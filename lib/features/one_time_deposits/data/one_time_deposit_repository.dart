@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
@@ -28,6 +29,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       startDate: DateTime(2025, 1, 1),
       maturityDate: DateTime(2026, 7, 1),
       linkedSavingsAccountNo: 'SA987654321',
+      status: DepositStatus.active,
       nominees: const [
         Nominee(
           name: 'Alfred Pennyworth',
@@ -57,6 +59,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       startDate: DateTime(2024, 6, 15),
       maturityDate: DateTime(2029, 6, 15),
       linkedSavingsAccountNo: 'SA123456789',
+      status: DepositStatus.active,
       nominees: const [
         Nominee(
           name: 'Lois Lane',
@@ -86,6 +89,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       startDate: DateTime(2025, 3, 1),
       maturityDate: DateTime(2028, 3, 1),
       linkedSavingsAccountNo: 'SA456789123',
+      status: DepositStatus.matured,
       nominees: const [
         Nominee(
           name: 'Hippolyta',
@@ -109,6 +113,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       startDate: DateTime(2024, 10, 10),
       maturityDate: DateTime(2025, 10, 10),
       linkedSavingsAccountNo: 'SA567890123',
+      status: DepositStatus.closed,
       nominees: const [
         Nominee(
           name: 'Iris West',
@@ -132,6 +137,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       startDate: DateTime(2025, 4, 1),
       maturityDate: DateTime(2027, 10, 1),
       linkedSavingsAccountNo: 'SA678901234',
+      status: DepositStatus.active,
       nominees: const [
         Nominee(
           name: 'Mera',

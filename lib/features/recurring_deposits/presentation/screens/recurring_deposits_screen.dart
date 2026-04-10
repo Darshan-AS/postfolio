@@ -50,6 +50,7 @@ class RecurringDepositsScreen extends ConsumerWidget {
               return RecurringDepositCard(
                 accountNo: deposit.accountNo,
                 installmentAmount: deposit.installmentAmount,
+                status: deposit.status,
                 onTap: () => context.push(RouteNames.rdDetail(deposit.id)),
                 onEdit: () => context.push(RouteNames.rdEdit(deposit.id)),
                 onDelete: () {

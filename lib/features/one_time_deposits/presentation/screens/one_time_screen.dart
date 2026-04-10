@@ -54,6 +54,7 @@ class OneTimeDepositsScreen extends ConsumerWidget {
                 accountNo: deposit.accountNo,
                 schemeName: deposit.schemeType.displayName,
                 principalAmount: deposit.principalAmount,
+                status: deposit.status,
                 onTap: () => context.push(RouteNames.oneTimeDetail(deposit.id)),
                 onEdit: () => context.push(RouteNames.oneTimeEdit(deposit.id)),
                 onDelete: () {

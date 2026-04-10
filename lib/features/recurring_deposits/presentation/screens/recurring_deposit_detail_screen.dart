@@ -112,6 +112,12 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                     ),
                     const Divider(),
                     _buildInfoTile(
+                      Icons.info_outline,
+                      'Status',
+                      deposit.status.displayName,
+                    ),
+                    const Divider(),
+                    _buildInfoTile(
                       Icons.category_outlined,
                       t.recurringDeposits.fields.schemeType,
                       deposit.schemeType.displayName,

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 
 class RecurringDepositCard extends StatelessWidget {
   final String accountNo;
   final double installmentAmount;
+  final DepositStatus status;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -12,6 +14,7 @@ class RecurringDepositCard extends StatelessWidget {
     super.key,
     required this.accountNo,
     required this.installmentAmount,
+    required this.status,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -29,7 +32,7 @@ class RecurringDepositCard extends StatelessWidget {
         accountNo,
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
-      subtitle: Text('₹${installmentAmount.toStringAsFixed(2)} / month'),
+      subtitle: Text('₹${installmentAmount.toStringAsFixed(2)} / month • ${status.displayName}'),
       onTap: onTap,
       trailing: PopupMenuButton<String>(
         onSelected: (value) {

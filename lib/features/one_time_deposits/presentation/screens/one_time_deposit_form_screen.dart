@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_selection_field.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
@@ -74,6 +75,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
   String? _selectedCustomerId;
 
   OneTimeSchemeType _selectedScheme = OneTimeSchemeType.timeDeposit;
+  DepositStatus _selectedStatus = DepositStatus.active;
   DateTime _startDate = DateTime.now();
   DateTime _maturityDate = DateTime.now().add(const Duration(days: 365));
 
@@ -110,6 +112,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
 
     if (widget.existingDeposit != null) {
       _selectedScheme = widget.existingDeposit!.schemeType;
+      _selectedStatus = widget.existingDeposit!.status;
       _startDate = widget.existingDeposit!.startDate;
       _maturityDate = widget.existingDeposit!.maturityDate;
     }
@@ -152,6 +155,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                 double.tryParse(_interestRateController.text.trim()) ?? 0.0,
             customerId: _selectedCustomerId ?? '',
             schemeType: _selectedScheme,
+            status: _selectedStatus,
             maturityAmount:
                 double.tryParse(_maturityAmountController.text.trim()) ?? 0.0,
             startDate: _startDate,
@@ -293,6 +297,24 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
               ),
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.next,
+            ),
+            AppSpacings.gapLg,
+            DropdownButtonFormField<DepositStatus>(
+              value: _selectedStatus,
+              decoration: const InputDecoration(
+                labelText: 'Status',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.info_outline),
+              ),
+              items: DepositStatus.values.map((status) {
+                return DropdownMenuItem(
+                  value: status,
+                  child: Text(status.displayName),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) setState(() => _selectedStatus = val);
+              },
             ),
             AppSpacings.gapLg,
             CustomerSelectionField(

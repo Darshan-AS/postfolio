@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
 
@@ -36,6 +37,7 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
     double interestRate = 0.0,
     required String customerId,
     required OneTimeSchemeType schemeType,
+    DepositStatus status = DepositStatus.active,
     required double maturityAmount,
     required DateTime startDate,
     required DateTime maturityDate,
@@ -52,6 +54,7 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
       interestRate: interestRate,
       customerId: customerId,
       schemeType: schemeType,
+      status: status,
       maturityAmount: maturityAmount,
       startDate: startDate,
       maturityDate: maturityDate,

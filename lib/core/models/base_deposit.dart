@@ -1,4 +1,5 @@
 import 'package:postfolio/core/models/nominee.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 
 abstract interface class BaseDeposit {
   String get id;
@@ -11,6 +12,7 @@ abstract interface class BaseDeposit {
   DateTime get startDate;
   DateTime get maturityDate;
   List<Nominee> get nominees;
+  DepositStatus get status;
 
   static String? validateAccountNo(String? accountNo) {
     if (accountNo == null || accountNo.trim().isEmpty) {

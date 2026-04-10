@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 
 part 'recurring_deposit_model.freezed.dart';
 part 'recurring_deposit_model.g.dart';
@@ -24,6 +25,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required DateTime maturityDate,
     String? linkedAutoDebitAccountNo,
     @Default([]) List<Nominee> nominees,
+    @Default(DepositStatus.active) DepositStatus status,
   }) = _RecurringDeposit;
 
   factory RecurringDeposit.fromJson(Map<String, dynamic> json) =>
@@ -57,6 +59,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required DateTime maturityDate,
     String? linkedAutoDebitAccountNo,
     List<Nominee> nominees = const [],
+    DepositStatus status = DepositStatus.active,
   }) {
     final accountError = BaseDeposit.validateAccountNo(accountNo);
     if (accountError != null) return (accountError, null);
@@ -89,6 +92,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
         maturityDate: maturityDate,
         linkedAutoDebitAccountNo: linkedAutoDebitAccountNo?.trim(),
         nominees: List.unmodifiable(nominees),
+        status: status,
       ),
     );
   }
