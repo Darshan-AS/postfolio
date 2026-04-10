@@ -357,7 +357,9 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               FilledButton(
                 onPressed: _isSaving ? null : _save,
                 style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(AppDimensions.buttonHeight),
+                  minimumSize: const Size.fromHeight(
+                    AppDimensions.buttonHeight,
+                  ),
                 ),
                 child: _isSaving
                     ? const SizedBox(
@@ -365,9 +367,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                         width: AppDimensions.iconMd,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(
-                        t.customers.saveCustomer,
-                      ),
+                    : Text(t.customers.saveCustomer),
               ),
               AppSpacings.gapXxl,
             ],

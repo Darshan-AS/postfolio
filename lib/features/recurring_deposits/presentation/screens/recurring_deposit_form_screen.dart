@@ -6,7 +6,6 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_selection_field.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
-import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -216,7 +215,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
           else
             IconButton(
               icon: const Icon(Icons.check),
-              color: AppTheme.primary,
+              color: Theme.of(context).colorScheme.primary,
               onPressed: _save,
               tooltip: t.recurringDeposits.saveDeposit,
             ),

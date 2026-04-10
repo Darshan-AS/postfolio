@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_card.dart';
-import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/utils/intent_service.dart';
@@ -22,11 +21,16 @@ class CustomersScreen extends ConsumerWidget {
         leading: IconButton(icon: const Icon(Icons.menu), onPressed: () {}),
         title: Row(
           children: [
-            const Icon(Icons.groups_outlined, color: AppTheme.primary),
+            Icon(
+              Icons.groups_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             AppSpacings.gapSm,
             Text(
               t.nav.customers,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -52,7 +56,8 @@ class CustomersScreen extends ConsumerWidget {
           return RefreshIndicator(
             onRefresh: () async {
               // Trigger a manual refresh from the controller
-              ref.refresh(customersControllerProvider);
+              ref.invalidate(customersControllerProvider);
+              await ref.read(customersControllerProvider.future);
             },
             child: ListView.separated(
               padding: const EdgeInsets.only(

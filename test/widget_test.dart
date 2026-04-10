@@ -6,11 +6,7 @@ import 'package:postfolio/features/customers/presentation/screens/customer_form_
 void main() {
   testWidgets('CustomerFormScreen renders', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: CustomerFormScreen(),
-        ),
-      ),
+      const ProviderScope(child: MaterialApp(home: CustomerFormScreen())),
     );
     expect(find.byType(Scaffold), findsOneWidget);
   });

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
-import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -20,14 +19,16 @@ class OneTimeDepositsScreen extends ConsumerWidget {
         leading: IconButton(icon: const Icon(Icons.menu), onPressed: () {}),
         title: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.account_balance_wallet_outlined,
-              color: AppTheme.primary,
+              color: Theme.of(context).colorScheme.primary,
             ),
             AppSpacings.gapSm,
             Text(
               t.oneTimeDeposits.title,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
             ),
           ],
         ),

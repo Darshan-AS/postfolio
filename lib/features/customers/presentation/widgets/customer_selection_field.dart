@@ -56,25 +56,13 @@ class _CustomerSelectionFieldState
 
   @override
   Widget build(BuildContext context) {
-    // If we only have ID but no initialCustomer, we might want to watch the controller
-    // However, it's better if the parent passes the initialCustomer directly,
-    // or we resolve it here.
-    if (_selectedCustomer == null && widget.initialCustomerId != null) {
+    Customer? displayCustomer = _selectedCustomer;
+
+    if (displayCustomer == null && widget.initialCustomerId != null) {
       final state = ref.watch(customersControllerProvider);
-      state.whenData((customers) {
-        final cust = customers
-            .where((c) => c.id == widget.initialCustomerId)
-            .firstOrNull;
-        if (cust != null && _selectedCustomer?.id != cust.id) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              setState(() {
-                _selectedCustomer = cust;
-              });
-            }
-          });
-        }
-      });
+      displayCustomer = state.value
+          ?.where((c) => c.id == widget.initialCustomerId)
+          .firstOrNull;
     }
 
     return InkWell(
@@ -92,17 +80,17 @@ class _CustomerSelectionFieldState
           children: [
             Expanded(
               child: Text(
-                _selectedCustomer?.name ?? 'Select a customer',
-                style: TextStyle(
-                  color: _selectedCustomer == null
+                displayCustomer?.name ?? 'Select a customer',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: displayCustomer == null
                       ? Theme.of(context).hintColor
-                      : Theme.of(context).textTheme.bodyLarge?.color,
+                      : Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
-            if (_selectedCustomer != null)
+            if (displayCustomer != null)
               Text(
-                _selectedCustomer!.cifNumber ?? _selectedCustomer!.id,
+                displayCustomer.cifNumber ?? displayCustomer.id,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             const Icon(Icons.arrow_drop_down),

@@ -50,7 +50,9 @@ class RecurringDepositCard extends ConsumerWidget {
       ),
       title: Text(
         customerName,
-        style: const TextStyle(fontWeight: FontWeight.bold),
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
       ),
       subtitle: Text.rich(
         TextSpan(

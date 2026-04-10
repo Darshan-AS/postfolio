@@ -21,6 +21,7 @@
 - [x] Centralize hardcoded route paths into a constants file.
 - [x] Integrate `go_router_builder` for type-safe routing.
 - [x] Centralize hardcoded colors into `lib/core/theme/`.
+- [x] Remove direct static AppTheme usages and hardcoded TextStyles from UI layers, relying strictly on Theme.of(context).
 - [x] Centralize hardcoded dimensions and spacings into `AppSpacings` and `AppDimensions`.
 - [x] Replace hardcoded padding with `AppDimensions` in deposit cards.
 - [x] Standardize ListView layouts and padding across screens.

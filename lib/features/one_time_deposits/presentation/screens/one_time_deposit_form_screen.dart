@@ -6,7 +6,6 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_selection_field.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
-import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -209,7 +208,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
           else
             IconButton(
               icon: const Icon(Icons.check),
-              color: AppTheme.primary,
+              color: Theme.of(context).colorScheme.primary,
               onPressed: _save,
               tooltip: t.oneTimeDeposits.saveDeposit,
             ),

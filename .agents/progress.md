@@ -1,11 +1,16 @@
 # Current Progress & Agent Handoff
 
-**Last Updated:** April 10, 2026
+**Last Updated:** April 11, 2026
 
 ## Current State
 The project is structurally sound and compiles perfectly. We have successfully implemented a full CRUD cycle for the `Customers`, `OneTimeDeposit`, and `RecurringDeposit` features using mock repositories and Riverpod state management. Each feature follows the exact same architectural pattern, including UI parity with consistent form fields, validators, and loading states. The app uses a `StatefulShellRoute` for bottom navigation, and routing is completely type-safe using `go_router_builder`.
 
 Nominee inputs have been unified across the Customers (SB Account) and Deposits (One-Time and Recurring) features, utilizing the `NomineesInputSection` and removing redundant code. The phone number field was removed from the `Nominee` model, adhering strictly to the shared unified structure.
+
+## UI & Architectural Refinements
+- **Theming & Colors**: Replaced all hardcoded usages of `AppTheme.primary`, `AppTheme.error`, `AppTheme.accent` with `Theme.of(context).colorScheme...` to correctly support dark mode/dynamic themes.
+- **Typography**: Removed hardcoded `TextStyle` usages (like `const TextStyle(fontWeight: FontWeight.bold)`) from AppBars, cards, and buttons, standardizing on `Theme.of(context).textTheme...`.
+- **State Mismanagement**: Refactored `CustomerSelectionField` to resolve selected customers within the `build` method directly from the provider state, removing anti-patterns where `WidgetsBinding.addPostFrameCallback` was used to trigger `setState`.
 
 ## Active Technical Debt
 None currently. The architectural cleanup phase, type-safe routing migration, UI updates (pull-to-refresh, standardized ListView layouts, Detail screen parity, and AppDimensions usage), and mock CRUD implementations are complete. 

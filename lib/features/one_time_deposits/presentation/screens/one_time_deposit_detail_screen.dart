@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:postfolio/core/routing/app_router.dart';
-import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
@@ -52,7 +51,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
             },
             child: Text(
               t.common.delete,
-              style: const TextStyle(color: AppTheme.error),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
         ],
@@ -73,7 +72,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            color: AppTheme.error,
+            color: Theme.of(context).colorScheme.error,
             onPressed: () => _confirmDelete(context, ref),
           ),
         ],

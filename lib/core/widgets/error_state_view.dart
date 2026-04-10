@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class ErrorStateView extends StatelessWidget {
@@ -17,16 +16,18 @@ class ErrorStateView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline,
               size: AppDimensions.iconXl,
-              color: AppTheme.error,
+              color: Theme.of(context).colorScheme.error,
             ),
             AppSpacings.gapLg,
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppTheme.textSecondary),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             if (onRetry != null) ...[
               AppSpacings.gapLg,
