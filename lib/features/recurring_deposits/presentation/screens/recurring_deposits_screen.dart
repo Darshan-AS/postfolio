@@ -5,6 +5,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/controllers/r
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
+import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class RecurringDepositsScreen extends ConsumerWidget {
@@ -61,10 +62,17 @@ class RecurringDepositsScreen extends ConsumerWidget {
                       RecurringDepositDetailRoute(deposit.id).push(context),
                   onEdit: () =>
                       RecurringDepositEditRoute(deposit.id).push(context),
-                  onDelete: () {
-                    ref
-                        .read(recurringDepositsControllerProvider.notifier)
-                        .deleteRecurringDeposit(deposit.id);
+                  onDelete: () async {
+                    final confirmed = await AppDialogs.confirmDelete(
+                      context,
+                      title: t.recurringDeposits.deleteDeposit,
+                      content: t.recurringDeposits.deleteDepositConfirmation,
+                    );
+                    if (confirmed == true) {
+                      ref
+                          .read(recurringDepositsControllerProvider.notifier)
+                          .deleteRecurringDeposit(deposit.id);
+                    }
                   },
                 );
               },

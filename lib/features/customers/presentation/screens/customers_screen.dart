@@ -5,6 +5,7 @@ import 'package:postfolio/features/customers/presentation/controllers/customers_
 import 'package:postfolio/features/customers/presentation/widgets/customer_card.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
+import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/core/utils/intent_service.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -72,11 +73,17 @@ class CustomersScreen extends ConsumerWidget {
                   phone: customer.phone ?? t.common.notProvided,
                   onTap: () => CustomerDetailRoute(customer.id).push(context),
                   onEdit: () => CustomerEditRoute(customer.id).push(context),
-                  onDelete: () {
-                    // Call the controller directly to delete
-                    ref
-                        .read(customersControllerProvider.notifier)
-                        .deleteCustomer(customer.id);
+                  onDelete: () async {
+                    final confirmed = await AppDialogs.confirmDelete(
+                      context,
+                      title: t.customers.deleteCustomer,
+                      content: t.customers.deleteCustomerConfirmation,
+                    );
+                    if (confirmed == true) {
+                      ref
+                          .read(customersControllerProvider.notifier)
+                          .deleteCustomer(customer.id);
+                    }
                   },
                   onPhoneTapped: () => ref
                       .read(intentServiceProvider)

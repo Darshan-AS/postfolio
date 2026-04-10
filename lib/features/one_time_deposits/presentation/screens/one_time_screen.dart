@@ -5,6 +5,7 @@ import 'package:postfolio/features/one_time_deposits/presentation/controllers/on
 import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
+import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class OneTimeDepositsScreen extends ConsumerWidget {
@@ -60,10 +61,17 @@ class OneTimeDepositsScreen extends ConsumerWidget {
                       OneTimeDepositDetailRoute(deposit.id).push(context),
                   onEdit: () =>
                       OneTimeDepositEditRoute(deposit.id).push(context),
-                  onDelete: () {
-                    ref
-                        .read(oneTimeDepositsControllerProvider.notifier)
-                        .deleteOneTimeDeposit(deposit.id);
+                  onDelete: () async {
+                    final confirmed = await AppDialogs.confirmDelete(
+                      context,
+                      title: t.oneTimeDeposits.deleteDeposit,
+                      content: t.oneTimeDeposits.deleteDepositConfirmation,
+                    );
+                    if (confirmed == true) {
+                      ref
+                          .read(oneTimeDepositsControllerProvider.notifier)
+                          .deleteOneTimeDeposit(deposit.id);
+                    }
                   },
                 );
               },

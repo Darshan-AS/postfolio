@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/app_dialogs.dart';
 
 class EntityDetailScaffold extends StatelessWidget {
   final String appBarTitle;
@@ -23,42 +23,28 @@ class EntityDetailScaffold extends StatelessWidget {
     required this.body,
   });
 
-  void _confirmDelete(BuildContext context) {
-    final theme = Theme.of(context);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(deleteDialogTitle),
-        content: Text(deleteDialogContent),
-        actions: [
-          TextButton(onPressed: () => ctx.pop(), child: Text(t.common.cancel)),
-          FilledButton.tonal(
-            style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.errorContainer,
-              foregroundColor: theme.colorScheme.onErrorContainer,
-            ),
-            onPressed: () async {
-              final error = await onDelete();
-              if (!context.mounted) return;
-
-              if (error == null) {
-                ctx.pop();
-                context.pop();
-              } else {
-                ctx.pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    behavior: SnackBarBehavior.floating,
-                    content: Text(error),
-                  ),
-                );
-              }
-            },
-            child: Text(t.common.delete),
-          ),
-        ],
-      ),
+  void _confirmDelete(BuildContext context) async {
+    final confirmed = await AppDialogs.confirmDelete(
+      context,
+      title: deleteDialogTitle,
+      content: deleteDialogContent,
     );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final error = await onDelete();
+    if (!context.mounted) return;
+
+    if (error == null) {
+      context.pop();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text(error),
+        ),
+      );
+    }
   }
 
   @override
