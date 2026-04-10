@@ -121,9 +121,9 @@ class RecurringDepositCard extends ConsumerWidget {
                     AppSpacings.gapSm,
                     Text(
                       'Delete',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                     ),
                   ],
                 ),

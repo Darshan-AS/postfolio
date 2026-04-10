@@ -51,7 +51,9 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
             },
             child: Text(
               t.common.delete,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
             ),
           ),
         ],

@@ -143,9 +143,9 @@ class CustomerCard extends StatelessWidget {
                     AppSpacings.gapSm,
                     Text(
                       t.common.delete,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                     ),
                   ],
                 ),
