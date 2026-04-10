@@ -36,8 +36,14 @@ class CustomersController extends _$CustomersController {
     String? aadhaarNumber,
     String? panNumber,
     String? savingsAccountNumber,
-    List<Nominee>? savingsNominees,
+    List<({String name, String relationship, double percentage})>? savingsNominees,
   }) async {
+    final mappedNominees = savingsNominees?.map((n) => Nominee(
+      name: n.name,
+      relationship: n.relationship,
+      percentage: n.percentage,
+    )).toList();
+
     final (error, customer) = Customer.create(
       id: id ?? '', // FakeRepo will assign a real ID if creating
       name: name,
@@ -49,7 +55,7 @@ class CustomersController extends _$CustomersController {
       aadhaarNumber: aadhaarNumber,
       panNumber: panNumber,
       savingsAccountNumber: savingsAccountNumber,
-      savingsNominees: savingsNominees,
+      savingsNominees: mappedNominees,
     );
 
     if (error != null || customer == null) {

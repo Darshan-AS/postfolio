@@ -7,6 +7,7 @@ import 'package:postfolio/features/customers/presentation/widgets/customer_card.
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
+import 'package:postfolio/core/utils/intent_service.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class CustomersScreen extends ConsumerWidget {
@@ -67,6 +68,10 @@ class CustomersScreen extends ConsumerWidget {
                       .read(customersControllerProvider.notifier)
                       .deleteCustomer(customer.id);
                 },
+                onPhoneTapped: () => ref.read(intentServiceProvider).launchPhone(customer.phone ?? ''),
+                onWhatsAppTapped: () => ref.read(intentServiceProvider).launchWhatsApp(customer.phone ?? ''),
+                onSmsTapped: () => ref.read(intentServiceProvider).launchSms(customer.phone ?? ''),
+                onLocationTapped: () => ref.read(intentServiceProvider).launchMapSearch(customer.name),
               );
             },
           );

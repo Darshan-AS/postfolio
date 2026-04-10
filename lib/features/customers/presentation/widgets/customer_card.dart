@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/utils/intent_service.dart';
 import '../../../../i18n/strings.g.dart';
 
-class CustomerCard extends ConsumerWidget {
+class CustomerCard extends StatelessWidget {
   final String name;
   final String phone;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onPhoneTapped;
+  final VoidCallback onWhatsAppTapped;
+  final VoidCallback onSmsTapped;
+  final VoidCallback onLocationTapped;
 
   const CustomerCard({
     super.key,
@@ -20,10 +22,14 @@ class CustomerCard extends ConsumerWidget {
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
+    required this.onPhoneTapped,
+    required this.onWhatsAppTapped,
+    required this.onSmsTapped,
+    required this.onLocationTapped,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.paddingLg,
@@ -68,14 +74,13 @@ class CustomerCard extends ConsumerWidget {
             icon: const Icon(Icons.phone_outlined),
             tooltip: t.customers.actions.call,
             color: Theme.of(context).colorScheme.primary,
-            onPressed: () => ref.read(intentServiceProvider).launchPhone(phone),
+            onPressed: onPhoneTapped,
           ),
           IconButton(
             icon: const FaIcon(FontAwesomeIcons.whatsapp, size: 22),
             tooltip: t.customers.actions.whatsapp,
             color: Theme.of(context).colorScheme.primary,
-            onPressed: () =>
-                ref.read(intentServiceProvider).launchWhatsApp(phone),
+            onPressed: onWhatsAppTapped,
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
@@ -86,10 +91,10 @@ class CustomerCard extends ConsumerWidget {
                   onDelete();
                   break;
                 case 'sms':
-                  ref.read(intentServiceProvider).launchSms(phone);
+                  onSmsTapped();
                   break;
                 case 'location':
-                  ref.read(intentServiceProvider).launchMapSearch(name);
+                  onLocationTapped();
                   break;
               }
             },

@@ -6,6 +6,8 @@ import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
 class RecurringDepositCard extends ConsumerWidget {
+  static final _dateFormatter = DateFormat('MMM dd, yyyy');
+
   final String customerId;
   final String serialNo;
   final String accountNo;
@@ -48,25 +50,29 @@ class RecurringDepositCard extends ConsumerWidget {
         customerName,
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
-      subtitle: Wrap(
-        spacing: 8.0,
-        runSpacing: 4.0,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text(
-            serialNo.isNotEmpty ? '($serialNo) $accountNo' : accountNo,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+      subtitle: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: serialNo.isNotEmpty ? '($serialNo) $accountNo' : accountNo,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-          StatusBadge(status: status.displayName, compact: true),
-          Text(
-            '• ${DateFormat('MMM dd, yyyy').format(maturityDate)}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            const WidgetSpan(child: SizedBox(width: 8.0)),
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: StatusBadge(status: status.displayName, compact: true),
             ),
-          ),
-        ],
+            const WidgetSpan(child: SizedBox(width: 8.0)),
+            TextSpan(
+              text: '• ${_dateFormatter.format(maturityDate)}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
       onTap: onTap,
       trailing: Row(

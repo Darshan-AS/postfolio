@@ -8,7 +8,6 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:intl/intl.dart';
-import 'package:postfolio/core/models/nominee.dart';
 
 class _NomineeFormModel {
   final TextEditingController nameController;
@@ -210,7 +209,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 : _savingsAccountNumberController.text.trim(),
             savingsNominees: _nomineeForms
                 .map(
-                  (f) => Nominee(
+                  (f) => (
                     name: f.nameController.text.trim(),
                     relationship: f.relationshipController.text.trim(),
                     percentage:
