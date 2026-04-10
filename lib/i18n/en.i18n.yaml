@@ -47,6 +47,11 @@ customers:
     sbNomineeName: "SB Nominee Name"
     sbNomineeRelationship: "SB Nominee Relationship"
     dateOfBirth: "Date of Birth"
+    nominees: "Nominees"
+    addNominee: "Add Nominee"
+    nomineeName: "Nominee Name"
+    relationship: "Relationship"
+    percentage: "Percentage (%)"
 
 dashboard:
   charts: "Dashboard Charts Go Here"

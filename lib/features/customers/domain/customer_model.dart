@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/savings_account.dart';
+import 'package:postfolio/core/models/nominee.dart';
 
 part 'customer_model.freezed.dart';
 part 'customer_model.g.dart';
@@ -21,7 +22,8 @@ sealed class Customer with _$Customer {
     SavingsAccount? savingsAccount,
   }) = _Customer;
 
-  factory Customer.fromJson(Map<String, dynamic> json) => _$CustomerFromJson(json);
+  factory Customer.fromJson(Map<String, dynamic> json) =>
+      _$CustomerFromJson(json);
 
   // --- Domain Validation Rules ---
 
@@ -59,8 +61,7 @@ sealed class Customer with _$Customer {
     String? aadhaarNumber,
     String? panNumber,
     String? savingsAccountNumber,
-    String? savingsNomineeName,
-    String? savingsNomineeRelationship,
+    List<Nominee>? savingsNominees,
   }) {
     final nameError = validateName(name);
     if (nameError != null) return (nameError, null);
@@ -72,18 +73,16 @@ sealed class Customer with _$Customer {
     if (phoneError != null) return (phoneError, null);
 
     SavingsAccount? savingsAccount;
-    if (savingsAccountNumber != null && savingsAccountNumber.trim().isNotEmpty) {
+    if (savingsAccountNumber != null &&
+        savingsAccountNumber.trim().isNotEmpty) {
       final (accErr, acc) = SavingsAccount.create(
         accountNumber: savingsAccountNumber,
-        nomineeName: savingsNomineeName,
-        nomineeRelationship: savingsNomineeRelationship,
+        nominees: savingsNominees ?? const [],
       );
       if (accErr != null) return (accErr, null);
       savingsAccount = acc;
-    } else if ((savingsNomineeName != null && savingsNomineeName.trim().isNotEmpty) ||
-        (savingsNomineeRelationship != null &&
-            savingsNomineeRelationship.trim().isNotEmpty)) {
-      return ('Savings Account Number is required to add a nominee', null);
+    } else if (savingsNominees != null && savingsNominees.isNotEmpty) {
+      return ('Savings Account Number is required to add nominees', null);
     }
 
     return (
@@ -96,7 +95,9 @@ sealed class Customer with _$Customer {
         address: address?.trim().isEmpty == true ? null : address?.trim(),
         cifNumber: cifNumber?.trim().isEmpty == true ? null : cifNumber?.trim(),
         dateOfBirth: dateOfBirth,
-        aadhaarNumber: aadhaarNumber?.trim().isEmpty == true ? null : aadhaarNumber?.trim(),
+        aadhaarNumber: aadhaarNumber?.trim().isEmpty == true
+            ? null
+            : aadhaarNumber?.trim(),
         panNumber: panNumber?.trim().isEmpty == true ? null : panNumber?.trim(),
         savingsAccount: savingsAccount,
       ),

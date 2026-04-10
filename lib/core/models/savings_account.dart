@@ -10,7 +10,7 @@ sealed class SavingsAccount with _$SavingsAccount {
 
   const factory SavingsAccount({
     required String accountNumber,
-    Nominee? nominee,
+    @Default([]) List<Nominee> nominees,
   }) = _SavingsAccount;
 
   factory SavingsAccount.fromJson(Map<String, dynamic> json) =>
@@ -23,35 +23,34 @@ sealed class SavingsAccount with _$SavingsAccount {
     return null;
   }
 
+  static String? validateNominees(List<Nominee> nominees) {
+    if (nominees.isEmpty) return null; // Valid if empty
+
+    double totalPercentage = 0;
+    for (final n in nominees) {
+      totalPercentage += n.percentage;
+    }
+    if (totalPercentage != 100.0) {
+      return 'Total nominee percentage must be exactly 100%';
+    }
+    return null;
+  }
+
   static (String?, SavingsAccount?) create({
     required String accountNumber,
-    String? nomineeName,
-    String? nomineeRelationship,
+    List<Nominee> nominees = const [],
   }) {
     final accError = validateAccountNumber(accountNumber);
     if (accError != null) return (accError, null);
 
-    Nominee? nominee;
-    final hasNomineeName =
-        nomineeName != null && nomineeName.trim().isNotEmpty;
-    final hasNomineeRel =
-        nomineeRelationship != null && nomineeRelationship.trim().isNotEmpty;
-
-    if (hasNomineeName || hasNomineeRel) {
-      final (nomError, nom) = Nominee.create(
-        name: nomineeName ?? '',
-        relationship: nomineeRelationship ?? '',
-      );
+    if (nominees.isNotEmpty) {
+      final nomError = validateNominees(nominees);
       if (nomError != null) return (nomError, null);
-      nominee = nom;
     }
 
     return (
       null,
-      SavingsAccount(
-        accountNumber: accountNumber.trim(),
-        nominee: nominee,
-      ),
+      SavingsAccount(accountNumber: accountNumber.trim(), nominees: nominees),
     );
   }
 }

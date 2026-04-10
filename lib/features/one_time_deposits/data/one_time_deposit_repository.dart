@@ -29,7 +29,18 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       maturityDate: DateTime(2026, 7, 1),
       linkedSavingsAccountNo: 'SA987654321',
       nominees: const [
-        Nominee(name: 'Alfred Pennyworth', relationship: 'Butler', phone: '9876543211'),
+        Nominee(
+          name: 'Alfred Pennyworth',
+          relationship: 'Butler',
+          phone: '9876543211',
+          percentage: 50.0,
+        ),
+        Nominee(
+          name: 'Dick Grayson',
+          relationship: 'Ward',
+          phone: '9876543210',
+          percentage: 50.0,
+        ),
       ],
     ),
     OneTimeDeposit(
@@ -47,7 +58,18 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       maturityDate: DateTime(2029, 6, 15),
       linkedSavingsAccountNo: 'SA123456789',
       nominees: const [
-        Nominee(name: 'Lois Lane', relationship: 'Spouse', phone: '9876543212'),
+        Nominee(
+          name: 'Lois Lane',
+          relationship: 'Spouse',
+          phone: '9876543212',
+          percentage: 60.0,
+        ),
+        Nominee(
+          name: 'Martha Kent',
+          relationship: 'Mother',
+          phone: '9876543213',
+          percentage: 40.0,
+        ),
       ],
     ),
     OneTimeDeposit(
@@ -65,7 +87,12 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       maturityDate: DateTime(2028, 3, 1),
       linkedSavingsAccountNo: 'SA456789123',
       nominees: const [
-        Nominee(name: 'Hippolyta', relationship: 'Mother', phone: '9123456781'),
+        Nominee(
+          name: 'Hippolyta',
+          relationship: 'Mother',
+          phone: '9123456781',
+          percentage: 100.0,
+        ),
       ],
     ),
     OneTimeDeposit(
@@ -83,7 +110,12 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       maturityDate: DateTime(2025, 10, 10),
       linkedSavingsAccountNo: 'SA567890123',
       nominees: const [
-        Nominee(name: 'Iris West', relationship: 'Spouse', phone: '9988776656'),
+        Nominee(
+          name: 'Iris West',
+          relationship: 'Spouse',
+          phone: '9988776656',
+          percentage: 100.0,
+        ),
       ],
     ),
     OneTimeDeposit(
@@ -101,7 +133,12 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       maturityDate: DateTime(2027, 10, 1),
       linkedSavingsAccountNo: 'SA678901234',
       nominees: const [
-        Nominee(name: 'Mera', relationship: 'Spouse', phone: '9876543213'),
+        Nominee(
+          name: 'Mera',
+          relationship: 'Spouse',
+          phone: '9876543213',
+          percentage: 100.0,
+        ),
       ],
     ),
   ];

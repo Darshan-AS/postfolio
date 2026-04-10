@@ -319,6 +319,21 @@ class TranslationsCustomersFieldsEn {
 
 	/// en: 'Date of Birth'
 	String get dateOfBirth => 'Date of Birth';
+
+	/// en: 'Nominees'
+	String get nominees => 'Nominees';
+
+	/// en: 'Add Nominee'
+	String get addNominee => 'Add Nominee';
+
+	/// en: 'Nominee Name'
+	String get nomineeName => 'Nominee Name';
+
+	/// en: 'Relationship'
+	String get relationship => 'Relationship';
+
+	/// en: 'Percentage (%)'
+	String get percentage => 'Percentage (%)';
 }
 
 // Path: oneTimeDeposits.fields
@@ -447,6 +462,11 @@ extension on Translations {
 			'customers.fields.sbNomineeName' => 'SB Nominee Name',
 			'customers.fields.sbNomineeRelationship' => 'SB Nominee Relationship',
 			'customers.fields.dateOfBirth' => 'Date of Birth',
+			'customers.fields.nominees' => 'Nominees',
+			'customers.fields.addNominee' => 'Add Nominee',
+			'customers.fields.nomineeName' => 'Nominee Name',
+			'customers.fields.relationship' => 'Relationship',
+			'customers.fields.percentage' => 'Percentage (%)',
 			'dashboard.charts' => 'Dashboard Charts Go Here',
 			'oneTimeDeposits.title' => 'One-Time Deposits',
 			'oneTimeDeposits.newDeposit' => 'New Deposit',

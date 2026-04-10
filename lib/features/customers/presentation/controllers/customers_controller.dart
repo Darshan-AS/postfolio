@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:postfolio/core/models/nominee.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
@@ -35,8 +36,7 @@ class CustomersController extends _$CustomersController {
     String? aadhaarNumber,
     String? panNumber,
     String? savingsAccountNumber,
-    String? savingsNomineeName,
-    String? savingsNomineeRelationship,
+    List<Nominee>? savingsNominees,
   }) async {
     final (error, customer) = Customer.create(
       id: id ?? '', // FakeRepo will assign a real ID if creating
@@ -49,8 +49,7 @@ class CustomersController extends _$CustomersController {
       aadhaarNumber: aadhaarNumber,
       panNumber: panNumber,
       savingsAccountNumber: savingsAccountNumber,
-      savingsNomineeName: savingsNomineeName,
-      savingsNomineeRelationship: savingsNomineeRelationship,
+      savingsNominees: savingsNominees,
     );
 
     if (error != null || customer == null) {

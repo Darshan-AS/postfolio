@@ -26,11 +26,20 @@ class FakeCustomerRepository implements CustomerRepository {
       panNumber: 'ABCDE1234F',
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA987654321',
-        nominee: Nominee(
-          name: 'Alfred Pennyworth',
-          relationship: 'Butler',
-          phone: '9876543211',
-        ),
+        nominees: [
+          Nominee(
+            percentage: 50.0,
+            name: 'Alfred Pennyworth',
+            relationship: 'Butler',
+            phone: '9876543211',
+          ),
+          Nominee(
+            percentage: 50.0,
+            name: 'Dick Grayson',
+            relationship: 'Ward',
+            phone: '9876543210',
+          ),
+        ],
       ),
     ),
     Customer(
@@ -45,11 +54,20 @@ class FakeCustomerRepository implements CustomerRepository {
       panNumber: 'FGHIJ5678K',
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA123456789',
-        nominee: Nominee(
-          name: 'Lois Lane',
-          relationship: 'Spouse',
-          phone: '9876543212',
-        ),
+        nominees: [
+          Nominee(
+            percentage: 60.0,
+            name: 'Lois Lane',
+            relationship: 'Spouse',
+            phone: '9876543212',
+          ),
+          Nominee(
+            percentage: 40.0,
+            name: 'Martha Kent',
+            relationship: 'Mother',
+            phone: '9876543213',
+          ),
+        ],
       ),
     ),
     Customer(
@@ -64,11 +82,14 @@ class FakeCustomerRepository implements CustomerRepository {
       panNumber: 'LMNOP9012Q',
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA456789123',
-        nominee: Nominee(
-          name: 'Hippolyta',
-          relationship: 'Mother',
-          phone: '9123456781',
-        ),
+        nominees: [
+          Nominee(
+            percentage: 100.0,
+            name: 'Hippolyta',
+            relationship: 'Mother',
+            phone: '9123456781',
+          ),
+        ],
       ),
     ),
     Customer(
@@ -83,11 +104,14 @@ class FakeCustomerRepository implements CustomerRepository {
       panNumber: 'RSTUV3456W',
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA567890123',
-        nominee: Nominee(
-          name: 'Iris West',
-          relationship: 'Spouse',
-          phone: '9988776656',
-        ),
+        nominees: [
+          Nominee(
+            percentage: 100.0,
+            name: 'Iris West',
+            relationship: 'Spouse',
+            phone: '9988776656',
+          ),
+        ],
       ),
     ),
     Customer(
@@ -102,11 +126,14 @@ class FakeCustomerRepository implements CustomerRepository {
       panNumber: 'XYZAB7890C',
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA678901234',
-        nominee: Nominee(
-          name: 'Mera',
-          relationship: 'Spouse',
-          phone: '9876543213',
-        ),
+        nominees: [
+          Nominee(
+            percentage: 100.0,
+            name: 'Mera',
+            relationship: 'Spouse',
+            phone: '9876543213',
+          ),
+        ],
       ),
     ),
   ];

@@ -9,6 +9,26 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:intl/intl.dart';
+import 'package:postfolio/core/models/nominee.dart';
+
+class _NomineeFormModel {
+  final TextEditingController nameController;
+  final TextEditingController relationshipController;
+  final TextEditingController percentageController;
+
+  _NomineeFormModel({String? name, String? relationship, double? percentage})
+    : nameController = TextEditingController(text: name),
+      relationshipController = TextEditingController(text: relationship),
+      percentageController = TextEditingController(
+        text: percentage?.toString() ?? '100',
+      );
+
+  void dispose() {
+    nameController.dispose();
+    relationshipController.dispose();
+    percentageController.dispose();
+  }
+}
 
 class CustomerFormScreen extends ConsumerWidget {
   final String? customerId;
@@ -69,8 +89,8 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
   late final TextEditingController _aadhaarNumberController;
   late final TextEditingController _panNumberController;
   late final TextEditingController _savingsAccountNumberController;
-  late final TextEditingController _savingsNomineeNameController;
-  late final TextEditingController _savingsNomineeRelationshipController;
+
+  final List<_NomineeFormModel> _nomineeForms = [];
 
   DateTime? _selectedDate;
   bool _isSaving = false;
@@ -82,18 +102,28 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
     _nameController = TextEditingController(text: customer?.name);
     _emailController = TextEditingController(text: customer?.email);
     _phoneController = TextEditingController(text: customer?.phone);
-    _addressController = TextEditingController(
-      text: customer?.address,
-    );
+    _addressController = TextEditingController(text: customer?.address);
     _cifNumberController = TextEditingController(text: customer?.cifNumber);
-    _aadhaarNumberController = TextEditingController(text: customer?.aadhaarNumber);
+    _aadhaarNumberController = TextEditingController(
+      text: customer?.aadhaarNumber,
+    );
     _panNumberController = TextEditingController(text: customer?.panNumber);
-    _savingsAccountNumberController =
-        TextEditingController(text: customer?.savingsAccount?.accountNumber);
-    _savingsNomineeNameController =
-        TextEditingController(text: customer?.savingsAccount?.nominee?.name);
-    _savingsNomineeRelationshipController = TextEditingController(
-        text: customer?.savingsAccount?.nominee?.relationship);
+    _savingsAccountNumberController = TextEditingController(
+      text: customer?.savingsAccount?.accountNumber,
+    );
+
+    final nominees = customer?.savingsAccount?.nominees ?? [];
+    if (nominees.isNotEmpty) {
+      _nomineeForms.addAll(
+        nominees.map(
+          (n) => _NomineeFormModel(
+            name: n.name,
+            relationship: n.relationship,
+            percentage: n.percentage,
+          ),
+        ),
+      );
+    }
 
     _selectedDate = customer?.dateOfBirth;
     _dateOfBirthController = TextEditingController(
@@ -114,9 +144,23 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
     _aadhaarNumberController.dispose();
     _panNumberController.dispose();
     _savingsAccountNumberController.dispose();
-    _savingsNomineeNameController.dispose();
-    _savingsNomineeRelationshipController.dispose();
+    for (final form in _nomineeForms) {
+      form.dispose();
+    }
     super.dispose();
+  }
+
+  void _addNominee() {
+    setState(() {
+      _nomineeForms.add(_NomineeFormModel());
+    });
+  }
+
+  void _removeNominee(int index) {
+    setState(() {
+      final form = _nomineeForms.removeAt(index);
+      form.dispose();
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -161,16 +205,21 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
             panNumber: _panNumberController.text.trim().isEmpty
                 ? null
                 : _panNumberController.text.trim(),
-            savingsAccountNumber: _savingsAccountNumberController.text.trim().isEmpty
+            savingsAccountNumber:
+                _savingsAccountNumberController.text.trim().isEmpty
                 ? null
                 : _savingsAccountNumberController.text.trim(),
-            savingsNomineeName: _savingsNomineeNameController.text.trim().isEmpty
-                ? null
-                : _savingsNomineeNameController.text.trim(),
-            savingsNomineeRelationship:
-                _savingsNomineeRelationshipController.text.trim().isEmpty
-                    ? null
-                    : _savingsNomineeRelationshipController.text.trim(),
+            savingsNominees: _nomineeForms
+                .map(
+                  (f) => Nominee(
+                    name: f.nameController.text.trim(),
+                    relationship: f.relationshipController.text.trim(),
+                    percentage:
+                        double.tryParse(f.percentageController.text.trim()) ??
+                        100,
+                  ),
+                )
+                .toList(),
           );
 
       if (!mounted) return;
@@ -182,7 +231,9 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
         case Failure(error: final err):
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(t.customers.failedToSaveCustomer(error: err.toString())),
+              content: Text(
+                t.customers.failedToSaveCustomer(error: err.toString()),
+              ),
             ),
           );
       }
@@ -195,7 +246,9 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isUpdating ? t.customers.editCustomer : t.customers.newCustomer),
+        title: Text(
+          isUpdating ? t.customers.editCustomer : t.customers.newCustomer,
+        ),
         actions: [
           if (_isSaving)
             const Padding(
@@ -307,30 +360,99 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppSpacings.gapMd,
               TextFormField(
                 controller: _savingsAccountNumberController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'SB Account No.',
-                  prefixIcon: const Icon(Icons.account_balance_outlined),
+                  prefixIcon: Icon(Icons.account_balance_outlined),
                 ),
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
               ),
               AppSpacings.gapMd,
-              TextFormField(
-                controller: _savingsNomineeNameController,
-                decoration: InputDecoration(
-                  labelText: 'SB Nominee Name',
-                  prefixIcon: const Icon(Icons.person_pin_outlined),
-                ),
-                textInputAction: TextInputAction.next,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    t.customers.fields.nominees,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextButton.icon(
+                    onPressed: _addNominee,
+                    icon: const Icon(Icons.add),
+                    label: Text(t.customers.fields.addNominee),
+                  ),
+                ],
               ),
-              AppSpacings.gapMd,
-              TextFormField(
-                controller: _savingsNomineeRelationshipController,
-                decoration: InputDecoration(
-                  labelText: 'SB Nominee Relationship',
-                  prefixIcon: const Icon(Icons.people_alt_outlined),
-                ),
-                textInputAction: TextInputAction.done,
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _nomineeForms.length,
+                itemBuilder: (context, index) {
+                  final form = _nomineeForms[index];
+                  return Card(
+                    margin: const EdgeInsets.only(
+                      bottom: AppDimensions.paddingMd,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${t.customers.fields.nominees} ${index + 1}',
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: AppTheme.error,
+                                ),
+                                onPressed: () => _removeNominee(index),
+                              ),
+                            ],
+                          ),
+                          AppSpacings.gapSm,
+                          TextFormField(
+                            controller: form.nameController,
+                            decoration: InputDecoration(
+                              labelText: t.customers.fields.nomineeName,
+                              prefixIcon: const Icon(Icons.person_pin_outlined),
+                            ),
+                            validator: Customer.validateName,
+                          ),
+                          AppSpacings.gapSm,
+                          TextFormField(
+                            controller: form.relationshipController,
+                            decoration: InputDecoration(
+                              labelText: t.customers.fields.relationship,
+                              prefixIcon: const Icon(Icons.people_alt_outlined),
+                            ),
+                            validator: (v) =>
+                                v?.trim().isEmpty == true ? 'Required' : null,
+                          ),
+                          AppSpacings.gapSm,
+                          TextFormField(
+                            controller: form.percentageController,
+                            decoration: InputDecoration(
+                              labelText: t.customers.fields.percentage,
+                              prefixIcon: const Icon(Icons.percent_outlined),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            validator: (v) {
+                              final val = double.tryParse(v ?? '');
+                              if (val == null || val <= 0 || val > 100) {
+                                return 'Invalid';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
               AppSpacings.gapXxl,
               ElevatedButton(

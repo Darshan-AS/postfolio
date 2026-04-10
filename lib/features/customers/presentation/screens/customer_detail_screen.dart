@@ -366,43 +366,38 @@ class CustomerDetailScreen extends ConsumerWidget {
                           ),
                         ),
                       ],
-                      if (customer.savingsAccount?.accountNumber != null &&
-                          customer.savingsAccount?.nominee != null)
+                      if (customer.savingsAccount?.nominees != null &&
+                          customer.savingsAccount!.nominees.isNotEmpty) ...[
                         const Divider(height: 1),
-                      if (customer.savingsAccount?.nominee?.name != null) ...[
-                        ListTile(
-                          leading: Icon(
-                            Icons.person_pin_outlined,
-                            color: colorScheme.primary,
+                        Padding(
+                          padding: const EdgeInsets.all(
+                            AppDimensions.paddingLg,
                           ),
-                          title: Text(
-                            t.customers.fields.sbNomineeName,
-                            style: textTheme.bodySmall,
-                          ),
-                          subtitle: Text(
-                            customer.savingsAccount!.nominee!.name,
-                            style: textTheme.bodyLarge,
-                          ),
-                        ),
-                      ],
-                      if (customer.savingsAccount?.nominee?.name != null &&
-                          customer.savingsAccount?.nominee?.relationship !=
-                              null)
-                        const Divider(height: 1),
-                      if (customer.savingsAccount?.nominee?.relationship !=
-                          null) ...[
-                        ListTile(
-                          leading: Icon(
-                            Icons.people_alt_outlined,
-                            color: colorScheme.primary,
-                          ),
-                          title: Text(
-                            t.customers.fields.sbNomineeRelationship,
-                            style: textTheme.bodySmall,
-                          ),
-                          subtitle: Text(
-                            customer.savingsAccount!.nominee!.relationship,
-                            style: textTheme.bodyLarge,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Nominees', style: textTheme.titleSmall),
+                              AppSpacings.gapSm,
+                              ...customer.savingsAccount!.nominees.map((
+                                nominee,
+                              ) {
+                                return ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: Icon(
+                                    Icons.person_pin_outlined,
+                                    color: colorScheme.primary,
+                                  ),
+                                  title: Text(
+                                    nominee.name,
+                                    style: textTheme.bodyLarge,
+                                  ),
+                                  subtitle: Text(
+                                    '${nominee.relationship} • ${nominee.percentage}%',
+                                    style: textTheme.bodyMedium,
+                                  ),
+                                );
+                              }),
+                            ],
                           ),
                         ),
                       ],

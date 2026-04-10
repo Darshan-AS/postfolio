@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SavingsAccount {
 
- String get accountNumber; Nominee? get nominee;
+ String get accountNumber; List<Nominee> get nominees;
 /// Create a copy of SavingsAccount
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $SavingsAccountCopyWith<SavingsAccount> get copyWith => _$SavingsAccountCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavingsAccount&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.nominee, nominee) || other.nominee == nominee));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavingsAccount&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&const DeepCollectionEquality().equals(other.nominees, nominees));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,accountNumber,nominee);
+int get hashCode => Object.hash(runtimeType,accountNumber,const DeepCollectionEquality().hash(nominees));
 
 @override
 String toString() {
-  return 'SavingsAccount(accountNumber: $accountNumber, nominee: $nominee)';
+  return 'SavingsAccount(accountNumber: $accountNumber, nominees: $nominees)';
 }
 
 
@@ -48,11 +48,11 @@ abstract mixin class $SavingsAccountCopyWith<$Res>  {
   factory $SavingsAccountCopyWith(SavingsAccount value, $Res Function(SavingsAccount) _then) = _$SavingsAccountCopyWithImpl;
 @useResult
 $Res call({
- String accountNumber, Nominee? nominee
+ String accountNumber, List<Nominee> nominees
 });
 
 
-$NomineeCopyWith<$Res>? get nominee;
+
 
 }
 /// @nodoc
@@ -65,26 +65,14 @@ class _$SavingsAccountCopyWithImpl<$Res>
 
 /// Create a copy of SavingsAccount
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? accountNumber = null,Object? nominee = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? accountNumber = null,Object? nominees = null,}) {
   return _then(_self.copyWith(
 accountNumber: null == accountNumber ? _self.accountNumber : accountNumber // ignore: cast_nullable_to_non_nullable
-as String,nominee: freezed == nominee ? _self.nominee : nominee // ignore: cast_nullable_to_non_nullable
-as Nominee?,
+as String,nominees: null == nominees ? _self.nominees : nominees // ignore: cast_nullable_to_non_nullable
+as List<Nominee>,
   ));
 }
-/// Create a copy of SavingsAccount
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$NomineeCopyWith<$Res>? get nominee {
-    if (_self.nominee == null) {
-    return null;
-  }
 
-  return $NomineeCopyWith<$Res>(_self.nominee!, (value) {
-    return _then(_self.copyWith(nominee: value));
-  });
-}
 }
 
 
@@ -163,10 +151,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String accountNumber,  Nominee? nominee)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String accountNumber,  List<Nominee> nominees)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SavingsAccount() when $default != null:
-return $default(_that.accountNumber,_that.nominee);case _:
+return $default(_that.accountNumber,_that.nominees);case _:
   return orElse();
 
 }
@@ -184,10 +172,10 @@ return $default(_that.accountNumber,_that.nominee);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String accountNumber,  Nominee? nominee)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String accountNumber,  List<Nominee> nominees)  $default,) {final _that = this;
 switch (_that) {
 case _SavingsAccount():
-return $default(_that.accountNumber,_that.nominee);}
+return $default(_that.accountNumber,_that.nominees);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -201,10 +189,10 @@ return $default(_that.accountNumber,_that.nominee);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String accountNumber,  Nominee? nominee)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String accountNumber,  List<Nominee> nominees)?  $default,) {final _that = this;
 switch (_that) {
 case _SavingsAccount() when $default != null:
-return $default(_that.accountNumber,_that.nominee);case _:
+return $default(_that.accountNumber,_that.nominees);case _:
   return null;
 
 }
@@ -216,11 +204,17 @@ return $default(_that.accountNumber,_that.nominee);case _:
 @JsonSerializable()
 
 class _SavingsAccount extends SavingsAccount {
-  const _SavingsAccount({required this.accountNumber, this.nominee}): super._();
+  const _SavingsAccount({required this.accountNumber, final  List<Nominee> nominees = const []}): _nominees = nominees,super._();
   factory _SavingsAccount.fromJson(Map<String, dynamic> json) => _$SavingsAccountFromJson(json);
 
 @override final  String accountNumber;
-@override final  Nominee? nominee;
+ final  List<Nominee> _nominees;
+@override@JsonKey() List<Nominee> get nominees {
+  if (_nominees is EqualUnmodifiableListView) return _nominees;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_nominees);
+}
+
 
 /// Create a copy of SavingsAccount
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +229,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavingsAccount&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.nominee, nominee) || other.nominee == nominee));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavingsAccount&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&const DeepCollectionEquality().equals(other._nominees, _nominees));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,accountNumber,nominee);
+int get hashCode => Object.hash(runtimeType,accountNumber,const DeepCollectionEquality().hash(_nominees));
 
 @override
 String toString() {
-  return 'SavingsAccount(accountNumber: $accountNumber, nominee: $nominee)';
+  return 'SavingsAccount(accountNumber: $accountNumber, nominees: $nominees)';
 }
 
 
@@ -255,11 +249,11 @@ abstract mixin class _$SavingsAccountCopyWith<$Res> implements $SavingsAccountCo
   factory _$SavingsAccountCopyWith(_SavingsAccount value, $Res Function(_SavingsAccount) _then) = __$SavingsAccountCopyWithImpl;
 @override @useResult
 $Res call({
- String accountNumber, Nominee? nominee
+ String accountNumber, List<Nominee> nominees
 });
 
 
-@override $NomineeCopyWith<$Res>? get nominee;
+
 
 }
 /// @nodoc
@@ -272,27 +266,15 @@ class __$SavingsAccountCopyWithImpl<$Res>
 
 /// Create a copy of SavingsAccount
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? accountNumber = null,Object? nominee = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? accountNumber = null,Object? nominees = null,}) {
   return _then(_SavingsAccount(
 accountNumber: null == accountNumber ? _self.accountNumber : accountNumber // ignore: cast_nullable_to_non_nullable
-as String,nominee: freezed == nominee ? _self.nominee : nominee // ignore: cast_nullable_to_non_nullable
-as Nominee?,
+as String,nominees: null == nominees ? _self._nominees : nominees // ignore: cast_nullable_to_non_nullable
+as List<Nominee>,
   ));
 }
 
-/// Create a copy of SavingsAccount
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$NomineeCopyWith<$Res>? get nominee {
-    if (_self.nominee == null) {
-    return null;
-  }
 
-  return $NomineeCopyWith<$Res>(_self.nominee!, (value) {
-    return _then(_self.copyWith(nominee: value));
-  });
-}
 }
 
 // dart format on
