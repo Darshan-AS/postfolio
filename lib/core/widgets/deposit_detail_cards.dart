@@ -29,7 +29,7 @@ class DetailSection extends StatelessWidget {
           elevation: 0,
           color: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
             side: BorderSide(
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
@@ -129,7 +129,7 @@ class DetailAmountCard extends StatelessWidget {
         elevation: 0,
         color: bg,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         ),
         margin: EdgeInsets.zero,
         child: Padding(

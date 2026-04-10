@@ -34,6 +34,10 @@
 - [x] Add pull-to-refresh to listing screens.
 - [x] Unify `Nominee` model and widgets across Customers and Deposits, removing duplicate logic.
 - [ ] Add `riverpod_lint` and `custom_lint` for static analysis of Riverpod rules.
+- [x] Standardize Input Decorations across all form fields using `AppInputDecoration.m3`.
+- [x] Standardize Save Buttons across all form screens using `FilledButtonThemeData`.
+- [x] Unify border radius to `radiusLg` across input decorations, cards, and buttons.
+- [x] Standardize bottom padding in all form screens by ensuring a `gapXxl` after the save button.
 
 ## Phase 4: Deposits & RD Features (Completed)
 - [x] Build `OneTimeDepositRepository` and `OneTimeDepositsController`.

@@ -5,12 +5,16 @@ import 'package:flutter/material.dart';
 class AppInputDecoration {
   static InputDecoration m3(
     BuildContext context, {
-    required String labelText,
+    String? labelText,
+    String? hintText,
+    String? errorText,
     IconData? prefixIcon,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     return InputDecoration(
       labelText: labelText,
+      hintText: hintText,
+      errorText: errorText,
       prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
       filled: true,
       fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),

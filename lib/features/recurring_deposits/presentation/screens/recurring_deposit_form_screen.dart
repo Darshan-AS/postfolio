@@ -470,26 +470,14 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
               onPressed: _isSaving ? null : _save,
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(AppDimensions.buttonHeight),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-                ),
               ),
               child: _isSaving
                   ? const SizedBox(
                       height: AppDimensions.iconMd,
                       width: AppDimensions.iconMd,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(
-                      t.recurringDeposits.saveDeposit,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  : Text(t.recurringDeposits.saveDeposit),
             ),
             AppSpacings.gapXxl,
           ],

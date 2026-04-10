@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/nominees_input_section.dart';
@@ -233,9 +234,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppSpacings.gapMd,
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(
+                decoration: AppInputDecoration.m3(
+                  context,
                   labelText: t.customers.fields.fullName,
-                  prefixIcon: const Icon(Icons.person_outline),
+                  prefixIcon: Icons.person_outline,
                 ),
                 validator: Customer.validateName,
                 textInputAction: TextInputAction.next,
@@ -243,9 +245,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppSpacings.gapMd,
               TextFormField(
                 controller: _phoneController,
-                decoration: InputDecoration(
+                decoration: AppInputDecoration.m3(
+                  context,
                   labelText: t.customers.fields.phoneNumber,
-                  prefixIcon: const Icon(Icons.phone_outlined),
+                  prefixIcon: Icons.phone_outlined,
                 ),
                 validator: Customer.validatePhone,
                 keyboardType: TextInputType.phone,
@@ -254,9 +257,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppSpacings.gapMd,
               TextFormField(
                 controller: _emailController,
-                decoration: InputDecoration(
+                decoration: AppInputDecoration.m3(
+                  context,
                   labelText: t.customers.fields.emailAddress,
-                  prefixIcon: const Icon(Icons.email_outlined),
+                  prefixIcon: Icons.email_outlined,
                 ),
                 validator: Customer.validateEmail,
                 keyboardType: TextInputType.emailAddress,
@@ -265,9 +269,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppSpacings.gapMd,
               TextFormField(
                 controller: _dateOfBirthController,
-                decoration: const InputDecoration(
+                decoration: AppInputDecoration.m3(
+                  context,
                   labelText: 'Date of Birth',
-                  prefixIcon: Icon(Icons.calendar_today_outlined),
+                  prefixIcon: Icons.calendar_today_outlined,
                 ),
                 readOnly: true,
                 onTap: () => _selectDate(context),
@@ -275,9 +280,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppSpacings.gapMd,
               TextFormField(
                 controller: _addressController,
-                decoration: InputDecoration(
+                decoration: AppInputDecoration.m3(
+                  context,
                   labelText: t.customers.fields.homeAddress,
-                  prefixIcon: const Icon(Icons.home_outlined),
+                  prefixIcon: Icons.home_outlined,
                 ),
                 maxLines: 3,
               ),
@@ -292,18 +298,20 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppSpacings.gapMd,
               TextFormField(
                 controller: _cifNumberController,
-                decoration: const InputDecoration(
+                decoration: AppInputDecoration.m3(
+                  context,
                   labelText: 'CIF',
-                  prefixIcon: Icon(Icons.confirmation_number_outlined),
+                  prefixIcon: Icons.confirmation_number_outlined,
                 ),
                 textInputAction: TextInputAction.next,
               ),
               AppSpacings.gapMd,
               TextFormField(
                 controller: _aadhaarNumberController,
-                decoration: const InputDecoration(
+                decoration: AppInputDecoration.m3(
+                  context,
                   labelText: 'Aadhaar',
-                  prefixIcon: Icon(Icons.badge_outlined),
+                  prefixIcon: Icons.badge_outlined,
                 ),
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
@@ -311,9 +319,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppSpacings.gapMd,
               TextFormField(
                 controller: _panNumberController,
-                decoration: const InputDecoration(
+                decoration: AppInputDecoration.m3(
+                  context,
                   labelText: 'PAN',
-                  prefixIcon: Icon(Icons.credit_card_outlined),
+                  prefixIcon: Icons.credit_card_outlined,
                 ),
                 textInputAction: TextInputAction.next,
               ),
@@ -328,9 +337,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppSpacings.gapMd,
               TextFormField(
                 controller: _savingsAccountNumberController,
-                decoration: const InputDecoration(
+                decoration: AppInputDecoration.m3(
+                  context,
                   labelText: 'SB Account No.',
-                  prefixIcon: Icon(Icons.account_balance_outlined),
+                  prefixIcon: Icons.account_balance_outlined,
                 ),
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
@@ -346,9 +356,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               FilledButton(
                 onPressed: _isSaving ? null : _save,
                 style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(
-                    AppDimensions.buttonHeight,
-                  ),
+                  minimumSize: const Size.fromHeight(AppDimensions.buttonHeight),
                 ),
                 child: _isSaving
                     ? const SizedBox(
@@ -358,12 +366,9 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                       )
                     : Text(
                         t.customers.saveCustomer,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                            ),
                       ),
               ),
+              AppSpacings.gapXxl,
             ],
           ),
         ),

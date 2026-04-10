@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -79,11 +80,10 @@ class _CustomerSelectionFieldState
     return InkWell(
       onTap: _showSelectionSheet,
       child: InputDecorator(
-        decoration: InputDecoration(
-          labelText:
-              t.oneTimeDeposits.fields.customerId, // Reusing localized string
-          border: const OutlineInputBorder(),
-          prefixIcon: const Icon(Icons.person_outline),
+        decoration: AppInputDecoration.m3(
+          context,
+          labelText: t.oneTimeDeposits.fields.customerId,
+          prefixIcon: Icons.person_outline,
           errorText: widget.errorText,
         ),
         child: Row(
@@ -138,10 +138,10 @@ class _CustomerSelectionSheetState
           Padding(
             padding: const EdgeInsets.all(AppDimensions.paddingLg),
             child: TextField(
-              decoration: const InputDecoration(
+              decoration: AppInputDecoration.m3(
+                context,
                 hintText: 'Search by name, phone or CIF...',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+                prefixIcon: Icons.search,
               ),
               onChanged: (value) =>
                   setState(() => _searchQuery = value.toLowerCase()),
