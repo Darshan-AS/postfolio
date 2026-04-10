@@ -13,6 +13,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/screens/recur
 import 'package:postfolio/features/customers/presentation/screens/customer_detail_screen.dart';
 import 'package:postfolio/features/customers/presentation/screens/customer_form_screen.dart';
 import 'package:postfolio/features/customers/presentation/screens/customers_screen.dart';
+import 'package:postfolio/core/routing/app_routes.dart';
 
 part 'app_router.g.dart';
 
@@ -22,7 +23,7 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 GoRouter goRouter(Ref ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/customers',
+    initialLocation: AppRoutes.customers,
     routes: $appRoutes,
   );
 }
@@ -31,18 +32,20 @@ GoRouter goRouter(Ref ref) {
   branches: <TypedStatefulShellBranch<StatefulShellBranchData>>[
     TypedStatefulShellBranch<DashboardBranch>(
       routes: <TypedRoute<RouteData>>[
-        TypedGoRoute<DashboardRoute>(path: '/dashboard'),
+        TypedGoRoute<DashboardRoute>(path: AppRoutes.dashboard),
       ],
     ),
     TypedStatefulShellBranch<DepositsBranch>(
       routes: <TypedRoute<RouteData>>[
         TypedGoRoute<OneTimeDepositsRoute>(
-          path: '/deposits',
+          path: AppRoutes.deposits,
           routes: [
-            TypedGoRoute<OneTimeDepositCreateRoute>(path: 'new'),
+            TypedGoRoute<OneTimeDepositCreateRoute>(path: AppRoutes.newRoute),
             TypedGoRoute<OneTimeDepositDetailRoute>(
-              path: ':depositId',
-              routes: [TypedGoRoute<OneTimeDepositEditRoute>(path: 'edit')],
+              path: AppRoutes.depositIdParam,
+              routes: [
+                TypedGoRoute<OneTimeDepositEditRoute>(path: AppRoutes.editRoute),
+              ],
             ),
           ],
         ),
@@ -51,12 +54,14 @@ GoRouter goRouter(Ref ref) {
     TypedStatefulShellBranch<RdBranch>(
       routes: <TypedRoute<RouteData>>[
         TypedGoRoute<RecurringDepositsRoute>(
-          path: '/rd',
+          path: AppRoutes.rd,
           routes: [
-            TypedGoRoute<RecurringDepositCreateRoute>(path: 'new'),
+            TypedGoRoute<RecurringDepositCreateRoute>(path: AppRoutes.newRoute),
             TypedGoRoute<RecurringDepositDetailRoute>(
-              path: ':depositId',
-              routes: [TypedGoRoute<RecurringDepositEditRoute>(path: 'edit')],
+              path: AppRoutes.depositIdParam,
+              routes: [
+                TypedGoRoute<RecurringDepositEditRoute>(path: AppRoutes.editRoute),
+              ],
             ),
           ],
         ),
@@ -65,12 +70,14 @@ GoRouter goRouter(Ref ref) {
     TypedStatefulShellBranch<CustomersBranch>(
       routes: <TypedRoute<RouteData>>[
         TypedGoRoute<CustomersRoute>(
-          path: '/customers',
+          path: AppRoutes.customers,
           routes: [
-            TypedGoRoute<CustomerCreateRoute>(path: 'new'),
+            TypedGoRoute<CustomerCreateRoute>(path: AppRoutes.newRoute),
             TypedGoRoute<CustomerDetailRoute>(
-              path: ':customerId',
-              routes: [TypedGoRoute<CustomerEditRoute>(path: 'edit')],
+              path: AppRoutes.customerIdParam,
+              routes: [
+                TypedGoRoute<CustomerEditRoute>(path: AppRoutes.editRoute),
+              ],
             ),
           ],
         ),
