@@ -1,10 +1,13 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:uuid/uuid.dart';
+
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'one_time_deposit_repository.g.dart';
 
 abstract class OneTimeDepositRepository {
   Future<Result<List<OneTimeDeposit>, String>> fetchOneTimeDeposits();
@@ -158,8 +161,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
 }
 
 // Global Provider for the Repository.
-final oneTimeDepositRepositoryProvider = Provider<OneTimeDepositRepository>((
-  ref,
-) {
+@riverpod
+OneTimeDepositRepository oneTimeDepositRepository(Ref ref) {
   return FakeOneTimeDepositRepository();
-});
+}

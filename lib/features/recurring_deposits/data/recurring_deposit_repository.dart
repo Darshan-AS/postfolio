@@ -1,10 +1,13 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:uuid/uuid.dart';
+
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'recurring_deposit_repository.g.dart';
 
 abstract class RecurringDepositRepository {
   Future<Result<List<RecurringDeposit>, String>> fetchRecurringDeposits();
@@ -164,8 +167,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 }
 
 // Global Provider for the Repository.
-final recurringDepositRepositoryProvider = Provider<RecurringDepositRepository>(
-  (ref) {
-    return FakeRecurringDepositRepository();
-  },
-);
+@riverpod
+RecurringDepositRepository recurringDepositRepository(Ref ref) {
+  return FakeRecurringDepositRepository();
+}

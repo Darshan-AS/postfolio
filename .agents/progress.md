@@ -19,3 +19,6 @@ None currently. The architectural cleanup phase, type-safe routing migration, UI
 
 ## Next Agent Action
 The immediate next step is to proceed to **Phase 5 (Firebase Integration)** from `tasks.md`. Run `flutterfire configure` to connect the project, and then start building the real `FirestoreCustomerRepository` and Firestore repositories for Deposits, RD, and Schemes to replace the current Fake repositories.
+
+- Refactored legacy `Provider` declarations to use `@riverpod` annotation (code generation) for `CustomerRepository`, `OneTimeDepositRepository`, `RecurringDepositRepository`, `GoRouter`, and `IntentService` to adhere rigorously to Riverpod conventions.
+- Ensured no usages of `StateNotifier` or `dartz` exist in the codebase.

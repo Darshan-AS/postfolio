@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+part 'intent_service.g.dart';
 
 class IntentService {
   Future<void> _launchUrl(String urlString) async {
@@ -32,6 +34,7 @@ class IntentService {
   }
 }
 
-final intentServiceProvider = Provider<IntentService>((ref) {
+@riverpod
+IntentService intentService(Ref ref) {
   return IntentService();
-});
+}

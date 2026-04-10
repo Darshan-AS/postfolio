@@ -1,9 +1,12 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/models/savings_account.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:uuid/uuid.dart';
+
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'customer_repository.g.dart';
 
 abstract class CustomerRepository {
   Future<Result<List<Customer>, String>> fetchCustomers();
@@ -152,6 +155,7 @@ class FakeCustomerRepository implements CustomerRepository {
 
 // Global Provider for the Repository.
 // When we move to Firebase, we simply swap FakeUserRepository() for FirestoreUserRepository() here!
-final customerRepositoryProvider = Provider<CustomerRepository>((ref) {
+@riverpod
+CustomerRepository customerRepository(Ref ref) {
   return FakeCustomerRepository();
-});
+}
