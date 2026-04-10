@@ -64,7 +64,6 @@ class _OneTimeDepositForm extends ConsumerStatefulWidget {
 
 class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _rowIdController;
   late final TextEditingController _accountNoController;
   late final TextEditingController _principalAmountController;
   late final TextEditingController _termYearsController;
@@ -85,9 +84,6 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
   @override
   void initState() {
     super.initState();
-    _rowIdController = TextEditingController(
-      text: widget.existingDeposit?.rowId,
-    );
     _accountNoController = TextEditingController(
       text: widget.existingDeposit?.accountNo,
     );
@@ -121,7 +117,6 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
 
   @override
   void dispose() {
-    _rowIdController.dispose();
     _accountNoController.dispose();
     _principalAmountController.dispose();
     _termYearsController.dispose();
@@ -146,7 +141,6 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
           .read(oneTimeDepositsControllerProvider.notifier)
           .saveOneTimeDeposit(
             id: widget.existingDeposit?.id,
-            rowId: _rowIdController.text.trim(),
             accountNo: _accountNoController.text.trim(),
             principalAmount:
                 double.tryParse(_principalAmountController.text.trim()) ?? 0.0,
@@ -236,18 +230,6 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                   _selectedCustomerId = customer?.id;
                 });
               },
-            ),
-            AppSpacings.gapLg,
-            TextFormField(
-              controller: _rowIdController,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.oneTimeDeposits.fields.rowId,
-                prefixIcon: Icons.tag_outlined,
-              ),
-              validator: (val) =>
-                  val == null || val.trim().isEmpty ? 'Required' : null,
-              textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
             TextFormField(

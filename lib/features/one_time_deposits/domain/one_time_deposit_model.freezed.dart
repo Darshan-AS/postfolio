@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$OneTimeDeposit {
 
- String get id; String get rowId; String get accountNo; double get principalAmount; int get termYears; int get termMonths; double get interestRate; String get customerId; OneTimeSchemeType get schemeType; double get maturityAmount; DateTime get startDate; DateTime get maturityDate; String? get linkedSavingsAccountNo; List<Nominee> get nominees; DepositStatus get status;
+ String get id; String get accountNo; double get principalAmount; int get termYears; int get termMonths; double get interestRate; String get customerId; OneTimeSchemeType get schemeType; double get maturityAmount; DateTime get startDate; DateTime get maturityDate; String? get linkedSavingsAccountNo; List<Nominee> get nominees; DepositStatus get status;
 /// Create a copy of OneTimeDeposit
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $OneTimeDepositCopyWith<OneTimeDeposit> get copyWith => _$OneTimeDepositCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OneTimeDeposit&&(identical(other.id, id) || other.id == id)&&(identical(other.rowId, rowId) || other.rowId == rowId)&&(identical(other.accountNo, accountNo) || other.accountNo == accountNo)&&(identical(other.principalAmount, principalAmount) || other.principalAmount == principalAmount)&&(identical(other.termYears, termYears) || other.termYears == termYears)&&(identical(other.termMonths, termMonths) || other.termMonths == termMonths)&&(identical(other.interestRate, interestRate) || other.interestRate == interestRate)&&(identical(other.customerId, customerId) || other.customerId == customerId)&&(identical(other.schemeType, schemeType) || other.schemeType == schemeType)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate)&&(identical(other.linkedSavingsAccountNo, linkedSavingsAccountNo) || other.linkedSavingsAccountNo == linkedSavingsAccountNo)&&const DeepCollectionEquality().equals(other.nominees, nominees)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OneTimeDeposit&&(identical(other.id, id) || other.id == id)&&(identical(other.accountNo, accountNo) || other.accountNo == accountNo)&&(identical(other.principalAmount, principalAmount) || other.principalAmount == principalAmount)&&(identical(other.termYears, termYears) || other.termYears == termYears)&&(identical(other.termMonths, termMonths) || other.termMonths == termMonths)&&(identical(other.interestRate, interestRate) || other.interestRate == interestRate)&&(identical(other.customerId, customerId) || other.customerId == customerId)&&(identical(other.schemeType, schemeType) || other.schemeType == schemeType)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate)&&(identical(other.linkedSavingsAccountNo, linkedSavingsAccountNo) || other.linkedSavingsAccountNo == linkedSavingsAccountNo)&&const DeepCollectionEquality().equals(other.nominees, nominees)&&(identical(other.status, status) || other.status == status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,rowId,accountNo,principalAmount,termYears,termMonths,interestRate,customerId,schemeType,maturityAmount,startDate,maturityDate,linkedSavingsAccountNo,const DeepCollectionEquality().hash(nominees),status);
+int get hashCode => Object.hash(runtimeType,id,accountNo,principalAmount,termYears,termMonths,interestRate,customerId,schemeType,maturityAmount,startDate,maturityDate,linkedSavingsAccountNo,const DeepCollectionEquality().hash(nominees),status);
 
 @override
 String toString() {
-  return 'OneTimeDeposit(id: $id, rowId: $rowId, accountNo: $accountNo, principalAmount: $principalAmount, termYears: $termYears, termMonths: $termMonths, interestRate: $interestRate, customerId: $customerId, schemeType: $schemeType, maturityAmount: $maturityAmount, startDate: $startDate, maturityDate: $maturityDate, linkedSavingsAccountNo: $linkedSavingsAccountNo, nominees: $nominees, status: $status)';
+  return 'OneTimeDeposit(id: $id, accountNo: $accountNo, principalAmount: $principalAmount, termYears: $termYears, termMonths: $termMonths, interestRate: $interestRate, customerId: $customerId, schemeType: $schemeType, maturityAmount: $maturityAmount, startDate: $startDate, maturityDate: $maturityDate, linkedSavingsAccountNo: $linkedSavingsAccountNo, nominees: $nominees, status: $status)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $OneTimeDepositCopyWith<$Res>  {
   factory $OneTimeDepositCopyWith(OneTimeDeposit value, $Res Function(OneTimeDeposit) _then) = _$OneTimeDepositCopyWithImpl;
 @useResult
 $Res call({
- String id, String rowId, String accountNo, double principalAmount, int termYears, int termMonths, double interestRate, String customerId, OneTimeSchemeType schemeType, double maturityAmount, DateTime startDate, DateTime maturityDate, String? linkedSavingsAccountNo, List<Nominee> nominees, DepositStatus status
+ String id, String accountNo, double principalAmount, int termYears, int termMonths, double interestRate, String customerId, OneTimeSchemeType schemeType, double maturityAmount, DateTime startDate, DateTime maturityDate, String? linkedSavingsAccountNo, List<Nominee> nominees, DepositStatus status
 });
 
 
@@ -65,10 +65,9 @@ class _$OneTimeDepositCopyWithImpl<$Res>
 
 /// Create a copy of OneTimeDeposit
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? rowId = null,Object? accountNo = null,Object? principalAmount = null,Object? termYears = null,Object? termMonths = null,Object? interestRate = null,Object? customerId = null,Object? schemeType = null,Object? maturityAmount = null,Object? startDate = null,Object? maturityDate = null,Object? linkedSavingsAccountNo = freezed,Object? nominees = null,Object? status = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? accountNo = null,Object? principalAmount = null,Object? termYears = null,Object? termMonths = null,Object? interestRate = null,Object? customerId = null,Object? schemeType = null,Object? maturityAmount = null,Object? startDate = null,Object? maturityDate = null,Object? linkedSavingsAccountNo = freezed,Object? nominees = null,Object? status = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,rowId: null == rowId ? _self.rowId : rowId // ignore: cast_nullable_to_non_nullable
 as String,accountNo: null == accountNo ? _self.accountNo : accountNo // ignore: cast_nullable_to_non_nullable
 as String,principalAmount: null == principalAmount ? _self.principalAmount : principalAmount // ignore: cast_nullable_to_non_nullable
 as double,termYears: null == termYears ? _self.termYears : termYears // ignore: cast_nullable_to_non_nullable
@@ -164,10 +163,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String rowId,  String accountNo,  double principalAmount,  int termYears,  int termMonths,  double interestRate,  String customerId,  OneTimeSchemeType schemeType,  double maturityAmount,  DateTime startDate,  DateTime maturityDate,  String? linkedSavingsAccountNo,  List<Nominee> nominees,  DepositStatus status)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String accountNo,  double principalAmount,  int termYears,  int termMonths,  double interestRate,  String customerId,  OneTimeSchemeType schemeType,  double maturityAmount,  DateTime startDate,  DateTime maturityDate,  String? linkedSavingsAccountNo,  List<Nominee> nominees,  DepositStatus status)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OneTimeDeposit() when $default != null:
-return $default(_that.id,_that.rowId,_that.accountNo,_that.principalAmount,_that.termYears,_that.termMonths,_that.interestRate,_that.customerId,_that.schemeType,_that.maturityAmount,_that.startDate,_that.maturityDate,_that.linkedSavingsAccountNo,_that.nominees,_that.status);case _:
+return $default(_that.id,_that.accountNo,_that.principalAmount,_that.termYears,_that.termMonths,_that.interestRate,_that.customerId,_that.schemeType,_that.maturityAmount,_that.startDate,_that.maturityDate,_that.linkedSavingsAccountNo,_that.nominees,_that.status);case _:
   return orElse();
 
 }
@@ -185,10 +184,10 @@ return $default(_that.id,_that.rowId,_that.accountNo,_that.principalAmount,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String rowId,  String accountNo,  double principalAmount,  int termYears,  int termMonths,  double interestRate,  String customerId,  OneTimeSchemeType schemeType,  double maturityAmount,  DateTime startDate,  DateTime maturityDate,  String? linkedSavingsAccountNo,  List<Nominee> nominees,  DepositStatus status)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String accountNo,  double principalAmount,  int termYears,  int termMonths,  double interestRate,  String customerId,  OneTimeSchemeType schemeType,  double maturityAmount,  DateTime startDate,  DateTime maturityDate,  String? linkedSavingsAccountNo,  List<Nominee> nominees,  DepositStatus status)  $default,) {final _that = this;
 switch (_that) {
 case _OneTimeDeposit():
-return $default(_that.id,_that.rowId,_that.accountNo,_that.principalAmount,_that.termYears,_that.termMonths,_that.interestRate,_that.customerId,_that.schemeType,_that.maturityAmount,_that.startDate,_that.maturityDate,_that.linkedSavingsAccountNo,_that.nominees,_that.status);}
+return $default(_that.id,_that.accountNo,_that.principalAmount,_that.termYears,_that.termMonths,_that.interestRate,_that.customerId,_that.schemeType,_that.maturityAmount,_that.startDate,_that.maturityDate,_that.linkedSavingsAccountNo,_that.nominees,_that.status);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -202,10 +201,10 @@ return $default(_that.id,_that.rowId,_that.accountNo,_that.principalAmount,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String rowId,  String accountNo,  double principalAmount,  int termYears,  int termMonths,  double interestRate,  String customerId,  OneTimeSchemeType schemeType,  double maturityAmount,  DateTime startDate,  DateTime maturityDate,  String? linkedSavingsAccountNo,  List<Nominee> nominees,  DepositStatus status)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String accountNo,  double principalAmount,  int termYears,  int termMonths,  double interestRate,  String customerId,  OneTimeSchemeType schemeType,  double maturityAmount,  DateTime startDate,  DateTime maturityDate,  String? linkedSavingsAccountNo,  List<Nominee> nominees,  DepositStatus status)?  $default,) {final _that = this;
 switch (_that) {
 case _OneTimeDeposit() when $default != null:
-return $default(_that.id,_that.rowId,_that.accountNo,_that.principalAmount,_that.termYears,_that.termMonths,_that.interestRate,_that.customerId,_that.schemeType,_that.maturityAmount,_that.startDate,_that.maturityDate,_that.linkedSavingsAccountNo,_that.nominees,_that.status);case _:
+return $default(_that.id,_that.accountNo,_that.principalAmount,_that.termYears,_that.termMonths,_that.interestRate,_that.customerId,_that.schemeType,_that.maturityAmount,_that.startDate,_that.maturityDate,_that.linkedSavingsAccountNo,_that.nominees,_that.status);case _:
   return null;
 
 }
@@ -217,11 +216,10 @@ return $default(_that.id,_that.rowId,_that.accountNo,_that.principalAmount,_that
 @JsonSerializable()
 
 class _OneTimeDeposit extends OneTimeDeposit {
-  const _OneTimeDeposit({required this.id, required this.rowId, required this.accountNo, required this.principalAmount, required this.termYears, required this.termMonths, this.interestRate = 0.0, required this.customerId, required this.schemeType, required this.maturityAmount, required this.startDate, required this.maturityDate, this.linkedSavingsAccountNo, final  List<Nominee> nominees = const [], this.status = DepositStatus.active}): _nominees = nominees,super._();
+  const _OneTimeDeposit({required this.id, required this.accountNo, required this.principalAmount, required this.termYears, required this.termMonths, this.interestRate = 0.0, required this.customerId, required this.schemeType, required this.maturityAmount, required this.startDate, required this.maturityDate, this.linkedSavingsAccountNo, final  List<Nominee> nominees = const [], this.status = DepositStatus.active}): _nominees = nominees,super._();
   factory _OneTimeDeposit.fromJson(Map<String, dynamic> json) => _$OneTimeDepositFromJson(json);
 
 @override final  String id;
-@override final  String rowId;
 @override final  String accountNo;
 @override final  double principalAmount;
 @override final  int termYears;
@@ -255,16 +253,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OneTimeDeposit&&(identical(other.id, id) || other.id == id)&&(identical(other.rowId, rowId) || other.rowId == rowId)&&(identical(other.accountNo, accountNo) || other.accountNo == accountNo)&&(identical(other.principalAmount, principalAmount) || other.principalAmount == principalAmount)&&(identical(other.termYears, termYears) || other.termYears == termYears)&&(identical(other.termMonths, termMonths) || other.termMonths == termMonths)&&(identical(other.interestRate, interestRate) || other.interestRate == interestRate)&&(identical(other.customerId, customerId) || other.customerId == customerId)&&(identical(other.schemeType, schemeType) || other.schemeType == schemeType)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate)&&(identical(other.linkedSavingsAccountNo, linkedSavingsAccountNo) || other.linkedSavingsAccountNo == linkedSavingsAccountNo)&&const DeepCollectionEquality().equals(other._nominees, _nominees)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OneTimeDeposit&&(identical(other.id, id) || other.id == id)&&(identical(other.accountNo, accountNo) || other.accountNo == accountNo)&&(identical(other.principalAmount, principalAmount) || other.principalAmount == principalAmount)&&(identical(other.termYears, termYears) || other.termYears == termYears)&&(identical(other.termMonths, termMonths) || other.termMonths == termMonths)&&(identical(other.interestRate, interestRate) || other.interestRate == interestRate)&&(identical(other.customerId, customerId) || other.customerId == customerId)&&(identical(other.schemeType, schemeType) || other.schemeType == schemeType)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate)&&(identical(other.linkedSavingsAccountNo, linkedSavingsAccountNo) || other.linkedSavingsAccountNo == linkedSavingsAccountNo)&&const DeepCollectionEquality().equals(other._nominees, _nominees)&&(identical(other.status, status) || other.status == status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,rowId,accountNo,principalAmount,termYears,termMonths,interestRate,customerId,schemeType,maturityAmount,startDate,maturityDate,linkedSavingsAccountNo,const DeepCollectionEquality().hash(_nominees),status);
+int get hashCode => Object.hash(runtimeType,id,accountNo,principalAmount,termYears,termMonths,interestRate,customerId,schemeType,maturityAmount,startDate,maturityDate,linkedSavingsAccountNo,const DeepCollectionEquality().hash(_nominees),status);
 
 @override
 String toString() {
-  return 'OneTimeDeposit(id: $id, rowId: $rowId, accountNo: $accountNo, principalAmount: $principalAmount, termYears: $termYears, termMonths: $termMonths, interestRate: $interestRate, customerId: $customerId, schemeType: $schemeType, maturityAmount: $maturityAmount, startDate: $startDate, maturityDate: $maturityDate, linkedSavingsAccountNo: $linkedSavingsAccountNo, nominees: $nominees, status: $status)';
+  return 'OneTimeDeposit(id: $id, accountNo: $accountNo, principalAmount: $principalAmount, termYears: $termYears, termMonths: $termMonths, interestRate: $interestRate, customerId: $customerId, schemeType: $schemeType, maturityAmount: $maturityAmount, startDate: $startDate, maturityDate: $maturityDate, linkedSavingsAccountNo: $linkedSavingsAccountNo, nominees: $nominees, status: $status)';
 }
 
 
@@ -275,7 +273,7 @@ abstract mixin class _$OneTimeDepositCopyWith<$Res> implements $OneTimeDepositCo
   factory _$OneTimeDepositCopyWith(_OneTimeDeposit value, $Res Function(_OneTimeDeposit) _then) = __$OneTimeDepositCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String rowId, String accountNo, double principalAmount, int termYears, int termMonths, double interestRate, String customerId, OneTimeSchemeType schemeType, double maturityAmount, DateTime startDate, DateTime maturityDate, String? linkedSavingsAccountNo, List<Nominee> nominees, DepositStatus status
+ String id, String accountNo, double principalAmount, int termYears, int termMonths, double interestRate, String customerId, OneTimeSchemeType schemeType, double maturityAmount, DateTime startDate, DateTime maturityDate, String? linkedSavingsAccountNo, List<Nominee> nominees, DepositStatus status
 });
 
 
@@ -292,10 +290,9 @@ class __$OneTimeDepositCopyWithImpl<$Res>
 
 /// Create a copy of OneTimeDeposit
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? rowId = null,Object? accountNo = null,Object? principalAmount = null,Object? termYears = null,Object? termMonths = null,Object? interestRate = null,Object? customerId = null,Object? schemeType = null,Object? maturityAmount = null,Object? startDate = null,Object? maturityDate = null,Object? linkedSavingsAccountNo = freezed,Object? nominees = null,Object? status = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? accountNo = null,Object? principalAmount = null,Object? termYears = null,Object? termMonths = null,Object? interestRate = null,Object? customerId = null,Object? schemeType = null,Object? maturityAmount = null,Object? startDate = null,Object? maturityDate = null,Object? linkedSavingsAccountNo = freezed,Object? nominees = null,Object? status = null,}) {
   return _then(_OneTimeDeposit(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,rowId: null == rowId ? _self.rowId : rowId // ignore: cast_nullable_to_non_nullable
 as String,accountNo: null == accountNo ? _self.accountNo : accountNo // ignore: cast_nullable_to_non_nullable
 as String,principalAmount: null == principalAmount ? _self.principalAmount : principalAmount // ignore: cast_nullable_to_non_nullable
 as double,termYears: null == termYears ? _self.termYears : termYears // ignore: cast_nullable_to_non_nullable

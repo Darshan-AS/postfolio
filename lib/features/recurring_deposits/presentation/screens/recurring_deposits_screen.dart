@@ -55,6 +55,7 @@ class RecurringDepositsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
                 child: RecurringDepositCard(
                   customerName: ref.watch(customersControllerProvider).value?.where((c) => c.id == deposit.customerId).firstOrNull?.name ?? deposit.customerId,
+                  serialNo: deposit.serialNo,
                   accountNo: deposit.accountNo,
                   installmentAmount: deposit.installmentAmount,
                   status: deposit.status,

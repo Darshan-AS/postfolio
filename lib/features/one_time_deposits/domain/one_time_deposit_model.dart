@@ -13,7 +13,6 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
 
   const factory OneTimeDeposit({
     required String id,
-    required String rowId,
     required String accountNo,
     required double principalAmount,
     required int termYears,
@@ -48,7 +47,6 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
 
   static (String?, OneTimeDeposit?) create({
     required String id,
-    required String rowId,
     required String accountNo,
     required double principalAmount,
     required int termYears,
@@ -82,7 +80,6 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
       null,
       OneTimeDeposit(
         id: id,
-        rowId: rowId,
         accountNo: accountNo.trim(),
         principalAmount: principalAmount,
         termYears: termYears,

@@ -68,7 +68,6 @@ oneTimeDeposits:
   failedToSaveDeposit: "Failed to save deposit: ${error}"
   failedToDeleteDeposit: "Failed to delete deposit: ${error}"
   fields:
-    rowId: "Row ID *"
     accountNo: "Account No *"
     principalAmount: "Principal Amount *"
     termYears: "Term (Years) *"
@@ -91,6 +90,7 @@ recurringDeposits:
   failedToSaveDeposit: "Failed to save RD: ${error}"
   failedToDeleteDeposit: "Failed to delete RD: ${error}"
   fields:
+    serialNo: "Serial No. *"
     accountNo: "Account No *"
     installmentAmount: "Installment Amount *"
     termYears: "Term (Years) *"

@@ -29,7 +29,6 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
 
   Future<Result<void, String>> saveOneTimeDeposit({
     String? id,
-    required String rowId,
     required String accountNo,
     required double principalAmount,
     required int termYears,
@@ -46,7 +45,6 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
   }) async {
     final (error, deposit) = OneTimeDeposit.create(
       id: id ?? '', // FakeRepo will assign a real ID if creating
-      rowId: rowId,
       accountNo: accountNo,
       principalAmount: principalAmount,
       termYears: termYears,

@@ -200,11 +200,6 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                     ),
                     const Divider(height: 1),
                   ],
-                  DetailItem(
-                    icon: Icons.tag_outlined,
-                    label: t.oneTimeDeposits.fields.rowId,
-                    value: deposit.rowId,
-                  ),
                 ],
               ),
               if (deposit.nominees.isNotEmpty) ...[

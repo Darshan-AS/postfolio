@@ -17,7 +17,6 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
   final List<OneTimeDeposit> _deposits = [
     OneTimeDeposit(
       id: '101',
-      rowId: 'OTD-001',
       accountNo: '3045678912',
       principalAmount: 50000.0,
       termYears: 1,
@@ -47,7 +46,6 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
     ),
     OneTimeDeposit(
       id: '102',
-      rowId: 'OTD-002',
       accountNo: '3089123456',
       principalAmount: 25000.0,
       termYears: 5,
@@ -77,7 +75,6 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
     ),
     OneTimeDeposit(
       id: '103',
-      rowId: 'OTD-003',
       accountNo: '3099887766',
       principalAmount: 100000.0,
       termYears: 3,
@@ -101,7 +98,6 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
     ),
     OneTimeDeposit(
       id: '104',
-      rowId: 'OTD-004',
       accountNo: '3077665544',
       principalAmount: 15000.0,
       termYears: 1,
@@ -125,7 +121,6 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
     ),
     OneTimeDeposit(
       id: '105',
-      rowId: 'OTD-005',
       accountNo: '3055443322',
       principalAmount: 75000.0,
       termYears: 2,

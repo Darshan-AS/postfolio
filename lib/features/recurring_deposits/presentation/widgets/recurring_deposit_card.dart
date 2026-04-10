@@ -6,6 +6,7 @@ import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
 
 class RecurringDepositCard extends StatelessWidget {
   final String customerName;
+  final String serialNo;
   final String accountNo;
   final double installmentAmount;
   final DepositStatus status;
@@ -17,6 +18,7 @@ class RecurringDepositCard extends StatelessWidget {
   const RecurringDepositCard({
     super.key,
     required this.customerName,
+    required this.serialNo,
     required this.accountNo,
     required this.installmentAmount,
     required this.status,
@@ -42,17 +44,18 @@ class RecurringDepositCard extends StatelessWidget {
         customerName,
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
-      subtitle: Row(
+      subtitle: Wrap(
+        spacing: 8.0,
+        runSpacing: 4.0,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text(
-            accountNo,
+            serialNo.isNotEmpty ? '($serialNo) $accountNo' : accountNo,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(width: 8),
           StatusBadge(status: status.displayName, compact: true),
-          const SizedBox(width: 8),
           Text(
             '• ${DateFormat('MMM dd, yyyy').format(maturityDate)}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(

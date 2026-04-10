@@ -30,6 +30,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
 
   Future<Result<void, String>> saveRecurringDeposit({
     String? id,
+    required String serialNo,
     required String accountNo,
     required double installmentAmount,
     required int termYears,
@@ -46,6 +47,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
   }) async {
     final (error, deposit) = RecurringDeposit.create(
       id: id ?? '', // FakeRepo will assign a real ID if creating
+      serialNo: serialNo,
       accountNo: accountNo,
       installmentAmount: installmentAmount,
       termYears: termYears,

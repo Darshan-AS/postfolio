@@ -344,9 +344,6 @@ class TranslationsOneTimeDepositsFieldsEn {
 
 	// Translations
 
-	/// en: 'Row ID *'
-	String get rowId => 'Row ID *';
-
 	/// en: 'Account No *'
 	String get accountNo => 'Account No *';
 
@@ -382,6 +379,9 @@ class TranslationsRecurringDepositsFieldsEn {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+
+	/// en: 'Serial No. *'
+	String get serialNo => 'Serial No. *';
 
 	/// en: 'Account No *'
 	String get accountNo => 'Account No *';
@@ -478,7 +478,6 @@ extension on Translations {
 			'oneTimeDeposits.deleteDepositConfirmation' => 'Are you sure you want to delete this deposit?',
 			'oneTimeDeposits.failedToSaveDeposit' => ({required Object error}) => 'Failed to save deposit: ${error}',
 			'oneTimeDeposits.failedToDeleteDeposit' => ({required Object error}) => 'Failed to delete deposit: ${error}',
-			'oneTimeDeposits.fields.rowId' => 'Row ID *',
 			'oneTimeDeposits.fields.accountNo' => 'Account No *',
 			'oneTimeDeposits.fields.principalAmount' => 'Principal Amount *',
 			'oneTimeDeposits.fields.termYears' => 'Term (Years) *',
@@ -498,6 +497,7 @@ extension on Translations {
 			'recurringDeposits.deleteDepositConfirmation' => 'Are you sure you want to delete this RD?',
 			'recurringDeposits.failedToSaveDeposit' => ({required Object error}) => 'Failed to save RD: ${error}',
 			'recurringDeposits.failedToDeleteDeposit' => ({required Object error}) => 'Failed to delete RD: ${error}',
+			'recurringDeposits.fields.serialNo' => 'Serial No. *',
 			'recurringDeposits.fields.accountNo' => 'Account No *',
 			'recurringDeposits.fields.installmentAmount' => 'Installment Amount *',
 			'recurringDeposits.fields.termYears' => 'Term (Years) *',

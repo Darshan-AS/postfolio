@@ -43,7 +43,10 @@ class OneTimeDepositCard extends StatelessWidget {
         customerName,
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
-      subtitle: Row(
+      subtitle: Wrap(
+        spacing: 8.0,
+        runSpacing: 4.0,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text(
             accountNo,
@@ -51,9 +54,7 @@ class OneTimeDepositCard extends StatelessWidget {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(width: 8),
           StatusBadge(status: status.displayName, compact: true),
-          const SizedBox(width: 8),
           Text(
             '• ${DateFormat('MMM dd, yyyy').format(maturityDate)}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(

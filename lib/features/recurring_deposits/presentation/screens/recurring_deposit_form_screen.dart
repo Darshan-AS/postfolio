@@ -64,6 +64,7 @@ class _RecurringDepositForm extends ConsumerStatefulWidget {
 
 class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
   final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _serialNoController;
   late final TextEditingController _accountNoController;
   late final TextEditingController _installmentAmountController;
   late final TextEditingController _termYearsController;
@@ -84,6 +85,9 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
   @override
   void initState() {
     super.initState();
+    _serialNoController = TextEditingController(
+      text: widget.existingDeposit?.serialNo,
+    );
     _accountNoController = TextEditingController(
       text: widget.existingDeposit?.accountNo,
     );
@@ -117,6 +121,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
 
   @override
   void dispose() {
+    _serialNoController.dispose();
     _accountNoController.dispose();
     _installmentAmountController.dispose();
     _termYearsController.dispose();
@@ -141,6 +146,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
           .read(recurringDepositsControllerProvider.notifier)
           .saveRecurringDeposit(
             id: widget.existingDeposit?.id,
+            serialNo: _serialNoController.text.trim(),
             accountNo: _accountNoController.text.trim(),
             installmentAmount:
                 double.tryParse(_installmentAmountController.text.trim()) ??
@@ -231,6 +237,18 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                   _selectedCustomerId = customer?.id;
                 });
               },
+            ),
+            AppSpacings.gapLg,
+            TextFormField(
+              controller: _serialNoController,
+              decoration: AppInputDecoration.m3(
+                context,
+                labelText: t.recurringDeposits.fields.serialNo,
+                prefixIcon: Icons.tag_outlined,
+              ),
+              validator: (val) =>
+                  val == null || val.trim().isEmpty ? 'Required' : null,
+              textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
             TextFormField(

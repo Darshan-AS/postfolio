@@ -189,6 +189,12 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                 title: 'Account Information',
                 children: [
                   DetailItem(
+                    icon: Icons.tag_outlined,
+                    label: t.recurringDeposits.fields.serialNo,
+                    value: deposit.serialNo,
+                  ),
+                  const Divider(height: 1),
+                  DetailItem(
                     icon: Icons.account_circle_outlined,
                     label: t.recurringDeposits.fields.customerId,
                     value: ref.watch(customersControllerProvider).value?.where((c) => c.id == deposit.customerId).firstOrNull?.name ?? deposit.customerId,

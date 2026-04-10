@@ -17,6 +17,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   final List<RecurringDeposit> _deposits = [
     RecurringDeposit(
       id: '201',
+      serialNo: 'RD-001',
       accountNo: 'RD-9021345',
       installmentAmount: 5000.0,
       termYears: 5,
@@ -46,6 +47,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     ),
     RecurringDeposit(
       id: '202',
+      serialNo: 'RD-002',
       accountNo: 'RD-9025678',
       installmentAmount: 10000.0,
       termYears: 1,
@@ -75,6 +77,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     ),
     RecurringDeposit(
       id: '203',
+      serialNo: 'RD-003',
       accountNo: 'RD-9029988',
       installmentAmount: 2000.0,
       termYears: 3,
@@ -98,6 +101,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     ),
     RecurringDeposit(
       id: '204',
+      serialNo: 'RD-004',
       accountNo: 'RD-9027766',
       installmentAmount: 15000.0,
       termYears: 2,
@@ -121,6 +125,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     ),
     RecurringDeposit(
       id: '205',
+      serialNo: 'RD-005',
       accountNo: 'RD-9025544',
       installmentAmount: 3000.0,
       termYears: 5,

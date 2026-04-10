@@ -9,7 +9,6 @@ part of 'one_time_deposit_model.dart';
 _OneTimeDeposit _$OneTimeDepositFromJson(Map<String, dynamic> json) =>
     _OneTimeDeposit(
       id: json['id'] as String,
-      rowId: json['rowId'] as String,
       accountNo: json['accountNo'] as String,
       principalAmount: (json['principalAmount'] as num).toDouble(),
       termYears: (json['termYears'] as num).toInt(),
@@ -34,7 +33,6 @@ _OneTimeDeposit _$OneTimeDepositFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$OneTimeDepositToJson(_OneTimeDeposit instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'rowId': instance.rowId,
       'accountNo': instance.accountNo,
       'principalAmount': instance.principalAmount,
       'termYears': instance.termYears,
