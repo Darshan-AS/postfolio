@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
-import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
@@ -266,7 +265,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
           else
             IconButton(
               icon: const Icon(Icons.check),
-              color: AppTheme.primary,
+              color: Theme.of(context).colorScheme.primary,
               onPressed: _save,
               tooltip: t.customers.saveCustomer,
             ),
@@ -279,6 +278,14 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                t.customers.sections.personalInfo,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              AppSpacings.gapMd,
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
@@ -312,19 +319,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               ),
               AppSpacings.gapMd,
               TextFormField(
-                controller: _cifNumberController,
-                decoration: InputDecoration(
-                  labelText: 'CIF',
-                  prefixIcon: const Icon(Icons.confirmation_number_outlined),
-                ),
-                textInputAction: TextInputAction.next,
-              ),
-              AppSpacings.gapMd,
-              TextFormField(
                 controller: _dateOfBirthController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Date of Birth',
-                  prefixIcon: const Icon(Icons.calendar_today_outlined),
+                  prefixIcon: Icon(Icons.calendar_today_outlined),
                 ),
                 readOnly: true,
                 onTap: () => _selectDate(context),
@@ -338,12 +336,29 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 ),
                 maxLines: 3,
               ),
+              AppSpacings.gapXl,
+              Text(
+                t.customers.sections.identityDocuments,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              AppSpacings.gapMd,
+              TextFormField(
+                controller: _cifNumberController,
+                decoration: const InputDecoration(
+                  labelText: 'CIF',
+                  prefixIcon: Icon(Icons.confirmation_number_outlined),
+                ),
+                textInputAction: TextInputAction.next,
+              ),
               AppSpacings.gapMd,
               TextFormField(
                 controller: _aadhaarNumberController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Aadhaar',
-                  prefixIcon: const Icon(Icons.badge_outlined),
+                  prefixIcon: Icon(Icons.badge_outlined),
                 ),
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
@@ -351,11 +366,19 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppSpacings.gapMd,
               TextFormField(
                 controller: _panNumberController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'PAN',
-                  prefixIcon: const Icon(Icons.credit_card_outlined),
+                  prefixIcon: Icon(Icons.credit_card_outlined),
                 ),
                 textInputAction: TextInputAction.next,
+              ),
+              AppSpacings.gapXl,
+              Text(
+                t.customers.sections.savingsBank,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               AppSpacings.gapMd,
               TextFormField(
@@ -375,13 +398,14 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                     t.customers.fields.nominees,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  TextButton.icon(
+                  FilledButton.tonalIcon(
                     onPressed: _addNominee,
                     icon: const Icon(Icons.add),
                     label: Text(t.customers.fields.addNominee),
                   ),
                 ],
               ),
+              AppSpacings.gapSm,
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -392,6 +416,20 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                     margin: const EdgeInsets.only(
                       bottom: AppDimensions.paddingMd,
                     ),
+                    clipBehavior: Clip.antiAlias,
+                    elevation: 0,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusLg,
+                      ),
+                      side: BorderSide(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                      ),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(AppDimensions.paddingMd),
                       child: Column(
@@ -401,12 +439,11 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                             children: [
                               Text(
                                 '${t.customers.fields.nominees} ${index + 1}',
+                                style: Theme.of(context).textTheme.titleSmall,
                               ),
                               IconButton(
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  color: AppTheme.error,
-                                ),
+                                icon: const Icon(Icons.delete_outline),
+                                color: Theme.of(context).colorScheme.error,
                                 onPressed: () => _removeNominee(index),
                               ),
                             ],
@@ -455,10 +492,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 },
               ),
               AppSpacings.gapXxl,
-              ElevatedButton(
+              FilledButton(
                 onPressed: _isSaving ? null : _save,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(50),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
                 ),
                 child: _isSaving
                     ? const SizedBox(
@@ -466,7 +503,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(t.customers.saveCustomer),
+                    : Text(
+                        t.customers.saveCustomer,
+                        style: const TextStyle(fontSize: 16),
+                      ),
               ),
             ],
           ),
