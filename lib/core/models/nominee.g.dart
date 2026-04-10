@@ -10,12 +10,10 @@ _Nominee _$NomineeFromJson(Map<String, dynamic> json) => _Nominee(
   name: json['name'] as String,
   relationship: json['relationship'] as String,
   percentage: (json['percentage'] as num).toDouble(),
-  phone: json['phone'] as String?,
 );
 
 Map<String, dynamic> _$NomineeToJson(_Nominee instance) => <String, dynamic>{
   'name': instance.name,
   'relationship': instance.relationship,
   'percentage': instance.percentage,
-  'phone': instance.phone,
 };

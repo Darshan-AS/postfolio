@@ -11,7 +11,9 @@ import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
+import 'package:postfolio/core/widgets/nominees_input_section.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/models/nominee.dart';
 
 class RecurringDepositFormScreen extends ConsumerWidget {
   final String? depositId;
@@ -79,6 +81,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
   DepositStatus _selectedStatus = DepositStatus.active;
   DateTime _startDate = DateTime.now();
   DateTime _maturityDate = DateTime.now().add(const Duration(days: 365));
+  List<Nominee> _nominees = [];
 
   bool _isSaving = false;
 
@@ -116,6 +119,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
       _selectedStatus = widget.existingDeposit!.status;
       _startDate = widget.existingDeposit!.startDate;
       _maturityDate = widget.existingDeposit!.maturityDate;
+      _nominees = List.of(widget.existingDeposit!.nominees);
     }
   }
 
@@ -163,6 +167,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
             startDate: _startDate,
             maturityDate: _maturityDate,
             linkedAutoDebitAccountNo: _linkedAccountController.text.trim(),
+            nominees: _nominees,
           );
 
       if (!mounted) return;
@@ -448,6 +453,13 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                   ),
                 ],
               ),
+            ),
+            AppSpacings.gapXxl,
+            NomineesInputSection(
+              initialNominees: _nominees,
+              onChanged: (newNominees) {
+                _nominees = newNominees;
+              },
             ),
             AppSpacings.gapXxl,
             FilledButton(

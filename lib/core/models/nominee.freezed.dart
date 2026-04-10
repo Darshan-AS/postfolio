@@ -16,8 +16,7 @@ T _$identity<T>(T value) => value;
 mixin _$Nominee {
 
  String get name; String get relationship;// e.g., "Spouse", "Son"
- double get percentage;// e.g., 50.0 for 50%
- String? get phone;
+ double get percentage;
 /// Create a copy of Nominee
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,16 +29,16 @@ $NomineeCopyWith<Nominee> get copyWith => _$NomineeCopyWithImpl<Nominee>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Nominee&&(identical(other.name, name) || other.name == name)&&(identical(other.relationship, relationship) || other.relationship == relationship)&&(identical(other.percentage, percentage) || other.percentage == percentage)&&(identical(other.phone, phone) || other.phone == phone));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Nominee&&(identical(other.name, name) || other.name == name)&&(identical(other.relationship, relationship) || other.relationship == relationship)&&(identical(other.percentage, percentage) || other.percentage == percentage));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,relationship,percentage,phone);
+int get hashCode => Object.hash(runtimeType,name,relationship,percentage);
 
 @override
 String toString() {
-  return 'Nominee(name: $name, relationship: $relationship, percentage: $percentage, phone: $phone)';
+  return 'Nominee(name: $name, relationship: $relationship, percentage: $percentage)';
 }
 
 
@@ -50,7 +49,7 @@ abstract mixin class $NomineeCopyWith<$Res>  {
   factory $NomineeCopyWith(Nominee value, $Res Function(Nominee) _then) = _$NomineeCopyWithImpl;
 @useResult
 $Res call({
- String name, String relationship, double percentage, String? phone
+ String name, String relationship, double percentage
 });
 
 
@@ -67,13 +66,12 @@ class _$NomineeCopyWithImpl<$Res>
 
 /// Create a copy of Nominee
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? relationship = null,Object? percentage = null,Object? phone = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? relationship = null,Object? percentage = null,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,relationship: null == relationship ? _self.relationship : relationship // ignore: cast_nullable_to_non_nullable
 as String,percentage: null == percentage ? _self.percentage : percentage // ignore: cast_nullable_to_non_nullable
-as double,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
-as String?,
+as double,
   ));
 }
 
@@ -155,10 +153,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String relationship,  double percentage,  String? phone)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String relationship,  double percentage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Nominee() when $default != null:
-return $default(_that.name,_that.relationship,_that.percentage,_that.phone);case _:
+return $default(_that.name,_that.relationship,_that.percentage);case _:
   return orElse();
 
 }
@@ -176,10 +174,10 @@ return $default(_that.name,_that.relationship,_that.percentage,_that.phone);case
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String relationship,  double percentage,  String? phone)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String relationship,  double percentage)  $default,) {final _that = this;
 switch (_that) {
 case _Nominee():
-return $default(_that.name,_that.relationship,_that.percentage,_that.phone);}
+return $default(_that.name,_that.relationship,_that.percentage);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -193,10 +191,10 @@ return $default(_that.name,_that.relationship,_that.percentage,_that.phone);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String relationship,  double percentage,  String? phone)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String relationship,  double percentage)?  $default,) {final _that = this;
 switch (_that) {
 case _Nominee() when $default != null:
-return $default(_that.name,_that.relationship,_that.percentage,_that.phone);case _:
+return $default(_that.name,_that.relationship,_that.percentage);case _:
   return null;
 
 }
@@ -208,15 +206,13 @@ return $default(_that.name,_that.relationship,_that.percentage,_that.phone);case
 @JsonSerializable()
 
 class _Nominee extends Nominee {
-  const _Nominee({required this.name, required this.relationship, required this.percentage, this.phone}): super._();
+  const _Nominee({required this.name, required this.relationship, required this.percentage}): super._();
   factory _Nominee.fromJson(Map<String, dynamic> json) => _$NomineeFromJson(json);
 
 @override final  String name;
 @override final  String relationship;
 // e.g., "Spouse", "Son"
 @override final  double percentage;
-// e.g., 50.0 for 50%
-@override final  String? phone;
 
 /// Create a copy of Nominee
 /// with the given fields replaced by the non-null parameter values.
@@ -231,16 +227,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Nominee&&(identical(other.name, name) || other.name == name)&&(identical(other.relationship, relationship) || other.relationship == relationship)&&(identical(other.percentage, percentage) || other.percentage == percentage)&&(identical(other.phone, phone) || other.phone == phone));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Nominee&&(identical(other.name, name) || other.name == name)&&(identical(other.relationship, relationship) || other.relationship == relationship)&&(identical(other.percentage, percentage) || other.percentage == percentage));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,relationship,percentage,phone);
+int get hashCode => Object.hash(runtimeType,name,relationship,percentage);
 
 @override
 String toString() {
-  return 'Nominee(name: $name, relationship: $relationship, percentage: $percentage, phone: $phone)';
+  return 'Nominee(name: $name, relationship: $relationship, percentage: $percentage)';
 }
 
 
@@ -251,7 +247,7 @@ abstract mixin class _$NomineeCopyWith<$Res> implements $NomineeCopyWith<$Res> {
   factory _$NomineeCopyWith(_Nominee value, $Res Function(_Nominee) _then) = __$NomineeCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String relationship, double percentage, String? phone
+ String name, String relationship, double percentage
 });
 
 
@@ -268,13 +264,12 @@ class __$NomineeCopyWithImpl<$Res>
 
 /// Create a copy of Nominee
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? relationship = null,Object? percentage = null,Object? phone = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? relationship = null,Object? percentage = null,}) {
   return _then(_Nominee(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,relationship: null == relationship ? _self.relationship : relationship // ignore: cast_nullable_to_non_nullable
 as String,percentage: null == percentage ? _self.percentage : percentage // ignore: cast_nullable_to_non_nullable
-as double,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
-as String?,
+as double,
   ));
 }
 

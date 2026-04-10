@@ -101,3 +101,13 @@ recurringDeposits:
     maturityAmount: "Maturity Amount *"
     startDate: "Start Date"
     maturityDate: "Maturity Date"
+
+nominees:
+  title: "Nominees"
+  addNominee: "Add Nominee"
+  editNominee: "Edit Nominee"
+  deleteNominee: "Delete Nominee"
+  name: "Nominee Name *"
+  relationship: "Relationship *"
+  percentage: "Percentage (%) *"
+  noNominees: "No nominees added yet."

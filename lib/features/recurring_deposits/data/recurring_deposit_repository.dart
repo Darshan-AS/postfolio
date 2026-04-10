@@ -34,13 +34,13 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
         Nominee(
           name: 'Alfred Pennyworth',
           relationship: 'Butler',
-          phone: '9876543211',
+          
           percentage: 50.0,
         ),
         Nominee(
           name: 'Dick Grayson',
           relationship: 'Ward',
-          phone: '9876543210',
+          
           percentage: 50.0,
         ),
       ],
@@ -64,13 +64,13 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
         Nominee(
           name: 'Lois Lane',
           relationship: 'Spouse',
-          phone: '9876543212',
+          
           percentage: 60.0,
         ),
         Nominee(
           name: 'Martha Kent',
           relationship: 'Mother',
-          phone: '9876543213',
+          
           percentage: 40.0,
         ),
       ],
@@ -94,7 +94,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
         Nominee(
           name: 'Hippolyta',
           relationship: 'Mother',
-          phone: '9123456781',
+          
           percentage: 100.0,
         ),
       ],
@@ -118,7 +118,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
         Nominee(
           name: 'Iris West',
           relationship: 'Spouse',
-          phone: '9988776656',
+          
           percentage: 100.0,
         ),
       ],
@@ -142,7 +142,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
         Nominee(
           name: 'Mera',
           relationship: 'Spouse',
-          phone: '9876543213',
+          
           percentage: 100.0,
         ),
       ],

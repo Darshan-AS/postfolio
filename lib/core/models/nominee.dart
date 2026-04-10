@@ -11,7 +11,6 @@ sealed class Nominee with _$Nominee {
     required String name,
     required String relationship, // e.g., "Spouse", "Son"
     required double percentage, // e.g., 50.0 for 50%
-    String? phone, // Optional, useful if the bank needs to contact them
   }) = _Nominee;
 
   factory Nominee.fromJson(Map<String, dynamic> json) =>
@@ -41,7 +40,6 @@ sealed class Nominee with _$Nominee {
     required String name,
     required String relationship,
     required double percentage,
-    String? phone,
   }) {
     final nameError = validateName(name);
     if (nameError != null) return (nameError, null);
@@ -58,7 +56,6 @@ sealed class Nominee with _$Nominee {
         name: name.trim(),
         relationship: relationship.trim(),
         percentage: percentage,
-        phone: phone?.trim().isEmpty == true ? null : phone?.trim(),
       ),
     );
   }

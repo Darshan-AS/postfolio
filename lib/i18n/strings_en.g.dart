@@ -50,6 +50,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsDashboardEn dashboard = TranslationsDashboardEn.internal(_root);
 	late final TranslationsOneTimeDepositsEn oneTimeDeposits = TranslationsOneTimeDepositsEn.internal(_root);
 	late final TranslationsRecurringDepositsEn recurringDeposits = TranslationsRecurringDepositsEn.internal(_root);
+	late final TranslationsNomineesEn nominees = TranslationsNomineesEn.internal(_root);
 }
 
 // Path: common
@@ -241,6 +242,39 @@ class TranslationsRecurringDepositsEn {
 	String failedToDeleteDeposit({required Object error}) => 'Failed to delete RD: ${error}';
 
 	late final TranslationsRecurringDepositsFieldsEn fields = TranslationsRecurringDepositsFieldsEn.internal(_root);
+}
+
+// Path: nominees
+class TranslationsNomineesEn {
+	TranslationsNomineesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Nominees'
+	String get title => 'Nominees';
+
+	/// en: 'Add Nominee'
+	String get addNominee => 'Add Nominee';
+
+	/// en: 'Edit Nominee'
+	String get editNominee => 'Edit Nominee';
+
+	/// en: 'Delete Nominee'
+	String get deleteNominee => 'Delete Nominee';
+
+	/// en: 'Nominee Name *'
+	String get name => 'Nominee Name *';
+
+	/// en: 'Relationship *'
+	String get relationship => 'Relationship *';
+
+	/// en: 'Percentage (%) *'
+	String get percentage => 'Percentage (%) *';
+
+	/// en: 'No nominees added yet.'
+	String get noNominees => 'No nominees added yet.';
 }
 
 // Path: customers.actions
@@ -508,6 +542,14 @@ extension on Translations {
 			'recurringDeposits.fields.maturityAmount' => 'Maturity Amount *',
 			'recurringDeposits.fields.startDate' => 'Start Date',
 			'recurringDeposits.fields.maturityDate' => 'Maturity Date',
+			'nominees.title' => 'Nominees',
+			'nominees.addNominee' => 'Add Nominee',
+			'nominees.editNominee' => 'Edit Nominee',
+			'nominees.deleteNominee' => 'Delete Nominee',
+			'nominees.name' => 'Nominee Name *',
+			'nominees.relationship' => 'Relationship *',
+			'nominees.percentage' => 'Percentage (%) *',
+			'nominees.noNominees' => 'No nominees added yet.',
 			_ => null,
 		};
 	}

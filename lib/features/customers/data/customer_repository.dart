@@ -18,7 +18,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '1',
       name: 'Bruce Wayne',
       email: 'bruce@wayneenterprises.com',
-      phone: '9148173207',
+      
       address: '1007 Mountain Drive, Gotham City',
       cifNumber: 'CIF000001',
       dateOfBirth: DateTime(1980, 2, 19),
@@ -31,13 +31,13 @@ class FakeCustomerRepository implements CustomerRepository {
             percentage: 50.0,
             name: 'Alfred Pennyworth',
             relationship: 'Butler',
-            phone: '9876543211',
+            
           ),
           Nominee(
             percentage: 50.0,
             name: 'Dick Grayson',
             relationship: 'Ward',
-            phone: '9876543210',
+            
           ),
         ],
       ),
@@ -46,7 +46,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '2',
       name: 'Clark Kent',
       email: 'clark.kent@dailyplanet.com',
-      phone: '9876543210',
+      
       address: '344 Clinton St, Metropolis',
       cifNumber: 'CIF000002',
       dateOfBirth: DateTime(1985, 6, 18),
@@ -59,13 +59,13 @@ class FakeCustomerRepository implements CustomerRepository {
             percentage: 60.0,
             name: 'Lois Lane',
             relationship: 'Spouse',
-            phone: '9876543212',
+            
           ),
           Nominee(
             percentage: 40.0,
             name: 'Martha Kent',
             relationship: 'Mother',
-            phone: '9876543213',
+            
           ),
         ],
       ),
@@ -74,7 +74,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '3',
       name: 'Diana Prince',
       email: 'diana@themyscira.gov',
-      phone: '9123456780',
+      
       address: 'Themyscira Embassy, Washington D.C.',
       cifNumber: 'CIF000003',
       dateOfBirth: DateTime(1985, 3, 22),
@@ -87,7 +87,7 @@ class FakeCustomerRepository implements CustomerRepository {
             percentage: 100.0,
             name: 'Hippolyta',
             relationship: 'Mother',
-            phone: '9123456781',
+            
           ),
         ],
       ),
@@ -96,7 +96,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '4',
       name: 'Barry Allen',
       email: 'barry@ccpd.gov',
-      phone: '9988776655',
+      
       address: 'Central City Police Department, Central City',
       cifNumber: 'CIF000004',
       dateOfBirth: DateTime(1992, 9, 30),
@@ -109,7 +109,7 @@ class FakeCustomerRepository implements CustomerRepository {
             percentage: 100.0,
             name: 'Iris West',
             relationship: 'Spouse',
-            phone: '9988776656',
+            
           ),
         ],
       ),
@@ -118,7 +118,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '5',
       name: 'Arthur Curry',
       email: 'arthur@atlantis.gov',
-      phone: '9876543210',
+      
       address: 'Amnesty Bay, Maine',
       cifNumber: 'CIF000005',
       dateOfBirth: DateTime(1986, 1, 29),
@@ -131,7 +131,7 @@ class FakeCustomerRepository implements CustomerRepository {
             percentage: 100.0,
             name: 'Mera',
             relationship: 'Spouse',
-            phone: '9876543213',
+            
           ),
         ],
       ),

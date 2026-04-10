@@ -6,27 +6,10 @@ import 'package:postfolio/features/customers/presentation/controllers/customers_
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
+import 'package:postfolio/core/widgets/nominees_input_section.dart';
+import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:intl/intl.dart';
-
-class _NomineeFormModel {
-  final TextEditingController nameController;
-  final TextEditingController relationshipController;
-  final TextEditingController percentageController;
-
-  _NomineeFormModel({String? name, String? relationship, double? percentage})
-    : nameController = TextEditingController(text: name),
-      relationshipController = TextEditingController(text: relationship),
-      percentageController = TextEditingController(
-        text: percentage?.toString() ?? '100',
-      );
-
-  void dispose() {
-    nameController.dispose();
-    relationshipController.dispose();
-    percentageController.dispose();
-  }
-}
 
 class CustomerFormScreen extends ConsumerWidget {
   final String? customerId;
@@ -88,7 +71,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
   late final TextEditingController _panNumberController;
   late final TextEditingController _savingsAccountNumberController;
 
-  final List<_NomineeFormModel> _nomineeForms = [];
+  List<Nominee> _nominees = [];
 
   DateTime? _selectedDate;
   bool _isSaving = false;
@@ -110,18 +93,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
       text: customer?.savingsAccount?.accountNumber,
     );
 
-    final nominees = customer?.savingsAccount?.nominees ?? [];
-    if (nominees.isNotEmpty) {
-      _nomineeForms.addAll(
-        nominees.map(
-          (n) => _NomineeFormModel(
-            name: n.name,
-            relationship: n.relationship,
-            percentage: n.percentage,
-          ),
-        ),
-      );
-    }
+    _nominees = List.of(customer?.savingsAccount?.nominees ?? []);
 
     _selectedDate = customer?.dateOfBirth;
     _dateOfBirthController = TextEditingController(
@@ -142,23 +114,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
     _aadhaarNumberController.dispose();
     _panNumberController.dispose();
     _savingsAccountNumberController.dispose();
-    for (final form in _nomineeForms) {
-      form.dispose();
-    }
     super.dispose();
-  }
-
-  void _addNominee() {
-    setState(() {
-      _nomineeForms.add(_NomineeFormModel());
-    });
-  }
-
-  void _removeNominee(int index) {
-    setState(() {
-      final form = _nomineeForms.removeAt(index);
-      form.dispose();
-    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -207,17 +163,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 _savingsAccountNumberController.text.trim().isEmpty
                 ? null
                 : _savingsAccountNumberController.text.trim(),
-            savingsNominees: _nomineeForms
-                .map(
-                  (f) => (
-                    name: f.nameController.text.trim(),
-                    relationship: f.relationshipController.text.trim(),
-                    percentage:
-                        double.tryParse(f.percentageController.text.trim()) ??
-                        100,
-                  ),
-                )
-                .toList(),
+            savingsNominees: _nominees,
           );
 
       if (!mounted) return;
@@ -389,105 +335,11 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
               ),
-              AppSpacings.gapMd,
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    t.customers.fields.nominees,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  FilledButton.tonalIcon(
-                    onPressed: _addNominee,
-                    icon: const Icon(Icons.add),
-                    label: Text(t.customers.fields.addNominee),
-                  ),
-                ],
-              ),
-              AppSpacings.gapSm,
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _nomineeForms.length,
-                itemBuilder: (context, index) {
-                  final form = _nomineeForms[index];
-                  return Card(
-                    margin: const EdgeInsets.only(
-                      bottom: AppDimensions.paddingMd,
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    elevation: 0,
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusLg,
-                      ),
-                      side: BorderSide(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.outlineVariant.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '${t.customers.fields.nominees} ${index + 1}',
-                                style: Theme.of(context).textTheme.titleSmall,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                color: Theme.of(context).colorScheme.error,
-                                onPressed: () => _removeNominee(index),
-                              ),
-                            ],
-                          ),
-                          AppSpacings.gapSm,
-                          TextFormField(
-                            controller: form.nameController,
-                            decoration: InputDecoration(
-                              labelText: t.customers.fields.nomineeName,
-                              prefixIcon: const Icon(Icons.person_pin_outlined),
-                            ),
-                            validator: Customer.validateName,
-                          ),
-                          AppSpacings.gapSm,
-                          TextFormField(
-                            controller: form.relationshipController,
-                            decoration: InputDecoration(
-                              labelText: t.customers.fields.relationship,
-                              prefixIcon: const Icon(Icons.people_alt_outlined),
-                            ),
-                            validator: (v) =>
-                                v?.trim().isEmpty == true ? 'Required' : null,
-                          ),
-                          AppSpacings.gapSm,
-                          TextFormField(
-                            controller: form.percentageController,
-                            decoration: InputDecoration(
-                              labelText: t.customers.fields.percentage,
-                              prefixIcon: const Icon(Icons.percent_outlined),
-                            ),
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            validator: (v) {
-                              final val = double.tryParse(v ?? '');
-                              if (val == null || val <= 0 || val > 100) {
-                                return 'Invalid';
-                              }
-                              return null;
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+              AppSpacings.gapXl,
+              NomineesInputSection(
+                initialNominees: _nominees,
+                onChanged: (newNominees) {
+                  _nominees = newNominees;
                 },
               ),
               AppSpacings.gapXxl,
