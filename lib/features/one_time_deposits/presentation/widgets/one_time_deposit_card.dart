@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/theme/app_dimensions.dart';
 
 import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
@@ -37,8 +38,8 @@ class OneTimeDepositCard extends ConsumerWidget {
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16.0,
-        vertical: 8.0,
+        horizontal: AppDimensions.paddingLg,
+        vertical: AppDimensions.paddingSm,
       ),
       leading: CircleAvatar(
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
