@@ -114,6 +114,9 @@ class TranslationsCustomersEn {
 	/// en: 'Customers'
 	String get title => 'Customers';
 
+	/// en: 'Customer Details'
+	String get customerDetails => 'Customer Details';
+
 	/// en: 'New Customer'
 	String get newCustomer => 'New Customer';
 
@@ -141,6 +144,7 @@ class TranslationsCustomersEn {
 	/// en: 'Failed to delete customer: ${error}'
 	String failedToDeleteCustomer({required Object error}) => 'Failed to delete customer: ${error}';
 
+	late final TranslationsCustomersSectionsEn sections = TranslationsCustomersSectionsEn.internal(_root);
 	late final TranslationsCustomersFieldsEn fields = TranslationsCustomersFieldsEn.internal(_root);
 }
 
@@ -238,6 +242,24 @@ class TranslationsRecurringDepositsEn {
 	late final TranslationsRecurringDepositsFieldsEn fields = TranslationsRecurringDepositsFieldsEn.internal(_root);
 }
 
+// Path: customers.sections
+class TranslationsCustomersSectionsEn {
+	TranslationsCustomersSectionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Personal Information'
+	String get personalInfo => 'Personal Information';
+
+	/// en: 'Identity Documents'
+	String get identityDocuments => 'Identity Documents';
+
+	/// en: 'Savings Bank'
+	String get savingsBank => 'Savings Bank';
+}
+
 // Path: customers.fields
 class TranslationsCustomersFieldsEn {
 	TranslationsCustomersFieldsEn.internal(this._root);
@@ -257,6 +279,27 @@ class TranslationsCustomersFieldsEn {
 
 	/// en: 'Home Address'
 	String get homeAddress => 'Home Address';
+
+	/// en: 'CIF'
+	String get cif => 'CIF';
+
+	/// en: 'Aadhaar Number'
+	String get aadhaarNumber => 'Aadhaar Number';
+
+	/// en: 'PAN Number'
+	String get panNumber => 'PAN Number';
+
+	/// en: 'SB Account No.'
+	String get sbAccountNumber => 'SB Account No.';
+
+	/// en: 'SB Nominee Name'
+	String get sbNomineeName => 'SB Nominee Name';
+
+	/// en: 'SB Nominee Relationship'
+	String get sbNomineeRelationship => 'SB Nominee Relationship';
+
+	/// en: 'Date of Birth'
+	String get dateOfBirth => 'Date of Birth';
 }
 
 // Path: oneTimeDeposits.fields
@@ -358,6 +401,7 @@ extension on Translations {
 			'nav.recurringDeposits' => 'Recurring Deposits',
 			'nav.customers' => 'Customers',
 			'customers.title' => 'Customers',
+			'customers.customerDetails' => 'Customer Details',
 			'customers.newCustomer' => 'New Customer',
 			'customers.editCustomer' => 'Edit Customer',
 			'customers.saveCustomer' => 'Save Customer',
@@ -367,10 +411,20 @@ extension on Translations {
 			'customers.deleteCustomerConfirmation' => 'Are you sure you want to delete this customer?',
 			'customers.failedToSaveCustomer' => ({required Object error}) => 'Failed to save customer: ${error}',
 			'customers.failedToDeleteCustomer' => ({required Object error}) => 'Failed to delete customer: ${error}',
+			'customers.sections.personalInfo' => 'Personal Information',
+			'customers.sections.identityDocuments' => 'Identity Documents',
+			'customers.sections.savingsBank' => 'Savings Bank',
 			'customers.fields.fullName' => 'Full Name *',
 			'customers.fields.phoneNumber' => 'Phone Number',
 			'customers.fields.emailAddress' => 'Email Address',
 			'customers.fields.homeAddress' => 'Home Address',
+			'customers.fields.cif' => 'CIF',
+			'customers.fields.aadhaarNumber' => 'Aadhaar Number',
+			'customers.fields.panNumber' => 'PAN Number',
+			'customers.fields.sbAccountNumber' => 'SB Account No.',
+			'customers.fields.sbNomineeName' => 'SB Nominee Name',
+			'customers.fields.sbNomineeRelationship' => 'SB Nominee Relationship',
+			'customers.fields.dateOfBirth' => 'Date of Birth',
 			'dashboard.charts' => 'Dashboard Charts Go Here',
 			'oneTimeDeposits.title' => 'One-Time Deposits',
 			'oneTimeDeposits.newDeposit' => 'New Deposit',

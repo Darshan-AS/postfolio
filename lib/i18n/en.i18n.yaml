@@ -17,6 +17,7 @@ nav:
 
 customers:
   title: "Customers"
+  customerDetails: "Customer Details"
   newCustomer: "New Customer"
   editCustomer: "Edit Customer"
   saveCustomer: "Save Customer"
@@ -26,11 +27,22 @@ customers:
   deleteCustomerConfirmation: "Are you sure you want to delete this customer?"
   failedToSaveCustomer: "Failed to save customer: ${error}"
   failedToDeleteCustomer: "Failed to delete customer: ${error}"
+  sections:
+    personalInfo: "Personal Information"
+    identityDocuments: "Identity Documents"
+    savingsBank: "Savings Bank"
   fields:
     fullName: "Full Name *"
     phoneNumber: "Phone Number"
     emailAddress: "Email Address"
     homeAddress: "Home Address"
+    cif: "CIF"
+    aadhaarNumber: "Aadhaar Number"
+    panNumber: "PAN Number"
+    sbAccountNumber: "SB Account No."
+    sbNomineeName: "SB Nominee Name"
+    sbNomineeRelationship: "SB Nominee Relationship"
+    dateOfBirth: "Date of Birth"
 
 dashboard:
   charts: "Dashboard Charts Go Here"

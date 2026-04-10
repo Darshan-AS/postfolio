@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/routing/route_names.dart';
-import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
@@ -16,6 +15,9 @@ class CustomerDetailScreen extends ConsumerWidget {
   const CustomerDetailScreen({super.key, required this.customerId});
 
   void _confirmDelete(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -23,7 +25,11 @@ class CustomerDetailScreen extends ConsumerWidget {
         content: Text(t.customers.deleteCustomerConfirmation),
         actions: [
           TextButton(onPressed: () => ctx.pop(), child: Text(t.common.cancel)),
-          TextButton(
+          FilledButton.tonal(
+            style: FilledButton.styleFrom(
+              backgroundColor: colorScheme.errorContainer,
+              foregroundColor: colorScheme.onErrorContainer,
+            ),
             onPressed: () async {
               final result = await ref
                   .read(customersControllerProvider.notifier)
@@ -39,17 +45,17 @@ class CustomerDetailScreen extends ConsumerWidget {
                   ctx.pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
+                      behavior: SnackBarBehavior.floating,
                       content: Text(
-                        t.customers.failedToDeleteCustomer(error: err.toString()),
+                        t.customers.failedToDeleteCustomer(
+                          error: err.toString(),
+                        ),
                       ),
                     ),
                   );
               }
             },
-            child: Text(
-              t.common.delete,
-              style: const TextStyle(color: AppTheme.error),
-            ),
+            child: Text(t.common.delete),
           ),
         ],
       ),
@@ -59,9 +65,13 @@ class CustomerDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final customersState = ref.watch(customersControllerProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
       appBar: AppBar(
+        title: Text(t.customers.customerDetails),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
@@ -69,7 +79,7 @@ class CustomerDetailScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            color: AppTheme.error,
+            color: colorScheme.error,
             onPressed: () => _confirmDelete(context, ref),
           ),
         ],
@@ -77,100 +87,290 @@ class CustomerDetailScreen extends ConsumerWidget {
       body: customersState.when(
         data: (customers) {
           // Find the specific customer from the state
-          final customer = customers.where((u) => u.id == customerId).firstOrNull;
+          final customer = customers
+              .where((u) => u.id == customerId)
+              .firstOrNull;
 
           if (customer == null) {
             return Center(child: Text(t.customers.customerNotFound));
           }
 
           return ListView(
-            padding: const EdgeInsets.all(AppDimensions.paddingLg),
+            padding: const EdgeInsets.symmetric(
+              vertical: AppDimensions.paddingLg,
+            ),
             children: [
-              const CircleAvatar(
-                radius: AppDimensions.iconXl,
-                backgroundColor: AppTheme.primary,
-                foregroundColor: AppTheme.surface,
-                child: Icon(Icons.person, size: AppDimensions.iconXl),
-              ),
-              AppSpacings.gapLg,
-              Text(
-                customer.name,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.paddingLg,
+                ),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: AppDimensions.iconXl * 1.5,
+                      backgroundColor: colorScheme.primaryContainer,
+                      foregroundColor: colorScheme.onPrimaryContainer,
+                      child: Text(
+                        customer.name.isNotEmpty
+                            ? customer.name[0].toUpperCase()
+                            : '?',
+                        style: textTheme.headlineLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    AppSpacings.gapLg,
+                    Text(
+                      customer.name,
+                      textAlign: TextAlign.center,
+                      style: textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    AppSpacings.gapSm,
+                    if (customer.phone != null)
+                      Text(
+                        customer.phone!,
+                        textAlign: TextAlign.center,
+                        style: textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    if (customer.email != null)
+                      Text(
+                        customer.email!,
+                        textAlign: TextAlign.center,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              AppSpacings.gapSm,
-              if (customer.phone != null)
-                Text(
-                  customer.phone!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppTheme.textSecondary),
+              AppSpacings.gapXl,
+
+              if (customer.address != null || customer.dateOfBirth != null) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingLg,
+                  ),
+                  child: Text(
+                    t.customers.sections.personalInfo,
+                    style: textTheme.titleSmall?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-              if (customer.email != null)
-                Text(
-                  customer.email!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppTheme.textSecondary),
+                AppSpacings.gapSm,
+                Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingLg,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    children: [
+                      if (customer.address != null)
+                        ListTile(
+                          leading: Icon(
+                            Icons.location_on_outlined,
+                            color: colorScheme.primary,
+                          ),
+                          title: Text(
+                            t.customers.fields.homeAddress,
+                            style: textTheme.bodySmall,
+                          ),
+                          subtitle: Text(
+                            customer.address!,
+                            style: textTheme.bodyLarge,
+                          ),
+                        ),
+                      if (customer.address != null &&
+                          customer.dateOfBirth != null)
+                        const Divider(height: 1),
+                      if (customer.dateOfBirth != null)
+                        ListTile(
+                          leading: Icon(
+                            Icons.calendar_today_outlined,
+                            color: colorScheme.primary,
+                          ),
+                          title: Text(t.customers.fields.dateOfBirth),
+                          subtitle: Text(
+                            DateFormat.yMMMd().format(customer.dateOfBirth!),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              AppSpacings.gapLg,
-              const Divider(),
-              if (customer.address != null) ...[
-                ListTile(
-                  leading: const Icon(Icons.location_on_outlined),
-                  title: Text(t.customers.fields.homeAddress),
-                  subtitle: Text(customer.address!),
-                ),
+                AppSpacings.gapLg,
               ],
-              if (customer.cifNumber != null) ...[
-                ListTile(
-                  leading: const Icon(Icons.confirmation_number_outlined),
-                  title: const Text('CIF'),
-                  subtitle: Text(customer.cifNumber!),
+
+              if (customer.cifNumber != null ||
+                  customer.aadhaarNumber != null ||
+                  customer.panNumber != null) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingLg,
+                  ),
+                  child: Text(
+                    t.customers.sections.identityDocuments,
+                    style: textTheme.titleSmall?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
+                AppSpacings.gapSm,
+                Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingLg,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    children: [
+                      if (customer.cifNumber != null) ...[
+                        ListTile(
+                          leading: Icon(
+                            Icons.confirmation_number_outlined,
+                            color: colorScheme.primary,
+                          ),
+                          title: Text(
+                            t.customers.fields.cif,
+                            style: textTheme.bodySmall,
+                          ),
+                          subtitle: Text(
+                            customer.cifNumber!,
+                            style: textTheme.bodyLarge,
+                          ),
+                        ),
+                      ],
+                      if (customer.cifNumber != null &&
+                          (customer.aadhaarNumber != null ||
+                              customer.panNumber != null))
+                        const Divider(height: 1),
+                      if (customer.aadhaarNumber != null) ...[
+                        ListTile(
+                          leading: Icon(
+                            Icons.badge_outlined,
+                            color: colorScheme.primary,
+                          ),
+                          title: Text(
+                            t.customers.fields.aadhaarNumber,
+                            style: textTheme.bodySmall,
+                          ),
+                          subtitle: Text(
+                            customer.aadhaarNumber!,
+                            style: textTheme.bodyLarge,
+                          ),
+                        ),
+                      ],
+                      if (customer.aadhaarNumber != null &&
+                          customer.panNumber != null)
+                        const Divider(height: 1),
+                      if (customer.panNumber != null) ...[
+                        ListTile(
+                          leading: Icon(
+                            Icons.credit_card_outlined,
+                            color: colorScheme.primary,
+                          ),
+                          title: Text(
+                            t.customers.fields.panNumber,
+                            style: textTheme.bodySmall,
+                          ),
+                          subtitle: Text(
+                            customer.panNumber!,
+                            style: textTheme.bodyLarge,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                AppSpacings.gapLg,
               ],
-              if (customer.dateOfBirth != null) ...[
-                ListTile(
-                  leading: const Icon(Icons.calendar_today_outlined),
-                  title: const Text('Date of Birth'),
-                  subtitle: Text(DateFormat.yMMMd().format(customer.dateOfBirth!)),
+
+              if (customer.savingsAccount != null) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingLg,
+                  ),
+                  child: Text(
+                    t.customers.sections.savingsBank,
+                    style: textTheme.titleSmall?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-              ],
-              if (customer.aadhaarNumber != null) ...[
-                ListTile(
-                  leading: const Icon(Icons.badge_outlined),
-                  title: const Text('Aadhaar Number'),
-                  subtitle: Text(customer.aadhaarNumber!),
+                AppSpacings.gapSm,
+                Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingLg,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    children: [
+                      if (customer.savingsAccount?.accountNumber != null) ...[
+                        ListTile(
+                          leading: Icon(
+                            Icons.account_balance_outlined,
+                            color: colorScheme.primary,
+                          ),
+                          title: Text(
+                            t.customers.fields.sbAccountNumber,
+                            style: textTheme.bodySmall,
+                          ),
+                          subtitle: Text(
+                            customer.savingsAccount!.accountNumber,
+                            style: textTheme.bodyLarge,
+                          ),
+                        ),
+                      ],
+                      if (customer.savingsAccount?.accountNumber != null &&
+                          customer.savingsAccount?.nominee != null)
+                        const Divider(height: 1),
+                      if (customer.savingsAccount?.nominee?.name != null) ...[
+                        ListTile(
+                          leading: Icon(
+                            Icons.person_pin_outlined,
+                            color: colorScheme.primary,
+                          ),
+                          title: Text(
+                            t.customers.fields.sbNomineeName,
+                            style: textTheme.bodySmall,
+                          ),
+                          subtitle: Text(
+                            customer.savingsAccount!.nominee!.name,
+                            style: textTheme.bodyLarge,
+                          ),
+                        ),
+                      ],
+                      if (customer.savingsAccount?.nominee?.name != null &&
+                          customer.savingsAccount?.nominee?.relationship !=
+                              null)
+                        const Divider(height: 1),
+                      if (customer.savingsAccount?.nominee?.relationship !=
+                          null) ...[
+                        ListTile(
+                          leading: Icon(
+                            Icons.people_alt_outlined,
+                            color: colorScheme.primary,
+                          ),
+                          title: Text(
+                            t.customers.fields.sbNomineeRelationship,
+                            style: textTheme.bodySmall,
+                          ),
+                          subtitle: Text(
+                            customer.savingsAccount!.nominee!.relationship,
+                            style: textTheme.bodyLarge,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ],
-              if (customer.panNumber != null) ...[
-                ListTile(
-                  leading: const Icon(Icons.credit_card_outlined),
-                  title: const Text('PAN Number'),
-                  subtitle: Text(customer.panNumber!),
-                ),
-              ],
-              if (customer.savingsAccount?.accountNumber != null) ...[
-                ListTile(
-                  leading: const Icon(Icons.account_balance_outlined),
-                  title: const Text('SB Account No.'),
-                  subtitle: Text(customer.savingsAccount!.accountNumber),
-                ),
-              ],
-              if (customer.savingsAccount?.nominee?.name != null) ...[
-                ListTile(
-                  leading: const Icon(Icons.person_pin_outlined),
-                  title: const Text('SB Nominee Name'),
-                  subtitle: Text(customer.savingsAccount!.nominee!.name),
-                ),
-              ],
-              if (customer.savingsAccount?.nominee?.relationship != null) ...[
-                ListTile(
-                  leading: const Icon(Icons.people_alt_outlined),
-                  title: const Text('SB Nominee Relationship'),
-                  subtitle: Text(customer.savingsAccount!.nominee!.relationship),
-                ),
+                AppSpacings.gapLg,
               ],
             ],
           );
