@@ -51,14 +51,16 @@ class CustomersScreen extends ConsumerWidget {
           }
           return ListView.separated(
             itemCount: customers.length,
-            separatorBuilder: (context, index) => const Divider(),
+            separatorBuilder: (context, index) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final customer = customers[index];
               return CustomerCard(
                 name: customer.name,
                 phone: customer.phone ?? t.common.notProvided,
-                onTap: () => context.push(RouteNames.customerDetail(customer.id)),
-                onEdit: () => context.push(RouteNames.customerEdit(customer.id)),
+                onTap: () =>
+                    context.push(RouteNames.customerDetail(customer.id)),
+                onEdit: () =>
+                    context.push(RouteNames.customerEdit(customer.id)),
                 onDelete: () {
                   // Call the controller directly to delete
                   ref
@@ -75,9 +77,10 @@ class CustomersScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(customersControllerProvider),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(RouteNames.customerCreate),
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: Text(t.customers.newCustomer),
       ),
     );
   }

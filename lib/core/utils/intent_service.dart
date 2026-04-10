@@ -20,6 +20,12 @@ class IntentService {
     await _launchUrl('sms:$phone');
   }
 
+  Future<void> launchWhatsApp(String phone) async {
+    // Clean phone number (remove spaces, dashes, etc. if needed, but we'll assume it's clean enough or handled by wa.me)
+    final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    await _launchUrl('https://wa.me/$cleanPhone');
+  }
+
   Future<void> launchMapSearch(String query) async {
     final encodedQuery = Uri.encodeComponent(query);
     await _launchUrl('https://maps.google.com/?q=$encodedQuery');
