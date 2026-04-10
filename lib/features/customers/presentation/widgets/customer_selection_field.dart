@@ -5,6 +5,7 @@ import 'package:postfolio/features/customers/presentation/controllers/customers_
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
+import 'package:postfolio/core/widgets/entity_list_tile.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class CustomerSelectionField extends ConsumerStatefulWidget {
@@ -157,13 +158,9 @@ class _CustomerSelectionSheetState
                   itemCount: filtered.length,
                   itemBuilder: (context, index) {
                     final customer = filtered[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        child: Text(
-                          customer.name.substring(0, 1).toUpperCase(),
-                        ),
-                      ),
-                      title: Text(customer.name),
+                    return EntityListTile(
+                      leadingText: customer.name.isNotEmpty ? customer.name.substring(0, 1).toUpperCase() : '?',
+                      title: customer.name,
                       subtitle: Text(
                         [
                           if (customer.cifNumber != null)

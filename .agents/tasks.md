@@ -25,6 +25,8 @@
 - [x] Centralize hardcoded dimensions and spacings into `AppSpacings` and `AppDimensions`.
 - [x] Replace hardcoded padding with `AppDimensions` in deposit cards.
 - [x] Standardize ListView layouts and padding across screens.
+- [x] Deduplicate and extract common widgets into `EntityListTile`, `AppTextField`, `AppDropdownField`, `AsyncEntityFormBuilder`, and `FormAppBar`.
+- [x] Deduplicate and extract common widgets into `EntityDetailScaffold`, `EntityDetailHeader`, `NomineesDetailSection`, and generalize `AsyncEntityBuilder`.
 - [x] Standardize Detail Screen layouts and widget sizes.
 - [x] Fix `CustomerFormScreen` initialization (avoid synchronously reading controller state).
 - [x] Implement robust loading states in `CustomerFormScreen` (disable buttons during save).

@@ -6,11 +6,12 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_selection_field.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
-import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/nominees_input_section.dart';
+import 'package:postfolio/core/widgets/async_entity_builder.dart';
+import 'package:postfolio/core/widgets/app_form_fields.dart';
+import 'package:postfolio/core/widgets/form_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/models/nominee.dart';
 
@@ -21,34 +22,13 @@ class RecurringDepositFormScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (depositId == null) {
-      return const _RecurringDepositForm(existingDeposit: null);
-    }
-
-    final depositsState = ref.watch(recurringDepositsControllerProvider);
-
-    return depositsState.when(
-      data: (deposits) {
-        final deposit = deposits.where((d) => d.id == depositId).firstOrNull;
-        if (deposit == null) {
-          return Scaffold(
-            appBar: AppBar(title: Text(t.common.error)),
-            body: ErrorStateView(message: t.recurringDeposits.depositNotFound),
-          );
-        }
-        return _RecurringDepositForm(existingDeposit: deposit);
-      },
-      loading: () => Scaffold(
-        appBar: AppBar(title: Text(t.common.loading)),
-        body: const Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, stack) => Scaffold(
-        appBar: AppBar(title: Text(t.common.error)),
-        body: ErrorStateView(
-          message: error.toString(),
-          onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
-        ),
-      ),
+    return AsyncEntityBuilder<RecurringDeposit>(
+      state: ref.watch(recurringDepositsControllerProvider),
+      entityId: depositId,
+      idSelector: (d) => d.id,
+      notFoundMessage: t.recurringDeposits.depositNotFound,
+      onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
+      builder: (deposit) => _RecurringDepositForm(existingDeposit: deposit),
     );
   }
 }
@@ -192,34 +172,12 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
     final isUpdating = widget.existingDeposit != null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          isUpdating
-              ? t.recurringDeposits.editDeposit
-              : t.recurringDeposits.newDeposit,
-        ),
-        actions: [
-          if (_isSaving)
-            const Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingLg,
-              ),
-              child: Center(
-                child: SizedBox(
-                  width: AppDimensions.iconMd,
-                  height: AppDimensions.iconMd,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.check),
-              color: Theme.of(context).colorScheme.primary,
-              onPressed: _save,
-              tooltip: t.recurringDeposits.saveDeposit,
-            ),
-        ],
+      appBar: FormAppBar(
+        title: isUpdating
+            ? t.recurringDeposits.editDeposit
+            : t.recurringDeposits.newDeposit,
+        isSaving: _isSaving,
+        onSave: _save,
       ),
       body: Form(
         key: _formKey,
@@ -243,38 +201,29 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
               },
             ),
             AppSpacings.gapLg,
-            TextFormField(
+            AppTextField(
               controller: _serialNoController,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.recurringDeposits.fields.serialNo,
-                prefixIcon: Icons.tag_outlined,
-                isRequired: true,
-              ),
+              labelText: t.recurringDeposits.fields.serialNo,
+              prefixIcon: Icons.tag_outlined,
+              isRequired: true,
               validator: (val) =>
                   val == null || val.trim().isEmpty ? 'Required' : null,
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
-            TextFormField(
+            AppTextField(
               controller: _accountNoController,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.recurringDeposits.fields.accountNo,
-                prefixIcon: Icons.numbers_outlined,
-                isRequired: true,
-              ),
+              labelText: t.recurringDeposits.fields.accountNo,
+              prefixIcon: Icons.numbers_outlined,
+              isRequired: true,
               validator: RecurringDeposit.validateAccountNo,
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
-            DropdownButtonFormField<DepositStatus>(
-              initialValue: _selectedStatus,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.recurringDeposits.fields.status,
-                prefixIcon: Icons.info_outline,
-              ),
+            AppDropdownField<DepositStatus>(
+              value: _selectedStatus,
+              labelText: t.recurringDeposits.fields.status,
+              prefixIcon: Icons.info_outline,
               items: DepositStatus.values.map((status) {
                 return DropdownMenuItem(
                   value: status,
@@ -295,13 +244,10 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
               ),
             ),
             AppSpacings.gapMd,
-            DropdownButtonFormField<RecurringSchemeType>(
-              initialValue: _selectedScheme,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.recurringDeposits.fields.schemeType,
-                prefixIcon: Icons.category_outlined,
-              ),
+            AppDropdownField<RecurringSchemeType>(
+              value: _selectedScheme,
+              labelText: t.recurringDeposits.fields.schemeType,
+              prefixIcon: Icons.category_outlined,
               items: RecurringSchemeType.values.map((s) {
                 return DropdownMenuItem(value: s, child: Text(s.displayName));
               }).toList(),
@@ -310,14 +256,11 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
               },
             ),
             AppSpacings.gapLg,
-            TextFormField(
+            AppTextField(
               controller: _installmentAmountController,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.recurringDeposits.fields.installmentAmount,
-                prefixIcon: Icons.money_outlined,
-                isRequired: true,
-              ),
+              labelText: t.recurringDeposits.fields.installmentAmount,
+              prefixIcon: Icons.money_outlined,
+              isRequired: true,
               keyboardType: TextInputType.number,
               validator: (val) => RecurringDeposit.validateAmount(
                 double.tryParse(val ?? ''),
@@ -329,28 +272,22 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
             Row(
               children: [
                 Expanded(
-                  child: TextFormField(
+                  child: AppTextField(
                     controller: _termYearsController,
-                    decoration: AppInputDecoration.m3(
-                      context,
-                      labelText: t.recurringDeposits.fields.termYears,
-                      prefixIcon: Icons.calendar_today_outlined,
-                      isRequired: true,
-                    ),
+                    labelText: t.recurringDeposits.fields.termYears,
+                    prefixIcon: Icons.calendar_today_outlined,
+                    isRequired: true,
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
                   ),
                 ),
                 AppSpacings.gapMd,
                 Expanded(
-                  child: TextFormField(
+                  child: AppTextField(
                     controller: _termMonthsController,
-                    decoration: AppInputDecoration.m3(
-                      context,
-                      labelText: t.recurringDeposits.fields.termMonths,
-                      prefixIcon: Icons.calendar_month_outlined,
-                      isRequired: true,
-                    ),
+                    labelText: t.recurringDeposits.fields.termMonths,
+                    prefixIcon: Icons.calendar_month_outlined,
+                    isRequired: true,
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
                   ),
@@ -358,26 +295,20 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
               ],
             ),
             AppSpacings.gapLg,
-            TextFormField(
+            AppTextField(
               controller: _interestRateController,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.recurringDeposits.fields.interestRate,
-                prefixIcon: Icons.percent_outlined,
-                isRequired: true,
-              ),
+              labelText: t.recurringDeposits.fields.interestRate,
+              prefixIcon: Icons.percent_outlined,
+              isRequired: true,
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
-            TextFormField(
+            AppTextField(
               controller: _maturityAmountController,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.recurringDeposits.fields.maturityAmount,
-                prefixIcon: Icons.savings_outlined,
-                isRequired: true,
-              ),
+              labelText: t.recurringDeposits.fields.maturityAmount,
+              prefixIcon: Icons.savings_outlined,
+              isRequired: true,
               keyboardType: TextInputType.number,
               validator: (val) => RecurringDeposit.validateAmount(
                 double.tryParse(val ?? ''),
@@ -386,13 +317,10 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
-            TextFormField(
+            AppTextField(
               controller: _linkedAccountController,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.recurringDeposits.fields.linkedSavingsAccount,
-                prefixIcon: Icons.account_balance_outlined,
-              ),
+              labelText: t.recurringDeposits.fields.linkedSavingsAccount,
+              prefixIcon: Icons.account_balance_outlined,
               textInputAction: TextInputAction.next,
             ),
 

@@ -5,8 +5,8 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 
 import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
+import 'package:postfolio/core/widgets/entity_list_tile.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
-import 'package:postfolio/i18n/strings.g.dart';
 
 class OneTimeDepositCard extends ConsumerWidget {
   static final _dateFormatter = DateFormat('MMM dd, yyyy');
@@ -37,23 +37,11 @@ class OneTimeDepositCard extends ConsumerWidget {
     final customerName =
         ref.watch(customerByIdProvider(customerId))?.name ?? customerId;
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLg,
-        vertical: AppDimensions.paddingSm,
-      ),
-      leading: CircleAvatar(
-        radius: AppDimensions.radiusXxl,
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-        foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-        child: const Icon(Icons.account_balance_wallet_outlined),
-      ),
-      title: Text(
-        customerName,
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-      ),
+    return EntityListTile(
+      leadingIcon: const Icon(Icons.account_balance_wallet_outlined),
+      leadingBackgroundColor: Theme.of(context).colorScheme.primaryContainer,
+      leadingForegroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+      title: customerName,
       subtitle: Text.rich(
         TextSpan(
           children: [
@@ -79,59 +67,18 @@ class OneTimeDepositCard extends ConsumerWidget {
         ),
       ),
       onTap: onTap,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '₹${principalAmount.toStringAsFixed(0)}',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              if (value == 'edit') {
-                onEdit();
-              } else if (value == 'delete') {
-                onDelete();
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'edit',
-                child: Row(
-                  children: [
-                    const Icon(Icons.edit_outlined, size: AppDimensions.iconMd),
-                    AppSpacings.gapSm,
-                    Text(t.common.edit),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'delete',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.delete_outline,
-                      size: AppDimensions.iconMd,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    AppSpacings.gapSm,
-                    Text(
-                      t.common.delete,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
+      trailing: Text(
+        '₹${principalAmount.toStringAsFixed(0)}',
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
+      actions: [
+        EntityAction.edit(onTap: onEdit),
+        EntityAction.delete(onTap: onDelete),
+      ],
     );
   }
 }
+

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/theme/app_input_decoration.dart';
+import 'package:postfolio/core/widgets/app_form_fields.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class _NomineeFormModel {
@@ -177,38 +177,29 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
                         ],
                       ),
                       AppSpacings.gapSm,
-                      TextFormField(
+                      AppTextField(
                         controller: form.nameController,
-                        decoration: AppInputDecoration.m3(
-                          context,
-                          labelText: t.nominees.name,
-                          prefixIcon: Icons.person_pin_outlined,
-                          isRequired: true,
-                        ),
+                        labelText: t.nominees.name,
+                        prefixIcon: Icons.person_pin_outlined,
+                        isRequired: true,
                         validator: Nominee.validateName,
                         textInputAction: TextInputAction.next,
                       ),
                       AppSpacings.gapSm,
-                      TextFormField(
+                      AppTextField(
                         controller: form.relationshipController,
-                        decoration: AppInputDecoration.m3(
-                          context,
-                          labelText: t.nominees.relationship,
-                          prefixIcon: Icons.people_alt_outlined,
-                          isRequired: true,
-                        ),
+                        labelText: t.nominees.relationship,
+                        prefixIcon: Icons.people_alt_outlined,
+                        isRequired: true,
                         validator: Nominee.validateRelationship,
                         textInputAction: TextInputAction.next,
                       ),
                       AppSpacings.gapSm,
-                      TextFormField(
+                      AppTextField(
                         controller: form.percentageController,
-                        decoration: AppInputDecoration.m3(
-                          context,
-                          labelText: t.nominees.percentage,
-                          prefixIcon: Icons.percent_outlined,
-                          isRequired: true,
-                        ),
+                        labelText: t.nominees.percentage,
+                        prefixIcon: Icons.percent_outlined,
+                        isRequired: true,
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),

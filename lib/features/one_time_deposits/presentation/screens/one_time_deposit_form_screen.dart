@@ -6,11 +6,12 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_selection_field.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
-import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/nominees_input_section.dart';
+import 'package:postfolio/core/widgets/async_entity_builder.dart';
+import 'package:postfolio/core/widgets/app_form_fields.dart';
+import 'package:postfolio/core/widgets/form_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/models/nominee.dart';
 
@@ -21,34 +22,13 @@ class OneTimeDepositFormScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (depositId == null) {
-      return const _OneTimeDepositForm(existingDeposit: null);
-    }
-
-    final depositsState = ref.watch(oneTimeDepositsControllerProvider);
-
-    return depositsState.when(
-      data: (deposits) {
-        final deposit = deposits.where((d) => d.id == depositId).firstOrNull;
-        if (deposit == null) {
-          return Scaffold(
-            appBar: AppBar(title: Text(t.common.error)),
-            body: ErrorStateView(message: t.oneTimeDeposits.depositNotFound),
-          );
-        }
-        return _OneTimeDepositForm(existingDeposit: deposit);
-      },
-      loading: () => Scaffold(
-        appBar: AppBar(title: Text(t.common.loading)),
-        body: const Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, stack) => Scaffold(
-        appBar: AppBar(title: Text(t.common.error)),
-        body: ErrorStateView(
-          message: error.toString(),
-          onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
-        ),
-      ),
+    return AsyncEntityBuilder<OneTimeDeposit>(
+      state: ref.watch(oneTimeDepositsControllerProvider),
+      entityId: depositId,
+      idSelector: (d) => d.id,
+      notFoundMessage: t.oneTimeDeposits.depositNotFound,
+      onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
+      builder: (deposit) => _OneTimeDepositForm(existingDeposit: deposit),
     );
   }
 }
@@ -185,34 +165,12 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
     final isUpdating = widget.existingDeposit != null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          isUpdating
-              ? t.oneTimeDeposits.editDeposit
-              : t.oneTimeDeposits.newDeposit,
-        ),
-        actions: [
-          if (_isSaving)
-            const Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingLg,
-              ),
-              child: Center(
-                child: SizedBox(
-                  width: AppDimensions.iconMd,
-                  height: AppDimensions.iconMd,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.check),
-              color: Theme.of(context).colorScheme.primary,
-              onPressed: _save,
-              tooltip: t.oneTimeDeposits.saveDeposit,
-            ),
-        ],
+      appBar: FormAppBar(
+        title: isUpdating
+            ? t.oneTimeDeposits.editDeposit
+            : t.oneTimeDeposits.newDeposit,
+        isSaving: _isSaving,
+        onSave: _save,
       ),
       body: Form(
         key: _formKey,
@@ -236,24 +194,18 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
               },
             ),
             AppSpacings.gapLg,
-            TextFormField(
+            AppTextField(
               controller: _accountNoController,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.oneTimeDeposits.fields.accountNo,
-                prefixIcon: Icons.numbers_outlined,
-              ),
+              labelText: t.oneTimeDeposits.fields.accountNo,
+              prefixIcon: Icons.numbers_outlined,
               validator: OneTimeDeposit.validateAccountNo,
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
-            DropdownButtonFormField<DepositStatus>(
-              initialValue: _selectedStatus,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.oneTimeDeposits.fields.status,
-                prefixIcon: Icons.info_outline,
-              ),
+            AppDropdownField<DepositStatus>(
+              value: _selectedStatus,
+              labelText: t.oneTimeDeposits.fields.status,
+              prefixIcon: Icons.info_outline,
               items: DepositStatus.values.map((status) {
                 return DropdownMenuItem(
                   value: status,
@@ -274,13 +226,10 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
               ),
             ),
             AppSpacings.gapMd,
-            DropdownButtonFormField<OneTimeSchemeType>(
-              initialValue: _selectedScheme,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.oneTimeDeposits.fields.schemeType,
-                prefixIcon: Icons.category_outlined,
-              ),
+            AppDropdownField<OneTimeSchemeType>(
+              value: _selectedScheme,
+              labelText: t.oneTimeDeposits.fields.schemeType,
+              prefixIcon: Icons.category_outlined,
               items: OneTimeSchemeType.values.map((s) {
                 return DropdownMenuItem(value: s, child: Text(s.displayName));
               }).toList(),
@@ -289,13 +238,10 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
               },
             ),
             AppSpacings.gapLg,
-            TextFormField(
+            AppTextField(
               controller: _principalAmountController,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.oneTimeDeposits.fields.principalAmount,
-                prefixIcon: Icons.money_outlined,
-              ),
+              labelText: t.oneTimeDeposits.fields.principalAmount,
+              prefixIcon: Icons.money_outlined,
               keyboardType: TextInputType.number,
               validator: (val) => OneTimeDeposit.validateAmount(
                 double.tryParse(val ?? ''),
@@ -307,28 +253,22 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             Row(
               children: [
                 Expanded(
-                  child: TextFormField(
+                  child: AppTextField(
                     controller: _termYearsController,
-                    decoration: AppInputDecoration.m3(
-                      context,
-                      labelText: t.oneTimeDeposits.fields.termYears,
-                      prefixIcon: Icons.calendar_today_outlined,
-                      isRequired: true,
-                    ),
+                    labelText: t.oneTimeDeposits.fields.termYears,
+                    prefixIcon: Icons.calendar_today_outlined,
+                    isRequired: true,
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
                   ),
                 ),
                 AppSpacings.gapMd,
                 Expanded(
-                  child: TextFormField(
+                  child: AppTextField(
                     controller: _termMonthsController,
-                    decoration: AppInputDecoration.m3(
-                      context,
-                      labelText: t.oneTimeDeposits.fields.termMonths,
-                      prefixIcon: Icons.calendar_month_outlined,
-                      isRequired: true,
-                    ),
+                    labelText: t.oneTimeDeposits.fields.termMonths,
+                    prefixIcon: Icons.calendar_month_outlined,
+                    isRequired: true,
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
                   ),
@@ -336,26 +276,20 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
               ],
             ),
             AppSpacings.gapLg,
-            TextFormField(
+            AppTextField(
               controller: _interestRateController,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.oneTimeDeposits.fields.interestRate,
-                prefixIcon: Icons.percent_outlined,
-                isRequired: true,
-              ),
+              labelText: t.oneTimeDeposits.fields.interestRate,
+              prefixIcon: Icons.percent_outlined,
+              isRequired: true,
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
-            TextFormField(
+            AppTextField(
               controller: _maturityAmountController,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.oneTimeDeposits.fields.maturityAmount,
-                prefixIcon: Icons.savings_outlined,
-                isRequired: true,
-              ),
+              labelText: t.oneTimeDeposits.fields.maturityAmount,
+              prefixIcon: Icons.savings_outlined,
+              isRequired: true,
               keyboardType: TextInputType.number,
               validator: (val) => OneTimeDeposit.validateAmount(
                 double.tryParse(val ?? ''),
@@ -364,13 +298,10 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
-            TextFormField(
+            AppTextField(
               controller: _linkedAccountController,
-              decoration: AppInputDecoration.m3(
-                context,
-                labelText: t.oneTimeDeposits.fields.linkedSavingsAccount,
-                prefixIcon: Icons.account_balance_outlined,
-              ),
+              labelText: t.oneTimeDeposits.fields.linkedSavingsAccount,
+              prefixIcon: Icons.account_balance_outlined,
               textInputAction: TextInputAction.next,
             ),
 

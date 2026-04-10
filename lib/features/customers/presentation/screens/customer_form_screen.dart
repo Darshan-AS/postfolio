@@ -4,11 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/nominees_input_section.dart';
 import 'package:postfolio/core/models/nominee.dart';
+import 'package:postfolio/core/widgets/async_entity_builder.dart';
+import 'package:postfolio/core/widgets/app_form_fields.dart';
+import 'package:postfolio/core/widgets/form_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:intl/intl.dart';
 
@@ -19,34 +20,13 @@ class CustomerFormScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (customerId == null) {
-      return const _CustomerForm(existingCustomer: null);
-    }
-
-    final customersState = ref.watch(customersControllerProvider);
-
-    return customersState.when(
-      data: (customers) {
-        final customer = customers.where((u) => u.id == customerId).firstOrNull;
-        if (customer == null) {
-          return Scaffold(
-            appBar: AppBar(title: Text(t.common.error)),
-            body: ErrorStateView(message: t.customers.customerNotFound),
-          );
-        }
-        return _CustomerForm(existingCustomer: customer);
-      },
-      loading: () => Scaffold(
-        appBar: AppBar(title: Text(t.common.loading)),
-        body: const Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, stack) => Scaffold(
-        appBar: AppBar(title: Text(t.common.error)),
-        body: ErrorStateView(
-          message: error.toString(),
-          onRetry: () => ref.invalidate(customersControllerProvider),
-        ),
-      ),
+    return AsyncEntityBuilder<Customer>(
+      state: ref.watch(customersControllerProvider),
+      entityId: customerId,
+      idSelector: (c) => c.id,
+      notFoundMessage: t.customers.customerNotFound,
+      onRetry: () => ref.invalidate(customersControllerProvider),
+      builder: (customer) => _CustomerForm(existingCustomer: customer),
     );
   }
 }
@@ -190,32 +170,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
     final isUpdating = widget.existingCustomer != null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          isUpdating ? t.customers.editCustomer : t.customers.newCustomer,
-        ),
-        actions: [
-          if (_isSaving)
-            const Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingLg,
-              ),
-              child: Center(
-                child: SizedBox(
-                  width: AppDimensions.iconMd,
-                  height: AppDimensions.iconMd,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.check),
-              color: Theme.of(context).colorScheme.primary,
-              onPressed: _save,
-              tooltip: t.customers.saveCustomer,
-            ),
-        ],
+      appBar: FormAppBar(
+        title: isUpdating ? t.customers.editCustomer : t.customers.newCustomer,
+        isSaving: _isSaving,
+        onSave: _save,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingLg),
@@ -232,60 +190,43 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 ),
               ),
               AppSpacings.gapMd,
-              TextFormField(
+              AppTextField(
                 controller: _nameController,
-                decoration: AppInputDecoration.m3(
-                  context,
-                  labelText: t.customers.fields.fullName,
-                  prefixIcon: Icons.person_outline,
-                  isRequired: true,
-                ),
+                labelText: t.customers.fields.fullName,
+                prefixIcon: Icons.person_outline,
+                isRequired: true,
                 validator: Customer.validateName,
                 textInputAction: TextInputAction.next,
               ),
               AppSpacings.gapMd,
-              TextFormField(
+              AppTextField(
                 controller: _phoneController,
-                decoration: AppInputDecoration.m3(
-                  context,
-                  labelText: t.customers.fields.phoneNumber,
-                  prefixIcon: Icons.phone_outlined,
-                ),
+                labelText: t.customers.fields.phoneNumber,
+                prefixIcon: Icons.phone_outlined,
                 validator: Customer.validatePhone,
                 keyboardType: TextInputType.phone,
                 textInputAction: TextInputAction.next,
               ),
               AppSpacings.gapMd,
-              TextFormField(
+              AppTextField(
                 controller: _emailController,
-                decoration: AppInputDecoration.m3(
-                  context,
-                  labelText: t.customers.fields.emailAddress,
-                  prefixIcon: Icons.email_outlined,
-                ),
+                labelText: t.customers.fields.emailAddress,
+                prefixIcon: Icons.email_outlined,
                 validator: Customer.validateEmail,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
               ),
               AppSpacings.gapMd,
-              TextFormField(
+              AppDateField(
                 controller: _dateOfBirthController,
-                decoration: AppInputDecoration.m3(
-                  context,
-                  labelText: t.customers.fields.dateOfBirth,
-                  prefixIcon: Icons.calendar_today_outlined,
-                ),
-                readOnly: true,
+                labelText: t.customers.fields.dateOfBirth,
                 onTap: () => _selectDate(context),
               ),
               AppSpacings.gapMd,
-              TextFormField(
+              AppTextField(
                 controller: _addressController,
-                decoration: AppInputDecoration.m3(
-                  context,
-                  labelText: t.customers.fields.homeAddress,
-                  prefixIcon: Icons.home_outlined,
-                ),
+                labelText: t.customers.fields.homeAddress,
+                prefixIcon: Icons.home_outlined,
                 maxLines: 3,
               ),
               AppSpacings.gapXl,
@@ -297,34 +238,25 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 ),
               ),
               AppSpacings.gapMd,
-              TextFormField(
+              AppTextField(
                 controller: _cifNumberController,
-                decoration: AppInputDecoration.m3(
-                  context,
-                  labelText: t.customers.fields.cif,
-                  prefixIcon: Icons.confirmation_number_outlined,
-                ),
+                labelText: t.customers.fields.cif,
+                prefixIcon: Icons.confirmation_number_outlined,
                 textInputAction: TextInputAction.next,
               ),
               AppSpacings.gapMd,
-              TextFormField(
+              AppTextField(
                 controller: _aadhaarNumberController,
-                decoration: AppInputDecoration.m3(
-                  context,
-                  labelText: t.customers.fields.aadhaarNumber,
-                  prefixIcon: Icons.badge_outlined,
-                ),
+                labelText: t.customers.fields.aadhaarNumber,
+                prefixIcon: Icons.badge_outlined,
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
               ),
               AppSpacings.gapMd,
-              TextFormField(
+              AppTextField(
                 controller: _panNumberController,
-                decoration: AppInputDecoration.m3(
-                  context,
-                  labelText: t.customers.fields.panNumber,
-                  prefixIcon: Icons.credit_card_outlined,
-                ),
+                labelText: t.customers.fields.panNumber,
+                prefixIcon: Icons.credit_card_outlined,
                 textInputAction: TextInputAction.next,
               ),
               AppSpacings.gapXl,
@@ -336,13 +268,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 ),
               ),
               AppSpacings.gapMd,
-              TextFormField(
+              AppTextField(
                 controller: _savingsAccountNumberController,
-                decoration: AppInputDecoration.m3(
-                  context,
-                  labelText: t.customers.fields.sbAccountNumber,
-                  prefixIcon: Icons.account_balance_outlined,
-                ),
+                labelText: t.customers.fields.sbAccountNumber,
+                prefixIcon: Icons.account_balance_outlined,
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
               ),

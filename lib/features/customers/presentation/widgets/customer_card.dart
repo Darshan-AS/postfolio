@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/widgets/entity_list_tile.dart';
 import '../../../../i18n/strings.g.dart';
 
 class CustomerCard extends StatelessWidget {
@@ -30,32 +30,9 @@ class CustomerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLg,
-        vertical: AppDimensions.paddingSm,
-      ),
-      onTap: onTap,
-      leading: CircleAvatar(
-        radius: AppDimensions.radiusXxl,
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-        foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-        child: Text(
-          name.isNotEmpty ? name[0].toUpperCase() : '?',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onPrimaryContainer,
-          ),
-        ),
-      ),
-      title: Text(
-        name,
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+    return EntityListTile(
+      leadingText: name.isNotEmpty ? name[0].toUpperCase() : '?',
+      title: name,
       subtitle: phone.isNotEmpty && phone != t.common.notProvided
           ? Text(
               phone,
@@ -64,96 +41,38 @@ class CustomerCard extends StatelessWidget {
               ),
             )
           : null,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: t.customers.editCustomer,
-            color: Theme.of(context).colorScheme.secondary,
-            onPressed: onEdit,
-          ),
-          IconButton(
-            icon: const Icon(Icons.phone_outlined),
-            tooltip: t.customers.actions.call,
-            color: Theme.of(context).colorScheme.primary,
-            onPressed: onPhoneTapped,
-          ),
-          IconButton(
-            icon: const FaIcon(
-              FontAwesomeIcons.whatsapp,
-              size: AppDimensions.iconMd,
-            ),
-            tooltip: t.customers.actions.whatsapp,
-            color: Theme.of(context).colorScheme.primary,
-            onPressed: onWhatsAppTapped,
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            tooltip: t.common.moreOptions,
-            onSelected: (value) {
-              switch (value) {
-                case 'delete':
-                  onDelete();
-                  break;
-                case 'sms':
-                  onSmsTapped();
-                  break;
-                case 'location':
-                  onLocationTapped();
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'sms',
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.message_outlined,
-                      size: AppDimensions.iconMd,
-                    ),
-                    AppSpacings.gapSm,
-                    Text(t.customers.actions.sms),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'location',
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: AppDimensions.iconMd,
-                    ),
-                    AppSpacings.gapSm,
-                    Text(t.customers.actions.location),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'delete',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.delete_outline,
-                      size: AppDimensions.iconMd,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    AppSpacings.gapSm,
-                    Text(
-                      t.common.delete,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      onTap: onTap,
+      actions: [
+        EntityAction.edit(onTap: onEdit, isInline: true),
+        EntityAction(
+          type: EntityActionType.call,
+          label: t.customers.actions.call,
+          icon: Icons.phone_outlined,
+          onTap: onPhoneTapped,
+          isInline: true,
+        ),
+        EntityAction(
+          type: EntityActionType.whatsapp,
+          label: t.customers.actions.whatsapp,
+          customIcon: const FaIcon(FontAwesomeIcons.whatsapp, size: 24.0),
+          onTap: onWhatsAppTapped,
+          isInline: true,
+        ),
+        EntityAction(
+          type: EntityActionType.sms,
+          label: t.customers.actions.sms,
+          icon: Icons.message_outlined,
+          onTap: onSmsTapped,
+        ),
+        EntityAction(
+          type: EntityActionType.location,
+          label: t.customers.actions.location,
+          icon: Icons.location_on_outlined,
+          onTap: onLocationTapped,
+        ),
+        EntityAction.delete(onTap: onDelete),
+      ],
     );
   }
 }
+

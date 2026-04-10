@@ -22,3 +22,15 @@ The immediate next step is to proceed to **Phase 5 (Firebase Integration)** from
 
 - Refactored legacy `Provider` declarations to use `@riverpod` annotation (code generation) for `CustomerRepository`, `OneTimeDepositRepository`, `RecurringDepositRepository`, `GoRouter`, and `IntentService` to adhere rigorously to Riverpod conventions.
 - Ensured no usages of `StateNotifier` or `dartz` exist in the codebase.
+
+- Added `EntityListTile` to centralize list item UI across Customer and Deposit cards.
+- Added `AppTextField`, `AppDropdownField`, `AppDateField` for form field deduplication.
+- Added `AsyncEntityFormBuilder` to wrap async riverpod state in forms.
+- Added `FormAppBar` to standardize the save actions across forms.
+- Refactored `customer_form_screen`, `one_time_deposit_form_screen`, and `recurring_deposit_form_screen` to use the new core widgets.
+
+- Created `EntityDetailScaffold` to standardize details screen scaffold.
+- Created `EntityDetailHeader` to standardize hero section of detail screens.
+- Refactored `AsyncEntityFormBuilder` to `AsyncEntityBuilder` for generic usage across forms and details.
+- Abstracted `NomineesDetailSection` for reuse.
+- Refactored all Detail screens to utilize the new common scaffold.
