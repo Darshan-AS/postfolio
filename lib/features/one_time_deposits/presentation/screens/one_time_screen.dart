@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/routing/route_names.dart';
-import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
@@ -52,7 +51,7 @@ class OneTimeDepositsScreen extends ConsumerWidget {
             itemBuilder: (context, index) {
               final deposit = deposits[index];
               return OneTimeDepositCard(
-                customerName: ref.watch(customersControllerProvider).value?.where((c) => c.id == deposit.customerId).firstOrNull?.name ?? deposit.customerId,
+                customerId: deposit.customerId,
                 accountNo: deposit.accountNo,
                 principalAmount: deposit.principalAmount,
                 status: deposit.status,

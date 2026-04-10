@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
+import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
-class RecurringDepositCard extends StatelessWidget {
-  final String customerName;
+class RecurringDepositCard extends ConsumerWidget {
+  final String customerId;
   final String serialNo;
   final String accountNo;
   final double installmentAmount;
@@ -17,7 +18,7 @@ class RecurringDepositCard extends StatelessWidget {
 
   const RecurringDepositCard({
     super.key,
-    required this.customerName,
+    required this.customerId,
     required this.serialNo,
     required this.accountNo,
     required this.installmentAmount,
@@ -29,7 +30,10 @@ class RecurringDepositCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final customerName =
+        ref.watch(customerByIdProvider(customerId))?.name ?? customerId;
+
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 16.0,

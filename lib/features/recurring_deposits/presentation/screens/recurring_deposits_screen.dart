@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/routing/route_names.dart';
-import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
@@ -54,7 +53,7 @@ class RecurringDepositsScreen extends ConsumerWidget {
               return Padding(
                 padding: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
                 child: RecurringDepositCard(
-                  customerName: ref.watch(customersControllerProvider).value?.where((c) => c.id == deposit.customerId).firstOrNull?.name ?? deposit.customerId,
+                  customerId: deposit.customerId,
                   serialNo: deposit.serialNo,
                   accountNo: deposit.accountNo,
                   installmentAmount: deposit.installmentAmount,

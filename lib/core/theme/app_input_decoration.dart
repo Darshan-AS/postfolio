@@ -11,7 +11,7 @@ class AppInputDecoration {
       labelText: labelText,
       prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
       filled: true,
-      fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: colorScheme.outlineVariant),

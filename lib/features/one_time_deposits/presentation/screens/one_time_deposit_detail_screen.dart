@@ -188,7 +188,14 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   DetailItem(
                     icon: Icons.account_circle_outlined,
                     label: t.oneTimeDeposits.fields.customerId,
-                    value: ref.watch(customersControllerProvider).value?.where((c) => c.id == deposit.customerId).firstOrNull?.name ?? deposit.customerId,
+                    value:
+                        ref
+                            .watch(customersControllerProvider)
+                            .value
+                            ?.where((c) => c.id == deposit.customerId)
+                            .firstOrNull
+                            ?.name ??
+                        deposit.customerId,
                   ),
                   const Divider(height: 1),
                   if (deposit.linkedSavingsAccountNo != null &&

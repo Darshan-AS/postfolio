@@ -102,13 +102,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   ),
                   GoRoute(
                     path: ':id',
-                    builder: (context, state) =>
-                        CustomerDetailScreen(customerId: state.pathParameters['id']!),
+                    builder: (context, state) => CustomerDetailScreen(
+                      customerId: state.pathParameters['id']!,
+                    ),
                   ),
                   GoRoute(
                     path: ':id/edit',
-                    builder: (context, state) =>
-                        CustomerFormScreen(customerId: state.pathParameters['id']),
+                    builder: (context, state) => CustomerFormScreen(
+                      customerId: state.pathParameters['id'],
+                    ),
                   ),
                 ],
               ),

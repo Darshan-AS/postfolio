@@ -83,3 +83,9 @@ class CustomersController extends _$CustomersController {
     };
   }
 }
+
+@riverpod
+Customer? customerById(Ref ref, String id) {
+  final customersState = ref.watch(customersControllerProvider);
+  return customersState.value?.where((c) => c.id == id).firstOrNull;
+}

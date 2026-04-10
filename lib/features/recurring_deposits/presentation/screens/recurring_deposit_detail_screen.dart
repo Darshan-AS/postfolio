@@ -197,7 +197,14 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                   DetailItem(
                     icon: Icons.account_circle_outlined,
                     label: t.recurringDeposits.fields.customerId,
-                    value: ref.watch(customersControllerProvider).value?.where((c) => c.id == deposit.customerId).firstOrNull?.name ?? deposit.customerId,
+                    value:
+                        ref
+                            .watch(customersControllerProvider)
+                            .value
+                            ?.where((c) => c.id == deposit.customerId)
+                            .firstOrNull
+                            ?.name ??
+                        deposit.customerId,
                   ),
                   if (deposit.linkedAutoDebitAccountNo != null &&
                       deposit.linkedAutoDebitAccountNo!.isNotEmpty) ...[

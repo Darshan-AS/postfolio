@@ -66,3 +66,80 @@ abstract class _$CustomersController
     element.handleCreate(ref, build);
   }
 }
+
+@ProviderFor(customerById)
+final customerByIdProvider = CustomerByIdFamily._();
+
+final class CustomerByIdProvider
+    extends $FunctionalProvider<Customer?, Customer?, Customer?>
+    with $Provider<Customer?> {
+  CustomerByIdProvider._({
+    required CustomerByIdFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'customerByIdProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$customerByIdHash();
+
+  @override
+  String toString() {
+    return r'customerByIdProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<Customer?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Customer? create(Ref ref) {
+    final argument = this.argument as String;
+    return customerById(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Customer? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Customer?>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CustomerByIdProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$customerByIdHash() => r'17faf20d26abd26940cb6e43fd9e2780f902d06f';
+
+final class CustomerByIdFamily extends $Family
+    with $FunctionalFamilyOverride<Customer?, String> {
+  CustomerByIdFamily._()
+    : super(
+        retry: null,
+        name: r'customerByIdProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  CustomerByIdProvider call(String id) =>
+      CustomerByIdProvider._(argument: id, from: this);
+
+  @override
+  String toString() => r'customerByIdProvider';
+}

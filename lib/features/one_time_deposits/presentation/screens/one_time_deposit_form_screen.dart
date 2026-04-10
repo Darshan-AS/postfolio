@@ -244,7 +244,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             ),
             AppSpacings.gapLg,
             DropdownButtonFormField<DepositStatus>(
-              value: _selectedStatus,
+              initialValue: _selectedStatus,
               decoration: AppInputDecoration.m3(
                 context,
                 labelText: 'Status',
@@ -271,7 +271,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             ),
             AppSpacings.gapMd,
             DropdownButtonFormField<OneTimeSchemeType>(
-              value: _selectedScheme,
+              initialValue: _selectedScheme,
               decoration: AppInputDecoration.m3(
                 context,
                 labelText: t.oneTimeDeposits.fields.schemeType,
@@ -379,7 +379,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
               elevation: 0,
               color: Theme.of(
                 context,
-              ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(

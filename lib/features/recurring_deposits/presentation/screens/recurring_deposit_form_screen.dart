@@ -263,7 +263,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
             ),
             AppSpacings.gapLg,
             DropdownButtonFormField<DepositStatus>(
-              value: _selectedStatus,
+              initialValue: _selectedStatus,
               decoration: AppInputDecoration.m3(
                 context,
                 labelText: 'Status',
@@ -290,7 +290,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
             ),
             AppSpacings.gapMd,
             DropdownButtonFormField<RecurringSchemeType>(
-              value: _selectedScheme,
+              initialValue: _selectedScheme,
               decoration: AppInputDecoration.m3(
                 context,
                 labelText: t.recurringDeposits.fields.schemeType,
@@ -398,7 +398,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
               elevation: 0,
               color: Theme.of(
                 context,
-              ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(

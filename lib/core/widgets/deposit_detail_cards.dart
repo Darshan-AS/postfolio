@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/theme/app_theme.dart';
 
 class DetailSection extends StatelessWidget {
   final String title;
@@ -139,7 +138,7 @@ class DetailAmountCard extends StatelessWidget {
               Text(
                 title,
                 style: theme.textTheme.titleSmall?.copyWith(
-                  color: fg.withOpacity(0.8),
+                  color: fg.withValues(alpha: 0.8),
                 ),
               ),
               AppSpacings.gapSm,

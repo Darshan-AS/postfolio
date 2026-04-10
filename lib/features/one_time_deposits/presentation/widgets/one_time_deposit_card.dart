@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 
 import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
+import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
-class OneTimeDepositCard extends StatelessWidget {
-  final String customerName;
+class OneTimeDepositCard extends ConsumerWidget {
+  final String customerId;
   final String accountNo;
   final double principalAmount;
   final DepositStatus status;
@@ -17,7 +18,7 @@ class OneTimeDepositCard extends StatelessWidget {
 
   const OneTimeDepositCard({
     super.key,
-    required this.customerName,
+    required this.customerId,
     required this.accountNo,
     required this.principalAmount,
     required this.status,
@@ -28,7 +29,10 @@ class OneTimeDepositCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final customerName =
+        ref.watch(customerByIdProvider(customerId))?.name ?? customerId;
+
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 16.0,
