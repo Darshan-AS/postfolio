@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/routing/route_names.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
@@ -8,11 +9,19 @@ import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:intl/intl.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CustomerDetailScreen extends ConsumerWidget {
   final String customerId;
 
   const CustomerDetailScreen({super.key, required this.customerId});
+
+  Future<void> _launchUrl(String urlString) async {
+    final uri = Uri.parse(urlString);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
 
   void _confirmDelete(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -145,6 +154,36 @@ class CustomerDetailScreen extends ConsumerWidget {
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
+                    if (customer.phone != null &&
+                        customer.phone!.isNotEmpty) ...[
+                      AppSpacings.gapLg,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: AppDimensions.paddingSm,
+                        runSpacing: AppDimensions.paddingSm,
+                        children: [
+                          FilledButton.icon(
+                            onPressed: () =>
+                                _launchUrl('tel:${customer.phone}'),
+                            icon: const Icon(Icons.call_outlined),
+                            label: Text(t.customers.actions.call),
+                          ),
+                          FilledButton.tonalIcon(
+                            onPressed: () =>
+                                _launchUrl('sms:${customer.phone}'),
+                            icon: const Icon(Icons.message_outlined),
+                            label: Text(t.customers.actions.sms),
+                          ),
+                          FilledButton.tonalIcon(
+                            onPressed: () => _launchUrl(
+                              'https://wa.me/${customer.phone!.replaceAll(RegExp(r'[^\d+]'), '')}',
+                            ),
+                            icon: const FaIcon(FontAwesomeIcons.whatsapp),
+                            label: Text(t.customers.actions.whatsapp),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

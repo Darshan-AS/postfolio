@@ -144,6 +144,7 @@ class TranslationsCustomersEn {
 	/// en: 'Failed to delete customer: ${error}'
 	String failedToDeleteCustomer({required Object error}) => 'Failed to delete customer: ${error}';
 
+	late final TranslationsCustomersActionsEn actions = TranslationsCustomersActionsEn.internal(_root);
 	late final TranslationsCustomersSectionsEn sections = TranslationsCustomersSectionsEn.internal(_root);
 	late final TranslationsCustomersFieldsEn fields = TranslationsCustomersFieldsEn.internal(_root);
 }
@@ -240,6 +241,24 @@ class TranslationsRecurringDepositsEn {
 	String failedToDeleteDeposit({required Object error}) => 'Failed to delete RD: ${error}';
 
 	late final TranslationsRecurringDepositsFieldsEn fields = TranslationsRecurringDepositsFieldsEn.internal(_root);
+}
+
+// Path: customers.actions
+class TranslationsCustomersActionsEn {
+	TranslationsCustomersActionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Call'
+	String get call => 'Call';
+
+	/// en: 'SMS'
+	String get sms => 'SMS';
+
+	/// en: 'WhatsApp'
+	String get whatsapp => 'WhatsApp';
 }
 
 // Path: customers.sections
@@ -411,6 +430,9 @@ extension on Translations {
 			'customers.deleteCustomerConfirmation' => 'Are you sure you want to delete this customer?',
 			'customers.failedToSaveCustomer' => ({required Object error}) => 'Failed to save customer: ${error}',
 			'customers.failedToDeleteCustomer' => ({required Object error}) => 'Failed to delete customer: ${error}',
+			'customers.actions.call' => 'Call',
+			'customers.actions.sms' => 'SMS',
+			'customers.actions.whatsapp' => 'WhatsApp',
 			'customers.sections.personalInfo' => 'Personal Information',
 			'customers.sections.identityDocuments' => 'Identity Documents',
 			'customers.sections.savingsBank' => 'Savings Bank',

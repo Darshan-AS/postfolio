@@ -27,6 +27,10 @@ customers:
   deleteCustomerConfirmation: "Are you sure you want to delete this customer?"
   failedToSaveCustomer: "Failed to save customer: ${error}"
   failedToDeleteCustomer: "Failed to delete customer: ${error}"
+  actions:
+    call: "Call"
+    sms: "SMS"
+    whatsapp: "WhatsApp"
   sections:
     personalInfo: "Personal Information"
     identityDocuments: "Identity Documents"
