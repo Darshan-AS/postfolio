@@ -4,6 +4,7 @@
 - **State Management**: Riverpod (AsyncNotifier / Notifier via riverpod_generator).
 - **Dependency Injection**: Handled entirely via Riverpod providers.
 - **Folder Structure**: Feature-first with inner Layered Architecture (`data/`, `domain/`, `presentation/`).
+- **Routing**: `go_router` combined with `go_router_builder` for type-safe routing.
 
 ## Functional Programming & Purity
 - **Immutability**: Freezed for all domain models. Never mutate state.
@@ -18,6 +19,7 @@
 - **Ephemeral UI State**: Prefer `ConsumerStatefulWidget` for managing purely local, ephemeral UI state (e.g., text controllers, focus nodes, form submission loading spinners).
 - **Localization (i18n)**: Use **Slang** (with nested YAML configurations). Avoid raw `Text('...')` strings.
 - **Theme & Dimensions**: Do not hardcode dimensions or colors. Use centralized `AppTheme`, `AppDimensions`, and `AppSpacings`.
+- **Code Reuse**: Identify shared components early (like `NomineesInputSection`) and centralize them in `lib/core/widgets` to avoid duplicating logic across features.
 
 ## Anti-Patterns to Avoid
 1. **Committing Erroring States**: Never commit code that does not compile or pass the analyzer (`dart analyze`). Always format, build, and analyze before committing.

@@ -43,7 +43,10 @@ When starting a new conversation or picking up this repository, you MUST immedia
 ## Agent Workflow Rules
 - **Build Before Commit:** Ensure everything builds successfully before making a commit.
 - **Logical Commits:** Commits should only be made at logical stages, and only when the codebase is in a building/working state.
-- **Maintain Markdown State:** Keep all markdown files (like `progress.md`, `tasks.md`, `conventions.md`, and `AGENTS.md`) updated based on the conversations so the next agent is fully informed.
+- **Maintain Markdown State:** You MUST actively look for and update `.md` files in `docs/` and `.agents/` as part of your workflow:
+  - **`progress.md`**: Update it at the end of your session with what you did today. Going forward, `progress.md` is strictly for tracking recent agent actions. You should wipe out progress history that is older than a few days to keep it concise.
+  - **`conventions.md`**: Update this file if a new architectural or design decision was taken during your session.
+  - **`tasks.md`**: Check off tasks as you complete them. If new tasks or next steps were discussed/recommended, append them to the appropriate phase.
 
 ## Conventions
 {Patterns that differ from common practices—include specific examples}
