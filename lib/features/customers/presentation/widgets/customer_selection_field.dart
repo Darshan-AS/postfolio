@@ -80,7 +80,7 @@ class _CustomerSelectionFieldState
           children: [
             Expanded(
               child: Text(
-                displayCustomer?.name ?? 'Select a customer',
+                displayCustomer?.name ?? t.customers.selectCustomer,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: displayCustomer == null
                       ? Theme.of(context).hintColor

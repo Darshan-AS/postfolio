@@ -144,8 +144,8 @@ class CustomerCard extends StatelessWidget {
                     Text(
                       t.common.delete,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   ],
                 ),

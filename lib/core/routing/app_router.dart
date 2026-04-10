@@ -44,7 +44,9 @@ GoRouter goRouter(Ref ref) {
             TypedGoRoute<OneTimeDepositDetailRoute>(
               path: AppRoutes.depositIdParam,
               routes: [
-                TypedGoRoute<OneTimeDepositEditRoute>(path: AppRoutes.editRoute),
+                TypedGoRoute<OneTimeDepositEditRoute>(
+                  path: AppRoutes.editRoute,
+                ),
               ],
             ),
           ],
@@ -60,7 +62,9 @@ GoRouter goRouter(Ref ref) {
             TypedGoRoute<RecurringDepositDetailRoute>(
               path: AppRoutes.depositIdParam,
               routes: [
-                TypedGoRoute<RecurringDepositEditRoute>(path: AppRoutes.editRoute),
+                TypedGoRoute<RecurringDepositEditRoute>(
+                  path: AppRoutes.editRoute,
+                ),
               ],
             ),
           ],

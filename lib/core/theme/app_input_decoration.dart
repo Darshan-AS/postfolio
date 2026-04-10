@@ -19,9 +19,8 @@ class AppInputDecoration {
           ? RichText(
               text: TextSpan(
                 text: labelText,
-                style: TextStyle(
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurfaceVariant,
-                  fontSize: 16,
                 ),
                 children: [
                   TextSpan(

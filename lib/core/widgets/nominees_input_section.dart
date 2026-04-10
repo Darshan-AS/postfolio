@@ -132,8 +132,8 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
             child: Text(
               t.nominees.noNominees,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
           )
         else
