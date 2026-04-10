@@ -31,40 +31,39 @@ class OneTimeDepositsScreen extends ConsumerWidget {
             ),
           ],
         ),
-        actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.refresh(oneTimeDepositsControllerProvider),
-          ),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.search), onPressed: () {})],
       ),
       body: depositsState.when(
         data: (deposits) {
           if (deposits.isEmpty) {
             return Center(child: Text(t.oneTimeDeposits.noDepositsFound));
           }
-          return ListView.separated(
-            itemCount: deposits.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final deposit = deposits[index];
-              return OneTimeDepositCard(
-                customerId: deposit.customerId,
-                accountNo: deposit.accountNo,
-                principalAmount: deposit.principalAmount,
-                status: deposit.status,
-                maturityDate: deposit.maturityDate,
-                onTap: () =>
-                    OneTimeDepositDetailRoute(deposit.id).push(context),
-                onEdit: () => OneTimeDepositEditRoute(deposit.id).push(context),
-                onDelete: () {
-                  ref
-                      .read(oneTimeDepositsControllerProvider.notifier)
-                      .deleteOneTimeDeposit(deposit.id);
-                },
-              );
-            },
+          return RefreshIndicator(
+            onRefresh: () =>
+                ref.refresh(oneTimeDepositsControllerProvider.future),
+            child: ListView.separated(
+              itemCount: deposits.length,
+              separatorBuilder: (context, index) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final deposit = deposits[index];
+                return OneTimeDepositCard(
+                  customerId: deposit.customerId,
+                  accountNo: deposit.accountNo,
+                  principalAmount: deposit.principalAmount,
+                  status: deposit.status,
+                  maturityDate: deposit.maturityDate,
+                  onTap: () =>
+                      OneTimeDepositDetailRoute(deposit.id).push(context),
+                  onEdit: () =>
+                      OneTimeDepositEditRoute(deposit.id).push(context),
+                  onDelete: () {
+                    ref
+                        .read(oneTimeDepositsControllerProvider.notifier)
+                        .deleteOneTimeDeposit(deposit.id);
+                  },
+                );
+              },
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

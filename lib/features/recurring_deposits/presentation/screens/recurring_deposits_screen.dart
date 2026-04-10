@@ -28,48 +28,48 @@ class RecurringDepositsScreen extends ConsumerWidget {
             ),
           ],
         ),
-        actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.refresh(recurringDepositsControllerProvider),
-          ),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.search), onPressed: () {})],
       ),
       body: depositsState.when(
         data: (deposits) {
           if (deposits.isEmpty) {
             return Center(child: Text(t.recurringDeposits.noDepositsFound));
           }
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingMd,
-              vertical: AppDimensions.paddingSm,
+          return RefreshIndicator(
+            onRefresh: () =>
+                ref.refresh(recurringDepositsControllerProvider.future),
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingMd,
+                vertical: AppDimensions.paddingSm,
+              ),
+              itemCount: deposits.length,
+              itemBuilder: (context, index) {
+                final deposit = deposits[index];
+                return Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: AppDimensions.paddingSm,
+                  ),
+                  child: RecurringDepositCard(
+                    customerId: deposit.customerId,
+                    serialNo: deposit.serialNo,
+                    accountNo: deposit.accountNo,
+                    installmentAmount: deposit.installmentAmount,
+                    status: deposit.status,
+                    maturityDate: deposit.maturityDate,
+                    onTap: () =>
+                        RecurringDepositDetailRoute(deposit.id).push(context),
+                    onEdit: () =>
+                        RecurringDepositEditRoute(deposit.id).push(context),
+                    onDelete: () {
+                      ref
+                          .read(recurringDepositsControllerProvider.notifier)
+                          .deleteRecurringDeposit(deposit.id);
+                    },
+                  ),
+                );
+              },
             ),
-            itemCount: deposits.length,
-            itemBuilder: (context, index) {
-              final deposit = deposits[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
-                child: RecurringDepositCard(
-                  customerId: deposit.customerId,
-                  serialNo: deposit.serialNo,
-                  accountNo: deposit.accountNo,
-                  installmentAmount: deposit.installmentAmount,
-                  status: deposit.status,
-                  maturityDate: deposit.maturityDate,
-                  onTap: () =>
-                      RecurringDepositDetailRoute(deposit.id).push(context),
-                  onEdit: () =>
-                      RecurringDepositEditRoute(deposit.id).push(context),
-                  onDelete: () {
-                    ref
-                        .read(recurringDepositsControllerProvider.notifier)
-                        .deleteRecurringDeposit(deposit.id);
-                  },
-                ),
-              );
-            },
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
