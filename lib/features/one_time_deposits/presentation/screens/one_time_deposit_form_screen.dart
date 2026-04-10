@@ -7,6 +7,7 @@ import 'package:postfolio/features/customers/presentation/widgets/customer_selec
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
@@ -220,12 +221,29 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
         child: ListView(
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
           children: [
+            Text(
+              'Account Details',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            AppSpacings.gapMd,
+            CustomerSelectionField(
+              initialCustomerId: _selectedCustomerId,
+              onCustomerSelected: (customer) {
+                setState(() {
+                  _selectedCustomerId = customer?.id;
+                });
+              },
+            ),
+            AppSpacings.gapLg,
             TextFormField(
               controller: _rowIdController,
-              decoration: InputDecoration(
+              decoration: AppInputDecoration.m3(
+                context,
                 labelText: t.oneTimeDeposits.fields.rowId,
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.tag_outlined),
+                prefixIcon: Icons.tag_outlined,
               ),
               validator: (val) =>
                   val == null || val.trim().isEmpty ? 'Required' : null,
@@ -234,21 +252,63 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             AppSpacings.gapLg,
             TextFormField(
               controller: _accountNoController,
-              decoration: InputDecoration(
+              decoration: AppInputDecoration.m3(
+                context,
                 labelText: t.oneTimeDeposits.fields.accountNo,
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.numbers_outlined),
+                prefixIcon: Icons.numbers_outlined,
               ),
               validator: OneTimeDeposit.validateAccountNo,
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
+            DropdownButtonFormField<DepositStatus>(
+              value: _selectedStatus,
+              decoration: AppInputDecoration.m3(
+                context,
+                labelText: 'Status',
+                prefixIcon: Icons.info_outline,
+              ),
+              items: DepositStatus.values.map((status) {
+                return DropdownMenuItem(
+                  value: status,
+                  child: Text(status.displayName),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) setState(() => _selectedStatus = val);
+              },
+            ),
+
+            AppSpacings.gapXl,
+            Text(
+              'Investment Info',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            AppSpacings.gapMd,
+            DropdownButtonFormField<OneTimeSchemeType>(
+              value: _selectedScheme,
+              decoration: AppInputDecoration.m3(
+                context,
+                labelText: t.oneTimeDeposits.fields.schemeType,
+                prefixIcon: Icons.category_outlined,
+              ),
+              items: OneTimeSchemeType.values.map((s) {
+                return DropdownMenuItem(value: s, child: Text(s.displayName));
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) setState(() => _selectedScheme = val);
+              },
+            ),
+            AppSpacings.gapLg,
             TextFormField(
               controller: _principalAmountController,
-              decoration: InputDecoration(
+              decoration: AppInputDecoration.m3(
+                context,
                 labelText: t.oneTimeDeposits.fields.principalAmount,
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.money_outlined),
+                prefixIcon: Icons.money_outlined,
               ),
               keyboardType: TextInputType.number,
               validator: (val) => OneTimeDeposit.validateAmount(
@@ -263,10 +323,10 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                 Expanded(
                   child: TextFormField(
                     controller: _termYearsController,
-                    decoration: InputDecoration(
+                    decoration: AppInputDecoration.m3(
+                      context,
                       labelText: t.oneTimeDeposits.fields.termYears,
-                      border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.calendar_today_outlined),
+                      prefixIcon: Icons.calendar_today_outlined,
                     ),
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
@@ -276,10 +336,10 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                 Expanded(
                   child: TextFormField(
                     controller: _termMonthsController,
-                    decoration: InputDecoration(
+                    decoration: AppInputDecoration.m3(
+                      context,
                       labelText: t.oneTimeDeposits.fields.termMonths,
-                      border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.calendar_month_outlined),
+                      prefixIcon: Icons.calendar_month_outlined,
                     ),
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
@@ -290,63 +350,21 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             AppSpacings.gapLg,
             TextFormField(
               controller: _interestRateController,
-              decoration: const InputDecoration(
+              decoration: AppInputDecoration.m3(
+                context,
                 labelText: 'Interest Rate (%)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.percent_outlined),
+                prefixIcon: Icons.percent_outlined,
               ),
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
-            DropdownButtonFormField<DepositStatus>(
-              value: _selectedStatus,
-              decoration: const InputDecoration(
-                labelText: 'Status',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.info_outline),
-              ),
-              items: DepositStatus.values.map((status) {
-                return DropdownMenuItem(
-                  value: status,
-                  child: Text(status.displayName),
-                );
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => _selectedStatus = val);
-              },
-            ),
-            AppSpacings.gapLg,
-            CustomerSelectionField(
-              initialCustomerId: _selectedCustomerId,
-              onCustomerSelected: (customer) {
-                setState(() {
-                  _selectedCustomerId = customer?.id;
-                });
-              },
-            ),
-            AppSpacings.gapLg,
-            DropdownButtonFormField<OneTimeSchemeType>(
-              initialValue: _selectedScheme,
-              decoration: InputDecoration(
-                labelText: t.oneTimeDeposits.fields.schemeType,
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.category_outlined),
-              ),
-              items: OneTimeSchemeType.values.map((s) {
-                return DropdownMenuItem(value: s, child: Text(s.displayName));
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => _selectedScheme = val);
-              },
-            ),
-            AppSpacings.gapLg,
             TextFormField(
               controller: _maturityAmountController,
-              decoration: InputDecoration(
+              decoration: AppInputDecoration.m3(
+                context,
                 labelText: t.oneTimeDeposits.fields.maturityAmount,
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.savings_outlined),
+                prefixIcon: Icons.savings_outlined,
               ),
               keyboardType: TextInputType.number,
               validator: (val) => OneTimeDeposit.validateAmount(
@@ -358,60 +376,105 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             AppSpacings.gapLg,
             TextFormField(
               controller: _linkedAccountController,
-              decoration: const InputDecoration(
+              decoration: AppInputDecoration.m3(
+                context,
                 labelText: 'Linked Savings Account',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.account_balance_outlined),
+                prefixIcon: Icons.account_balance_outlined,
               ),
               textInputAction: TextInputAction.next,
             ),
-            AppSpacings.gapLg,
-            ListTile(
-              title: Text(t.oneTimeDeposits.fields.startDate),
-              subtitle: Text(
-                '${_startDate.day}/${_startDate.month}/${_startDate.year}',
+
+            AppSpacings.gapXl,
+            Text(
+              'Timeline',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
               ),
-              leading: const Icon(Icons.event),
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: _startDate,
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-                if (date != null) setState(() => _startDate = date);
-              },
             ),
-            ListTile(
-              title: Text(t.oneTimeDeposits.fields.maturityDate),
-              subtitle: Text(
-                '${_maturityDate.day}/${_maturityDate.month}/${_maturityDate.year}',
+            AppSpacings.gapMd,
+            Card(
+              elevation: 0,
+              color: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
               ),
-              leading: const Icon(Icons.event_available),
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: _maturityDate,
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-                if (date != null) setState(() => _maturityDate = date);
-              },
+              child: Column(
+                children: [
+                  ListTile(
+                    title: Text(t.oneTimeDeposits.fields.startDate),
+                    subtitle: Text(
+                      '${_startDate.day}/${_startDate.month}/${_startDate.year}',
+                    ),
+                    leading: const Icon(Icons.event),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: _startDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (date != null) setState(() => _startDate = date);
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    title: Text(t.oneTimeDeposits.fields.maturityDate),
+                    subtitle: Text(
+                      '${_maturityDate.day}/${_maturityDate.month}/${_maturityDate.year}',
+                    ),
+                    leading: const Icon(Icons.event_available),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: _maturityDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (date != null) setState(() => _maturityDate = date);
+                    },
+                  ),
+                ],
+              ),
             ),
             AppSpacings.gapXxl,
-            ElevatedButton(
+            FilledButton(
               onPressed: _isSaving ? null : _save,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(50),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
               child: _isSaving
                   ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
-                  : Text(t.oneTimeDeposits.saveDeposit),
+                  : Text(
+                      t.oneTimeDeposits.saveDeposit,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
+            AppSpacings.gapXxl,
           ],
         ),
       ),

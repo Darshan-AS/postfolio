@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:postfolio/core/routing/route_names.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
+import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -83,60 +85,143 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
             return Center(child: Text(t.recurringDeposits.depositNotFound));
           }
 
+          final dateFormat = DateFormat('MMM dd, yyyy');
+
           return ListView(
             padding: const EdgeInsets.all(AppDimensions.paddingLg),
             children: [
-              const CircleAvatar(
-                radius: AppDimensions.iconXl,
-                backgroundColor: AppTheme.accent,
-                foregroundColor: AppTheme.surface,
-                child: Icon(Icons.loop_outlined, size: AppDimensions.iconXl),
-              ),
-              AppSpacings.gapLg,
-              Text(
-                deposit.accountNo,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              AppSpacings.gapXxl,
-              Card(
+              Center(
                 child: Column(
                   children: [
-                    _buildInfoTile(
-                      Icons.money_outlined,
-                      t.recurringDeposits.fields.installmentAmount,
-                      '₹${deposit.installmentAmount.toStringAsFixed(2)}',
+                    CircleAvatar(
+                      radius: 32,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.secondaryContainer,
+                      foregroundColor: Theme.of(
+                        context,
+                      ).colorScheme.onSecondaryContainer,
+                      child: const Icon(Icons.loop_outlined, size: 32),
                     ),
-                    const Divider(),
-                    _buildInfoTile(
-                      Icons.info_outline,
-                      'Status',
-                      deposit.status.displayName,
+                    AppSpacings.gapLg,
+                    Text(
+                      deposit.accountNo,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                    const Divider(),
-                    _buildInfoTile(
-                      Icons.category_outlined,
-                      t.recurringDeposits.fields.schemeType,
+                    AppSpacings.gapSm,
+                    Text(
                       deposit.schemeType.displayName,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                    const Divider(),
-                    _buildInfoTile(
-                      Icons.account_circle_outlined,
-                      t.recurringDeposits.fields.customerId,
-                      deposit.customerId,
-                    ),
-                    const Divider(),
-                    _buildInfoTile(
-                      Icons.savings_outlined,
-                      t.recurringDeposits.fields.maturityAmount,
-                      '₹${deposit.maturityAmount.toStringAsFixed(2)}',
-                    ),
+                    AppSpacings.gapMd,
+                    StatusBadge(status: deposit.status.displayName),
                   ],
                 ),
               ),
+              AppSpacings.gapXxl,
+              Row(
+                children: [
+                  DetailAmountCard(
+                    title: t.recurringDeposits.fields.installmentAmount,
+                    amount: deposit.installmentAmount,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.secondaryContainer,
+                    textColor: Theme.of(
+                      context,
+                    ).colorScheme.onSecondaryContainer,
+                  ),
+                  AppSpacings.gapLg,
+                  DetailAmountCard(
+                    title: t.recurringDeposits.fields.maturityAmount,
+                    amount: deposit.maturityAmount,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.tertiaryContainer,
+                    textColor: Theme.of(
+                      context,
+                    ).colorScheme.onTertiaryContainer,
+                  ),
+                ],
+              ),
+              AppSpacings.gapXxl,
+              DetailSection(
+                title: 'Investment Details',
+                children: [
+                  DetailItem(
+                    icon: Icons.calendar_today_outlined,
+                    label: t.recurringDeposits.fields.termYears,
+                    value:
+                        '${deposit.termYears} Years, ${deposit.termMonths} Months',
+                  ),
+                  const Divider(height: 1),
+                  DetailItem(
+                    icon: Icons.percent_outlined,
+                    label: t.recurringDeposits.fields.interestRate,
+                    value: '${deposit.interestRate.toStringAsFixed(2)}%',
+                  ),
+                ],
+              ),
+              AppSpacings.gapLg,
+              DetailSection(
+                title: 'Timeline',
+                children: [
+                  DetailItem(
+                    icon: Icons.date_range_outlined,
+                    label: 'Start Date',
+                    value: dateFormat.format(deposit.startDate),
+                  ),
+                  const Divider(height: 1),
+                  DetailItem(
+                    icon: Icons.event_available_outlined,
+                    label: 'Maturity Date',
+                    value: dateFormat.format(deposit.maturityDate),
+                  ),
+                ],
+              ),
+              AppSpacings.gapLg,
+              DetailSection(
+                title: 'Account Information',
+                children: [
+                  DetailItem(
+                    icon: Icons.account_circle_outlined,
+                    label: t.recurringDeposits.fields.customerId,
+                    value: deposit.customerId,
+                  ),
+                  if (deposit.linkedAutoDebitAccountNo != null &&
+                      deposit.linkedAutoDebitAccountNo!.isNotEmpty) ...[
+                    const Divider(height: 1),
+                    DetailItem(
+                      icon: Icons.account_balance_outlined,
+                      label: 'Linked Auto Debit Account',
+                      value: deposit.linkedAutoDebitAccountNo!,
+                    ),
+                  ],
+                ],
+              ),
+              if (deposit.nominees.isNotEmpty) ...[
+                AppSpacings.gapLg,
+                DetailSection(
+                  title: 'Nominees',
+                  children: [
+                    for (int i = 0; i < deposit.nominees.length; i++) ...[
+                      DetailItem(
+                        icon: Icons.person_outline,
+                        label: deposit.nominees[i].relationship,
+                        value:
+                            '${deposit.nominees[i].name} (${deposit.nominees[i].percentage}%)',
+                      ),
+                      if (i < deposit.nominees.length - 1)
+                        const Divider(height: 1),
+                    ],
+                  ],
+                ),
+              ],
+              AppSpacings.gapXxl,
             ],
           );
         },
@@ -145,20 +230,6 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
           message: error.toString(),
           onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
         ),
-      ),
-    );
-  }
-
-  Widget _buildInfoTile(IconData icon, String title, String subtitle) {
-    return ListTile(
-      leading: Icon(icon, color: AppTheme.accent),
-      title: Text(
-        title,
-        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: const TextStyle(fontSize: 16, color: AppTheme.textPrimary),
       ),
     );
   }
