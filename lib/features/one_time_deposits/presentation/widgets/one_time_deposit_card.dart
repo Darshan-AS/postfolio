@@ -42,6 +42,7 @@ class OneTimeDepositCard extends ConsumerWidget {
         vertical: AppDimensions.paddingSm,
       ),
       leading: CircleAvatar(
+        radius: AppDimensions.radiusXxl,
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
         child: const Icon(Icons.account_balance_wallet_outlined),
@@ -59,12 +60,12 @@ class OneTimeDepositCard extends ConsumerWidget {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const WidgetSpan(child: SizedBox(width: 8.0)),
+            const WidgetSpan(child: AppSpacings.gapSm),
             WidgetSpan(
               alignment: PlaceholderAlignment.middle,
               child: StatusBadge(status: status.displayName, compact: true),
             ),
-            const WidgetSpan(child: SizedBox(width: 8.0)),
+            const WidgetSpan(child: AppSpacings.gapSm),
             TextSpan(
               text: '• ${_dateFormatter.format(maturityDate)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -99,8 +100,8 @@ class OneTimeDepositCard extends ConsumerWidget {
                 value: 'edit',
                 child: Row(
                   children: [
-                    Icon(Icons.edit_outlined, size: 20),
-                    SizedBox(width: 8),
+                    Icon(Icons.edit_outlined, size: AppDimensions.iconMd),
+                    AppSpacings.gapSm,
                     Text('Edit'),
                   ],
                 ),
@@ -111,10 +112,10 @@ class OneTimeDepositCard extends ConsumerWidget {
                   children: [
                     Icon(
                       Icons.delete_outline,
-                      size: 20,
+                      size: AppDimensions.iconMd,
                       color: Theme.of(context).colorScheme.error,
                     ),
-                    const SizedBox(width: 8),
+                    AppSpacings.gapSm,
                     Text(
                       'Delete',
                       style: TextStyle(

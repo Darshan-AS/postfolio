@@ -49,36 +49,45 @@ class CustomersScreen extends ConsumerWidget {
           if (customers.isEmpty) {
             return Center(child: Text(t.customers.noCustomersFound));
           }
-          return ListView.separated(
-            itemCount: customers.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final customer = customers[index];
-              return CustomerCard(
-                name: customer.name,
-                phone: customer.phone ?? t.common.notProvided,
-                onTap: () => CustomerDetailRoute(customer.id).push(context),
-                onEdit: () => CustomerEditRoute(customer.id).push(context),
-                onDelete: () {
-                  // Call the controller directly to delete
-                  ref
-                      .read(customersControllerProvider.notifier)
-                      .deleteCustomer(customer.id);
-                },
-                onPhoneTapped: () => ref
-                    .read(intentServiceProvider)
-                    .launchPhone(customer.phone ?? ''),
-                onWhatsAppTapped: () => ref
-                    .read(intentServiceProvider)
-                    .launchWhatsApp(customer.phone ?? ''),
-                onSmsTapped: () => ref
-                    .read(intentServiceProvider)
-                    .launchSms(customer.phone ?? ''),
-                onLocationTapped: () => ref
-                    .read(intentServiceProvider)
-                    .launchMapSearch(customer.name),
-              );
+          return RefreshIndicator(
+            onRefresh: () async {
+              // Trigger a manual refresh from the controller
+              ref.refresh(customersControllerProvider);
             },
+            child: ListView.separated(
+              padding: const EdgeInsets.only(
+                bottom: AppDimensions.listBottomPaddingFAB,
+              ),
+              itemCount: customers.length,
+              separatorBuilder: (context, index) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final customer = customers[index];
+                return CustomerCard(
+                  name: customer.name,
+                  phone: customer.phone ?? t.common.notProvided,
+                  onTap: () => CustomerDetailRoute(customer.id).push(context),
+                  onEdit: () => CustomerEditRoute(customer.id).push(context),
+                  onDelete: () {
+                    // Call the controller directly to delete
+                    ref
+                        .read(customersControllerProvider.notifier)
+                        .deleteCustomer(customer.id);
+                  },
+                  onPhoneTapped: () => ref
+                      .read(intentServiceProvider)
+                      .launchPhone(customer.phone ?? ''),
+                  onWhatsAppTapped: () => ref
+                      .read(intentServiceProvider)
+                      .launchWhatsApp(customer.phone ?? ''),
+                  onSmsTapped: () => ref
+                      .read(intentServiceProvider)
+                      .launchSms(customer.phone ?? ''),
+                  onLocationTapped: () => ref
+                      .read(intentServiceProvider)
+                      .launchMapSearch(customer.name),
+                );
+              },
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

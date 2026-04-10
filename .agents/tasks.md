@@ -23,6 +23,8 @@
 - [x] Centralize hardcoded colors into `lib/core/theme/`.
 - [x] Centralize hardcoded dimensions and spacings into `AppSpacings` and `AppDimensions`.
 - [x] Replace hardcoded padding with `AppDimensions` in deposit cards.
+- [x] Standardize ListView layouts and padding across screens.
+- [x] Standardize Detail Screen layouts and widget sizes.
 - [x] Fix `CustomerFormScreen` initialization (avoid synchronously reading controller state).
 - [x] Implement robust loading states in `CustomerFormScreen` (disable buttons during save).
 - [x] Create a reusable `ErrorStateView` widget for consistent error handling and retries.

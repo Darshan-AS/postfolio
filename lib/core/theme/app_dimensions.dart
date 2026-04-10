@@ -9,11 +9,20 @@ class AppDimensions {
   static const double paddingXl = 24.0;
   static const double paddingXxl = 32.0;
 
+  // List Views
+  static const double listBottomPaddingFAB = 88.0;
+
+  // Buttons
+  static const double buttonHeight = 56.0;
+
   // Radii
   static const double radiusSm = 4.0;
   static const double radiusMd = 8.0;
   static const double radiusLg = 12.0;
-  static const double radiusXl = 48.0;
+  static const double radiusXl = 16.0;
+  static const double radiusXxl = 24.0;
+  static const double radiusXxxl = 32.0;
+  static const double radiusMax = 48.0;
 
   // Icon Sizes
   static const double iconSm = 16.0;

@@ -38,35 +38,30 @@ class RecurringDepositsScreen extends ConsumerWidget {
           return RefreshIndicator(
             onRefresh: () =>
                 ref.refresh(recurringDepositsControllerProvider.future),
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingMd,
-                vertical: AppDimensions.paddingSm,
+            child: ListView.separated(
+              padding: const EdgeInsets.only(
+                bottom: AppDimensions.listBottomPaddingFAB,
               ),
               itemCount: deposits.length,
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final deposit = deposits[index];
-                return Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: AppDimensions.paddingSm,
-                  ),
-                  child: RecurringDepositCard(
-                    customerId: deposit.customerId,
-                    serialNo: deposit.serialNo,
-                    accountNo: deposit.accountNo,
-                    installmentAmount: deposit.installmentAmount,
-                    status: deposit.status,
-                    maturityDate: deposit.maturityDate,
-                    onTap: () =>
-                        RecurringDepositDetailRoute(deposit.id).push(context),
-                    onEdit: () =>
-                        RecurringDepositEditRoute(deposit.id).push(context),
-                    onDelete: () {
-                      ref
-                          .read(recurringDepositsControllerProvider.notifier)
-                          .deleteRecurringDeposit(deposit.id);
-                    },
-                  ),
+                return RecurringDepositCard(
+                  customerId: deposit.customerId,
+                  serialNo: deposit.serialNo,
+                  accountNo: deposit.accountNo,
+                  installmentAmount: deposit.installmentAmount,
+                  status: deposit.status,
+                  maturityDate: deposit.maturityDate,
+                  onTap: () =>
+                      RecurringDepositDetailRoute(deposit.id).push(context),
+                  onEdit: () =>
+                      RecurringDepositEditRoute(deposit.id).push(context),
+                  onDelete: () {
+                    ref
+                        .read(recurringDepositsControllerProvider.notifier)
+                        .deleteRecurringDeposit(deposit.id);
+                  },
                 );
               },
             ),

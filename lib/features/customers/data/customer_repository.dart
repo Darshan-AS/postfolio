@@ -18,7 +18,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '1',
       name: 'Bruce Wayne',
       email: 'bruce@wayneenterprises.com',
-      
+
       address: '1007 Mountain Drive, Gotham City',
       cifNumber: 'CIF000001',
       dateOfBirth: DateTime(1980, 2, 19),
@@ -31,14 +31,8 @@ class FakeCustomerRepository implements CustomerRepository {
             percentage: 50.0,
             name: 'Alfred Pennyworth',
             relationship: 'Butler',
-            
           ),
-          Nominee(
-            percentage: 50.0,
-            name: 'Dick Grayson',
-            relationship: 'Ward',
-            
-          ),
+          Nominee(percentage: 50.0, name: 'Dick Grayson', relationship: 'Ward'),
         ],
       ),
     ),
@@ -46,7 +40,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '2',
       name: 'Clark Kent',
       email: 'clark.kent@dailyplanet.com',
-      
+
       address: '344 Clinton St, Metropolis',
       cifNumber: 'CIF000002',
       dateOfBirth: DateTime(1985, 6, 18),
@@ -55,17 +49,11 @@ class FakeCustomerRepository implements CustomerRepository {
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA123456789',
         nominees: [
-          Nominee(
-            percentage: 60.0,
-            name: 'Lois Lane',
-            relationship: 'Spouse',
-            
-          ),
+          Nominee(percentage: 60.0, name: 'Lois Lane', relationship: 'Spouse'),
           Nominee(
             percentage: 40.0,
             name: 'Martha Kent',
             relationship: 'Mother',
-            
           ),
         ],
       ),
@@ -74,7 +62,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '3',
       name: 'Diana Prince',
       email: 'diana@themyscira.gov',
-      
+
       address: 'Themyscira Embassy, Washington D.C.',
       cifNumber: 'CIF000003',
       dateOfBirth: DateTime(1985, 3, 22),
@@ -83,12 +71,7 @@ class FakeCustomerRepository implements CustomerRepository {
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA456789123',
         nominees: [
-          Nominee(
-            percentage: 100.0,
-            name: 'Hippolyta',
-            relationship: 'Mother',
-            
-          ),
+          Nominee(percentage: 100.0, name: 'Hippolyta', relationship: 'Mother'),
         ],
       ),
     ),
@@ -96,7 +79,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '4',
       name: 'Barry Allen',
       email: 'barry@ccpd.gov',
-      
+
       address: 'Central City Police Department, Central City',
       cifNumber: 'CIF000004',
       dateOfBirth: DateTime(1992, 9, 30),
@@ -105,12 +88,7 @@ class FakeCustomerRepository implements CustomerRepository {
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA567890123',
         nominees: [
-          Nominee(
-            percentage: 100.0,
-            name: 'Iris West',
-            relationship: 'Spouse',
-            
-          ),
+          Nominee(percentage: 100.0, name: 'Iris West', relationship: 'Spouse'),
         ],
       ),
     ),
@@ -118,7 +96,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '5',
       name: 'Arthur Curry',
       email: 'arthur@atlantis.gov',
-      
+
       address: 'Amnesty Bay, Maine',
       cifNumber: 'CIF000005',
       dateOfBirth: DateTime(1986, 1, 29),
@@ -127,12 +105,7 @@ class FakeCustomerRepository implements CustomerRepository {
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA678901234',
         nominees: [
-          Nominee(
-            percentage: 100.0,
-            name: 'Mera',
-            relationship: 'Spouse',
-            
-          ),
+          Nominee(percentage: 100.0, name: 'Mera', relationship: 'Spouse'),
         ],
       ),
     ),

@@ -95,14 +95,17 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                 child: Column(
                   children: [
                     CircleAvatar(
-                      radius: 32,
+                      radius: AppDimensions.radiusXxxl,
                       backgroundColor: Theme.of(
                         context,
                       ).colorScheme.secondaryContainer,
                       foregroundColor: Theme.of(
                         context,
                       ).colorScheme.onSecondaryContainer,
-                      child: const Icon(Icons.loop_outlined, size: 32),
+                      child: const Icon(
+                        Icons.loop_outlined,
+                        size: AppDimensions.iconLg,
+                      ),
                     ),
                     AppSpacings.gapLg,
                     Text(

@@ -33,15 +33,10 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
         Nominee(
           name: 'Alfred Pennyworth',
           relationship: 'Butler',
-          
+
           percentage: 50.0,
         ),
-        Nominee(
-          name: 'Dick Grayson',
-          relationship: 'Ward',
-          
-          percentage: 50.0,
-        ),
+        Nominee(name: 'Dick Grayson', relationship: 'Ward', percentage: 50.0),
       ],
     ),
     OneTimeDeposit(
@@ -59,18 +54,8 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       linkedSavingsAccountNo: 'SA123456789',
       status: DepositStatus.active,
       nominees: const [
-        Nominee(
-          name: 'Lois Lane',
-          relationship: 'Spouse',
-          
-          percentage: 60.0,
-        ),
-        Nominee(
-          name: 'Martha Kent',
-          relationship: 'Mother',
-          
-          percentage: 40.0,
-        ),
+        Nominee(name: 'Lois Lane', relationship: 'Spouse', percentage: 60.0),
+        Nominee(name: 'Martha Kent', relationship: 'Mother', percentage: 40.0),
       ],
     ),
     OneTimeDeposit(
@@ -88,12 +73,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       linkedSavingsAccountNo: 'SA456789123',
       status: DepositStatus.matured,
       nominees: const [
-        Nominee(
-          name: 'Hippolyta',
-          relationship: 'Mother',
-          
-          percentage: 100.0,
-        ),
+        Nominee(name: 'Hippolyta', relationship: 'Mother', percentage: 100.0),
       ],
     ),
     OneTimeDeposit(
@@ -111,12 +91,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       linkedSavingsAccountNo: 'SA567890123',
       status: DepositStatus.closed,
       nominees: const [
-        Nominee(
-          name: 'Iris West',
-          relationship: 'Spouse',
-          
-          percentage: 100.0,
-        ),
+        Nominee(name: 'Iris West', relationship: 'Spouse', percentage: 100.0),
       ],
     ),
     OneTimeDeposit(
@@ -134,12 +109,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       linkedSavingsAccountNo: 'SA678901234',
       status: DepositStatus.active,
       nominees: const [
-        Nominee(
-          name: 'Mera',
-          relationship: 'Spouse',
-          
-          percentage: 100.0,
-        ),
+        Nominee(name: 'Mera', relationship: 'Spouse', percentage: 100.0),
       ],
     ),
   ];

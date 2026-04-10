@@ -386,7 +386,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                 context,
               ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                 side: BorderSide(
                   color: Theme.of(context).colorScheme.outlineVariant,
                 ),
@@ -400,7 +400,9 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                     ),
                     leading: const Icon(Icons.event),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusLg,
+                      ),
                     ),
                     onTap: () async {
                       final date = await showDatePicker(
@@ -420,7 +422,9 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                     ),
                     leading: const Icon(Icons.event_available),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusLg,
+                      ),
                     ),
                     onTap: () async {
                       final date = await showDatePicker(
@@ -446,15 +450,15 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             FilledButton(
               onPressed: _isSaving ? null : _save,
               style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(56),
+                minimumSize: const Size.fromHeight(AppDimensions.buttonHeight),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                 ),
               ),
               child: _isSaving
                   ? const SizedBox(
-                      height: 24,
-                      width: 24,
+                      height: AppDimensions.iconMd,
+                      width: AppDimensions.iconMd,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         color: Colors.white,
@@ -462,8 +466,8 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                     )
                   : Text(
                       t.oneTimeDeposits.saveDeposit,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

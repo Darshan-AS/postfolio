@@ -10,11 +10,11 @@ class _NomineeFormModel {
   final TextEditingController percentageController;
 
   _NomineeFormModel({String? name, String? relationship, double? percentage})
-      : nameController = TextEditingController(text: name),
-        relationshipController = TextEditingController(text: relationship),
-        percentageController = TextEditingController(
-          text: percentage?.toString() ?? '100',
-        );
+    : nameController = TextEditingController(text: name),
+      relationshipController = TextEditingController(text: relationship),
+      percentageController = TextEditingController(
+        text: percentage?.toString() ?? '100',
+      );
 
   void dispose() {
     nameController.dispose();
@@ -46,13 +46,15 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
     if (widget.initialNominees.isNotEmpty) {
       _nomineeForms.addAll(
         widget.initialNominees.map(
-          (n) => _NomineeFormModel(
-            name: n.name,
-            relationship: n.relationship,
-            percentage: n.percentage,
-          )..nameController.addListener(_notifyChanges)
-           ..relationshipController.addListener(_notifyChanges)
-           ..percentageController.addListener(_notifyChanges),
+          (n) =>
+              _NomineeFormModel(
+                  name: n.name,
+                  relationship: n.relationship,
+                  percentage: n.percentage,
+                )
+                ..nameController.addListener(_notifyChanges)
+                ..relationshipController.addListener(_notifyChanges)
+                ..percentageController.addListener(_notifyChanges),
         ),
       );
     }
@@ -67,11 +69,16 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
   }
 
   void _notifyChanges() {
-    final list = _nomineeForms.map((f) => Nominee(
-      name: f.nameController.text.trim(),
-      relationship: f.relationshipController.text.trim(),
-      percentage: double.tryParse(f.percentageController.text.trim()) ?? 100,
-    )).toList();
+    final list = _nomineeForms
+        .map(
+          (f) => Nominee(
+            name: f.nameController.text.trim(),
+            relationship: f.relationshipController.text.trim(),
+            percentage:
+                double.tryParse(f.percentageController.text.trim()) ?? 100,
+          ),
+        )
+        .toList();
     widget.onChanged(list);
   }
 
@@ -105,9 +112,9 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
             Text(
               t.nominees.title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             FilledButton.tonalIcon(
               onPressed: _addNominee,
@@ -119,7 +126,9 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
         AppSpacings.gapSm,
         if (_nomineeForms.isEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMd),
+            padding: const EdgeInsets.symmetric(
+              vertical: AppDimensions.paddingMd,
+            ),
             child: Text(
               t.nominees.noNominees,
               style: TextStyle(color: Theme.of(context).colorScheme.outline),
@@ -133,16 +142,18 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
             itemBuilder: (context, index) {
               final form = _nomineeForms[index];
               return Card(
-                margin: const EdgeInsets.only(
-                  bottom: AppDimensions.paddingMd,
-                ),
+                margin: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
                 clipBehavior: Clip.antiAlias,
                 elevation: 0,
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   side: BorderSide(
-                    color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outlineVariant.withValues(alpha: 0.5),
                   ),
                 ),
                 child: Padding(
@@ -193,8 +204,12 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
                           labelText: t.nominees.percentage,
                           prefixIcon: Icons.percent_outlined,
                         ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        validator: (v) => Nominee.validatePercentage(double.tryParse(v ?? '')),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        validator: (v) => Nominee.validatePercentage(
+                          double.tryParse(v ?? ''),
+                        ),
                         textInputAction: TextInputAction.next,
                       ),
                     ],

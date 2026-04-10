@@ -346,17 +346,22 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               FilledButton(
                 onPressed: _isSaving ? null : _save,
                 style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(56),
+                  minimumSize: const Size.fromHeight(
+                    AppDimensions.buttonHeight,
+                  ),
                 ),
                 child: _isSaving
                     ? const SizedBox(
-                        height: 20,
-                        width: 20,
+                        height: AppDimensions.iconMd,
+                        width: AppDimensions.iconMd,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Text(
                         t.customers.saveCustomer,
-                        style: const TextStyle(fontSize: 16),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
                       ),
               ),
             ],

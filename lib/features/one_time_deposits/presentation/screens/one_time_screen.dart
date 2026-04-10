@@ -42,6 +42,9 @@ class OneTimeDepositsScreen extends ConsumerWidget {
             onRefresh: () =>
                 ref.refresh(oneTimeDepositsControllerProvider.future),
             child: ListView.separated(
+              padding: const EdgeInsets.only(
+                bottom: AppDimensions.listBottomPaddingFAB,
+              ),
               itemCount: deposits.length,
               separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {

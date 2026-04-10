@@ -29,7 +29,7 @@ class DetailSection extends StatelessWidget {
           elevation: 0,
           color: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
             side: BorderSide(
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
@@ -72,7 +72,7 @@ class DetailItem extends StatelessWidget {
           if (icon != null) ...[
             Icon(
               icon,
-              size: 20,
+              size: AppDimensions.iconMd,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             AppSpacings.gapMd,
@@ -87,7 +87,7 @@ class DetailItem extends StatelessWidget {
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 2),
+                AppSpacings.gapXs,
                 Text(
                   value,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -128,7 +128,9 @@ class DetailAmountCard extends StatelessWidget {
       child: Card(
         elevation: 0,
         color: bg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        ),
         margin: EdgeInsets.zero,
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
@@ -182,21 +184,26 @@ class StatusBadge extends StatelessWidget {
 
     return Container(
       padding: compact
-          ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2)
+          ? const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingSm,
+              vertical: AppDimensions.paddingXs,
+            )
           : const EdgeInsets.symmetric(
               horizontal: AppDimensions.paddingMd,
               vertical: AppDimensions.paddingXs,
             ),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(compact ? 6 : 12),
+        borderRadius: BorderRadius.circular(
+          compact ? AppDimensions.radiusMd : AppDimensions.radiusLg,
+        ),
       ),
       child: Text(
         status.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: fgColor,
           fontWeight: FontWeight.bold,
-          fontSize: compact ? 9 : null,
+          fontSize: compact ? 10 : null,
           letterSpacing: compact ? 0.2 : 0.5,
         ),
       ),

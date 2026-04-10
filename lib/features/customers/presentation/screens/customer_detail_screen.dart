@@ -7,6 +7,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/intent_service.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
+import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
 import 'package:intl/intl.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -98,144 +99,104 @@ class CustomerDetailScreen extends ConsumerWidget {
           }
 
           return ListView(
-            padding: const EdgeInsets.symmetric(
-              vertical: AppDimensions.paddingLg,
-            ),
+            padding: const EdgeInsets.all(AppDimensions.paddingLg),
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingLg,
-                ),
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: AppDimensions.iconXl * 1.5,
-                      backgroundColor: colorScheme.primaryContainer,
-                      foregroundColor: colorScheme.onPrimaryContainer,
-                      child: Text(
-                        customer.name.isNotEmpty
-                            ? customer.name[0].toUpperCase()
-                            : '?',
-                        style: textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                    ),
-                    AppSpacings.gapLg,
-                    Text(
-                      customer.name,
-                      textAlign: TextAlign.center,
-                      style: textTheme.headlineSmall?.copyWith(
+              Column(
+                children: [
+                  CircleAvatar(
+                    radius: AppDimensions.iconXl * 1.5,
+                    backgroundColor: colorScheme.primaryContainer,
+                    foregroundColor: colorScheme.onPrimaryContainer,
+                    child: Text(
+                      customer.name.isNotEmpty
+                          ? customer.name[0].toUpperCase()
+                          : '?',
+                      style: textTheme.headlineLarge?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: colorScheme.onPrimaryContainer,
                       ),
                     ),
-                    AppSpacings.gapSm,
-                    if (customer.phone != null)
-                      Text(
-                        customer.phone!,
-                        textAlign: TextAlign.center,
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                  ),
+                  AppSpacings.gapLg,
+                  Text(
+                    customer.name,
+                    textAlign: TextAlign.center,
+                    style: textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  AppSpacings.gapSm,
+                  if (customer.phone != null)
+                    Text(
+                      customer.phone!,
+                      textAlign: TextAlign.center,
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  if (customer.email != null)
+                    Text(
+                      customer.email!,
+                      textAlign: TextAlign.center,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  if (customer.phone != null && customer.phone!.isNotEmpty) ...[
+                    AppSpacings.gapLg,
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: AppDimensions.paddingSm,
+                      runSpacing: AppDimensions.paddingSm,
+                      children: [
+                        FilledButton.icon(
+                          onPressed: () => ref
+                              .read(intentServiceProvider)
+                              .launchPhone(customer.phone!),
+                          icon: const Icon(Icons.call_outlined),
+                          label: Text(t.customers.actions.call),
                         ),
-                      ),
-                    if (customer.email != null)
-                      Text(
-                        customer.email!,
-                        textAlign: TextAlign.center,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                        FilledButton.tonalIcon(
+                          onPressed: () => ref
+                              .read(intentServiceProvider)
+                              .launchSms(customer.phone!),
+                          icon: const Icon(Icons.message_outlined),
+                          label: Text(t.customers.actions.sms),
                         ),
-                      ),
-                    if (customer.phone != null &&
-                        customer.phone!.isNotEmpty) ...[
-                      AppSpacings.gapLg,
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: AppDimensions.paddingSm,
-                        runSpacing: AppDimensions.paddingSm,
-                        children: [
-                          FilledButton.icon(
-                            onPressed: () => ref
-                                .read(intentServiceProvider)
-                                .launchPhone(customer.phone!),
-                            icon: const Icon(Icons.call_outlined),
-                            label: Text(t.customers.actions.call),
-                          ),
-                          FilledButton.tonalIcon(
-                            onPressed: () => ref
-                                .read(intentServiceProvider)
-                                .launchSms(customer.phone!),
-                            icon: const Icon(Icons.message_outlined),
-                            label: Text(t.customers.actions.sms),
-                          ),
-                          FilledButton.tonalIcon(
-                            onPressed: () => ref
-                                .read(intentServiceProvider)
-                                .launchWhatsApp(customer.phone!),
-                            icon: const FaIcon(FontAwesomeIcons.whatsapp),
-                            label: Text(t.customers.actions.whatsapp),
-                          ),
-                        ],
-                      ),
-                    ],
+                        FilledButton.tonalIcon(
+                          onPressed: () => ref
+                              .read(intentServiceProvider)
+                              .launchWhatsApp(customer.phone!),
+                          icon: const FaIcon(FontAwesomeIcons.whatsapp),
+                          label: Text(t.customers.actions.whatsapp),
+                        ),
+                      ],
+                    ),
                   ],
-                ),
+                ],
               ),
               AppSpacings.gapXl,
 
               if (customer.address != null || customer.dateOfBirth != null) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingLg,
-                  ),
-                  child: Text(
-                    t.customers.sections.personalInfo,
-                    style: textTheme.titleSmall?.copyWith(
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                AppSpacings.gapSm,
-                Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingLg,
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    children: [
-                      if (customer.address != null)
-                        ListTile(
-                          leading: Icon(
-                            Icons.location_on_outlined,
-                            color: colorScheme.primary,
-                          ),
-                          title: Text(
-                            t.customers.fields.homeAddress,
-                            style: textTheme.bodySmall,
-                          ),
-                          subtitle: Text(
-                            customer.address!,
-                            style: textTheme.bodyLarge,
-                          ),
-                        ),
-                      if (customer.address != null &&
-                          customer.dateOfBirth != null)
-                        const Divider(height: 1),
-                      if (customer.dateOfBirth != null)
-                        ListTile(
-                          leading: Icon(
-                            Icons.calendar_today_outlined,
-                            color: colorScheme.primary,
-                          ),
-                          title: Text(t.customers.fields.dateOfBirth),
-                          subtitle: Text(
-                            DateFormat.yMMMd().format(customer.dateOfBirth!),
-                          ),
-                        ),
-                    ],
-                  ),
+                DetailSection(
+                  title: t.customers.sections.personalInfo,
+                  children: [
+                    if (customer.address != null)
+                      DetailItem(
+                        icon: Icons.location_on_outlined,
+                        label: t.customers.fields.homeAddress,
+                        value: customer.address!,
+                      ),
+                    if (customer.address != null &&
+                        customer.dateOfBirth != null)
+                      const Divider(height: 1),
+                    if (customer.dateOfBirth != null)
+                      DetailItem(
+                        icon: Icons.calendar_today_outlined,
+                        label: t.customers.fields.dateOfBirth,
+                        value: DateFormat.yMMMd().format(customer.dateOfBirth!),
+                      ),
+                  ],
                 ),
                 AppSpacings.gapLg,
               ],
@@ -243,163 +204,76 @@ class CustomerDetailScreen extends ConsumerWidget {
               if (customer.cifNumber != null ||
                   customer.aadhaarNumber != null ||
                   customer.panNumber != null) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingLg,
-                  ),
-                  child: Text(
-                    t.customers.sections.identityDocuments,
-                    style: textTheme.titleSmall?.copyWith(
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                AppSpacings.gapSm,
-                Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingLg,
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    children: [
-                      if (customer.cifNumber != null) ...[
-                        ListTile(
-                          leading: Icon(
-                            Icons.confirmation_number_outlined,
-                            color: colorScheme.primary,
-                          ),
-                          title: Text(
-                            t.customers.fields.cif,
-                            style: textTheme.bodySmall,
-                          ),
-                          subtitle: Text(
-                            customer.cifNumber!,
-                            style: textTheme.bodyLarge,
-                          ),
-                        ),
-                      ],
-                      if (customer.cifNumber != null &&
-                          (customer.aadhaarNumber != null ||
-                              customer.panNumber != null))
-                        const Divider(height: 1),
-                      if (customer.aadhaarNumber != null) ...[
-                        ListTile(
-                          leading: Icon(
-                            Icons.badge_outlined,
-                            color: colorScheme.primary,
-                          ),
-                          title: Text(
-                            t.customers.fields.aadhaarNumber,
-                            style: textTheme.bodySmall,
-                          ),
-                          subtitle: Text(
-                            customer.aadhaarNumber!,
-                            style: textTheme.bodyLarge,
-                          ),
-                        ),
-                      ],
-                      if (customer.aadhaarNumber != null &&
-                          customer.panNumber != null)
-                        const Divider(height: 1),
-                      if (customer.panNumber != null) ...[
-                        ListTile(
-                          leading: Icon(
-                            Icons.credit_card_outlined,
-                            color: colorScheme.primary,
-                          ),
-                          title: Text(
-                            t.customers.fields.panNumber,
-                            style: textTheme.bodySmall,
-                          ),
-                          subtitle: Text(
-                            customer.panNumber!,
-                            style: textTheme.bodyLarge,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                DetailSection(
+                  title: t.customers.sections.identityDocuments,
+                  children: [
+                    if (customer.cifNumber != null)
+                      DetailItem(
+                        icon: Icons.confirmation_number_outlined,
+                        label: t.customers.fields.cif,
+                        value: customer.cifNumber!,
+                      ),
+                    if (customer.cifNumber != null &&
+                        (customer.aadhaarNumber != null ||
+                            customer.panNumber != null))
+                      const Divider(height: 1),
+                    if (customer.aadhaarNumber != null)
+                      DetailItem(
+                        icon: Icons.badge_outlined,
+                        label: t.customers.fields.aadhaarNumber,
+                        value: customer.aadhaarNumber!,
+                      ),
+                    if (customer.aadhaarNumber != null &&
+                        customer.panNumber != null)
+                      const Divider(height: 1),
+                    if (customer.panNumber != null)
+                      DetailItem(
+                        icon: Icons.credit_card_outlined,
+                        label: t.customers.fields.panNumber,
+                        value: customer.panNumber!,
+                      ),
+                  ],
                 ),
                 AppSpacings.gapLg,
               ],
 
               if (customer.savingsAccount != null) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingLg,
-                  ),
-                  child: Text(
-                    t.customers.sections.savingsBank,
-                    style: textTheme.titleSmall?.copyWith(
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                DetailSection(
+                  title: t.customers.sections.savingsBank,
+                  children: [
+                    if (customer.savingsAccount?.accountNumber != null)
+                      DetailItem(
+                        icon: Icons.account_balance_outlined,
+                        label: t.customers.fields.sbAccountNumber,
+                        value: customer.savingsAccount!.accountNumber,
+                      ),
+                  ],
                 ),
-                AppSpacings.gapSm,
-                Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingLg,
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
+                AppSpacings.gapLg,
+                if (customer.savingsAccount?.nominees != null &&
+                    customer.savingsAccount!.nominees.isNotEmpty) ...[
+                  DetailSection(
+                    title: 'Nominees',
                     children: [
-                      if (customer.savingsAccount?.accountNumber != null) ...[
-                        ListTile(
-                          leading: Icon(
-                            Icons.account_balance_outlined,
-                            color: colorScheme.primary,
-                          ),
-                          title: Text(
-                            t.customers.fields.sbAccountNumber,
-                            style: textTheme.bodySmall,
-                          ),
-                          subtitle: Text(
-                            customer.savingsAccount!.accountNumber,
-                            style: textTheme.bodyLarge,
-                          ),
+                      for (
+                        int i = 0;
+                        i < customer.savingsAccount!.nominees.length;
+                        i++
+                      ) ...[
+                        DetailItem(
+                          icon: Icons.person_outline,
+                          label:
+                              customer.savingsAccount!.nominees[i].relationship,
+                          value:
+                              '${customer.savingsAccount!.nominees[i].name} (${customer.savingsAccount!.nominees[i].percentage}%)',
                         ),
-                      ],
-                      if (customer.savingsAccount?.nominees != null &&
-                          customer.savingsAccount!.nominees.isNotEmpty) ...[
-                        const Divider(height: 1),
-                        Padding(
-                          padding: const EdgeInsets.all(
-                            AppDimensions.paddingLg,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Nominees', style: textTheme.titleSmall),
-                              AppSpacings.gapSm,
-                              ...customer.savingsAccount!.nominees.map((
-                                nominee,
-                              ) {
-                                return ListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  leading: Icon(
-                                    Icons.person_pin_outlined,
-                                    color: colorScheme.primary,
-                                  ),
-                                  title: Text(
-                                    nominee.name,
-                                    style: textTheme.bodyLarge,
-                                  ),
-                                  subtitle: Text(
-                                    '${nominee.relationship} • ${nominee.percentage}%',
-                                    style: textTheme.bodyMedium,
-                                  ),
-                                );
-                              }),
-                            ],
-                          ),
-                        ),
+                        if (i < customer.savingsAccount!.nominees.length - 1)
+                          const Divider(height: 1),
                       ],
                     ],
                   ),
-                ),
-                AppSpacings.gapLg,
+                  AppSpacings.gapLg,
+                ],
               ],
             ],
           );

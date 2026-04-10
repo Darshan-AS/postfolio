@@ -95,7 +95,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 child: Column(
                   children: [
                     CircleAvatar(
-                      radius: 32,
+                      radius: AppDimensions.radiusXxxl,
                       backgroundColor: Theme.of(
                         context,
                       ).colorScheme.primaryContainer,
@@ -104,7 +104,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                       ).colorScheme.onPrimaryContainer,
                       child: const Icon(
                         Icons.account_balance_wallet_outlined,
-                        size: 32,
+                        size: AppDimensions.iconLg,
                       ),
                     ),
                     AppSpacings.gapLg,

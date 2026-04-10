@@ -33,16 +33,19 @@ class CustomerCard extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.paddingLg,
-        vertical: AppDimensions.paddingXs,
+        vertical: AppDimensions.paddingSm,
       ),
       onTap: onTap,
       leading: CircleAvatar(
-        radius: 24,
+        radius: AppDimensions.radiusXxl,
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
         child: Text(
           name.isNotEmpty ? name[0].toUpperCase() : '?',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onPrimaryContainer,
+          ),
         ),
       ),
       title: Text(
@@ -77,7 +80,10 @@ class CustomerCard extends StatelessWidget {
             onPressed: onPhoneTapped,
           ),
           IconButton(
-            icon: const FaIcon(FontAwesomeIcons.whatsapp, size: 22),
+            icon: const FaIcon(
+              FontAwesomeIcons.whatsapp,
+              size: AppDimensions.iconMd,
+            ),
             tooltip: t.customers.actions.whatsapp,
             color: Theme.of(context).colorScheme.primary,
             onPressed: onWhatsAppTapped,
@@ -103,8 +109,11 @@ class CustomerCard extends StatelessWidget {
                 value: 'sms',
                 child: Row(
                   children: [
-                    const Icon(Icons.message_outlined, size: 20),
-                    const SizedBox(width: 12),
+                    const Icon(
+                      Icons.message_outlined,
+                      size: AppDimensions.iconMd,
+                    ),
+                    AppSpacings.gapSm,
                     Text(t.customers.actions.sms),
                   ],
                 ),
@@ -113,8 +122,11 @@ class CustomerCard extends StatelessWidget {
                 value: 'location',
                 child: Row(
                   children: [
-                    Icon(Icons.location_on_outlined, size: 20),
-                    SizedBox(width: 12),
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: AppDimensions.iconMd,
+                    ),
+                    AppSpacings.gapSm,
                     Text('Location'),
                   ],
                 ),
@@ -125,10 +137,10 @@ class CustomerCard extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.delete_outline,
-                      size: 20,
+                      size: AppDimensions.iconMd,
                       color: Theme.of(context).colorScheme.error,
                     ),
-                    const SizedBox(width: 12),
+                    AppSpacings.gapSm,
                     Text(
                       t.common.delete,
                       style: TextStyle(
