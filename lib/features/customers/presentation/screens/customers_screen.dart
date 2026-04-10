@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:postfolio/core/routing/route_names.dart';
+import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_card.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
@@ -58,20 +57,26 @@ class CustomersScreen extends ConsumerWidget {
               return CustomerCard(
                 name: customer.name,
                 phone: customer.phone ?? t.common.notProvided,
-                onTap: () =>
-                    context.push(RouteNames.customerDetail(customer.id)),
-                onEdit: () =>
-                    context.push(RouteNames.customerEdit(customer.id)),
+                onTap: () => CustomerDetailRoute(customer.id).push(context),
+                onEdit: () => CustomerEditRoute(customer.id).push(context),
                 onDelete: () {
                   // Call the controller directly to delete
                   ref
                       .read(customersControllerProvider.notifier)
                       .deleteCustomer(customer.id);
                 },
-                onPhoneTapped: () => ref.read(intentServiceProvider).launchPhone(customer.phone ?? ''),
-                onWhatsAppTapped: () => ref.read(intentServiceProvider).launchWhatsApp(customer.phone ?? ''),
-                onSmsTapped: () => ref.read(intentServiceProvider).launchSms(customer.phone ?? ''),
-                onLocationTapped: () => ref.read(intentServiceProvider).launchMapSearch(customer.name),
+                onPhoneTapped: () => ref
+                    .read(intentServiceProvider)
+                    .launchPhone(customer.phone ?? ''),
+                onWhatsAppTapped: () => ref
+                    .read(intentServiceProvider)
+                    .launchWhatsApp(customer.phone ?? ''),
+                onSmsTapped: () => ref
+                    .read(intentServiceProvider)
+                    .launchSms(customer.phone ?? ''),
+                onLocationTapped: () => ref
+                    .read(intentServiceProvider)
+                    .launchMapSearch(customer.name),
               );
             },
           );
@@ -83,7 +88,7 @@ class CustomersScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(RouteNames.customerCreate),
+        onPressed: () => const CustomerCreateRoute().push(context),
         icon: const Icon(Icons.add),
         label: Text(t.customers.newCustomer),
       ),

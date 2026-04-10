@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:postfolio/core/routing/route_names.dart';
+import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
@@ -59,8 +58,10 @@ class RecurringDepositsScreen extends ConsumerWidget {
                   installmentAmount: deposit.installmentAmount,
                   status: deposit.status,
                   maturityDate: deposit.maturityDate,
-                  onTap: () => context.push(RouteNames.rdDetail(deposit.id)),
-                  onEdit: () => context.push(RouteNames.rdEdit(deposit.id)),
+                  onTap: () =>
+                      RecurringDepositDetailRoute(deposit.id).push(context),
+                  onEdit: () =>
+                      RecurringDepositEditRoute(deposit.id).push(context),
                   onDelete: () {
                     ref
                         .read(recurringDepositsControllerProvider.notifier)
@@ -78,7 +79,7 @@ class RecurringDepositsScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(RouteNames.rdCreate),
+        onPressed: () => const RecurringDepositCreateRoute().push(context),
         child: const Icon(Icons.add),
       ),
     );

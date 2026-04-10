@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:postfolio/core/routing/route_names.dart';
+import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
@@ -56,8 +55,9 @@ class OneTimeDepositsScreen extends ConsumerWidget {
                 principalAmount: deposit.principalAmount,
                 status: deposit.status,
                 maturityDate: deposit.maturityDate,
-                onTap: () => context.push(RouteNames.oneTimeDetail(deposit.id)),
-                onEdit: () => context.push(RouteNames.oneTimeEdit(deposit.id)),
+                onTap: () =>
+                    OneTimeDepositDetailRoute(deposit.id).push(context),
+                onEdit: () => OneTimeDepositEditRoute(deposit.id).push(context),
                 onDelete: () {
                   ref
                       .read(oneTimeDepositsControllerProvider.notifier)
@@ -74,7 +74,7 @@ class OneTimeDepositsScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(RouteNames.oneTimeCreate),
+        onPressed: () => const OneTimeDepositCreateRoute().push(context),
         child: const Icon(Icons.add),
       ),
     );

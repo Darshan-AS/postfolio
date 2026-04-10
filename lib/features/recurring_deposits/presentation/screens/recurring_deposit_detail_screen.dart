@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:postfolio/core/routing/route_names.dart';
+import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -69,7 +69,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () => context.push(RouteNames.rdEdit(depositId)),
+            onPressed: () => RecurringDepositEditRoute(depositId).push(context),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),

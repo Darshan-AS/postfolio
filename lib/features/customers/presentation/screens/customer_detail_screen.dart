@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:postfolio/core/routing/route_names.dart';
+import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/intent_service.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -77,7 +77,7 @@ class CustomerDetailScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () => context.push(RouteNames.customerEdit(customerId)),
+            onPressed: () => CustomerEditRoute(customerId).push(context),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
