@@ -6,8 +6,8 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
 
 class OneTimeDepositCard extends StatelessWidget {
+  final String customerName;
   final String accountNo;
-  final String schemeName;
   final double principalAmount;
   final DepositStatus status;
   final DateTime maturityDate;
@@ -17,8 +17,8 @@ class OneTimeDepositCard extends StatelessWidget {
 
   const OneTimeDepositCard({
     super.key,
+    required this.customerName,
     required this.accountNo,
-    required this.schemeName,
     required this.principalAmount,
     required this.status,
     required this.maturityDate,
@@ -40,13 +40,13 @@ class OneTimeDepositCard extends StatelessWidget {
         child: const Icon(Icons.account_balance_wallet_outlined),
       ),
       title: Text(
-        accountNo,
+        customerName,
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       subtitle: Row(
         children: [
           Text(
-            schemeName,
+            accountNo,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),

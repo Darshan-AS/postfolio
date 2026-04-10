@@ -359,8 +359,8 @@ class TranslationsOneTimeDepositsFieldsEn {
 	/// en: 'Term (Months) *'
 	String get termMonths => 'Term (Months) *';
 
-	/// en: 'Customer ID *'
-	String get customerId => 'Customer ID *';
+	/// en: 'Customer'
+	String get customerId => 'Customer';
 
 	/// en: 'Scheme Type'
 	String get schemeType => 'Scheme Type';
@@ -398,8 +398,8 @@ class TranslationsRecurringDepositsFieldsEn {
 	/// en: 'Interest Rate *'
 	String get interestRate => 'Interest Rate *';
 
-	/// en: 'Customer ID *'
-	String get customerId => 'Customer ID *';
+	/// en: 'Customer'
+	String get customerId => 'Customer';
 
 	/// en: 'Scheme Type'
 	String get schemeType => 'Scheme Type';
@@ -483,7 +483,7 @@ extension on Translations {
 			'oneTimeDeposits.fields.principalAmount' => 'Principal Amount *',
 			'oneTimeDeposits.fields.termYears' => 'Term (Years) *',
 			'oneTimeDeposits.fields.termMonths' => 'Term (Months) *',
-			'oneTimeDeposits.fields.customerId' => 'Customer ID *',
+			'oneTimeDeposits.fields.customerId' => 'Customer',
 			'oneTimeDeposits.fields.schemeType' => 'Scheme Type',
 			'oneTimeDeposits.fields.maturityAmount' => 'Maturity Amount *',
 			'oneTimeDeposits.fields.startDate' => 'Start Date',
@@ -503,7 +503,7 @@ extension on Translations {
 			'recurringDeposits.fields.termYears' => 'Term (Years) *',
 			'recurringDeposits.fields.termMonths' => 'Term (Months) *',
 			'recurringDeposits.fields.interestRate' => 'Interest Rate *',
-			'recurringDeposits.fields.customerId' => 'Customer ID *',
+			'recurringDeposits.fields.customerId' => 'Customer',
 			'recurringDeposits.fields.schemeType' => 'Scheme Type',
 			'recurringDeposits.fields.maturityAmount' => 'Maturity Amount *',
 			'recurringDeposits.fields.startDate' => 'Start Date',

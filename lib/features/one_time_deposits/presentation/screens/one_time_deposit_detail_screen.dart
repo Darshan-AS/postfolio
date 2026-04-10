@@ -8,6 +8,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
+import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -187,7 +188,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   DetailItem(
                     icon: Icons.account_circle_outlined,
                     label: t.oneTimeDeposits.fields.customerId,
-                    value: deposit.customerId,
+                    value: ref.watch(customersControllerProvider).value?.where((c) => c.id == deposit.customerId).firstOrNull?.name ?? deposit.customerId,
                   ),
                   const Divider(height: 1),
                   if (deposit.linkedSavingsAccountNo != null &&
