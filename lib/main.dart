@@ -22,7 +22,7 @@ class PostfolioApp extends ConsumerWidget {
     final goRouter = ref.watch(goRouterProvider);
 
     return MaterialApp.router(
-      title: 'Postfolio',
+      title: t.appTitle,
       theme: AppTheme.lightTheme, // Apply centralized theme
       routerConfig: goRouter,
       locale: TranslationProvider.of(context).flutterLocale,

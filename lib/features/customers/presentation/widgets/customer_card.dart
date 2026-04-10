@@ -90,7 +90,7 @@ class CustomerCard extends StatelessWidget {
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
-            tooltip: 'More options',
+            tooltip: t.common.moreOptions,
             onSelected: (value) {
               switch (value) {
                 case 'delete':
@@ -118,16 +118,16 @@ class CustomerCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'location',
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.location_on_outlined,
                       size: AppDimensions.iconMd,
                     ),
                     AppSpacings.gapSm,
-                    Text('Location'),
+                    Text(t.customers.actions.location),
                   ],
                 ),
               ),

@@ -5,6 +5,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 class RecurringDepositCard extends ConsumerWidget {
   static final _dateFormatter = DateFormat('MMM dd, yyyy');
@@ -99,13 +100,13 @@ class RecurringDepositCard extends ConsumerWidget {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'edit',
                 child: Row(
                   children: [
-                    Icon(Icons.edit_outlined, size: AppDimensions.iconMd),
+                    const Icon(Icons.edit_outlined, size: AppDimensions.iconMd),
                     AppSpacings.gapSm,
-                    Text('Edit'),
+                    Text(t.common.edit),
                   ],
                 ),
               ),

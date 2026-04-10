@@ -253,7 +253,7 @@ class CustomerDetailScreen extends ConsumerWidget {
                 if (customer.savingsAccount?.nominees != null &&
                     customer.savingsAccount!.nominees.isNotEmpty) ...[
                   DetailSection(
-                    title: 'Nominees',
+                    title: t.nominees.title,
                     children: [
                       for (
                         int i = 0;

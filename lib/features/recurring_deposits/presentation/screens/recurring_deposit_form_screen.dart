@@ -139,7 +139,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
     if (_formKey.currentState!.validate()) {
       if (_selectedCustomerId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a customer')),
+          SnackBar(content: Text(t.recurringDeposits.selectCustomerPrompt)),
         );
         return;
       }

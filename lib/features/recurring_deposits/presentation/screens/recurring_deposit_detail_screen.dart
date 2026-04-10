@@ -155,7 +155,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
               ),
               AppSpacings.gapXxl,
               DetailSection(
-                title: 'Investment Details',
+                title: t.recurringDeposits.sections.investmentDetails,
                 children: [
                   DetailItem(
                     icon: Icons.calendar_today_outlined,
@@ -173,24 +173,24 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
               ),
               AppSpacings.gapLg,
               DetailSection(
-                title: 'Timeline',
+                title: t.recurringDeposits.sections.timeline,
                 children: [
                   DetailItem(
                     icon: Icons.date_range_outlined,
-                    label: 'Start Date',
+                    label: t.recurringDeposits.fields.startDate,
                     value: dateFormat.format(deposit.startDate),
                   ),
                   const Divider(height: 1),
                   DetailItem(
                     icon: Icons.event_available_outlined,
-                    label: 'Maturity Date',
+                    label: t.recurringDeposits.fields.maturityDate,
                     value: dateFormat.format(deposit.maturityDate),
                   ),
                 ],
               ),
               AppSpacings.gapLg,
               DetailSection(
-                title: 'Account Information',
+                title: t.recurringDeposits.sections.accountInformation,
                 children: [
                   DetailItem(
                     icon: Icons.tag_outlined,
@@ -215,7 +215,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                     const Divider(height: 1),
                     DetailItem(
                       icon: Icons.account_balance_outlined,
-                      label: 'Linked Auto Debit Account',
+                      label: t.recurringDeposits.fields.linkedAutoDebitAccount,
                       value: deposit.linkedAutoDebitAccountNo!,
                     ),
                   ],
@@ -224,7 +224,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
               if (deposit.nominees.isNotEmpty) ...[
                 AppSpacings.gapLg,
                 DetailSection(
-                  title: 'Nominees',
+                  title: t.nominees.title,
                   children: [
                     for (int i = 0; i < deposit.nominees.length; i++) ...[
                       DetailItem(

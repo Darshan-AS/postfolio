@@ -119,7 +119,7 @@ class _CustomerSelectionSheetState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Customer'),
+        title: Text(t.customers.selectCustomer),
         leading: const CloseButton(),
       ),
       body: Column(
@@ -129,7 +129,7 @@ class _CustomerSelectionSheetState
             child: TextField(
               decoration: AppInputDecoration.m3(
                 context,
-                hintText: 'Search by name, phone or CIF...',
+                hintText: t.customers.searchHint,
                 prefixIcon: Icons.search,
               ),
               onChanged: (value) =>
@@ -150,7 +150,7 @@ class _CustomerSelectionSheetState
                 }).toList();
 
                 if (filtered.isEmpty) {
-                  return const Center(child: Text('No customers found.'));
+                  return Center(child: Text(t.customers.noCustomersFound));
                 }
 
                 return ListView.builder(

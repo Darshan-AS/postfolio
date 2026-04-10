@@ -51,6 +51,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsOneTimeDepositsEn oneTimeDeposits = TranslationsOneTimeDepositsEn.internal(_root);
 	late final TranslationsRecurringDepositsEn recurringDeposits = TranslationsRecurringDepositsEn.internal(_root);
 	late final TranslationsNomineesEn nominees = TranslationsNomineesEn.internal(_root);
+	late final TranslationsEnumsEn enums = TranslationsEnumsEn.internal(_root);
 }
 
 // Path: common
@@ -67,6 +68,9 @@ class TranslationsCommonEn {
 	/// en: 'Saving...'
 	String get saving => 'Saving...';
 
+	/// en: 'Edit'
+	String get edit => 'Edit';
+
 	/// en: 'Delete'
 	String get delete => 'Delete';
 
@@ -81,6 +85,9 @@ class TranslationsCommonEn {
 
 	/// en: 'Not provided'
 	String get notProvided => 'Not provided';
+
+	/// en: 'More options'
+	String get moreOptions => 'More options';
 }
 
 // Path: nav
@@ -129,6 +136,12 @@ class TranslationsCustomersEn {
 
 	/// en: 'No customers found. Add one!'
 	String get noCustomersFound => 'No customers found. Add one!';
+
+	/// en: 'Select Customer'
+	String get selectCustomer => 'Select Customer';
+
+	/// en: 'Search by name, phone or CIF...'
+	String get searchHint => 'Search by name, phone or CIF...';
 
 	/// en: 'Customer not found'
 	String get customerNotFound => 'Customer not found';
@@ -200,6 +213,10 @@ class TranslationsOneTimeDepositsEn {
 	/// en: 'Failed to delete deposit: ${error}'
 	String failedToDeleteDeposit({required Object error}) => 'Failed to delete deposit: ${error}';
 
+	/// en: 'Please select a customer'
+	String get selectCustomerPrompt => 'Please select a customer';
+
+	late final TranslationsOneTimeDepositsSectionsEn sections = TranslationsOneTimeDepositsSectionsEn.internal(_root);
 	late final TranslationsOneTimeDepositsFieldsEn fields = TranslationsOneTimeDepositsFieldsEn.internal(_root);
 }
 
@@ -241,6 +258,10 @@ class TranslationsRecurringDepositsEn {
 	/// en: 'Failed to delete RD: ${error}'
 	String failedToDeleteDeposit({required Object error}) => 'Failed to delete RD: ${error}';
 
+	/// en: 'Please select a customer'
+	String get selectCustomerPrompt => 'Please select a customer';
+
+	late final TranslationsRecurringDepositsSectionsEn sections = TranslationsRecurringDepositsSectionsEn.internal(_root);
 	late final TranslationsRecurringDepositsFieldsEn fields = TranslationsRecurringDepositsFieldsEn.internal(_root);
 }
 
@@ -277,6 +298,18 @@ class TranslationsNomineesEn {
 	String get noNominees => 'No nominees added yet.';
 }
 
+// Path: enums
+class TranslationsEnumsEn {
+	TranslationsEnumsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsEnumsDepositStatusEn depositStatus = TranslationsEnumsDepositStatusEn.internal(_root);
+	late final TranslationsEnumsOneTimeSchemeTypeEn oneTimeSchemeType = TranslationsEnumsOneTimeSchemeTypeEn.internal(_root);
+	late final TranslationsEnumsRecurringSchemeTypeEn recurringSchemeType = TranslationsEnumsRecurringSchemeTypeEn.internal(_root);
+}
+
 // Path: customers.actions
 class TranslationsCustomersActionsEn {
 	TranslationsCustomersActionsEn.internal(this._root);
@@ -293,6 +326,9 @@ class TranslationsCustomersActionsEn {
 
 	/// en: 'WhatsApp'
 	String get whatsapp => 'WhatsApp';
+
+	/// en: 'Location'
+	String get location => 'Location';
 }
 
 // Path: customers.sections
@@ -370,6 +406,24 @@ class TranslationsCustomersFieldsEn {
 	String get percentage => 'Percentage (%)';
 }
 
+// Path: oneTimeDeposits.sections
+class TranslationsOneTimeDepositsSectionsEn {
+	TranslationsOneTimeDepositsSectionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Investment Details'
+	String get investmentDetails => 'Investment Details';
+
+	/// en: 'Timeline'
+	String get timeline => 'Timeline';
+
+	/// en: 'Account Information'
+	String get accountInformation => 'Account Information';
+}
+
 // Path: oneTimeDeposits.fields
 class TranslationsOneTimeDepositsFieldsEn {
 	TranslationsOneTimeDepositsFieldsEn.internal(this._root);
@@ -411,8 +465,29 @@ class TranslationsOneTimeDepositsFieldsEn {
 	/// en: 'Maturity Date'
 	String get maturityDate => 'Maturity Date';
 
+	/// en: 'Deposit Date'
+	String get depositDate => 'Deposit Date';
+
 	/// en: 'Linked Savings Account'
 	String get linkedSavingsAccount => 'Linked Savings Account';
+}
+
+// Path: recurringDeposits.sections
+class TranslationsRecurringDepositsSectionsEn {
+	TranslationsRecurringDepositsSectionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Investment Details'
+	String get investmentDetails => 'Investment Details';
+
+	/// en: 'Timeline'
+	String get timeline => 'Timeline';
+
+	/// en: 'Account Information'
+	String get accountInformation => 'Account Information';
 }
 
 // Path: recurringDeposits.fields
@@ -461,6 +536,60 @@ class TranslationsRecurringDepositsFieldsEn {
 
 	/// en: 'Linked Savings Account'
 	String get linkedSavingsAccount => 'Linked Savings Account';
+
+	/// en: 'Linked Auto Debit Account'
+	String get linkedAutoDebitAccount => 'Linked Auto Debit Account';
+}
+
+// Path: enums.depositStatus
+class TranslationsEnumsDepositStatusEn {
+	TranslationsEnumsDepositStatusEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Active'
+	String get active => 'Active';
+
+	/// en: 'Matured'
+	String get matured => 'Matured';
+
+	/// en: 'Closed'
+	String get closed => 'Closed';
+}
+
+// Path: enums.oneTimeSchemeType
+class TranslationsEnumsOneTimeSchemeTypeEn {
+	TranslationsEnumsOneTimeSchemeTypeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Time Deposit (TD)'
+	String get timeDeposit => 'Time Deposit (TD)';
+
+	/// en: 'Monthly Income Scheme (MIS)'
+	String get monthlyIncomeScheme => 'Monthly Income Scheme (MIS)';
+
+	/// en: 'National Savings Certificate (NSC)'
+	String get nationalSavingsCertificate => 'National Savings Certificate (NSC)';
+
+	/// en: 'Kisan Vikas Patra (KVP)'
+	String get kisanVikasPatra => 'Kisan Vikas Patra (KVP)';
+}
+
+// Path: enums.recurringSchemeType
+class TranslationsEnumsRecurringSchemeTypeEn {
+	TranslationsEnumsRecurringSchemeTypeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Recurring Deposit (RD)'
+	String get recurringDeposit => 'Recurring Deposit (RD)';
 }
 
 /// The flat map containing all translations for locale <en>.
@@ -474,11 +603,13 @@ extension on Translations {
 			'appTitle' => 'Postfolio',
 			'common.loading' => 'Loading...',
 			'common.saving' => 'Saving...',
+			'common.edit' => 'Edit',
 			'common.delete' => 'Delete',
 			'common.cancel' => 'Cancel',
 			'common.error' => 'Error',
 			'common.retry' => 'Retry',
 			'common.notProvided' => 'Not provided',
+			'common.moreOptions' => 'More options',
 			'nav.dashboard' => 'Dashboard',
 			'nav.oneTimeDeposits' => 'One-Time Deposits',
 			'nav.recurringDeposits' => 'Recurring Deposits',
@@ -489,6 +620,8 @@ extension on Translations {
 			'customers.editCustomer' => 'Edit Customer',
 			'customers.saveCustomer' => 'Save Customer',
 			'customers.noCustomersFound' => 'No customers found. Add one!',
+			'customers.selectCustomer' => 'Select Customer',
+			'customers.searchHint' => 'Search by name, phone or CIF...',
 			'customers.customerNotFound' => 'Customer not found',
 			'customers.deleteCustomer' => 'Delete Customer',
 			'customers.deleteCustomerConfirmation' => 'Are you sure you want to delete this customer?',
@@ -497,6 +630,7 @@ extension on Translations {
 			'customers.actions.call' => 'Call',
 			'customers.actions.sms' => 'SMS',
 			'customers.actions.whatsapp' => 'WhatsApp',
+			'customers.actions.location' => 'Location',
 			'customers.sections.personalInfo' => 'Personal Information',
 			'customers.sections.identityDocuments' => 'Identity Documents',
 			'customers.sections.savingsBank' => 'Savings Bank',
@@ -527,6 +661,10 @@ extension on Translations {
 			'oneTimeDeposits.deleteDepositConfirmation' => 'Are you sure you want to delete this deposit?',
 			'oneTimeDeposits.failedToSaveDeposit' => ({required Object error}) => 'Failed to save deposit: ${error}',
 			'oneTimeDeposits.failedToDeleteDeposit' => ({required Object error}) => 'Failed to delete deposit: ${error}',
+			'oneTimeDeposits.selectCustomerPrompt' => 'Please select a customer',
+			'oneTimeDeposits.sections.investmentDetails' => 'Investment Details',
+			'oneTimeDeposits.sections.timeline' => 'Timeline',
+			'oneTimeDeposits.sections.accountInformation' => 'Account Information',
 			'oneTimeDeposits.fields.status' => 'Status',
 			'oneTimeDeposits.fields.accountNo' => 'Account No.',
 			'oneTimeDeposits.fields.principalAmount' => 'Principal Amount',
@@ -538,6 +676,7 @@ extension on Translations {
 			'oneTimeDeposits.fields.maturityAmount' => 'Maturity Amount',
 			'oneTimeDeposits.fields.startDate' => 'Start Date',
 			'oneTimeDeposits.fields.maturityDate' => 'Maturity Date',
+			'oneTimeDeposits.fields.depositDate' => 'Deposit Date',
 			'oneTimeDeposits.fields.linkedSavingsAccount' => 'Linked Savings Account',
 			'recurringDeposits.title' => 'Recurring Deposits',
 			'recurringDeposits.newDeposit' => 'New RD',
@@ -549,6 +688,10 @@ extension on Translations {
 			'recurringDeposits.deleteDepositConfirmation' => 'Are you sure you want to delete this RD?',
 			'recurringDeposits.failedToSaveDeposit' => ({required Object error}) => 'Failed to save RD: ${error}',
 			'recurringDeposits.failedToDeleteDeposit' => ({required Object error}) => 'Failed to delete RD: ${error}',
+			'recurringDeposits.selectCustomerPrompt' => 'Please select a customer',
+			'recurringDeposits.sections.investmentDetails' => 'Investment Details',
+			'recurringDeposits.sections.timeline' => 'Timeline',
+			'recurringDeposits.sections.accountInformation' => 'Account Information',
 			'recurringDeposits.fields.status' => 'Status',
 			'recurringDeposits.fields.serialNo' => 'Serial No.',
 			'recurringDeposits.fields.accountNo' => 'Account No.',
@@ -562,6 +705,7 @@ extension on Translations {
 			'recurringDeposits.fields.startDate' => 'Start Date',
 			'recurringDeposits.fields.maturityDate' => 'Maturity Date',
 			'recurringDeposits.fields.linkedSavingsAccount' => 'Linked Savings Account',
+			'recurringDeposits.fields.linkedAutoDebitAccount' => 'Linked Auto Debit Account',
 			'nominees.title' => 'Nominees',
 			'nominees.addNominee' => 'Add Nominee',
 			'nominees.editNominee' => 'Edit Nominee',
@@ -570,6 +714,14 @@ extension on Translations {
 			'nominees.relationship' => 'Relationship',
 			'nominees.percentage' => 'Percentage (%)',
 			'nominees.noNominees' => 'No nominees added yet.',
+			'enums.depositStatus.active' => 'Active',
+			'enums.depositStatus.matured' => 'Matured',
+			'enums.depositStatus.closed' => 'Closed',
+			'enums.oneTimeSchemeType.timeDeposit' => 'Time Deposit (TD)',
+			'enums.oneTimeSchemeType.monthlyIncomeScheme' => 'Monthly Income Scheme (MIS)',
+			'enums.oneTimeSchemeType.nationalSavingsCertificate' => 'National Savings Certificate (NSC)',
+			'enums.oneTimeSchemeType.kisanVikasPatra' => 'Kisan Vikas Patra (KVP)',
+			'enums.recurringSchemeType.recurringDeposit' => 'Recurring Deposit (RD)',
 			_ => null,
 		};
 	}

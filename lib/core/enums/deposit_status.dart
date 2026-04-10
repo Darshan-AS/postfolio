@@ -1,14 +1,22 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 enum DepositStatus {
   @JsonValue('active')
-  active(displayName: 'Active'),
+  active,
   @JsonValue('matured')
-  matured(displayName: 'Matured'),
+  matured,
   @JsonValue('closed')
-  closed(displayName: 'Closed');
+  closed;
 
-  final String displayName;
-
-  const DepositStatus({required this.displayName});
+  String get displayName {
+    switch (this) {
+      case DepositStatus.active:
+        return t.enums.depositStatus.active;
+      case DepositStatus.matured:
+        return t.enums.depositStatus.matured;
+      case DepositStatus.closed:
+        return t.enums.depositStatus.closed;
+    }
+  }
 }

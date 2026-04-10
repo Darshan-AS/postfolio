@@ -134,7 +134,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
     if (_formKey.currentState!.validate()) {
       if (_selectedCustomerId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a customer')),
+          SnackBar(content: Text(t.oneTimeDeposits.selectCustomerPrompt)),
         );
         return;
       }

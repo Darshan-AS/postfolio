@@ -149,7 +149,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               ),
               AppSpacings.gapXxl,
               DetailSection(
-                title: 'Investment Details',
+                title: t.oneTimeDeposits.sections.investmentDetails,
                 children: [
                   DetailItem(
                     icon: Icons.calendar_today_outlined,
@@ -160,31 +160,31 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   const Divider(height: 1),
                   DetailItem(
                     icon: Icons.percent_outlined,
-                    label: 'Interest Rate',
+                    label: t.oneTimeDeposits.fields.interestRate,
                     value: '${deposit.interestRate.toStringAsFixed(2)}%',
                   ),
                 ],
               ),
               AppSpacings.gapLg,
               DetailSection(
-                title: 'Timeline',
+                title: t.oneTimeDeposits.sections.timeline,
                 children: [
                   DetailItem(
                     icon: Icons.date_range_outlined,
-                    label: 'Deposit Date',
+                    label: t.oneTimeDeposits.fields.depositDate,
                     value: dateFormat.format(deposit.startDate),
                   ),
                   const Divider(height: 1),
                   DetailItem(
                     icon: Icons.event_available_outlined,
-                    label: 'Maturity Date',
+                    label: t.oneTimeDeposits.fields.maturityDate,
                     value: dateFormat.format(deposit.maturityDate),
                   ),
                 ],
               ),
               AppSpacings.gapLg,
               DetailSection(
-                title: 'Account Information',
+                title: t.oneTimeDeposits.sections.accountInformation,
                 children: [
                   DetailItem(
                     icon: Icons.account_circle_outlined,
@@ -203,7 +203,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                       deposit.linkedSavingsAccountNo!.isNotEmpty) ...[
                     DetailItem(
                       icon: Icons.account_balance_outlined,
-                      label: 'Linked Savings Account',
+                      label: t.oneTimeDeposits.fields.linkedSavingsAccount,
                       value: deposit.linkedSavingsAccountNo!,
                     ),
                     const Divider(height: 1),
@@ -213,7 +213,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               if (deposit.nominees.isNotEmpty) ...[
                 AppSpacings.gapLg,
                 DetailSection(
-                  title: 'Nominees',
+                  title: t.nominees.title,
                   children: [
                     for (int i = 0; i < deposit.nominees.length; i++) ...[
                       DetailItem(
