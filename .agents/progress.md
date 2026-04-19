@@ -6,6 +6,7 @@
 The project is structurally sound and compiles. We have successfully implemented a full CRUD cycle for the `Customers`, `OneTimeDeposit`, and `RecurringDeposit` features using mock repositories and Riverpod state management. Each feature follows the exact same architectural pattern, including UI parity with consistent form fields, validators, and loading states. The app uses a `StatefulShellRoute` for bottom navigation, and routing is completely type-safe using `go_router_builder`.
 
 ### Recent Milestones
+- **Documentation Refactoring**: Completely modularized the documentation into `docs/product_requirements.md` (software specs) and `docs/domain_knowledge/` (business rules, workflows, and strict Post Office calculation formulas).
 - **Validations & Results**: Refactored Controllers to return strongly-typed `Result` records instead of throwing exceptions.
 - **UI Standardization**: Centralized hardcoded colors, dimensions, and spacings into the core theme. Standardized detail screens and form headers.
 - **Component Extraction**: Unified `Nominee` logic and extracted core widgets like `EntityListTile`, `AppTextField`, and `FormAppBar`.

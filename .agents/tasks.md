@@ -67,22 +67,28 @@
 - [ ] Migrate all icons from `font_awesome_flutter` and Material to `hugeicons`.
 - [ ] Track structural decisions in `conventions.md`.
 
-## Phase 6: Firebase Integration (Pending)
+## Phase 6: Firebase Integration & Authentication (Pending)
 - [ ] Run `flutterfire configure`.
 - [ ] Add necessary packages: `firebase_core`, `firebase_auth`, and `cloud_firestore`. (Avoid unnecessary Firebase bloat).
 - [ ] Expose Firebase instances (`FirebaseAuth`, `FirebaseFirestore`) using Riverpod Providers. Do not use static getters.
+- [ ] Implement Email & Password Authentication.
+- [ ] Implement Phone (OTP) Authentication.
 - [ ] Build `FirestoreCustomerRepository` and swap out the Fake repository.
 - [ ] Build Firestore repositories for Deposits, RD, and Schemes.
 
 ## Phase 7: Enhancements & Refinements (Pending)
 - [ ] Implement comprehensive form field validations across all create/update screens.
 - [ ] Expand `SchemeType` enum and models to support an exhaustive list of Term Deposit variants.
-- [ ] Implement domain logic to auto-calculate maturity amounts based on scheme formulas and interest rates.
+- [ ] **Domain Math - Maturity Calculators:** Implement pure Dart extensions to auto-calculate Maturity Dates (accounting for RD defaults) and Maturity Amounts (compounding for RD/TD/NSC, simple for MIS) based on principal, tenure, and start date.
+- [ ] **Domain Math - Commission Calculators:** Implement functions to auto-calculate Gross Commission per transaction (4% for RD, 0.5% for others) and auto-deduct the 2% TDS to derive the Net Payout.
+- [ ] **Domain Math - Penalties & Rebates:** Implement transaction evaluation logic to automatically calculate RD Late Fees (1% per month delayed) and Advance Deposit Rebates (₹10/₹40 rules for 6+/12+ months).
+- [ ] **UI Cleanup - Remove Manual Fields:** Refactor `RecurringDepositFormScreen` and `OneTimeDepositFormScreen` to remove fields like "Maturity Amount" or "Maturity Date" if they require manual input. Replace them with read-only "Live Preview" text based on the auto-calculations.
 - [ ] Add filtering capabilities to deposit list screens (e.g., view by Active, Matured, Closed status).
 - [ ] Integrate search functionality across all entity listing screens (Customers, Deposits, RDs).
 - [ ] Create and integrate an enum for relationships in the `Nominee` model.
 - [ ] Rethink the data type for `termYears` and `termMonths` in deposit models (e.g., consider using a single duration or custom value object).
 - [ ] Implement and support dark theme across the application.
+- [ ] Implement local App Lock (Biometrics/PIN) for additional privacy and security.
 - [ ] Explore `flutter_flavorizr` for managing native app flavors (Dev, Staging, Prod).
 - [ ] Integrate `firebase_crashlytics` for automatic error tracking and reporting in production.
 - [ ] Integrate `firebase_analytics` to track user engagement and app usage metrics.
