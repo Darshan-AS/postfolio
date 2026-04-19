@@ -36,15 +36,19 @@ All progress, tasks, and architectural conventions are stored in the `.agents/` 
 When starting a new conversation or picking up this repository, you MUST immediately read the following files before making any changes:
 1. `.agents/progress.md` (To understand current state and immediate next steps)
 2. `.agents/tasks.md` (To understand the project roadmap)
-3. `.agents/conventions.md` (To understand strict coding rules)
-4. `docs/product_requirements.md` (To understand feature specifications)
-5. `docs/deposit_schemes.md` & `docs/domain_knowledge.md` (To understand the business context and financial logic)
+3. `.agents/conventions.md` (To understand strict coding rules & structural decisions)
+4. `docs/product_requirements.md` (To understand feature specs, domain knowledge, and financial logic)
+5. Read the latest session log in `.agents/session_logs/` for granular context of recent work.
 
 ## Agent Workflow Rules
 - **Build Before Commit:** Ensure everything builds successfully before making a commit.
 - **Logical Commits:** Commits should only be made at logical stages, and only when the codebase is in a building/working state.
+- **Standardized Commit Messages:** Use Conventional Commits format: `<type>(<scope>): <summary>` (e.g., `Feat(auth): Add Firebase login`). 
+  - Types: `Feat`, `Fix`, `Refactor`, `Docs`, `Chore`, `UI`.
+  - Use imperative mood ("Add" not "Added").
 - **Maintain Markdown State:** You MUST actively look for and update `.md` files in `docs/` and `.agents/` as part of your workflow:
-  - **`progress.md`**: Update it at the end of your session with what you did today. Going forward, `progress.md` is strictly for tracking recent agent actions. You should wipe out progress history that is older than a few days to keep it concise.
+  - **`progress.md`**: High-level summary of the **Current State** and **Next Steps**. Update this at the end of your session. It should reflect the global state of the project.
+  - **`.agents/session_logs/`**: Create a new log for **every session**. Name it `YYYY-MM-DD_session_N.md`. This log should contain granular details of changes made, decisions taken, and specific files touched.
   - **`conventions.md`**: Update this file if a new architectural or design decision was taken during your session.
   - **`tasks.md`**: Check off tasks as you complete them. If new tasks or next steps were discussed/recommended, append them to the appropriate phase.
 

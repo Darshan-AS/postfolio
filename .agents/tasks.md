@@ -52,12 +52,29 @@
 - [x] Build `RecurringDepositFormScreen` (Create/Update).
 - [x] Build `RecurringDepositDetailScreen`.
 
-## Phase 5: Firebase Integration (Pending)
+## Phase 5: Structural Refactoring (In Progress)
+- [ ] Reorganize `lib/core/` structure (Create `services/`, `extensions/`, and rename `widgets/` to `shared/widgets/`).
+- [ ] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.
+- [ ] Extract shared services into `lib/core/services/`.
+- [ ] Extract extension methods into `lib/core/extensions/`.
+- [ ] Refactor `AppTheme` into a granular file structure inside `lib/core/theme/`.
+- [ ] Migrate static dimension constants to a `ThemeExtension` (`AppDesignTokens`) attached to `ThemeData`.
+- [ ] Extract generic `AppButton`, `AppCard`, and `AppTextField` widgets into `lib/core/shared/widgets/`, removing all `.w`/`.h`/`.sp` screenutil references.
+- [ ] Refactor existing domain cards (`CustomerCard`, `OneTimeDepositCard`, `RecurringDepositCard`) to use `AppCard` as their base container.
+- [ ] Replace standard `FilledButton` usages across the app with `AppButton` to leverage built-in loading states.
+- [ ] Integrate `skeletonizer` for list and detail loading states.
+- [ ] Integrate `flutter_animate` for UI entry/exit animations.
+- [ ] Migrate all icons from `font_awesome_flutter` and Material to `hugeicons`.
+- [ ] Track structural decisions in `conventions.md`.
+
+## Phase 6: Firebase Integration (Pending)
 - [ ] Run `flutterfire configure`.
+- [ ] Add necessary packages: `firebase_core`, `firebase_auth`, and `cloud_firestore`. (Avoid unnecessary Firebase bloat).
+- [ ] Expose Firebase instances (`FirebaseAuth`, `FirebaseFirestore`) using Riverpod Providers. Do not use static getters.
 - [ ] Build `FirestoreCustomerRepository` and swap out the Fake repository.
 - [ ] Build Firestore repositories for Deposits, RD, and Schemes.
 
-## Phase 6: Enhancements & Refinements (Pending)
+## Phase 7: Enhancements & Refinements (Pending)
 - [ ] Implement comprehensive form field validations across all create/update screens.
 - [ ] Expand `SchemeType` enum and models to support an exhaustive list of Term Deposit variants.
 - [ ] Implement domain logic to auto-calculate maturity amounts based on scheme formulas and interest rates.
@@ -66,3 +83,8 @@
 - [ ] Create and integrate an enum for relationships in the `Nominee` model.
 - [ ] Rethink the data type for `termYears` and `termMonths` in deposit models (e.g., consider using a single duration or custom value object).
 - [ ] Implement and support dark theme across the application.
+- [ ] Explore `flutter_flavorizr` for managing native app flavors (Dev, Staging, Prod).
+- [ ] Integrate `firebase_crashlytics` for automatic error tracking and reporting in production.
+- [ ] Integrate `firebase_analytics` to track user engagement and app usage metrics.
+- [ ] Integrate `share_plus` into `IntentService` to allow agents to share deposit details/reports with customers via native share sheets.
+- [ ] Integrate `flutter_native_splash` to generate native splash screens and prevent cold-boot white flashes.
