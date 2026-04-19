@@ -26,13 +26,15 @@ class AppTheme {
 
   // The Master Theme Data
   static ThemeData get lightTheme {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: primary,
+      surface: surface,
+      error: error,
+    );
+
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primary,
-        surface: surface,
-        error: error,
-      ),
+      colorScheme: colorScheme,
       scaffoldBackgroundColor: background,
 
       // AppBar Theme
@@ -76,7 +78,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           ),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
 
@@ -86,30 +88,34 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           ),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
 
       // Input Decoration (Text Fields)
       inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          borderSide: const BorderSide(color: divider),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          borderSide: const BorderSide(color: divider),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          borderSide: const BorderSide(color: primary, width: 2),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          borderSide: const BorderSide(color: error),
+          borderSide: BorderSide(color: colorScheme.error),
         ),
-        labelStyle: const TextStyle(color: textSecondary),
-        prefixIconColor: textSecondary,
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          borderSide: BorderSide(color: colorScheme.error, width: 2),
+        ),
       ),
     );
   }

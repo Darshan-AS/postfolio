@@ -3,6 +3,7 @@ import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/utils/result.dart';
 
 part 'one_time_deposit_model.freezed.dart';
 part 'one_time_deposit_model.g.dart';
@@ -45,7 +46,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
   static String? validateDates(DateTime startDate, DateTime maturityDate) =>
       BaseDeposit.validateDates(startDate, maturityDate);
 
-  static (String?, OneTimeDeposit?) create({
+  static Result<OneTimeDeposit, String> create({
     required String id,
     required String accountNo,
     required double principalAmount,
@@ -61,23 +62,14 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     List<Nominee> nominees = const [],
     DepositStatus status = DepositStatus.active,
   }) {
-    final accountError = BaseDeposit.validateAccountNo(accountNo);
-    if (accountError != null) return (accountError, null);
+    final validationError = BaseDeposit.validateAccountNo(accountNo) ??
+        BaseDeposit.validateAmount(principalAmount, 'Principal Amount') ??
+        BaseDeposit.validateTerm(termYears, termMonths) ??
+        BaseDeposit.validateDates(startDate, maturityDate);
 
-    final amountError = BaseDeposit.validateAmount(
-      principalAmount,
-      'Principal Amount',
-    );
-    if (amountError != null) return (amountError, null);
+    if (validationError != null) return Failure(validationError);
 
-    final termError = BaseDeposit.validateTerm(termYears, termMonths);
-    if (termError != null) return (termError, null);
-
-    final dateError = BaseDeposit.validateDates(startDate, maturityDate);
-    if (dateError != null) return (dateError, null);
-
-    return (
-      null,
+    return Success(
       OneTimeDeposit(
         id: id,
         accountNo: accountNo.trim(),

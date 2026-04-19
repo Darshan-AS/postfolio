@@ -56,3 +56,13 @@
 - [ ] Run `flutterfire configure`.
 - [ ] Build `FirestoreCustomerRepository` and swap out the Fake repository.
 - [ ] Build Firestore repositories for Deposits, RD, and Schemes.
+
+## Phase 6: Enhancements & Refinements (Pending)
+- [ ] Implement comprehensive form field validations across all create/update screens.
+- [ ] Expand `SchemeType` enum and models to support an exhaustive list of Term Deposit variants.
+- [ ] Implement domain logic to auto-calculate maturity amounts based on scheme formulas and interest rates.
+- [ ] Add filtering capabilities to deposit list screens (e.g., view by Active, Matured, Closed status).
+- [ ] Integrate search functionality across all entity listing screens (Customers, Deposits, RDs).
+- [ ] Create and integrate an enum for relationships in the `Nominee` model.
+- [ ] Rethink the data type for `termYears` and `termMonths` in deposit models (e.g., consider using a single duration or custom value object).
+- [ ] Implement and support dark theme across the application.

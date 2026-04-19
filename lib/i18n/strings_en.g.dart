@@ -44,6 +44,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	/// en: 'Postfolio'
 	String get appTitle => 'Postfolio';
 
+	late final TranslationsErrorsEn errors = TranslationsErrorsEn.internal(_root);
 	late final TranslationsCommonEn common = TranslationsCommonEn.internal(_root);
 	late final TranslationsNavEn nav = TranslationsNavEn.internal(_root);
 	late final TranslationsCustomersEn customers = TranslationsCustomersEn.internal(_root);
@@ -52,6 +53,39 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsRecurringDepositsEn recurringDeposits = TranslationsRecurringDepositsEn.internal(_root);
 	late final TranslationsNomineesEn nominees = TranslationsNomineesEn.internal(_root);
 	late final TranslationsEnumsEn enums = TranslationsEnumsEn.internal(_root);
+}
+
+// Path: errors
+class TranslationsErrorsEn {
+	TranslationsErrorsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: '${field} is required'
+	String requiredField({required Object field}) => '${field} is required';
+
+	/// en: '${field} must be greater than 0'
+	String greaterThanZero({required Object field}) => '${field} must be greater than 0';
+
+	/// en: 'Term cannot be negative'
+	String get negativeTerm => 'Term cannot be negative';
+
+	/// en: 'Maturity date cannot be before start date'
+	String get invalidMaturityDate => 'Maturity date cannot be before start date';
+
+	/// en: '${field} must be at least ${count} characters'
+	String minLength({required Object field, required Object count}) => '${field} must be at least ${count} characters';
+
+	/// en: 'Invalid email format'
+	String get invalidEmail => 'Invalid email format';
+
+	/// en: 'Invalid phone number (7-15 digits)'
+	String get invalidPhone => 'Invalid phone number (7-15 digits)';
+
+	/// en: 'Savings Account Number is required to add nominees'
+	String get sbAccountRequiredForNominee => 'Savings Account Number is required to add nominees';
 }
 
 // Path: common
@@ -601,6 +635,14 @@ extension on Translations {
 	dynamic _flatMapFunction(String path) {
 		return switch (path) {
 			'appTitle' => 'Postfolio',
+			'errors.requiredField' => ({required Object field}) => '${field} is required',
+			'errors.greaterThanZero' => ({required Object field}) => '${field} must be greater than 0',
+			'errors.negativeTerm' => 'Term cannot be negative',
+			'errors.invalidMaturityDate' => 'Maturity date cannot be before start date',
+			'errors.minLength' => ({required Object field, required Object count}) => '${field} must be at least ${count} characters',
+			'errors.invalidEmail' => 'Invalid email format',
+			'errors.invalidPhone' => 'Invalid phone number (7-15 digits)',
+			'errors.sbAccountRequiredForNominee' => 'Savings Account Number is required to add nominees',
 			'common.loading' => 'Loading...',
 			'common.saving' => 'Saving...',
 			'common.edit' => 'Edit',

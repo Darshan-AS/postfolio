@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:postfolio/core/utils/result.dart';
 
 part 'nominee.freezed.dart';
 part 'nominee.g.dart';
@@ -36,22 +37,18 @@ sealed class Nominee with _$Nominee {
     return null;
   }
 
-  static (String?, Nominee?) create({
+  static Result<Nominee, String> create({
     required String name,
     required String relationship,
     required double percentage,
   }) {
-    final nameError = validateName(name);
-    if (nameError != null) return (nameError, null);
+    final error = validateName(name) ??
+        validateRelationship(relationship) ??
+        validatePercentage(percentage);
 
-    final relError = validateRelationship(relationship);
-    if (relError != null) return (relError, null);
+    if (error != null) return Failure(error);
 
-    final pctError = validatePercentage(percentage);
-    if (pctError != null) return (pctError, null);
-
-    return (
-      null,
+    return Success(
       Nominee(
         name: name.trim(),
         relationship: relationship.trim(),

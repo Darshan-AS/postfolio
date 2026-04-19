@@ -38,7 +38,7 @@ class CustomersController extends _$CustomersController {
     String? savingsAccountNumber,
     List<Nominee>? savingsNominees,
   }) async {
-    final (error, customer) = Customer.create(
+    final createResult = Customer.create(
       id: id ?? '', // FakeRepo will assign a real ID if creating
       name: name,
       email: email,
@@ -52,8 +52,12 @@ class CustomersController extends _$CustomersController {
       savingsNominees: savingsNominees,
     );
 
-    if (error != null || customer == null) {
-      return Failure(error ?? 'Invalid customer data provided');
+    final Customer customer;
+    switch (createResult) {
+      case Failure(error: final err):
+        return Failure(err);
+      case Success(value: final c):
+        customer = c;
     }
 
     final repository = ref.read(customerRepositoryProvider);

@@ -1,5 +1,15 @@
 appTitle: "Postfolio"
 
+errors:
+  requiredField: "${field} is required"
+  greaterThanZero: "${field} must be greater than 0"
+  negativeTerm: "Term cannot be negative"
+  invalidMaturityDate: "Maturity date cannot be before start date"
+  minLength: "${field} must be at least ${count} characters"
+  invalidEmail: "Invalid email format"
+  invalidPhone: "Invalid phone number (7-15 digits)"
+  sbAccountRequiredForNominee: "Savings Account Number is required to add nominees"
+
 common:
   loading: "Loading..."
   saving: "Saving..."

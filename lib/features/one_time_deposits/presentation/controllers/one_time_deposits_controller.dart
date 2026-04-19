@@ -43,7 +43,7 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
     String? linkedSavingsAccountNo,
     List<Nominee> nominees = const [],
   }) async {
-    final (error, deposit) = OneTimeDeposit.create(
+    final createResult = OneTimeDeposit.create(
       id: id ?? '', // FakeRepo will assign a real ID if creating
       accountNo: accountNo,
       principalAmount: principalAmount,
@@ -60,8 +60,12 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
       nominees: nominees,
     );
 
-    if (error != null || deposit == null) {
-      return Failure(error ?? 'Invalid one time deposit data provided');
+    final OneTimeDeposit deposit;
+    switch (createResult) {
+      case Failure(error: final err):
+        return Failure(err);
+      case Success(value: final d):
+        deposit = d;
     }
 
     final repository = ref.read(oneTimeDepositRepositoryProvider);

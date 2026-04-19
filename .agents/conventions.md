@@ -10,7 +10,7 @@
 - **Immutability**: Freezed for all domain models. Never mutate state.
 - **Sealed Classes**: Always use `sealed class` for Freezed models to enable exhaustive pattern matching.
 - **Modern Dart 3 Features**: Use native Records, Pattern matching, and Sealed classes for error handling and state unions instead of third-party packages (e.g., `dartz`).
-- **Domain Validation**: Use extension methods or Smart Factory constructors (`Model.create()`) on Freezed models to return `(String? error, Model? data)` tuples. Avoid primitive Value Objects.
+- **Domain Validation**: Use extension methods or Smart Factory constructors (`Model.create()`) on Freezed models to return `Result<Model, String>` types to leverage exhaustive pattern matching. Avoid primitive Value Objects.
 - **Error Handling**: Controllers must return typed `Result<SuccessType, ErrorType>` records/sealed classes instead of throwing exceptions.
 - **Controller Result Matching**: For controller mutation operations (`save`, `delete`), match the result using `switch` on the `Result`. If `Success`, explicitly trigger `ref.invalidateSelf()` and return `Success`. Never manually update the local `state` cache to avoid bugs. Let `build()` fetch the single source of truth from the repository.
 

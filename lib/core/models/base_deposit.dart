@@ -1,5 +1,6 @@
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 abstract interface class BaseDeposit {
   String get id;
@@ -16,25 +17,25 @@ abstract interface class BaseDeposit {
 
   static String? validateAccountNo(String? accountNo) {
     if (accountNo == null || accountNo.trim().isEmpty) {
-      return 'Account number is required';
+      return t.errors.requiredField(field: 'Account number');
     }
     return null;
   }
 
   static String? validateAmount(double? amount, String fieldName) {
-    if (amount == null) return '$fieldName is required';
-    if (amount <= 0) return '$fieldName must be greater than 0';
+    if (amount == null) return t.errors.requiredField(field: fieldName);
+    if (amount <= 0) return t.errors.greaterThanZero(field: fieldName);
     return null;
   }
 
   static String? validateTerm(int years, int months) {
-    if (years < 0 || months < 0) return 'Term cannot be negative';
+    if (years < 0 || months < 0) return t.errors.negativeTerm;
     return null;
   }
 
   static String? validateDates(DateTime startDate, DateTime maturityDate) {
     if (maturityDate.isBefore(startDate)) {
-      return 'Maturity date cannot be before start date';
+      return t.errors.invalidMaturityDate;
     }
     return null;
   }

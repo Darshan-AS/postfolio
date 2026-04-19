@@ -45,7 +45,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     String? linkedAutoDebitAccountNo,
     List<Nominee> nominees = const [],
   }) async {
-    final (error, deposit) = RecurringDeposit.create(
+    final createResult = RecurringDeposit.create(
       id: id ?? '', // FakeRepo will assign a real ID if creating
       serialNo: serialNo,
       accountNo: accountNo,
@@ -63,8 +63,12 @@ class RecurringDepositsController extends _$RecurringDepositsController {
       nominees: nominees,
     );
 
-    if (error != null || deposit == null) {
-      return Failure(error ?? 'Invalid recurring deposit data provided');
+    final RecurringDeposit deposit;
+    switch (createResult) {
+      case Failure(error: final err):
+        return Failure(err);
+      case Success(value: final d):
+        deposit = d;
     }
 
     final repository = ref.read(recurringDepositRepositoryProvider);
