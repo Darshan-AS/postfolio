@@ -28,6 +28,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
       idSelector: (d) => d.id,
       notFoundMessage: t.recurringDeposits.depositNotFound,
       onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
+      dummyEntity: RecurringDeposit.dummy,
       builder: (deposit) {
         return EntityDetailScaffold(
           appBarTitle: "Deposit Details",

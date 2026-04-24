@@ -33,6 +33,21 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   factory RecurringDeposit.fromJson(Map<String, dynamic> json) =>
       _$RecurringDepositFromJson(json);
 
+  static RecurringDeposit get dummy => RecurringDeposit(
+        id: 'dummy',
+        serialNo: 'RD12345',
+        accountNo: 'Loading...',
+        installmentAmount: 1000.0,
+        termYears: 5,
+        termMonths: 0,
+        interestRate: 5.8,
+        customerId: 'Loading Dummy Name...',
+        schemeType: RecurringSchemeType.recurringDeposit,
+        maturityAmount: 60000.0,
+        startDate: DateTime.now(),
+        maturityDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      );
+
   // --- Domain Validation Rules ---
 
   static String? validateAccountNo(String? accountNo) =>

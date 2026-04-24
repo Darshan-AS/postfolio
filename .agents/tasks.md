@@ -59,7 +59,7 @@
 - [x] Refactor `AppTheme` into a granular file structure inside `lib/core/theme/`.
 - [x] Extract generic `AppTextField` widgets into `lib/core/widgets/`, removing all `.w`/`.h`/`.sp` screenutil references.
 - [ ] Replace standard `FilledButton` usages across the app with `AppButton` to leverage built-in loading states. (To rethink)
-- [ ] Integrate `skeletonizer` for list and detail loading states.
+- [x] Integrate `skeletonizer` for list and detail loading states.
 - [ ] Integrate `flutter_animate` for UI entry/exit animations.
 - [ ] Migrate all icons from `font_awesome_flutter` and Material to `hugeicons`.
 - [ ] Track structural decisions in `conventions.md`.
@@ -72,6 +72,7 @@
 - [ ] Implement Phone (OTP) Authentication.
 - [ ] Build `FirestoreCustomerRepository` and swap out the Fake repository.
 - [ ] Build Firestore repositories for Deposits, RD, and Schemes.
+- [ ] **Refactor Data Fetching**: Transition detail screens from list-based filtering (`AsyncValue<List<T>>`) to single-document fetching (`AsyncValue<T>`) using Riverpod family providers to improve efficiency with Firestore. Rewrite `AsyncEntityBuilder` accordingly.
 
 ## Phase 7: Enhancements & Refinements (Pending)
 - [ ] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.

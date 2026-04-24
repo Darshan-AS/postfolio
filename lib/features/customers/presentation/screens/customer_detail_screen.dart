@@ -31,6 +31,7 @@ class CustomerDetailScreen extends ConsumerWidget {
       idSelector: (c) => c.id,
       notFoundMessage: t.customers.customerNotFound,
       onRetry: () => ref.invalidate(customersControllerProvider),
+      dummyEntity: Customer.dummy,
       builder: (customer) {
         return EntityDetailScaffold(
           appBarTitle: t.customers.customerDetails,

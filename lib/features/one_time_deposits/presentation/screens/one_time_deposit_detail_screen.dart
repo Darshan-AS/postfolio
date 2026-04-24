@@ -28,6 +28,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
       idSelector: (d) => d.id,
       notFoundMessage: t.oneTimeDeposits.depositNotFound,
       onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
+      dummyEntity: OneTimeDeposit.dummy,
       builder: (deposit) {
         return EntityDetailScaffold(
           appBarTitle: "Deposit Details",

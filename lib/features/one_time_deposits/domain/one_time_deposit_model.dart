@@ -32,6 +32,19 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
   factory OneTimeDeposit.fromJson(Map<String, dynamic> json) =>
       _$OneTimeDepositFromJson(json);
 
+  static OneTimeDeposit get dummy => OneTimeDeposit(
+        id: 'dummy',
+        accountNo: 'Loading...',
+        principalAmount: 10000.0,
+        termYears: 5,
+        termMonths: 0,
+        customerId: 'Loading Dummy Name...',
+        schemeType: OneTimeSchemeType.timeDeposit,
+        maturityAmount: 15000.0,
+        startDate: DateTime.now(),
+        maturityDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      );
+
   // --- Domain Validation Rules ---
 
   static String? validateAccountNo(String? accountNo) =>

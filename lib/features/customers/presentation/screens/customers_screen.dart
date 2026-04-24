@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
+import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_card.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
@@ -9,6 +10,7 @@ import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/core/services/intent_service.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class CustomersScreen extends ConsumerWidget {
   const CustomersScreen({super.key});
@@ -115,7 +117,30 @@ class CustomersScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Skeletonizer(
+          enabled: true,
+          child: ListView.separated(
+            padding: const EdgeInsets.only(
+              bottom: AppDimensions.listBottomPaddingFAB,
+            ),
+            itemCount: 5,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final dummy = Customer.dummy;
+              return CustomerCard(
+                name: dummy.name,
+                phone: dummy.phone ?? '',
+                onTap: () {},
+                onEdit: () {},
+                onDelete: () {},
+                onPhoneTapped: () {},
+                onWhatsAppTapped: () {},
+                onSmsTapped: () {},
+                onLocationTapped: () {},
+              );
+            },
+          ),
+        ),
         error: (error, stack) => ErrorStateView(
           message: error.toString(),
           onRetry: () => ref.invalidate(customersControllerProvider),

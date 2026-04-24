@@ -27,6 +27,17 @@ sealed class Customer with _$Customer {
   factory Customer.fromJson(Map<String, dynamic> json) =>
       _$CustomerFromJson(json);
 
+  static Customer get dummy => const Customer(
+        id: 'dummy',
+        name: 'Loading dummy data...',
+        phone: '+91 00000 00000',
+        email: 'dummy@dummy.com',
+        address: '123 Dummy Street, Dummy City',
+        cifNumber: '1234567890',
+        aadhaarNumber: '1234 5678 9012',
+        panNumber: 'ABCDE1234F',
+      );
+
   // --- Domain Validation Rules ---
 
   static String? validateName(String? name) {

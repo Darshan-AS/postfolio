@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
+import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class OneTimeDepositsScreen extends ConsumerWidget {
   const OneTimeDepositsScreen({super.key});
@@ -91,7 +93,29 @@ class OneTimeDepositsScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Skeletonizer(
+          enabled: true,
+          child: ListView.separated(
+            padding: const EdgeInsets.only(
+              bottom: AppDimensions.listBottomPaddingFAB,
+            ),
+            itemCount: 5,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final dummy = OneTimeDeposit.dummy;
+              return OneTimeDepositCard(
+                customerId: dummy.customerId,
+                accountNo: dummy.accountNo,
+                principalAmount: dummy.principalAmount,
+                status: dummy.status,
+                maturityDate: dummy.maturityDate,
+                onTap: () {},
+                onEdit: () {},
+                onDelete: () {},
+              );
+            },
+          ),
+        ),
         error: (error, stack) => ErrorStateView(
           message: error.toString(),
           onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
