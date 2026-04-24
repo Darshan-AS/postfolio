@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
@@ -72,7 +74,7 @@ class _CustomerSelectionFieldState
         decoration: AppInputDecoration.m3(
           context,
           labelText: t.oneTimeDeposits.fields.customerId,
-          prefixIcon: Icons.person_outline,
+          prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedUser),
           errorText: widget.errorText,
           isRequired: true,
         ),
@@ -94,7 +96,7 @@ class _CustomerSelectionFieldState
                 displayCustomer.cifNumber ?? displayCustomer.id,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-            const Icon(Icons.arrow_drop_down),
+            const HugeIcon(icon: HugeIcons.strokeRoundedArrowDown01),
           ],
         ),
       ),
@@ -131,7 +133,9 @@ class _CustomerSelectionSheetState
               decoration: AppInputDecoration.m3(
                 context,
                 hintText: t.customers.searchHint,
-                prefixIcon: Icons.search,
+                prefixIcon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedSearch01,
+                ),
               ),
               onChanged: (value) =>
                   setState(() => _searchQuery = value.toLowerCase()),
@@ -159,7 +163,9 @@ class _CustomerSelectionSheetState
                   itemBuilder: (context, index) {
                     final customer = filtered[index];
                     return EntityListTile(
-                      leadingText: customer.name.isNotEmpty ? customer.name.substring(0, 1).toUpperCase() : '?',
+                      leadingText: customer.name.isNotEmpty
+                          ? customer.name.substring(0, 1).toUpperCase()
+                          : '?',
                       title: customer.name,
                       subtitle: Text(
                         [

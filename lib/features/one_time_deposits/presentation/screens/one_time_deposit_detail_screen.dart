@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:postfolio/core/routing/app_router.dart';
@@ -39,10 +41,17 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
             final result = await ref
                 .read(oneTimeDepositsControllerProvider.notifier)
                 .deleteOneTimeDeposit(depositId);
-            return result is Failure ? t.oneTimeDeposits.failedToDeleteDeposit(error: (result as Failure).error.toString()) : null;
+            return result is Failure
+                ? t.oneTimeDeposits.failedToDeleteDeposit(
+                    error: (result as Failure).error.toString(),
+                  )
+                : null;
           },
           header: EntityDetailHeader(
-            avatarChild: const Icon(Icons.account_balance_wallet_outlined, size: AppDimensions.iconLg),
+            avatarChild: const HugeIcon(
+              icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
+              size: AppDimensions.iconLg,
+            ),
             title: deposit!.accountNo,
             subtitle: Text(
               deposit.schemeType.displayName,
@@ -63,7 +72,9 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 DetailAmountCard(
                   title: t.oneTimeDeposits.fields.maturityAmount,
                   amount: deposit.maturityAmount,
-                  backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.tertiaryContainer,
                   textColor: Theme.of(context).colorScheme.onTertiaryContainer,
                 ),
               ],
@@ -73,13 +84,14 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               title: t.oneTimeDeposits.sections.investmentDetails,
               children: [
                 DetailItem(
-                  icon: Icons.calendar_today_outlined,
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar01),
                   label: t.oneTimeDeposits.fields.termYears,
-                  value: '${deposit.termYears} Years, ${deposit.termMonths} Months',
+                  value:
+                      '${deposit.termYears} Years, ${deposit.termMonths} Months',
                 ),
                 const Divider(height: 1),
                 DetailItem(
-                  icon: Icons.percent_outlined,
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedPercent),
                   label: t.oneTimeDeposits.fields.interestRate,
                   value: '${deposit.interestRate.toStringAsFixed(2)}%',
                 ),
@@ -90,13 +102,13 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               title: t.oneTimeDeposits.sections.timeline,
               children: [
                 DetailItem(
-                  icon: Icons.date_range_outlined,
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar02),
                   label: t.oneTimeDeposits.fields.depositDate,
                   value: dateFormat.format(deposit.startDate),
                 ),
                 const Divider(height: 1),
                 DetailItem(
-                  icon: Icons.event_available_outlined,
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar03),
                   label: t.oneTimeDeposits.fields.maturityDate,
                   value: dateFormat.format(deposit.maturityDate),
                 ),
@@ -107,14 +119,22 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               title: t.oneTimeDeposits.sections.accountInformation,
               children: [
                 DetailItem(
-                  icon: Icons.account_circle_outlined,
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedUser),
                   label: t.oneTimeDeposits.fields.customerId,
-                  value: ref.watch(customersControllerProvider).value?.where((c) => c.id == deposit.customerId).firstOrNull?.name ?? deposit.customerId,
+                  value:
+                      ref
+                          .watch(customersControllerProvider)
+                          .value
+                          ?.where((c) => c.id == deposit.customerId)
+                          .firstOrNull
+                          ?.name ??
+                      deposit.customerId,
                 ),
-                if (deposit.linkedSavingsAccountNo != null && deposit.linkedSavingsAccountNo!.isNotEmpty) ...[
+                if (deposit.linkedSavingsAccountNo != null &&
+                    deposit.linkedSavingsAccountNo!.isNotEmpty) ...[
                   const Divider(height: 1),
                   DetailItem(
-                    icon: Icons.account_balance_outlined,
+                    icon: const HugeIcon(icon: HugeIcons.strokeRoundedBank),
                     label: t.oneTimeDeposits.fields.linkedSavingsAccount,
                     value: deposit.linkedSavingsAccountNo!,
                   ),

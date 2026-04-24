@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
@@ -193,7 +195,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppTextField(
                 controller: _nameController,
                 labelText: t.customers.fields.fullName,
-                prefixIcon: Icons.person_outline,
+                prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedUser),
                 isRequired: true,
                 validator: Customer.validateName,
                 textInputAction: TextInputAction.next,
@@ -202,7 +204,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppTextField(
                 controller: _phoneController,
                 labelText: t.customers.fields.phoneNumber,
-                prefixIcon: Icons.phone_outlined,
+                prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedCall02),
                 validator: Customer.validatePhone,
                 keyboardType: TextInputType.phone,
                 textInputAction: TextInputAction.next,
@@ -211,7 +213,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppTextField(
                 controller: _emailController,
                 labelText: t.customers.fields.emailAddress,
-                prefixIcon: Icons.email_outlined,
+                prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedMail01),
                 validator: Customer.validateEmail,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
@@ -226,7 +228,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppTextField(
                 controller: _addressController,
                 labelText: t.customers.fields.homeAddress,
-                prefixIcon: Icons.home_outlined,
+                prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedHome01),
                 maxLines: 3,
               ),
               AppSpacings.gapXl,
@@ -241,14 +243,16 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppTextField(
                 controller: _cifNumberController,
                 labelText: t.customers.fields.cif,
-                prefixIcon: Icons.confirmation_number_outlined,
+                prefixIcon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedTicket01,
+                ),
                 textInputAction: TextInputAction.next,
               ),
               AppSpacings.gapMd,
               AppTextField(
                 controller: _aadhaarNumberController,
                 labelText: t.customers.fields.aadhaarNumber,
-                prefixIcon: Icons.badge_outlined,
+                prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedId),
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
               ),
@@ -256,7 +260,9 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppTextField(
                 controller: _panNumberController,
                 labelText: t.customers.fields.panNumber,
-                prefixIcon: Icons.credit_card_outlined,
+                prefixIcon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedCreditCard,
+                ),
                 textInputAction: TextInputAction.next,
               ),
               AppSpacings.gapXl,
@@ -271,7 +277,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppTextField(
                 controller: _savingsAccountNumberController,
                 labelText: t.customers.fields.sbAccountNumber,
-                prefixIcon: Icons.account_balance_outlined,
+                prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedBank),
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
               ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
@@ -38,7 +40,7 @@ class OneTimeDepositCard extends ConsumerWidget {
         ref.watch(customerByIdProvider(customerId))?.name ?? customerId;
 
     return EntityListTile(
-      leadingIcon: const Icon(Icons.account_balance_wallet_outlined),
+      leadingIcon: const HugeIcon(icon: HugeIcons.strokeRoundedMoneyReceiveSquare),
       leadingBackgroundColor: Theme.of(context).colorScheme.primaryContainer,
       leadingForegroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
       title: customerName,
@@ -81,4 +83,3 @@ class OneTimeDepositCard extends ConsumerWidget {
     );
   }
 }
-

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
+
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
@@ -41,10 +43,7 @@ class EntityDetailScaffold extends StatelessWidget {
       context.pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text(error),
-        ),
+        SnackBar(behavior: SnackBarBehavior.floating, content: Text(error)),
       );
     }
   }
@@ -57,9 +56,12 @@ class EntityDetailScaffold extends StatelessWidget {
       appBar: AppBar(
         title: Text(appBarTitle),
         actions: [
-          IconButton(icon: const Icon(Icons.edit_outlined), onPressed: onEdit),
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedEdit02),
+            onPressed: onEdit,
+          ),
+          IconButton(
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedDelete02),
             color: theme.colorScheme.error,
             onPressed: () => _confirmDelete(context),
           ),
@@ -69,7 +71,10 @@ class EntityDetailScaffold extends StatelessWidget {
         padding: const EdgeInsets.all(AppDimensions.paddingLg),
         children: [header, AppSpacings.gapXxl, ...body]
             .animate(interval: AppAnimations.stagger)
-            .fade(duration: AppAnimations.medium, curve: AppAnimations.defaultCurve)
+            .fade(
+              duration: AppAnimations.medium,
+              curve: AppAnimations.defaultCurve,
+            )
             .slideY(
               begin: AppAnimations.slideOffset,
               end: 0,

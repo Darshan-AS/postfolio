@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/services/intent_service.dart';
@@ -42,7 +42,11 @@ class CustomerDetailScreen extends ConsumerWidget {
             final result = await ref
                 .read(customersControllerProvider.notifier)
                 .deleteCustomer(customerId);
-            return result is Failure ? t.customers.failedToDeleteCustomer(error: (result as Failure).error.toString()) : null;
+            return result is Failure
+                ? t.customers.failedToDeleteCustomer(
+                    error: (result as Failure).error.toString(),
+                  )
+                : null;
           },
           header: EntityDetailHeader(
             avatarChild: Text(
@@ -58,33 +62,43 @@ class CustomerDetailScreen extends ConsumerWidget {
                 if (customer.phone != null)
                   Text(
                     customer.phone!,
-                    style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
+                    style: textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 if (customer.email != null)
                   Text(
                     customer.email!,
-                    style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
               ],
             ),
             bottomActions: [
               if (customer.phone != null && customer.phone!.isNotEmpty) ...[
                 FilledButton.icon(
-                  onPressed: () => ref.read(intentServiceProvider).launchPhone(customer.phone!),
-                  icon: const Icon(Icons.call_outlined),
+                  onPressed: () => ref
+                      .read(intentServiceProvider)
+                      .launchPhone(customer.phone!),
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCall02),
                   label: Text(t.customers.actions.call),
                 ),
                 FilledButton.tonalIcon(
-                  onPressed: () => ref.read(intentServiceProvider).launchSms(customer.phone!),
-                  icon: const Icon(Icons.message_outlined),
+                  onPressed: () => ref
+                      .read(intentServiceProvider)
+                      .launchSms(customer.phone!),
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedComment01),
                   label: Text(t.customers.actions.sms),
                 ),
                 FilledButton.tonalIcon(
-                  onPressed: () => ref.read(intentServiceProvider).launchWhatsApp(customer.phone!),
-                  icon: const FaIcon(FontAwesomeIcons.whatsapp, size: 24),
+                  onPressed: () => ref
+                      .read(intentServiceProvider)
+                      .launchWhatsApp(customer.phone!),
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedWhatsapp),
                   label: Text(t.customers.actions.whatsapp),
                 ),
-              ]
+              ],
             ],
           ),
           body: [
@@ -94,7 +108,9 @@ class CustomerDetailScreen extends ConsumerWidget {
                 children: [
                   if (customer.address != null)
                     DetailItem(
-                      icon: Icons.location_on_outlined,
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedLocation01,
+                      ),
                       label: t.customers.fields.homeAddress,
                       value: customer.address!,
                     ),
@@ -102,7 +118,9 @@ class CustomerDetailScreen extends ConsumerWidget {
                     const Divider(height: 1),
                   if (customer.dateOfBirth != null)
                     DetailItem(
-                      icon: Icons.calendar_today_outlined,
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedCalendar01,
+                      ),
                       label: t.customers.fields.dateOfBirth,
                       value: DateFormat.yMMMd().format(customer.dateOfBirth!),
                     ),
@@ -110,29 +128,38 @@ class CustomerDetailScreen extends ConsumerWidget {
               ),
               AppSpacings.gapLg,
             ],
-            if (customer.cifNumber != null || customer.aadhaarNumber != null || customer.panNumber != null) ...[
+            if (customer.cifNumber != null ||
+                customer.aadhaarNumber != null ||
+                customer.panNumber != null) ...[
               DetailSection(
                 title: t.customers.sections.identityDocuments,
                 children: [
                   if (customer.cifNumber != null)
                     DetailItem(
-                      icon: Icons.confirmation_number_outlined,
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedTicket01,
+                      ),
                       label: t.customers.fields.cif,
                       value: customer.cifNumber!,
                     ),
-                  if (customer.cifNumber != null && (customer.aadhaarNumber != null || customer.panNumber != null))
+                  if (customer.cifNumber != null &&
+                      (customer.aadhaarNumber != null ||
+                          customer.panNumber != null))
                     const Divider(height: 1),
                   if (customer.aadhaarNumber != null)
                     DetailItem(
-                      icon: Icons.badge_outlined,
+                      icon: const HugeIcon(icon: HugeIcons.strokeRoundedId),
                       label: t.customers.fields.aadhaarNumber,
                       value: customer.aadhaarNumber!,
                     ),
-                  if (customer.aadhaarNumber != null && customer.panNumber != null)
+                  if (customer.aadhaarNumber != null &&
+                      customer.panNumber != null)
                     const Divider(height: 1),
                   if (customer.panNumber != null)
                     DetailItem(
-                      icon: Icons.credit_card_outlined,
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedCreditCard,
+                      ),
                       label: t.customers.fields.panNumber,
                       value: customer.panNumber!,
                     ),
@@ -146,7 +173,7 @@ class CustomerDetailScreen extends ConsumerWidget {
                 children: [
                   if (customer.savingsAccount?.accountNumber != null)
                     DetailItem(
-                      icon: Icons.account_balance_outlined,
+                      icon: const HugeIcon(icon: HugeIcons.strokeRoundedBank),
                       label: t.customers.fields.sbAccountNumber,
                       value: customer.savingsAccount!.accountNumber,
                     ),
@@ -154,7 +181,9 @@ class CustomerDetailScreen extends ConsumerWidget {
               ),
               AppSpacings.gapLg,
               if (customer.savingsAccount?.nominees != null)
-                NomineesDetailSection(nominees: customer.savingsAccount!.nominees),
+                NomineesDetailSection(
+                  nominees: customer.savingsAccount!.nominees,
+                ),
             ],
           ],
         );

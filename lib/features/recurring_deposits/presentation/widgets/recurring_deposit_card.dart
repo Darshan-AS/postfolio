@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
@@ -39,9 +41,11 @@ class RecurringDepositCard extends ConsumerWidget {
         ref.watch(customerByIdProvider(customerId))?.name ?? customerId;
 
     return EntityListTile(
-      leadingIcon: const Icon(Icons.loop_outlined),
+      leadingIcon: const HugeIcon(icon: HugeIcons.strokeRoundedTransaction),
       leadingBackgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-      leadingForegroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
+      leadingForegroundColor: Theme.of(
+        context,
+      ).colorScheme.onSecondaryContainer,
       title: customerName,
       subtitle: Text.rich(
         TextSpan(
@@ -82,4 +86,3 @@ class RecurringDepositCard extends ConsumerWidget {
     );
   }
 }
-

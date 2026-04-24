@@ -42,7 +42,8 @@ sealed class Nominee with _$Nominee {
     required String relationship,
     required double percentage,
   }) {
-    final error = validateName(name) ??
+    final error =
+        validateName(name) ??
         validateRelationship(relationship) ??
         validatePercentage(percentage);
 

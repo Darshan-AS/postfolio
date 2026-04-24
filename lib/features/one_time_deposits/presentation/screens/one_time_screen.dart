@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
@@ -20,11 +22,14 @@ class OneTimeDepositsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.menu), onPressed: () {}),
+        leading: IconButton(
+          icon: const HugeIcon(icon: HugeIcons.strokeRoundedMenu01),
+          onPressed: () {},
+        ),
         title: Row(
           children: [
-            Icon(
-              Icons.account_balance_wallet_outlined,
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
               color: Theme.of(context).colorScheme.primary,
             ),
             AppSpacings.gapSm,
@@ -36,7 +41,12 @@ class OneTimeDepositsScreen extends ConsumerWidget {
             ),
           ],
         ),
-        actions: [IconButton(icon: const Icon(Icons.search), onPressed: () {})],
+        actions: [
+          IconButton(
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch01),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: depositsState.when(
         data: (deposits) {
@@ -123,7 +133,7 @@ class OneTimeDepositsScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => const OneTimeDepositCreateRoute().push(context),
-        icon: const Icon(Icons.add),
+        icon: const HugeIcon(icon: HugeIcons.strokeRoundedAdd01),
         label: Text(t.oneTimeDeposits.newDeposit),
       ),
     );

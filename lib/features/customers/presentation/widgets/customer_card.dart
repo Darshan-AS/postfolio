@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../../../../core/widgets/entity_list_tile.dart';
 import '../../../../i18n/strings.g.dart';
@@ -47,27 +47,27 @@ class CustomerCard extends StatelessWidget {
         EntityAction(
           type: EntityActionType.call,
           label: t.customers.actions.call,
-          icon: Icons.phone_outlined,
+          icon: const HugeIcon(icon: HugeIcons.strokeRoundedCall02),
           onTap: onPhoneTapped,
           isInline: true,
         ),
         EntityAction(
           type: EntityActionType.whatsapp,
           label: t.customers.actions.whatsapp,
-          customIcon: const FaIcon(FontAwesomeIcons.whatsapp, size: 24.0),
+          icon: const HugeIcon(icon: HugeIcons.strokeRoundedWhatsapp),
           onTap: onWhatsAppTapped,
           isInline: true,
         ),
         EntityAction(
           type: EntityActionType.sms,
           label: t.customers.actions.sms,
-          icon: Icons.message_outlined,
+          icon: const HugeIcon(icon: HugeIcons.strokeRoundedComment01),
           onTap: onSmsTapped,
         ),
         EntityAction(
           type: EntityActionType.location,
           label: t.customers.actions.location,
-          icon: Icons.location_on_outlined,
+          icon: const HugeIcon(icon: HugeIcons.strokeRoundedLocation01),
           onTap: onLocationTapped,
         ),
         EntityAction.delete(onTap: onDelete),
@@ -75,4 +75,3 @@ class CustomerCard extends StatelessWidget {
     );
   }
 }
-

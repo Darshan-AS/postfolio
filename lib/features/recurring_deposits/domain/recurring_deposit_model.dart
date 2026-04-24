@@ -34,19 +34,19 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
       _$RecurringDepositFromJson(json);
 
   static RecurringDeposit get dummy => RecurringDeposit(
-        id: 'dummy',
-        serialNo: 'RD12345',
-        accountNo: 'Loading...',
-        installmentAmount: 1000.0,
-        termYears: 5,
-        termMonths: 0,
-        interestRate: 5.8,
-        customerId: 'Loading Dummy Name...',
-        schemeType: RecurringSchemeType.recurringDeposit,
-        maturityAmount: 60000.0,
-        startDate: DateTime.now(),
-        maturityDate: DateTime.now().add(const Duration(days: 365 * 5)),
-      );
+    id: 'dummy',
+    serialNo: 'RD12345',
+    accountNo: 'Loading...',
+    installmentAmount: 1000.0,
+    termYears: 5,
+    termMonths: 0,
+    interestRate: 5.8,
+    customerId: 'Loading Dummy Name...',
+    schemeType: RecurringSchemeType.recurringDeposit,
+    maturityAmount: 60000.0,
+    startDate: DateTime.now(),
+    maturityDate: DateTime.now().add(const Duration(days: 365 * 5)),
+  );
 
   // --- Domain Validation Rules ---
 
@@ -79,7 +79,8 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     List<Nominee> nominees = const [],
     DepositStatus status = DepositStatus.active,
   }) {
-    final validationError = BaseDeposit.validateAccountNo(accountNo) ??
+    final validationError =
+        BaseDeposit.validateAccountNo(accountNo) ??
         BaseDeposit.validateAmount(installmentAmount, 'Installment amount') ??
         BaseDeposit.validateTerm(termYears, termMonths) ??
         BaseDeposit.validateDates(startDate, maturityDate);

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
@@ -20,11 +22,14 @@ class RecurringDepositsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.menu), onPressed: () {}),
+        leading: IconButton(
+          icon: const HugeIcon(icon: HugeIcons.strokeRoundedMenu01),
+          onPressed: () {},
+        ),
         title: Row(
           children: [
-            Icon(
-              Icons.loop_outlined,
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedTransaction,
               color: Theme.of(context).colorScheme.secondary,
             ),
             AppSpacings.gapSm,
@@ -36,7 +41,12 @@ class RecurringDepositsScreen extends ConsumerWidget {
             ),
           ],
         ),
-        actions: [IconButton(icon: const Icon(Icons.search), onPressed: () {})],
+        actions: [
+          IconButton(
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch01),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: depositsState.when(
         data: (deposits) {
@@ -125,7 +135,7 @@ class RecurringDepositsScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => const RecurringDepositCreateRoute().push(context),
-        icon: const Icon(Icons.add),
+        icon: const HugeIcon(icon: HugeIcons.strokeRoundedAdd01),
         label: Text(t.recurringDeposits.newDeposit),
       ),
     );

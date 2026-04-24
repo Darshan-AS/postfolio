@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
 
 class AppTextField extends StatelessWidget {
   final TextEditingController? controller;
   final String labelText;
   final String? hintText;
-  final IconData? prefixIcon;
+  final Widget? prefixIcon;
   final bool isRequired;
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
@@ -58,7 +59,7 @@ class AppTextField extends StatelessWidget {
 class AppDropdownField<T> extends StatelessWidget {
   final T? value;
   final String labelText;
-  final IconData? prefixIcon;
+  final Widget? prefixIcon;
   final bool isRequired;
   final List<DropdownMenuItem<T>> items;
   final void Function(T?)? onChanged;
@@ -111,7 +112,7 @@ class AppDateField extends StatelessWidget {
     return AppTextField(
       controller: controller,
       labelText: labelText,
-      prefixIcon: Icons.calendar_today_outlined,
+      prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar01),
       readOnly: true,
       onTap: onTap,
       isRequired: isRequired,

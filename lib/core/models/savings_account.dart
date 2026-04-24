@@ -43,16 +43,14 @@ sealed class SavingsAccount with _$SavingsAccount {
     List<Nominee> nominees = const [],
   }) {
     // Functional validation chain
-    final error = validateAccountNumber(accountNumber) ??
+    final error =
+        validateAccountNumber(accountNumber) ??
         (nominees.isNotEmpty ? validateNominees(nominees) : null);
 
     if (error != null) return Failure(error);
 
     return Success(
-      SavingsAccount(
-        accountNumber: accountNumber.trim(),
-        nominees: nominees,
-      ),
+      SavingsAccount(accountNumber: accountNumber.trim(), nominees: nominees),
     );
   }
 }

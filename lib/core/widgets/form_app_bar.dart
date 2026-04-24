@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
+
 import 'package:postfolio/core/theme/app_dimensions.dart';
 
 class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -30,7 +32,10 @@ class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           )
         else
-          IconButton(icon: const Icon(Icons.check), onPressed: onSave),
+          IconButton(
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedTick01),
+            onPressed: onSave,
+          ),
       ],
     );
   }

@@ -21,5 +21,7 @@ class AppColors {
   // Text Colors
   static const Color textPrimary = Color(0xDD000000); // black87 equivalent
   static const Color textSecondary = Color(0xFF757575); // grey[600] equivalent
-  static const Color textTertiary = Color(0xFF9E9E9E); // grey equivalent for faint icons/labels
+  static const Color textTertiary = Color(
+    0xFF9E9E9E,
+  ); // grey equivalent for faint icons/labels
 }

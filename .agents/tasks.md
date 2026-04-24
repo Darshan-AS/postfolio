@@ -41,6 +41,9 @@
 - [x] Standardize Save Buttons across all form screens using `FilledButtonThemeData`.
 - [x] Unify border radius to `radiusLg` across input decorations, cards, and buttons.
 - [x] Standardize bottom padding in all form screens by ensuring a `gapXxl` after the save button.
+- [x] Fix oversized icons in form fields by standardizing prefix icon sizes in the global `InputDecorationTheme`.
+- [ ] Standardize icon sizes for `AppBar` and `ListTile` actions.
+- [ ] Use same icons in entity add/edit page and entity view page.
 
 ## Phase 4: Deposits & RD Features (Completed)
 - [x] Build `OneTimeDepositRepository` and `OneTimeDepositsController`.
@@ -61,7 +64,7 @@
 - [ ] Replace standard `FilledButton` usages across the app with `AppButton` to leverage built-in loading states. (To rethink)
 - [x] Integrate `skeletonizer` for list and detail loading states.
 - [x] Integrate `flutter_animate` for UI entry/exit animations.
-- [ ] Migrate all icons from `font_awesome_flutter` and Material to `hugeicons`.
+- [x] Migrate all icons from `font_awesome_flutter` and Material to `hugeicons`.
 - [ ] Track structural decisions in `conventions.md`.
 
 ## Phase 6: Firebase Integration & Authentication (Pending)

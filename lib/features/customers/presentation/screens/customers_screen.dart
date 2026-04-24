@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
@@ -22,11 +24,14 @@ class CustomersScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.menu), onPressed: () {}),
+        leading: IconButton(
+          icon: const HugeIcon(icon: HugeIcons.strokeRoundedMenu01),
+          onPressed: () {},
+        ),
         title: Row(
           children: [
-            Icon(
-              Icons.groups_outlined,
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedUserMultiple,
               color: Theme.of(context).colorScheme.primary,
             ),
             AppSpacings.gapSm,
@@ -39,13 +44,16 @@ class CustomersScreen extends ConsumerWidget {
           ],
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
           IconButton(
-            icon: const Icon(Icons.check_box_outlined),
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch01),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedCheckList),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedRefresh),
             // Trigger a manual refresh from the controller
             onPressed: () => ref.refresh(customersControllerProvider),
           ),
@@ -148,7 +156,7 @@ class CustomersScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => const CustomerCreateRoute().push(context),
-        icon: const Icon(Icons.add),
+        icon: const HugeIcon(icon: HugeIcons.strokeRoundedAdd01),
         label: Text(t.customers.newCustomer),
       ),
     );

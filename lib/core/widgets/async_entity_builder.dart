@@ -45,10 +45,7 @@ class AsyncEntityBuilder<T> extends StatelessWidget {
       },
       loading: () {
         if (dummyEntity != null) {
-          return Skeletonizer(
-            enabled: true,
-            child: builder(dummyEntity),
-          );
+          return Skeletonizer(enabled: true, child: builder(dummyEntity));
         }
         return Scaffold(
           appBar: AppBar(title: Text(t.common.loading)),

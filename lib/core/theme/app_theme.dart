@@ -25,6 +25,7 @@ class AppTheme {
       elevatedButtonTheme: AppWidgetThemes.elevatedButtonTheme,
       filledButtonTheme: AppWidgetThemes.filledButtonTheme,
       inputDecorationTheme: AppWidgetThemes.inputDecorationTheme(colorScheme),
+      iconButtonTheme: AppWidgetThemes.iconButtonTheme,
     );
   }
 }

@@ -28,15 +28,15 @@ sealed class Customer with _$Customer {
       _$CustomerFromJson(json);
 
   static Customer get dummy => const Customer(
-        id: 'dummy',
-        name: 'Loading dummy data...',
-        phone: '+91 00000 00000',
-        email: 'dummy@dummy.com',
-        address: '123 Dummy Street, Dummy City',
-        cifNumber: '1234567890',
-        aadhaarNumber: '1234 5678 9012',
-        panNumber: 'ABCDE1234F',
-      );
+    id: 'dummy',
+    name: 'Loading dummy data...',
+    phone: '+91 00000 00000',
+    email: 'dummy@dummy.com',
+    address: '123 Dummy Street, Dummy City',
+    cifNumber: '1234567890',
+    aadhaarNumber: '1234 5678 9012',
+    panNumber: 'ABCDE1234F',
+  );
 
   // --- Domain Validation Rules ---
 
@@ -84,10 +84,12 @@ sealed class Customer with _$Customer {
     String? clean(String? s) => s?.trim().isEmpty == true ? null : s?.trim();
 
     // 1. Evaluate all base validations using a null-coalescing chain for fail-fast execution
-    final validationError = validateName(name) ??
+    final validationError =
+        validateName(name) ??
         validateEmail(email) ??
         validatePhone(phone) ??
-        (clean(savingsAccountNumber) == null && (savingsNominees?.isNotEmpty ?? false)
+        (clean(savingsAccountNumber) == null &&
+                (savingsNominees?.isNotEmpty ?? false)
             ? t.errors.sbAccountRequiredForNominee
             : null);
 

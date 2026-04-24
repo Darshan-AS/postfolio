@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
+
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/app_form_fields.dart';
@@ -118,7 +120,7 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
             ),
             FilledButton.tonalIcon(
               onPressed: _addNominee,
-              icon: const Icon(Icons.add),
+              icon: const HugeIcon(icon: HugeIcons.strokeRoundedAdd01),
               label: Text(t.nominees.addNominee),
             ),
           ],
@@ -170,7 +172,9 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
                           IconButton(
-                            icon: const Icon(Icons.delete_outline),
+                            icon: const HugeIcon(
+                              icon: HugeIcons.strokeRoundedDelete02,
+                            ),
                             color: Theme.of(context).colorScheme.error,
                             onPressed: () => _removeNominee(index),
                           ),
@@ -180,7 +184,9 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
                       AppTextField(
                         controller: form.nameController,
                         labelText: t.nominees.name,
-                        prefixIcon: Icons.person_pin_outlined,
+                        prefixIcon: const HugeIcon(
+                          icon: HugeIcons.strokeRoundedUser,
+                        ),
                         isRequired: true,
                         validator: Nominee.validateName,
                         textInputAction: TextInputAction.next,
@@ -189,7 +195,9 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
                       AppTextField(
                         controller: form.relationshipController,
                         labelText: t.nominees.relationship,
-                        prefixIcon: Icons.people_alt_outlined,
+                        prefixIcon: const HugeIcon(
+                          icon: HugeIcons.strokeRoundedUserMultiple,
+                        ),
                         isRequired: true,
                         validator: Nominee.validateRelationship,
                         textInputAction: TextInputAction.next,
@@ -198,7 +206,9 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
                       AppTextField(
                         controller: form.percentageController,
                         labelText: t.nominees.percentage,
-                        prefixIcon: Icons.percent_outlined,
+                        prefixIcon: const HugeIcon(
+                          icon: HugeIcons.strokeRoundedPercent,
+                        ),
                         isRequired: true,
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,

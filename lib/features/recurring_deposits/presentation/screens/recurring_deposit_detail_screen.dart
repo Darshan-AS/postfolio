@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:postfolio/core/routing/app_router.dart';
@@ -39,12 +41,23 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
             final result = await ref
                 .read(recurringDepositsControllerProvider.notifier)
                 .deleteRecurringDeposit(depositId);
-            return result is Failure ? t.recurringDeposits.failedToDeleteDeposit(error: (result as Failure).error.toString()) : null;
+            return result is Failure
+                ? t.recurringDeposits.failedToDeleteDeposit(
+                    error: (result as Failure).error.toString(),
+                  )
+                : null;
           },
           header: EntityDetailHeader(
-            avatarBackgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-            avatarForegroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
-            avatarChild: const Icon(Icons.loop_outlined, size: AppDimensions.iconLg),
+            avatarBackgroundColor: Theme.of(
+              context,
+            ).colorScheme.secondaryContainer,
+            avatarForegroundColor: Theme.of(
+              context,
+            ).colorScheme.onSecondaryContainer,
+            avatarChild: const HugeIcon(
+                icon: HugeIcons.strokeRoundedTransaction,
+              size: AppDimensions.iconLg,
+            ),
             title: deposit!.accountNo,
             subtitle: Text(
               deposit.schemeType.displayName,
@@ -60,14 +73,18 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                 DetailAmountCard(
                   title: t.recurringDeposits.fields.installmentAmount,
                   amount: deposit.installmentAmount,
-                  backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.secondaryContainer,
                   textColor: Theme.of(context).colorScheme.onSecondaryContainer,
                 ),
                 AppSpacings.gapLg,
                 DetailAmountCard(
                   title: t.recurringDeposits.fields.maturityAmount,
                   amount: deposit.maturityAmount,
-                  backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.tertiaryContainer,
                   textColor: Theme.of(context).colorScheme.onTertiaryContainer,
                 ),
               ],
@@ -77,13 +94,14 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
               title: t.recurringDeposits.sections.investmentDetails,
               children: [
                 DetailItem(
-                  icon: Icons.calendar_today_outlined,
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar01),
                   label: t.recurringDeposits.fields.termYears,
-                  value: '${deposit.termYears} Years, ${deposit.termMonths} Months',
+                  value:
+                      '${deposit.termYears} Years, ${deposit.termMonths} Months',
                 ),
                 const Divider(height: 1),
                 DetailItem(
-                  icon: Icons.percent_outlined,
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedPercent),
                   label: t.recurringDeposits.fields.interestRate,
                   value: '${deposit.interestRate.toStringAsFixed(2)}%',
                 ),
@@ -94,13 +112,13 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
               title: t.recurringDeposits.sections.timeline,
               children: [
                 DetailItem(
-                  icon: Icons.date_range_outlined,
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar02),
                   label: t.recurringDeposits.fields.startDate,
                   value: dateFormat.format(deposit.startDate),
                 ),
                 const Divider(height: 1),
                 DetailItem(
-                  icon: Icons.event_available_outlined,
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar03),
                   label: t.recurringDeposits.fields.maturityDate,
                   value: dateFormat.format(deposit.maturityDate),
                 ),
@@ -111,17 +129,23 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
               title: t.recurringDeposits.sections.accountInformation,
               children: [
                 DetailItem(
-                  icon: Icons.tag_outlined,
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedTag01),
                   label: t.recurringDeposits.fields.serialNo,
                   value: deposit.serialNo,
                 ),
                 const Divider(height: 1),
                 DetailItem(
-                  icon: Icons.account_circle_outlined,
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedUser),
                   label: t.recurringDeposits.fields.customerId,
-                  value: ref.watch(customersControllerProvider).value?.where((c) => c.id == deposit.customerId).firstOrNull?.name ?? deposit.customerId,
+                  value:
+                      ref
+                          .watch(customersControllerProvider)
+                          .value
+                          ?.where((c) => c.id == deposit.customerId)
+                          .firstOrNull
+                          ?.name ??
+                      deposit.customerId,
                 ),
-                
               ],
             ),
             AppSpacings.gapLg,

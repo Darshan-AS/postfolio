@@ -50,7 +50,7 @@ class DetailSection extends StatelessWidget {
 class DetailItem extends StatelessWidget {
   final String label;
   final String value;
-  final IconData? icon;
+  final Widget? icon;
 
   const DetailItem({
     super.key,
@@ -70,10 +70,12 @@ class DetailItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (icon != null) ...[
-            Icon(
-              icon,
-              size: AppDimensions.iconMd,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            IconTheme(
+              data: IconThemeData(
+                size: AppDimensions.iconMd,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              child: icon!,
             ),
             AppSpacings.gapMd,
           ],
