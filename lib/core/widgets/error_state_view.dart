@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -38,7 +40,12 @@ class ErrorStateView extends StatelessWidget {
               ),
             ],
           ],
-        ),
+        ).animate().fade(duration: AppAnimations.slow).scale(
+              begin: const Offset(0.9, 0.9),
+              end: const Offset(1, 1),
+              duration: AppAnimations.slow,
+              curve: AppAnimations.bounceCurve,
+            ),
       ),
     );
   }

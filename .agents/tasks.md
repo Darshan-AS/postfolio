@@ -60,7 +60,7 @@
 - [x] Extract generic `AppTextField` widgets into `lib/core/widgets/`, removing all `.w`/`.h`/`.sp` screenutil references.
 - [ ] Replace standard `FilledButton` usages across the app with `AppButton` to leverage built-in loading states. (To rethink)
 - [x] Integrate `skeletonizer` for list and detail loading states.
-- [ ] Integrate `flutter_animate` for UI entry/exit animations.
+- [x] Integrate `flutter_animate` for UI entry/exit animations.
 - [ ] Migrate all icons from `font_awesome_flutter` and Material to `hugeicons`.
 - [ ] Track structural decisions in `conventions.md`.
 

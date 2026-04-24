@@ -12,12 +12,13 @@ The project is structurally sound and compiles. We have successfully implemented
 - **Component Extraction**: Unified `Nominee` logic and extracted core widgets like `EntityListTile`, `AppTextField`, and `FormAppBar`.
 - **Skeletonizer Integration**: Integrated `skeletonizer` to provide smooth loading animations in listing screens and detail screens across all features.
 
+- **UI Entry Animations**: Integrated `flutter_animate` to provide smooth, staggered slide and fade animations for all list items and detail screen components natively without boilerplate.
+
 ## Active Technical Debt / Blockers
 - None currently. The architectural cleanup phase is nearing completion.
 
 ## Next Agent Action
 Continue with **Phase 5 (Structural Refactoring)** from `tasks.md`. 
-1. Integrate `flutter_animate` for UI entry/exit animations.
-2. Migrate all icons from `font_awesome_flutter` and Material to `hugeicons`.
+1. Migrate all icons from `font_awesome_flutter` and Material to `hugeicons`.
 
 *Refer to `.agents/session_logs/` for granular historical details.*

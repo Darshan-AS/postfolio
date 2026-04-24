@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/app_dialogs.dart';
 
@@ -65,7 +67,19 @@ class EntityDetailScaffold extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        children: [header, AppSpacings.gapXxl, ...body],
+        children: [header, AppSpacings.gapXxl, ...body]
+            .animate(interval: AppAnimations.stagger)
+            .fade(duration: AppAnimations.medium, curve: AppAnimations.defaultCurve)
+            .slideY(
+              begin: AppAnimations.slideOffset,
+              end: 0,
+              duration: AppAnimations.medium,
+              curve: AppAnimations.defaultCurve,
+            )
+            .shimmer(
+              duration: AppAnimations.slow,
+              color: theme.colorScheme.surfaceTint.withValues(alpha: 0.1),
+            ),
       ),
     );
   }
