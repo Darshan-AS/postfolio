@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/utils/intent_service.dart';
+import 'package:postfolio/core/services/intent_service.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
 import 'package:postfolio/core/widgets/async_entity_builder.dart';

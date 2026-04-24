@@ -53,15 +53,12 @@
 - [x] Build `RecurringDepositDetailScreen`.
 
 ## Phase 5: Structural Refactoring (In Progress)
-- [ ] Reorganize `lib/core/` structure (Create `services/`, `extensions/`, and rename `widgets/` to `shared/widgets/`).
-- [ ] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.
-- [ ] Extract shared services into `lib/core/services/`.
-- [ ] Extract extension methods into `lib/core/extensions/`.
-- [ ] Refactor `AppTheme` into a granular file structure inside `lib/core/theme/`.
-- [ ] Migrate static dimension constants to a `ThemeExtension` (`AppDesignTokens`) attached to `ThemeData`.
-- [ ] Extract generic `AppButton`, `AppCard`, and `AppTextField` widgets into `lib/core/shared/widgets/`, removing all `.w`/`.h`/`.sp` screenutil references.
-- [ ] Refactor existing domain cards (`CustomerCard`, `OneTimeDepositCard`, `RecurringDepositCard`) to use `AppCard` as their base container.
-- [ ] Replace standard `FilledButton` usages across the app with `AppButton` to leverage built-in loading states.
+- [x] Reorganize `lib/core/` structure (Created `services/`, `extensions/`).
+- [x] Extract shared services into `lib/core/services/`.
+- [x] Extract extension methods into `lib/core/extensions/`.
+- [x] Refactor `AppTheme` into a granular file structure inside `lib/core/theme/`.
+- [x] Extract generic `AppTextField` widgets into `lib/core/widgets/`, removing all `.w`/`.h`/`.sp` screenutil references.
+- [ ] Replace standard `FilledButton` usages across the app with `AppButton` to leverage built-in loading states. (To rethink)
 - [ ] Integrate `skeletonizer` for list and detail loading states.
 - [ ] Integrate `flutter_animate` for UI entry/exit animations.
 - [ ] Migrate all icons from `font_awesome_flutter` and Material to `hugeicons`.
@@ -77,6 +74,7 @@
 - [ ] Build Firestore repositories for Deposits, RD, and Schemes.
 
 ## Phase 7: Enhancements & Refinements (Pending)
+- [ ] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.
 - [ ] Implement comprehensive form field validations across all create/update screens.
 - [ ] Expand `SchemeType` enum and models to support an exhaustive list of Term Deposit variants.
 - [ ] **Domain Math - Maturity Calculators:** Implement pure Dart extensions to auto-calculate Maturity Dates (accounting for RD defaults) and Maturity Amounts (compounding for RD/TD/NSC, simple for MIS) based on principal, tenure, and start date.

@@ -6,7 +6,7 @@ import 'package:postfolio/features/customers/presentation/widgets/customer_card.
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/app_dialogs.dart';
-import 'package:postfolio/core/utils/intent_service.dart';
+import 'package:postfolio/core/services/intent_service.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
