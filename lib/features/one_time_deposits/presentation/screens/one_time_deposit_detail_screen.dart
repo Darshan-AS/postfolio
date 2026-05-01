@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
+import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/entity_detail_scaffold.dart';
 import 'package:postfolio/core/widgets/nominees_detail_section.dart';
@@ -84,14 +84,20 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               title: t.oneTimeDeposits.sections.investmentDetails,
               children: [
                 DetailItem(
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar01),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedCalendar01,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: t.oneTimeDeposits.fields.termYears,
                   value:
                       '${deposit.termYears} Years, ${deposit.termMonths} Months',
                 ),
                 const Divider(height: 1),
                 DetailItem(
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedPercent),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedPercent,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: t.oneTimeDeposits.fields.interestRate,
                   value: '${deposit.interestRate.toStringAsFixed(2)}%',
                 ),
@@ -102,13 +108,19 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               title: t.oneTimeDeposits.sections.timeline,
               children: [
                 DetailItem(
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar02),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedCalendar02,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: t.oneTimeDeposits.fields.depositDate,
                   value: dateFormat.format(deposit.startDate),
                 ),
                 const Divider(height: 1),
                 DetailItem(
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar03),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedCalendar03,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: t.oneTimeDeposits.fields.maturityDate,
                   value: dateFormat.format(deposit.maturityDate),
                 ),
@@ -119,7 +131,10 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               title: t.oneTimeDeposits.sections.accountInformation,
               children: [
                 DetailItem(
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedUser),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedUser,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: t.oneTimeDeposits.fields.customerId,
                   value:
                       ref
@@ -134,7 +149,10 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                     deposit.linkedSavingsAccountNo!.isNotEmpty) ...[
                   const Divider(height: 1),
                   DetailItem(
-                    icon: const HugeIcon(icon: HugeIcons.strokeRoundedBank),
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedBank,
+                      size: AppDimensions.iconMd,
+                    ),
                     label: t.oneTimeDeposits.fields.linkedSavingsAccount,
                     value: deposit.linkedSavingsAccountNo!,
                   ),

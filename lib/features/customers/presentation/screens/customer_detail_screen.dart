@@ -5,7 +5,7 @@ import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/services/intent_service.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
+import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/entity_detail_scaffold.dart';
 import 'package:postfolio/core/widgets/nominees_detail_section.dart';
@@ -81,21 +81,30 @@ class CustomerDetailScreen extends ConsumerWidget {
                   onPressed: () => ref
                       .read(intentServiceProvider)
                       .launchPhone(customer.phone!),
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCall02),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedCall02,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: Text(t.customers.actions.call),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: () => ref
                       .read(intentServiceProvider)
                       .launchSms(customer.phone!),
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedComment01),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedComment01,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: Text(t.customers.actions.sms),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: () => ref
                       .read(intentServiceProvider)
                       .launchWhatsApp(customer.phone!),
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedWhatsapp),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedWhatsapp,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: Text(t.customers.actions.whatsapp),
                 ),
               ],
@@ -110,6 +119,7 @@ class CustomerDetailScreen extends ConsumerWidget {
                     DetailItem(
                       icon: const HugeIcon(
                         icon: HugeIcons.strokeRoundedLocation01,
+                        size: AppDimensions.iconMd,
                       ),
                       label: t.customers.fields.homeAddress,
                       value: customer.address!,
@@ -120,6 +130,7 @@ class CustomerDetailScreen extends ConsumerWidget {
                     DetailItem(
                       icon: const HugeIcon(
                         icon: HugeIcons.strokeRoundedCalendar01,
+                        size: AppDimensions.iconMd,
                       ),
                       label: t.customers.fields.dateOfBirth,
                       value: DateFormat.yMMMd().format(customer.dateOfBirth!),
@@ -138,6 +149,7 @@ class CustomerDetailScreen extends ConsumerWidget {
                     DetailItem(
                       icon: const HugeIcon(
                         icon: HugeIcons.strokeRoundedTicket01,
+                        size: AppDimensions.iconMd,
                       ),
                       label: t.customers.fields.cif,
                       value: customer.cifNumber!,
@@ -148,7 +160,10 @@ class CustomerDetailScreen extends ConsumerWidget {
                     const Divider(height: 1),
                   if (customer.aadhaarNumber != null)
                     DetailItem(
-                      icon: const HugeIcon(icon: HugeIcons.strokeRoundedId),
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedId,
+                        size: AppDimensions.iconMd,
+                      ),
                       label: t.customers.fields.aadhaarNumber,
                       value: customer.aadhaarNumber!,
                     ),
@@ -159,6 +174,7 @@ class CustomerDetailScreen extends ConsumerWidget {
                     DetailItem(
                       icon: const HugeIcon(
                         icon: HugeIcons.strokeRoundedCreditCard,
+                        size: AppDimensions.iconMd,
                       ),
                       label: t.customers.fields.panNumber,
                       value: customer.panNumber!,
@@ -173,7 +189,10 @@ class CustomerDetailScreen extends ConsumerWidget {
                 children: [
                   if (customer.savingsAccount?.accountNumber != null)
                     DetailItem(
-                      icon: const HugeIcon(icon: HugeIcons.strokeRoundedBank),
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedBank,
+                        size: AppDimensions.iconMd,
+                      ),
                       label: t.customers.fields.sbAccountNumber,
                       value: customer.savingsAccount!.accountNumber,
                     ),

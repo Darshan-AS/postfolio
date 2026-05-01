@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
+import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/entity_detail_scaffold.dart';
 import 'package:postfolio/core/widgets/nominees_detail_section.dart';
@@ -55,7 +55,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
               context,
             ).colorScheme.onSecondaryContainer,
             avatarChild: const HugeIcon(
-                icon: HugeIcons.strokeRoundedTransaction,
+              icon: HugeIcons.strokeRoundedTransaction,
               size: AppDimensions.iconLg,
             ),
             title: deposit!.accountNo,
@@ -94,14 +94,20 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
               title: t.recurringDeposits.sections.investmentDetails,
               children: [
                 DetailItem(
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar01),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedCalendar01,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: t.recurringDeposits.fields.termYears,
                   value:
                       '${deposit.termYears} Years, ${deposit.termMonths} Months',
                 ),
                 const Divider(height: 1),
                 DetailItem(
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedPercent),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedPercent,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: t.recurringDeposits.fields.interestRate,
                   value: '${deposit.interestRate.toStringAsFixed(2)}%',
                 ),
@@ -112,13 +118,19 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
               title: t.recurringDeposits.sections.timeline,
               children: [
                 DetailItem(
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar02),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedCalendar02,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: t.recurringDeposits.fields.startDate,
                   value: dateFormat.format(deposit.startDate),
                 ),
                 const Divider(height: 1),
                 DetailItem(
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar03),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedCalendar03,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: t.recurringDeposits.fields.maturityDate,
                   value: dateFormat.format(deposit.maturityDate),
                 ),
@@ -129,13 +141,19 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
               title: t.recurringDeposits.sections.accountInformation,
               children: [
                 DetailItem(
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedTag01),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedTag01,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: t.recurringDeposits.fields.serialNo,
                   value: deposit.serialNo,
                 ),
                 const Divider(height: 1),
                 DetailItem(
-                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedUser),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedUser,
+                    size: AppDimensions.iconMd,
+                  ),
                   label: t.recurringDeposits.fields.customerId,
                   value:
                       ref

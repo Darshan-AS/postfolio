@@ -120,7 +120,10 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
             ),
             FilledButton.tonalIcon(
               onPressed: _addNominee,
-              icon: const HugeIcon(icon: HugeIcons.strokeRoundedAdd01),
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedAdd01,
+                size: AppDimensions.iconMd,
+              ),
               label: Text(t.nominees.addNominee),
             ),
           ],
@@ -174,6 +177,7 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
                           IconButton(
                             icon: const HugeIcon(
                               icon: HugeIcons.strokeRoundedDelete02,
+                              size: AppDimensions.iconMd,
                             ),
                             color: Theme.of(context).colorScheme.error,
                             onPressed: () => _removeNominee(index),
@@ -186,6 +190,7 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
                         labelText: t.nominees.name,
                         prefixIcon: const HugeIcon(
                           icon: HugeIcons.strokeRoundedUser,
+                          size: AppDimensions.iconMd,
                         ),
                         isRequired: true,
                         validator: Nominee.validateName,
@@ -197,6 +202,7 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
                         labelText: t.nominees.relationship,
                         prefixIcon: const HugeIcon(
                           icon: HugeIcons.strokeRoundedUserMultiple,
+                          size: AppDimensions.iconMd,
                         ),
                         isRequired: true,
                         validator: Nominee.validateRelationship,
@@ -208,6 +214,7 @@ class _NomineesInputSectionState extends State<NomineesInputSection> {
                         labelText: t.nominees.percentage,
                         prefixIcon: const HugeIcon(
                           icon: HugeIcons.strokeRoundedPercent,
+                          size: AppDimensions.iconMd,
                         ),
                         isRequired: true,
                         keyboardType: const TextInputType.numberWithOptions(

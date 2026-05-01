@@ -3,7 +3,7 @@ import 'package:hugeicons/hugeicons.dart';
 
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
+import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class NomineesDetailSection extends StatelessWidget {
@@ -22,7 +22,10 @@ class NomineesDetailSection extends StatelessWidget {
           children: [
             for (int i = 0; i < nominees.length; i++) ...[
               DetailItem(
-                icon: const HugeIcon(icon: HugeIcons.strokeRoundedUser),
+                icon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedUser,
+                  size: AppDimensions.iconMd,
+                ),
                 label: nominees[i].relationship,
                 value: '${nominees[i].name} (${nominees[i].percentage}%)',
               ),

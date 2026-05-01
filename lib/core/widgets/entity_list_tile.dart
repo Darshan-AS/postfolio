@@ -34,7 +34,10 @@ class EntityAction {
     return EntityAction(
       type: EntityActionType.edit,
       label: t.common.edit,
-      icon: const HugeIcon(icon: HugeIcons.strokeRoundedEdit02),
+      icon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedEdit02,
+        size: AppDimensions.iconMd,
+      ),
       onTap: onTap,
       isInline: isInline,
     );
@@ -44,7 +47,10 @@ class EntityAction {
     return EntityAction(
       type: EntityActionType.delete,
       label: t.common.delete,
-      icon: const HugeIcon(icon: HugeIcons.strokeRoundedDelete02),
+      icon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedDelete02,
+        size: AppDimensions.iconMd,
+      ),
       onTap: onTap,
       isDestructive: true,
     );
@@ -135,6 +141,7 @@ class EntityListTile extends StatelessWidget {
                 PopupMenuButton<EntityAction>(
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedMoreVertical,
+                    size: AppDimensions.iconMd,
                   ),
                   iconSize: AppDimensions.iconMd,
                   tooltip: t.common.moreOptions,

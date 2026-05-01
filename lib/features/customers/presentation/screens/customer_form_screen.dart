@@ -195,7 +195,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppTextField(
                 controller: _nameController,
                 labelText: t.customers.fields.fullName,
-                prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedUser),
+                prefixIcon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedUser,
+                  size: AppDimensions.iconMd,
+                ),
                 isRequired: true,
                 validator: Customer.validateName,
                 textInputAction: TextInputAction.next,
@@ -204,7 +207,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppTextField(
                 controller: _phoneController,
                 labelText: t.customers.fields.phoneNumber,
-                prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedCall02),
+                prefixIcon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedCall02,
+                  size: AppDimensions.iconMd,
+                ),
                 validator: Customer.validatePhone,
                 keyboardType: TextInputType.phone,
                 textInputAction: TextInputAction.next,
@@ -213,7 +219,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppTextField(
                 controller: _emailController,
                 labelText: t.customers.fields.emailAddress,
-                prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedMail01),
+                prefixIcon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedMail01,
+                  size: AppDimensions.iconMd,
+                ),
                 validator: Customer.validateEmail,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
@@ -228,7 +237,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppTextField(
                 controller: _addressController,
                 labelText: t.customers.fields.homeAddress,
-                prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedHome01),
+                prefixIcon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedHome01,
+                  size: AppDimensions.iconMd,
+                ),
                 maxLines: 3,
               ),
               AppSpacings.gapXl,
@@ -245,6 +257,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 labelText: t.customers.fields.cif,
                 prefixIcon: const HugeIcon(
                   icon: HugeIcons.strokeRoundedTicket01,
+                  size: AppDimensions.iconMd,
                 ),
                 textInputAction: TextInputAction.next,
               ),
@@ -252,7 +265,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppTextField(
                 controller: _aadhaarNumberController,
                 labelText: t.customers.fields.aadhaarNumber,
-                prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedId),
+                prefixIcon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedId,
+                  size: AppDimensions.iconMd,
+                ),
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
               ),
@@ -262,6 +278,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
                 labelText: t.customers.fields.panNumber,
                 prefixIcon: const HugeIcon(
                   icon: HugeIcons.strokeRoundedCreditCard,
+                  size: AppDimensions.iconMd,
                 ),
                 textInputAction: TextInputAction.next,
               ),
@@ -277,7 +294,10 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               AppTextField(
                 controller: _savingsAccountNumberController,
                 labelText: t.customers.fields.sbAccountNumber,
-                prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedBank),
+                prefixIcon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedBank,
+                  size: AppDimensions.iconMd,
+                ),
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
               ),

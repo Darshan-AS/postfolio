@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
+import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/entity_list_tile.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
@@ -41,7 +41,10 @@ class RecurringDepositCard extends ConsumerWidget {
         ref.watch(customerByIdProvider(customerId))?.name ?? customerId;
 
     return EntityListTile(
-      leadingIcon: const HugeIcon(icon: HugeIcons.strokeRoundedTransaction),
+      leadingIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedTransaction,
+        size: AppDimensions.iconMd,
+      ),
       leadingBackgroundColor: Theme.of(context).colorScheme.secondaryContainer,
       leadingForegroundColor: Theme.of(
         context,

@@ -67,7 +67,7 @@ class DetailItem extends StatelessWidget {
         vertical: AppDimensions.paddingMd,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (icon != null) ...[
             IconTheme(

@@ -206,7 +206,10 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
             AppTextField(
               controller: _serialNoController,
               labelText: t.recurringDeposits.fields.serialNo,
-              prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedTag01),
+              prefixIcon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedTag01,
+                size: AppDimensions.iconMd,
+              ),
               isRequired: true,
               validator: (val) =>
                   val == null || val.trim().isEmpty ? 'Required' : null,
@@ -216,7 +219,10 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
             AppTextField(
               controller: _accountNoController,
               labelText: t.recurringDeposits.fields.accountNo,
-              prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedTicket01),
+              prefixIcon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedTicket01,
+                size: AppDimensions.iconMd,
+              ),
               isRequired: true,
               validator: RecurringDeposit.validateAccountNo,
               textInputAction: TextInputAction.next,
@@ -227,6 +233,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
               labelText: t.recurringDeposits.fields.status,
               prefixIcon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedInformationCircle,
+                size: AppDimensions.iconMd,
               ),
               items: DepositStatus.values.map((status) {
                 return DropdownMenuItem(
@@ -251,7 +258,10 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
             AppDropdownField<RecurringSchemeType>(
               value: _selectedScheme,
               labelText: t.recurringDeposits.fields.schemeType,
-              prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedTag01),
+              prefixIcon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedTag01,
+                size: AppDimensions.iconMd,
+              ),
               items: RecurringSchemeType.values.map((s) {
                 return DropdownMenuItem(value: s, child: Text(s.displayName));
               }).toList(),
@@ -263,7 +273,10 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
             AppTextField(
               controller: _installmentAmountController,
               labelText: t.recurringDeposits.fields.installmentAmount,
-              prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedMoney01),
+              prefixIcon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedMoney01,
+                size: AppDimensions.iconMd,
+              ),
               isRequired: true,
               keyboardType: TextInputType.number,
               validator: (val) => RecurringDeposit.validateAmount(
@@ -281,6 +294,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                     labelText: t.recurringDeposits.fields.termYears,
                     prefixIcon: const HugeIcon(
                       icon: HugeIcons.strokeRoundedCalendar01,
+                      size: AppDimensions.iconMd,
                     ),
                     isRequired: true,
                     keyboardType: TextInputType.number,
@@ -294,6 +308,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                     labelText: t.recurringDeposits.fields.termMonths,
                     prefixIcon: const HugeIcon(
                       icon: HugeIcons.strokeRoundedCalendar02,
+                      size: AppDimensions.iconMd,
                     ),
                     isRequired: true,
                     keyboardType: TextInputType.number,
@@ -306,7 +321,10 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
             AppTextField(
               controller: _interestRateController,
               labelText: t.recurringDeposits.fields.interestRate,
-              prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedPercent),
+              prefixIcon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedPercent,
+                size: AppDimensions.iconMd,
+              ),
               isRequired: true,
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.next,
@@ -317,6 +335,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
               labelText: t.recurringDeposits.fields.maturityAmount,
               prefixIcon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedPiggyBank,
+                size: AppDimensions.iconMd,
               ),
               isRequired: true,
               keyboardType: TextInputType.number,
@@ -330,7 +349,10 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
             AppTextField(
               controller: _linkedAccountController,
               labelText: t.recurringDeposits.fields.linkedSavingsAccount,
-              prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedBank),
+              prefixIcon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedBank,
+                size: AppDimensions.iconMd,
+              ),
               textInputAction: TextInputAction.next,
             ),
 
@@ -362,7 +384,8 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                       '${_startDate.day}/${_startDate.month}/${_startDate.year}',
                     ),
                     leading: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedCalendar01,
+                      icon: HugeIcons.strokeRoundedCalendar02,
+                      size: AppDimensions.iconMd,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
@@ -387,6 +410,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                     ),
                     leading: const HugeIcon(
                       icon: HugeIcons.strokeRoundedCalendar03,
+                      size: AppDimensions.iconMd,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(

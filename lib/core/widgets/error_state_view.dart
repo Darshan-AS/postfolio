@@ -40,6 +40,7 @@ class ErrorStateView extends StatelessWidget {
                         onPressed: onRetry,
                         icon: const HugeIcon(
                           icon: HugeIcons.strokeRoundedRefresh,
+                          size: AppDimensions.iconMd,
                         ),
                         label: Text(t.common.retry),
                       ),

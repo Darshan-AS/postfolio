@@ -199,7 +199,10 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             AppTextField(
               controller: _accountNoController,
               labelText: t.oneTimeDeposits.fields.accountNo,
-              prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedTicket01),
+              prefixIcon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedTicket01,
+                size: AppDimensions.iconMd,
+              ),
               validator: OneTimeDeposit.validateAccountNo,
               textInputAction: TextInputAction.next,
             ),
@@ -209,6 +212,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
               labelText: t.oneTimeDeposits.fields.status,
               prefixIcon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedInformationCircle,
+                size: AppDimensions.iconMd,
               ),
               items: DepositStatus.values.map((status) {
                 return DropdownMenuItem(
@@ -233,7 +237,10 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             AppDropdownField<OneTimeSchemeType>(
               value: _selectedScheme,
               labelText: t.oneTimeDeposits.fields.schemeType,
-              prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedTag01),
+              prefixIcon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedTag01,
+                size: AppDimensions.iconMd,
+              ),
               items: OneTimeSchemeType.values.map((s) {
                 return DropdownMenuItem(value: s, child: Text(s.displayName));
               }).toList(),
@@ -245,7 +252,10 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             AppTextField(
               controller: _principalAmountController,
               labelText: t.oneTimeDeposits.fields.principalAmount,
-              prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedMoney01),
+              prefixIcon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedMoney01,
+                size: AppDimensions.iconMd,
+              ),
               keyboardType: TextInputType.number,
               validator: (val) => OneTimeDeposit.validateAmount(
                 double.tryParse(val ?? ''),
@@ -262,6 +272,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                     labelText: t.oneTimeDeposits.fields.termYears,
                     prefixIcon: const HugeIcon(
                       icon: HugeIcons.strokeRoundedCalendar01,
+                      size: AppDimensions.iconMd,
                     ),
                     isRequired: true,
                     keyboardType: TextInputType.number,
@@ -275,6 +286,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                     labelText: t.oneTimeDeposits.fields.termMonths,
                     prefixIcon: const HugeIcon(
                       icon: HugeIcons.strokeRoundedCalendar02,
+                      size: AppDimensions.iconMd,
                     ),
                     isRequired: true,
                     keyboardType: TextInputType.number,
@@ -287,7 +299,10 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             AppTextField(
               controller: _interestRateController,
               labelText: t.oneTimeDeposits.fields.interestRate,
-              prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedPercent),
+              prefixIcon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedPercent,
+                size: AppDimensions.iconMd,
+              ),
               isRequired: true,
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.next,
@@ -298,6 +313,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
               labelText: t.oneTimeDeposits.fields.maturityAmount,
               prefixIcon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedPiggyBank,
+                size: AppDimensions.iconMd,
               ),
               isRequired: true,
               keyboardType: TextInputType.number,
@@ -311,7 +327,10 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             AppTextField(
               controller: _linkedAccountController,
               labelText: t.oneTimeDeposits.fields.linkedSavingsAccount,
-              prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedBank),
+              prefixIcon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedBank,
+                size: AppDimensions.iconMd,
+              ),
               textInputAction: TextInputAction.next,
             ),
 
@@ -343,7 +362,8 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                       '${_startDate.day}/${_startDate.month}/${_startDate.year}',
                     ),
                     leading: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedCalendar01,
+                      icon: HugeIcons.strokeRoundedCalendar02,
+                      size: AppDimensions.iconMd,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
@@ -368,6 +388,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                     ),
                     leading: const HugeIcon(
                       icon: HugeIcons.strokeRoundedCalendar03,
+                      size: AppDimensions.iconMd,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(

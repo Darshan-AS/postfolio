@@ -25,13 +25,17 @@ class CustomersScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const HugeIcon(icon: HugeIcons.strokeRoundedMenu01),
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedMenu01,
+            size: AppDimensions.iconMd,
+          ),
           onPressed: () {},
         ),
         title: Row(
           children: [
             HugeIcon(
               icon: HugeIcons.strokeRoundedUserMultiple,
+              size: AppDimensions.iconMd,
               color: Theme.of(context).colorScheme.primary,
             ),
             AppSpacings.gapSm,
@@ -45,15 +49,24 @@ class CustomersScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch01),
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedSearch01,
+              size: AppDimensions.iconMd,
+            ),
             onPressed: () {},
           ),
           IconButton(
-            icon: const HugeIcon(icon: HugeIcons.strokeRoundedCheckList),
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedCheckList,
+              size: AppDimensions.iconMd,
+            ),
             onPressed: () {},
           ),
           IconButton(
-            icon: const HugeIcon(icon: HugeIcons.strokeRoundedRefresh),
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedRefresh,
+              size: AppDimensions.iconMd,
+            ),
             // Trigger a manual refresh from the controller
             onPressed: () => ref.refresh(customersControllerProvider),
           ),
@@ -156,7 +169,10 @@ class CustomersScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => const CustomerCreateRoute().push(context),
-        icon: const HugeIcon(icon: HugeIcons.strokeRoundedAdd01),
+        icon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedAdd01,
+          size: AppDimensions.iconMd,
+        ),
         label: Text(t.customers.newCustomer),
       ),
     );

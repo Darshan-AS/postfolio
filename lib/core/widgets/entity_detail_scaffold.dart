@@ -57,11 +57,17 @@ class EntityDetailScaffold extends StatelessWidget {
         title: Text(appBarTitle),
         actions: [
           IconButton(
-            icon: const HugeIcon(icon: HugeIcons.strokeRoundedEdit02),
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedEdit02,
+              size: AppDimensions.iconMd,
+            ),
             onPressed: onEdit,
           ),
           IconButton(
-            icon: const HugeIcon(icon: HugeIcons.strokeRoundedDelete02),
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedDelete02,
+              size: AppDimensions.iconMd,
+            ),
             color: theme.colorScheme.error,
             onPressed: () => _confirmDelete(context),
           ),

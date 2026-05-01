@@ -23,13 +23,17 @@ class OneTimeDepositsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const HugeIcon(icon: HugeIcons.strokeRoundedMenu01),
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedMenu01,
+            size: AppDimensions.iconMd,
+          ),
           onPressed: () {},
         ),
         title: Row(
           children: [
             HugeIcon(
               icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
+              size: AppDimensions.iconMd,
               color: Theme.of(context).colorScheme.primary,
             ),
             AppSpacings.gapSm,
@@ -43,7 +47,10 @@ class OneTimeDepositsScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch01),
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedSearch01,
+              size: AppDimensions.iconMd,
+            ),
             onPressed: () {},
           ),
         ],
@@ -133,7 +140,10 @@ class OneTimeDepositsScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => const OneTimeDepositCreateRoute().push(context),
-        icon: const HugeIcon(icon: HugeIcons.strokeRoundedAdd01),
+        icon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedAdd01,
+          size: AppDimensions.iconMd,
+        ),
         label: Text(t.oneTimeDeposits.newDeposit),
       ),
     );

@@ -74,7 +74,10 @@ class _CustomerSelectionFieldState
         decoration: AppInputDecoration.m3(
           context,
           labelText: t.oneTimeDeposits.fields.customerId,
-          prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedUser),
+          prefixIcon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedUser,
+            size: AppDimensions.iconMd,
+          ),
           errorText: widget.errorText,
           isRequired: true,
         ),
@@ -96,7 +99,10 @@ class _CustomerSelectionFieldState
                 displayCustomer.cifNumber ?? displayCustomer.id,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-            const HugeIcon(icon: HugeIcons.strokeRoundedArrowDown01),
+            const HugeIcon(
+              icon: HugeIcons.strokeRoundedArrowDown01,
+              size: AppDimensions.iconMd,
+            ),
           ],
         ),
       ),
@@ -135,6 +141,7 @@ class _CustomerSelectionSheetState
                 hintText: t.customers.searchHint,
                 prefixIcon: const HugeIcon(
                   icon: HugeIcons.strokeRoundedSearch01,
+                  size: AppDimensions.iconMd,
                 ),
               ),
               onChanged: (value) =>

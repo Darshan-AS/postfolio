@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
+import 'package:postfolio/core/theme/app_dimensions.dart';
 
 class AppTextField extends StatelessWidget {
   final TextEditingController? controller;
@@ -112,7 +113,10 @@ class AppDateField extends StatelessWidget {
     return AppTextField(
       controller: controller,
       labelText: labelText,
-      prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedCalendar01),
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedCalendar01,
+        size: AppDimensions.iconMd,
+      ),
       readOnly: true,
       onTap: onTap,
       isRequired: isRequired,

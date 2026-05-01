@@ -33,7 +33,10 @@ class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
           )
         else
           IconButton(
-            icon: const HugeIcon(icon: HugeIcons.strokeRoundedTick01),
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedTick01,
+              size: AppDimensions.iconMd,
+            ),
             onPressed: onSave,
           ),
       ],

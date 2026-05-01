@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 
-import 'package:postfolio/core/widgets/deposit_detail_cards.dart';
+import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/entity_list_tile.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
@@ -40,7 +40,10 @@ class OneTimeDepositCard extends ConsumerWidget {
         ref.watch(customerByIdProvider(customerId))?.name ?? customerId;
 
     return EntityListTile(
-      leadingIcon: const HugeIcon(icon: HugeIcons.strokeRoundedMoneyReceiveSquare),
+      leadingIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
+        size: AppDimensions.iconMd,
+      ),
       leadingBackgroundColor: Theme.of(context).colorScheme.primaryContainer,
       leadingForegroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
       title: customerName,

@@ -42,8 +42,8 @@
 - [x] Unify border radius to `radiusLg` across input decorations, cards, and buttons.
 - [x] Standardize bottom padding in all form screens by ensuring a `gapXxl` after the save button.
 - [x] Fix oversized icons in form fields by standardizing prefix icon sizes in the global `InputDecorationTheme`.
-- [ ] Standardize icon sizes for `AppBar` and `ListTile` actions.
-- [ ] Use same icons in entity add/edit page and entity view page.
+- [x] Standardize icon sizes for `AppBar` and `ListTile` actions.
+- [x] Use same icons in entity add/edit page and entity view page.
 
 ## Phase 4: Deposits & RD Features (Completed)
 - [x] Build `OneTimeDepositRepository` and `OneTimeDepositsController`.

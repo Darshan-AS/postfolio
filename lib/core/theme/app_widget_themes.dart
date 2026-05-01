@@ -6,32 +6,29 @@ class AppWidgetThemes {
   AppWidgetThemes._();
 
   static AppBarTheme get appBarTheme => const AppBarTheme(
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-        centerTitle: false,
-        iconTheme: IconThemeData(
-          color: AppColors.textPrimary,
-          size: AppDimensions.iconMd,
-        ),
-        actionsIconTheme: IconThemeData(
-          color: AppColors.textPrimary,
-          size: AppDimensions.iconMd,
-        ),
-      );
+    backgroundColor: AppColors.surface,
+    foregroundColor: AppColors.textPrimary,
+    elevation: 0,
+    centerTitle: false,
+    iconTheme: IconThemeData(
+      color: AppColors.textPrimary,
+      size: AppDimensions.iconMd,
+    ),
+    actionsIconTheme: IconThemeData(
+      color: AppColors.textPrimary,
+      size: AppDimensions.iconMd,
+    ),
+  );
 
-  static DividerThemeData get dividerTheme => const DividerThemeData(
-        color: AppColors.divider,
-        space: 1,
-        thickness: 1,
-      );
+  static DividerThemeData get dividerTheme =>
+      const DividerThemeData(color: AppColors.divider, space: 1, thickness: 1);
 
   static IconButtonThemeData get iconButtonTheme => IconButtonThemeData(
-        style: IconButton.styleFrom(
-          iconSize: AppDimensions.iconMd,
-          foregroundColor: AppColors.textSecondary,
-        ),
-      );
+    style: IconButton.styleFrom(
+      iconSize: AppDimensions.iconMd,
+      foregroundColor: AppColors.textSecondary,
+    ),
+  );
 
   static FloatingActionButtonThemeData get floatingActionButtonTheme =>
       const FloatingActionButtonThemeData(
@@ -41,13 +38,13 @@ class AppWidgetThemes {
       );
 
   static CardThemeData get cardTheme => CardThemeData(
-        color: AppColors.surface,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          side: const BorderSide(color: AppColors.divider, width: 1),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        ),
-      );
+    color: AppColors.surface,
+    elevation: 0,
+    shape: RoundedRectangleBorder(
+      side: const BorderSide(color: AppColors.divider, width: 1),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+    ),
+  );
 
   static ElevatedButtonThemeData get elevatedButtonTheme =>
       ElevatedButtonThemeData(

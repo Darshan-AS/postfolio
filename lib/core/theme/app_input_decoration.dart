@@ -20,8 +20,8 @@ class AppInputDecoration {
               text: TextSpan(
                 text: labelText,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                  color: colorScheme.onSurfaceVariant,
+                ),
                 children: [
                   TextSpan(
                     text: ' *',
@@ -36,7 +36,9 @@ class AppInputDecoration {
     Widget? finalPrefixIcon;
     if (prefixIcon != null) {
       finalPrefixIcon = Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingMd,
+        ),
         child: IconTheme(
           data: const IconThemeData(
             size: AppDimensions.iconMd,
