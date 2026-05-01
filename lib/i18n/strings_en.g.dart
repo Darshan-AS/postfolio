@@ -72,6 +72,12 @@ class TranslationsErrorsEn {
 	/// en: 'Term cannot be negative'
 	String get negativeTerm => 'Term cannot be negative';
 
+	/// en: 'Invalid tenure of ${years} years for ${scheme}'
+	String invalidTenure({required Object years, required Object scheme}) => 'Invalid tenure of ${years} years for ${scheme}';
+
+	/// en: 'Months are not applicable for fixed tenure schemes'
+	String get fixedTenureNoMonths => 'Months are not applicable for fixed tenure schemes';
+
 	/// en: 'Maturity date cannot be before start date'
 	String get invalidMaturityDate => 'Maturity date cannot be before start date';
 
@@ -95,6 +101,7 @@ class TranslationsCommonEn {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+	late final TranslationsCommonDurationEn duration = TranslationsCommonDurationEn.internal(_root);
 
 	/// en: 'Loading...'
 	String get loading => 'Loading...';
@@ -344,6 +351,27 @@ class TranslationsEnumsEn {
 	late final TranslationsEnumsRecurringSchemeTypeEn recurringSchemeType = TranslationsEnumsRecurringSchemeTypeEn.internal(_root);
 }
 
+// Path: common.duration
+class TranslationsCommonDurationEn {
+	TranslationsCommonDurationEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Term (Years)'
+	String get termYears => 'Term (Years)';
+
+	/// en: 'Term (Months)'
+	String get termMonths => 'Term (Months)';
+
+	/// en: '(one) {1 Yr} (other) {${n} Yrs}'
+	String yearAbbreviation({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: '1 Yr',
+		other: '${n} Yrs',
+	);
+}
+
 // Path: customers.actions
 class TranslationsCustomersActionsEn {
 	TranslationsCustomersActionsEn.internal(this._root);
@@ -481,6 +509,12 @@ class TranslationsOneTimeDepositsFieldsEn {
 	/// en: 'Term (Months)'
 	String get termMonths => 'Term (Months)';
 
+	/// en: '(one) {1 Yr} (other) {${n} Yrs}'
+	String yearAbbreviation({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: '1 Yr',
+		other: '${n} Yrs',
+	);
+
 	/// en: 'Customer'
 	String get customerId => 'Customer';
 
@@ -549,6 +583,12 @@ class TranslationsRecurringDepositsFieldsEn {
 
 	/// en: 'Term (Months)'
 	String get termMonths => 'Term (Months)';
+
+	/// en: '(one) {1 Yr} (other) {${n} Yrs}'
+	String yearAbbreviation({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: '1 Yr',
+		other: '${n} Yrs',
+	);
 
 	/// en: 'Interest Rate (%)'
 	String get interestRate => 'Interest Rate (%)';
@@ -638,11 +678,16 @@ extension on Translations {
 			'errors.requiredField' => ({required Object field}) => '${field} is required',
 			'errors.greaterThanZero' => ({required Object field}) => '${field} must be greater than 0',
 			'errors.negativeTerm' => 'Term cannot be negative',
+			'errors.invalidTenure' => ({required Object years, required Object scheme}) => 'Invalid tenure of ${years} years for ${scheme}',
+			'errors.fixedTenureNoMonths' => 'Months are not applicable for fixed tenure schemes',
 			'errors.invalidMaturityDate' => 'Maturity date cannot be before start date',
 			'errors.minLength' => ({required Object field, required Object count}) => '${field} must be at least ${count} characters',
 			'errors.invalidEmail' => 'Invalid email format',
 			'errors.invalidPhone' => 'Invalid phone number (7-15 digits)',
 			'errors.sbAccountRequiredForNominee' => 'Savings Account Number is required to add nominees',
+			'common.duration.termYears' => 'Term (Years)',
+			'common.duration.termMonths' => 'Term (Months)',
+			'common.duration.yearAbbreviation' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 Yr', other: '${n} Yrs', ), 
 			'common.loading' => 'Loading...',
 			'common.saving' => 'Saving...',
 			'common.edit' => 'Edit',
@@ -712,6 +757,7 @@ extension on Translations {
 			'oneTimeDeposits.fields.principalAmount' => 'Principal Amount',
 			'oneTimeDeposits.fields.termYears' => 'Term (Years)',
 			'oneTimeDeposits.fields.termMonths' => 'Term (Months)',
+			'oneTimeDeposits.fields.yearAbbreviation' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 Yr', other: '${n} Yrs', ), 
 			'oneTimeDeposits.fields.customerId' => 'Customer',
 			'oneTimeDeposits.fields.schemeType' => 'Scheme Type',
 			'oneTimeDeposits.fields.interestRate' => 'Interest Rate (%)',
@@ -740,6 +786,7 @@ extension on Translations {
 			'recurringDeposits.fields.installmentAmount' => 'Installment Amount',
 			'recurringDeposits.fields.termYears' => 'Term (Years)',
 			'recurringDeposits.fields.termMonths' => 'Term (Months)',
+			'recurringDeposits.fields.yearAbbreviation' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 Yr', other: '${n} Yrs', ), 
 			'recurringDeposits.fields.interestRate' => 'Interest Rate (%)',
 			'recurringDeposits.fields.customerId' => 'Customer',
 			'recurringDeposits.fields.schemeType' => 'Scheme Type',

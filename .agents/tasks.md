@@ -80,15 +80,16 @@
 ## Phase 7: Enhancements & Refinements (Pending)
 - [ ] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.
 - [ ] Implement comprehensive form field validations across all create/update screens.
-- [ ] Expand `SchemeType` enum and models to support an exhaustive list of Term Deposit variants.
+- [x] Expand `SchemeType` enum and models to support an exhaustive list of Term Deposit variants.
 - [ ] **Domain Math - Maturity Calculators:** Implement pure Dart extensions to auto-calculate Maturity Dates (accounting for RD defaults) and Maturity Amounts (compounding for RD/TD/NSC, simple for MIS) based on principal, tenure, and start date.
 - [ ] **Domain Math - Commission Calculators:** Implement functions to auto-calculate Gross Commission per transaction (4% for RD, 0.5% for others) and auto-deduct the 2% TDS to derive the Net Payout.
 - [ ] **Domain Math - Penalties & Rebates:** Implement transaction evaluation logic to automatically calculate RD Late Fees (1% per month delayed) and Advance Deposit Rebates (₹10/₹40 rules for 6+/12+ months).
 - [ ] **UI Cleanup - Remove Manual Fields:** Refactor `RecurringDepositFormScreen` and `OneTimeDepositFormScreen` to remove fields like "Maturity Amount" or "Maturity Date" if they require manual input. Replace them with read-only "Live Preview" text based on the auto-calculations.
+- [ ] **UI Cleanup - Redundant Fixed Fields:** Reconsider whether to display "Scheme Type" and "Term" on the Recurring Deposit form (since they are always fixed to RD and 5 Years). Similarly, evaluate hiding the "Term" field for One-Time Deposits like MIS and NSC where the duration is strictly fixed to 5 years, to minimize form clutter.
 - [ ] Add filtering capabilities to deposit list screens (e.g., view by Active, Matured, Closed status).
 - [ ] Integrate search functionality across all entity listing screens (Customers, Deposits, RDs).
 - [ ] Create and integrate an enum for relationships in the `Nominee` model.
-- [ ] Rethink the data type for `termYears` and `termMonths` in deposit models (e.g., consider using a single duration or custom value object).
+- [ ] Explore migrating `termYears` and `termMonths` into a custom Domain-Driven Value Object (e.g., `class Tenure`) to encapsulate calendar math, keeping in mind the tradeoffs for Firestore compound indexing.
 - [ ] Implement and support dark theme across the application.
 - [ ] Implement local App Lock (Biometrics/PIN) for additional privacy and security.
 - [ ] Explore `flutter_flavorizr` for managing native app flavors (Dev, Staging, Prod).

@@ -4,6 +4,7 @@ import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 part 'recurring_deposit_model.freezed.dart';
 part 'recurring_deposit_model.g.dart';
@@ -86,6 +87,15 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
         BaseDeposit.validateDates(startDate, maturityDate);
 
     if (validationError != null) return Failure(validationError);
+
+    if (schemeType.isFixedTenure) {
+      if (!schemeType.allowedTenuresInYears.contains(termYears)) {
+        return Failure(t.errors.invalidTenure(years: termYears, scheme: schemeType.displayName));
+      }
+      if (termMonths != 0) {
+        return Failure(t.errors.fixedTenureNoMonths);
+      }
+    }
 
     return Success(
       RecurringDeposit(

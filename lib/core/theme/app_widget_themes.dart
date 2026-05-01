@@ -67,6 +67,27 @@ class AppWidgetThemes {
     ),
   );
 
+  static SegmentedButtonThemeData segmentedButtonTheme(
+    ColorScheme colorScheme,
+  ) => SegmentedButtonThemeData(
+    style: ButtonStyle(
+      shape: WidgetStatePropertyAll(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        ),
+      ),
+      side: WidgetStatePropertyAll(
+        BorderSide(color: colorScheme.outlineVariant),
+      ),
+      backgroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return colorScheme.primaryContainer;
+        }
+        return colorScheme.surfaceContainerHighest.withValues(alpha: 0.3);
+      }),
+    ),
+  );
+
   static InputDecorationTheme inputDecorationTheme(ColorScheme colorScheme) =>
       InputDecorationTheme(
         filled: true,

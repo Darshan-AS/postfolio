@@ -23,7 +23,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       accountNo: '3045678912',
       principalAmount: 50000.0,
       termYears: 1,
-      termMonths: 6,
+      termMonths: 0,
       interestRate: 6.5,
       customerId: '1', // Bruce Wayne
       schemeType: OneTimeSchemeType.timeDeposit,
@@ -83,7 +83,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       id: '104',
       accountNo: '3077665544',
       principalAmount: 15000.0,
-      termYears: 1,
+      termYears: 5,
       termMonths: 0,
       interestRate: 5.5,
       customerId: '4', // Barry Allen
@@ -101,8 +101,8 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       id: '105',
       accountNo: '3055443322',
       principalAmount: 75000.0,
-      termYears: 2,
-      termMonths: 6,
+      termYears: 9,
+      termMonths: 7,
       interestRate: 6.2,
       customerId: '5', // Arthur Curry
       schemeType: OneTimeSchemeType.kisanVikasPatra,

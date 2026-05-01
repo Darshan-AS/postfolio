@@ -48,7 +48,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       serialNo: 'RD-002',
       accountNo: 'RD-9025678',
       installmentAmount: 10000.0,
-      termYears: 1,
+      termYears: 5,
       termMonths: 0,
       interestRate: 6.0,
       customerId: '2', // Clark Kent
@@ -68,7 +68,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       serialNo: 'RD-003',
       accountNo: 'RD-9029988',
       installmentAmount: 2000.0,
-      termYears: 3,
+      termYears: 5,
       termMonths: 0,
       interestRate: 6.5,
       customerId: '3', // Diana Prince
@@ -87,7 +87,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       serialNo: 'RD-004',
       accountNo: 'RD-9027766',
       installmentAmount: 15000.0,
-      termYears: 2,
+      termYears: 5,
       termMonths: 0,
       interestRate: 6.8,
       customerId: '4', // Barry Allen

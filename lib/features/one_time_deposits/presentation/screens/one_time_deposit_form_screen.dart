@@ -14,6 +14,7 @@ import 'package:postfolio/core/widgets/nominees_input_section.dart';
 import 'package:postfolio/core/widgets/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/app_form_fields.dart';
 import 'package:postfolio/core/widgets/form_app_bar.dart';
+import 'package:postfolio/core/widgets/app_duration_input.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/models/nominee.dart';
 
@@ -49,8 +50,6 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _accountNoController;
   late final TextEditingController _principalAmountController;
-  late final TextEditingController _termYearsController;
-  late final TextEditingController _termMonthsController;
   late final TextEditingController _interestRateController;
   late final TextEditingController _maturityAmountController;
   late final TextEditingController _linkedAccountController;
@@ -58,6 +57,8 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
   String? _selectedCustomerId;
 
   OneTimeSchemeType _selectedScheme = OneTimeSchemeType.timeDeposit;
+  late int _selectedTermYears;
+  late int _selectedTermMonths;
   DepositStatus _selectedStatus = DepositStatus.active;
   DateTime _startDate = DateTime.now();
   DateTime _maturityDate = DateTime.now().add(const Duration(days: 365));
@@ -74,12 +75,6 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
     _principalAmountController = TextEditingController(
       text: widget.existingDeposit?.principalAmount.toString(),
     );
-    _termYearsController = TextEditingController(
-      text: widget.existingDeposit?.termYears.toString(),
-    );
-    _termMonthsController = TextEditingController(
-      text: widget.existingDeposit?.termMonths.toString(),
-    );
     _interestRateController = TextEditingController(
       text: widget.existingDeposit?.interestRate.toString(),
     );
@@ -93,10 +88,15 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
 
     if (widget.existingDeposit != null) {
       _selectedScheme = widget.existingDeposit!.schemeType;
+      _selectedTermYears = widget.existingDeposit!.termYears;
+      _selectedTermMonths = widget.existingDeposit!.termMonths;
       _selectedStatus = widget.existingDeposit!.status;
       _startDate = widget.existingDeposit!.startDate;
       _maturityDate = widget.existingDeposit!.maturityDate;
       _nominees = List.of(widget.existingDeposit!.nominees);
+    } else {
+      _selectedTermYears = _selectedScheme.defaultTenureYears;
+      _selectedTermMonths = 0;
     }
   }
 
@@ -104,8 +104,6 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
   void dispose() {
     _accountNoController.dispose();
     _principalAmountController.dispose();
-    _termYearsController.dispose();
-    _termMonthsController.dispose();
     _interestRateController.dispose();
     _maturityAmountController.dispose();
     _linkedAccountController.dispose();
@@ -129,8 +127,8 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             accountNo: _accountNoController.text.trim(),
             principalAmount:
                 double.tryParse(_principalAmountController.text.trim()) ?? 0.0,
-            termYears: int.tryParse(_termYearsController.text.trim()) ?? 0,
-            termMonths: int.tryParse(_termMonthsController.text.trim()) ?? 0,
+            termYears: _selectedTermYears,
+            termMonths: _selectedScheme.isFixedTenure ? 0 : _selectedTermMonths,
             interestRate:
                 double.tryParse(_interestRateController.text.trim()) ?? 0.0,
             customerId: _selectedCustomerId ?? '',
@@ -180,7 +178,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
           children: [
             Text(
-              'Account Details',
+              t.oneTimeDeposits.sections.accountInformation,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -227,7 +225,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
 
             AppSpacings.gapXl,
             Text(
-              'Investment Info',
+              t.oneTimeDeposits.sections.investmentDetails,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -245,7 +243,27 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                 return DropdownMenuItem(value: s, child: Text(s.displayName));
               }).toList(),
               onChanged: (val) {
-                if (val != null) setState(() => _selectedScheme = val);
+                if (val != null) {
+                  setState(() {
+                    _selectedScheme = val;
+                    if (!_selectedScheme.allowedTenuresInYears.contains(_selectedTermYears) && _selectedScheme.isFixedTenure) {
+                      _selectedTermYears = _selectedScheme.defaultTenureYears;
+                    }
+                  });
+                }
+              },
+            ),
+            AppSpacings.gapLg,
+            AppDurationInput(
+              isFixedTenure: _selectedScheme.isFixedTenure,
+              allowedTenuresInYears: _selectedScheme.allowedTenuresInYears,
+              selectedYears: _selectedTermYears,
+              selectedMonths: _selectedTermMonths,
+              onChanged: (years, months) {
+                setState(() {
+                  _selectedTermYears = years;
+                  _selectedTermMonths = months;
+                });
               },
             ),
             AppSpacings.gapLg,
@@ -262,38 +280,6 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
                 'Principal Amount',
               ),
               textInputAction: TextInputAction.next,
-            ),
-            AppSpacings.gapLg,
-            Row(
-              children: [
-                Expanded(
-                  child: AppTextField(
-                    controller: _termYearsController,
-                    labelText: t.oneTimeDeposits.fields.termYears,
-                    prefixIcon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedCalendar01,
-                      size: AppDimensions.iconMd,
-                    ),
-                    isRequired: true,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.next,
-                  ),
-                ),
-                AppSpacings.gapMd,
-                Expanded(
-                  child: AppTextField(
-                    controller: _termMonthsController,
-                    labelText: t.oneTimeDeposits.fields.termMonths,
-                    prefixIcon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedCalendar02,
-                      size: AppDimensions.iconMd,
-                    ),
-                    isRequired: true,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.next,
-                  ),
-                ),
-              ],
             ),
             AppSpacings.gapLg,
             AppTextField(
@@ -336,7 +322,7 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
 
             AppSpacings.gapXl,
             Text(
-              'Timeline',
+              t.oneTimeDeposits.sections.timeline,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,

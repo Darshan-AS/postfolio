@@ -4,6 +4,8 @@ errors:
   requiredField: "${field} is required"
   greaterThanZero: "${field} must be greater than 0"
   negativeTerm: "Term cannot be negative"
+  invalidTenure: "Invalid tenure of ${years} years for ${scheme}"
+  fixedTenureNoMonths: "Months are not applicable for fixed tenure schemes"
   invalidMaturityDate: "Maturity date cannot be before start date"
   minLength: "${field} must be at least ${count} characters"
   invalidEmail: "Invalid email format"
@@ -11,6 +13,12 @@ errors:
   sbAccountRequiredForNominee: "Savings Account Number is required to add nominees"
 
 common:
+  duration:
+    termYears: "Term (Years)"
+    termMonths: "Term (Months)"
+    yearAbbreviation:
+      one: "1 Yr"
+      other: "${n} Yrs"
   loading: "Loading..."
   saving: "Saving..."
   edit: "Edit"
@@ -93,6 +101,9 @@ oneTimeDeposits:
     principalAmount: "Principal Amount"
     termYears: "Term (Years)"
     termMonths: "Term (Months)"
+    yearAbbreviation:
+      one: "1 Yr"
+      other: "${n} Yrs"
     customerId: "Customer"
     schemeType: "Scheme Type"
     interestRate: "Interest Rate (%)"
@@ -125,6 +136,9 @@ recurringDeposits:
     installmentAmount: "Installment Amount"
     termYears: "Term (Years)"
     termMonths: "Term (Months)"
+    yearAbbreviation:
+      one: "1 Yr"
+      other: "${n} Yrs"
     interestRate: "Interest Rate (%)"
     customerId: "Customer"
     schemeType: "Scheme Type"

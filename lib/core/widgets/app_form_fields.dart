@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
@@ -13,10 +14,12 @@ class AppTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final bool readOnly;
+  final bool enabled;
   final VoidCallback? onTap;
   final int? maxLines;
   final Widget? suffixIcon;
   final void Function(String)? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AppTextField({
     super.key,
@@ -29,10 +32,12 @@ class AppTextField extends StatelessWidget {
     this.keyboardType,
     this.textInputAction,
     this.readOnly = false,
+    this.enabled = true,
     this.onTap,
     this.maxLines = 1,
     this.suffixIcon,
     this.onChanged,
+    this.inputFormatters,
   });
 
   @override
@@ -50,9 +55,11 @@ class AppTextField extends StatelessWidget {
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       readOnly: readOnly,
+      enabled: enabled,
       onTap: onTap,
       maxLines: maxLines,
       onChanged: onChanged,
+      inputFormatters: inputFormatters,
     );
   }
 }
