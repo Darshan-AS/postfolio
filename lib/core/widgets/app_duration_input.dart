@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/app_form_fields.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-class AppDurationInput extends StatefulWidget {
+class AppDurationInput extends HookWidget {
   final bool isFixedTenure;
   final List<int> allowedTenuresInYears;
   final int selectedYears;
@@ -22,47 +23,28 @@ class AppDurationInput extends StatefulWidget {
   });
 
   @override
-  State<AppDurationInput> createState() => _AppDurationInputState();
-}
-
-class _AppDurationInputState extends State<AppDurationInput> {
-  late final TextEditingController _yearsController;
-  late final TextEditingController _monthsController;
-
-  @override
-  void initState() {
-    super.initState();
-    _yearsController = TextEditingController(text: widget.selectedYears.toString());
-    _monthsController = TextEditingController(text: widget.selectedMonths.toString());
-  }
-
-  @override
-  void didUpdateWidget(covariant AppDurationInput oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedYears != widget.selectedYears && _yearsController.text != widget.selectedYears.toString()) {
-      _yearsController.text = widget.selectedYears.toString();
-    }
-    if (oldWidget.selectedMonths != widget.selectedMonths && _monthsController.text != widget.selectedMonths.toString()) {
-      _monthsController.text = widget.selectedMonths.toString();
-    }
-  }
-
-  @override
-  void dispose() {
-    _yearsController.dispose();
-    _monthsController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (widget.isFixedTenure) {
-      final allowedYears = widget.allowedTenuresInYears;
+    final yearsController = useTextEditingController(text: selectedYears.toString());
+    final monthsController = useTextEditingController(text: selectedMonths.toString());
+
+    // Sync controllers with external state if it changes
+    useEffect(() {
+      if (yearsController.text != selectedYears.toString()) {
+        yearsController.text = selectedYears.toString();
+      }
+      if (monthsController.text != selectedMonths.toString()) {
+        monthsController.text = selectedMonths.toString();
+      }
+      return null;
+    }, [selectedYears, selectedMonths]);
+
+    if (isFixedTenure) {
+      final allowedYears = allowedTenuresInYears;
 
       // For schemes like MIS/NSC which only have a single valid tenure (e.g., 5 years)
       if (allowedYears.length == 1) {
         return AppTextField(
-          controller: _yearsController,
+          controller: yearsController,
           labelText: t.common.duration.termYears,
           prefixIcon: const HugeIcon(
             icon: HugeIcons.strokeRoundedCalendar01,
@@ -96,9 +78,9 @@ class _AppDurationInputState extends State<AppDurationInput> {
                 label: Text(t.common.duration.yearAbbreviation(n: year)),
               );
             }).toList(),
-            selected: {widget.selectedYears},
+            selected: {selectedYears},
             onSelectionChanged: (Set<int> newSelection) {
-              widget.onChanged(newSelection.first, 0);
+              onChanged(newSelection.first, 0);
             },
           ),
         ],
@@ -110,7 +92,7 @@ class _AppDurationInputState extends State<AppDurationInput> {
       children: [
         Expanded(
           child: AppTextField(
-            controller: _yearsController,
+            controller: yearsController,
             labelText: t.common.duration.termYears,
             prefixIcon: const HugeIcon(
               icon: HugeIcons.strokeRoundedCalendar01,
@@ -120,14 +102,14 @@ class _AppDurationInputState extends State<AppDurationInput> {
             textInputAction: TextInputAction.next,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             onChanged: (val) {
-              widget.onChanged(int.tryParse(val) ?? 0, widget.selectedMonths);
+              onChanged(int.tryParse(val) ?? 0, selectedMonths);
             },
           ),
         ),
         AppSpacings.gapMd,
         Expanded(
           child: AppTextField(
-            controller: _monthsController,
+            controller: monthsController,
             labelText: t.common.duration.termMonths,
             prefixIcon: const HugeIcon(
               icon: HugeIcons.strokeRoundedCalendar02,
@@ -137,7 +119,7 @@ class _AppDurationInputState extends State<AppDurationInput> {
             textInputAction: TextInputAction.next,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             onChanged: (val) {
-              widget.onChanged(widget.selectedYears, int.tryParse(val) ?? 0);
+              onChanged(selectedYears, int.tryParse(val) ?? 0);
             },
           ),
         ),

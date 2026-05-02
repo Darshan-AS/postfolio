@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
@@ -33,154 +34,115 @@ class CustomerFormScreen extends ConsumerWidget {
   }
 }
 
-class _CustomerForm extends ConsumerStatefulWidget {
+class _CustomerForm extends HookConsumerWidget {
   final Customer? existingCustomer;
 
   const _CustomerForm({this.existingCustomer});
 
   @override
-  ConsumerState<_CustomerForm> createState() => _CustomerFormState();
-}
-
-class _CustomerFormState extends ConsumerState<_CustomerForm> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController;
-  late final TextEditingController _emailController;
-  late final TextEditingController _phoneController;
-  late final TextEditingController _addressController;
-  late final TextEditingController _cifNumberController;
-  late final TextEditingController _dateOfBirthController;
-  late final TextEditingController _aadhaarNumberController;
-  late final TextEditingController _panNumberController;
-  late final TextEditingController _savingsAccountNumberController;
-
-  List<Nominee> _nominees = [];
-
-  DateTime? _selectedDate;
-  bool _isSaving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final customer = widget.existingCustomer;
-    _nameController = TextEditingController(text: customer?.name);
-    _emailController = TextEditingController(text: customer?.email);
-    _phoneController = TextEditingController(text: customer?.phone);
-    _addressController = TextEditingController(text: customer?.address);
-    _cifNumberController = TextEditingController(text: customer?.cifNumber);
-    _aadhaarNumberController = TextEditingController(
-      text: customer?.aadhaarNumber,
-    );
-    _panNumberController = TextEditingController(text: customer?.panNumber);
-    _savingsAccountNumberController = TextEditingController(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+    
+    final customer = existingCustomer;
+    
+    final nameController = useTextEditingController(text: customer?.name);
+    final emailController = useTextEditingController(text: customer?.email);
+    final phoneController = useTextEditingController(text: customer?.phone);
+    final addressController = useTextEditingController(text: customer?.address);
+    final cifNumberController = useTextEditingController(text: customer?.cifNumber);
+    final aadhaarNumberController = useTextEditingController(text: customer?.aadhaarNumber);
+    final panNumberController = useTextEditingController(text: customer?.panNumber);
+    final savingsAccountNumberController = useTextEditingController(
       text: customer?.savingsAccount?.accountNumber,
     );
 
-    _nominees = List.of(customer?.savingsAccount?.nominees ?? []);
-
-    _selectedDate = customer?.dateOfBirth;
-    _dateOfBirthController = TextEditingController(
-      text: _selectedDate != null
-          ? DateFormat.yMMMd().format(_selectedDate!)
+    final nominees = useState<List<Nominee>>(List.of(customer?.savingsAccount?.nominees ?? []));
+    final selectedDate = useState<DateTime?>(customer?.dateOfBirth);
+    final dateOfBirthController = useTextEditingController(
+      text: selectedDate.value != null
+          ? DateFormat.yMMMd().format(selectedDate.value!)
           : '',
     );
-  }
+    
+    final isSaving = useState(false);
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
-    _cifNumberController.dispose();
-    _dateOfBirthController.dispose();
-    _aadhaarNumberController.dispose();
-    _panNumberController.dispose();
-    _savingsAccountNumberController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-        _dateOfBirthController.text = DateFormat.yMMMd().format(_selectedDate!);
-      });
-    }
-  }
-
-  Future<void> _save() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isSaving = true);
-      final result = await ref
-          .read(customersControllerProvider.notifier)
-          .saveCustomer(
-            id: widget.existingCustomer?.id,
-            name: _nameController.text.trim(),
-            email: _emailController.text.trim().isEmpty
-                ? null
-                : _emailController.text.trim(),
-            phone: _phoneController.text.trim().isEmpty
-                ? null
-                : _phoneController.text.trim(),
-            address: _addressController.text.trim().isEmpty
-                ? null
-                : _addressController.text.trim(),
-            cifNumber: _cifNumberController.text.trim().isEmpty
-                ? null
-                : _cifNumberController.text.trim(),
-            dateOfBirth: _selectedDate,
-            aadhaarNumber: _aadhaarNumberController.text.trim().isEmpty
-                ? null
-                : _aadhaarNumberController.text.trim(),
-            panNumber: _panNumberController.text.trim().isEmpty
-                ? null
-                : _panNumberController.text.trim(),
-            savingsAccountNumber:
-                _savingsAccountNumberController.text.trim().isEmpty
-                ? null
-                : _savingsAccountNumberController.text.trim(),
-            savingsNominees: _nominees,
-          );
-
-      if (!mounted) return;
-      setState(() => _isSaving = false);
-
-      switch (result) {
-        case Success():
-          context.pop();
-        case Failure(error: final err):
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                t.customers.failedToSaveCustomer(error: err.toString()),
-              ),
-            ),
-          );
+    Future<void> selectDate(BuildContext context) async {
+      final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate.value ?? DateTime.now(),
+        firstDate: DateTime(1900),
+        lastDate: DateTime.now(),
+      );
+      if (picked != null && picked != selectedDate.value) {
+        selectedDate.value = picked;
+        dateOfBirthController.text = DateFormat.yMMMd().format(picked);
       }
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    final isUpdating = widget.existingCustomer != null;
+    Future<void> save() async {
+      if (formKey.currentState!.validate()) {
+        isSaving.value = true;
+        final result = await ref
+            .read(customersControllerProvider.notifier)
+            .saveCustomer(
+              id: customer?.id,
+              name: nameController.text.trim(),
+              email: emailController.text.trim().isEmpty
+                  ? null
+                  : emailController.text.trim(),
+              phone: phoneController.text.trim().isEmpty
+                  ? null
+                  : phoneController.text.trim(),
+              address: addressController.text.trim().isEmpty
+                  ? null
+                  : addressController.text.trim(),
+              cifNumber: cifNumberController.text.trim().isEmpty
+                  ? null
+                  : cifNumberController.text.trim(),
+              dateOfBirth: selectedDate.value,
+              aadhaarNumber: aadhaarNumberController.text.trim().isEmpty
+                  ? null
+                  : aadhaarNumberController.text.trim(),
+              panNumber: panNumberController.text.trim().isEmpty
+                  ? null
+                  : panNumberController.text.trim(),
+              savingsAccountNumber:
+                  savingsAccountNumberController.text.trim().isEmpty
+                  ? null
+                  : savingsAccountNumberController.text.trim(),
+              savingsNominees: nominees.value,
+            );
+
+        if (!context.mounted) return;
+        isSaving.value = false;
+
+        switch (result) {
+          case Success():
+            context.pop();
+          case Failure(error: final err):
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  t.customers.failedToSaveCustomer(error: err.toString()),
+                ),
+              ),
+            );
+        }
+      }
+    }
+
+    final isUpdating = customer != null;
 
     return Scaffold(
       appBar: FormAppBar(
         title: isUpdating ? t.customers.editCustomer : t.customers.newCustomer,
-        isSaving: _isSaving,
-        onSave: _save,
+        isSaving: isSaving.value,
+        onSave: save,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingLg),
         child: Form(
-          key: _formKey,
+          key: formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -193,7 +155,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               ),
               AppSpacings.gapMd,
               AppTextField(
-                controller: _nameController,
+                controller: nameController,
                 labelText: t.customers.fields.fullName,
                 prefixIcon: const HugeIcon(
                   icon: HugeIcons.strokeRoundedUser,
@@ -205,7 +167,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               ),
               AppSpacings.gapMd,
               AppTextField(
-                controller: _phoneController,
+                controller: phoneController,
                 labelText: t.customers.fields.phoneNumber,
                 prefixIcon: const HugeIcon(
                   icon: HugeIcons.strokeRoundedCall02,
@@ -217,7 +179,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               ),
               AppSpacings.gapMd,
               AppTextField(
-                controller: _emailController,
+                controller: emailController,
                 labelText: t.customers.fields.emailAddress,
                 prefixIcon: const HugeIcon(
                   icon: HugeIcons.strokeRoundedMail01,
@@ -229,13 +191,13 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               ),
               AppSpacings.gapMd,
               AppDateField(
-                controller: _dateOfBirthController,
+                controller: dateOfBirthController,
                 labelText: t.customers.fields.dateOfBirth,
-                onTap: () => _selectDate(context),
+                onTap: () => selectDate(context),
               ),
               AppSpacings.gapMd,
               AppTextField(
-                controller: _addressController,
+                controller: addressController,
                 labelText: t.customers.fields.homeAddress,
                 prefixIcon: const HugeIcon(
                   icon: HugeIcons.strokeRoundedHome01,
@@ -253,7 +215,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               ),
               AppSpacings.gapMd,
               AppTextField(
-                controller: _cifNumberController,
+                controller: cifNumberController,
                 labelText: t.customers.fields.cif,
                 prefixIcon: const HugeIcon(
                   icon: HugeIcons.strokeRoundedTicket01,
@@ -263,7 +225,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               ),
               AppSpacings.gapMd,
               AppTextField(
-                controller: _aadhaarNumberController,
+                controller: aadhaarNumberController,
                 labelText: t.customers.fields.aadhaarNumber,
                 prefixIcon: const HugeIcon(
                   icon: HugeIcons.strokeRoundedId,
@@ -274,7 +236,7 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               ),
               AppSpacings.gapMd,
               AppTextField(
-                controller: _panNumberController,
+                controller: panNumberController,
                 labelText: t.customers.fields.panNumber,
                 prefixIcon: const HugeIcon(
                   icon: HugeIcons.strokeRoundedCreditCard,
@@ -292,37 +254,20 @@ class _CustomerFormState extends ConsumerState<_CustomerForm> {
               ),
               AppSpacings.gapMd,
               AppTextField(
-                controller: _savingsAccountNumberController,
+                controller: savingsAccountNumberController,
                 labelText: t.customers.fields.sbAccountNumber,
                 prefixIcon: const HugeIcon(
                   icon: HugeIcons.strokeRoundedBank,
                   size: AppDimensions.iconMd,
                 ),
-                keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
               ),
-              AppSpacings.gapXl,
+              AppSpacings.gapMd,
               NomineesInputSection(
-                initialNominees: _nominees,
+                nominees: nominees.value,
                 onChanged: (newNominees) {
-                  _nominees = newNominees;
+                  nominees.value = newNominees;
                 },
-              ),
-              AppSpacings.gapXxl,
-              FilledButton(
-                onPressed: _isSaving ? null : _save,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(
-                    AppDimensions.buttonHeight,
-                  ),
-                ),
-                child: _isSaving
-                    ? const SizedBox(
-                        height: AppDimensions.iconMd,
-                        width: AppDimensions.iconMd,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(t.customers.saveCustomer),
               ),
               AppSpacings.gapXxl,
             ],

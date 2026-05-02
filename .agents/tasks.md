@@ -72,7 +72,7 @@
 - [x] Integrate `skeletonizer` for list and detail loading states.
 - [x] Integrate `flutter_animate` for UI entry/exit animations.
 - [x] Migrate all icons from `font_awesome_flutter` and Material to `hugeicons`.
-- [ ] Track structural decisions in `conventions.md`.
+- [x] Refactor UI layer to use `flutter_hooks` and `hooks_riverpod`, eliminating all `StatefulWidget` and `ConsumerStatefulWidget` boilerplate.
 
 ## Phase 6: Firebase Integration & Authentication (Pending)
 - [ ] Run `flutterfire configure`.
@@ -91,16 +91,17 @@
 - [ ] **Domain Math - Maturity Calculators & Projections:**
   - [x] Create `InvestmentProjection` model in `lib/core/models/`.
   - [x] Create `ProjectionCalculator` utility class in `lib/core/services/` for RD, TD, MIS, NSC, and KVP formulas.
-  - [ ] Refactor `BaseDeposit`, `OneTimeDeposit`, and `RecurringDeposit` to replace `maturityAmount` and `maturityDate` with dynamic getters.
-  - [ ] Update controllers, fake repositories, and dummy data to omit manual maturity fields.
-  - [ ] Run `build_runner` to regenerate Freezed models and JSON serialization.
+  - [x] Refactor `BaseDeposit`, `OneTimeDeposit`, and `RecurringDeposit` to replace `maturityAmount` and `maturityDate` with dynamic getters.
+  - [x] Update controllers, fake repositories, and dummy data to omit manual maturity fields.
+  - [x] Run `build_runner` to regenerate Freezed models and JSON serialization.
 - [ ] **Domain Math - Commission Calculators:** Implement functions to auto-calculate Gross Commission per transaction (4% for RD, 0.5% for others) and auto-deduct the 2% TDS to derive the Net Payout.
 - [ ] **Domain Math - Penalties & Rebates:** Implement transaction evaluation logic to automatically calculate RD Late Fees (1% per month delayed) and Advance Deposit Rebates (₹10/₹40 rules for 6+/12+ months).
 - [ ] **UI Cleanup - Live Preview & "Dumb Widgets":**
   - [ ] Create Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) to track inputs and expose live `InvestmentProjection`.
-  - [ ] Remove manual `maturityDate` and `maturityAmount` input fields from form screens.
-  - [ ] Create and integrate `InvestmentProjectionCard` (read-only "dumb" widget) that watches the form notifier for live updates.
-- [ ] **UI Cleanup - Redundant Fixed Fields:** Reconsider whether to display "Scheme Type" and "Term" on the Recurring Deposit form (since they are always fixed to RD and 5 Years). Similarly, evaluate hiding the "Term" field for One-Time Deposits like MIS and NSC where the duration is strictly fixed to 5 years, to minimize form clutter.
+  - [x] Remove manual `maturityDate` and `maturityAmount` input fields from form screens.
+  - [ ] **Dynamic Form Previews:** Create and integrate an `InvestmentProjectionCard` to dynamically calculate and display the expected Maturity Date, Maturity Amount, and interest projections in real-time as the user changes form values.
+- [ ] **UI Cleanup - Non-Editable Fixed Fields:** Make form fields read-only (non-editable) when they only have a single valid value or don't require user input. For example, lock the "Scheme Type" selection for Recurring Deposits, and make the "Term Length" field non-editable for single-tenure schemes like MIS and NSC.
+- [ ] **UI Cleanup - Deposit Status Selection:** Upgrade the "Deposit Status" widget in the form screens from a standard dropdown to a more intuitive UI component (e.g., a SegmentedButton or ChoiceChips).
 - [ ] Add filtering capabilities to deposit list screens (e.g., view by Active, Matured, Closed status).
 - [ ] Integrate search functionality across all entity listing screens (Customers, Deposits, RDs).
 - [ ] Create and integrate an enum for relationships in the `Nominee` model.

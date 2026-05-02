@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
@@ -10,7 +11,7 @@ import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/entity_list_tile.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-class CustomerSelectionField extends ConsumerStatefulWidget {
+class CustomerSelectionField extends HookConsumerWidget {
   final Customer? initialCustomer;
   final String? initialCustomerId;
   final void Function(Customer?) onCustomerSelected;
@@ -25,51 +26,36 @@ class CustomerSelectionField extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<CustomerSelectionField> createState() =>
-      _CustomerSelectionFieldState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedCustomer = useState<Customer?>(initialCustomer);
 
-class _CustomerSelectionFieldState
-    extends ConsumerState<CustomerSelectionField> {
-  Customer? _selectedCustomer;
+    void showSelectionSheet() {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        builder: (context) {
+          return const _CustomerSelectionSheet();
+        },
+      ).then((selected) {
+        if (selected != null && selected is Customer) {
+          selectedCustomer.value = selected;
+          onCustomerSelected(selected);
+        }
+      });
+    }
 
-  @override
-  void initState() {
-    super.initState();
-    _selectedCustomer = widget.initialCustomer;
-  }
+    Customer? displayCustomer = selectedCustomer.value;
 
-  void _showSelectionSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) {
-        return const _CustomerSelectionSheet();
-      },
-    ).then((selected) {
-      if (selected != null && selected is Customer) {
-        setState(() {
-          _selectedCustomer = selected;
-        });
-        widget.onCustomerSelected(selected);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    Customer? displayCustomer = _selectedCustomer;
-
-    if (displayCustomer == null && widget.initialCustomerId != null) {
+    if (displayCustomer == null && initialCustomerId != null) {
       final state = ref.watch(customersControllerProvider);
       displayCustomer = state.value
-          ?.where((c) => c.id == widget.initialCustomerId)
+          ?.where((c) => c.id == initialCustomerId)
           .firstOrNull;
     }
 
     return InkWell(
-      onTap: _showSelectionSheet,
+      onTap: showSelectionSheet,
       child: InputDecorator(
         decoration: AppInputDecoration.m3(
           context,
@@ -78,7 +64,7 @@ class _CustomerSelectionFieldState
             icon: HugeIcons.strokeRoundedUser,
             size: AppDimensions.iconMd,
           ),
-          errorText: widget.errorText,
+          errorText: errorText,
           isRequired: true,
         ),
         child: Row(
@@ -110,20 +96,12 @@ class _CustomerSelectionFieldState
   }
 }
 
-class _CustomerSelectionSheet extends ConsumerStatefulWidget {
+class _CustomerSelectionSheet extends HookConsumerWidget {
   const _CustomerSelectionSheet();
 
   @override
-  ConsumerState<_CustomerSelectionSheet> createState() =>
-      _CustomerSelectionSheetState();
-}
-
-class _CustomerSelectionSheetState
-    extends ConsumerState<_CustomerSelectionSheet> {
-  String _searchQuery = '';
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final searchQuery = useState('');
     final state = ref.watch(customersControllerProvider);
 
     return Scaffold(
@@ -144,19 +122,18 @@ class _CustomerSelectionSheetState
                   size: AppDimensions.iconMd,
                 ),
               ),
-              onChanged: (value) =>
-                  setState(() => _searchQuery = value.toLowerCase()),
+              onChanged: (value) => searchQuery.value = value.toLowerCase(),
             ),
           ),
           Expanded(
             child: state.when(
               data: (customers) {
                 final filtered = customers.where((c) {
-                  final nameMatch = c.name.toLowerCase().contains(_searchQuery);
+                  final nameMatch = c.name.toLowerCase().contains(searchQuery.value);
                   final phoneMatch =
-                      c.phone?.toLowerCase().contains(_searchQuery) ?? false;
+                      c.phone?.toLowerCase().contains(searchQuery.value) ?? false;
                   final cifMatch =
-                      c.cifNumber?.toLowerCase().contains(_searchQuery) ??
+                      c.cifNumber?.toLowerCase().contains(searchQuery.value) ??
                       false;
                   return nameMatch || phoneMatch || cifMatch;
                 }).toList();

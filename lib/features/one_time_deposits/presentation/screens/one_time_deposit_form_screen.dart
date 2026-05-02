@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
@@ -36,134 +37,93 @@ class OneTimeDepositFormScreen extends ConsumerWidget {
   }
 }
 
-class _OneTimeDepositForm extends ConsumerStatefulWidget {
+class _OneTimeDepositForm extends HookConsumerWidget {
   final OneTimeDeposit? existingDeposit;
 
   const _OneTimeDepositForm({this.existingDeposit});
 
   @override
-  ConsumerState<_OneTimeDepositForm> createState() =>
-      _OneTimeDepositFormState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+    final deposit = existingDeposit;
 
-class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _accountNoController;
-  late final TextEditingController _principalAmountController;
-  late final TextEditingController _interestRateController;
-  late final TextEditingController _linkedAccountController;
+    final accountNoController = useTextEditingController(text: deposit?.accountNo);
+    final principalAmountController = useTextEditingController(text: deposit?.principalAmount.toString());
+    final interestRateController = useTextEditingController(text: deposit?.interestRate.toString());
+    final linkedAccountController = useTextEditingController(text: deposit?.linkedSavingsAccountNo);
 
-  String? _selectedCustomerId;
+    final selectedCustomerId = useState<String?>(deposit?.customerId);
+    final selectedScheme = useState<OneTimeSchemeType>(deposit?.schemeType ?? OneTimeSchemeType.timeDeposit);
+    
+    // Default values if not updating
+    final initialTermYears = deposit?.termYears ?? selectedScheme.value.defaultTenureYears;
+    final initialTermMonths = deposit?.termMonths ?? 0;
+    
+    final selectedTermYears = useState<int>(initialTermYears);
+    final selectedTermMonths = useState<int>(initialTermMonths);
+    final selectedStatus = useState<DepositStatus>(deposit?.status ?? DepositStatus.active);
+    final startDate = useState<DateTime>(deposit?.startDate ?? DateTime.now());
+    final nominees = useState<List<Nominee>>(deposit != null ? List.of(deposit.nominees) : []);
 
-  OneTimeSchemeType _selectedScheme = OneTimeSchemeType.timeDeposit;
-  late int _selectedTermYears;
-  late int _selectedTermMonths;
-  DepositStatus _selectedStatus = DepositStatus.active;
-  DateTime _startDate = DateTime.now();
-  List<Nominee> _nominees = [];
+    final isSaving = useState(false);
 
-  bool _isSaving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _accountNoController = TextEditingController(
-      text: widget.existingDeposit?.accountNo,
-    );
-    _principalAmountController = TextEditingController(
-      text: widget.existingDeposit?.principalAmount.toString(),
-    );
-    _interestRateController = TextEditingController(
-      text: widget.existingDeposit?.interestRate.toString(),
-    );
-    _selectedCustomerId = widget.existingDeposit?.customerId;
-    _linkedAccountController = TextEditingController(
-      text: widget.existingDeposit?.linkedSavingsAccountNo,
-    );
-
-    if (widget.existingDeposit != null) {
-      _selectedScheme = widget.existingDeposit!.schemeType;
-      _selectedTermYears = widget.existingDeposit!.termYears;
-      _selectedTermMonths = widget.existingDeposit!.termMonths;
-      _selectedStatus = widget.existingDeposit!.status;
-      _startDate = widget.existingDeposit!.startDate;
-      _nominees = List.of(widget.existingDeposit!.nominees);
-    } else {
-      _selectedTermYears = _selectedScheme.defaultTenureYears;
-      _selectedTermMonths = 0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _accountNoController.dispose();
-    _principalAmountController.dispose();
-    _interestRateController.dispose();
-    _linkedAccountController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    if (_formKey.currentState!.validate()) {
-      if (_selectedCustomerId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(t.oneTimeDeposits.selectCustomerPrompt)),
-        );
-        return;
-      }
-
-      setState(() => _isSaving = true);
-      final result = await ref
-          .read(oneTimeDepositsControllerProvider.notifier)
-          .saveOneTimeDeposit(
-            id: widget.existingDeposit?.id,
-            accountNo: _accountNoController.text.trim(),
-            principalAmount:
-                double.tryParse(_principalAmountController.text.trim()) ?? 0.0,
-            termYears: _selectedTermYears,
-            termMonths: _selectedScheme.isFixedTenure ? 0 : _selectedTermMonths,
-            interestRate:
-                double.tryParse(_interestRateController.text.trim()) ?? 0.0,
-            customerId: _selectedCustomerId ?? '',
-            schemeType: _selectedScheme,
-            status: _selectedStatus,
-            startDate: _startDate,
-            linkedSavingsAccountNo: _linkedAccountController.text.trim(),
-            nominees: _nominees,
-          );
-
-      if (!mounted) return;
-      setState(() => _isSaving = false);
-
-      switch (result) {
-        case Success():
-          context.pop();
-        case Failure(error: final err):
+    Future<void> save() async {
+      if (formKey.currentState!.validate()) {
+        if (selectedCustomerId.value == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                t.oneTimeDeposits.failedToSaveDeposit(error: err.toString()),
-              ),
-            ),
+            SnackBar(content: Text(t.oneTimeDeposits.selectCustomerPrompt)),
           );
+          return;
+        }
+
+        isSaving.value = true;
+        final result = await ref
+            .read(oneTimeDepositsControllerProvider.notifier)
+            .saveOneTimeDeposit(
+              id: deposit?.id,
+              accountNo: accountNoController.text.trim(),
+              principalAmount: double.tryParse(principalAmountController.text.trim()) ?? 0.0,
+              termYears: selectedTermYears.value,
+              termMonths: selectedScheme.value.isFixedTenure ? 0 : selectedTermMonths.value,
+              interestRate: double.tryParse(interestRateController.text.trim()) ?? 0.0,
+              customerId: selectedCustomerId.value ?? '',
+              schemeType: selectedScheme.value,
+              status: selectedStatus.value,
+              startDate: startDate.value,
+              linkedSavingsAccountNo: linkedAccountController.text.trim(),
+              nominees: nominees.value,
+            );
+
+        if (!context.mounted) return;
+        isSaving.value = false;
+
+        switch (result) {
+          case Success():
+            context.pop();
+          case Failure(error: final err):
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  t.oneTimeDeposits.failedToSaveDeposit(error: err.toString()),
+                ),
+              ),
+            );
+        }
       }
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    final isUpdating = widget.existingDeposit != null;
+    final isUpdating = deposit != null;
 
     return Scaffold(
       appBar: FormAppBar(
         title: isUpdating
             ? t.oneTimeDeposits.editDeposit
             : t.oneTimeDeposits.newDeposit,
-        isSaving: _isSaving,
-        onSave: _save,
+        isSaving: isSaving.value,
+        onSave: save,
       ),
       body: Form(
-        key: _formKey,
+        key: formKey,
         child: ListView(
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
           children: [
@@ -176,16 +136,14 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             ),
             AppSpacings.gapMd,
             CustomerSelectionField(
-              initialCustomerId: _selectedCustomerId,
+              initialCustomerId: selectedCustomerId.value,
               onCustomerSelected: (customer) {
-                setState(() {
-                  _selectedCustomerId = customer?.id;
-                });
+                selectedCustomerId.value = customer?.id;
               },
             ),
             AppSpacings.gapLg,
             AppTextField(
-              controller: _accountNoController,
+              controller: accountNoController,
               labelText: t.oneTimeDeposits.fields.accountNo,
               prefixIcon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedTicket01,
@@ -196,23 +154,24 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             ),
             AppSpacings.gapLg,
             AppDropdownField<DepositStatus>(
-              value: _selectedStatus,
+              value: selectedStatus.value,
               labelText: t.oneTimeDeposits.fields.status,
+              items: DepositStatus.values
+                  .map((status) => DropdownMenuItem(
+                        value: status,
+                        child: Text(status.name.toUpperCase()),
+                      ))
+                  .toList(),
+              onChanged: (status) {
+                if (status != null) {
+                  selectedStatus.value = status;
+                }
+              },
               prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedInformationCircle,
+                icon: HugeIcons.strokeRoundedActivity01,
                 size: AppDimensions.iconMd,
               ),
-              items: DepositStatus.values.map((status) {
-                return DropdownMenuItem(
-                  value: status,
-                  child: Text(status.displayName),
-                );
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => _selectedStatus = val);
-              },
             ),
-
             AppSpacings.gapXl,
             Text(
               t.oneTimeDeposits.sections.investmentDetails,
@@ -223,146 +182,101 @@ class _OneTimeDepositFormState extends ConsumerState<_OneTimeDepositForm> {
             ),
             AppSpacings.gapMd,
             AppDropdownField<OneTimeSchemeType>(
-              value: _selectedScheme,
+              value: selectedScheme.value,
               labelText: t.oneTimeDeposits.fields.schemeType,
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedTag01,
-                size: AppDimensions.iconMd,
-              ),
-              items: OneTimeSchemeType.values.map((s) {
-                return DropdownMenuItem(value: s, child: Text(s.displayName));
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) {
-                  setState(() {
-                    _selectedScheme = val;
-                    if (!_selectedScheme.allowedTenuresInYears.contains(_selectedTermYears) && _selectedScheme.isFixedTenure) {
-                      _selectedTermYears = _selectedScheme.defaultTenureYears;
-                    }
-                  });
+              items: OneTimeSchemeType.values
+                  .map((scheme) => DropdownMenuItem(
+                        value: scheme,
+                        child: Text(scheme.displayName),
+                      ))
+                  .toList(),
+              onChanged: (scheme) {
+                if (scheme != null) {
+                  selectedScheme.value = scheme;
+                  selectedTermYears.value = scheme.defaultTenureYears;
                 }
               },
-            ),
-            AppSpacings.gapLg,
-            AppDurationInput(
-              isFixedTenure: _selectedScheme.isFixedTenure,
-              allowedTenuresInYears: _selectedScheme.allowedTenuresInYears,
-              selectedYears: _selectedTermYears,
-              selectedMonths: _selectedTermMonths,
-              onChanged: (years, months) {
-                setState(() {
-                  _selectedTermYears = years;
-                  _selectedTermMonths = months;
-                });
-              },
+              prefixIcon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedLayers01,
+                size: AppDimensions.iconMd,
+              ),
             ),
             AppSpacings.gapLg,
             AppTextField(
-              controller: _principalAmountController,
+              controller: principalAmountController,
               labelText: t.oneTimeDeposits.fields.principalAmount,
               prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedMoney01,
+                icon: HugeIcons.strokeRoundedCoins01,
                 size: AppDimensions.iconMd,
               ),
-              keyboardType: TextInputType.number,
-              validator: (val) => OneTimeDeposit.validateAmount(
-                double.tryParse(val ?? ''),
-                'Principal Amount',
-              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
             AppTextField(
-              controller: _interestRateController,
+              controller: interestRateController,
               labelText: t.oneTimeDeposits.fields.interestRate,
               prefixIcon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedPercent,
                 size: AppDimensions.iconMd,
               ),
-              isRequired: true,
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
-            AppTextField(
-              controller: _linkedAccountController,
-              labelText: t.oneTimeDeposits.fields.linkedSavingsAccount,
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedBank,
-                size: AppDimensions.iconMd,
+            AppDateField(
+              controller: useTextEditingController(
+                text: MaterialLocalizations.of(context)
+                    .formatCompactDate(startDate.value),
               ),
-              textInputAction: TextInputAction.next,
+              labelText: t.oneTimeDeposits.fields.startDate,
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: startDate.value,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (picked != null) {
+                  startDate.value = picked;
+                }
+              },
             ),
-
+            AppSpacings.gapLg,
+            AppDurationInput(
+              isFixedTenure: selectedScheme.value.isFixedTenure,
+              allowedTenuresInYears: selectedScheme.value.allowedTenuresInYears,
+              selectedYears: selectedTermYears.value,
+              selectedMonths: selectedTermMonths.value,
+              onChanged: (years, months) {
+                selectedTermYears.value = years;
+                selectedTermMonths.value = months;
+              },
+            ),
             AppSpacings.gapXl,
             Text(
-              t.oneTimeDeposits.sections.timeline,
+              "Linked Accounts",
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
             AppSpacings.gapMd,
-            Card(
-              elevation: 0,
-              color: Theme.of(
-                context,
-              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                side: BorderSide(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
+            AppTextField(
+              controller: linkedAccountController,
+              labelText: t.oneTimeDeposits.fields.linkedSavingsAccount,
+              prefixIcon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedBank,
+                size: AppDimensions.iconMd,
               ),
-              child: Column(
-                children: [
-                  ListTile(
-                    title: Text(t.oneTimeDeposits.fields.startDate),
-                    subtitle: Text(
-                      '${_startDate.day}/${_startDate.month}/${_startDate.year}',
-                    ),
-                    leading: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedCalendar02,
-                      size: AppDimensions.iconMd,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusLg,
-                      ),
-                    ),
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _startDate,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (date != null) setState(() => _startDate = date);
-                    },
-                  ),
-                ],
-              ),
+              textInputAction: TextInputAction.done,
             ),
-            AppSpacings.gapXxl,
+            AppSpacings.gapMd,
             NomineesInputSection(
-              initialNominees: _nominees,
+              nominees: nominees.value,
               onChanged: (newNominees) {
-                _nominees = newNominees;
+                nominees.value = newNominees;
               },
-            ),
-            AppSpacings.gapXxl,
-            FilledButton(
-              onPressed: _isSaving ? null : _save,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(AppDimensions.buttonHeight),
-              ),
-              child: _isSaving
-                  ? const SizedBox(
-                      height: AppDimensions.iconMd,
-                      width: AppDimensions.iconMd,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(t.oneTimeDeposits.saveDeposit),
             ),
             AppSpacings.gapXxl,
           ],

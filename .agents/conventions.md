@@ -33,7 +33,7 @@ This document tracks the architectural decisions, structural rules, and conventi
 
 ## 4. UI & Presentation Layer
 - **Dumb Widgets**: Widgets are purely for displaying data and capturing input. 
-- **Ephemeral UI State**: Prefer `ConsumerStatefulWidget` for managing purely local, ephemeral UI state (e.g., text controllers, focus nodes, form submission loading spinners).
+- **Ephemeral UI State**: Use `HookConsumerWidget` (via `hooks_riverpod` and `flutter_hooks`) exclusively for managing purely local, ephemeral UI state (e.g., `useTextEditingController`, `useState`). `StatefulWidget` and `ConsumerStatefulWidget` are prohibited.
 - **Localization (i18n)**: Use **Slang** (with nested YAML configurations). Avoid raw `Text('...')` strings.
 - **Theme & Dimensions**: Do not hardcode dimensions or colors. Consolidate all styling into a granular file structure inside `lib/core/theme/`. Use Flutter's `ThemeExtension` API to attach custom design tokens (spacings, radii, custom colors) directly to the `ThemeData`. Access them safely via `Theme.of(context).extension<AppDesignTokens>()` and `Theme.of(context).colorScheme`.
 - **ScreenUtil**: Reject `flutter_screenutil` (`.w`, `.h`, `.sp`) as it breaks responsive layouts on Web and Desktop. Strip all such dimensions during widget migrations.
@@ -43,7 +43,7 @@ This document tracks the architectural decisions, structural rules, and conventi
 
 ## 5. Anti-Patterns to Avoid
 1. **Committing Erroring States**: Never commit code that does not compile or pass the analyzer (`dart analyze`). Always format, build, and analyze before committing.
-2. **List Controller Mutation Spoilage**: DO NOT manually set `state = const AsyncValue.loading()` inside mutation methods (like `save()` or `delete()`) within a list controller. This wipes out the data and causes massive UI rebuild bugs (e.g., destroying form state). Handle form submission loading states locally via `setState` in a `ConsumerStatefulWidget`, OR use a separate mutation controller.
+2. **List Controller Mutation Spoilage**: DO NOT manually set `state = const AsyncValue.loading()` inside mutation methods (like `save()` or `delete()`) within a list controller. This wipes out the data and causes massive UI rebuild bugs (e.g., destroying form state). Handle form submission loading states locally via `useState` in a `HookConsumerWidget`, OR use a separate mutation controller.
 3. **Inline Filtering in UI**: Avoid doing complex filtering like `customers.where((c) => c.id == id)` inside `build()`. Create a separate provider or selector (e.g., `customerProvider(id)`) to keep the UI clean.
 
 ## 6. Git & Commit Conventions
