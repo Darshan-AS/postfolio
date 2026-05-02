@@ -8,6 +8,7 @@ void main() {
     await tester.pumpWidget(
       const ProviderScope(child: MaterialApp(home: CustomerFormScreen())),
     );
+    await tester.pumpAndSettle();
     expect(find.byType(Scaffold), findsOneWidget);
   });
 }

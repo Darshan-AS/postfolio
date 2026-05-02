@@ -52,7 +52,6 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
   late final TextEditingController _accountNoController;
   late final TextEditingController _installmentAmountController;
   late final TextEditingController _interestRateController;
-  late final TextEditingController _maturityAmountController;
   late final TextEditingController _linkedAccountController;
 
   String? _selectedCustomerId;
@@ -62,7 +61,6 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
   late int _selectedTermMonths;
   DepositStatus _selectedStatus = DepositStatus.active;
   DateTime _startDate = DateTime.now();
-  DateTime _maturityDate = DateTime.now().add(const Duration(days: 365));
   List<Nominee> _nominees = [];
 
   bool _isSaving = false;
@@ -83,9 +81,6 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
       text: widget.existingDeposit?.interestRate.toString(),
     );
     _selectedCustomerId = widget.existingDeposit?.customerId;
-    _maturityAmountController = TextEditingController(
-      text: widget.existingDeposit?.maturityAmount.toString(),
-    );
     _linkedAccountController = TextEditingController(
       text: widget.existingDeposit?.linkedAutoDebitAccountNo,
     );
@@ -96,7 +91,6 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
       _selectedTermMonths = widget.existingDeposit!.termMonths;
       _selectedStatus = widget.existingDeposit!.status;
       _startDate = widget.existingDeposit!.startDate;
-      _maturityDate = widget.existingDeposit!.maturityDate;
       _nominees = List.of(widget.existingDeposit!.nominees);
     } else {
       _selectedTermYears = _selectedScheme.defaultTenureYears;
@@ -110,7 +104,6 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
     _accountNoController.dispose();
     _installmentAmountController.dispose();
     _interestRateController.dispose();
-    _maturityAmountController.dispose();
     _linkedAccountController.dispose();
     super.dispose();
   }
@@ -141,10 +134,7 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
             customerId: _selectedCustomerId ?? '',
             schemeType: _selectedScheme,
             status: _selectedStatus,
-            maturityAmount:
-                double.tryParse(_maturityAmountController.text.trim()) ?? 0.0,
             startDate: _startDate,
-            maturityDate: _maturityDate,
             linkedAutoDebitAccountNo: _linkedAccountController.text.trim(),
             nominees: _nominees,
           );
@@ -310,22 +300,6 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
             ),
             AppSpacings.gapLg,
             AppTextField(
-              controller: _maturityAmountController,
-              labelText: t.recurringDeposits.fields.maturityAmount,
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedPiggyBank,
-                size: AppDimensions.iconMd,
-              ),
-              isRequired: true,
-              keyboardType: TextInputType.number,
-              validator: (val) => RecurringDeposit.validateAmount(
-                double.tryParse(val ?? ''),
-                'Maturity Amount',
-              ),
-              textInputAction: TextInputAction.next,
-            ),
-            AppSpacings.gapLg,
-            AppTextField(
               controller: _linkedAccountController,
               labelText: t.recurringDeposits.fields.linkedSavingsAccount,
               prefixIcon: const HugeIcon(
@@ -379,31 +353,6 @@ class _RecurringDepositFormState extends ConsumerState<_RecurringDepositForm> {
                         lastDate: DateTime(2100),
                       );
                       if (date != null) setState(() => _startDate = date);
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    title: Text(t.recurringDeposits.fields.maturityDate),
-                    subtitle: Text(
-                      '${_maturityDate.day}/${_maturityDate.month}/${_maturityDate.year}',
-                    ),
-                    leading: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedCalendar03,
-                      size: AppDimensions.iconMd,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusLg,
-                      ),
-                    ),
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _maturityDate,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (date != null) setState(() => _maturityDate = date);
                     },
                   ),
                 ],

@@ -16,9 +16,7 @@ _OneTimeDeposit _$OneTimeDepositFromJson(Map<String, dynamic> json) =>
       interestRate: (json['interestRate'] as num?)?.toDouble() ?? 0.0,
       customerId: json['customerId'] as String,
       schemeType: $enumDecode(_$OneTimeSchemeTypeEnumMap, json['schemeType']),
-      maturityAmount: (json['maturityAmount'] as num).toDouble(),
       startDate: DateTime.parse(json['startDate'] as String),
-      maturityDate: DateTime.parse(json['maturityDate'] as String),
       linkedSavingsAccountNo: json['linkedSavingsAccountNo'] as String?,
       nominees:
           (json['nominees'] as List<dynamic>?)
@@ -40,9 +38,7 @@ Map<String, dynamic> _$OneTimeDepositToJson(_OneTimeDeposit instance) =>
       'interestRate': instance.interestRate,
       'customerId': instance.customerId,
       'schemeType': _$OneTimeSchemeTypeEnumMap[instance.schemeType]!,
-      'maturityAmount': instance.maturityAmount,
       'startDate': instance.startDate.toIso8601String(),
-      'maturityDate': instance.maturityDate.toIso8601String(),
       'linkedSavingsAccountNo': instance.linkedSavingsAccountNo,
       'nominees': instance.nominees,
       'status': _$DepositStatusEnumMap[instance.status]!,

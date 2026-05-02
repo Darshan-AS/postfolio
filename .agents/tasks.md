@@ -55,7 +55,14 @@
 - [x] Build `RecurringDepositFormScreen` (Create/Update).
 - [x] Build `RecurringDepositDetailScreen`.
 
-## Phase 5: Structural Refactoring (In Progress)
+## Phase 5: Domain Math & Automatic Calculations (In Progress)
+- [x] Create `PayoutFrequency` enum and strictly typed `InvestmentProjection` state class.
+- [x] Build `ProjectionCalculator` pure utility class for PO scheme rules.
+- [x] Refactor Deposit models to strictly compute maturity projections (removing persisted inputs).
+- [ ] Build `InvestmentProjectionCard` UI for live previews.
+- [ ] Implement Gross/Net Commission logic and TDS rules.
+
+## Phase 6: Structural Refactoring (Pending)
 - [x] Reorganize `lib/core/` structure (Created `services/`, `extensions/`).
 - [x] Extract shared services into `lib/core/services/`.
 - [x] Extract extension methods into `lib/core/extensions/`.

@@ -39,9 +39,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     required String customerId,
     required RecurringSchemeType schemeType,
     DepositStatus status = DepositStatus.active,
-    required double maturityAmount,
     required DateTime startDate,
-    required DateTime maturityDate,
     String? linkedAutoDebitAccountNo,
     List<Nominee> nominees = const [],
   }) async {
@@ -56,9 +54,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
       customerId: customerId,
       schemeType: schemeType,
       status: status,
-      maturityAmount: maturityAmount,
       startDate: startDate,
-      maturityDate: maturityDate,
       linkedAutoDebitAccountNo: linkedAutoDebitAccountNo,
       nominees: nominees,
     );

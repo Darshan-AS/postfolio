@@ -27,9 +27,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       interestRate: 6.5,
       customerId: '1', // Bruce Wayne
       schemeType: OneTimeSchemeType.timeDeposit,
-      maturityAmount: 55000.0,
       startDate: DateTime(2025, 1, 1),
-      maturityDate: DateTime(2026, 7, 1),
       linkedSavingsAccountNo: 'SA987654321',
       status: DepositStatus.active,
       nominees: const [
@@ -51,9 +49,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       interestRate: 7.0,
       customerId: '2', // Clark Kent
       schemeType: OneTimeSchemeType.nationalSavingsCertificate,
-      maturityAmount: 35000.0,
       startDate: DateTime(2024, 6, 15),
-      maturityDate: DateTime(2029, 6, 15),
       linkedSavingsAccountNo: 'SA123456789',
       status: DepositStatus.active,
       nominees: const [
@@ -70,9 +66,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       interestRate: 6.8,
       customerId: '3', // Diana Prince
       schemeType: OneTimeSchemeType.timeDeposit,
-      maturityAmount: 122000.0,
       startDate: DateTime(2025, 3, 1),
-      maturityDate: DateTime(2028, 3, 1),
       linkedSavingsAccountNo: 'SA456789123',
       status: DepositStatus.matured,
       nominees: const [
@@ -88,9 +82,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       interestRate: 5.5,
       customerId: '4', // Barry Allen
       schemeType: OneTimeSchemeType.monthlyIncomeScheme,
-      maturityAmount: 15000.0,
       startDate: DateTime(2024, 10, 10),
-      maturityDate: DateTime(2025, 10, 10),
       linkedSavingsAccountNo: 'SA567890123',
       status: DepositStatus.closed,
       nominees: const [
@@ -106,9 +98,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       interestRate: 6.2,
       customerId: '5', // Arthur Curry
       schemeType: OneTimeSchemeType.kisanVikasPatra,
-      maturityAmount: 90000.0,
       startDate: DateTime(2025, 4, 1),
-      maturityDate: DateTime(2027, 10, 1),
       linkedSavingsAccountNo: 'SA678901234',
       status: DepositStatus.active,
       nominees: const [

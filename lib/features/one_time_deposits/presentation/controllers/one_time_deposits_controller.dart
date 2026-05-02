@@ -37,9 +37,7 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
     required String customerId,
     required OneTimeSchemeType schemeType,
     DepositStatus status = DepositStatus.active,
-    required double maturityAmount,
     required DateTime startDate,
-    required DateTime maturityDate,
     String? linkedSavingsAccountNo,
     List<Nominee> nominees = const [],
   }) async {
@@ -53,9 +51,7 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
       customerId: customerId,
       schemeType: schemeType,
       status: status,
-      maturityAmount: maturityAmount,
       startDate: startDate,
-      maturityDate: maturityDate,
       linkedSavingsAccountNo: linkedSavingsAccountNo,
       nominees: nominees,
     );

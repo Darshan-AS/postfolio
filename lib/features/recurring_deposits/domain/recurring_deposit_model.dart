@@ -3,6 +3,8 @@ import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/models/investment_projection.dart';
+import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -23,13 +25,26 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required double interestRate,
     required String customerId,
     required RecurringSchemeType schemeType,
-    required double maturityAmount,
     required DateTime startDate,
-    required DateTime maturityDate,
     String? linkedAutoDebitAccountNo,
     @Default([]) List<Nominee> nominees,
     @Default(DepositStatus.active) DepositStatus status,
   }) = _RecurringDeposit;
+
+  @override
+  InvestmentProjection get projection => ProjectionCalculator.calculateRD(
+    monthlyInstallment: installmentAmount,
+    interestRate: interestRate,
+    startDate: startDate,
+    termYears: termYears,
+    termMonths: termMonths,
+  );
+
+  @override
+  double get maturityAmount => projection.maturityAmount;
+
+  @override
+  DateTime get maturityDate => projection.maturityDate;
 
   factory RecurringDeposit.fromJson(Map<String, dynamic> json) =>
       _$RecurringDepositFromJson(json);
@@ -44,9 +59,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     interestRate: 5.8,
     customerId: 'Loading Dummy Name...',
     schemeType: RecurringSchemeType.recurringDeposit,
-    maturityAmount: 60000.0,
     startDate: DateTime.now(),
-    maturityDate: DateTime.now().add(const Duration(days: 365 * 5)),
   );
 
   // --- Domain Validation Rules ---
@@ -60,9 +73,6 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   static String? validateTerm(int years, int months) =>
       BaseDeposit.validateTerm(years, months);
 
-  static String? validateDates(DateTime startDate, DateTime maturityDate) =>
-      BaseDeposit.validateDates(startDate, maturityDate);
-
   static Result<RecurringDeposit, String> create({
     required String id,
     required String serialNo,
@@ -73,9 +83,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required double interestRate,
     required String customerId,
     required RecurringSchemeType schemeType,
-    required double maturityAmount,
     required DateTime startDate,
-    required DateTime maturityDate,
     String? linkedAutoDebitAccountNo,
     List<Nominee> nominees = const [],
     DepositStatus status = DepositStatus.active,
@@ -83,8 +91,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     final validationError =
         BaseDeposit.validateAccountNo(accountNo) ??
         BaseDeposit.validateAmount(installmentAmount, 'Installment amount') ??
-        BaseDeposit.validateTerm(termYears, termMonths) ??
-        BaseDeposit.validateDates(startDate, maturityDate);
+        BaseDeposit.validateTerm(termYears, termMonths);
 
     if (validationError != null) return Failure(validationError);
 
@@ -108,9 +115,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
         interestRate: interestRate,
         customerId: customerId,
         schemeType: schemeType,
-        maturityAmount: maturityAmount,
         startDate: startDate,
-        maturityDate: maturityDate,
         linkedAutoDebitAccountNo: linkedAutoDebitAccountNo?.trim(),
         nominees: List.unmodifiable(nominees),
         status: status,

@@ -1,5 +1,6 @@
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 abstract interface class BaseDeposit {
@@ -9,8 +10,9 @@ abstract interface class BaseDeposit {
   int get termMonths;
   double get interestRate;
   String get customerId;
-  double get maturityAmount;
   DateTime get startDate;
+  InvestmentProjection get projection;
+  double get maturityAmount;
   DateTime get maturityDate;
   List<Nominee> get nominees;
   DepositStatus get status;
@@ -30,13 +32,6 @@ abstract interface class BaseDeposit {
 
   static String? validateTerm(int years, int months) {
     if (years < 0 || months < 0) return t.errors.negativeTerm;
-    return null;
-  }
-
-  static String? validateDates(DateTime startDate, DateTime maturityDate) {
-    if (maturityDate.isBefore(startDate)) {
-      return t.errors.invalidMaturityDate;
-    }
     return null;
   }
 }

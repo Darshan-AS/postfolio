@@ -28,9 +28,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       interestRate: 6.7,
       customerId: '1', // Bruce Wayne
       schemeType: RecurringSchemeType.recurringDeposit,
-      maturityAmount: 350000.0,
       startDate: DateTime(2025, 2, 1),
-      maturityDate: DateTime(2030, 2, 1),
       linkedAutoDebitAccountNo: 'SA987654321',
       status: DepositStatus.active,
       nominees: const [
@@ -53,9 +51,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       interestRate: 6.0,
       customerId: '2', // Clark Kent
       schemeType: RecurringSchemeType.recurringDeposit,
-      maturityAmount: 124000.0,
       startDate: DateTime(2024, 11, 1),
-      maturityDate: DateTime(2025, 11, 1),
       linkedAutoDebitAccountNo: 'SA123456789',
       status: DepositStatus.matured,
       nominees: const [
@@ -73,9 +69,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       interestRate: 6.5,
       customerId: '3', // Diana Prince
       schemeType: RecurringSchemeType.recurringDeposit,
-      maturityAmount: 78000.0,
       startDate: DateTime(2025, 1, 15),
-      maturityDate: DateTime(2028, 1, 15),
       linkedAutoDebitAccountNo: 'SA456789123',
       status: DepositStatus.closed,
       nominees: const [
@@ -92,9 +86,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       interestRate: 6.8,
       customerId: '4', // Barry Allen
       schemeType: RecurringSchemeType.recurringDeposit,
-      maturityAmount: 390000.0,
       startDate: DateTime(2024, 8, 1),
-      maturityDate: DateTime(2026, 8, 1),
       linkedAutoDebitAccountNo: 'SA567890123',
       status: DepositStatus.active,
       nominees: const [
@@ -111,9 +103,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       interestRate: 7.0,
       customerId: '5', // Arthur Curry
       schemeType: RecurringSchemeType.recurringDeposit,
-      maturityAmount: 210000.0,
       startDate: DateTime(2025, 4, 10),
-      maturityDate: DateTime(2030, 4, 10),
       linkedAutoDebitAccountNo: 'SA678901234',
       status: DepositStatus.active,
       nominees: const [
