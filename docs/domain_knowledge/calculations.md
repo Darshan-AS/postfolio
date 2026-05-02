@@ -75,27 +75,46 @@ If an RD installment is missed, a default fee is levied.
 ## 5. Early Closing (Premature Closure) Penalty Formulas
 
 ### Recurring Deposit (RD)
-* **Rule:** Allowed after **3 years**.
-* **Penalty:** RD interest rate is forfeited. Interest is recalculated using the **Post Office Savings Account (POSA) rate** (currently 4.0% p.a.) for the completed months.
+* **Rule:** Allowed after **3 years** from the date of account opening.
+* **Penalty:** RD interest rate is forfeited. Interest is recalculated using the **Post Office Savings Account (POSA) rate** (currently 4.0% p.a.) for the completed months. If advance deposits have been made, premature closure is not allowed until the period for which advance deposits were made is over.
 
 ### Time Deposit (TD)
 * **< 6 months:** Premature closure not allowed.
-* **6 to 12 months:** No TD interest is paid; instead, interest is paid at the POSA rate (4.0%).
-* **> 1 year:** Interest is calculated at **2% less than the TD rate applicable for the completed years**. For the fractional (incomplete) year, interest is calculated at the POSA rate.
+* **6 to 12 months:** No TD interest is paid; instead, interest is calculated at the POSA rate (4.0%).
+* **> 1 year:** Interest is calculated at **2% less than the TD rate applicable for the completed years**. For the fractional (incomplete) year of withdrawal, interest is calculated at the POSA rate.
 
 ### Monthly Income Scheme (MIS)
 * **< 1 year:** Premature closure not allowed.
-* **1 to 3 years:** A penalty of **2%** is deducted from the principal.
+* **1 to 3 years:** A penalty of **2%** is deducted from the principal amount.
   $$\text{Refund} = P - (P \times 0.02)$$
-* **3 to 5 years:** A penalty of **1%** is deducted from the principal.
+* **3 to 5 years:** A penalty of **1%** is deducted from the principal amount.
   $$\text{Refund} = P - (P \times 0.01)$$
 
+### Senior Citizen Savings Scheme (SCSS)
+* **< 1 year:** No interest payable. Any interest already paid is recovered (deducted) from the principal.
+* **1 to 2 years:** A penalty of **1.5%** of the principal is deducted.
+  $$\text{Refund} = P - (P \times 0.015)$$
+* **2 to 5 years:** A penalty of **1%** of the principal is deducted.
+  $$\text{Refund} = P - (P \times 0.01)$$
+* **Extended Account:** If extended after the initial 5-year maturity, it can be closed at any time without penalty after 1 year of extension. 
+
 ### Kisan Vikas Patra (KVP)
-* **Rule:** Allowed only after **2 years and 6 months**.
-* **Penalty:** Payout is governed strictly by a pre-determined surrender value table published by the Ministry of Finance corresponding to the date of closure.
+* **Rule:** Premature closure allowed only after **2 years and 6 months (30 months)** from the date of issue.
+* **Penalty:** Payout is governed strictly by a pre-determined surrender value table published by the Ministry of Finance corresponding to the date of closure. It may also be closed earlier under special circumstances (death of holder, court order, or forfeiture to pledgee).
 
 ### National Savings Certificate (NSC)
-* **Rule:** Premature closure is generally **not allowed** except under specific extreme circumstances (e.g., death of the holder, forfeiture by a pledgee, or a court order).
+* **Rule:** Premature closure is **not allowed** before the 5-year maturity period except under specific extreme circumstances (e.g., death of a single account holder or all joint account holders, forfeiture by a pledgee, or a court order).
+
+### Mahila Samman Savings Certificate (MSSC)
+* **General Rule:** Can be closed without penalty only in case of the death of the account holder.
+* **Compassionate Grounds:** Allowed in case of extreme compassionate grounds (life-threatening disease of account holder or death of guardian). No penalty; normal rate applies.
+* **Voluntary Premature Closure:** Allowed after **6 months** of account opening without citing a reason.
+* **Penalty for Voluntary Closure:** A penalty of **2%** on the interest rate is applied (e.g., interest will be calculated at 5.5% instead of the standard 7.5%).
+
+### Public Provident Fund (PPF)
+* **Rule:** Premature closure is allowed only after **5 completed financial years** from the end of the year in which the account was opened.
+* **Conditions:** Allowed only under specific grounds (treatment of life-threatening disease, higher education, or change of residency status/NRI).
+* **Penalty:** A penal deduction of **1%** from the standard interest rate applies retrospectively from the date of account opening.
 
 ---
 

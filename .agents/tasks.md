@@ -116,7 +116,12 @@
 - [ ] Integrate `firebase_analytics` to track user engagement and app usage metrics.
 - [ ] Integrate `share_plus` into `IntentService` to allow agents to share deposit details/reports with customers via native share sheets.
 - [ ] Integrate `flutter_native_splash` to generate native splash screens and prevent cold-boot white flashes.
+- [ ] **Detail View - RD Premature Closure**: Allow RD to be withdrawn after 3 years. Prompt the user for the applicable penalty interest rate (e.g., Savings Account rate, ~4%) and show the calculated premature withdrawal amount ("if withdrawn today") when the user clicks "Close Account".
+- [ ] **Detail View - General Premature Closure**: Implement early withdrawal calculation logic for all applicable schemes (TD, MIS, SCSS, KVP, MSSC, PPF) based on domain rules. When "Close Account" is clicked, show the applicable penalties, deductions, and the exact "if withdrawn today" amount.
 
 ## Known Bugs & Issues
 - [x] **Date Picker UI Bug**: On selecting a new date in the date widget (e.g., RD Start Date or TD Start Date), the form text field does not visually update in the UI to reflect the newly picked date.
 - [x] **KVP Projection Crash**: The Form UI crashes for KVP selection with unsupported operation infinity when interest rate is cleared or 0.
+- [ ] **Form View - TD Calculation**: The maturity amount should have interest added in.
+- [ ] **Form View - MIS Projection**: Add a field to show maturity amount + total earned (e.g., "Total Value" or "Total Return").
+- [ ] **Form View - KVP Projection**: Show a human-readable time period indicating when the deposit doubles.
