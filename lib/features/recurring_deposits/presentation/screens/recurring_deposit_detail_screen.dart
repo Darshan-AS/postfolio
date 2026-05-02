@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -14,6 +13,7 @@ import 'package:postfolio/features/customers/presentation/controllers/customers_
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 
 class RecurringDepositDetailScreen extends ConsumerWidget {
   final String depositId;
@@ -22,8 +22,6 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dateFormat = DateFormat('MMM dd, yyyy');
-
     return AsyncEntityBuilder<RecurringDeposit>(
       state: ref.watch(recurringDepositsControllerProvider),
       entityId: depositId,
@@ -123,7 +121,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                     size: AppDimensions.iconMd,
                   ),
                   label: t.recurringDeposits.fields.startDate,
-                  value: dateFormat.format(deposit.startDate),
+                  value: deposit.startDate.toAppFormat(),
                 ),
                 const Divider(height: 1),
                 DetailItem(
@@ -132,7 +130,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                     size: AppDimensions.iconMd,
                   ),
                   label: t.recurringDeposits.fields.maturityDate,
-                  value: dateFormat.format(deposit.maturityDate),
+                  value: deposit.maturityDate.toAppFormat(),
                 ),
               ],
             ),

@@ -45,6 +45,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	String get appTitle => 'Postfolio';
 
 	late final TranslationsErrorsEn errors = TranslationsErrorsEn.internal(_root);
+	late final TranslationsFormatEn format = TranslationsFormatEn.internal(_root);
 	late final TranslationsCommonEn common = TranslationsCommonEn.internal(_root);
 	late final TranslationsProjectionEn projection = TranslationsProjectionEn.internal(_root);
 	late final TranslationsNavEn nav = TranslationsNavEn.internal(_root);
@@ -93,6 +94,24 @@ class TranslationsErrorsEn {
 
 	/// en: 'Savings Account Number is required to add nominees'
 	String get sbAccountRequiredForNominee => 'Savings Account Number is required to add nominees';
+}
+
+// Path: format
+class TranslationsFormatEn {
+	TranslationsFormatEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'dd MMM yyyy'
+	String get date => 'dd MMM yyyy';
+
+	/// en: 'dd/MM/yyyy'
+	String get dateCompact => 'dd/MM/yyyy';
+
+	/// en: 'dd MMM yyyy, hh:mm a'
+	String get dateTime => 'dd MMM yyyy, hh:mm a';
 }
 
 // Path: common
@@ -746,6 +765,9 @@ extension on Translations {
 			'errors.invalidEmail' => 'Invalid email format',
 			'errors.invalidPhone' => 'Invalid phone number (7-15 digits)',
 			'errors.sbAccountRequiredForNominee' => 'Savings Account Number is required to add nominees',
+			'format.date' => 'dd MMM yyyy',
+			'format.dateCompact' => 'dd/MM/yyyy',
+			'format.dateTime' => 'dd MMM yyyy, hh:mm a',
 			'common.duration.termYears' => 'Term (Years)',
 			'common.duration.termMonths' => 'Term (Months)',
 			'common.duration.yearAbbreviation' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 Yr', other: '${n} Yrs', ), 

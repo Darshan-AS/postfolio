@@ -101,7 +101,8 @@
   - [x] Remove manual `maturityDate` and `maturityAmount` input fields from form screens.
   - [x] **Dynamic Form Previews:** Create and integrate an `InvestmentProjectionCard` (using native `Card` and `flutter_animate` for fade/slide transitions) to dynamically calculate and display the expected Maturity Date, Maturity Amount, and interest projections in real-time as the user changes form values.
   - [x] **Explore Projection Animations:** Investigate "stock ticker" or odometer-style rolling number animations for the `InvestmentProjectionCard` (e.g., using `animated_flip_counter`, `countup`, or a custom native `TweenAnimationBuilder`) to give the live preview a premium financial feel.
-- [ ] **UI Cleanup - Date Formatting:** Standardize date displays across the entire app to use a consistent, human-readable format (e.g., `dd/MM/yyyy` or `12 Oct 2026`) instead of default date string conversions.
+- [x] **UI Cleanup - Date Formatting:** Standardize date displays across the entire app using `slang`'s `intl` integration.
+- [ ] **UI Cleanup - Relative Time Formatting:** Add relative time display (e.g., "Created 2 hours ago", "Matures in 3 months") where precise dates are less critical, potentially using the `timeago` or `jiffy` packages.
 - [ ] **UI Cleanup - Non-Editable Fixed Fields:** Make form fields read-only (non-editable) when they only have a single valid value or don't require user input. For example, lock the "Scheme Type" selection for Recurring Deposits, and make the "Term Length" field non-editable for single-tenure schemes like MIS and NSC.
 - [ ] **UI Cleanup - Deposit Status Selection:** Upgrade the "Deposit Status" widget in the form screens from a standard dropdown to a more intuitive UI component (e.g., a SegmentedButton or ChoiceChips).
 - [ ] Add filtering capabilities to deposit list screens (e.g., view by Active, Matured, Closed status).

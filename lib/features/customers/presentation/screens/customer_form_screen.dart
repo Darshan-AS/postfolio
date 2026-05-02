@@ -14,7 +14,7 @@ import 'package:postfolio/core/widgets/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/app_form_fields.dart';
 import 'package:postfolio/core/widgets/form_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
-import 'package:intl/intl.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 
 class CustomerFormScreen extends ConsumerWidget {
   final String? customerId;
@@ -60,7 +60,7 @@ class _CustomerForm extends HookConsumerWidget {
     final selectedDate = useState<DateTime?>(customer?.dateOfBirth);
     final dateOfBirthController = useTextEditingController(
       text: selectedDate.value != null
-          ? DateFormat.yMMMd().format(selectedDate.value!)
+          ? selectedDate.value!.toAppFormat()
           : '',
     );
     
@@ -75,7 +75,7 @@ class _CustomerForm extends HookConsumerWidget {
       );
       if (picked != null && picked != selectedDate.value) {
         selectedDate.value = picked;
-        dateOfBirthController.text = DateFormat.yMMMd().format(picked);
+        dateOfBirthController.text = picked.toAppFormat();
       }
     }
 

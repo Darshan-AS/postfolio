@@ -20,6 +20,7 @@ import 'package:postfolio/core/widgets/investment_projection_card.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/models/nominee.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 
 class OneTimeDepositFormScreen extends ConsumerWidget {
   final String? depositId;
@@ -70,7 +71,7 @@ class _OneTimeDepositForm extends HookConsumerWidget {
     final isSaving = useState(false);
 
     final startDateController = useTextEditingController(
-      text: MaterialLocalizations.of(context).formatCompactDate(startDate.value),
+      text: startDate.value.toAppFormat(),
     );
 
     // Live Projection Calculation
@@ -269,7 +270,7 @@ class _OneTimeDepositForm extends HookConsumerWidget {
                 if (picked != null) {
                   startDate.value = picked;
                   if (context.mounted) {
-                    startDateController.text = MaterialLocalizations.of(context).formatCompactDate(picked);
+                    startDateController.text = picked.toAppFormat();
                   }
                 }
               },

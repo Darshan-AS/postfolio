@@ -2,17 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 
 import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/entity_list_tile.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 
 class OneTimeDepositCard extends ConsumerWidget {
-  static final _dateFormatter = DateFormat('MMM dd, yyyy');
-
   final String customerId;
   final String accountNo;
   final double principalAmount;
@@ -63,7 +61,7 @@ class OneTimeDepositCard extends ConsumerWidget {
             ),
             const WidgetSpan(child: AppSpacings.gapSm),
             TextSpan(
-              text: '• ${_dateFormatter.format(maturityDate)}',
+              text: '• ${maturityDate.toAppFormat()}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),

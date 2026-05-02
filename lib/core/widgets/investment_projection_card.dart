@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 
 class InvestmentProjectionCard extends StatelessWidget {
   final InvestmentProjection? projection;
@@ -24,7 +25,6 @@ class InvestmentProjectionCard extends StatelessWidget {
       locale: 'en_IN',
       decimalDigits: 0,
     );
-    final formatDate = DateFormat.yMMMMd();
 
     return Card(
       elevation: 0,
@@ -104,7 +104,7 @@ class InvestmentProjectionCard extends StatelessWidget {
                     style: theme.textTheme.bodyMedium,
                   ),
                   Text(
-                    formatDate.format(proj.maturityDate),
+                    proj.maturityDate.toAppFormat(),
                     style: theme.textTheme.titleMedium,
                   ),
                 ],

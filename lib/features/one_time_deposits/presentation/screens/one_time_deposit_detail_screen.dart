@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -14,6 +13,7 @@ import 'package:postfolio/features/customers/presentation/controllers/customers_
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 
 class OneTimeDepositDetailScreen extends ConsumerWidget {
   final String depositId;
@@ -22,8 +22,6 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dateFormat = DateFormat('MMM dd, yyyy');
-
     return AsyncEntityBuilder<OneTimeDeposit>(
       state: ref.watch(oneTimeDepositsControllerProvider),
       entityId: depositId,
@@ -113,7 +111,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                     size: AppDimensions.iconMd,
                   ),
                   label: t.oneTimeDeposits.fields.depositDate,
-                  value: dateFormat.format(deposit.startDate),
+                  value: deposit.startDate.toAppFormat(),
                 ),
                 const Divider(height: 1),
                 DetailItem(
@@ -122,7 +120,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                     size: AppDimensions.iconMd,
                   ),
                   label: t.oneTimeDeposits.fields.maturityDate,
-                  value: dateFormat.format(deposit.maturityDate),
+                  value: deposit.maturityDate.toAppFormat(),
                 ),
               ],
             ),

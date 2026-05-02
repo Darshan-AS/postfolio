@@ -12,6 +12,11 @@ errors:
   invalidPhone: "Invalid phone number (7-15 digits)"
   sbAccountRequiredForNominee: "Savings Account Number is required to add nominees"
 
+format:
+  date: "dd MMM yyyy"
+  dateCompact: "dd/MM/yyyy"
+  dateTime: "dd MMM yyyy, hh:mm a"
+
 common:
   duration:
     termYears: "Term (Years)"

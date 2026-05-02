@@ -9,7 +9,7 @@ import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/entity_detail_scaffold.dart';
 import 'package:postfolio/core/widgets/nominees_detail_section.dart';
-import 'package:intl/intl.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -133,7 +133,7 @@ class CustomerDetailScreen extends ConsumerWidget {
                         size: AppDimensions.iconMd,
                       ),
                       label: t.customers.fields.dateOfBirth,
-                      value: DateFormat.yMMMd().format(customer.dateOfBirth!),
+                      value: customer.dateOfBirth!.toAppFormat(),
                     ),
                 ],
               ),
