@@ -28,6 +28,16 @@ common:
   retry: "Retry"
   notProvided: "Not provided"
   moreOptions: "More options"
+  sections:
+    linkedAccounts: "Linked Accounts"
+
+projection:
+  title: "Live Projection"
+  totalInvested: "Total Invested"
+  totalInterestEarned: "Total Interest Earned"
+  estimatedMaturity: "Estimated Maturity"
+  maturityDate: "Maturity Date"
+  payout: "Payout (${frequency})"
 
 nav:
   dashboard: "Dashboard"

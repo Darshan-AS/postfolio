@@ -16,6 +16,8 @@ import 'package:postfolio/core/widgets/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/app_form_fields.dart';
 import 'package:postfolio/core/widgets/form_app_bar.dart';
 import 'package:postfolio/core/widgets/app_duration_input.dart';
+import 'package:postfolio/core/widgets/investment_projection_card.dart';
+import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/models/nominee.dart';
 
@@ -67,6 +69,36 @@ class _RecurringDepositForm extends HookConsumerWidget {
     final nominees = useState<List<Nominee>>(deposit != null ? List.of(deposit.nominees) : []);
 
     final isSaving = useState(false);
+
+    final startDateController = useTextEditingController(
+      text: MaterialLocalizations.of(context).formatCompactDate(startDate.value),
+    );
+
+    // Live Projection Calculation
+    useListenable(installmentAmountController);
+    useListenable(interestRateController);
+
+    final currentInstallment = double.tryParse(installmentAmountController.text.trim()) ?? 0.0;
+    final currentInterest = double.tryParse(interestRateController.text.trim()) ?? 0.0;
+
+    final projection = useMemoized(
+      () {
+        return ProjectionCalculator.calculateRD(
+          monthlyInstallment: currentInstallment,
+          interestRate: currentInterest,
+          startDate: startDate.value,
+          termYears: selectedTermYears.value,
+          termMonths: selectedTermMonths.value,
+        );
+      },
+      [
+        currentInstallment,
+        currentInterest,
+        startDate.value,
+        selectedTermYears.value,
+        selectedTermMonths.value,
+      ],
+    );
 
     Future<void> save() async {
       if (formKey.currentState!.validate()) {
@@ -130,7 +162,7 @@ class _RecurringDepositForm extends HookConsumerWidget {
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
           children: [
             Text(
-              'Account Details',
+              t.recurringDeposits.sections.accountInformation,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -186,7 +218,7 @@ class _RecurringDepositForm extends HookConsumerWidget {
             ),
             AppSpacings.gapXl,
             Text(
-              'Deposit Details',
+              t.recurringDeposits.sections.investmentDetails,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -237,10 +269,7 @@ class _RecurringDepositForm extends HookConsumerWidget {
             ),
             AppSpacings.gapLg,
             AppDateField(
-              controller: useTextEditingController(
-                text: MaterialLocalizations.of(context)
-                    .formatCompactDate(startDate.value),
-              ),
+              controller: startDateController,
               labelText: t.recurringDeposits.fields.startDate,
               onTap: () async {
                 final picked = await showDatePicker(
@@ -251,6 +280,9 @@ class _RecurringDepositForm extends HookConsumerWidget {
                 );
                 if (picked != null) {
                   startDate.value = picked;
+                  if (context.mounted) {
+                    startDateController.text = MaterialLocalizations.of(context).formatCompactDate(picked);
+                  }
                 }
               },
             ),
@@ -266,8 +298,10 @@ class _RecurringDepositForm extends HookConsumerWidget {
               },
             ),
             AppSpacings.gapXl,
+            InvestmentProjectionCard(projection: projection),
+            AppSpacings.gapXxl,
             Text(
-              'Linked Accounts',
+              t.common.sections.linkedAccounts,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -276,7 +310,7 @@ class _RecurringDepositForm extends HookConsumerWidget {
             AppSpacings.gapMd,
             AppTextField(
               controller: linkedAccountController,
-              labelText: t.recurringDeposits.fields.linkedSavingsAccount,
+              labelText: t.recurringDeposits.fields.linkedAutoDebitAccount,
               prefixIcon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedBank,
                 size: AppDimensions.iconMd,
@@ -290,7 +324,6 @@ class _RecurringDepositForm extends HookConsumerWidget {
                 nominees.value = newNominees;
               },
             ),
-            AppSpacings.gapXxl,
           ],
         ),
       ),

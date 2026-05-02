@@ -16,6 +16,8 @@ import 'package:postfolio/core/widgets/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/app_form_fields.dart';
 import 'package:postfolio/core/widgets/form_app_bar.dart';
 import 'package:postfolio/core/widgets/app_duration_input.dart';
+import 'package:postfolio/core/widgets/investment_projection_card.dart';
+import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/models/nominee.dart';
 
@@ -66,6 +68,36 @@ class _OneTimeDepositForm extends HookConsumerWidget {
     final nominees = useState<List<Nominee>>(deposit != null ? List.of(deposit.nominees) : []);
 
     final isSaving = useState(false);
+
+    final startDateController = useTextEditingController(
+      text: MaterialLocalizations.of(context).formatCompactDate(startDate.value),
+    );
+
+    // Live Projection Calculation
+    useListenable(principalAmountController);
+    useListenable(interestRateController);
+
+    final currentPrincipal = double.tryParse(principalAmountController.text.trim()) ?? 0.0;
+    final currentInterest = double.tryParse(interestRateController.text.trim()) ?? 0.0;
+
+    final projection = useMemoized(
+      () {
+        return ProjectionCalculator.calculateOneTimeDeposit(
+          schemeType: selectedScheme.value,
+          principalAmount: currentPrincipal,
+          interestRate: currentInterest,
+          startDate: startDate.value,
+          termYears: selectedTermYears.value,
+        );
+      },
+      [
+        currentPrincipal,
+        currentInterest,
+        startDate.value,
+        selectedTermYears.value,
+        selectedScheme.value,
+      ],
+    );
 
     Future<void> save() async {
       if (formKey.currentState!.validate()) {
@@ -225,10 +257,7 @@ class _OneTimeDepositForm extends HookConsumerWidget {
             ),
             AppSpacings.gapLg,
             AppDateField(
-              controller: useTextEditingController(
-                text: MaterialLocalizations.of(context)
-                    .formatCompactDate(startDate.value),
-              ),
+              controller: startDateController,
               labelText: t.oneTimeDeposits.fields.startDate,
               onTap: () async {
                 final picked = await showDatePicker(
@@ -239,6 +268,9 @@ class _OneTimeDepositForm extends HookConsumerWidget {
                 );
                 if (picked != null) {
                   startDate.value = picked;
+                  if (context.mounted) {
+                    startDateController.text = MaterialLocalizations.of(context).formatCompactDate(picked);
+                  }
                 }
               },
             ),
@@ -254,8 +286,10 @@ class _OneTimeDepositForm extends HookConsumerWidget {
               },
             ),
             AppSpacings.gapXl,
+            InvestmentProjectionCard(projection: projection),
+            AppSpacings.gapXxl,
             Text(
-              "Linked Accounts",
+              t.common.sections.linkedAccounts,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -278,7 +312,6 @@ class _OneTimeDepositForm extends HookConsumerWidget {
                 nominees.value = newNominees;
               },
             ),
-            AppSpacings.gapXxl,
           ],
         ),
       ),

@@ -59,7 +59,7 @@
 - [x] Create `PayoutFrequency` enum and strictly typed `InvestmentProjection` state class.
 - [x] Build `ProjectionCalculator` pure utility class for PO scheme rules.
 - [x] Refactor Deposit models to strictly compute maturity projections (removing persisted inputs).
-- [ ] Build `InvestmentProjectionCard` UI for live previews.
+- [x] Build `InvestmentProjectionCard` UI for live previews.
 - [ ] Implement Gross/Net Commission logic and TDS rules.
 
 ## Phase 6: Structural Refactoring (Pending)
@@ -97,9 +97,11 @@
 - [ ] **Domain Math - Commission Calculators:** Implement functions to auto-calculate Gross Commission per transaction (4% for RD, 0.5% for others) and auto-deduct the 2% TDS to derive the Net Payout.
 - [ ] **Domain Math - Penalties & Rebates:** Implement transaction evaluation logic to automatically calculate RD Late Fees (1% per month delayed) and Advance Deposit Rebates (₹10/₹40 rules for 6+/12+ months).
 - [ ] **UI Cleanup - Live Preview & "Dumb Widgets":**
-  - [ ] Create Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) to track inputs and expose live `InvestmentProjection`.
+  - [x] Use `flutter_hooks` to manage local ephemeral form state (text controllers, current selections) and isolate business math into pure functions.
   - [x] Remove manual `maturityDate` and `maturityAmount` input fields from form screens.
-  - [ ] **Dynamic Form Previews:** Create and integrate an `InvestmentProjectionCard` to dynamically calculate and display the expected Maturity Date, Maturity Amount, and interest projections in real-time as the user changes form values.
+  - [x] **Dynamic Form Previews:** Create and integrate an `InvestmentProjectionCard` (using native `Card` and `flutter_animate` for fade/slide transitions) to dynamically calculate and display the expected Maturity Date, Maturity Amount, and interest projections in real-time as the user changes form values.
+  - [x] **Explore Projection Animations:** Investigate "stock ticker" or odometer-style rolling number animations for the `InvestmentProjectionCard` (e.g., using `animated_flip_counter`, `countup`, or a custom native `TweenAnimationBuilder`) to give the live preview a premium financial feel.
+- [ ] **UI Cleanup - Date Formatting:** Standardize date displays across the entire app to use a consistent, human-readable format (e.g., `dd/MM/yyyy` or `12 Oct 2026`) instead of default date string conversions.
 - [ ] **UI Cleanup - Non-Editable Fixed Fields:** Make form fields read-only (non-editable) when they only have a single valid value or don't require user input. For example, lock the "Scheme Type" selection for Recurring Deposits, and make the "Term Length" field non-editable for single-tenure schemes like MIS and NSC.
 - [ ] **UI Cleanup - Deposit Status Selection:** Upgrade the "Deposit Status" widget in the form screens from a standard dropdown to a more intuitive UI component (e.g., a SegmentedButton or ChoiceChips).
 - [ ] Add filtering capabilities to deposit list screens (e.g., view by Active, Matured, Closed status).
@@ -113,3 +115,7 @@
 - [ ] Integrate `firebase_analytics` to track user engagement and app usage metrics.
 - [ ] Integrate `share_plus` into `IntentService` to allow agents to share deposit details/reports with customers via native share sheets.
 - [ ] Integrate `flutter_native_splash` to generate native splash screens and prevent cold-boot white flashes.
+
+## Known Bugs & Issues
+- [x] **Date Picker UI Bug**: On selecting a new date in the date widget (e.g., RD Start Date or TD Start Date), the form text field does not visually update in the UI to reflect the newly picked date.
+- [x] **KVP Projection Crash**: The Form UI crashes for KVP selection with unsupported operation infinity when interest rate is cleared or 0.

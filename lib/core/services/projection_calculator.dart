@@ -143,9 +143,12 @@ class ProjectionCalculator {
     final maturityAmount = principal * 2;
     final totalInterestEarned = principal;
 
-    // Time to double: 2 = (1 + r/100)^t => t = ln(2) / ln(1 + r/100)
-    final timeInYears = log(2) / log(1 + (interestRate / 100));
-    final timeInMonths = (timeInYears * 12).round();
+    int timeInMonths = 0;
+    if (interestRate > 0) {
+      // Time to double: 2 = (1 + r/100)^t => t = ln(2) / ln(1 + r/100)
+      final timeInYears = log(2) / log(1 + (interestRate / 100));
+      timeInMonths = (timeInYears * 12).round();
+    }
 
     final maturityDate = DateTime(
       startDate.year,

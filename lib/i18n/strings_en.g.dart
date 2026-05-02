@@ -46,6 +46,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 
 	late final TranslationsErrorsEn errors = TranslationsErrorsEn.internal(_root);
 	late final TranslationsCommonEn common = TranslationsCommonEn.internal(_root);
+	late final TranslationsProjectionEn projection = TranslationsProjectionEn.internal(_root);
 	late final TranslationsNavEn nav = TranslationsNavEn.internal(_root);
 	late final TranslationsCustomersEn customers = TranslationsCustomersEn.internal(_root);
 	late final TranslationsDashboardEn dashboard = TranslationsDashboardEn.internal(_root);
@@ -129,6 +130,35 @@ class TranslationsCommonEn {
 
 	/// en: 'More options'
 	String get moreOptions => 'More options';
+
+	late final TranslationsCommonSectionsEn sections = TranslationsCommonSectionsEn.internal(_root);
+}
+
+// Path: projection
+class TranslationsProjectionEn {
+	TranslationsProjectionEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Live Projection'
+	String get title => 'Live Projection';
+
+	/// en: 'Total Invested'
+	String get totalInvested => 'Total Invested';
+
+	/// en: 'Total Interest Earned'
+	String get totalInterestEarned => 'Total Interest Earned';
+
+	/// en: 'Estimated Maturity'
+	String get estimatedMaturity => 'Estimated Maturity';
+
+	/// en: 'Maturity Date'
+	String get maturityDate => 'Maturity Date';
+
+	/// en: 'Payout (${frequency})'
+	String payout({required Object frequency}) => 'Payout (${frequency})';
 }
 
 // Path: nav
@@ -371,6 +401,18 @@ class TranslationsCommonDurationEn {
 		one: '1 Yr',
 		other: '${n} Yrs',
 	);
+}
+
+// Path: common.sections
+class TranslationsCommonSectionsEn {
+	TranslationsCommonSectionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Linked Accounts'
+	String get linkedAccounts => 'Linked Accounts';
 }
 
 // Path: customers.actions
@@ -716,6 +758,13 @@ extension on Translations {
 			'common.retry' => 'Retry',
 			'common.notProvided' => 'Not provided',
 			'common.moreOptions' => 'More options',
+			'common.sections.linkedAccounts' => 'Linked Accounts',
+			'projection.title' => 'Live Projection',
+			'projection.totalInvested' => 'Total Invested',
+			'projection.totalInterestEarned' => 'Total Interest Earned',
+			'projection.estimatedMaturity' => 'Estimated Maturity',
+			'projection.maturityDate' => 'Maturity Date',
+			'projection.payout' => ({required Object frequency}) => 'Payout (${frequency})',
 			'nav.dashboard' => 'Dashboard',
 			'nav.oneTimeDeposits' => 'One-Time Deposits',
 			'nav.recurringDeposits' => 'Recurring Deposits',
