@@ -81,10 +81,18 @@
 - [ ] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.
 - [ ] Implement comprehensive form field validations across all create/update screens.
 - [x] Expand `SchemeType` enum and models to support an exhaustive list of Term Deposit variants.
-- [ ] **Domain Math - Maturity Calculators:** Implement pure Dart extensions to auto-calculate Maturity Dates (accounting for RD defaults) and Maturity Amounts (compounding for RD/TD/NSC, simple for MIS) based on principal, tenure, and start date.
+- [ ] **Domain Math - Maturity Calculators & Projections:**
+  - [x] Create `InvestmentProjection` model in `lib/core/models/`.
+  - [x] Create `ProjectionCalculator` utility class in `lib/core/services/` for RD, TD, MIS, NSC, and KVP formulas.
+  - [ ] Refactor `BaseDeposit`, `OneTimeDeposit`, and `RecurringDeposit` to replace `maturityAmount` and `maturityDate` with dynamic getters.
+  - [ ] Update controllers, fake repositories, and dummy data to omit manual maturity fields.
+  - [ ] Run `build_runner` to regenerate Freezed models and JSON serialization.
 - [ ] **Domain Math - Commission Calculators:** Implement functions to auto-calculate Gross Commission per transaction (4% for RD, 0.5% for others) and auto-deduct the 2% TDS to derive the Net Payout.
 - [ ] **Domain Math - Penalties & Rebates:** Implement transaction evaluation logic to automatically calculate RD Late Fees (1% per month delayed) and Advance Deposit Rebates (₹10/₹40 rules for 6+/12+ months).
-- [ ] **UI Cleanup - Remove Manual Fields:** Refactor `RecurringDepositFormScreen` and `OneTimeDepositFormScreen` to remove fields like "Maturity Amount" or "Maturity Date" if they require manual input. Replace them with read-only "Live Preview" text based on the auto-calculations.
+- [ ] **UI Cleanup - Live Preview & "Dumb Widgets":**
+  - [ ] Create Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) to track inputs and expose live `InvestmentProjection`.
+  - [ ] Remove manual `maturityDate` and `maturityAmount` input fields from form screens.
+  - [ ] Create and integrate `InvestmentProjectionCard` (read-only "dumb" widget) that watches the form notifier for live updates.
 - [ ] **UI Cleanup - Redundant Fixed Fields:** Reconsider whether to display "Scheme Type" and "Term" on the Recurring Deposit form (since they are always fixed to RD and 5 Years). Similarly, evaluate hiding the "Term" field for One-Time Deposits like MIS and NSC where the duration is strictly fixed to 5 years, to minimize form clutter.
 - [ ] Add filtering capabilities to deposit list screens (e.g., view by Active, Matured, Closed status).
 - [ ] Integrate search functionality across all entity listing screens (Customers, Deposits, RDs).

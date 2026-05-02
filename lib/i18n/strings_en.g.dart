@@ -346,6 +346,7 @@ class TranslationsEnumsEn {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+	late final TranslationsEnumsPayoutFrequencyEn payoutFrequency = TranslationsEnumsPayoutFrequencyEn.internal(_root);
 	late final TranslationsEnumsDepositStatusEn depositStatus = TranslationsEnumsDepositStatusEn.internal(_root);
 	late final TranslationsEnumsOneTimeSchemeTypeEn oneTimeSchemeType = TranslationsEnumsOneTimeSchemeTypeEn.internal(_root);
 	late final TranslationsEnumsRecurringSchemeTypeEn recurringSchemeType = TranslationsEnumsRecurringSchemeTypeEn.internal(_root);
@@ -615,6 +616,24 @@ class TranslationsRecurringDepositsFieldsEn {
 	String get linkedAutoDebitAccount => 'Linked Auto Debit Account';
 }
 
+// Path: enums.payoutFrequency
+class TranslationsEnumsPayoutFrequencyEn {
+	TranslationsEnumsPayoutFrequencyEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Monthly'
+	String get monthly => 'Monthly';
+
+	/// en: 'Quarterly'
+	String get quarterly => 'Quarterly';
+
+	/// en: 'Annually'
+	String get annually => 'Annually';
+}
+
 // Path: enums.depositStatus
 class TranslationsEnumsDepositStatusEn {
 	TranslationsEnumsDepositStatusEn.internal(this._root);
@@ -803,6 +822,9 @@ extension on Translations {
 			'nominees.relationship' => 'Relationship',
 			'nominees.percentage' => 'Percentage (%)',
 			'nominees.noNominees' => 'No nominees added yet.',
+			'enums.payoutFrequency.monthly' => 'Monthly',
+			'enums.payoutFrequency.quarterly' => 'Quarterly',
+			'enums.payoutFrequency.annually' => 'Annually',
 			'enums.depositStatus.active' => 'Active',
 			'enums.depositStatus.matured' => 'Matured',
 			'enums.depositStatus.closed' => 'Closed',

@@ -159,6 +159,10 @@ nominees:
   noNominees: "No nominees added yet."
 
 enums:
+  payoutFrequency:
+    monthly: 'Monthly'
+    quarterly: 'Quarterly'
+    annually: 'Annually'
   depositStatus:
     active: "Active"
     matured: "Matured"
