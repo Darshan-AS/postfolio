@@ -22,14 +22,11 @@ class ProjectionCalculator {
 
     // RD Compounding Formula: M = sum(P * (1 + r/400)^t_i)
     // t_i is the time in quarters the i-th deposit stays in the account
-    final maturityAmount = List.generate(
-      totalMonths,
-      (index) {
-        // totalMonths - index gives us months remaining for this deposit (from totalMonths down to 1)
-        final quarters = (totalMonths - index) / 3.0;
-        return monthlyInstallment * pow(1 + (interestRate / 400), quarters);
-      },
-    ).fold<double>(0.0, (sum, value) => sum + value);
+    final maturityAmount = List.generate(totalMonths, (index) {
+      // totalMonths - index gives us months remaining for this deposit (from totalMonths down to 1)
+      final quarters = (totalMonths - index) / 3.0;
+      return monthlyInstallment * pow(1 + (interestRate / 400), quarters);
+    }).fold<double>(0.0, (sum, value) => sum + value);
 
     final totalInvested = monthlyInstallment * totalMonths;
     final totalInterestEarned = maturityAmount - totalInvested;
@@ -156,11 +153,18 @@ class ProjectionCalculator {
       startDate.day,
     );
 
+    final years = timeInMonths ~/ 12;
+    final months = timeInMonths % 12;
+    final durationNote = timeInMonths > 0
+        ? '$years Years & $months Months'
+        : null;
+
     return InvestmentProjection.wealthAccumulation(
       totalInvested: principal,
       maturityAmount: maturityAmount,
       totalInterestEarned: totalInterestEarned,
       maturityDate: maturityDate,
+      note: durationNote,
     );
   }
 

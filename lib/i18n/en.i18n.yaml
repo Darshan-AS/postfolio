@@ -39,10 +39,12 @@ common:
 projection:
   title: "Live Projection"
   totalInvested: "Total Invested"
-  totalInterestEarned: "Total Interest Earned"
+  totalInterestEarned: "Projected Interest"
+  totalReturn: "Total Return"
   estimatedMaturity: "Estimated Maturity"
   maturityDate: "Maturity Date"
   payout: "Payout (${frequency})"
+  doublesIn: "Doubles In"
 
 nav:
   dashboard: "Dashboard"

@@ -14,6 +14,7 @@ sealed class InvestmentProjection with _$InvestmentProjection {
     required double maturityAmount,
     required double totalInterestEarned,
     required DateTime maturityDate,
+    String? note,
   }) = _WealthAccumulation;
 
   /// Projection for schemes that provide periodic payouts and return principal at maturity
@@ -25,30 +26,31 @@ sealed class InvestmentProjection with _$InvestmentProjection {
     required DateTime maturityDate,
     required double periodicPayoutAmount,
     required PayoutFrequency payoutFrequency,
+    String? note,
   }) = _IncomeGeneration;
 
   // Shared Getters
   @override
   double get totalInvested => map(
-        wealthAccumulation: (p) => p.totalInvested,
-        incomeGeneration: (p) => p.totalInvested,
-      );
+    wealthAccumulation: (p) => p.totalInvested,
+    incomeGeneration: (p) => p.totalInvested,
+  );
 
   @override
   double get maturityAmount => map(
-        wealthAccumulation: (p) => p.maturityAmount,
-        incomeGeneration: (p) => p.maturityAmount,
-      );
+    wealthAccumulation: (p) => p.maturityAmount,
+    incomeGeneration: (p) => p.maturityAmount,
+  );
 
   @override
   double get totalInterestEarned => map(
-        wealthAccumulation: (p) => p.totalInterestEarned,
-        incomeGeneration: (p) => p.totalInterestEarned,
-      );
+    wealthAccumulation: (p) => p.totalInterestEarned,
+    incomeGeneration: (p) => p.totalInterestEarned,
+  );
 
   @override
   DateTime get maturityDate => map(
-        wealthAccumulation: (p) => p.maturityDate,
-        incomeGeneration: (p) => p.maturityDate,
-      );
+    wealthAccumulation: (p) => p.maturityDate,
+    incomeGeneration: (p) => p.maturityDate,
+  );
 }

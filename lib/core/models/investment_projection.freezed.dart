@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$InvestmentProjection {
 
- double get totalInvested; double get maturityAmount; double get totalInterestEarned; DateTime get maturityDate;
+ double get totalInvested; double get maturityAmount; double get totalInterestEarned; DateTime get maturityDate; String? get note;
 /// Create a copy of InvestmentProjection
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $InvestmentProjectionCopyWith<InvestmentProjection> get copyWith => _$Investment
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InvestmentProjection&&(identical(other.totalInvested, totalInvested) || other.totalInvested == totalInvested)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.totalInterestEarned, totalInterestEarned) || other.totalInterestEarned == totalInterestEarned)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InvestmentProjection&&(identical(other.totalInvested, totalInvested) || other.totalInvested == totalInvested)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.totalInterestEarned, totalInterestEarned) || other.totalInterestEarned == totalInterestEarned)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate)&&(identical(other.note, note) || other.note == note));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,totalInvested,maturityAmount,totalInterestEarned,maturityDate);
+int get hashCode => Object.hash(runtimeType,totalInvested,maturityAmount,totalInterestEarned,maturityDate,note);
 
 @override
 String toString() {
-  return 'InvestmentProjection(totalInvested: $totalInvested, maturityAmount: $maturityAmount, totalInterestEarned: $totalInterestEarned, maturityDate: $maturityDate)';
+  return 'InvestmentProjection(totalInvested: $totalInvested, maturityAmount: $maturityAmount, totalInterestEarned: $totalInterestEarned, maturityDate: $maturityDate, note: $note)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $InvestmentProjectionCopyWith<$Res>  {
   factory $InvestmentProjectionCopyWith(InvestmentProjection value, $Res Function(InvestmentProjection) _then) = _$InvestmentProjectionCopyWithImpl;
 @useResult
 $Res call({
- double totalInvested, double maturityAmount, double totalInterestEarned, DateTime maturityDate
+ double totalInvested, double maturityAmount, double totalInterestEarned, DateTime maturityDate, String? note
 });
 
 
@@ -62,13 +62,14 @@ class _$InvestmentProjectionCopyWithImpl<$Res>
 
 /// Create a copy of InvestmentProjection
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? totalInvested = null,Object? maturityAmount = null,Object? totalInterestEarned = null,Object? maturityDate = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? totalInvested = null,Object? maturityAmount = null,Object? totalInterestEarned = null,Object? maturityDate = null,Object? note = freezed,}) {
   return _then(_self.copyWith(
 totalInvested: null == totalInvested ? _self.totalInvested : totalInvested // ignore: cast_nullable_to_non_nullable
 as double,maturityAmount: null == maturityAmount ? _self.maturityAmount : maturityAmount // ignore: cast_nullable_to_non_nullable
 as double,totalInterestEarned: null == totalInterestEarned ? _self.totalInterestEarned : totalInterestEarned // ignore: cast_nullable_to_non_nullable
 as double,maturityDate: null == maturityDate ? _self.maturityDate : maturityDate // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -153,11 +154,11 @@ return incomeGeneration(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate)?  wealthAccumulation,TResult Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  double periodicPayoutAmount,  PayoutFrequency payoutFrequency)?  incomeGeneration,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  String? note)?  wealthAccumulation,TResult Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  double periodicPayoutAmount,  PayoutFrequency payoutFrequency,  String? note)?  incomeGeneration,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WealthAccumulation() when wealthAccumulation != null:
-return wealthAccumulation(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate);case _IncomeGeneration() when incomeGeneration != null:
-return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.periodicPayoutAmount,_that.payoutFrequency);case _:
+return wealthAccumulation(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.note);case _IncomeGeneration() when incomeGeneration != null:
+return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.periodicPayoutAmount,_that.payoutFrequency,_that.note);case _:
   return orElse();
 
 }
@@ -175,11 +176,11 @@ return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInte
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate)  wealthAccumulation,required TResult Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  double periodicPayoutAmount,  PayoutFrequency payoutFrequency)  incomeGeneration,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  String? note)  wealthAccumulation,required TResult Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  double periodicPayoutAmount,  PayoutFrequency payoutFrequency,  String? note)  incomeGeneration,}) {final _that = this;
 switch (_that) {
 case _WealthAccumulation():
-return wealthAccumulation(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate);case _IncomeGeneration():
-return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.periodicPayoutAmount,_that.payoutFrequency);}
+return wealthAccumulation(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.note);case _IncomeGeneration():
+return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.periodicPayoutAmount,_that.payoutFrequency,_that.note);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -193,11 +194,11 @@ return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInte
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate)?  wealthAccumulation,TResult? Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  double periodicPayoutAmount,  PayoutFrequency payoutFrequency)?  incomeGeneration,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  String? note)?  wealthAccumulation,TResult? Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  double periodicPayoutAmount,  PayoutFrequency payoutFrequency,  String? note)?  incomeGeneration,}) {final _that = this;
 switch (_that) {
 case _WealthAccumulation() when wealthAccumulation != null:
-return wealthAccumulation(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate);case _IncomeGeneration() when incomeGeneration != null:
-return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.periodicPayoutAmount,_that.payoutFrequency);case _:
+return wealthAccumulation(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.note);case _IncomeGeneration() when incomeGeneration != null:
+return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.periodicPayoutAmount,_that.payoutFrequency,_that.note);case _:
   return null;
 
 }
@@ -209,13 +210,14 @@ return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInte
 
 
 class _WealthAccumulation extends InvestmentProjection {
-  const _WealthAccumulation({required this.totalInvested, required this.maturityAmount, required this.totalInterestEarned, required this.maturityDate}): super._();
+  const _WealthAccumulation({required this.totalInvested, required this.maturityAmount, required this.totalInterestEarned, required this.maturityDate, this.note}): super._();
   
 
 @override final  double totalInvested;
 @override final  double maturityAmount;
 @override final  double totalInterestEarned;
 @override final  DateTime maturityDate;
+@override final  String? note;
 
 /// Create a copy of InvestmentProjection
 /// with the given fields replaced by the non-null parameter values.
@@ -227,16 +229,16 @@ _$WealthAccumulationCopyWith<_WealthAccumulation> get copyWith => __$WealthAccum
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WealthAccumulation&&(identical(other.totalInvested, totalInvested) || other.totalInvested == totalInvested)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.totalInterestEarned, totalInterestEarned) || other.totalInterestEarned == totalInterestEarned)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WealthAccumulation&&(identical(other.totalInvested, totalInvested) || other.totalInvested == totalInvested)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.totalInterestEarned, totalInterestEarned) || other.totalInterestEarned == totalInterestEarned)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate)&&(identical(other.note, note) || other.note == note));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,totalInvested,maturityAmount,totalInterestEarned,maturityDate);
+int get hashCode => Object.hash(runtimeType,totalInvested,maturityAmount,totalInterestEarned,maturityDate,note);
 
 @override
 String toString() {
-  return 'InvestmentProjection.wealthAccumulation(totalInvested: $totalInvested, maturityAmount: $maturityAmount, totalInterestEarned: $totalInterestEarned, maturityDate: $maturityDate)';
+  return 'InvestmentProjection.wealthAccumulation(totalInvested: $totalInvested, maturityAmount: $maturityAmount, totalInterestEarned: $totalInterestEarned, maturityDate: $maturityDate, note: $note)';
 }
 
 
@@ -247,7 +249,7 @@ abstract mixin class _$WealthAccumulationCopyWith<$Res> implements $InvestmentPr
   factory _$WealthAccumulationCopyWith(_WealthAccumulation value, $Res Function(_WealthAccumulation) _then) = __$WealthAccumulationCopyWithImpl;
 @override @useResult
 $Res call({
- double totalInvested, double maturityAmount, double totalInterestEarned, DateTime maturityDate
+ double totalInvested, double maturityAmount, double totalInterestEarned, DateTime maturityDate, String? note
 });
 
 
@@ -264,13 +266,14 @@ class __$WealthAccumulationCopyWithImpl<$Res>
 
 /// Create a copy of InvestmentProjection
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? totalInvested = null,Object? maturityAmount = null,Object? totalInterestEarned = null,Object? maturityDate = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? totalInvested = null,Object? maturityAmount = null,Object? totalInterestEarned = null,Object? maturityDate = null,Object? note = freezed,}) {
   return _then(_WealthAccumulation(
 totalInvested: null == totalInvested ? _self.totalInvested : totalInvested // ignore: cast_nullable_to_non_nullable
 as double,maturityAmount: null == maturityAmount ? _self.maturityAmount : maturityAmount // ignore: cast_nullable_to_non_nullable
 as double,totalInterestEarned: null == totalInterestEarned ? _self.totalInterestEarned : totalInterestEarned // ignore: cast_nullable_to_non_nullable
 as double,maturityDate: null == maturityDate ? _self.maturityDate : maturityDate // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -281,7 +284,7 @@ as DateTime,
 
 
 class _IncomeGeneration extends InvestmentProjection {
-  const _IncomeGeneration({required this.totalInvested, required this.maturityAmount, required this.totalInterestEarned, required this.maturityDate, required this.periodicPayoutAmount, required this.payoutFrequency}): super._();
+  const _IncomeGeneration({required this.totalInvested, required this.maturityAmount, required this.totalInterestEarned, required this.maturityDate, required this.periodicPayoutAmount, required this.payoutFrequency, this.note}): super._();
   
 
 @override final  double totalInvested;
@@ -290,6 +293,7 @@ class _IncomeGeneration extends InvestmentProjection {
 @override final  DateTime maturityDate;
  final  double periodicPayoutAmount;
  final  PayoutFrequency payoutFrequency;
+@override final  String? note;
 
 /// Create a copy of InvestmentProjection
 /// with the given fields replaced by the non-null parameter values.
@@ -301,16 +305,16 @@ _$IncomeGenerationCopyWith<_IncomeGeneration> get copyWith => __$IncomeGeneratio
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _IncomeGeneration&&(identical(other.totalInvested, totalInvested) || other.totalInvested == totalInvested)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.totalInterestEarned, totalInterestEarned) || other.totalInterestEarned == totalInterestEarned)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate)&&(identical(other.periodicPayoutAmount, periodicPayoutAmount) || other.periodicPayoutAmount == periodicPayoutAmount)&&(identical(other.payoutFrequency, payoutFrequency) || other.payoutFrequency == payoutFrequency));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _IncomeGeneration&&(identical(other.totalInvested, totalInvested) || other.totalInvested == totalInvested)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.totalInterestEarned, totalInterestEarned) || other.totalInterestEarned == totalInterestEarned)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate)&&(identical(other.periodicPayoutAmount, periodicPayoutAmount) || other.periodicPayoutAmount == periodicPayoutAmount)&&(identical(other.payoutFrequency, payoutFrequency) || other.payoutFrequency == payoutFrequency)&&(identical(other.note, note) || other.note == note));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,totalInvested,maturityAmount,totalInterestEarned,maturityDate,periodicPayoutAmount,payoutFrequency);
+int get hashCode => Object.hash(runtimeType,totalInvested,maturityAmount,totalInterestEarned,maturityDate,periodicPayoutAmount,payoutFrequency,note);
 
 @override
 String toString() {
-  return 'InvestmentProjection.incomeGeneration(totalInvested: $totalInvested, maturityAmount: $maturityAmount, totalInterestEarned: $totalInterestEarned, maturityDate: $maturityDate, periodicPayoutAmount: $periodicPayoutAmount, payoutFrequency: $payoutFrequency)';
+  return 'InvestmentProjection.incomeGeneration(totalInvested: $totalInvested, maturityAmount: $maturityAmount, totalInterestEarned: $totalInterestEarned, maturityDate: $maturityDate, periodicPayoutAmount: $periodicPayoutAmount, payoutFrequency: $payoutFrequency, note: $note)';
 }
 
 
@@ -321,7 +325,7 @@ abstract mixin class _$IncomeGenerationCopyWith<$Res> implements $InvestmentProj
   factory _$IncomeGenerationCopyWith(_IncomeGeneration value, $Res Function(_IncomeGeneration) _then) = __$IncomeGenerationCopyWithImpl;
 @override @useResult
 $Res call({
- double totalInvested, double maturityAmount, double totalInterestEarned, DateTime maturityDate, double periodicPayoutAmount, PayoutFrequency payoutFrequency
+ double totalInvested, double maturityAmount, double totalInterestEarned, DateTime maturityDate, double periodicPayoutAmount, PayoutFrequency payoutFrequency, String? note
 });
 
 
@@ -338,7 +342,7 @@ class __$IncomeGenerationCopyWithImpl<$Res>
 
 /// Create a copy of InvestmentProjection
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? totalInvested = null,Object? maturityAmount = null,Object? totalInterestEarned = null,Object? maturityDate = null,Object? periodicPayoutAmount = null,Object? payoutFrequency = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? totalInvested = null,Object? maturityAmount = null,Object? totalInterestEarned = null,Object? maturityDate = null,Object? periodicPayoutAmount = null,Object? payoutFrequency = null,Object? note = freezed,}) {
   return _then(_IncomeGeneration(
 totalInvested: null == totalInvested ? _self.totalInvested : totalInvested // ignore: cast_nullable_to_non_nullable
 as double,maturityAmount: null == maturityAmount ? _self.maturityAmount : maturityAmount // ignore: cast_nullable_to_non_nullable
@@ -346,7 +350,8 @@ as double,totalInterestEarned: null == totalInterestEarned ? _self.totalInterest
 as double,maturityDate: null == maturityDate ? _self.maturityDate : maturityDate // ignore: cast_nullable_to_non_nullable
 as DateTime,periodicPayoutAmount: null == periodicPayoutAmount ? _self.periodicPayoutAmount : periodicPayoutAmount // ignore: cast_nullable_to_non_nullable
 as double,payoutFrequency: null == payoutFrequency ? _self.payoutFrequency : payoutFrequency // ignore: cast_nullable_to_non_nullable
-as PayoutFrequency,
+as PayoutFrequency,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

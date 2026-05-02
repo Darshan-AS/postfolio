@@ -68,6 +68,7 @@ class InvestmentProjectionCard extends StatelessWidget {
               proj.map(
                 wealthAccumulation: (_) => const SizedBox.shrink(),
                 incomeGeneration: (incomeGen) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AppSpacings.gapSm,
                     _AnimatedStatRow(
@@ -86,13 +87,36 @@ class InvestmentProjectionCard extends StatelessWidget {
               AppSpacings.gapMd,
               Divider(color: theme.colorScheme.outlineVariant),
               AppSpacings.gapMd,
-              _AnimatedStatRow(
-                label: t.projection.estimatedMaturity,
-                value: proj.maturityAmount,
-                formatter: formatCurrency,
-                valueStyle: theme.textTheme.headlineSmall?.copyWith(
-                  color: theme.colorScheme.onSurface,
-                  fontWeight: FontWeight.bold,
+              proj.map(
+                wealthAccumulation: (w) => _AnimatedStatRow(
+                  label: t.projection.estimatedMaturity,
+                  value: w.maturityAmount,
+                  formatter: formatCurrency,
+                  valueStyle: theme.textTheme.headlineSmall?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                incomeGeneration: (i) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _AnimatedStatRow(
+                      label: t.projection.totalReturn,
+                      value: i.totalInvested + i.totalInterestEarned,
+                      formatter: formatCurrency,
+                      valueStyle: theme.textTheme.headlineSmall?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    AppSpacings.gapSm,
+                    _AnimatedStatRow(
+                      label: t.projection.estimatedMaturity,
+                      value: i.maturityAmount,
+                      formatter: formatCurrency,
+                      valueStyle: theme.textTheme.titleMedium,
+                    ),
+                  ],
                 ),
               ),
               AppSpacings.gapSm,
@@ -108,6 +132,47 @@ class InvestmentProjectionCard extends StatelessWidget {
                     style: theme.textTheme.titleMedium,
                   ),
                 ],
+              ),
+              proj.map(
+                wealthAccumulation: (w) => w.note != null
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppSpacings.gapSm,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                t.projection.doublesIn,
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                              Text(
+                                w.note!,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ).animate().fade(),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
+                incomeGeneration: (i) => i.note != null
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppSpacings.gapMd,
+                          Text(
+                            i.note!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ).animate().fade(),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
               ),
             ],
           ),

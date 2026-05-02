@@ -101,6 +101,7 @@
   - [x] Remove manual `maturityDate` and `maturityAmount` input fields from form screens.
   - [x] **Dynamic Form Previews:** Create and integrate an `InvestmentProjectionCard` (using native `Card` and `flutter_animate` for fade/slide transitions) to dynamically calculate and display the expected Maturity Date, Maturity Amount, and interest projections in real-time as the user changes form values.
   - [x] **Explore Projection Animations:** Investigate "stock ticker" or odometer-style rolling number animations for the `InvestmentProjectionCard` (e.g., using `animated_flip_counter`, `countup`, or a custom native `TweenAnimationBuilder`) to give the live preview a premium financial feel.
+  - [x] **Refine Projection UX:** Accurately split "Total Return" from principal for Income Generation schemes (MIS/TD) and display KVP's dynamic "Doubles In" duration prominently using full spelling for calendar units.
 - [x] **UI Cleanup - Date Formatting:** Standardize date displays across the entire app using `slang`'s `intl` integration.
 - [ ] **UI Cleanup - Relative Time Formatting:** Add relative time display (e.g., "Created 2 hours ago", "Matures in 3 months") where precise dates are less critical, potentially using the `timeago` or `jiffy` packages.
 - [ ] **UI Cleanup - Non-Editable Fixed Fields:** Make form fields read-only (non-editable) when they only have a single valid value or don't require user input. For example, lock the "Scheme Type" selection for Recurring Deposits, and make the "Term Length" field non-editable for single-tenure schemes like MIS and NSC.
@@ -122,6 +123,6 @@
 ## Known Bugs & Issues
 - [x] **Date Picker UI Bug**: On selecting a new date in the date widget (e.g., RD Start Date or TD Start Date), the form text field does not visually update in the UI to reflect the newly picked date.
 - [x] **KVP Projection Crash**: The Form UI crashes for KVP selection with unsupported operation infinity when interest rate is cleared or 0.
-- [ ] **Form View - TD Calculation**: The maturity amount should have interest added in.
-- [ ] **Form View - MIS Projection**: Add a field to show maturity amount + total earned (e.g., "Total Value" or "Total Return").
-- [ ] **Form View - KVP Projection**: Show a human-readable time period indicating when the deposit doubles.
+- [x] **Form View - TD Calculation**: The maturity amount should have interest added in.
+- [x] **Form View - MIS Projection**: Add a field to show maturity amount + total earned (e.g., "Total Value" or "Total Return").
+- [x] **Form View - KVP Projection**: Show a human-readable time period indicating when the deposit doubles.

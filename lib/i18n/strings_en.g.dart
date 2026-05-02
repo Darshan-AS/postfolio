@@ -167,8 +167,11 @@ class TranslationsProjectionEn {
 	/// en: 'Total Invested'
 	String get totalInvested => 'Total Invested';
 
-	/// en: 'Total Interest Earned'
-	String get totalInterestEarned => 'Total Interest Earned';
+	/// en: 'Projected Interest'
+	String get totalInterestEarned => 'Projected Interest';
+
+	/// en: 'Total Return'
+	String get totalReturn => 'Total Return';
 
 	/// en: 'Estimated Maturity'
 	String get estimatedMaturity => 'Estimated Maturity';
@@ -178,6 +181,9 @@ class TranslationsProjectionEn {
 
 	/// en: 'Payout (${frequency})'
 	String payout({required Object frequency}) => 'Payout (${frequency})';
+
+	/// en: 'Doubles In'
+	String get doublesIn => 'Doubles In';
 }
 
 // Path: nav
@@ -783,10 +789,12 @@ extension on Translations {
 			'common.sections.linkedAccounts' => 'Linked Accounts',
 			'projection.title' => 'Live Projection',
 			'projection.totalInvested' => 'Total Invested',
-			'projection.totalInterestEarned' => 'Total Interest Earned',
+			'projection.totalInterestEarned' => 'Projected Interest',
+			'projection.totalReturn' => 'Total Return',
 			'projection.estimatedMaturity' => 'Estimated Maturity',
 			'projection.maturityDate' => 'Maturity Date',
 			'projection.payout' => ({required Object frequency}) => 'Payout (${frequency})',
+			'projection.doublesIn' => 'Doubles In',
 			'nav.dashboard' => 'Dashboard',
 			'nav.oneTimeDeposits' => 'One-Time Deposits',
 			'nav.recurringDeposits' => 'Recurring Deposits',
