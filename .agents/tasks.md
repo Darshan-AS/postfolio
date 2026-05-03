@@ -101,6 +101,8 @@
 - [ ] Implement image capture and display functionality for customer profiles.
 - [ ] Redesign the leading visual element in deposit list tiles to replace the generic circular icons.
 - [ ] Implement a predefined dropdown with a manual entry fallback for Nominee relationship fields across all forms.
+- [ ] Apply distinct color coding to differentiate deposit types in list views.
+- [ ] Enhance the visual prominence of the scheme type in deposit detail views.
 - [x] Expand `SchemeType` enum and models to support an exhaustive list of Term Deposit variants.
 - [ ] **Domain Math - Maturity Calculators & Projections:**
   - [x] Create `InvestmentProjection` model in `lib/core/models/`.

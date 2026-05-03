@@ -79,14 +79,27 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                 ),
                 AppSpacings.gapLg,
                 DetailAmountCard(
-                  title: t.recurringDeposits.fields.maturityAmount,
-                  amount: deposit.maturityAmount,
-                  backgroundColor: Theme.of(
-                    context,
-                  ).colorScheme.tertiaryContainer,
-                  textColor: Theme.of(context).colorScheme.onTertiaryContainer,
+                  title: t.recurringDeposits.fields.interestRate,
+                  amount: deposit.interestRate,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  textColor: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ],
+            ),
+            AppSpacings.gapXxl,
+            deposit.projection.when(
+              wealthAccumulation: (
+                totalInvested,
+                maturityAmount,
+                totalInterestEarned,
+                _,
+                _,
+              ) => WealthAccumulationGrid(
+                totalInvested: totalInvested,
+                projectedInterest: totalInterestEarned,
+                maturityAmount: maturityAmount,
+              ),
+              incomeGeneration: (_, _, _, _, _, _, _) => const SizedBox.shrink(),
             ),
             AppSpacings.gapXxl,
             DetailSection(
@@ -109,52 +122,6 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                   ),
                   label: t.recurringDeposits.fields.interestRate,
                   value: '${deposit.interestRate.toStringAsFixed(2)}%',
-                ),
-                ...deposit.projection.when(
-                  wealthAccumulation: (
-                    totalInvested,
-                    maturityAmount,
-                    totalInterestEarned,
-                    _,
-                    _,
-                  ) => [
-                    const Divider(height: 1),
-                    DetailItem(
-                      icon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedPiggyBank,
-                        size: AppDimensions.iconMd,
-                      ),
-                      label: t.projection.totalInvested,
-                      value: '₹${totalInvested.toStringAsFixed(2)}',
-                    ),
-                    const Divider(height: 1),
-                    DetailItem(
-                      icon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedCoins01,
-                        size: AppDimensions.iconMd,
-                      ),
-                      label: t.projection.totalInterestEarned,
-                      value: '₹${totalInterestEarned.toStringAsFixed(2)}',
-                    ),
-                    const Divider(height: 1),
-                    DetailItem(
-                      icon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedSafe,
-                        size: AppDimensions.iconMd,
-                      ),
-                      label: t.projection.totalReturn,
-                      value: '₹${maturityAmount.toStringAsFixed(2)}',
-                    ),
-                  ],
-                  incomeGeneration: (
-                    _,
-                    _,
-                    _,
-                    _,
-                    _,
-                    _,
-                    _,
-                  ) => [],
                 ),
               ],
             ),
