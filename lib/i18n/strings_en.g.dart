@@ -620,6 +620,12 @@ class TranslationsOneTimeDepositsFieldsEn {
 	/// en: 'Maturity Amount'
 	String get maturityAmount => 'Maturity Amount';
 
+	/// en: 'Periodic Payout'
+	String get periodicPayoutAmount => 'Periodic Payout';
+
+	/// en: 'Payout Frequency'
+	String get payoutFrequency => 'Payout Frequency';
+
 	/// en: 'Start Date'
 	String get startDate => 'Start Date';
 
@@ -887,6 +893,8 @@ extension on Translations {
 			'oneTimeDeposits.fields.schemeType' => 'Scheme Type',
 			'oneTimeDeposits.fields.interestRate' => 'Interest Rate (%)',
 			'oneTimeDeposits.fields.maturityAmount' => 'Maturity Amount',
+			'oneTimeDeposits.fields.periodicPayoutAmount' => 'Periodic Payout',
+			'oneTimeDeposits.fields.payoutFrequency' => 'Payout Frequency',
 			'oneTimeDeposits.fields.startDate' => 'Start Date',
 			'oneTimeDeposits.fields.maturityDate' => 'Maturity Date',
 			'oneTimeDeposits.fields.depositDate' => 'Deposit Date',

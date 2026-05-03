@@ -4,6 +4,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/async_entity_builder.dart';
@@ -67,13 +68,39 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   amount: deposit.principalAmount,
                 ),
                 AppSpacings.gapLg,
-                DetailAmountCard(
-                  title: t.oneTimeDeposits.fields.maturityAmount,
-                  amount: deposit.maturityAmount,
-                  backgroundColor: Theme.of(
-                    context,
-                  ).colorScheme.tertiaryContainer,
-                  textColor: Theme.of(context).colorScheme.onTertiaryContainer,
+                ...deposit.projection.when(
+                  wealthAccumulation: (_, maturityAmount, _, _, _) => [
+                    DetailAmountCard(
+                      title: t.oneTimeDeposits.fields.maturityAmount,
+                      amount: maturityAmount,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.tertiaryContainer,
+                      textColor: Theme.of(
+                        context,
+                      ).colorScheme.onTertiaryContainer,
+                    ),
+                  ],
+                  incomeGeneration: (
+                    _,
+                    _,
+                    _,
+                    _,
+                    periodicPayoutAmount,
+                    _,
+                    _,
+                  ) => [
+                    DetailAmountCard(
+                      title: t.oneTimeDeposits.fields.periodicPayoutAmount,
+                      amount: periodicPayoutAmount,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.secondaryContainer,
+                      textColor: Theme.of(
+                        context,
+                      ).colorScheme.onSecondaryContainer,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -98,6 +125,83 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   ),
                   label: t.oneTimeDeposits.fields.interestRate,
                   value: '${deposit.interestRate.toStringAsFixed(2)}%',
+                ),
+                ...deposit.projection.when(
+                  wealthAccumulation: (
+                    totalInvested,
+                    maturityAmount,
+                    totalInterestEarned,
+                    _,
+                    note,
+                  ) => [
+                    if (note != null && note.isNotEmpty) ...[
+                      const Divider(height: 1),
+                      DetailItem(
+                        icon: const HugeIcon(
+                          icon: HugeIcons.strokeRoundedClock01,
+                          size: AppDimensions.iconMd,
+                        ),
+                        label: t.projection.doublesIn,
+                        value: note,
+                      ),
+                    ],
+                    const Divider(height: 1),
+                    DetailItem(
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedCoins01,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: t.projection.totalInterestEarned,
+                      value: '₹${totalInterestEarned.toStringAsFixed(2)}',
+                    ),
+                    const Divider(height: 1),
+                    DetailItem(
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedSafe,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: t.projection.totalReturn,
+                      value: '₹${maturityAmount.toStringAsFixed(2)}',
+                    ),
+                  ],
+                  incomeGeneration: (
+                    totalInvested,
+                    _,
+                    totalInterestEarned,
+                    _,
+                    _,
+                    payoutFrequency,
+                    _,
+                  ) => [
+                    const Divider(height: 1),
+                    DetailItem(
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedClock01,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: t.oneTimeDeposits.fields.payoutFrequency,
+                      value: payoutFrequency.displayName,
+                    ),
+                    const Divider(height: 1),
+                    DetailItem(
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedCoins01,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: t.projection.totalInterestEarned,
+                      value: '₹${totalInterestEarned.toStringAsFixed(2)}',
+                    ),
+                    const Divider(height: 1),
+                    DetailItem(
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedSafe,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: t.projection.totalReturn,
+                      value:
+                          '₹${(totalInvested + totalInterestEarned).toStringAsFixed(2)}',
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -127,6 +127,8 @@ oneTimeDeposits:
     schemeType: "Scheme Type"
     interestRate: "Interest Rate (%)"
     maturityAmount: "Maturity Amount"
+    periodicPayoutAmount: "Periodic Payout"
+    payoutFrequency: "Payout Frequency"
     startDate: "Start Date"
     maturityDate: "Maturity Date"
     depositDate: "Deposit Date"

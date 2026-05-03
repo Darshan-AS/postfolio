@@ -4,6 +4,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/async_entity_builder.dart';
@@ -108,6 +109,52 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                   ),
                   label: t.recurringDeposits.fields.interestRate,
                   value: '${deposit.interestRate.toStringAsFixed(2)}%',
+                ),
+                ...deposit.projection.when(
+                  wealthAccumulation: (
+                    totalInvested,
+                    maturityAmount,
+                    totalInterestEarned,
+                    _,
+                    _,
+                  ) => [
+                    const Divider(height: 1),
+                    DetailItem(
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedPiggyBank,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: t.projection.totalInvested,
+                      value: '₹${totalInvested.toStringAsFixed(2)}',
+                    ),
+                    const Divider(height: 1),
+                    DetailItem(
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedCoins01,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: t.projection.totalInterestEarned,
+                      value: '₹${totalInterestEarned.toStringAsFixed(2)}',
+                    ),
+                    const Divider(height: 1),
+                    DetailItem(
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedSafe,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: t.projection.totalReturn,
+                      value: '₹${maturityAmount.toStringAsFixed(2)}',
+                    ),
+                  ],
+                  incomeGeneration: (
+                    _,
+                    _,
+                    _,
+                    _,
+                    _,
+                    _,
+                    _,
+                  ) => [],
                 ),
               ],
             ),
