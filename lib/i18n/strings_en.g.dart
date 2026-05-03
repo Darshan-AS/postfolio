@@ -55,6 +55,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsRecurringDepositsEn recurringDeposits = TranslationsRecurringDepositsEn.internal(_root);
 	late final TranslationsNomineesEn nominees = TranslationsNomineesEn.internal(_root);
 	late final TranslationsEnumsEn enums = TranslationsEnumsEn.internal(_root);
+	late final TranslationsAuthEn auth = TranslationsAuthEn.internal(_root);
 }
 
 // Path: errors
@@ -405,6 +406,24 @@ class TranslationsEnumsEn {
 	late final TranslationsEnumsDepositStatusEn depositStatus = TranslationsEnumsDepositStatusEn.internal(_root);
 	late final TranslationsEnumsOneTimeSchemeTypeEn oneTimeSchemeType = TranslationsEnumsOneTimeSchemeTypeEn.internal(_root);
 	late final TranslationsEnumsRecurringSchemeTypeEn recurringSchemeType = TranslationsEnumsRecurringSchemeTypeEn.internal(_root);
+}
+
+// Path: auth
+class TranslationsAuthEn {
+	TranslationsAuthEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Welcome to Postfolio'
+	String get welcome => 'Welcome to Postfolio';
+
+	/// en: 'Sign in to manage your deposits securely'
+	String get signInSubtitle => 'Sign in to manage your deposits securely';
+
+	/// en: 'Sign in with Google'
+	String get signInWithGoogle => 'Sign in with Google';
 }
 
 // Path: common.duration
@@ -912,6 +931,9 @@ extension on Translations {
 			'enums.oneTimeSchemeType.nationalSavingsCertificate' => 'National Savings Certificate (NSC)',
 			'enums.oneTimeSchemeType.kisanVikasPatra' => 'Kisan Vikas Patra (KVP)',
 			'enums.recurringSchemeType.recurringDeposit' => 'Recurring Deposit (RD)',
+			'auth.welcome' => 'Welcome to Postfolio',
+			'auth.signInSubtitle' => 'Sign in to manage your deposits securely',
+			'auth.signInWithGoogle' => 'Sign in with Google',
 			_ => null,
 		};
 	}

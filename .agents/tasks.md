@@ -74,12 +74,15 @@
 - [x] Migrate all icons from `font_awesome_flutter` and Material to `hugeicons`.
 - [x] Refactor UI layer to use `flutter_hooks` and `hooks_riverpod`, eliminating all `StatefulWidget` and `ConsumerStatefulWidget` boilerplate.
 
-## Phase 6: Firebase Integration & Authentication (Pending)
-- [ ] Run `flutterfire configure`.
-- [ ] Add necessary packages: `firebase_core`, `firebase_auth`, and `cloud_firestore`. (Avoid unnecessary Firebase bloat).
-- [ ] Expose Firebase instances (`FirebaseAuth`, `FirebaseFirestore`) using Riverpod Providers. Do not use static getters.
-- [ ] Implement Email & Password Authentication.
-- [ ] Implement Phone (OTP) Authentication.
+## Phase 6: Firebase Integration & Authentication (In Progress)
+- [x] Run `flutterfire configure`.
+- [x] Add necessary packages: `firebase_core`, `firebase_auth`, `google_sign_in`, and `cloud_firestore`.
+- [x] Update iOS `Info.plist` with the URL Scheme from `GoogleService-Info.plist` and verify Android SHA keys.
+- [x] Expose Firebase instances (`FirebaseAuth`, `GoogleSignIn`) using Riverpod Providers.
+- [x] **Authentication Domain:** Create `AppUser` model and sealed `AuthState` union (Freezed).
+- [x] **Authentication Data Layer:** Build `AuthRepository` for Google Sign-In and mapping to Firebase.
+- [x] **Authentication Presentation:** Build `AuthController` and the `LoginScreen` widget.
+- [x] **Secure Routing:** Set up GoRouter `refreshListenable` and `redirect` guard for unauthenticated users.
 - [ ] Build `FirestoreCustomerRepository` and swap out the Fake repository.
 - [ ] Build Firestore repositories for Deposits, RD, and Schemes.
 - [ ] **Refactor Data Fetching**: Transition detail screens from list-based filtering (`AsyncValue<List<T>>`) to single-document fetching (`AsyncValue<T>`) using Riverpod family providers to improve efficiency with Firestore. Rewrite `AsyncEntityBuilder` accordingly.

@@ -13,6 +13,9 @@ import 'package:postfolio/features/recurring_deposits/presentation/screens/recur
 import 'package:postfolio/features/customers/presentation/screens/customer_detail_screen.dart';
 import 'package:postfolio/features/customers/presentation/screens/customer_form_screen.dart';
 import 'package:postfolio/features/customers/presentation/screens/customers_screen.dart';
+import 'package:postfolio/features/auth/domain/auth_state.dart';
+import 'package:postfolio/features/auth/presentation/screens/login_screen.dart';
+import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/routing/app_routes.dart';
 
 part 'app_router.g.dart';
@@ -21,10 +24,36 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 @riverpod
 GoRouter goRouter(Ref ref) {
+  final listenable = ValueNotifier<bool>(false);
+
+  ref.listen(authControllerProvider, (prev, next) {
+    listenable.value = !listenable.value;
+  });
+
+  ref.onDispose(() => listenable.dispose());
+
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: AppRoutes.customers,
     routes: $appRoutes,
+    refreshListenable: listenable,
+    redirect: (context, state) {
+      final authState = ref.read(authControllerProvider);
+      
+      final isAuth = authState is AuthStateAuthenticated;
+      
+      final isLoggingIn = state.matchedLocation == AppRoutes.login;
+      
+      if (!isAuth && !isLoggingIn) {
+        return AppRoutes.login;
+      }
+      
+      if (isAuth && isLoggingIn) {
+        return AppRoutes.customers;
+      }
+      
+      return null;
+    },
   );
 }
 
@@ -245,4 +274,12 @@ class CustomerEditRoute extends GoRouteData with $CustomerEditRoute {
   Widget build(BuildContext context, GoRouterState state) {
     return CustomerFormScreen(customerId: customerId);
   }
+}
+
+@TypedGoRoute<LoginRoute>(path: AppRoutes.login)
+class LoginRoute extends GoRouteData with $LoginRoute {
+  const LoginRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) => const LoginScreen();
 }

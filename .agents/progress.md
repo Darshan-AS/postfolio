@@ -2,6 +2,9 @@
 
 ## Current State
 - Set up core architecture with Riverpod, Freezed, and standard thematic elements.
+- Integrated Firebase Auth and Google Sign-In into the core domain layer (`AppUser`, `AuthState`).
+- Configured GoRouter with reactive routing, enforcing redirect rules using an auth-based listenable.
+- Built a functional `AuthRepository` and `AuthController` employing native Dart 3 features for exception handling.
 - Implemented robust `HugeIcon` usage throughout the UI, standardizing visual sizes for list tiles, app bars, detail views, and forms.
 - Migrated the UI layer entirely to `flutter_hooks` and `hooks_riverpod` to eliminate `StatefulWidget` boilerplate and enforce a strictly functional, React-like paradigm for ephemeral UI state.
 - Initiated transition to automatic domain mathematical calculations for Small Savings Schemes. 

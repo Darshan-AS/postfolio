@@ -191,3 +191,8 @@ enums:
     kisanVikasPatra: "Kisan Vikas Patra (KVP)"
   recurringSchemeType:
     recurringDeposit: "Recurring Deposit (RD)"
+
+auth:
+  welcome: "Welcome to Postfolio"
+  signInSubtitle: "Sign in to manage your deposits securely"
+  signInWithGoogle: "Sign in with Google"
