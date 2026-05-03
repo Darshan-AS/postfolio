@@ -1,0 +1,60 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Postfolio (Current Device)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart"
+        },
+        {
+            "name": "Postfolio (Android Emulator)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "emulator-5554"
+        },
+        {
+            "name": "Postfolio (macOS)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "macos"
+        },
+        {
+            "name": "Postfolio (Chrome)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "chrome"
+        },
+        {
+            "name": "Postfolio (iOS Simulator)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "ios"
+        },
+        {
+            "name": "Postfolio (Windows)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "windows"
+        },
+        {
+            "name": "Postfolio (Linux)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "linux"
+        },
+        {
+            "name": "Postfolio (Edge)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "edge"
+        }
+    ]
+}
