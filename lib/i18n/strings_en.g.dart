@@ -408,10 +408,25 @@ class TranslationsEnumsEn {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
-	late final TranslationsEnumsPayoutFrequencyEn payoutFrequency = TranslationsEnumsPayoutFrequencyEn.internal(_root);
-	late final TranslationsEnumsDepositStatusEn depositStatus = TranslationsEnumsDepositStatusEn.internal(_root);
-	late final TranslationsEnumsOneTimeSchemeTypeEn oneTimeSchemeType = TranslationsEnumsOneTimeSchemeTypeEn.internal(_root);
-	late final TranslationsEnumsRecurringSchemeTypeEn recurringSchemeType = TranslationsEnumsRecurringSchemeTypeEn.internal(_root);
+	Map<String, String> get payoutFrequency => {
+		'monthly': 'Monthly',
+		'quarterly': 'Quarterly',
+		'annually': 'Annually',
+	};
+	Map<String, String> get depositStatus => {
+		'active': 'Active',
+		'matured': 'Matured',
+		'closed': 'Closed',
+	};
+	Map<String, String> get oneTimeSchemeType => {
+		'timeDeposit': 'Time Deposit (TD)',
+		'monthlyIncomeScheme': 'Monthly Income Scheme (MIS)',
+		'nationalSavingsCertificate': 'National Savings Certificate (NSC)',
+		'kisanVikasPatra': 'Kisan Vikas Patra (KVP)',
+	};
+	Map<String, String> get recurringSchemeType => {
+		'recurringDeposit': 'Recurring Deposit (RD)',
+	};
 	Map<String, String> get nomineeRelationship => {
 		'husband': 'Husband',
 		'wife': 'Wife',
@@ -738,75 +753,6 @@ class TranslationsRecurringDepositsFieldsEn {
 
 	/// en: 'Linked Auto Debit Account'
 	String get linkedAutoDebitAccount => 'Linked Auto Debit Account';
-}
-
-// Path: enums.payoutFrequency
-class TranslationsEnumsPayoutFrequencyEn {
-	TranslationsEnumsPayoutFrequencyEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Monthly'
-	String get monthly => 'Monthly';
-
-	/// en: 'Quarterly'
-	String get quarterly => 'Quarterly';
-
-	/// en: 'Annually'
-	String get annually => 'Annually';
-}
-
-// Path: enums.depositStatus
-class TranslationsEnumsDepositStatusEn {
-	TranslationsEnumsDepositStatusEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Active'
-	String get active => 'Active';
-
-	/// en: 'Matured'
-	String get matured => 'Matured';
-
-	/// en: 'Closed'
-	String get closed => 'Closed';
-}
-
-// Path: enums.oneTimeSchemeType
-class TranslationsEnumsOneTimeSchemeTypeEn {
-	TranslationsEnumsOneTimeSchemeTypeEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Time Deposit (TD)'
-	String get timeDeposit => 'Time Deposit (TD)';
-
-	/// en: 'Monthly Income Scheme (MIS)'
-	String get monthlyIncomeScheme => 'Monthly Income Scheme (MIS)';
-
-	/// en: 'National Savings Certificate (NSC)'
-	String get nationalSavingsCertificate => 'National Savings Certificate (NSC)';
-
-	/// en: 'Kisan Vikas Patra (KVP)'
-	String get kisanVikasPatra => 'Kisan Vikas Patra (KVP)';
-}
-
-// Path: enums.recurringSchemeType
-class TranslationsEnumsRecurringSchemeTypeEn {
-	TranslationsEnumsRecurringSchemeTypeEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Recurring Deposit (RD)'
-	String get recurringDeposit => 'Recurring Deposit (RD)';
 }
 
 /// The flat map containing all translations for locale <en>.

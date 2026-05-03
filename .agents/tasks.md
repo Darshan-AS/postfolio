@@ -44,6 +44,7 @@
 - [x] Fix oversized icons in form fields by standardizing prefix icon sizes in the global `InputDecorationTheme`.
 - [x] Standardize icon sizes for `AppBar` and `ListTile` actions.
 - [x] Use same icons in entity add/edit page and entity view page.
+- [x] Refactor domain enums to remove verbose boilerplate and switch statements using `@JsonEnum` and `slang` translation maps.
 
 ## Phase 4: Deposits & RD Features (Completed)
 - [x] Build `OneTimeDepositRepository` and `OneTimeDepositsController`.

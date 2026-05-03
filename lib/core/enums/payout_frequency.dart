@@ -1,12 +1,10 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
+@JsonEnum()
 enum PayoutFrequency {
-  @JsonValue('monthly')
   monthly(monthsInterval: 1),
-  @JsonValue('quarterly')
   quarterly(monthsInterval: 3),
-  @JsonValue('annually')
   annually(monthsInterval: 12);
 
   /// The number of months between each payout.
@@ -17,14 +15,5 @@ enum PayoutFrequency {
   /// Mathematical helper: How many payouts happen in a single year?
   int get payoutsPerYear => 12 ~/ monthsInterval;
 
-  String get displayName {
-    switch (this) {
-      case PayoutFrequency.monthly:
-        return t.enums.payoutFrequency.monthly;
-      case PayoutFrequency.quarterly:
-        return t.enums.payoutFrequency.quarterly;
-      case PayoutFrequency.annually:
-        return t.enums.payoutFrequency.annually;
-    }
-  }
+  String get displayName => t.enums.payoutFrequency[name] ?? name;
 }

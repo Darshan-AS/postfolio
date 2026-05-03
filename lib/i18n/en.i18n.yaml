@@ -180,20 +180,20 @@ nominees:
   noNominees: "No nominees added yet."
 
 enums:
-  payoutFrequency:
+  payoutFrequency(map):
     monthly: 'Monthly'
     quarterly: 'Quarterly'
     annually: 'Annually'
-  depositStatus:
+  depositStatus(map):
     active: "Active"
     matured: "Matured"
     closed: "Closed"
-  oneTimeSchemeType:
+  oneTimeSchemeType(map):
     timeDeposit: "Time Deposit (TD)"
     monthlyIncomeScheme: "Monthly Income Scheme (MIS)"
     nationalSavingsCertificate: "National Savings Certificate (NSC)"
     kisanVikasPatra: "Kisan Vikas Patra (KVP)"
-  recurringSchemeType:
+  recurringSchemeType(map):
     recurringDeposit: "Recurring Deposit (RD)"
   nomineeRelationship(map):
     husband: "Husband"
