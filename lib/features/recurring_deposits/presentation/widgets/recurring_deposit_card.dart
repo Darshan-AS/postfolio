@@ -82,7 +82,7 @@ class RecurringDepositCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '${t.format.currencySymbol}${installmentAmount.toStringAsFixed(0)}${t.format.perMonthSuffix}',
+              '${t.format.currencySymbol}${installmentAmount.toStringAsFixed(0)}',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.secondary,
                 fontWeight: FontWeight.bold,

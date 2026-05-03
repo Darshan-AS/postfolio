@@ -117,9 +117,6 @@ class TranslationsFormatEn {
 	/// en: '₹'
 	String get currencySymbol => '₹';
 
-	/// en: ' / mo'
-	String get perMonthSuffix => ' / mo';
-
 	/// en: ' • '
 	String get bulletSeparator => ' • ';
 }
@@ -803,7 +800,6 @@ extension on Translations {
 			'format.dateCompact' => 'dd/MM/yyyy',
 			'format.dateTime' => 'dd MMM yyyy, hh:mm a',
 			'format.currencySymbol' => '₹',
-			'format.perMonthSuffix' => ' / mo',
 			'format.bulletSeparator' => ' • ',
 			'common.duration.termYears' => 'Term (Years)',
 			'common.duration.termMonths' => 'Term (Months)',

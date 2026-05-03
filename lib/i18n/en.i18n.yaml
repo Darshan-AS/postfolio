@@ -17,7 +17,6 @@ format:
   dateCompact: "dd/MM/yyyy"
   dateTime: "dd MMM yyyy, hh:mm a"
   currencySymbol: "₹"
-  perMonthSuffix: " / mo"
   bulletSeparator: " • "
 
 common:
