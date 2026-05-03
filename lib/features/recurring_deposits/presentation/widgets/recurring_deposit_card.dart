@@ -51,15 +51,26 @@ class RecurringDepositCard extends ConsumerWidget {
       title: customerName,
       subtitle: Padding(
         padding: const EdgeInsets.only(top: AppDimensions.paddingXs),
-        child: Text(
-          serialNo.isNotEmpty
-              ? '($serialNo) $accountNo${t.format.bulletSeparator}${maturityDate.toAppFormat()}'
-              : '$accountNo${t.format.bulletSeparator}${maturityDate.toAppFormat()}',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              serialNo.isNotEmpty ? '($serialNo) $accountNo' : accountNo,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              maturityDate.toAppFormat(),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
       onTap: onTap,

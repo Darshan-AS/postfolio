@@ -13,6 +13,7 @@
 - Implemented `InvestmentProjectionCard` with live native `TweenAnimationBuilder` counting animations and `flutter_animate` transitions, integrating it directly into `OneTimeDepositFormScreen` and `RecurringDepositFormScreen`.
 - Refined projection UI and mathematical domain logic for MIS, TD, and KVP schemes: decoupled total return from principal maturity for payout schemes, and introduced a prominent "Doubles In" calendar metric for KVP.
 - Standardized date formatting across the application using Slang's `intl` integration and a centralized `DateTimeFormatting` extension to prevent ambiguous format errors.
+- Addressed text truncation issues in Entity tiles by allowing names to wrap across multiple lines and vertically stacking account numbers with their respective maturity dates.
 
 ## Next Steps
 - **Form State Refactor**: Migrate local hook-based form state inside form screens to dedicated Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) for strictly pure business logic.
