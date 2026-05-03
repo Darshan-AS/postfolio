@@ -16,6 +16,9 @@ format:
   date: "dd MMM yyyy"
   dateCompact: "dd/MM/yyyy"
   dateTime: "dd MMM yyyy, hh:mm a"
+  currencySymbol: "₹"
+  perMonthSuffix: " / mo"
+  bulletSeparator: " • "
 
 common:
   duration:
@@ -48,8 +51,8 @@ projection:
 
 nav:
   dashboard: "Dashboard"
-  oneTimeDeposits: "One-Time Deposits"
-  recurringDeposits: "Recurring Deposits"
+  oneTimeDeposits: "One-Time"
+  recurringDeposits: "Recurring"
   customers: "Customers"
 
 customers:

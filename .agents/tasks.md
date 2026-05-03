@@ -73,6 +73,7 @@
 - [x] Integrate `flutter_animate` for UI entry/exit animations.
 - [x] Migrate all icons from `font_awesome_flutter` and Material to `hugeicons`.
 - [x] Refactor UI layer to use `flutter_hooks` and `hooks_riverpod`, eliminating all `StatefulWidget` and `ConsumerStatefulWidget` boilerplate.
+- [ ] Clean up the codebase to ensure no function/method is excessively long. Extract complex business logic and UI build methods into pure, composable logical functions wherever possible.
 
 ## Phase 6: Firebase Integration & Authentication (In Progress)
 - [x] Run `flutterfire configure`.
@@ -87,7 +88,14 @@
 - [ ] Build Firestore repositories for Deposits, RD, and Schemes.
 - [ ] **Refactor Data Fetching**: Transition detail screens from list-based filtering (`AsyncValue<List<T>>`) to single-document fetching (`AsyncValue<T>`) using Riverpod family providers to improve efficiency with Firestore. Rewrite `AsyncEntityBuilder` accordingly.
 
-## Phase 7: Enhancements & Refinements (Pending)
+## Phase 7: Responsive Architecture (Completed)
+- [ ] Add `flutter_adaptive_scaffold` to the project for official Material 3 adaptive layouts.
+- [ ] Refactor `go_router` in `app_router.dart` to use `StatefulShellRoute` wrapping the `AdaptiveScaffold`.
+- [ ] Implement adaptive navigation (BottomNavigationBar on Mobile vs NavigationRail on Web/Desktop).
+- [ ] Create Master-Detail layouts for Customer, RD, and Deposit lists on large screens.
+- [ ] Refactor `BottomSheet` invocations to conditionally display as `AlertDialog` or Side Panels on large screens.
+
+## Phase 8: Enhancements & Refinements (Pending)
 - [ ] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.
 - [ ] Implement comprehensive form field validations across all create/update screens.
 - [x] Expand `SchemeType` enum and models to support an exhaustive list of Term Deposit variants.

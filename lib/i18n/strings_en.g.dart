@@ -113,6 +113,15 @@ class TranslationsFormatEn {
 
 	/// en: 'dd MMM yyyy, hh:mm a'
 	String get dateTime => 'dd MMM yyyy, hh:mm a';
+
+	/// en: '₹'
+	String get currencySymbol => '₹';
+
+	/// en: ' / mo'
+	String get perMonthSuffix => ' / mo';
+
+	/// en: ' • '
+	String get bulletSeparator => ' • ';
 }
 
 // Path: common
@@ -198,11 +207,11 @@ class TranslationsNavEn {
 	/// en: 'Dashboard'
 	String get dashboard => 'Dashboard';
 
-	/// en: 'One-Time Deposits'
-	String get oneTimeDeposits => 'One-Time Deposits';
+	/// en: 'One-Time'
+	String get oneTimeDeposits => 'One-Time';
 
-	/// en: 'Recurring Deposits'
-	String get recurringDeposits => 'Recurring Deposits';
+	/// en: 'Recurring'
+	String get recurringDeposits => 'Recurring';
 
 	/// en: 'Customers'
 	String get customers => 'Customers';
@@ -793,6 +802,9 @@ extension on Translations {
 			'format.date' => 'dd MMM yyyy',
 			'format.dateCompact' => 'dd/MM/yyyy',
 			'format.dateTime' => 'dd MMM yyyy, hh:mm a',
+			'format.currencySymbol' => '₹',
+			'format.perMonthSuffix' => ' / mo',
+			'format.bulletSeparator' => ' • ',
 			'common.duration.termYears' => 'Term (Years)',
 			'common.duration.termMonths' => 'Term (Months)',
 			'common.duration.yearAbbreviation' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 Yr', other: '${n} Yrs', ), 
@@ -815,8 +827,8 @@ extension on Translations {
 			'projection.payout' => ({required Object frequency}) => 'Payout (${frequency})',
 			'projection.doublesIn' => 'Doubles In',
 			'nav.dashboard' => 'Dashboard',
-			'nav.oneTimeDeposits' => 'One-Time Deposits',
-			'nav.recurringDeposits' => 'Recurring Deposits',
+			'nav.oneTimeDeposits' => 'One-Time',
+			'nav.recurringDeposits' => 'Recurring',
 			'nav.customers' => 'Customers',
 			'customers.title' => 'Customers',
 			'customers.customerDetails' => 'Customer Details',

@@ -7,6 +7,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 
 import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/entity_list_tile.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 
@@ -45,36 +46,35 @@ class OneTimeDepositCard extends ConsumerWidget {
       leadingBackgroundColor: Theme.of(context).colorScheme.primaryContainer,
       leadingForegroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
       title: customerName,
-      subtitle: Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(
-              text: accountNo,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const WidgetSpan(child: AppSpacings.gapSm),
-            WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: StatusBadge(status: status.displayName, compact: true),
-            ),
-            const WidgetSpan(child: AppSpacings.gapSm),
-            TextSpan(
-              text: '• ${maturityDate.toAppFormat()}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: AppDimensions.paddingXs),
+        child: Text(
+          '$accountNo${t.format.bulletSeparator}${maturityDate.toAppFormat()}',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
       onTap: onTap,
-      trailing: Text(
-        '₹${principalAmount.toStringAsFixed(0)}',
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.bold,
+      trailing: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '${t.format.currencySymbol}${principalAmount.toStringAsFixed(0)}',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            AppSpacings.gapXs,
+            StatusBadge(status: status.displayName, compact: true),
+          ],
         ),
       ),
       actions: [

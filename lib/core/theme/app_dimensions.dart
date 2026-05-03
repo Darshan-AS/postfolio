@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 class AppDimensions {
+  // Breakpoints
+  static const double breakpointTablet = 600.0;
+
   // Padding & Margins
   static const double paddingXs = 4.0;
   static const double paddingSm = 8.0;

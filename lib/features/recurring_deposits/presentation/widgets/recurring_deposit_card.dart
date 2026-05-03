@@ -6,6 +6,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/entity_list_tile.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 
@@ -48,36 +49,37 @@ class RecurringDepositCard extends ConsumerWidget {
         context,
       ).colorScheme.onSecondaryContainer,
       title: customerName,
-      subtitle: Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(
-              text: serialNo.isNotEmpty ? '($serialNo) $accountNo' : accountNo,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const WidgetSpan(child: AppSpacings.gapSm),
-            WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: StatusBadge(status: status.displayName, compact: true),
-            ),
-            const WidgetSpan(child: AppSpacings.gapSm),
-            TextSpan(
-              text: '• ${maturityDate.toAppFormat()}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: AppDimensions.paddingXs),
+        child: Text(
+          serialNo.isNotEmpty
+              ? '($serialNo) $accountNo${t.format.bulletSeparator}${maturityDate.toAppFormat()}'
+              : '$accountNo${t.format.bulletSeparator}${maturityDate.toAppFormat()}',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
       onTap: onTap,
-      trailing: Text(
-        '₹${installmentAmount.toStringAsFixed(0)} / mo',
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: Theme.of(context).colorScheme.secondary,
-          fontWeight: FontWeight.bold,
+      trailing: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '${t.format.currencySymbol}${installmentAmount.toStringAsFixed(0)}${t.format.perMonthSuffix}',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.secondary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            AppSpacings.gapXs,
+            StatusBadge(status: status.displayName, compact: true),
+          ],
         ),
       ),
       actions: [
