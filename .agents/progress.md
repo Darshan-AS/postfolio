@@ -15,6 +15,7 @@
 - Standardized date formatting across the application using Slang's `intl` integration and a centralized `DateTimeFormatting` extension to prevent ambiguous format errors.
 - Addressed text truncation issues in Entity tiles by allowing names to wrap across multiple lines and vertically stacking account numbers with their respective maturity dates.
 - Unified Deposit Detail screens to dynamically display projection metrics (Total Invested, Total Interest, Payout Frequency) using Dart 3 pattern matching against the `InvestmentProjection` sealed class.
+- Upgraded the Deposit Status selection in form screens from a standard dropdown to an intuitive `SegmentedButton` using a newly created `AppSegmentedButtonField`.
 
 ## Next Steps
 - **Form State Refactor**: Migrate local hook-based form state inside form screens to dedicated Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) for strictly pure business logic.

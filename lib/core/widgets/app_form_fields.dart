@@ -130,3 +130,64 @@ class AppDateField extends StatelessWidget {
     );
   }
 }
+
+class AppSegmentedButtonField<T> extends StatelessWidget {
+  final T value;
+  final String labelText;
+  final Widget? prefixIcon;
+  final List<ButtonSegment<T>> segments;
+  final void Function(T) onChanged;
+  final bool isRequired;
+
+  const AppSegmentedButtonField({
+    super.key,
+    required this.value,
+    required this.labelText,
+    required this.segments,
+    required this.onChanged,
+    this.prefixIcon,
+    this.isRequired = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(
+            left: AppDimensions.paddingXs,
+            bottom: AppDimensions.paddingSm,
+          ),
+          child: Row(
+            children: [
+              if (prefixIcon != null) ...[
+                IconTheme(
+                  data: IconThemeData(
+                    size: AppDimensions.iconSm,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  child: prefixIcon!,
+                ),
+                AppSpacings.gapSm,
+              ],
+              Text(
+                labelText + (isRequired ? ' *' : ''),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ],
+          ),
+        ),
+        SegmentedButton<T>(
+          segments: segments,
+          selected: {value},
+          onSelectionChanged: (Set<T> newSelection) {
+            onChanged(newSelection.first);
+          },
+        ),
+      ],
+    );
+  }
+}

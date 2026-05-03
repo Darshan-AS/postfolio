@@ -186,19 +186,17 @@ class _OneTimeDepositForm extends HookConsumerWidget {
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
-            AppDropdownField<DepositStatus>(
+            AppSegmentedButtonField<DepositStatus>(
               value: selectedStatus.value,
               labelText: t.oneTimeDeposits.fields.status,
-              items: DepositStatus.values
-                  .map((status) => DropdownMenuItem(
+              segments: DepositStatus.values
+                  .map((status) => ButtonSegment(
                         value: status,
-                        child: Text(status.name.toUpperCase()),
+                        label: Text(status.displayName),
                       ))
                   .toList(),
               onChanged: (status) {
-                if (status != null) {
-                  selectedStatus.value = status;
-                }
+                selectedStatus.value = status;
               },
               prefixIcon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedActivity01,

@@ -29,12 +29,14 @@ class AppDurationInput extends HookWidget {
 
     // Sync controllers with external state if it changes
     useEffect(() {
-      if (yearsController.text != selectedYears.toString()) {
-        yearsController.text = selectedYears.toString();
-      }
-      if (monthsController.text != selectedMonths.toString()) {
-        monthsController.text = selectedMonths.toString();
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (yearsController.text != selectedYears.toString()) {
+          yearsController.text = selectedYears.toString();
+        }
+        if (monthsController.text != selectedMonths.toString()) {
+          monthsController.text = selectedMonths.toString();
+        }
+      });
       return null;
     }, [selectedYears, selectedMonths]);
 
@@ -56,34 +58,22 @@ class AppDurationInput extends HookWidget {
       }
 
       // For TD with multiple options (1, 2, 3, 5 years)
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(
-              left: AppDimensions.paddingXs,
-              bottom: AppDimensions.paddingSm,
-            ),
-            child: Text(
-              t.common.duration.termYears,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-          ),
-          SegmentedButton<int>(
-            segments: allowedYears.map((year) {
-              return ButtonSegment<int>(
-                value: year,
-                label: Text(t.common.duration.yearAbbreviation(n: year)),
-              );
-            }).toList(),
-            selected: {selectedYears},
-            onSelectionChanged: (Set<int> newSelection) {
-              onChanged(newSelection.first, 0);
-            },
-          ),
-        ],
+      return AppSegmentedButtonField<int>(
+        value: selectedYears,
+        labelText: t.common.duration.termYears,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedCalendar01,
+          size: AppDimensions.iconMd,
+        ),
+        segments: allowedYears.map((year) {
+          return ButtonSegment<int>(
+            value: year,
+            label: Text(t.common.duration.yearAbbreviation(n: year)),
+          );
+        }).toList(),
+        onChanged: (int newSelection) {
+          onChanged(newSelection, 0);
+        },
       );
     }
 

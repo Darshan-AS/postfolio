@@ -121,7 +121,7 @@
 - [x] **UI Cleanup - Date Formatting:** Standardize date displays across the entire app using `slang`'s `intl` integration.
 - [ ] **UI Cleanup - Relative Time Formatting:** Add relative time display (e.g., "Created 2 hours ago", "Matures in 3 months") where precise dates are less critical, potentially using the `timeago` or `jiffy` packages.
 - [ ] **UI Cleanup - Non-Editable Fixed Fields:** Make form fields read-only (non-editable) when they only have a single valid value or don't require user input. For example, lock the "Scheme Type" selection for Recurring Deposits, and make the "Term Length" field non-editable for single-tenure schemes like MIS and NSC.
-- [ ] **UI Cleanup - Deposit Status Selection:** Upgrade the "Deposit Status" widget in the form screens from a standard dropdown to a more intuitive UI component (e.g., a SegmentedButton or ChoiceChips).
+- [x] **UI Cleanup - Deposit Status Selection:** Upgrade the "Deposit Status" widget in the form screens from a standard dropdown to a more intuitive UI component (e.g., a SegmentedButton or ChoiceChips).
 - [ ] Add filtering capabilities to deposit list screens (e.g., view by Active, Matured, Closed status).
 - [ ] Integrate search functionality across all entity listing screens (Customers, Deposits, RDs).
 - [ ] Create and integrate an enum for relationships in the `Nominee` model.
@@ -139,6 +139,7 @@
 ## Known Bugs & Issues
 - [x] **Date Picker UI Bug**: On selecting a new date in the date widget (e.g., RD Start Date or TD Start Date), the form text field does not visually update in the UI to reflect the newly picked date.
 - [x] **KVP Projection Crash**: The Form UI crashes for KVP selection with unsupported operation infinity when interest rate is cleared or 0.
+- [x] **Form View - KVP Crash**: Fixed flutter build phase exception (setState during build) when switching to KVP due to synchronous text controller updates in useEffect.
 - [x] **Form View - TD Calculation**: The maturity amount should have interest added in.
 - [x] **Form View - MIS Projection**: Add a field to show maturity amount + total earned (e.g., "Total Value" or "Total Return").
 - [x] **Form View - KVP Projection**: Show a human-readable time period indicating when the deposit doubles.

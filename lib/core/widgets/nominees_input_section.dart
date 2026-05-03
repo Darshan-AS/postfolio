@@ -109,15 +109,17 @@ class _NomineeItemForm extends HookWidget {
 
     // Sync controllers if parent changes state externally, but prevent cursor jumping
     useEffect(() {
-      if (nameController.text != nominee.name) {
-        nameController.text = nominee.name;
-      }
-      if (relationshipController.text != nominee.relationship) {
-        relationshipController.text = nominee.relationship;
-      }
-      if (percentageController.text != nominee.percentage.toString() && nominee.percentage != (double.tryParse(percentageController.text) ?? 100)) {
-        percentageController.text = nominee.percentage.toString();
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (nameController.text != nominee.name) {
+          nameController.text = nominee.name;
+        }
+        if (relationshipController.text != nominee.relationship) {
+          relationshipController.text = nominee.relationship;
+        }
+        if (percentageController.text != nominee.percentage.toString() && nominee.percentage != (double.tryParse(percentageController.text) ?? 100)) {
+          percentageController.text = nominee.percentage.toString();
+        }
+      });
       return null;
     }, [nominee]);
 
