@@ -88,7 +88,7 @@
 - [ ] Build Firestore repositories for Deposits, RD, and Schemes.
 - [ ] **Refactor Data Fetching**: Transition detail screens from list-based filtering (`AsyncValue<List<T>>`) to single-document fetching (`AsyncValue<T>`) using Riverpod family providers to improve efficiency with Firestore. Rewrite `AsyncEntityBuilder` accordingly.
 
-## Phase 7: Responsive Architecture (Completed)
+## Phase 7: Responsive Architecture (Pending)
 - [ ] Add `flutter_adaptive_scaffold` to the project for official Material 3 adaptive layouts.
 - [ ] Refactor `go_router` in `app_router.dart` to use `StatefulShellRoute` wrapping the `AdaptiveScaffold`.
 - [ ] Implement adaptive navigation (BottomNavigationBar on Mobile vs NavigationRail on Web/Desktop).
@@ -100,11 +100,11 @@
 - [ ] Implement comprehensive form field validations across all create/update screens.
 - [ ] Implement image capture and display functionality for customer profiles.
 - [ ] Redesign the leading visual element in deposit list tiles to replace the generic circular icons.
-- [ ] Implement a predefined dropdown with a manual entry fallback for Nominee relationship fields across all forms.
+- [x] Implement a predefined dropdown with a manual entry fallback for Nominee relationship fields across all forms.
 - [ ] Apply distinct color coding to differentiate deposit types in list views.
 - [ ] Enhance the visual prominence of the scheme type in deposit detail views.
 - [x] Expand `SchemeType` enum and models to support an exhaustive list of Term Deposit variants.
-- [ ] **Domain Math - Maturity Calculators & Projections:**
+- [x] **Domain Math - Maturity Calculators & Projections:**
   - [x] Create `InvestmentProjection` model in `lib/core/models/`.
   - [x] Create `ProjectionCalculator` utility class in `lib/core/services/` for RD, TD, MIS, NSC, and KVP formulas.
   - [x] Refactor `BaseDeposit`, `OneTimeDeposit`, and `RecurringDeposit` to replace `maturityAmount` and `maturityDate` with dynamic getters.
@@ -112,7 +112,7 @@
   - [x] Run `build_runner` to regenerate Freezed models and JSON serialization.
 - [ ] **Domain Math - Commission Calculators:** Implement functions to auto-calculate Gross Commission per transaction (4% for RD, 0.5% for others) and auto-deduct the 2% TDS to derive the Net Payout.
 - [ ] **Domain Math - Penalties & Rebates:** Implement transaction evaluation logic to automatically calculate RD Late Fees (1% per month delayed) and Advance Deposit Rebates (₹10/₹40 rules for 6+/12+ months).
-- [ ] **UI Cleanup - Live Preview & "Dumb Widgets":**
+- [x] **UI Cleanup - Live Preview & "Dumb Widgets":**
   - [x] Use `flutter_hooks` to manage local ephemeral form state (text controllers, current selections) and isolate business math into pure functions.
   - [x] Remove manual `maturityDate` and `maturityAmount` input fields from form screens.
   - [x] **Dynamic Form Previews:** Create and integrate an `InvestmentProjectionCard` (using native `Card` and `flutter_animate` for fade/slide transitions) to dynamically calculate and display the expected Maturity Date, Maturity Amount, and interest projections in real-time as the user changes form values.
@@ -124,7 +124,7 @@
 - [x] **UI Cleanup - Deposit Status Selection:** Upgrade the "Deposit Status" widget in the form screens from a standard dropdown to a more intuitive UI component (e.g., a SegmentedButton or ChoiceChips).
 - [ ] Add filtering capabilities to deposit list screens (e.g., view by Active, Matured, Closed status).
 - [ ] Integrate search functionality across all entity listing screens (Customers, Deposits, RDs).
-- [ ] Create and integrate an enum for relationships in the `Nominee` model.
+- [x] Create and integrate an enum for relationships in the `Nominee` model.
 - [ ] Explore migrating `termYears` and `termMonths` into a custom Domain-Driven Value Object (e.g., `class Tenure`) to encapsulate calendar math, keeping in mind the tradeoffs for Firestore compound indexing.
 - [ ] Implement and support dark theme across the application.
 - [ ] Implement local App Lock (Biometrics/PIN) for additional privacy and security.

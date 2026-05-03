@@ -33,9 +33,10 @@ class FakeCustomerRepository implements CustomerRepository {
           Nominee(
             percentage: 50.0,
             name: 'Alfred Pennyworth',
-            relationship: 'Butler',
+            relationship: NomineeRelationship.other,
+            customRelationship: 'Butler',
           ),
-          Nominee(percentage: 50.0, name: 'Dick Grayson', relationship: 'Ward'),
+          Nominee(percentage: 50.0, name: 'Dick Grayson', relationship: NomineeRelationship.other, customRelationship: 'Ward'),
         ],
       ),
     ),
@@ -52,11 +53,11 @@ class FakeCustomerRepository implements CustomerRepository {
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA123456789',
         nominees: [
-          Nominee(percentage: 60.0, name: 'Lois Lane', relationship: 'Spouse'),
+          Nominee(percentage: 60.0, name: 'Lois Lane', relationship: NomineeRelationship.wife),
           Nominee(
             percentage: 40.0,
             name: 'Martha Kent',
-            relationship: 'Mother',
+            relationship: NomineeRelationship.mother,
           ),
         ],
       ),
@@ -74,7 +75,7 @@ class FakeCustomerRepository implements CustomerRepository {
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA456789123',
         nominees: [
-          Nominee(percentage: 100.0, name: 'Hippolyta', relationship: 'Mother'),
+          Nominee(percentage: 100.0, name: 'Hippolyta', relationship: NomineeRelationship.mother),
         ],
       ),
     ),
@@ -91,7 +92,7 @@ class FakeCustomerRepository implements CustomerRepository {
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA567890123',
         nominees: [
-          Nominee(percentage: 100.0, name: 'Iris West', relationship: 'Spouse'),
+          Nominee(percentage: 100.0, name: 'Iris West', relationship: NomineeRelationship.wife),
         ],
       ),
     ),
@@ -108,7 +109,7 @@ class FakeCustomerRepository implements CustomerRepository {
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA678901234',
         nominees: [
-          Nominee(percentage: 100.0, name: 'Mera', relationship: 'Spouse'),
+          Nominee(percentage: 100.0, name: 'Mera', relationship: NomineeRelationship.wife),
         ],
       ),
     ),

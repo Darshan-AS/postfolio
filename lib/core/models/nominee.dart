@@ -1,8 +1,39 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 part 'nominee.freezed.dart';
 part 'nominee.g.dart';
+
+@JsonEnum(fieldRename: FieldRename.pascal)
+enum NomineeRelationship {
+  husband,
+  wife,
+  son,
+  daughter,
+  father,
+  mother,
+  brother,
+  sister,
+  grandfather,
+  grandmother,
+  grandson,
+  granddaughter,
+  fatherInLaw,
+  motherInLaw,
+  sonInLaw,
+  daughterInLaw,
+  brotherInLaw,
+  sisterInLaw,
+  nephew,
+  niece,
+  uncle,
+  aunt,
+  cousin,
+  other;
+
+  String get displayName => t.enums.nomineeRelationship[name] ?? name;
+}
 
 @freezed
 sealed class Nominee with _$Nominee {
@@ -10,21 +41,29 @@ sealed class Nominee with _$Nominee {
 
   const factory Nominee({
     required String name,
-    required String relationship, // e.g., "Spouse", "Son"
+    required NomineeRelationship relationship,
+    String? customRelationship,
     required double percentage, // e.g., 50.0 for 50%
   }) = _Nominee;
 
   factory Nominee.fromJson(Map<String, dynamic> json) =>
       _$NomineeFromJson(json);
 
+  String get displayRelationship => relationship == NomineeRelationship.other
+      ? (customRelationship ?? t.enums.nomineeRelationship['other']!)
+      : relationship.displayName;
+
   static String? validateName(String? name) {
     if (name == null || name.trim().isEmpty) return 'Nominee name is required';
     return null;
   }
 
-  static String? validateRelationship(String? relation) {
-    if (relation == null || relation.trim().isEmpty) {
-      return 'Relationship is required';
+  static String? validateCustomRelationship(
+      NomineeRelationship relationship, String? customRelation) {
+    if (relationship == NomineeRelationship.other) {
+      if (customRelation == null || customRelation.trim().isEmpty) {
+        return 'Custom relationship is required';
+      }
     }
     return null;
   }
@@ -39,12 +78,13 @@ sealed class Nominee with _$Nominee {
 
   static Result<Nominee, String> create({
     required String name,
-    required String relationship,
+    required NomineeRelationship relationship,
+    String? customRelationship,
     required double percentage,
   }) {
     final error =
         validateName(name) ??
-        validateRelationship(relationship) ??
+        validateCustomRelationship(relationship, customRelationship) ??
         validatePercentage(percentage);
 
     if (error != null) return Failure(error);
@@ -52,7 +92,10 @@ sealed class Nominee with _$Nominee {
     return Success(
       Nominee(
         name: name.trim(),
-        relationship: relationship.trim(),
+        relationship: relationship,
+        customRelationship: relationship == NomineeRelationship.other
+            ? customRelationship?.trim()
+            : null,
         percentage: percentage,
       ),
     );

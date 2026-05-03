@@ -18,7 +18,7 @@ class NomineesInputSection extends HookWidget {
   });
 
   void _addNominee() {
-    onChanged([...nominees, const Nominee(name: '', relationship: '', percentage: 100)]);
+    onChanged([...nominees, const Nominee(name: '', relationship: NomineeRelationship.other, percentage: 100)]);
   }
 
   void _removeNominee(int index) {
@@ -104,8 +104,9 @@ class _NomineeItemForm extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final nameController = useTextEditingController(text: nominee.name);
-    final relationshipController = useTextEditingController(text: nominee.relationship);
+    final customRelationshipController = useTextEditingController(text: nominee.customRelationship ?? '');
     final percentageController = useTextEditingController(text: nominee.percentage.toString());
+    final relationshipState = useState<NomineeRelationship>(nominee.relationship);
 
     // Sync controllers if parent changes state externally, but prevent cursor jumping
     useEffect(() {
@@ -113,8 +114,11 @@ class _NomineeItemForm extends HookWidget {
         if (nameController.text != nominee.name) {
           nameController.text = nominee.name;
         }
-        if (relationshipController.text != nominee.relationship) {
-          relationshipController.text = nominee.relationship;
+        if (customRelationshipController.text != (nominee.customRelationship ?? '')) {
+          customRelationshipController.text = nominee.customRelationship ?? '';
+        }
+        if (relationshipState.value != nominee.relationship) {
+          relationshipState.value = nominee.relationship;
         }
         if (percentageController.text != nominee.percentage.toString() && nominee.percentage != (double.tryParse(percentageController.text) ?? 100)) {
           percentageController.text = nominee.percentage.toString();
@@ -127,7 +131,8 @@ class _NomineeItemForm extends HookWidget {
       onChanged(
         nominee.copyWith(
           name: nameController.text.trim(),
-          relationship: relationshipController.text.trim(),
+          relationship: relationshipState.value,
+          customRelationship: relationshipState.value == NomineeRelationship.other ? customRelationshipController.text.trim() : null,
           percentage: double.tryParse(percentageController.text.trim()) ?? 100,
         ),
       );
@@ -183,16 +188,43 @@ class _NomineeItemForm extends HookWidget {
               onChanged: (_) => notifyChange(),
             ),
             AppSpacings.gapSm,
-            AppTextField(
-              controller: relationshipController,
+            AppDropdownField<NomineeRelationship>(
+              value: relationshipState.value,
               labelText: t.nominees.relationship,
+              items: NomineeRelationship.values
+                  .map((rel) => DropdownMenuItem(
+                        value: rel,
+                        child: Text(rel.displayName),
+                      ))
+                  .toList(),
+              onChanged: (rel) {
+                if (rel != null) {
+                  relationshipState.value = rel;
+                  notifyChange();
+                }
+              },
               prefixIcon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedUserMultiple,
                 size: AppDimensions.iconMd,
               ),
-              textInputAction: TextInputAction.next,
-              onChanged: (_) => notifyChange(),
             ),
+            if (relationshipState.value == NomineeRelationship.other) ...[
+              AppSpacings.gapSm,
+              AppTextField(
+                controller: customRelationshipController,
+                labelText: t.nominees.relationship, // Can reuse the same label or add a new one
+                prefixIcon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedUserMultiple,
+                  size: AppDimensions.iconMd,
+                ),
+                textInputAction: TextInputAction.next,
+                onChanged: (_) => notifyChange(),
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) return 'Relationship is required';
+                  return null;
+                },
+              ),
+            ],
             AppSpacings.gapSm,
             AppTextField(
               controller: percentageController,
