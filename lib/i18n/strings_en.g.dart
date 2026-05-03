@@ -471,6 +471,9 @@ class TranslationsAuthEn {
 
 	/// en: 'Sign in with Google'
 	String get signInWithGoogle => 'Sign in with Google';
+
+	/// en: 'Sign Out'
+	String get signOut => 'Sign Out';
 }
 
 // Path: common.duration
@@ -946,6 +949,7 @@ extension on Translations {
 			'auth.welcome' => 'Welcome to Postfolio',
 			'auth.signInSubtitle' => 'Sign in to manage your deposits securely',
 			'auth.signInWithGoogle' => 'Sign in with Google',
+			'auth.signOut' => 'Sign Out',
 			_ => null,
 		};
 	}

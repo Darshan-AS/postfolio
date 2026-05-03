@@ -113,6 +113,12 @@
   - [x] Run `build_runner` to regenerate Freezed models and JSON serialization.
 - [ ] **Domain Math - Commission Calculators:** Implement functions to auto-calculate Gross Commission per transaction (4% for RD, 0.5% for others) and auto-deduct the 2% TDS to derive the Net Payout.
 - [ ] **Domain Math - Penalties & Rebates:** Implement transaction evaluation logic to automatically calculate RD Late Fees (1% per month delayed) and Advance Deposit Rebates (₹10/₹40 rules for 6+/12+ months).
+
+## Phase 9: Agent Profile Feature (Pending)
+- [ ] Expand `AppUser` domain model to include personal info and agency details.
+- [ ] Build `AgentProfileRepository` for managing agent details in Firestore.
+- [ ] Build `AgentProfileController` for state management.
+- [ ] Build `AgentProfileScreen` to display and edit personal and agency details.
 - [x] **UI Cleanup - Live Preview & "Dumb Widgets":**
   - [x] Use `flutter_hooks` to manage local ephemeral form state (text controllers, current selections) and isolate business math into pure functions.
   - [x] Remove manual `maturityDate` and `maturityAmount` input fields from form screens.

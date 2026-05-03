@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 
@@ -29,6 +31,30 @@ class MainShellScaffold extends StatelessWidget {
                   selectedIndex: navigationShell.currentIndex,
                   onDestinationSelected: _goBranch,
                   labelType: NavigationRailLabelType.all,
+                  trailing: Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: AppDimensions.paddingLg,
+                        ),
+                        child: Consumer(
+                          builder: (context, ref, child) {
+                            return IconButton(
+                              icon: const HugeIcon(
+                                icon: HugeIcons.strokeRoundedLogout01,
+                                size: AppDimensions.iconMd,
+                              ),
+                              onPressed: () {
+                                ref.read(authControllerProvider.notifier).signOut();
+                              },
+                              tooltip: t.auth.signOut,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
                   destinations: [
                     NavigationRailDestination(
                       icon: const HugeIcon(

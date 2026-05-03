@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
@@ -22,28 +24,41 @@ class LoginScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              HugeIcon(
-                icon: HugeIcons.strokeRoundedShield01,
-                color: theme.colorScheme.primary,
-                size: 80,
-              ),
-              const SizedBox(height: AppDimensions.paddingXl),
-              Text(
-                t.auth.welcome,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  HugeIcon(
+                    icon: HugeIcons.strokeRoundedShield01,
+                    color: theme.colorScheme.primary,
+                    size: AppDimensions.iconXl,
+                  ),
+                  AppSpacings.gapXl,
+                  Text(
+                    t.auth.welcome,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  AppSpacings.gapSm,
+                  Text(
+                    t.auth.signInSubtitle,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                ]
+                    .animate(interval: AppAnimations.stagger)
+                    .fadeIn(duration: AppAnimations.medium)
+                    .slideY(
+                      begin: AppAnimations.slideOffset,
+                      curve: AppAnimations.defaultCurve,
+                      duration: AppAnimations.medium,
                     ),
-                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: AppDimensions.paddingSm),
-              Text(
-                t.auth.signInSubtitle,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppDimensions.paddingXxl * 2),
+              AppSpacings.gapXxl,
+              AppSpacings.gapXxl,
               switch (authState) {
                 AuthStateLoading() => const Center(child: CircularProgressIndicator()),
                 _ => FilledButton.icon(
@@ -53,10 +68,11 @@ class LoginScreen extends ConsumerWidget {
                   icon: HugeIcon(
                     icon: HugeIcons.strokeRoundedGoogle,
                     color: theme.colorScheme.onPrimary,
-                    size: 24,
+                    size: AppDimensions.iconMd,
                   ),
                   label: Text(t.auth.signInWithGoogle),
                   style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(AppDimensions.buttonHeight),
                     padding: const EdgeInsets.symmetric(
                       vertical: AppDimensions.paddingMd,
                     ),
@@ -64,7 +80,7 @@ class LoginScreen extends ConsumerWidget {
                 ),
               },
               if (authState is AuthStateError) ...[
-                const SizedBox(height: AppDimensions.paddingMd),
+                AppSpacings.gapMd,
                 Text(
                   authState.message,
                   style: TextStyle(
