@@ -168,12 +168,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                   ),
                   label: t.recurringDeposits.fields.customerId,
                   value:
-                      ref
-                          .watch(customersControllerProvider)
-                          .value
-                          ?.where((c) => c.id == deposit.customerId)
-                          .firstOrNull
-                          ?.name ??
+                      ref.watch(customerByIdProvider(deposit.customerId))?.name ??
                       deposit.customerId,
                 ),
               ],

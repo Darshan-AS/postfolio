@@ -48,10 +48,7 @@ class CustomerSelectionField extends HookConsumerWidget {
     Customer? displayCustomer = selectedCustomer.value;
 
     if (displayCustomer == null && initialCustomerId != null) {
-      final state = ref.watch(customersControllerProvider);
-      displayCustomer = state.value
-          ?.where((c) => c.id == initialCustomerId)
-          .firstOrNull;
+      displayCustomer = ref.watch(customerByIdProvider(initialCustomerId!));
     }
 
     return InkWell(
@@ -111,67 +108,81 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(AppDimensions.paddingLg),
-            child: TextField(
-              decoration: AppInputDecoration.m3(
-                context,
-                hintText: t.customers.searchHint,
-                prefixIcon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedSearch01,
-                  size: AppDimensions.iconMd,
-                ),
-              ),
-              onChanged: (value) => searchQuery.value = value.toLowerCase(),
-            ),
-          ),
+          _buildSearchBar(context, searchQuery),
           Expanded(
             child: state.when(
-              data: (customers) {
-                final filtered = customers.where((c) {
-                  final nameMatch = c.name.toLowerCase().contains(searchQuery.value);
-                  final phoneMatch =
-                      c.phone?.toLowerCase().contains(searchQuery.value) ?? false;
-                  final cifMatch =
-                      c.cifNumber?.toLowerCase().contains(searchQuery.value) ??
-                      false;
-                  return nameMatch || phoneMatch || cifMatch;
-                }).toList();
-
-                if (filtered.isEmpty) {
-                  return Center(child: Text(t.customers.noCustomersFound));
-                }
-
-                return ListView.builder(
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final customer = filtered[index];
-                    return EntityListTile(
-                      leadingText: customer.name.isNotEmpty
-                          ? customer.name.substring(0, 1).toUpperCase()
-                          : '?',
-                      title: customer.name,
-                      subtitle: Text(
-                        [
-                          if (customer.cifNumber != null)
-                            'CIF: ${customer.cifNumber}',
-                          if (customer.phone != null) customer.phone,
-                        ].join(' • '),
-                      ),
-                      onTap: () => Navigator.of(context).pop(customer),
-                    );
-                  },
-                );
-              },
+              data: (customers) => _buildDataState(context, customers, searchQuery.value),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => ErrorStateView(
-                message: error.toString(),
-                onRetry: () => ref.invalidate(customersControllerProvider),
-              ),
+              error: (error, stack) => _buildErrorState(ref, error.toString()),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSearchBar(BuildContext context, ValueNotifier<String> searchQuery) {
+    return Padding(
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
+      child: TextField(
+        decoration: AppInputDecoration.m3(
+          context,
+          hintText: t.customers.searchHint,
+          prefixIcon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedSearch01,
+            size: AppDimensions.iconMd,
+          ),
+        ),
+        onChanged: (value) => searchQuery.value = value.toLowerCase(),
+      ),
+    );
+  }
+
+  Widget _buildDataState(BuildContext context, List<Customer> customers, String query) {
+    final filtered = _filterCustomers(customers, query);
+
+    if (filtered.isEmpty) {
+      return Center(child: Text(t.customers.noCustomersFound));
+    }
+
+    return _buildCustomerList(filtered);
+  }
+
+  List<Customer> _filterCustomers(List<Customer> customers, String query) {
+    if (query.isEmpty) return customers;
+    return customers.where((c) {
+      final nameMatch = c.name.toLowerCase().contains(query);
+      final phoneMatch = c.phone?.toLowerCase().contains(query) ?? false;
+      final cifMatch = c.cifNumber?.toLowerCase().contains(query) ?? false;
+      return nameMatch || phoneMatch || cifMatch;
+    }).toList();
+  }
+
+  Widget _buildCustomerList(List<Customer> customers) {
+    return ListView.builder(
+      itemCount: customers.length,
+      itemBuilder: (context, index) {
+        final customer = customers[index];
+        return EntityListTile(
+          leadingText:
+              customer.name.isNotEmpty ? customer.name.substring(0, 1).toUpperCase() : '?',
+          title: customer.name,
+          subtitle: Text(
+            [
+              if (customer.cifNumber != null) 'CIF: ${customer.cifNumber}',
+              if (customer.phone != null) customer.phone,
+            ].join(' • '),
+          ),
+          onTap: () => Navigator.of(context).pop(customer),
+        );
+      },
+    );
+  }
+
+  Widget _buildErrorState(WidgetRef ref, String error) {
+    return ErrorStateView(
+      message: error,
+      onRetry: () => ref.invalidate(customersControllerProvider),
     );
   }
 }

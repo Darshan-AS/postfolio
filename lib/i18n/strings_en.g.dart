@@ -151,6 +151,9 @@ class TranslationsCommonEn {
 	/// en: 'Retry'
 	String get retry => 'Retry';
 
+	/// en: 'OK'
+	String get ok => 'OK';
+
 	/// en: 'Not provided'
 	String get notProvided => 'Not provided';
 
@@ -792,6 +795,7 @@ extension on Translations {
 			'common.cancel' => 'Cancel',
 			'common.error' => 'Error',
 			'common.retry' => 'Retry',
+			'common.ok' => 'OK',
 			'common.notProvided' => 'Not provided',
 			'common.moreOptions' => 'More options',
 			'common.sections.linkedAccounts' => 'Linked Accounts',

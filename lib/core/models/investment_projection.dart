@@ -15,7 +15,7 @@ sealed class InvestmentProjection with _$InvestmentProjection {
     required double totalInterestEarned,
     required DateTime maturityDate,
     String? note,
-  }) = _WealthAccumulation;
+  }) = WealthAccumulation;
 
   /// Projection for schemes that provide periodic payouts and return principal at maturity
   /// (e.g., MIS, TD)
@@ -27,7 +27,7 @@ sealed class InvestmentProjection with _$InvestmentProjection {
     required double periodicPayoutAmount,
     required PayoutFrequency payoutFrequency,
     String? note,
-  }) = _IncomeGeneration;
+  }) = IncomeGeneration;
 
   // Shared Getters
   @override

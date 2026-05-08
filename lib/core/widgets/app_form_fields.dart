@@ -191,3 +191,32 @@ class AppSegmentedButtonField<T> extends StatelessWidget {
     );
   }
 }
+
+class FormSectionHeader extends StatelessWidget {
+  final String title;
+  final EdgeInsetsGeometry? padding;
+
+  const FormSectionHeader({
+    super.key,
+    required this.title,
+    this.padding,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: padding ??
+          const EdgeInsets.only(
+            top: AppDimensions.paddingLg,
+            bottom: AppDimensions.paddingMd,
+          ),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
+      ),
+    );
+  }
+}

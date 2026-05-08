@@ -164,12 +164,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   ),
                   label: t.oneTimeDeposits.fields.customerId,
                   value:
-                      ref
-                          .watch(customersControllerProvider)
-                          .value
-                          ?.where((c) => c.id == deposit.customerId)
-                          .firstOrNull
-                          ?.name ??
+                      ref.watch(customerByIdProvider(deposit.customerId))?.name ??
                       deposit.customerId,
                 ),
                 if (deposit.linkedSavingsAccountNo != null &&

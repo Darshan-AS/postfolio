@@ -33,6 +33,7 @@ common:
   cancel: "Cancel"
   error: "Error"
   retry: "Retry"
+  ok: "OK"
   notProvided: "Not provided"
   moreOptions: "More options"
   sections:

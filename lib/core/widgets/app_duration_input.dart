@@ -41,43 +41,54 @@ class AppDurationInput extends HookWidget {
     }, [selectedYears, selectedMonths]);
 
     if (isFixedTenure) {
-      final allowedYears = allowedTenuresInYears;
+      return _buildFixedTenure(context, yearsController);
+    }
 
-      // For schemes like MIS/NSC which only have a single valid tenure (e.g., 5 years)
-      if (allowedYears.length == 1) {
-        return AppTextField(
-          controller: yearsController,
-          labelText: t.common.duration.termYears,
-          prefixIcon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedCalendar01,
-            size: AppDimensions.iconMd,
-          ),
-          readOnly: true,
-          enabled: true,
-        );
-      }
+    return _buildCustomTenure(context, yearsController, monthsController);
+  }
 
-      // For TD with multiple options (1, 2, 3, 5 years)
-      return AppSegmentedButtonField<int>(
-        value: selectedYears,
+  Widget _buildFixedTenure(BuildContext context, TextEditingController yearsController) {
+    final allowedYears = allowedTenuresInYears;
+
+    // For schemes like MIS/NSC which only have a single valid tenure (e.g., 5 years)
+    if (allowedYears.length == 1) {
+      return AppTextField(
+        controller: yearsController,
         labelText: t.common.duration.termYears,
         prefixIcon: const HugeIcon(
           icon: HugeIcons.strokeRoundedCalendar01,
           size: AppDimensions.iconMd,
         ),
-        segments: allowedYears.map((year) {
-          return ButtonSegment<int>(
-            value: year,
-            label: Text(t.common.duration.yearAbbreviation(n: year)),
-          );
-        }).toList(),
-        onChanged: (int newSelection) {
-          onChanged(newSelection, 0);
-        },
+        readOnly: true,
+        enabled: true,
       );
     }
 
-    // Custom Tenure (e.g., KVP)
+    // For TD with multiple options (1, 2, 3, 5 years)
+    return AppSegmentedButtonField<int>(
+      value: selectedYears,
+      labelText: t.common.duration.termYears,
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedCalendar01,
+        size: AppDimensions.iconMd,
+      ),
+      segments: allowedYears.map((year) {
+        return ButtonSegment<int>(
+          value: year,
+          label: Text(t.common.duration.yearAbbreviation(n: year)),
+        );
+      }).toList(),
+      onChanged: (int newSelection) {
+        onChanged(newSelection, 0);
+      },
+    );
+  }
+
+  Widget _buildCustomTenure(
+    BuildContext context,
+    TextEditingController yearsController,
+    TextEditingController monthsController,
+  ) {
     return Row(
       children: [
         Expanded(

@@ -19,6 +19,9 @@
 - Refactored `Nominee` relationship from raw strings to a strongly-typed `NomineeRelationship` enum, utilizing `@JsonEnum` and `slang` map code generation for boilerplate-free JSON and localization handling.
 - Upgraded `NomineesInputSection` to use `AppDropdownField` for predefined relationships with a fallback dynamic text field for 'Other'.
 - Standardized `LoginScreen` to use theme dimensions and `flutter_animate` transitions, and added a Sign Out button to `DashboardScreen` and `MainShellScaffold` using Slang localized strings.
+- Refactored Form Screens (`RecurringDeposit`, `OneTimeDeposit`, `Customer`) to reduce `build` method length and complexity.
+- Introduced `FormSectionHeader` to standardize section headers and reduce repetitive styling code.
+- Fixed convention violations where inline filtering was used instead of dedicated providers (e.g., `customerByIdProvider`).
 
 ## Next Steps
 - **Form State Refactor**: Migrate local hook-based form state inside form screens to dedicated Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) for strictly pure business logic.

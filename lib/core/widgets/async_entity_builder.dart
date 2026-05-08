@@ -12,6 +12,7 @@ class AsyncEntityBuilder<T> extends StatelessWidget {
   final String notFoundMessage;
   final VoidCallback onRetry;
   final T? dummyEntity;
+  final bool wrapWithScaffold;
 
   const AsyncEntityBuilder({
     super.key,
@@ -22,6 +23,7 @@ class AsyncEntityBuilder<T> extends StatelessWidget {
     required this.notFoundMessage,
     required this.onRetry,
     this.dummyEntity,
+    this.wrapWithScaffold = true,
   });
 
   @override
@@ -31,31 +33,49 @@ class AsyncEntityBuilder<T> extends StatelessWidget {
     }
 
     return state.when(
-      data: (entities) {
-        final entity = entities
-            .where((e) => idSelector(e) == entityId)
-            .firstOrNull;
-        if (entity == null) {
-          return Scaffold(
-            appBar: AppBar(title: Text(t.common.error)),
-            body: ErrorStateView(message: notFoundMessage),
-          );
-        }
-        return builder(entity);
-      },
-      loading: () {
-        if (dummyEntity != null) {
-          return Skeletonizer(enabled: true, child: builder(dummyEntity));
-        }
-        return Scaffold(
-          appBar: AppBar(title: Text(t.common.loading)),
-          body: const Center(child: CircularProgressIndicator()),
-        );
-      },
-      error: (error, stack) => Scaffold(
-        appBar: AppBar(title: Text(t.common.error)),
-        body: ErrorStateView(message: error.toString(), onRetry: onRetry),
-      ),
+      data: (entities) => _buildDataState(context, entities),
+      loading: () => _buildLoadingState(context),
+      error: (error, stack) => _buildErrorState(context, error.toString()),
     );
+  }
+
+  Widget _buildDataState(BuildContext context, List<T> entities) {
+    final entity = entities.where((e) => idSelector(e) == entityId).firstOrNull;
+    if (entity == null) {
+      final errorView = ErrorStateView(message: notFoundMessage);
+      return wrapWithScaffold
+          ? Scaffold(
+              appBar: AppBar(title: Text(t.common.error)),
+              body: errorView,
+            )
+          : errorView;
+    }
+    return builder(entity);
+  }
+
+  Widget _buildLoadingState(BuildContext context) {
+    if (dummyEntity != null) {
+      return Skeletonizer(enabled: true, child: builder(dummyEntity));
+    }
+    const loadingView = Center(child: CircularProgressIndicator());
+    return wrapWithScaffold
+        ? Scaffold(
+            appBar: AppBar(title: Text(t.common.loading)),
+            body: loadingView,
+          )
+        : loadingView;
+  }
+
+  Widget _buildErrorState(BuildContext context, String error) {
+    final errorView = ErrorStateView(
+      message: error,
+      onRetry: onRetry,
+    );
+    return wrapWithScaffold
+        ? Scaffold(
+            appBar: AppBar(title: Text(t.common.error)),
+            body: errorView,
+          )
+        : errorView;
   }
 }

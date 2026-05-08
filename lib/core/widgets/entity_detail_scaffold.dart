@@ -53,45 +53,53 @@ class EntityDetailScaffold extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appBarTitle),
-        actions: [
-          IconButton(
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedEdit02,
-              size: AppDimensions.iconMd,
-            ),
-            onPressed: onEdit,
+      appBar: _buildAppBar(theme, context),
+      body: _buildBody(theme),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(ThemeData theme, BuildContext context) {
+    return AppBar(
+      title: Text(appBarTitle),
+      actions: [
+        IconButton(
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedEdit02,
+            size: AppDimensions.iconMd,
           ),
-          IconButton(
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedDelete02,
-              size: AppDimensions.iconMd,
-            ),
-            color: theme.colorScheme.error,
-            onPressed: () => _confirmDelete(context),
+          onPressed: onEdit,
+        ),
+        IconButton(
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedDelete02,
+            size: AppDimensions.iconMd,
           ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        children: [header, AppSpacings.gapXxl, ...body]
-            .animate(interval: AppAnimations.stagger)
-            .fade(
-              duration: AppAnimations.medium,
-              curve: AppAnimations.defaultCurve,
-            )
-            .slideY(
-              begin: AppAnimations.slideOffset,
-              end: 0,
-              duration: AppAnimations.medium,
-              curve: AppAnimations.defaultCurve,
-            )
-            .shimmer(
-              duration: AppAnimations.slow,
-              color: theme.colorScheme.surfaceTint.withValues(alpha: 0.1),
-            ),
-      ),
+          color: theme.colorScheme.error,
+          onPressed: () => _confirmDelete(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody(ThemeData theme) {
+    return ListView(
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
+      children: [header, AppSpacings.gapXxl, ...body]
+          .animate(interval: AppAnimations.stagger)
+          .fade(
+            duration: AppAnimations.medium,
+            curve: AppAnimations.defaultCurve,
+          )
+          .slideY(
+            begin: AppAnimations.slideOffset,
+            end: 0,
+            duration: AppAnimations.medium,
+            curve: AppAnimations.defaultCurve,
+          )
+          .shimmer(
+            duration: AppAnimations.slow,
+            color: theme.colorScheme.surfaceTint.withValues(alpha: 0.1),
+          ),
     );
   }
 }

@@ -90,11 +90,11 @@ extension InvestmentProjectionPatterns on InvestmentProjection {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _WealthAccumulation value)?  wealthAccumulation,TResult Function( _IncomeGeneration value)?  incomeGeneration,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( WealthAccumulation value)?  wealthAccumulation,TResult Function( IncomeGeneration value)?  incomeGeneration,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case _WealthAccumulation() when wealthAccumulation != null:
-return wealthAccumulation(_that);case _IncomeGeneration() when incomeGeneration != null:
+case WealthAccumulation() when wealthAccumulation != null:
+return wealthAccumulation(_that);case IncomeGeneration() when incomeGeneration != null:
 return incomeGeneration(_that);case _:
   return orElse();
 
@@ -113,11 +113,11 @@ return incomeGeneration(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _WealthAccumulation value)  wealthAccumulation,required TResult Function( _IncomeGeneration value)  incomeGeneration,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( WealthAccumulation value)  wealthAccumulation,required TResult Function( IncomeGeneration value)  incomeGeneration,}){
 final _that = this;
 switch (_that) {
-case _WealthAccumulation():
-return wealthAccumulation(_that);case _IncomeGeneration():
+case WealthAccumulation():
+return wealthAccumulation(_that);case IncomeGeneration():
 return incomeGeneration(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -132,11 +132,11 @@ return incomeGeneration(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _WealthAccumulation value)?  wealthAccumulation,TResult? Function( _IncomeGeneration value)?  incomeGeneration,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( WealthAccumulation value)?  wealthAccumulation,TResult? Function( IncomeGeneration value)?  incomeGeneration,}){
 final _that = this;
 switch (_that) {
-case _WealthAccumulation() when wealthAccumulation != null:
-return wealthAccumulation(_that);case _IncomeGeneration() when incomeGeneration != null:
+case WealthAccumulation() when wealthAccumulation != null:
+return wealthAccumulation(_that);case IncomeGeneration() when incomeGeneration != null:
 return incomeGeneration(_that);case _:
   return null;
 
@@ -156,8 +156,8 @@ return incomeGeneration(_that);case _:
 
 @optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  String? note)?  wealthAccumulation,TResult Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  double periodicPayoutAmount,  PayoutFrequency payoutFrequency,  String? note)?  incomeGeneration,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case _WealthAccumulation() when wealthAccumulation != null:
-return wealthAccumulation(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.note);case _IncomeGeneration() when incomeGeneration != null:
+case WealthAccumulation() when wealthAccumulation != null:
+return wealthAccumulation(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.note);case IncomeGeneration() when incomeGeneration != null:
 return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.periodicPayoutAmount,_that.payoutFrequency,_that.note);case _:
   return orElse();
 
@@ -178,8 +178,8 @@ return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInte
 
 @optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  String? note)  wealthAccumulation,required TResult Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  double periodicPayoutAmount,  PayoutFrequency payoutFrequency,  String? note)  incomeGeneration,}) {final _that = this;
 switch (_that) {
-case _WealthAccumulation():
-return wealthAccumulation(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.note);case _IncomeGeneration():
+case WealthAccumulation():
+return wealthAccumulation(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.note);case IncomeGeneration():
 return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.periodicPayoutAmount,_that.payoutFrequency,_that.note);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -196,8 +196,8 @@ return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInte
 
 @optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  String? note)?  wealthAccumulation,TResult? Function( double totalInvested,  double maturityAmount,  double totalInterestEarned,  DateTime maturityDate,  double periodicPayoutAmount,  PayoutFrequency payoutFrequency,  String? note)?  incomeGeneration,}) {final _that = this;
 switch (_that) {
-case _WealthAccumulation() when wealthAccumulation != null:
-return wealthAccumulation(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.note);case _IncomeGeneration() when incomeGeneration != null:
+case WealthAccumulation() when wealthAccumulation != null:
+return wealthAccumulation(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.note);case IncomeGeneration() when incomeGeneration != null:
 return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInterestEarned,_that.maturityDate,_that.periodicPayoutAmount,_that.payoutFrequency,_that.note);case _:
   return null;
 
@@ -209,8 +209,8 @@ return incomeGeneration(_that.totalInvested,_that.maturityAmount,_that.totalInte
 /// @nodoc
 
 
-class _WealthAccumulation extends InvestmentProjection {
-  const _WealthAccumulation({required this.totalInvested, required this.maturityAmount, required this.totalInterestEarned, required this.maturityDate, this.note}): super._();
+class WealthAccumulation extends InvestmentProjection {
+  const WealthAccumulation({required this.totalInvested, required this.maturityAmount, required this.totalInterestEarned, required this.maturityDate, this.note}): super._();
   
 
 @override final  double totalInvested;
@@ -223,13 +223,13 @@ class _WealthAccumulation extends InvestmentProjection {
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-_$WealthAccumulationCopyWith<_WealthAccumulation> get copyWith => __$WealthAccumulationCopyWithImpl<_WealthAccumulation>(this, _$identity);
+$WealthAccumulationCopyWith<WealthAccumulation> get copyWith => _$WealthAccumulationCopyWithImpl<WealthAccumulation>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WealthAccumulation&&(identical(other.totalInvested, totalInvested) || other.totalInvested == totalInvested)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.totalInterestEarned, totalInterestEarned) || other.totalInterestEarned == totalInterestEarned)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate)&&(identical(other.note, note) || other.note == note));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WealthAccumulation&&(identical(other.totalInvested, totalInvested) || other.totalInvested == totalInvested)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.totalInterestEarned, totalInterestEarned) || other.totalInterestEarned == totalInterestEarned)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate)&&(identical(other.note, note) || other.note == note));
 }
 
 
@@ -245,8 +245,8 @@ String toString() {
 }
 
 /// @nodoc
-abstract mixin class _$WealthAccumulationCopyWith<$Res> implements $InvestmentProjectionCopyWith<$Res> {
-  factory _$WealthAccumulationCopyWith(_WealthAccumulation value, $Res Function(_WealthAccumulation) _then) = __$WealthAccumulationCopyWithImpl;
+abstract mixin class $WealthAccumulationCopyWith<$Res> implements $InvestmentProjectionCopyWith<$Res> {
+  factory $WealthAccumulationCopyWith(WealthAccumulation value, $Res Function(WealthAccumulation) _then) = _$WealthAccumulationCopyWithImpl;
 @override @useResult
 $Res call({
  double totalInvested, double maturityAmount, double totalInterestEarned, DateTime maturityDate, String? note
@@ -257,17 +257,17 @@ $Res call({
 
 }
 /// @nodoc
-class __$WealthAccumulationCopyWithImpl<$Res>
-    implements _$WealthAccumulationCopyWith<$Res> {
-  __$WealthAccumulationCopyWithImpl(this._self, this._then);
+class _$WealthAccumulationCopyWithImpl<$Res>
+    implements $WealthAccumulationCopyWith<$Res> {
+  _$WealthAccumulationCopyWithImpl(this._self, this._then);
 
-  final _WealthAccumulation _self;
-  final $Res Function(_WealthAccumulation) _then;
+  final WealthAccumulation _self;
+  final $Res Function(WealthAccumulation) _then;
 
 /// Create a copy of InvestmentProjection
 /// with the given fields replaced by the non-null parameter values.
 @override @pragma('vm:prefer-inline') $Res call({Object? totalInvested = null,Object? maturityAmount = null,Object? totalInterestEarned = null,Object? maturityDate = null,Object? note = freezed,}) {
-  return _then(_WealthAccumulation(
+  return _then(WealthAccumulation(
 totalInvested: null == totalInvested ? _self.totalInvested : totalInvested // ignore: cast_nullable_to_non_nullable
 as double,maturityAmount: null == maturityAmount ? _self.maturityAmount : maturityAmount // ignore: cast_nullable_to_non_nullable
 as double,totalInterestEarned: null == totalInterestEarned ? _self.totalInterestEarned : totalInterestEarned // ignore: cast_nullable_to_non_nullable
@@ -283,8 +283,8 @@ as String?,
 /// @nodoc
 
 
-class _IncomeGeneration extends InvestmentProjection {
-  const _IncomeGeneration({required this.totalInvested, required this.maturityAmount, required this.totalInterestEarned, required this.maturityDate, required this.periodicPayoutAmount, required this.payoutFrequency, this.note}): super._();
+class IncomeGeneration extends InvestmentProjection {
+  const IncomeGeneration({required this.totalInvested, required this.maturityAmount, required this.totalInterestEarned, required this.maturityDate, required this.periodicPayoutAmount, required this.payoutFrequency, this.note}): super._();
   
 
 @override final  double totalInvested;
@@ -299,13 +299,13 @@ class _IncomeGeneration extends InvestmentProjection {
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-_$IncomeGenerationCopyWith<_IncomeGeneration> get copyWith => __$IncomeGenerationCopyWithImpl<_IncomeGeneration>(this, _$identity);
+$IncomeGenerationCopyWith<IncomeGeneration> get copyWith => _$IncomeGenerationCopyWithImpl<IncomeGeneration>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _IncomeGeneration&&(identical(other.totalInvested, totalInvested) || other.totalInvested == totalInvested)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.totalInterestEarned, totalInterestEarned) || other.totalInterestEarned == totalInterestEarned)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate)&&(identical(other.periodicPayoutAmount, periodicPayoutAmount) || other.periodicPayoutAmount == periodicPayoutAmount)&&(identical(other.payoutFrequency, payoutFrequency) || other.payoutFrequency == payoutFrequency)&&(identical(other.note, note) || other.note == note));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is IncomeGeneration&&(identical(other.totalInvested, totalInvested) || other.totalInvested == totalInvested)&&(identical(other.maturityAmount, maturityAmount) || other.maturityAmount == maturityAmount)&&(identical(other.totalInterestEarned, totalInterestEarned) || other.totalInterestEarned == totalInterestEarned)&&(identical(other.maturityDate, maturityDate) || other.maturityDate == maturityDate)&&(identical(other.periodicPayoutAmount, periodicPayoutAmount) || other.periodicPayoutAmount == periodicPayoutAmount)&&(identical(other.payoutFrequency, payoutFrequency) || other.payoutFrequency == payoutFrequency)&&(identical(other.note, note) || other.note == note));
 }
 
 
@@ -321,8 +321,8 @@ String toString() {
 }
 
 /// @nodoc
-abstract mixin class _$IncomeGenerationCopyWith<$Res> implements $InvestmentProjectionCopyWith<$Res> {
-  factory _$IncomeGenerationCopyWith(_IncomeGeneration value, $Res Function(_IncomeGeneration) _then) = __$IncomeGenerationCopyWithImpl;
+abstract mixin class $IncomeGenerationCopyWith<$Res> implements $InvestmentProjectionCopyWith<$Res> {
+  factory $IncomeGenerationCopyWith(IncomeGeneration value, $Res Function(IncomeGeneration) _then) = _$IncomeGenerationCopyWithImpl;
 @override @useResult
 $Res call({
  double totalInvested, double maturityAmount, double totalInterestEarned, DateTime maturityDate, double periodicPayoutAmount, PayoutFrequency payoutFrequency, String? note
@@ -333,17 +333,17 @@ $Res call({
 
 }
 /// @nodoc
-class __$IncomeGenerationCopyWithImpl<$Res>
-    implements _$IncomeGenerationCopyWith<$Res> {
-  __$IncomeGenerationCopyWithImpl(this._self, this._then);
+class _$IncomeGenerationCopyWithImpl<$Res>
+    implements $IncomeGenerationCopyWith<$Res> {
+  _$IncomeGenerationCopyWithImpl(this._self, this._then);
 
-  final _IncomeGeneration _self;
-  final $Res Function(_IncomeGeneration) _then;
+  final IncomeGeneration _self;
+  final $Res Function(IncomeGeneration) _then;
 
 /// Create a copy of InvestmentProjection
 /// with the given fields replaced by the non-null parameter values.
 @override @pragma('vm:prefer-inline') $Res call({Object? totalInvested = null,Object? maturityAmount = null,Object? totalInterestEarned = null,Object? maturityDate = null,Object? periodicPayoutAmount = null,Object? payoutFrequency = null,Object? note = freezed,}) {
-  return _then(_IncomeGeneration(
+  return _then(IncomeGeneration(
 totalInvested: null == totalInvested ? _self.totalInvested : totalInvested // ignore: cast_nullable_to_non_nullable
 as double,maturityAmount: null == maturityAmount ? _self.maturityAmount : maturityAmount // ignore: cast_nullable_to_non_nullable
 as double,totalInterestEarned: null == totalInterestEarned ? _self.totalInterestEarned : totalInterestEarned // ignore: cast_nullable_to_non_nullable

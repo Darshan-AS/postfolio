@@ -132,9 +132,105 @@ class _NomineeItemForm extends HookWidget {
         nominee.copyWith(
           name: nameController.text.trim(),
           relationship: relationshipState.value,
-          customRelationship: relationshipState.value == NomineeRelationship.other ? customRelationshipController.text.trim() : null,
+          customRelationship:
+              relationshipState.value == NomineeRelationship.other
+                  ? customRelationshipController.text.trim()
+                  : null,
           percentage: double.tryParse(percentageController.text.trim()) ?? 100,
         ),
+      );
+    }
+
+    Widget buildHeader(BuildContext context) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            '${t.nominees.title} ${index + 1}',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          IconButton(
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedDelete02,
+              size: AppDimensions.iconMd,
+            ),
+            color: Theme.of(context).colorScheme.error,
+            onPressed: onRemove,
+          ),
+        ],
+      );
+    }
+
+    Widget buildNameField() {
+      return AppTextField(
+        controller: nameController,
+        labelText: t.nominees.name,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedUser,
+          size: AppDimensions.iconMd,
+        ),
+        isRequired: true,
+        validator: Nominee.validateName,
+        textInputAction: TextInputAction.next,
+        onChanged: (_) => notifyChange(),
+      );
+    }
+
+    Widget buildRelationshipField() {
+      return AppDropdownField<NomineeRelationship>(
+        value: relationshipState.value,
+        labelText: t.nominees.relationship,
+        items: NomineeRelationship.values
+            .map((rel) => DropdownMenuItem(
+                  value: rel,
+                  child: Text(rel.displayName),
+                ))
+            .toList(),
+        onChanged: (rel) {
+          if (rel != null) {
+            relationshipState.value = rel;
+            notifyChange();
+          }
+        },
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedUserMultiple,
+          size: AppDimensions.iconMd,
+        ),
+      );
+    }
+
+    Widget buildCustomRelationshipField() {
+      return AppTextField(
+        controller: customRelationshipController,
+        labelText:
+            t.nominees.relationship, // Can reuse the same label or add a new one
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedUserMultiple,
+          size: AppDimensions.iconMd,
+        ),
+        textInputAction: TextInputAction.next,
+        onChanged: (_) => notifyChange(),
+        validator: (val) {
+          if (val == null || val.trim().isEmpty)
+            return 'Relationship is required';
+          return null;
+        },
+      );
+    }
+
+    Widget buildPercentageField() {
+      return AppTextField(
+        controller: percentageController,
+        labelText: t.nominees.percentage,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedPercent,
+          size: AppDimensions.iconMd,
+        ),
+        keyboardType: const TextInputType.numberWithOptions(
+          decimal: true,
+        ),
+        textInputAction: TextInputAction.done,
+        onChanged: (_) => notifyChange(),
       );
     }
 
@@ -157,88 +253,17 @@ class _NomineeItemForm extends HookWidget {
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${t.nominees.title} ${index + 1}',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                IconButton(
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedDelete02,
-                    size: AppDimensions.iconMd,
-                  ),
-                  color: Theme.of(context).colorScheme.error,
-                  onPressed: onRemove,
-                ),
-              ],
-            ),
+            buildHeader(context),
             AppSpacings.gapSm,
-            AppTextField(
-              controller: nameController,
-              labelText: t.nominees.name,
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedUser,
-                size: AppDimensions.iconMd,
-              ),
-              isRequired: true,
-              validator: Nominee.validateName,
-              textInputAction: TextInputAction.next,
-              onChanged: (_) => notifyChange(),
-            ),
+            buildNameField(),
             AppSpacings.gapSm,
-            AppDropdownField<NomineeRelationship>(
-              value: relationshipState.value,
-              labelText: t.nominees.relationship,
-              items: NomineeRelationship.values
-                  .map((rel) => DropdownMenuItem(
-                        value: rel,
-                        child: Text(rel.displayName),
-                      ))
-                  .toList(),
-              onChanged: (rel) {
-                if (rel != null) {
-                  relationshipState.value = rel;
-                  notifyChange();
-                }
-              },
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedUserMultiple,
-                size: AppDimensions.iconMd,
-              ),
-            ),
+            buildRelationshipField(),
             if (relationshipState.value == NomineeRelationship.other) ...[
               AppSpacings.gapSm,
-              AppTextField(
-                controller: customRelationshipController,
-                labelText: t.nominees.relationship, // Can reuse the same label or add a new one
-                prefixIcon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedUserMultiple,
-                  size: AppDimensions.iconMd,
-                ),
-                textInputAction: TextInputAction.next,
-                onChanged: (_) => notifyChange(),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Relationship is required';
-                  return null;
-                },
-              ),
+              buildCustomRelationshipField(),
             ],
             AppSpacings.gapSm,
-            AppTextField(
-              controller: percentageController,
-              labelText: t.nominees.percentage,
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedPercent,
-                size: AppDimensions.iconMd,
-              ),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              textInputAction: TextInputAction.done,
-              onChanged: (_) => notifyChange(),
-            ),
+            buildPercentageField(),
           ],
         ),
       ),

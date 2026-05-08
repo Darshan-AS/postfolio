@@ -18,6 +18,7 @@ import 'package:postfolio/core/widgets/form_app_bar.dart';
 import 'package:postfolio/core/widgets/app_duration_input.dart';
 import 'package:postfolio/core/widgets/investment_projection_card.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
+import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
@@ -162,170 +163,210 @@ class _RecurringDepositForm extends HookConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
           children: [
-            Text(
-              t.recurringDeposits.sections.accountInformation,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
+            ..._buildAccountInformation(
+              context,
+              selectedCustomerId: selectedCustomerId,
+              serialNoController: serialNoController,
+              accountNoController: accountNoController,
+              selectedStatus: selectedStatus,
             ),
-            AppSpacings.gapMd,
-            CustomerSelectionField(
-              initialCustomerId: selectedCustomerId.value,
-              onCustomerSelected: (customer) {
-                selectedCustomerId.value = customer?.id;
-              },
+            ..._buildInvestmentDetails(
+              context,
+              selectedScheme: selectedScheme,
+              selectedTermYears: selectedTermYears,
+              selectedTermMonths: selectedTermMonths,
+              installmentAmountController: installmentAmountController,
+              interestRateController: interestRateController,
+              startDate: startDate,
+              startDateController: startDateController,
+              projection: projection,
             ),
-            AppSpacings.gapLg,
-            AppTextField(
-              controller: serialNoController,
-              labelText: t.recurringDeposits.fields.serialNo,
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedTag01,
-                size: AppDimensions.iconMd,
-              ),
-              textInputAction: TextInputAction.next,
-            ),
-            AppSpacings.gapLg,
-            AppTextField(
-              controller: accountNoController,
-              labelText: t.recurringDeposits.fields.accountNo,
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedTicket01,
-                size: AppDimensions.iconMd,
-              ),
-              validator: RecurringDeposit.validateAccountNo,
-              textInputAction: TextInputAction.next,
-            ),
-            AppSpacings.gapLg,
-            AppSegmentedButtonField<DepositStatus>(
-              value: selectedStatus.value,
-              labelText: t.recurringDeposits.fields.status,
-              segments: DepositStatus.values
-                  .map((status) => ButtonSegment(
-                        value: status,
-                        label: Text(status.displayName),
-                      ))
-                  .toList(),
-              onChanged: (status) {
-                selectedStatus.value = status;
-              },
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedActivity01,
-                size: AppDimensions.iconMd,
-              ),
-            ),
-            AppSpacings.gapXl,
-            Text(
-              t.recurringDeposits.sections.investmentDetails,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            AppSpacings.gapMd,
-            AppDropdownField<RecurringSchemeType>(
-              value: selectedScheme.value,
-              labelText: t.recurringDeposits.fields.schemeType,
-              items: RecurringSchemeType.values
-                  .map((scheme) => DropdownMenuItem(
-                        value: scheme,
-                        child: Text(scheme.displayName),
-                      ))
-                  .toList(),
-              onChanged: (scheme) {
-                if (scheme != null) {
-                  selectedScheme.value = scheme;
-                  selectedTermYears.value = scheme.defaultTenureYears;
-                }
-              },
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedLayers01,
-                size: AppDimensions.iconMd,
-              ),
-            ),
-            AppSpacings.gapLg,
-            AppTextField(
-              controller: installmentAmountController,
-              labelText: t.recurringDeposits.fields.installmentAmount,
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedCoins01,
-                size: AppDimensions.iconMd,
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              textInputAction: TextInputAction.next,
-            ),
-            AppSpacings.gapLg,
-            AppTextField(
-              controller: interestRateController,
-              labelText: t.recurringDeposits.fields.interestRate,
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedPercent,
-                size: AppDimensions.iconMd,
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              textInputAction: TextInputAction.next,
-            ),
-            AppSpacings.gapLg,
-            AppDateField(
-              controller: startDateController,
-              labelText: t.recurringDeposits.fields.startDate,
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: startDate.value,
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-                if (picked != null) {
-                  startDate.value = picked;
-                  if (context.mounted) {
-                    startDateController.text = picked.toAppFormat();
-                  }
-                }
-              },
-            ),
-            AppSpacings.gapLg,
-            AppDurationInput(
-              isFixedTenure: selectedScheme.value.isFixedTenure,
-              allowedTenuresInYears: selectedScheme.value.allowedTenuresInYears,
-              selectedYears: selectedTermYears.value,
-              selectedMonths: selectedTermMonths.value,
-              onChanged: (years, months) {
-                selectedTermYears.value = years;
-                selectedTermMonths.value = months;
-              },
-            ),
-            AppSpacings.gapXl,
-            InvestmentProjectionCard(projection: projection),
-            AppSpacings.gapXxl,
-            Text(
-              t.common.sections.linkedAccounts,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            AppSpacings.gapMd,
-            AppTextField(
-              controller: linkedAccountController,
-              labelText: t.recurringDeposits.fields.linkedAutoDebitAccount,
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedBank,
-                size: AppDimensions.iconMd,
-              ),
-              textInputAction: TextInputAction.done,
-            ),
-            AppSpacings.gapMd,
-            NomineesInputSection(
-              nominees: nominees.value,
-              onChanged: (newNominees) {
-                nominees.value = newNominees;
-              },
+            ..._buildLinkedAccountsAndNominees(
+              context,
+              linkedAccountController: linkedAccountController,
+              nominees: nominees,
             ),
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> _buildAccountInformation(
+    BuildContext context, {
+    required ValueNotifier<String?> selectedCustomerId,
+    required TextEditingController serialNoController,
+    required TextEditingController accountNoController,
+    required ValueNotifier<DepositStatus> selectedStatus,
+  }) {
+    return [
+      const FormSectionHeader(
+        title: 'Account Information',
+        padding: EdgeInsets.zero,
+      ),
+      AppSpacings.gapMd,
+      CustomerSelectionField(
+        initialCustomerId: selectedCustomerId.value,
+        onCustomerSelected: (customer) {
+          selectedCustomerId.value = customer?.id;
+        },
+      ),
+      AppSpacings.gapLg,
+      AppTextField(
+        controller: serialNoController,
+        labelText: t.recurringDeposits.fields.serialNo,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedTag01,
+          size: AppDimensions.iconMd,
+        ),
+        textInputAction: TextInputAction.next,
+      ),
+      AppSpacings.gapLg,
+      AppTextField(
+        controller: accountNoController,
+        labelText: t.recurringDeposits.fields.accountNo,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedTicket01,
+          size: AppDimensions.iconMd,
+        ),
+        validator: RecurringDeposit.validateAccountNo,
+        textInputAction: TextInputAction.next,
+      ),
+      AppSpacings.gapLg,
+      AppSegmentedButtonField<DepositStatus>(
+        value: selectedStatus.value,
+        labelText: t.recurringDeposits.fields.status,
+        segments: DepositStatus.values
+            .map((status) => ButtonSegment(
+                  value: status,
+                  label: Text(status.displayName),
+                ))
+            .toList(),
+        onChanged: (status) {
+          selectedStatus.value = status;
+        },
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedActivity01,
+          size: AppDimensions.iconMd,
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildInvestmentDetails(
+    BuildContext context, {
+    required ValueNotifier<RecurringSchemeType> selectedScheme,
+    required ValueNotifier<int> selectedTermYears,
+    required ValueNotifier<int> selectedTermMonths,
+    required TextEditingController installmentAmountController,
+    required TextEditingController interestRateController,
+    required ValueNotifier<DateTime> startDate,
+    required TextEditingController startDateController,
+    required InvestmentProjection projection,
+  }) {
+    return [
+      FormSectionHeader(title: t.recurringDeposits.sections.investmentDetails),
+      AppDropdownField<RecurringSchemeType>(
+        value: selectedScheme.value,
+        labelText: t.recurringDeposits.fields.schemeType,
+        items: RecurringSchemeType.values
+            .map((scheme) => DropdownMenuItem(
+                  value: scheme,
+                  child: Text(scheme.displayName),
+                ))
+            .toList(),
+        onChanged: (scheme) {
+          if (scheme != null) {
+            selectedScheme.value = scheme;
+            selectedTermYears.value = scheme.defaultTenureYears;
+          }
+        },
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedLayers01,
+          size: AppDimensions.iconMd,
+        ),
+      ),
+      AppSpacings.gapLg,
+      AppTextField(
+        controller: installmentAmountController,
+        labelText: t.recurringDeposits.fields.installmentAmount,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedCoins01,
+          size: AppDimensions.iconMd,
+        ),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        textInputAction: TextInputAction.next,
+      ),
+      AppSpacings.gapLg,
+      AppTextField(
+        controller: interestRateController,
+        labelText: t.recurringDeposits.fields.interestRate,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedPercent,
+          size: AppDimensions.iconMd,
+        ),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        textInputAction: TextInputAction.next,
+      ),
+      AppSpacings.gapLg,
+      AppDateField(
+        controller: startDateController,
+        labelText: t.recurringDeposits.fields.startDate,
+        onTap: () async {
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: startDate.value,
+            firstDate: DateTime(2000),
+            lastDate: DateTime(2100),
+          );
+          if (picked != null) {
+            startDate.value = picked;
+            if (context.mounted) {
+              startDateController.text = picked.toAppFormat();
+            }
+          }
+        },
+      ),
+      AppSpacings.gapLg,
+      AppDurationInput(
+        isFixedTenure: selectedScheme.value.isFixedTenure,
+        allowedTenuresInYears: selectedScheme.value.allowedTenuresInYears,
+        selectedYears: selectedTermYears.value,
+        selectedMonths: selectedTermMonths.value,
+        onChanged: (years, months) {
+          selectedTermYears.value = years;
+          selectedTermMonths.value = months;
+        },
+      ),
+      AppSpacings.gapXl,
+      InvestmentProjectionCard(projection: projection),
+    ];
+  }
+
+  List<Widget> _buildLinkedAccountsAndNominees(
+    BuildContext context, {
+    required TextEditingController linkedAccountController,
+    required ValueNotifier<List<Nominee>> nominees,
+  }) {
+    return [
+      FormSectionHeader(title: t.common.sections.linkedAccounts),
+      AppTextField(
+        controller: linkedAccountController,
+        labelText: t.recurringDeposits.fields.linkedAutoDebitAccount,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedBank,
+          size: AppDimensions.iconMd,
+        ),
+        textInputAction: TextInputAction.done,
+      ),
+      AppSpacings.gapMd,
+      NomineesInputSection(
+        nominees: nominees.value,
+        onChanged: (newNominees) {
+          nominees.value = newNominees;
+        },
+      ),
+      AppSpacings.gapXxl,
+    ];
   }
 }

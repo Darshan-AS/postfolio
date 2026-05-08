@@ -32,4 +32,24 @@ class AppDialogs {
       ),
     );
   }
+
+  static Future<void> showError(
+    BuildContext context, {
+    required String title,
+    required String message,
+  }) {
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => ctx.pop(),
+            child: Text(t.common.ok),
+          ),
+        ],
+      ),
+    );
+  }
 }

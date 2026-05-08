@@ -146,134 +146,163 @@ class _CustomerForm extends HookConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                t.customers.sections.personalInfo,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
+              ..._buildPersonalInfo(
+                context,
+                nameController: nameController,
+                phoneController: phoneController,
+                emailController: emailController,
+                dateOfBirthController: dateOfBirthController,
+                addressController: addressController,
+                onSelectDate: () => selectDate(context),
               ),
-              AppSpacings.gapMd,
-              AppTextField(
-                controller: nameController,
-                labelText: t.customers.fields.fullName,
-                prefixIcon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedUser,
-                  size: AppDimensions.iconMd,
-                ),
-                isRequired: true,
-                validator: Customer.validateName,
-                textInputAction: TextInputAction.next,
+              ..._buildIdentityDocuments(
+                cifNumberController: cifNumberController,
+                aadhaarNumberController: aadhaarNumberController,
+                panNumberController: panNumberController,
               ),
-              AppSpacings.gapMd,
-              AppTextField(
-                controller: phoneController,
-                labelText: t.customers.fields.phoneNumber,
-                prefixIcon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedCall02,
-                  size: AppDimensions.iconMd,
-                ),
-                validator: Customer.validatePhone,
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
+              ..._buildSavingsBank(
+                savingsAccountNumberController: savingsAccountNumberController,
+                nominees: nominees,
               ),
-              AppSpacings.gapMd,
-              AppTextField(
-                controller: emailController,
-                labelText: t.customers.fields.emailAddress,
-                prefixIcon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedMail01,
-                  size: AppDimensions.iconMd,
-                ),
-                validator: Customer.validateEmail,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-              ),
-              AppSpacings.gapMd,
-              AppDateField(
-                controller: dateOfBirthController,
-                labelText: t.customers.fields.dateOfBirth,
-                onTap: () => selectDate(context),
-              ),
-              AppSpacings.gapMd,
-              AppTextField(
-                controller: addressController,
-                labelText: t.customers.fields.homeAddress,
-                prefixIcon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedHome01,
-                  size: AppDimensions.iconMd,
-                ),
-                maxLines: 3,
-              ),
-              AppSpacings.gapXl,
-              Text(
-                t.customers.sections.identityDocuments,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              AppSpacings.gapMd,
-              AppTextField(
-                controller: cifNumberController,
-                labelText: t.customers.fields.cif,
-                prefixIcon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedTicket01,
-                  size: AppDimensions.iconMd,
-                ),
-                textInputAction: TextInputAction.next,
-              ),
-              AppSpacings.gapMd,
-              AppTextField(
-                controller: aadhaarNumberController,
-                labelText: t.customers.fields.aadhaarNumber,
-                prefixIcon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedId,
-                  size: AppDimensions.iconMd,
-                ),
-                keyboardType: TextInputType.number,
-                textInputAction: TextInputAction.next,
-              ),
-              AppSpacings.gapMd,
-              AppTextField(
-                controller: panNumberController,
-                labelText: t.customers.fields.panNumber,
-                prefixIcon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedCreditCard,
-                  size: AppDimensions.iconMd,
-                ),
-                textInputAction: TextInputAction.next,
-              ),
-              AppSpacings.gapXl,
-              Text(
-                t.customers.sections.savingsBank,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              AppSpacings.gapMd,
-              AppTextField(
-                controller: savingsAccountNumberController,
-                labelText: t.customers.fields.sbAccountNumber,
-                prefixIcon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedBank,
-                  size: AppDimensions.iconMd,
-                ),
-                textInputAction: TextInputAction.next,
-              ),
-              AppSpacings.gapMd,
-              NomineesInputSection(
-                nominees: nominees.value,
-                onChanged: (newNominees) {
-                  nominees.value = newNominees;
-                },
-              ),
-              AppSpacings.gapXxl,
             ],
           ),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildPersonalInfo(
+    BuildContext context, {
+    required TextEditingController nameController,
+    required TextEditingController phoneController,
+    required TextEditingController emailController,
+    required TextEditingController dateOfBirthController,
+    required TextEditingController addressController,
+    required VoidCallback onSelectDate,
+  }) {
+    return [
+      FormSectionHeader(
+        title: t.customers.sections.personalInfo,
+        padding: EdgeInsets.zero,
+      ),
+      AppSpacings.gapMd,
+      AppTextField(
+        controller: nameController,
+        labelText: t.customers.fields.fullName,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedUser,
+          size: AppDimensions.iconMd,
+        ),
+        isRequired: true,
+        validator: Customer.validateName,
+        textInputAction: TextInputAction.next,
+      ),
+      AppSpacings.gapMd,
+      AppTextField(
+        controller: phoneController,
+        labelText: t.customers.fields.phoneNumber,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedCall02,
+          size: AppDimensions.iconMd,
+        ),
+        validator: Customer.validatePhone,
+        keyboardType: TextInputType.phone,
+        textInputAction: TextInputAction.next,
+      ),
+      AppSpacings.gapMd,
+      AppTextField(
+        controller: emailController,
+        labelText: t.customers.fields.emailAddress,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedMail01,
+          size: AppDimensions.iconMd,
+        ),
+        validator: Customer.validateEmail,
+        keyboardType: TextInputType.emailAddress,
+        textInputAction: TextInputAction.next,
+      ),
+      AppSpacings.gapMd,
+      AppDateField(
+        controller: dateOfBirthController,
+        labelText: t.customers.fields.dateOfBirth,
+        onTap: onSelectDate,
+      ),
+      AppSpacings.gapMd,
+      AppTextField(
+        controller: addressController,
+        labelText: t.customers.fields.homeAddress,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedHome01,
+          size: AppDimensions.iconMd,
+        ),
+        maxLines: 3,
+      ),
+    ];
+  }
+
+  List<Widget> _buildIdentityDocuments({
+    required TextEditingController cifNumberController,
+    required TextEditingController aadhaarNumberController,
+    required TextEditingController panNumberController,
+  }) {
+    return [
+      FormSectionHeader(title: t.customers.sections.identityDocuments),
+      AppTextField(
+        controller: cifNumberController,
+        labelText: t.customers.fields.cif,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedTicket01,
+          size: AppDimensions.iconMd,
+        ),
+        textInputAction: TextInputAction.next,
+      ),
+      AppSpacings.gapMd,
+      AppTextField(
+        controller: aadhaarNumberController,
+        labelText: t.customers.fields.aadhaarNumber,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedId,
+          size: AppDimensions.iconMd,
+        ),
+        keyboardType: TextInputType.number,
+        textInputAction: TextInputAction.next,
+      ),
+      AppSpacings.gapMd,
+      AppTextField(
+        controller: panNumberController,
+        labelText: t.customers.fields.panNumber,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedCreditCard,
+          size: AppDimensions.iconMd,
+        ),
+        textInputAction: TextInputAction.next,
+      ),
+    ];
+  }
+
+  List<Widget> _buildSavingsBank({
+    required TextEditingController savingsAccountNumberController,
+    required ValueNotifier<List<Nominee>> nominees,
+  }) {
+    return [
+      FormSectionHeader(title: t.customers.sections.savingsBank),
+      AppTextField(
+        controller: savingsAccountNumberController,
+        labelText: t.customers.fields.sbAccountNumber,
+        prefixIcon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedBank,
+          size: AppDimensions.iconMd,
+        ),
+        textInputAction: TextInputAction.next,
+      ),
+      AppSpacings.gapMd,
+      NomineesInputSection(
+        nominees: nominees.value,
+        onChanged: (newNominees) {
+          nominees.value = newNominees;
+        },
+      ),
+      AppSpacings.gapXxl,
+    ];
   }
 }

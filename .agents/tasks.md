@@ -74,7 +74,7 @@
 - [x] Integrate `flutter_animate` for UI entry/exit animations.
 - [x] Migrate all icons from `font_awesome_flutter` and Material to `hugeicons`.
 - [x] Refactor UI layer to use `flutter_hooks` and `hooks_riverpod`, eliminating all `StatefulWidget` and `ConsumerStatefulWidget` boilerplate.
-- [ ] Clean up the codebase to ensure no function/method is excessively long. Extract complex business logic and UI build methods into pure, composable logical functions wherever possible.
+- [x] Clean up the codebase to ensure no function/method is excessively long. Extract complex business logic and UI build methods into pure, composable logical functions wherever possible.
 
 ## Phase 6: Firebase Integration & Authentication (In Progress)
 - [x] Run `flutterfire configure`.

@@ -94,26 +94,7 @@ class EntityListTile extends StatelessWidget {
             vertical: AppDimensions.paddingSm,
           ),
           onTap: onTap,
-          leading: CircleAvatar(
-            radius: AppDimensions.radiusXxl,
-            backgroundColor:
-                leadingBackgroundColor ?? theme.colorScheme.primaryContainer,
-            foregroundColor:
-                leadingForegroundColor ?? theme.colorScheme.onPrimaryContainer,
-            child:
-                leadingIcon ??
-                (leadingText != null
-                    ? Text(
-                        leadingText!,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color:
-                              leadingForegroundColor ??
-                              theme.colorScheme.onPrimaryContainer,
-                        ),
-                      )
-                    : null),
-          ),
+          leading: _buildLeading(theme),
           title: Text(
             title,
             style: theme.textTheme.titleMedium?.copyWith(
@@ -123,59 +104,7 @@ class EntityListTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: subtitle,
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              trailing != null ? trailing! : const SizedBox.shrink(),
-              for (final action in inlineActions)
-                IconButton(
-                  icon: action.icon,
-                  iconSize: AppDimensions.iconMd,
-                  tooltip: action.label,
-                  color: action.isDestructive
-                      ? theme.colorScheme.error
-                      : theme.colorScheme.primary,
-                  onPressed: action.onTap,
-                ),
-              if (menuActions.isNotEmpty)
-                PopupMenuButton<EntityAction>(
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedMoreVertical,
-                    size: AppDimensions.iconMd,
-                  ),
-                  iconSize: AppDimensions.iconMd,
-                  tooltip: t.common.moreOptions,
-                  onSelected: (action) => action.onTap(),
-                  itemBuilder: (context) => menuActions.map((action) {
-                    final color = action.isDestructive
-                        ? theme.colorScheme.error
-                        : theme.colorScheme.onSurface;
-
-                    return PopupMenuItem(
-                      value: action,
-                      child: Row(
-                        children: [
-                          IconTheme(
-                            data: IconThemeData(
-                              color: color,
-                              size: AppDimensions.iconMd,
-                            ),
-                            child: action.icon,
-                          ),
-                          AppSpacings.gapSm,
-                          Text(
-                            action.label,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: color,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-            ],
-          ),
+          trailing: _buildTrailing(theme, inlineActions, menuActions),
         )
         .animate()
         .fade(duration: AppAnimations.medium, curve: AppAnimations.defaultCurve)
@@ -189,5 +118,80 @@ class EntityListTile extends StatelessWidget {
           duration: AppAnimations.slow,
           color: theme.colorScheme.surfaceTint.withValues(alpha: 0.1),
         );
+  }
+
+  Widget _buildLeading(ThemeData theme) {
+    return CircleAvatar(
+      radius: AppDimensions.radiusXxl,
+      backgroundColor: leadingBackgroundColor ?? theme.colorScheme.primaryContainer,
+      foregroundColor: leadingForegroundColor ?? theme.colorScheme.onPrimaryContainer,
+      child: leadingIcon ??
+          (leadingText != null
+              ? Text(
+                  leadingText!,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: leadingForegroundColor ?? theme.colorScheme.onPrimaryContainer,
+                  ),
+                )
+              : null),
+    );
+  }
+
+  Widget _buildTrailing(
+    ThemeData theme,
+    List<EntityAction> inlineActions,
+    List<EntityAction> menuActions,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        trailing != null ? trailing! : const SizedBox.shrink(),
+        for (final action in inlineActions)
+          IconButton(
+            icon: action.icon,
+            iconSize: AppDimensions.iconMd,
+            tooltip: action.label,
+            color: action.isDestructive ? theme.colorScheme.error : theme.colorScheme.primary,
+            onPressed: action.onTap,
+          ),
+        if (menuActions.isNotEmpty)
+          PopupMenuButton<EntityAction>(
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedMoreVertical,
+              size: AppDimensions.iconMd,
+            ),
+            iconSize: AppDimensions.iconMd,
+            tooltip: t.common.moreOptions,
+            onSelected: (action) => action.onTap(),
+            itemBuilder: (context) => menuActions.map((action) {
+              final color =
+                  action.isDestructive ? theme.colorScheme.error : theme.colorScheme.onSurface;
+
+              return PopupMenuItem(
+                value: action,
+                child: Row(
+                  children: [
+                    IconTheme(
+                      data: IconThemeData(
+                        color: color,
+                        size: AppDimensions.iconMd,
+                      ),
+                      child: action.icon,
+                    ),
+                    AppSpacings.gapSm,
+                    Text(
+                      action.label,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: color,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+      ],
+    );
   }
 }
