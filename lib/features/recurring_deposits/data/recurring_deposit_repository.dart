@@ -1,13 +1,11 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
-import 'package:postfolio/core/enums/scheme_type.dart';
-import 'package:postfolio/core/enums/deposit_status.dart';
-import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'recurring_deposit_repository.g.dart';
@@ -86,100 +84,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   final _controller =
       StreamController<Result<List<RecurringDeposit>, String>>.broadcast();
 
-  final List<RecurringDeposit> _deposits = [
-    RecurringDeposit(
-      id: '201',
-      serialNo: 'RD-001',
-      accountNo: 'RD-9021345',
-      installmentAmount: 5000.0,
-      termYears: 5,
-      termMonths: 0,
-      interestRate: 6.7,
-      customerId: '1', // Bruce Wayne
-      schemeType: RecurringSchemeType.recurringDeposit,
-      startDate: DateTime(2025, 2, 1),
-      linkedAutoDebitAccountNo: 'SA987654321',
-      status: DepositStatus.active,
-      nominees: const [
-        Nominee(
-          name: 'Alfred Pennyworth',
-          relationship: NomineeRelationship.other,
-          customRelationship: 'Butler',
-          percentage: 50.0,
-        ),
-        Nominee(name: 'Dick Grayson', relationship: NomineeRelationship.other, customRelationship: 'Ward', percentage: 50.0),
-      ],
-    ),
-    RecurringDeposit(
-      id: '202',
-      serialNo: 'RD-002',
-      accountNo: 'RD-9025678',
-      installmentAmount: 10000.0,
-      termYears: 5,
-      termMonths: 0,
-      interestRate: 6.0,
-      customerId: '2', // Clark Kent
-      schemeType: RecurringSchemeType.recurringDeposit,
-      startDate: DateTime(2024, 11, 1),
-      linkedAutoDebitAccountNo: 'SA123456789',
-      status: DepositStatus.matured,
-      nominees: const [
-        Nominee(name: 'Lois Lane', relationship: NomineeRelationship.wife, percentage: 60.0),
-        Nominee(name: 'Martha Kent', relationship: NomineeRelationship.mother, percentage: 40.0),
-      ],
-    ),
-    RecurringDeposit(
-      id: '203',
-      serialNo: 'RD-003',
-      accountNo: 'RD-9029988',
-      installmentAmount: 2000.0,
-      termYears: 5,
-      termMonths: 0,
-      interestRate: 6.5,
-      customerId: '3', // Diana Prince
-      schemeType: RecurringSchemeType.recurringDeposit,
-      startDate: DateTime(2025, 1, 15),
-      linkedAutoDebitAccountNo: 'SA456789123',
-      status: DepositStatus.closed,
-      nominees: const [
-        Nominee(name: 'Hippolyta', relationship: NomineeRelationship.mother, percentage: 100.0),
-      ],
-    ),
-    RecurringDeposit(
-      id: '204',
-      serialNo: 'RD-004',
-      accountNo: 'RD-9027766',
-      installmentAmount: 15000.0,
-      termYears: 5,
-      termMonths: 0,
-      interestRate: 6.8,
-      customerId: '4', // Barry Allen
-      schemeType: RecurringSchemeType.recurringDeposit,
-      startDate: DateTime(2024, 8, 1),
-      linkedAutoDebitAccountNo: 'SA567890123',
-      status: DepositStatus.active,
-      nominees: const [
-        Nominee(name: 'Iris West', relationship: NomineeRelationship.wife, percentage: 100.0),
-      ],
-    ),
-    RecurringDeposit(
-      id: '205',
-      serialNo: 'RD-005',
-      accountNo: 'RD-9025544',
-      installmentAmount: 3000.0,
-      termYears: 5,
-      termMonths: 0,
-      interestRate: 7.0,
-      customerId: '5', // Arthur Curry
-      schemeType: RecurringSchemeType.recurringDeposit,
-      startDate: DateTime(2025, 4, 10),
-      linkedAutoDebitAccountNo: 'SA678901234',
-      status: DepositStatus.active,
-      nominees: const [
-        Nominee(name: 'Mera', relationship: NomineeRelationship.wife, percentage: 100.0),
-      ],
-    ),
-  ];
+  final List<RecurringDeposit> _deposits = FakeDataSource().recurringDeposits.toList();
 
   void _emit() {
     if (!_controller.isClosed) {

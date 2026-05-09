@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
-import 'package:postfolio/core/models/nominee.dart';
-import 'package:postfolio/core/models/savings_account.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
+import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'customer_repository.g.dart';
@@ -86,125 +85,7 @@ class FakeCustomerRepository implements CustomerRepository {
   final _controller =
       StreamController<Result<List<Customer>, String>>.broadcast();
 
-  final List<Customer> _customers = [
-    Customer(
-      id: '1',
-      name: 'Bruce Wayne',
-      email: 'bruce@wayneenterprises.com',
-      phone: '+1 555-0101',
-      address: '1007 Mountain Drive, Gotham City',
-      cifNumber: 'CIF000001',
-      dateOfBirth: DateTime(1980, 2, 19),
-      aadhaarNumber: '1234 5678 9012',
-      panNumber: 'ABCDE1234F',
-      savingsAccount: const SavingsAccount(
-        accountNumber: 'SA987654321',
-        nominees: [
-          Nominee(
-            percentage: 50.0,
-            name: 'Alfred Pennyworth',
-            relationship: NomineeRelationship.other,
-            customRelationship: 'Butler',
-          ),
-          Nominee(
-            percentage: 50.0,
-            name: 'Dick Grayson',
-            relationship: NomineeRelationship.other,
-            customRelationship: 'Ward',
-          ),
-        ],
-      ),
-    ),
-    Customer(
-      id: '2',
-      name: 'Clark Kent',
-      email: 'clark.kent@dailyplanet.com',
-      phone: '+1 555-0102',
-      address: '344 Clinton St, Metropolis',
-      cifNumber: 'CIF000002',
-      dateOfBirth: DateTime(1985, 6, 18),
-      aadhaarNumber: '9876 5432 1098',
-      panNumber: 'FGHIJ5678K',
-      savingsAccount: const SavingsAccount(
-        accountNumber: 'SA123456789',
-        nominees: [
-          Nominee(
-            percentage: 60.0,
-            name: 'Lois Lane',
-            relationship: NomineeRelationship.wife,
-          ),
-          Nominee(
-            percentage: 40.0,
-            name: 'Martha Kent',
-            relationship: NomineeRelationship.mother,
-          ),
-        ],
-      ),
-    ),
-    Customer(
-      id: '3',
-      name: 'Diana Prince',
-      email: 'diana@themyscira.gov',
-      phone: '+1 555-0103',
-      address: 'Themyscira Embassy, Washington D.C.',
-      cifNumber: 'CIF000003',
-      dateOfBirth: DateTime(1985, 3, 22),
-      aadhaarNumber: '4567 8901 2345',
-      panNumber: 'LMNOP9012Q',
-      savingsAccount: const SavingsAccount(
-        accountNumber: 'SA456789123',
-        nominees: [
-          Nominee(
-            percentage: 100.0,
-            name: 'Hippolyta',
-            relationship: NomineeRelationship.mother,
-          ),
-        ],
-      ),
-    ),
-    Customer(
-      id: '4',
-      name: 'Barry Allen',
-      email: 'barry@ccpd.gov',
-      phone: '+1 555-0104',
-      address: 'Central City Police Department, Central City',
-      cifNumber: 'CIF000004',
-      dateOfBirth: DateTime(1992, 9, 30),
-      aadhaarNumber: '5678 9012 3456',
-      panNumber: 'RSTUV3456W',
-      savingsAccount: const SavingsAccount(
-        accountNumber: 'SA567890123',
-        nominees: [
-          Nominee(
-            percentage: 100.0,
-            name: 'Iris West',
-            relationship: NomineeRelationship.wife,
-          ),
-        ],
-      ),
-    ),
-    Customer(
-      id: '5',
-      name: 'Arthur Curry',
-      email: 'arthur@atlantis.gov',
-      phone: '+1 555-0105',
-      address: 'Amnesty Bay, Maine',
-      cifNumber: 'CIF000005',
-      dateOfBirth: DateTime(1986, 1, 29),
-      aadhaarNumber: '6789 0123 4567',
-      panNumber: 'XYZAB7890C',
-      savingsAccount: const SavingsAccount(
-        accountNumber: 'SA678901234',
-        nominees: [
-          Nominee(
-            percentage: 100.0,
-            name: 'Mera',
-            relationship: NomineeRelationship.wife,
-          ),
-        ],
-      ),
-    ),
-  ];
+  final List<Customer> _customers = FakeDataSource().customers.toList();
 
   void _emit() {
     if (!_controller.isClosed) {
