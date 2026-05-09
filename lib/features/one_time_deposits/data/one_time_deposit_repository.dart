@@ -5,6 +5,8 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:postfolio/features/auth/domain/auth_state.dart';
+import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -20,11 +22,12 @@ abstract class OneTimeDepositRepository {
 
 class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
   final firestore.FirebaseFirestore _firestore;
+  final String _userId;
 
-  FirestoreOneTimeDepositRepository(this._firestore);
+  FirestoreOneTimeDepositRepository(this._firestore, this._userId);
 
   firestore.CollectionReference<Map<String, dynamic>> get _deposits =>
-      _firestore.collection('one_time_deposits');
+      _firestore.collection('users').doc(_userId).collection('one_time_deposits');
 
   @override
   Stream<Result<List<OneTimeDeposit>, String>> watchOneTimeDeposits() {
@@ -158,7 +161,18 @@ OneTimeDepositRepository oneTimeDepositRepository(Ref ref) {
     ref.onDispose(repo.dispose);
     return repo;
   }
+
+  final authState = ref.watch(authControllerProvider);
+  final userId = authState.mapOrNull(
+    authenticated: (state) => state.user.id,
+  );
+
+  if (userId == null) {
+    throw Exception('User must be authenticated to access OneTimeDepositRepository');
+  }
+
   return FirestoreOneTimeDepositRepository(
     firestore.FirebaseFirestore.instance,
+    userId,
   );
 }

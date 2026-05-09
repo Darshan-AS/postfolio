@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
+import 'package:postfolio/features/auth/domain/auth_state.dart';
+import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -18,11 +20,12 @@ abstract class CustomerRepository {
 
 class FirestoreCustomerRepository implements CustomerRepository {
   final firestore.FirebaseFirestore _firestore;
+  final String _userId;
 
-  FirestoreCustomerRepository(this._firestore);
+  FirestoreCustomerRepository(this._firestore, this._userId);
 
   firestore.CollectionReference<Map<String, dynamic>> get _customers =>
-      _firestore.collection('customers');
+      _firestore.collection('users').doc(_userId).collection('customers');
 
   @override
   Stream<Result<List<Customer>, String>> watchCustomers() {
@@ -148,5 +151,19 @@ CustomerRepository customerRepository(Ref ref) {
     ref.onDispose(repo.dispose);
     return repo;
   }
-  return FirestoreCustomerRepository(firestore.FirebaseFirestore.instance);
+  
+  final authState = ref.watch(authControllerProvider);
+  final userId = authState.mapOrNull(
+    authenticated: (state) => state.user.id,
+  );
+
+  if (userId == null) {
+    // If not authenticated, we can't provide a working Firestore repository
+    // Instead of throwing immediately (which might break riverpod startup),
+    // we can return a dummy or let the caller handle errors.
+    // However, since UI is guarded by auth, this shouldn't normally happen.
+    throw Exception('User must be authenticated to access CustomerRepository');
+  }
+
+  return FirestoreCustomerRepository(firestore.FirebaseFirestore.instance, userId);
 }

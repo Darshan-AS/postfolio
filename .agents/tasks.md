@@ -102,9 +102,11 @@
 
 ## Phase 8: Enhancements & Refinements (Pending)
 - [x] Implement a **"Demo Mode"** feature toggle. When activated via a persistent UI button on the login screen, the app bypasses Firebase Auth constraints and wires all repository providers to their `FakeDataRepository` counterparts instead of `FirestoreRepository`, allowing a complete offline, zero-setup interactive demonstration.
-- [ ] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.
+- [x] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.
 - [ ] Implement comprehensive form field validations across all create/update screens.
 - [ ] Implement image capture and display functionality for customer profiles.
+- [ ] **Routing UX:** Navigate to corresponding customer detail screen when clicking on a customer in the deposit detail view.
+- [ ] **UI Cleanup - Formatting:** Display Aadhaar number in format "XXXX XXXX XXXX" across the app.
 - [ ] Redesign the leading visual element in deposit list tiles to replace the generic circular icons.
 - [x] Implement a predefined dropdown with a manual entry fallback for Nominee relationship fields across all forms.
 - [ ] Apply distinct color coding to differentiate deposit types in list views.
@@ -135,7 +137,7 @@
 - [ ] **UI Cleanup - Non-Editable Fixed Fields:** Make form fields read-only (non-editable) when they only have a single valid value or don't require user input. For example, lock the "Scheme Type" selection for Recurring Deposits, and make the "Term Length" field non-editable for single-tenure schemes like MIS and NSC.
 - [x] **UI Cleanup - Deposit Status Selection:** Upgrade the "Deposit Status" widget in the form screens from a standard dropdown to a more intuitive UI component (e.g., a SegmentedButton or ChoiceChips).
 - [ ] Add filtering capabilities to deposit list screens (e.g., view by Active, Matured, Closed status).
-- [ ] **UI Cleanup - Hero Animations:** Add unique `heroTag` properties to the `FloatingActionButton`s and implement physical expanding Hero animations transitioning into the Create Form screens.
+- [x] **UI Cleanup - Hero Animations:** Add unique `heroTag` properties to the `FloatingActionButton`s and implement physical expanding Hero animations transitioning into the Create Form screens.
 - [ ] Integrate search functionality across all entity listing screens (Customers, Deposits, RDs).
 - [x] Create and integrate an enum for relationships in the `Nominee` model.
 - [ ] Explore migrating `termYears` and `termMonths` into a custom Domain-Driven Value Object (e.g., `class Tenure`) to encapsulate calendar math, keeping in mind the tradeoffs for Firestore compound indexing.
@@ -150,6 +152,8 @@
 - [ ] **Detail View - General Premature Closure**: Implement early withdrawal calculation logic for all applicable schemes (TD, MIS, SCSS, KVP, MSSC, PPF) based on domain rules. When "Close Account" is clicked, show the applicable penalties, deductions, and the exact "if withdrawn today" amount.
 
 ## Known Bugs & Issues
+- [ ] **Customer Form - Saving Issue**: Entering only a name and saving a customer works, but entering all details and saving fails or does not work.
+- [ ] **Form View - Keyboard Spacer**: Clicking on a text field in a form (e.g., customer form) brings up the keyboard and a lot of empty white space on top of it.
 - [x] **Date Picker UI Bug**: On selecting a new date in the date widget (e.g., RD Start Date or TD Start Date), the form text field does not visually update in the UI to reflect the newly picked date.
 - [x] **KVP Projection Crash**: The Form UI crashes for KVP selection with unsupported operation infinity when interest rate is cleared or 0.
 - [x] **Form View - KVP Crash**: Fixed flutter build phase exception (setState during build) when switching to KVP due to synchronous text controller updates in useEffect.

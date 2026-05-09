@@ -5,6 +5,8 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:postfolio/features/auth/domain/auth_state.dart';
+import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -21,11 +23,12 @@ abstract class RecurringDepositRepository {
 class FirestoreRecurringDepositRepository
     implements RecurringDepositRepository {
   final firestore.FirebaseFirestore _firestore;
+  final String _userId;
 
-  FirestoreRecurringDepositRepository(this._firestore);
+  FirestoreRecurringDepositRepository(this._firestore, this._userId);
 
   firestore.CollectionReference<Map<String, dynamic>> get _deposits =>
-      _firestore.collection('recurring_deposits');
+      _firestore.collection('users').doc(_userId).collection('recurring_deposits');
 
   @override
   Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits() {
@@ -159,7 +162,18 @@ RecurringDepositRepository recurringDepositRepository(Ref ref) {
     ref.onDispose(repo.dispose);
     return repo;
   }
+
+  final authState = ref.watch(authControllerProvider);
+  final userId = authState.mapOrNull(
+    authenticated: (state) => state.user.id,
+  );
+
+  if (userId == null) {
+    throw Exception('User must be authenticated to access RecurringDepositRepository');
+  }
+
   return FirestoreRecurringDepositRepository(
     firestore.FirebaseFirestore.instance,
+    userId,
   );
 }
