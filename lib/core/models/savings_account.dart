@@ -12,7 +12,7 @@ sealed class SavingsAccount with _$SavingsAccount {
 
   const factory SavingsAccount({
     required String accountNumber,
-    @Default([]) List<Nominee> nominees,
+    @JsonSerializable(explicitToJson: true) @Default([]) List<Nominee> nominees,
   }) = _SavingsAccount;
 
   factory SavingsAccount.fromJson(Map<String, dynamic> json) =>

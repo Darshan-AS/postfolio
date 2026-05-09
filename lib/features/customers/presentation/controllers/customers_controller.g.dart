@@ -14,7 +14,7 @@ final customersControllerProvider = CustomersControllerProvider._();
 
 final class CustomersControllerProvider
     extends
-        $AsyncNotifierProvider<
+        $StreamNotifierProvider<
           CustomersController,
           UnmodifiableListView<Customer>
         > {
@@ -38,11 +38,11 @@ final class CustomersControllerProvider
 }
 
 String _$customersControllerHash() =>
-    r'e8eb91387b645d5eb3f3e4e23669a316fa9b0777';
+    r'75d0fa21511d1bf2aecc66649efc240c7e68bffd';
 
 abstract class _$CustomersController
-    extends $AsyncNotifier<UnmodifiableListView<Customer>> {
-  FutureOr<UnmodifiableListView<Customer>> build();
+    extends $StreamNotifier<UnmodifiableListView<Customer>> {
+  Stream<UnmodifiableListView<Customer>> build();
   @$mustCallSuper
   @override
   void runBuild() {

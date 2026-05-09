@@ -37,6 +37,9 @@
 - [x] Add pull-to-refresh to listing screens.
 - [x] Unify `Nominee` model and widgets across Customers and Deposits, removing duplicate logic.
 - [ ] Add `riverpod_lint` and `custom_lint` for static analysis of Riverpod rules.
+- [ ] Add domain validation to ensure Nominee percentages sum exactly to 100%.
+- [ ] Update Nominee UI to a better input widget/slider that enforces the 100% rule.
+- [ ] Fix uneven horizontal padding in List Views (right side currently has more empty space than the left).
 - [x] Standardize Input Decorations across all form fields using `AppInputDecoration.m3`.
 - [x] Standardize Save Buttons across all form screens using `FilledButtonThemeData`.
 - [x] Unify border radius to `radiusLg` across input decorations, cards, and buttons.
@@ -85,7 +88,8 @@
 - [x] **Authentication Data Layer:** Build `AuthRepository` for Google Sign-In and mapping to Firebase.
 - [x] **Authentication Presentation:** Build `AuthController` and the `LoginScreen` widget.
 - [x] **Secure Routing:** Set up GoRouter `refreshListenable` and `redirect` guard for unauthenticated users.
-- [ ] Build `FirestoreCustomerRepository` and swap out the Fake repository.
+- [x] Build `FirestoreCustomerRepository` and swap out the Fake repository.
+- [x] Setup Client-Side ID generation for Customers using `uuid` to improve Firestore syncing and offline-support.
 - [ ] Build Firestore repositories for Deposits, RD, and Schemes.
 - [ ] **Refactor Data Fetching**: Transition detail screens from list-based filtering (`AsyncValue<List<T>>`) to single-document fetching (`AsyncValue<T>`) using Riverpod family providers to improve efficiency with Firestore. Rewrite `AsyncEntityBuilder` accordingly.
 
@@ -97,6 +101,7 @@
 - [ ] Refactor `BottomSheet` invocations to conditionally display as `AlertDialog` or Side Panels on large screens.
 
 ## Phase 8: Enhancements & Refinements (Pending)
+- [ ] Implement a **"Demo Mode"** feature toggle. When activated via a persistent UI button on the login screen or via environment variables, the app bypasses Firebase Auth constraints and wires all repository providers to their `FakeDataRepository` counterparts instead of `FirestoreRepository`, allowing a complete offline, zero-setup interactive demonstration.
 - [ ] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.
 - [ ] Implement comprehensive form field validations across all create/update screens.
 - [ ] Implement image capture and display functionality for customer profiles.

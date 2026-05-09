@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Customer {
 
- String get id; String get name; String? get email; String? get phone; String? get address; String? get cifNumber; DateTime? get dateOfBirth; String? get aadhaarNumber; String? get panNumber; SavingsAccount? get savingsAccount;
+ String get id; String get name; String? get email; String? get phone; String? get address; String? get cifNumber; DateTime? get dateOfBirth; String? get aadhaarNumber; String? get panNumber;@JsonSerializable(explicitToJson: true) SavingsAccount? get savingsAccount;
 /// Create a copy of Customer
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $CustomerCopyWith<$Res>  {
   factory $CustomerCopyWith(Customer value, $Res Function(Customer) _then) = _$CustomerCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String? email, String? phone, String? address, String? cifNumber, DateTime? dateOfBirth, String? aadhaarNumber, String? panNumber, SavingsAccount? savingsAccount
+ String id, String name, String? email, String? phone, String? address, String? cifNumber, DateTime? dateOfBirth, String? aadhaarNumber, String? panNumber,@JsonSerializable(explicitToJson: true) SavingsAccount? savingsAccount
 });
 
 
@@ -171,7 +171,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? email,  String? phone,  String? address,  String? cifNumber,  DateTime? dateOfBirth,  String? aadhaarNumber,  String? panNumber,  SavingsAccount? savingsAccount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? email,  String? phone,  String? address,  String? cifNumber,  DateTime? dateOfBirth,  String? aadhaarNumber,  String? panNumber, @JsonSerializable(explicitToJson: true)  SavingsAccount? savingsAccount)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Customer() when $default != null:
 return $default(_that.id,_that.name,_that.email,_that.phone,_that.address,_that.cifNumber,_that.dateOfBirth,_that.aadhaarNumber,_that.panNumber,_that.savingsAccount);case _:
@@ -192,7 +192,7 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.address,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? email,  String? phone,  String? address,  String? cifNumber,  DateTime? dateOfBirth,  String? aadhaarNumber,  String? panNumber,  SavingsAccount? savingsAccount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? email,  String? phone,  String? address,  String? cifNumber,  DateTime? dateOfBirth,  String? aadhaarNumber,  String? panNumber, @JsonSerializable(explicitToJson: true)  SavingsAccount? savingsAccount)  $default,) {final _that = this;
 switch (_that) {
 case _Customer():
 return $default(_that.id,_that.name,_that.email,_that.phone,_that.address,_that.cifNumber,_that.dateOfBirth,_that.aadhaarNumber,_that.panNumber,_that.savingsAccount);}
@@ -209,7 +209,7 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.address,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? email,  String? phone,  String? address,  String? cifNumber,  DateTime? dateOfBirth,  String? aadhaarNumber,  String? panNumber,  SavingsAccount? savingsAccount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? email,  String? phone,  String? address,  String? cifNumber,  DateTime? dateOfBirth,  String? aadhaarNumber,  String? panNumber, @JsonSerializable(explicitToJson: true)  SavingsAccount? savingsAccount)?  $default,) {final _that = this;
 switch (_that) {
 case _Customer() when $default != null:
 return $default(_that.id,_that.name,_that.email,_that.phone,_that.address,_that.cifNumber,_that.dateOfBirth,_that.aadhaarNumber,_that.panNumber,_that.savingsAccount);case _:
@@ -224,7 +224,7 @@ return $default(_that.id,_that.name,_that.email,_that.phone,_that.address,_that.
 @JsonSerializable()
 
 class _Customer extends Customer {
-  const _Customer({required this.id, required this.name, this.email, this.phone, this.address, this.cifNumber, this.dateOfBirth, this.aadhaarNumber, this.panNumber, this.savingsAccount}): super._();
+  const _Customer({required this.id, required this.name, this.email, this.phone, this.address, this.cifNumber, this.dateOfBirth, this.aadhaarNumber, this.panNumber, @JsonSerializable(explicitToJson: true) this.savingsAccount}): super._();
   factory _Customer.fromJson(Map<String, dynamic> json) => _$CustomerFromJson(json);
 
 @override final  String id;
@@ -236,7 +236,7 @@ class _Customer extends Customer {
 @override final  DateTime? dateOfBirth;
 @override final  String? aadhaarNumber;
 @override final  String? panNumber;
-@override final  SavingsAccount? savingsAccount;
+@override@JsonSerializable(explicitToJson: true) final  SavingsAccount? savingsAccount;
 
 /// Create a copy of Customer
 /// with the given fields replaced by the non-null parameter values.
@@ -271,7 +271,7 @@ abstract mixin class _$CustomerCopyWith<$Res> implements $CustomerCopyWith<$Res>
   factory _$CustomerCopyWith(_Customer value, $Res Function(_Customer) _then) = __$CustomerCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String? email, String? phone, String? address, String? cifNumber, DateTime? dateOfBirth, String? aadhaarNumber, String? panNumber, SavingsAccount? savingsAccount
+ String id, String name, String? email, String? phone, String? address, String? cifNumber, DateTime? dateOfBirth, String? aadhaarNumber, String? panNumber,@JsonSerializable(explicitToJson: true) SavingsAccount? savingsAccount
 });
 
 

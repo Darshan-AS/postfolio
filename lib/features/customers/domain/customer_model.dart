@@ -21,7 +21,7 @@ sealed class Customer with _$Customer {
     DateTime? dateOfBirth,
     String? aadhaarNumber,
     String? panNumber,
-    SavingsAccount? savingsAccount,
+    @JsonSerializable(explicitToJson: true) SavingsAccount? savingsAccount,
   }) = _Customer;
 
   factory Customer.fromJson(Map<String, dynamic> json) =>

@@ -1,27 +1,97 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/models/savings_account.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
-import 'package:uuid/uuid.dart';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'customer_repository.g.dart';
 
 abstract class CustomerRepository {
-  Future<Result<List<Customer>, String>> fetchCustomers();
+  Stream<Result<List<Customer>, String>> watchCustomers();
   Future<Result<void, String>> createCustomer(Customer customer);
   Future<Result<void, String>> updateCustomer(Customer customer);
   Future<Result<void, String>> deleteCustomer(String id);
 }
 
+class FirestoreCustomerRepository implements CustomerRepository {
+  final firestore.FirebaseFirestore _firestore;
+
+  FirestoreCustomerRepository(this._firestore);
+
+  firestore.CollectionReference<Map<String, dynamic>> get _customers =>
+      _firestore.collection('customers');
+
+  @override
+  Stream<Result<List<Customer>, String>> watchCustomers() {
+    return _customers.snapshots().map((snapshot) {
+      try {
+        final customers = snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id; // Inject the document ID into the data
+          return Customer.fromJson(data);
+        }).toList();
+        return Success(customers);
+      } catch (e) {
+        return Failure(e.toString());
+      }
+    });
+  }
+
+  @override
+  Future<Result<void, String>> createCustomer(Customer customer) async {
+    try {
+      final docRef = _customers.doc(customer.id);
+
+      final data = customer.toJson();
+      data.remove('id'); // Remove id from body as it's the doc key
+
+      // We use .set() without awaiting the server sync.
+      // This allows offline writes to resolve immediately to the UI, 
+      // relying on Firestore's background syncing.
+      docRef.set(data);
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
+  Future<Result<void, String>> updateCustomer(Customer customer) async {
+    try {
+      final data = customer.toJson();
+      data.remove('id');
+      
+      _customers.doc(customer.id).update(data);
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
+  Future<Result<void, String>> deleteCustomer(String id) async {
+    try {
+      _customers.doc(id).delete();
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+}
+
 class FakeCustomerRepository implements CustomerRepository {
-  static final List<Customer> _customers = [
+  final _controller =
+      StreamController<Result<List<Customer>, String>>.broadcast();
+
+  final List<Customer> _customers = [
     Customer(
       id: '1',
       name: 'Bruce Wayne',
       email: 'bruce@wayneenterprises.com',
-
+      phone: '+1 555-0101',
       address: '1007 Mountain Drive, Gotham City',
       cifNumber: 'CIF000001',
       dateOfBirth: DateTime(1980, 2, 19),
@@ -36,7 +106,12 @@ class FakeCustomerRepository implements CustomerRepository {
             relationship: NomineeRelationship.other,
             customRelationship: 'Butler',
           ),
-          Nominee(percentage: 50.0, name: 'Dick Grayson', relationship: NomineeRelationship.other, customRelationship: 'Ward'),
+          Nominee(
+            percentage: 50.0,
+            name: 'Dick Grayson',
+            relationship: NomineeRelationship.other,
+            customRelationship: 'Ward',
+          ),
         ],
       ),
     ),
@@ -44,7 +119,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '2',
       name: 'Clark Kent',
       email: 'clark.kent@dailyplanet.com',
-
+      phone: '+1 555-0102',
       address: '344 Clinton St, Metropolis',
       cifNumber: 'CIF000002',
       dateOfBirth: DateTime(1985, 6, 18),
@@ -53,7 +128,11 @@ class FakeCustomerRepository implements CustomerRepository {
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA123456789',
         nominees: [
-          Nominee(percentage: 60.0, name: 'Lois Lane', relationship: NomineeRelationship.wife),
+          Nominee(
+            percentage: 60.0,
+            name: 'Lois Lane',
+            relationship: NomineeRelationship.wife,
+          ),
           Nominee(
             percentage: 40.0,
             name: 'Martha Kent',
@@ -66,7 +145,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '3',
       name: 'Diana Prince',
       email: 'diana@themyscira.gov',
-
+      phone: '+1 555-0103',
       address: 'Themyscira Embassy, Washington D.C.',
       cifNumber: 'CIF000003',
       dateOfBirth: DateTime(1985, 3, 22),
@@ -75,7 +154,11 @@ class FakeCustomerRepository implements CustomerRepository {
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA456789123',
         nominees: [
-          Nominee(percentage: 100.0, name: 'Hippolyta', relationship: NomineeRelationship.mother),
+          Nominee(
+            percentage: 100.0,
+            name: 'Hippolyta',
+            relationship: NomineeRelationship.mother,
+          ),
         ],
       ),
     ),
@@ -83,7 +166,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '4',
       name: 'Barry Allen',
       email: 'barry@ccpd.gov',
-
+      phone: '+1 555-0104',
       address: 'Central City Police Department, Central City',
       cifNumber: 'CIF000004',
       dateOfBirth: DateTime(1992, 9, 30),
@@ -92,7 +175,11 @@ class FakeCustomerRepository implements CustomerRepository {
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA567890123',
         nominees: [
-          Nominee(percentage: 100.0, name: 'Iris West', relationship: NomineeRelationship.wife),
+          Nominee(
+            percentage: 100.0,
+            name: 'Iris West',
+            relationship: NomineeRelationship.wife,
+          ),
         ],
       ),
     ),
@@ -100,7 +187,7 @@ class FakeCustomerRepository implements CustomerRepository {
       id: '5',
       name: 'Arthur Curry',
       email: 'arthur@atlantis.gov',
-
+      phone: '+1 555-0105',
       address: 'Amnesty Bay, Maine',
       cifNumber: 'CIF000005',
       dateOfBirth: DateTime(1986, 1, 29),
@@ -109,25 +196,35 @@ class FakeCustomerRepository implements CustomerRepository {
       savingsAccount: const SavingsAccount(
         accountNumber: 'SA678901234',
         nominees: [
-          Nominee(percentage: 100.0, name: 'Mera', relationship: NomineeRelationship.wife),
+          Nominee(
+            percentage: 100.0,
+            name: 'Mera',
+            relationship: NomineeRelationship.wife,
+          ),
         ],
       ),
     ),
   ];
 
+  void _emit() {
+    if (!_controller.isClosed) {
+      _controller.add(Success([..._customers]));
+    }
+  }
+
   @override
-  Future<Result<List<Customer>, String>> fetchCustomers() async {
-    await Future.delayed(
-      const Duration(seconds: 1),
-    ); // Simulate network latency
-    return Success([..._customers]);
+  Stream<Result<List<Customer>, String>> watchCustomers() async* {
+    // Yield initial data immediately for new listeners
+    yield Success([..._customers]);
+    // Then yield any future updates
+    yield* _controller.stream;
   }
 
   @override
   Future<Result<void, String>> createCustomer(Customer customer) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    final newCustomer = customer.copyWith(id: const Uuid().v4());
-    _customers.add(newCustomer);
+    _customers.add(customer);
+    _emit();
     return const Success(null);
   }
 
@@ -137,6 +234,7 @@ class FakeCustomerRepository implements CustomerRepository {
     final index = _customers.indexWhere((u) => u.id == customer.id);
     if (index != -1) {
       _customers[index] = customer;
+      _emit();
       return const Success(null);
     }
     return const Failure('Customer not found');
@@ -148,6 +246,7 @@ class FakeCustomerRepository implements CustomerRepository {
     final initialLength = _customers.length;
     _customers.removeWhere((u) => u.id == id);
     if (_customers.length < initialLength) {
+      _emit();
       return const Success(null);
     }
     return const Failure('Customer not found');
@@ -155,8 +254,14 @@ class FakeCustomerRepository implements CustomerRepository {
 }
 
 // Global Provider for the Repository.
-// When we move to Firebase, we simply swap FakeUserRepository() for FirestoreUserRepository() here!
 @riverpod
 CustomerRepository customerRepository(Ref ref) {
-  return FakeCustomerRepository();
+  const useFakeData = bool.fromEnvironment(
+    'USE_FAKE_DATA',
+    defaultValue: false,
+  );
+  if (useFakeData) {
+    return FakeCustomerRepository();
+  }
+  return FirestoreCustomerRepository(firestore.FirebaseFirestore.instance);
 }

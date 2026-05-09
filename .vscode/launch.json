@@ -15,6 +15,17 @@
             "deviceId": "emulator-5554"
         },
         {
+            "name": "Postfolio (Android Fake Data)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "emulator-5554",
+            "args": [
+                "--dart-define",
+                "USE_FAKE_DATA=true"
+            ]
+        },
+        {
             "name": "Postfolio (macOS)",
             "request": "launch",
             "type": "dart",

@@ -5,24 +5,25 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
+import 'package:uuid/uuid.dart';
 
 part 'customers_controller.g.dart';
 
 @riverpod
 class CustomersController extends _$CustomersController {
   @override
-  FutureOr<UnmodifiableListView<Customer>> build() async {
-    return _fetchCustomers();
+  Stream<UnmodifiableListView<Customer>> build() {
+    return _watchCustomers();
   }
 
-  Future<UnmodifiableListView<Customer>> _fetchCustomers() async {
+  Stream<UnmodifiableListView<Customer>> _watchCustomers() {
     final repository = ref.read(customerRepositoryProvider);
-    final result = await repository.fetchCustomers();
-
-    return switch (result) {
-      Success(value: final customers) => UnmodifiableListView(customers),
-      Failure(error: final error) => throw Exception(error),
-    };
+    return repository.watchCustomers().map((result) {
+      return switch (result) {
+        Success(value: final customers) => UnmodifiableListView(customers),
+        Failure(error: final error) => throw Exception(error),
+      };
+    });
   }
 
   Future<Result<void, String>> saveCustomer({
@@ -38,8 +39,10 @@ class CustomersController extends _$CustomersController {
     String? savingsAccountNumber,
     List<Nominee>? savingsNominees,
   }) async {
+    final customerId = id ?? const Uuid().v4();
+
     final createResult = Customer.create(
-      id: id ?? '', // FakeRepo will assign a real ID if creating
+      id: customerId,
       name: name,
       email: email,
       phone: phone,
@@ -66,10 +69,7 @@ class CustomersController extends _$CustomersController {
         : await repository.createCustomer(customer);
 
     return switch (result) {
-      Success() => () {
-        ref.invalidateSelf(); // Triggers a re-fetch and rebuild
-        return const Success<void, String>(null);
-      }(),
+      Success() => const Success<void, String>(null),
       Failure(error: final err) => Failure<void, String>(err),
     };
   }
@@ -79,10 +79,7 @@ class CustomersController extends _$CustomersController {
     final result = await repository.deleteCustomer(id);
 
     return switch (result) {
-      Success() => () {
-        ref.invalidateSelf();
-        return const Success<void, String>(null);
-      }(),
+      Success() => const Success<void, String>(null),
       Failure(error: final err) => Failure<void, String>(err),
     };
   }

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SavingsAccount {
 
- String get accountNumber; List<Nominee> get nominees;
+ String get accountNumber;@JsonSerializable(explicitToJson: true) List<Nominee> get nominees;
 /// Create a copy of SavingsAccount
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $SavingsAccountCopyWith<$Res>  {
   factory $SavingsAccountCopyWith(SavingsAccount value, $Res Function(SavingsAccount) _then) = _$SavingsAccountCopyWithImpl;
 @useResult
 $Res call({
- String accountNumber, List<Nominee> nominees
+ String accountNumber,@JsonSerializable(explicitToJson: true) List<Nominee> nominees
 });
 
 
@@ -151,7 +151,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String accountNumber,  List<Nominee> nominees)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String accountNumber, @JsonSerializable(explicitToJson: true)  List<Nominee> nominees)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SavingsAccount() when $default != null:
 return $default(_that.accountNumber,_that.nominees);case _:
@@ -172,7 +172,7 @@ return $default(_that.accountNumber,_that.nominees);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String accountNumber,  List<Nominee> nominees)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String accountNumber, @JsonSerializable(explicitToJson: true)  List<Nominee> nominees)  $default,) {final _that = this;
 switch (_that) {
 case _SavingsAccount():
 return $default(_that.accountNumber,_that.nominees);}
@@ -189,7 +189,7 @@ return $default(_that.accountNumber,_that.nominees);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String accountNumber,  List<Nominee> nominees)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String accountNumber, @JsonSerializable(explicitToJson: true)  List<Nominee> nominees)?  $default,) {final _that = this;
 switch (_that) {
 case _SavingsAccount() when $default != null:
 return $default(_that.accountNumber,_that.nominees);case _:
@@ -204,12 +204,12 @@ return $default(_that.accountNumber,_that.nominees);case _:
 @JsonSerializable()
 
 class _SavingsAccount extends SavingsAccount {
-  const _SavingsAccount({required this.accountNumber, final  List<Nominee> nominees = const []}): _nominees = nominees,super._();
+  const _SavingsAccount({required this.accountNumber, @JsonSerializable(explicitToJson: true) final  List<Nominee> nominees = const []}): _nominees = nominees,super._();
   factory _SavingsAccount.fromJson(Map<String, dynamic> json) => _$SavingsAccountFromJson(json);
 
 @override final  String accountNumber;
  final  List<Nominee> _nominees;
-@override@JsonKey() List<Nominee> get nominees {
+@override@JsonKey()@JsonSerializable(explicitToJson: true) List<Nominee> get nominees {
   if (_nominees is EqualUnmodifiableListView) return _nominees;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_nominees);
@@ -249,7 +249,7 @@ abstract mixin class _$SavingsAccountCopyWith<$Res> implements $SavingsAccountCo
   factory _$SavingsAccountCopyWith(_SavingsAccount value, $Res Function(_SavingsAccount) _then) = __$SavingsAccountCopyWithImpl;
 @override @useResult
 $Res call({
- String accountNumber, List<Nominee> nominees
+ String accountNumber,@JsonSerializable(explicitToJson: true) List<Nominee> nominees
 });
 
 
