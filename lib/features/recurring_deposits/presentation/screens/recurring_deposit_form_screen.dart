@@ -51,22 +51,37 @@ class _RecurringDepositForm extends HookConsumerWidget {
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final deposit = existingDeposit;
 
-    final serialNoController = useTextEditingController(text: deposit?.serialNo);
-    final accountNoController = useTextEditingController(text: deposit?.accountNo);
-    final installmentAmountController = useTextEditingController(text: deposit?.installmentAmount.toString());
-    final interestRateController = useTextEditingController(text: deposit?.interestRate.toString());
-    final linkedAccountController = useTextEditingController(text: deposit?.linkedAutoDebitAccountNo);
+    final serialNoController = useTextEditingController(
+      text: deposit?.serialNo,
+    );
+    final accountNoController = useTextEditingController(
+      text: deposit?.accountNo,
+    );
+    final installmentAmountController = useTextEditingController(
+      text: deposit?.installmentAmount.toString(),
+    );
+    final interestRateController = useTextEditingController(
+      text: deposit?.interestRate.toString(),
+    );
+    final linkedAccountController = useTextEditingController(
+      text: deposit?.linkedAutoDebitAccountNo,
+    );
 
     final selectedCustomerId = useState<String?>(deposit?.customerId);
-    final selectedScheme = useState<RecurringSchemeType>(deposit?.schemeType ?? RecurringSchemeType.recurringDeposit);
-    
+    final selectedScheme = useState<RecurringSchemeType>(
+      deposit?.schemeType ?? RecurringSchemeType.recurringDeposit,
+    );
+
     // Default values if not updating
-    final initialTermYears = deposit?.termYears ?? selectedScheme.value.defaultTenureYears;
+    final initialTermYears =
+        deposit?.termYears ?? selectedScheme.value.defaultTenureYears;
     final initialTermMonths = deposit?.termMonths ?? 0;
 
     final selectedTermYears = useState<int>(initialTermYears);
     final selectedTermMonths = useState<int>(initialTermMonths);
-    final selectedStatus = useState<DepositStatus>(deposit?.status ?? DepositStatus.active);
+    final selectedStatus = useState<DepositStatus>(
+      deposit?.status ?? DepositStatus.active,
+    );
     final startDate = useState<DateTime>(deposit?.startDate ?? DateTime.now());
     final nominees = useState<List<Nominee>>(deposit?.nominees.toList() ?? []);
 
@@ -80,8 +95,10 @@ class _RecurringDepositForm extends HookConsumerWidget {
     useListenable(installmentAmountController);
     useListenable(interestRateController);
 
-    final currentInstallment = double.tryParse(installmentAmountController.text.trim()) ?? 0.0;
-    final currentInterest = double.tryParse(interestRateController.text.trim()) ?? 0.0;
+    final currentInstallment =
+        double.tryParse(installmentAmountController.text.trim()) ?? 0.0;
+    final currentInterest =
+        double.tryParse(interestRateController.text.trim()) ?? 0.0;
 
     final projection = useMemoized(
       () {
@@ -118,10 +135,15 @@ class _RecurringDepositForm extends HookConsumerWidget {
               id: deposit?.id,
               serialNo: serialNoController.text.trim(),
               accountNo: accountNoController.text.trim(),
-              installmentAmount: double.tryParse(installmentAmountController.text.trim()) ?? 0.0,
+              installmentAmount:
+                  double.tryParse(installmentAmountController.text.trim()) ??
+                  0.0,
               termYears: selectedTermYears.value,
-              termMonths: selectedScheme.value.isFixedTenure ? 0 : selectedTermMonths.value,
-              interestRate: double.tryParse(interestRateController.text.trim()) ?? 0.0,
+              termMonths: selectedScheme.value.isFixedTenure
+                  ? 0
+                  : selectedTermMonths.value,
+              interestRate:
+                  double.tryParse(interestRateController.text.trim()) ?? 0.0,
               customerId: selectedCustomerId.value ?? '',
               schemeType: selectedScheme.value,
               status: selectedStatus.value,
@@ -140,7 +162,9 @@ class _RecurringDepositForm extends HookConsumerWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  t.recurringDeposits.failedToSaveDeposit(error: err.toString()),
+                  t.recurringDeposits.failedToSaveDeposit(
+                    error: err.toString(),
+                  ),
                 ),
               ),
             );
@@ -235,10 +259,10 @@ List<Widget> _buildAccountInformation({
       value: selectedStatus.value,
       labelText: t.recurringDeposits.fields.status,
       segments: DepositStatus.values
-          .map((status) => ButtonSegment(
-                value: status,
-                label: Text(status.displayName),
-              ))
+          .map(
+            (status) =>
+                ButtonSegment(value: status, label: Text(status.displayName)),
+          )
           .toList(),
       onChanged: (status) {
         selectedStatus.value = status;
@@ -268,10 +292,12 @@ List<Widget> _buildInvestmentDetails(
       value: selectedScheme.value,
       labelText: t.recurringDeposits.fields.schemeType,
       items: RecurringSchemeType.values
-          .map((scheme) => DropdownMenuItem(
-                value: scheme,
-                child: Text(scheme.displayName),
-              ))
+          .map(
+            (scheme) => DropdownMenuItem(
+              value: scheme,
+              child: Text(scheme.displayName),
+            ),
+          )
           .toList(),
       onChanged: (scheme) {
         if (scheme != null) {

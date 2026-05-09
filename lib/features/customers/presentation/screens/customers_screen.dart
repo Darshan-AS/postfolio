@@ -76,12 +76,13 @@ class CustomersScreen extends ConsumerWidget {
       body: switch (customersState) {
         AsyncData(:final value) => _buildDataState(context, ref, value),
         AsyncError(:final error) => ErrorStateView(
-            message: error.toString(),
-            onRetry: () => ref.invalidate(customersControllerProvider),
-          ),
+          message: error.toString(),
+          onRetry: () => ref.invalidate(customersControllerProvider),
+        ),
         _ => _buildLoadingState(),
       },
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => const CustomerCreateRoute().push(context),
         icon: const HugeIcon(
           icon: HugeIcons.strokeRoundedAdd01,
@@ -92,7 +93,11 @@ class CustomersScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDataState(BuildContext context, WidgetRef ref, List<Customer> customers) {
+  Widget _buildDataState(
+    BuildContext context,
+    WidgetRef ref,
+    List<Customer> customers,
+  ) {
     if (customers.isEmpty) {
       return Center(child: Text(t.customers.noCustomersFound));
     }
@@ -144,12 +149,10 @@ class CustomersScreen extends ConsumerWidget {
             onWhatsAppTapped: () => ref
                 .read(intentServiceProvider)
                 .launchWhatsApp(customer.phone ?? ''),
-            onSmsTapped: () => ref
-                .read(intentServiceProvider)
-                .launchSms(customer.phone ?? ''),
-            onLocationTapped: () => ref
-                .read(intentServiceProvider)
-                .launchMapSearch(customer.name),
+            onSmsTapped: () =>
+                ref.read(intentServiceProvider).launchSms(customer.phone ?? ''),
+            onLocationTapped: () =>
+                ref.read(intentServiceProvider).launchMapSearch(customer.name),
           );
         },
       ),

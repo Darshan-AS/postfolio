@@ -101,7 +101,7 @@
 - [ ] Refactor `BottomSheet` invocations to conditionally display as `AlertDialog` or Side Panels on large screens.
 
 ## Phase 8: Enhancements & Refinements (Pending)
-- [ ] Implement a **"Demo Mode"** feature toggle. When activated via a persistent UI button on the login screen or via environment variables, the app bypasses Firebase Auth constraints and wires all repository providers to their `FakeDataRepository` counterparts instead of `FirestoreRepository`, allowing a complete offline, zero-setup interactive demonstration.
+- [x] Implement a **"Demo Mode"** feature toggle. When activated via a persistent UI button on the login screen, the app bypasses Firebase Auth constraints and wires all repository providers to their `FakeDataRepository` counterparts instead of `FirestoreRepository`, allowing a complete offline, zero-setup interactive demonstration.
 - [ ] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.
 - [ ] Implement comprehensive form field validations across all create/update screens.
 - [ ] Implement image capture and display functionality for customer profiles.
@@ -135,6 +135,7 @@
 - [ ] **UI Cleanup - Non-Editable Fixed Fields:** Make form fields read-only (non-editable) when they only have a single valid value or don't require user input. For example, lock the "Scheme Type" selection for Recurring Deposits, and make the "Term Length" field non-editable for single-tenure schemes like MIS and NSC.
 - [x] **UI Cleanup - Deposit Status Selection:** Upgrade the "Deposit Status" widget in the form screens from a standard dropdown to a more intuitive UI component (e.g., a SegmentedButton or ChoiceChips).
 - [ ] Add filtering capabilities to deposit list screens (e.g., view by Active, Matured, Closed status).
+- [ ] **UI Cleanup - Hero Animations:** Add unique `heroTag` properties to the `FloatingActionButton`s and implement physical expanding Hero animations transitioning into the Create Form screens.
 - [ ] Integrate search functionality across all entity listing screens (Customers, Deposits, RDs).
 - [x] Create and integrate an enum for relationships in the `Nominee` model.
 - [ ] Explore migrating `termYears` and `termMonths` into a custom Domain-Driven Value Object (e.g., `class Tenure`) to encapsulate calendar math, keeping in mind the tradeoffs for Firestore compound indexing.

@@ -59,7 +59,9 @@ sealed class Nominee with _$Nominee {
   }
 
   static String? validateCustomRelationship(
-      NomineeRelationship relationship, String? customRelation) {
+    NomineeRelationship relationship,
+    String? customRelation,
+  ) {
     if (relationship == NomineeRelationship.other) {
       if (customRelation == null || customRelation.trim().isEmpty) {
         return 'Custom relationship is required';

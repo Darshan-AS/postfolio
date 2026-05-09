@@ -29,15 +29,18 @@ class ProjectionCalculator {
 
     // RD Compounding Formula: M = sum(P * (1 + r/n)^(n*t_i))
     // t_i is the time in quarters the i-th deposit stays in the account
-    final maturityAmount = List.generate(totalMonths, (index) {
-      // totalMonths - index gives us months remaining for this deposit
-      final monthsRemaining = totalMonths - index;
-      final quartersRemaining = monthsRemaining / _monthsInQuarter;
-      return monthlyInstallment * pow(1 + quarterlyInterestRate, quartersRemaining);
-    }).fold<double>(
-      0.0,
-      (accumulatedTotal, installmentMaturity) => accumulatedTotal + installmentMaturity,
-    );
+    final maturityAmount =
+        List.generate(totalMonths, (index) {
+          // totalMonths - index gives us months remaining for this deposit
+          final monthsRemaining = totalMonths - index;
+          final quartersRemaining = monthsRemaining / _monthsInQuarter;
+          return monthlyInstallment *
+              pow(1 + quarterlyInterestRate, quartersRemaining);
+        }).fold<double>(
+          0.0,
+          (accumulatedTotal, installmentMaturity) =>
+              accumulatedTotal + installmentMaturity,
+        );
 
     final totalInvested = monthlyInstallment * totalMonths;
     final totalInterestEarned = maturityAmount - totalInvested;
@@ -69,7 +72,8 @@ class ProjectionCalculator {
     final quarterlyInterestRate = decimalInterestRate / _quartersInYear;
 
     // Annual Payout: P * [ (1 + r/n)^n - 1 ]
-    final annualPayout = principal * (pow(1 + quarterlyInterestRate, _quartersInYear) - 1);
+    final annualPayout =
+        principal * (pow(1 + quarterlyInterestRate, _quartersInYear) - 1);
     final totalInterestEarned = annualPayout * termYears;
 
     final maturityDate = DateTime(
@@ -195,30 +199,29 @@ class ProjectionCalculator {
     required double interestRate,
     required DateTime startDate,
     required int termYears,
-  }) =>
-      switch (schemeType) {
-        OneTimeSchemeType.timeDeposit => calculateTD(
-            principal: principalAmount,
-            interestRate: interestRate,
-            startDate: startDate,
-            termYears: termYears,
-          ),
-        OneTimeSchemeType.monthlyIncomeScheme => calculateMIS(
-            principal: principalAmount,
-            interestRate: interestRate,
-            startDate: startDate,
-            termYears: termYears,
-          ),
-        OneTimeSchemeType.nationalSavingsCertificate => calculateNSC(
-            principal: principalAmount,
-            interestRate: interestRate,
-            startDate: startDate,
-            termYears: termYears,
-          ),
-        OneTimeSchemeType.kisanVikasPatra => calculateKVP(
-            principal: principalAmount,
-            interestRate: interestRate,
-            startDate: startDate,
-          ),
-      };
+  }) => switch (schemeType) {
+    OneTimeSchemeType.timeDeposit => calculateTD(
+      principal: principalAmount,
+      interestRate: interestRate,
+      startDate: startDate,
+      termYears: termYears,
+    ),
+    OneTimeSchemeType.monthlyIncomeScheme => calculateMIS(
+      principal: principalAmount,
+      interestRate: interestRate,
+      startDate: startDate,
+      termYears: termYears,
+    ),
+    OneTimeSchemeType.nationalSavingsCertificate => calculateNSC(
+      principal: principalAmount,
+      interestRate: interestRate,
+      startDate: startDate,
+      termYears: termYears,
+    ),
+    OneTimeSchemeType.kisanVikasPatra => calculateKVP(
+      principal: principalAmount,
+      interestRate: interestRate,
+      startDate: startDate,
+    ),
+  };
 }

@@ -42,28 +42,34 @@ class _CustomerForm extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final formKey = useMemoized(() => GlobalKey<FormState>());
-    
+
     final customer = existingCustomer;
-    
+
     final nameController = useTextEditingController(text: customer?.name);
     final emailController = useTextEditingController(text: customer?.email);
     final phoneController = useTextEditingController(text: customer?.phone);
     final addressController = useTextEditingController(text: customer?.address);
-    final cifNumberController = useTextEditingController(text: customer?.cifNumber);
-    final aadhaarNumberController = useTextEditingController(text: customer?.aadhaarNumber);
-    final panNumberController = useTextEditingController(text: customer?.panNumber);
+    final cifNumberController = useTextEditingController(
+      text: customer?.cifNumber,
+    );
+    final aadhaarNumberController = useTextEditingController(
+      text: customer?.aadhaarNumber,
+    );
+    final panNumberController = useTextEditingController(
+      text: customer?.panNumber,
+    );
     final savingsAccountNumberController = useTextEditingController(
       text: customer?.savingsAccount?.accountNumber,
     );
 
-    final nominees = useState<List<Nominee>>(List.of(customer?.savingsAccount?.nominees ?? []));
+    final nominees = useState<List<Nominee>>(
+      List.of(customer?.savingsAccount?.nominees ?? []),
+    );
     final selectedDate = useState<DateTime?>(customer?.dateOfBirth);
     final dateOfBirthController = useTextEditingController(
-      text: selectedDate.value != null
-          ? selectedDate.value!.toAppFormat()
-          : '',
+      text: selectedDate.value != null ? selectedDate.value!.toAppFormat() : '',
     );
-    
+
     final isSaving = useState(false);
 
     Future<void> selectDate(BuildContext context) async {

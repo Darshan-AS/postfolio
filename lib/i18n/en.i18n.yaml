@@ -36,6 +36,7 @@ common:
   ok: "OK"
   notProvided: "Not provided"
   moreOptions: "More options"
+  demoModeActive: "Demo Mode Active. Data is not saved to the cloud."
   sections:
     linkedAccounts: "Linked Accounts"
 
@@ -226,4 +227,5 @@ auth:
   welcome: "Welcome to Postfolio"
   signInSubtitle: "Sign in to manage your deposits securely"
   signInWithGoogle: "Sign in with Google"
+  tryDemoMode: "Try Demo Mode"
   signOut: "Sign Out"

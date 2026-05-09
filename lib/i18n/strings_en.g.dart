@@ -160,6 +160,9 @@ class TranslationsCommonEn {
 	/// en: 'More options'
 	String get moreOptions => 'More options';
 
+	/// en: 'Demo Mode Active. Data is not saved to the cloud.'
+	String get demoModeActive => 'Demo Mode Active. Data is not saved to the cloud.';
+
 	late final TranslationsCommonSectionsEn sections = TranslationsCommonSectionsEn.internal(_root);
 }
 
@@ -474,6 +477,9 @@ class TranslationsAuthEn {
 
 	/// en: 'Sign in with Google'
 	String get signInWithGoogle => 'Sign in with Google';
+
+	/// en: 'Try Demo Mode'
+	String get tryDemoMode => 'Try Demo Mode';
 
 	/// en: 'Sign Out'
 	String get signOut => 'Sign Out';
@@ -798,6 +804,7 @@ extension on Translations {
 			'common.ok' => 'OK',
 			'common.notProvided' => 'Not provided',
 			'common.moreOptions' => 'More options',
+			'common.demoModeActive' => 'Demo Mode Active. Data is not saved to the cloud.',
 			'common.sections.linkedAccounts' => 'Linked Accounts',
 			'projection.title' => 'Live Projection',
 			'projection.totalInvested' => 'Total Invested',
@@ -953,6 +960,7 @@ extension on Translations {
 			'auth.welcome' => 'Welcome to Postfolio',
 			'auth.signInSubtitle' => 'Sign in to manage your deposits securely',
 			'auth.signInWithGoogle' => 'Sign in with Google',
+			'auth.tryDemoMode' => 'Try Demo Mode',
 			'auth.signOut' => 'Sign Out',
 			_ => null,
 		};

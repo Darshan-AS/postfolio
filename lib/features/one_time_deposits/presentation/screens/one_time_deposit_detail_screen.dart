@@ -62,7 +62,13 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
           ),
           body: [
             switch (deposit.projection) {
-              WealthAccumulation(:final totalInvested, :final maturityAmount, :final totalInterestEarned, :final note) => Column(
+              WealthAccumulation(
+                :final totalInvested,
+                :final maturityAmount,
+                :final totalInterestEarned,
+                :final note,
+              ) =>
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (note != null && note.isNotEmpty)
@@ -74,7 +80,12 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-              IncomeGeneration(:final totalInterestEarned, :final payoutFrequency, :final periodicPayoutAmount) => IncomeGenerationGrid(
+              IncomeGeneration(
+                :final totalInterestEarned,
+                :final payoutFrequency,
+                :final periodicPayoutAmount,
+              ) =>
+                IncomeGenerationGrid(
                   principal: deposit.principalAmount,
                   periodicPayout: periodicPayoutAmount,
                   payoutFrequency: payoutFrequency.displayName,
@@ -139,7 +150,9 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   ),
                   label: t.oneTimeDeposits.fields.customerId,
                   value:
-                      ref.watch(customerByIdProvider(deposit.customerId))?.name ??
+                      ref
+                          .watch(customerByIdProvider(deposit.customerId))
+                          ?.name ??
                       deposit.customerId,
                 ),
                 if (deposit.linkedSavingsAccountNo != null &&

@@ -18,7 +18,14 @@ class NomineesInputSection extends HookWidget {
   });
 
   void _addNominee() {
-    onChanged([...nominees, const Nominee(name: '', relationship: NomineeRelationship.other, percentage: 100)]);
+    onChanged([
+      ...nominees,
+      const Nominee(
+        name: '',
+        relationship: NomineeRelationship.other,
+        percentage: 100,
+      ),
+    ]);
   }
 
   void _removeNominee(int index) {
@@ -104,9 +111,15 @@ class _NomineeItemForm extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final nameController = useTextEditingController(text: nominee.name);
-    final customRelationshipController = useTextEditingController(text: nominee.customRelationship ?? '');
-    final percentageController = useTextEditingController(text: nominee.percentage.toString());
-    final relationshipState = useState<NomineeRelationship>(nominee.relationship);
+    final customRelationshipController = useTextEditingController(
+      text: nominee.customRelationship ?? '',
+    );
+    final percentageController = useTextEditingController(
+      text: nominee.percentage.toString(),
+    );
+    final relationshipState = useState<NomineeRelationship>(
+      nominee.relationship,
+    );
 
     // Sync controllers if parent changes state externally, but prevent cursor jumping
     useEffect(() {
@@ -114,13 +127,16 @@ class _NomineeItemForm extends HookWidget {
         if (nameController.text != nominee.name) {
           nameController.text = nominee.name;
         }
-        if (customRelationshipController.text != (nominee.customRelationship ?? '')) {
+        if (customRelationshipController.text !=
+            (nominee.customRelationship ?? '')) {
           customRelationshipController.text = nominee.customRelationship ?? '';
         }
         if (relationshipState.value != nominee.relationship) {
           relationshipState.value = nominee.relationship;
         }
-        if (percentageController.text != nominee.percentage.toString() && nominee.percentage != (double.tryParse(percentageController.text) ?? 100)) {
+        if (percentageController.text != nominee.percentage.toString() &&
+            nominee.percentage !=
+                (double.tryParse(percentageController.text) ?? 100)) {
           percentageController.text = nominee.percentage.toString();
         }
       });
@@ -134,8 +150,8 @@ class _NomineeItemForm extends HookWidget {
           relationship: relationshipState.value,
           customRelationship:
               relationshipState.value == NomineeRelationship.other
-                  ? customRelationshipController.text.trim()
-                  : null,
+              ? customRelationshipController.text.trim()
+              : null,
           percentage: double.tryParse(percentageController.text.trim()) ?? 100,
         ),
       );
@@ -240,10 +256,9 @@ Widget _buildRelationshipField({
     value: relationshipState.value,
     labelText: t.nominees.relationship,
     items: NomineeRelationship.values
-        .map((rel) => DropdownMenuItem(
-              value: rel,
-              child: Text(rel.displayName),
-            ))
+        .map(
+          (rel) => DropdownMenuItem(value: rel, child: Text(rel.displayName)),
+        )
         .toList(),
     onChanged: (rel) {
       if (rel != null) {
@@ -291,9 +306,7 @@ Widget _buildPercentageField({
       icon: HugeIcons.strokeRoundedPercent,
       size: AppDimensions.iconMd,
     ),
-    keyboardType: const TextInputType.numberWithOptions(
-      decimal: true,
-    ),
+    keyboardType: const TextInputType.numberWithOptions(decimal: true),
     textInputAction: TextInputAction.done,
     onChanged: (_) => onChanged(),
   );

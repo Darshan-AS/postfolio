@@ -44,10 +44,7 @@ class AppDialogs {
         title: Text(title),
         content: Text(message),
         actions: [
-          TextButton(
-            onPressed: () => ctx.pop(),
-            child: Text(t.common.ok),
-          ),
+          TextButton(onPressed: () => ctx.pop(), child: Text(t.common.ok)),
         ],
       ),
     );

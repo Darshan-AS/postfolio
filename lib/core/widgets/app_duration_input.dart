@@ -24,8 +24,12 @@ class AppDurationInput extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final yearsController = useTextEditingController(text: selectedYears.toString());
-    final monthsController = useTextEditingController(text: selectedMonths.toString());
+    final yearsController = useTextEditingController(
+      text: selectedYears.toString(),
+    );
+    final monthsController = useTextEditingController(
+      text: selectedMonths.toString(),
+    );
 
     // Sync controllers with external state if it changes
     useEffect(() {
@@ -47,7 +51,10 @@ class AppDurationInput extends HookWidget {
     return _buildCustomTenure(context, yearsController, monthsController);
   }
 
-  Widget _buildFixedTenure(BuildContext context, TextEditingController yearsController) {
+  Widget _buildFixedTenure(
+    BuildContext context,
+    TextEditingController yearsController,
+  ) {
     final allowedYears = allowedTenuresInYears;
 
     // For schemes like MIS/NSC which only have a single valid tenure (e.g., 5 years)

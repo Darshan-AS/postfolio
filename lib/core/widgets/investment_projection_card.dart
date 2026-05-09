@@ -66,16 +66,10 @@ class InvestmentProjectionCard extends StatelessWidget {
                 prefix: '+ ',
               ),
               ...proj.map(
-                wealthAccumulation: (w) => _buildWealthAccumulationDetails(
-                  context,
-                  w,
-                  formatCurrency,
-                ),
-                incomeGeneration: (i) => _buildIncomeGenerationDetails(
-                  context,
-                  i,
-                  formatCurrency,
-                ),
+                wealthAccumulation: (w) =>
+                    _buildWealthAccumulationDetails(context, w, formatCurrency),
+                incomeGeneration: (i) =>
+                    _buildIncomeGenerationDetails(context, i, formatCurrency),
               ),
               AppSpacings.gapSm,
               Row(
@@ -92,7 +86,8 @@ class InvestmentProjectionCard extends StatelessWidget {
                 ],
               ),
               ...proj.map(
-                wealthAccumulation: (w) => _buildWealthAccumulationNote(context, w),
+                wealthAccumulation: (w) =>
+                    _buildWealthAccumulationNote(context, w),
                 incomeGeneration: (i) => _buildIncomeGenerationNote(context, i),
               ),
             ],
@@ -134,9 +129,7 @@ List<Widget> _buildIncomeGenerationDetails(
   return [
     AppSpacings.gapSm,
     _AnimatedStatRow(
-      label: t.projection.payout(
-        frequency: i.payoutFrequency.displayName,
-      ),
+      label: t.projection.payout(frequency: i.payoutFrequency.displayName),
       value: i.periodicPayoutAmount,
       formatter: formatter,
       valueStyle: theme.textTheme.titleMedium?.copyWith(
@@ -165,7 +158,10 @@ List<Widget> _buildIncomeGenerationDetails(
   ];
 }
 
-List<Widget> _buildWealthAccumulationNote(BuildContext context, WealthAccumulation w) {
+List<Widget> _buildWealthAccumulationNote(
+  BuildContext context,
+  WealthAccumulation w,
+) {
   final theme = Theme.of(context);
   if (w.note == null) return [];
 
@@ -174,10 +170,7 @@ List<Widget> _buildWealthAccumulationNote(BuildContext context, WealthAccumulati
     Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          t.projection.doublesIn,
-          style: theme.textTheme.bodyMedium,
-        ),
+        Text(t.projection.doublesIn, style: theme.textTheme.bodyMedium),
         Text(
           w.note!,
           style: theme.textTheme.titleMedium?.copyWith(
@@ -190,7 +183,10 @@ List<Widget> _buildWealthAccumulationNote(BuildContext context, WealthAccumulati
   ];
 }
 
-List<Widget> _buildIncomeGenerationNote(BuildContext context, IncomeGeneration i) {
+List<Widget> _buildIncomeGenerationNote(
+  BuildContext context,
+  IncomeGeneration i,
+) {
   final theme = Theme.of(context);
   if (i.note == null) return [];
 

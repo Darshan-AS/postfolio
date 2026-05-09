@@ -174,8 +174,8 @@ class AppSegmentedButtonField<T> extends StatelessWidget {
               Text(
                 labelText + (isRequired ? ' *' : ''),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -196,16 +196,13 @@ class FormSectionHeader extends StatelessWidget {
   final String title;
   final EdgeInsetsGeometry? padding;
 
-  const FormSectionHeader({
-    super.key,
-    required this.title,
-    this.padding,
-  });
+  const FormSectionHeader({super.key, required this.title, this.padding});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: padding ??
+      padding:
+          padding ??
           const EdgeInsets.only(
             top: AppDimensions.paddingLg,
             bottom: AppDimensions.paddingMd,
@@ -213,9 +210,9 @@ class FormSectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

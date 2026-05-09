@@ -20,7 +20,7 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
   }
 
   Stream<UnmodifiableListView<OneTimeDeposit>> _watchOneTimeDeposits() {
-    final repository = ref.read(oneTimeDepositRepositoryProvider);
+    final repository = ref.watch(oneTimeDepositRepositoryProvider);
     return repository.watchOneTimeDeposits().map((result) {
       return switch (result) {
         Success(value: final deposits) => UnmodifiableListView(deposits),
@@ -89,4 +89,3 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
     };
   }
 }
-

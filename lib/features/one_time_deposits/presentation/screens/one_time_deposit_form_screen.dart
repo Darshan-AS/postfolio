@@ -51,21 +51,34 @@ class _OneTimeDepositForm extends HookConsumerWidget {
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final deposit = existingDeposit;
 
-    final accountNoController = useTextEditingController(text: deposit?.accountNo);
-    final principalAmountController = useTextEditingController(text: deposit?.principalAmount.toString());
-    final interestRateController = useTextEditingController(text: deposit?.interestRate.toString());
-    final linkedAccountController = useTextEditingController(text: deposit?.linkedSavingsAccountNo);
+    final accountNoController = useTextEditingController(
+      text: deposit?.accountNo,
+    );
+    final principalAmountController = useTextEditingController(
+      text: deposit?.principalAmount.toString(),
+    );
+    final interestRateController = useTextEditingController(
+      text: deposit?.interestRate.toString(),
+    );
+    final linkedAccountController = useTextEditingController(
+      text: deposit?.linkedSavingsAccountNo,
+    );
 
     final selectedCustomerId = useState<String?>(deposit?.customerId);
-    final selectedScheme = useState<OneTimeSchemeType>(deposit?.schemeType ?? OneTimeSchemeType.timeDeposit);
-    
+    final selectedScheme = useState<OneTimeSchemeType>(
+      deposit?.schemeType ?? OneTimeSchemeType.timeDeposit,
+    );
+
     // Default values if not updating
-    final initialTermYears = deposit?.termYears ?? selectedScheme.value.defaultTenureYears;
+    final initialTermYears =
+        deposit?.termYears ?? selectedScheme.value.defaultTenureYears;
     final initialTermMonths = deposit?.termMonths ?? 0;
-    
+
     final selectedTermYears = useState<int>(initialTermYears);
     final selectedTermMonths = useState<int>(initialTermMonths);
-    final selectedStatus = useState<DepositStatus>(deposit?.status ?? DepositStatus.active);
+    final selectedStatus = useState<DepositStatus>(
+      deposit?.status ?? DepositStatus.active,
+    );
     final startDate = useState<DateTime>(deposit?.startDate ?? DateTime.now());
     final nominees = useState<List<Nominee>>(deposit?.nominees.toList() ?? []);
 
@@ -79,8 +92,10 @@ class _OneTimeDepositForm extends HookConsumerWidget {
     useListenable(principalAmountController);
     useListenable(interestRateController);
 
-    final currentPrincipal = double.tryParse(principalAmountController.text.trim()) ?? 0.0;
-    final currentInterest = double.tryParse(interestRateController.text.trim()) ?? 0.0;
+    final currentPrincipal =
+        double.tryParse(principalAmountController.text.trim()) ?? 0.0;
+    final currentInterest =
+        double.tryParse(interestRateController.text.trim()) ?? 0.0;
 
     final projection = useMemoized(
       () {
@@ -116,10 +131,14 @@ class _OneTimeDepositForm extends HookConsumerWidget {
             .saveOneTimeDeposit(
               id: deposit?.id,
               accountNo: accountNoController.text.trim(),
-              principalAmount: double.tryParse(principalAmountController.text.trim()) ?? 0.0,
+              principalAmount:
+                  double.tryParse(principalAmountController.text.trim()) ?? 0.0,
               termYears: selectedTermYears.value,
-              termMonths: selectedScheme.value.isFixedTenure ? 0 : selectedTermMonths.value,
-              interestRate: double.tryParse(interestRateController.text.trim()) ?? 0.0,
+              termMonths: selectedScheme.value.isFixedTenure
+                  ? 0
+                  : selectedTermMonths.value,
+              interestRate:
+                  double.tryParse(interestRateController.text.trim()) ?? 0.0,
               customerId: selectedCustomerId.value ?? '',
               schemeType: selectedScheme.value,
               status: selectedStatus.value,
@@ -221,10 +240,10 @@ List<Widget> _buildAccountInformation({
       value: selectedStatus.value,
       labelText: t.oneTimeDeposits.fields.status,
       segments: DepositStatus.values
-          .map((status) => ButtonSegment(
-                value: status,
-                label: Text(status.displayName),
-              ))
+          .map(
+            (status) =>
+                ButtonSegment(value: status, label: Text(status.displayName)),
+          )
           .toList(),
       onChanged: (status) {
         selectedStatus.value = status;
@@ -254,10 +273,12 @@ List<Widget> _buildInvestmentDetails(
       value: selectedScheme.value,
       labelText: t.oneTimeDeposits.fields.schemeType,
       items: OneTimeSchemeType.values
-          .map((scheme) => DropdownMenuItem(
-                value: scheme,
-                child: Text(scheme.displayName),
-              ))
+          .map(
+            (scheme) => DropdownMenuItem(
+              value: scheme,
+              child: Text(scheme.displayName),
+            ),
+          )
           .toList(),
       onChanged: (scheme) {
         if (scheme != null) {

@@ -31,13 +31,14 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
   }) = _OneTimeDeposit;
 
   @override
-  InvestmentProjection get projection => ProjectionCalculator.calculateOneTimeDeposit(
-    schemeType: schemeType,
-    principalAmount: principalAmount,
-    interestRate: interestRate,
-    startDate: startDate,
-    termYears: termYears,
-  );
+  InvestmentProjection get projection =>
+      ProjectionCalculator.calculateOneTimeDeposit(
+        schemeType: schemeType,
+        principalAmount: principalAmount,
+        interestRate: interestRate,
+        startDate: startDate,
+        termYears: termYears,
+      );
 
   @override
   double get maturityAmount => projection.maturityAmount;
@@ -93,7 +94,12 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
 
     if (schemeType.isFixedTenure) {
       if (!schemeType.allowedTenuresInYears.contains(termYears)) {
-        return Failure(t.errors.invalidTenure(years: termYears, scheme: schemeType.displayName));
+        return Failure(
+          t.errors.invalidTenure(
+            years: termYears,
+            scheme: schemeType.displayName,
+          ),
+        );
       }
       if (termMonths != 0) {
         return Failure(t.errors.fixedTenureNoMonths);

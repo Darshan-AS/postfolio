@@ -39,19 +39,19 @@ GoRouter goRouter(Ref ref) {
     refreshListenable: listenable,
     redirect: (context, state) {
       final authState = ref.read(authControllerProvider);
-      
+
       final isAuth = authState is AuthStateAuthenticated;
-      
+
       final isLoggingIn = state.matchedLocation == AppRoutes.login;
-      
+
       if (!isAuth && !isLoggingIn) {
         return AppRoutes.login;
       }
-      
+
       if (isAuth && isLoggingIn) {
         return AppRoutes.customers;
       }
-      
+
       return null;
     },
   );
@@ -281,5 +281,6 @@ class LoginRoute extends GoRouteData with $LoginRoute {
   const LoginRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) => const LoginScreen();
+  Widget build(BuildContext context, GoRouterState state) =>
+      const LoginScreen();
 }

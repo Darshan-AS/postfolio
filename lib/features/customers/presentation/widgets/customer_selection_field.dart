@@ -111,8 +111,15 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
           _buildSearchBar(context, searchQuery),
           Expanded(
             child: switch (state) {
-              AsyncData(:final value) => _buildDataState(context, value, searchQuery.value),
-              AsyncError(:final error) => _buildErrorState(ref, error.toString()),
+              AsyncData(:final value) => _buildDataState(
+                context,
+                value,
+                searchQuery.value,
+              ),
+              AsyncError(:final error) => _buildErrorState(
+                ref,
+                error.toString(),
+              ),
               _ => const Center(child: CircularProgressIndicator()),
             },
           ),
@@ -121,7 +128,10 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
     );
   }
 
-  Widget _buildSearchBar(BuildContext context, ValueNotifier<String> searchQuery) {
+  Widget _buildSearchBar(
+    BuildContext context,
+    ValueNotifier<String> searchQuery,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(AppDimensions.paddingLg),
       child: TextField(
@@ -138,7 +148,11 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
     );
   }
 
-  Widget _buildDataState(BuildContext context, List<Customer> customers, String query) {
+  Widget _buildDataState(
+    BuildContext context,
+    List<Customer> customers,
+    String query,
+  ) {
     final filtered = _filterCustomers(customers, query);
 
     if (filtered.isEmpty) {
@@ -164,8 +178,9 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
       itemBuilder: (context, index) {
         final customer = customers[index];
         return EntityListTile(
-          leadingText:
-              customer.name.isNotEmpty ? customer.name.substring(0, 1).toUpperCase() : '?',
+          leadingText: customer.name.isNotEmpty
+              ? customer.name.substring(0, 1).toUpperCase()
+              : '?',
           title: customer.name,
           subtitle: Text(
             [

@@ -97,7 +97,12 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
 
     if (schemeType.isFixedTenure) {
       if (!schemeType.allowedTenuresInYears.contains(termYears)) {
-        return Failure(t.errors.invalidTenure(years: termYears, scheme: schemeType.displayName));
+        return Failure(
+          t.errors.invalidTenure(
+            years: termYears,
+            scheme: schemeType.displayName,
+          ),
+        );
       }
       if (termMonths != 0) {
         return Failure(t.errors.fixedTenureNoMonths);

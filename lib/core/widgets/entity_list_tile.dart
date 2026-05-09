@@ -123,15 +123,20 @@ class EntityListTile extends StatelessWidget {
   Widget _buildLeading(ThemeData theme) {
     return CircleAvatar(
       radius: AppDimensions.radiusXxl,
-      backgroundColor: leadingBackgroundColor ?? theme.colorScheme.primaryContainer,
-      foregroundColor: leadingForegroundColor ?? theme.colorScheme.onPrimaryContainer,
-      child: leadingIcon ??
+      backgroundColor:
+          leadingBackgroundColor ?? theme.colorScheme.primaryContainer,
+      foregroundColor:
+          leadingForegroundColor ?? theme.colorScheme.onPrimaryContainer,
+      child:
+          leadingIcon ??
           (leadingText != null
               ? Text(
                   leadingText!,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: leadingForegroundColor ?? theme.colorScheme.onPrimaryContainer,
+                    color:
+                        leadingForegroundColor ??
+                        theme.colorScheme.onPrimaryContainer,
                   ),
                 )
               : null),
@@ -152,7 +157,9 @@ class EntityListTile extends StatelessWidget {
             icon: action.icon,
             iconSize: AppDimensions.iconMd,
             tooltip: action.label,
-            color: action.isDestructive ? theme.colorScheme.error : theme.colorScheme.primary,
+            color: action.isDestructive
+                ? theme.colorScheme.error
+                : theme.colorScheme.primary,
             onPressed: action.onTap,
           ),
         if (menuActions.isNotEmpty)
@@ -165,8 +172,9 @@ class EntityListTile extends StatelessWidget {
             tooltip: t.common.moreOptions,
             onSelected: (action) => action.onTap(),
             itemBuilder: (context) => menuActions.map((action) {
-              final color =
-                  action.isDestructive ? theme.colorScheme.error : theme.colorScheme.onSurface;
+              final color = action.isDestructive
+                  ? theme.colorScheme.error
+                  : theme.colorScheme.onSurface;
 
               return PopupMenuItem(
                 value: action,
@@ -182,9 +190,7 @@ class EntityListTile extends StatelessWidget {
                     AppSpacings.gapSm,
                     Text(
                       action.label,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: color,
-                      ),
+                      style: theme.textTheme.bodyMedium?.copyWith(color: color),
                     ),
                   ],
                 ),

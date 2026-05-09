@@ -17,7 +17,7 @@ class CustomersController extends _$CustomersController {
   }
 
   Stream<UnmodifiableListView<Customer>> _watchCustomers() {
-    final repository = ref.read(customerRepositoryProvider);
+    final repository = ref.watch(customerRepositoryProvider);
     return repository.watchCustomers().map((result) {
       return switch (result) {
         Success(value: final customers) => UnmodifiableListView(customers),

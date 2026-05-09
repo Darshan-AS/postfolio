@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
+import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'customer_repository.g.dart';
@@ -48,7 +49,7 @@ class FirestoreCustomerRepository implements CustomerRepository {
       data.remove('id'); // Remove id from body as it's the doc key
 
       // We use .set() without awaiting the server sync.
-      // This allows offline writes to resolve immediately to the UI, 
+      // This allows offline writes to resolve immediately to the UI,
       // relying on Firestore's background syncing.
       docRef.set(data);
       return const Success(null);
@@ -62,7 +63,7 @@ class FirestoreCustomerRepository implements CustomerRepository {
     try {
       final data = customer.toJson();
       data.remove('id');
-      
+
       _customers.doc(customer.id).update(data);
       return const Success(null);
     } catch (e) {
@@ -132,17 +133,20 @@ class FakeCustomerRepository implements CustomerRepository {
     }
     return const Failure('Customer not found');
   }
+
+  void dispose() {
+    _controller.close();
+  }
 }
 
 // Global Provider for the Repository.
 @riverpod
 CustomerRepository customerRepository(Ref ref) {
-  const useFakeData = bool.fromEnvironment(
-    'USE_FAKE_DATA',
-    defaultValue: false,
-  );
-  if (useFakeData) {
-    return FakeCustomerRepository();
+  final isDemoMode = ref.watch(demoModeProvider);
+  if (isDemoMode) {
+    final repo = FakeCustomerRepository();
+    ref.onDispose(repo.dispose);
+    return repo;
   }
   return FirestoreCustomerRepository(firestore.FirebaseFirestore.instance);
 }

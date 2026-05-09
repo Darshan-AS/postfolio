@@ -20,7 +20,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
   }
 
   Stream<UnmodifiableListView<RecurringDeposit>> _watchRecurringDeposits() {
-    final repository = ref.read(recurringDepositRepositoryProvider);
+    final repository = ref.watch(recurringDepositRepositoryProvider);
     return repository.watchRecurringDeposits().map((result) {
       return switch (result) {
         Success(value: final deposits) => UnmodifiableListView(deposits),
@@ -91,4 +91,3 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     };
   }
 }
-

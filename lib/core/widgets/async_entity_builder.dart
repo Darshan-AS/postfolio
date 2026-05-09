@@ -67,10 +67,7 @@ class AsyncEntityBuilder<T> extends StatelessWidget {
   }
 
   Widget _buildErrorState(BuildContext context, String error) {
-    final errorView = ErrorStateView(
-      message: error,
-      onRetry: onRetry,
-    );
+    final errorView = ErrorStateView(message: error, onRetry: onRetry);
     return wrapWithScaffold
         ? Scaffold(
             appBar: AppBar(title: Text(t.common.error)),

@@ -10,7 +10,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 class FakeDataSource {
   static final FakeDataSource _instance = FakeDataSource._internal();
   factory FakeDataSource() => _instance;
-  
+
   late final List<Customer> customers;
   late final List<OneTimeDeposit> oneTimeDeposits;
   late final List<RecurringDeposit> recurringDeposits;
@@ -20,7 +20,7 @@ class FakeDataSource {
   }
 
   void _generateData() {
-    // Using a fixed seed ensures the generated fake data is exactly the same 
+    // Using a fixed seed ensures the generated fake data is exactly the same
     // every time the app is restarted, making UI testing much easier.
     final faker = Faker(seed: 12345);
     final random = faker.randomGenerator;
@@ -35,8 +35,10 @@ class FakeDataSource {
         address: faker.address.streetAddress(),
         cifNumber: 'CIF${random.fromCharSet('0123456789', 6)}',
         dateOfBirth: faker.date.dateTimeBetween(DateTime(1950), DateTime(2005)),
-        aadhaarNumber: '${random.fromCharSet('0123456789', 4)} ${random.fromCharSet('0123456789', 4)} ${random.fromCharSet('0123456789', 4)}',
-        panNumber: '${random.fromCharSet('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 5)}${random.fromCharSet('0123456789', 4)}${random.fromCharSet('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 1)}',
+        aadhaarNumber:
+            '${random.fromCharSet('0123456789', 4)} ${random.fromCharSet('0123456789', 4)} ${random.fromCharSet('0123456789', 4)}',
+        panNumber:
+            '${random.fromCharSet('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 5)}${random.fromCharSet('0123456789', 4)}${random.fromCharSet('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 1)}',
         savingsAccount: SavingsAccount(
           accountNumber: 'SA${random.fromCharSet('0123456789', 9)}',
           nominees: List.generate(
@@ -60,7 +62,7 @@ class FakeDataSource {
       final scheme = random.element(oneTimeSchemes);
       final int termYears;
       final int termMonths;
-      
+
       if (scheme.isFixedTenure) {
         termYears = random.element(scheme.allowedTenuresInYears);
         termMonths = 0;
@@ -78,11 +80,9 @@ class FakeDataSource {
         interestRate: random.decimal(scale: 2, min: 5.0) + 5.0,
         customerId: random.element(customerIds),
         schemeType: scheme,
-        startDate: faker.date.dateTimeBetween(
-          DateTime(2020),
-          DateTime.now(),
-        ),
-        linkedSavingsAccountNo: 'SA${faker.randomGenerator.fromCharSet('0123456789', 9)}',
+        startDate: faker.date.dateTimeBetween(DateTime(2020), DateTime.now()),
+        linkedSavingsAccountNo:
+            'SA${faker.randomGenerator.fromCharSet('0123456789', 9)}',
         status: random.element(depositStatuses),
         nominees: List.generate(
           random.integer(3),
@@ -99,7 +99,9 @@ class FakeDataSource {
     final recurringSchemes = RecurringSchemeType.values;
     recurringDeposits = List.generate(15, (index) {
       final scheme = random.element(recurringSchemes);
-      final termYears = scheme.isFixedTenure ? random.element(scheme.allowedTenuresInYears) : 5;
+      final termYears = scheme.isFixedTenure
+          ? random.element(scheme.allowedTenuresInYears)
+          : 5;
 
       return RecurringDeposit(
         id: faker.guid.guid(),

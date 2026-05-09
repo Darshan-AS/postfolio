@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:hugeicons/hugeicons.dart';
@@ -26,66 +27,88 @@ class LoginScreen extends ConsumerWidget {
             children: [
               Column(
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  HugeIcon(
-                    icon: HugeIcons.strokeRoundedShield01,
-                    color: theme.colorScheme.primary,
-                    size: AppDimensions.iconXl,
-                  ),
-                  AppSpacings.gapXl,
-                  Text(
-                    t.auth.welcome,
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                children:
+                    [
+                          HugeIcon(
+                            icon: HugeIcons.strokeRoundedShield01,
+                            color: theme.colorScheme.primary,
+                            size: AppDimensions.iconXl,
+                          ),
+                          AppSpacings.gapXl,
+                          Text(
+                            t.auth.welcome,
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          AppSpacings.gapSm,
+                          Text(
+                            t.auth.signInSubtitle,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ]
+                        .animate(interval: AppAnimations.stagger)
+                        .fadeIn(duration: AppAnimations.medium)
+                        .slideY(
+                          begin: AppAnimations.slideOffset,
+                          curve: AppAnimations.defaultCurve,
+                          duration: AppAnimations.medium,
                         ),
-                    textAlign: TextAlign.center,
-                  ),
-                  AppSpacings.gapSm,
-                  Text(
-                    t.auth.signInSubtitle,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                ]
-                    .animate(interval: AppAnimations.stagger)
-                    .fadeIn(duration: AppAnimations.medium)
-                    .slideY(
-                      begin: AppAnimations.slideOffset,
-                      curve: AppAnimations.defaultCurve,
-                      duration: AppAnimations.medium,
-                    ),
               ),
               AppSpacings.gapXxl,
               AppSpacings.gapXxl,
               switch (authState) {
-                AuthStateLoading() => const Center(child: CircularProgressIndicator()),
-                _ => FilledButton.icon(
-                  onPressed: () {
-                    ref.read(authControllerProvider.notifier).signInWithGoogle();
-                  },
-                  icon: HugeIcon(
-                    icon: HugeIcons.strokeRoundedGoogle,
-                    color: theme.colorScheme.onPrimary,
-                    size: AppDimensions.iconMd,
-                  ),
-                  label: Text(t.auth.signInWithGoogle),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(AppDimensions.buttonHeight),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppDimensions.paddingMd,
+                AuthStateLoading() => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                _ => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: () {
+                        ref
+                            .read(authControllerProvider.notifier)
+                            .signInWithGoogle();
+                      },
+                      icon: HugeIcon(
+                        icon: HugeIcons.strokeRoundedGoogle,
+                        color: theme.colorScheme.onPrimary,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: Text(t.auth.signInWithGoogle),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(
+                          AppDimensions.buttonHeight,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppDimensions.paddingMd,
+                        ),
+                      ),
                     ),
-                  ),
+                    AppSpacings.gapLg,
+                    TextButton.icon(
+                      onPressed: () {
+                        ref.read(demoModeProvider.notifier).enable();
+                      },
+                      icon: HugeIcon(
+                        icon: HugeIcons.strokeRoundedPlay,
+                        color: theme.colorScheme.primary,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: Text(t.auth.tryDemoMode),
+                    ),
+                  ],
                 ),
               },
               if (authState is AuthStateError) ...[
                 AppSpacings.gapMd,
                 Text(
                   authState.message,
-                  style: TextStyle(
-                    color: theme.colorScheme.error,
-                  ),
+                  style: TextStyle(color: theme.colorScheme.error),
                   textAlign: TextAlign.center,
                 ),
               ],

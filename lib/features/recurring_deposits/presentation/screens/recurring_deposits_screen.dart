@@ -58,12 +58,13 @@ class RecurringDepositsScreen extends ConsumerWidget {
       body: switch (depositsState) {
         AsyncData(:final value) => _buildDataState(context, ref, value),
         AsyncError(:final error) => ErrorStateView(
-            message: error.toString(),
-            onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
-          ),
+          message: error.toString(),
+          onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
+        ),
         _ => _buildLoadingState(),
       },
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => const RecurringDepositCreateRoute().push(context),
         icon: const HugeIcon(
           icon: HugeIcons.strokeRoundedAdd01,
@@ -74,7 +75,11 @@ class RecurringDepositsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDataState(BuildContext context, WidgetRef ref, List<RecurringDeposit> deposits) {
+  Widget _buildDataState(
+    BuildContext context,
+    WidgetRef ref,
+    List<RecurringDeposit> deposits,
+  ) {
     if (deposits.isEmpty) {
       return Center(child: Text(t.recurringDeposits.noDepositsFound));
     }

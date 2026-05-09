@@ -6,16 +6,20 @@ import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:postfolio/core/services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  final prefs = await SharedPreferences.getInstance();
   LocaleSettings.useDeviceLocale();
 
   runApp(
-    ProviderScope(child: TranslationProvider(child: const PostfolioApp())),
+    ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      child: TranslationProvider(child: const PostfolioApp()),
+    ),
   );
 }
 

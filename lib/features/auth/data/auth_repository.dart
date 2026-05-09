@@ -84,8 +84,7 @@ class AuthRepository {
           accessToken: accessToken,
         );
 
-        userCredential = await _firebaseAuth
-            .signInWithCredential(credential);
+        userCredential = await _firebaseAuth.signInWithCredential(credential);
       }
 
       final user = userCredential.user;
@@ -93,12 +92,14 @@ class AuthRepository {
         return const Failure('Sign in failed, user is null');
       }
 
-      return Success(AppUser(
-        id: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoUrl: user.photoURL,
-      ));
+      return Success(
+        AppUser(
+          id: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoUrl: user.photoURL,
+        ),
+      );
     } catch (e) {
       return Failure('Failed to sign in with Google: $e');
     }
@@ -107,7 +108,7 @@ class AuthRepository {
   Future<Result<void, String>> signOut() async {
     try {
       if (!kIsWeb) {
-         await _googleSignIn.signOut();
+        await _googleSignIn.signOut();
       }
       await _firebaseAuth.signOut();
       return const Success(null);

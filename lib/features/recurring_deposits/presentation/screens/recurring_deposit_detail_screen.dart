@@ -81,14 +81,21 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                 DetailAmountCard(
                   title: t.recurringDeposits.fields.interestRate,
                   amount: deposit.interestRate,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
                   textColor: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ],
             ),
             AppSpacings.gapXxl,
             switch (deposit.projection) {
-              WealthAccumulation(:final totalInvested, :final maturityAmount, :final totalInterestEarned) => WealthAccumulationGrid(
+              WealthAccumulation(
+                :final totalInvested,
+                :final maturityAmount,
+                :final totalInterestEarned,
+              ) =>
+                WealthAccumulationGrid(
                   totalInvested: totalInvested,
                   projectedInterest: totalInterestEarned,
                   maturityAmount: maturityAmount,
@@ -162,7 +169,9 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                   ),
                   label: t.recurringDeposits.fields.customerId,
                   value:
-                      ref.watch(customerByIdProvider(deposit.customerId))?.name ??
+                      ref
+                          .watch(customerByIdProvider(deposit.customerId))
+                          ?.name ??
                       deposit.customerId,
                 ),
               ],

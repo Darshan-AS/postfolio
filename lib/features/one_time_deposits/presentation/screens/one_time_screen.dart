@@ -58,12 +58,13 @@ class OneTimeDepositsScreen extends ConsumerWidget {
       body: switch (depositsState) {
         AsyncData(:final value) => _buildDataState(context, ref, value),
         AsyncError(:final error) => ErrorStateView(
-            message: error.toString(),
-            onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
-          ),
+          message: error.toString(),
+          onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
+        ),
         _ => _buildLoadingState(),
       },
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => const OneTimeDepositCreateRoute().push(context),
         icon: const HugeIcon(
           icon: HugeIcons.strokeRoundedAdd01,
@@ -74,7 +75,11 @@ class OneTimeDepositsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDataState(BuildContext context, WidgetRef ref, List<OneTimeDeposit> deposits) {
+  Widget _buildDataState(
+    BuildContext context,
+    WidgetRef ref,
+    List<OneTimeDeposit> deposits,
+  ) {
     if (deposits.isEmpty) {
       return Center(child: Text(t.oneTimeDeposits.noDepositsFound));
     }
