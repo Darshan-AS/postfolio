@@ -90,7 +90,7 @@
 - [x] **Secure Routing:** Set up GoRouter `refreshListenable` and `redirect` guard for unauthenticated users.
 - [x] Build `FirestoreCustomerRepository` and swap out the Fake repository.
 - [x] Setup Client-Side ID generation for Customers using `uuid` to improve Firestore syncing and offline-support.
-- [ ] Build Firestore repositories for Deposits, RD, and Schemes.
+- [x] Build Firestore repositories for Deposits, RD, and Schemes.
 - [ ] **Refactor Data Fetching**: Transition detail screens from list-based filtering (`AsyncValue<List<T>>`) to single-document fetching (`AsyncValue<T>`) using Riverpod family providers to improve efficiency with Firestore. Rewrite `AsyncEntityBuilder` accordingly.
 
 ## Phase 7: Responsive Architecture (Pending)

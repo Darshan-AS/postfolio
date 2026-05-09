@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/models/nominee.dart';
@@ -10,14 +13,81 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'one_time_deposit_repository.g.dart';
 
 abstract class OneTimeDepositRepository {
-  Future<Result<List<OneTimeDeposit>, String>> fetchOneTimeDeposits();
+  Stream<Result<List<OneTimeDeposit>, String>> watchOneTimeDeposits();
   Future<Result<void, String>> createOneTimeDeposit(OneTimeDeposit deposit);
   Future<Result<void, String>> updateOneTimeDeposit(OneTimeDeposit deposit);
   Future<Result<void, String>> deleteOneTimeDeposit(String id);
 }
 
+class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
+  final firestore.FirebaseFirestore _firestore;
+
+  FirestoreOneTimeDepositRepository(this._firestore);
+
+  firestore.CollectionReference<Map<String, dynamic>> get _deposits =>
+      _firestore.collection('one_time_deposits');
+
+  @override
+  Stream<Result<List<OneTimeDeposit>, String>> watchOneTimeDeposits() {
+    return _deposits.snapshots().map((snapshot) {
+      try {
+        final deposits = snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return OneTimeDeposit.fromJson(data);
+        }).toList();
+        return Success(deposits);
+      } catch (e) {
+        return Failure(e.toString());
+      }
+    });
+  }
+
+  @override
+  Future<Result<void, String>> createOneTimeDeposit(OneTimeDeposit deposit) async {
+    try {
+      final docRef = _deposits.doc(deposit.id);
+
+      final data = deposit.toJson();
+      data.remove('id');
+
+      // We use .set() without awaiting the server sync.
+      docRef.set(data);
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
+  Future<Result<void, String>> updateOneTimeDeposit(OneTimeDeposit deposit) async {
+    try {
+      final data = deposit.toJson();
+      data.remove('id');
+      
+      _deposits.doc(deposit.id).update(data);
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
+  Future<Result<void, String>> deleteOneTimeDeposit(String id) async {
+    try {
+      _deposits.doc(id).delete();
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+}
+
 class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
-  static final List<OneTimeDeposit> _deposits = [
+  final _controller =
+      StreamController<Result<List<OneTimeDeposit>, String>>.broadcast();
+
+  final List<OneTimeDeposit> _deposits = [
     OneTimeDeposit(
       id: '101',
       accountNo: '3045678912',
@@ -107,12 +177,16 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
     ),
   ];
 
+  void _emit() {
+    if (!_controller.isClosed) {
+      _controller.add(Success([..._deposits]));
+    }
+  }
+
   @override
-  Future<Result<List<OneTimeDeposit>, String>> fetchOneTimeDeposits() async {
-    await Future.delayed(
-      const Duration(seconds: 1),
-    ); // Simulate network latency
-    return Success([..._deposits]);
+  Stream<Result<List<OneTimeDeposit>, String>> watchOneTimeDeposits() async* {
+    yield Success([..._deposits]);
+    yield* _controller.stream;
   }
 
   @override
@@ -120,8 +194,9 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
     OneTimeDeposit deposit,
   ) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    final newDeposit = deposit.copyWith(id: const Uuid().v4());
+    final newDeposit = deposit.copyWith(id: deposit.id.isEmpty ? const Uuid().v4() : deposit.id);
     _deposits.add(newDeposit);
+    _emit();
     return const Success(null);
   }
 
@@ -133,6 +208,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
     final index = _deposits.indexWhere((d) => d.id == deposit.id);
     if (index != -1) {
       _deposits[index] = deposit;
+      _emit();
       return const Success(null);
     }
     return const Failure('One Time Deposit not found');
@@ -144,6 +220,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
     final initialLength = _deposits.length;
     _deposits.removeWhere((d) => d.id == id);
     if (_deposits.length < initialLength) {
+      _emit();
       return const Success(null);
     }
     return const Failure('One Time Deposit not found');
@@ -153,5 +230,12 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
 // Global Provider for the Repository.
 @riverpod
 OneTimeDepositRepository oneTimeDepositRepository(Ref ref) {
-  return FakeOneTimeDepositRepository();
+  const useFakeData = bool.fromEnvironment(
+    'USE_FAKE_DATA',
+    defaultValue: false,
+  );
+  if (useFakeData) {
+    return FakeOneTimeDepositRepository();
+  }
+  return FirestoreOneTimeDepositRepository(firestore.FirebaseFirestore.instance);
 }

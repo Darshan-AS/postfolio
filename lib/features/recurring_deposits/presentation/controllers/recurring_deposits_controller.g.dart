@@ -15,7 +15,7 @@ final recurringDepositsControllerProvider =
 
 final class RecurringDepositsControllerProvider
     extends
-        $AsyncNotifierProvider<
+        $StreamNotifierProvider<
           RecurringDepositsController,
           UnmodifiableListView<RecurringDeposit>
         > {
@@ -39,11 +39,11 @@ final class RecurringDepositsControllerProvider
 }
 
 String _$recurringDepositsControllerHash() =>
-    r'1d5942b9872a722db23c2ff1fb2a31ba63d5cc0d';
+    r'55d452653cb2bc883fd7006dbb6ccc2534acc30a';
 
 abstract class _$RecurringDepositsController
-    extends $AsyncNotifier<UnmodifiableListView<RecurringDeposit>> {
-  FutureOr<UnmodifiableListView<RecurringDeposit>> build();
+    extends $StreamNotifier<UnmodifiableListView<RecurringDeposit>> {
+  Stream<UnmodifiableListView<RecurringDeposit>> build();
   @$mustCallSuper
   @override
   void runBuild() {

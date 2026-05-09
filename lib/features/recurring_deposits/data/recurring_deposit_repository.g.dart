@@ -56,4 +56,4 @@ final class RecurringDepositRepositoryProvider
 }
 
 String _$recurringDepositRepositoryHash() =>
-    r'995f4788e3e91d6fc8cc1353ca13c94fdb7eaa92';
+    r'd5ea54d380ecc2c02511cf50cfe1b3090d7bb097';

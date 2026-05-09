@@ -8,24 +8,25 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 
+import 'package:uuid/uuid.dart';
+
 part 'recurring_deposits_controller.g.dart';
 
 @riverpod
 class RecurringDepositsController extends _$RecurringDepositsController {
   @override
-  FutureOr<UnmodifiableListView<RecurringDeposit>> build() async {
-    return _fetchRecurringDeposits();
+  Stream<UnmodifiableListView<RecurringDeposit>> build() {
+    return _watchRecurringDeposits();
   }
 
-  Future<UnmodifiableListView<RecurringDeposit>>
-  _fetchRecurringDeposits() async {
+  Stream<UnmodifiableListView<RecurringDeposit>> _watchRecurringDeposits() {
     final repository = ref.read(recurringDepositRepositoryProvider);
-    final result = await repository.fetchRecurringDeposits();
-
-    return switch (result) {
-      Success(value: final deposits) => UnmodifiableListView(deposits),
-      Failure(error: final error) => throw Exception(error),
-    };
+    return repository.watchRecurringDeposits().map((result) {
+      return switch (result) {
+        Success(value: final deposits) => UnmodifiableListView(deposits),
+        Failure(error: final error) => throw Exception(error),
+      };
+    });
   }
 
   Future<Result<void, String>> saveRecurringDeposit({
@@ -43,8 +44,10 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     String? linkedAutoDebitAccountNo,
     List<Nominee> nominees = const [],
   }) async {
+    final depositId = id ?? const Uuid().v4();
+
     final createResult = RecurringDeposit.create(
-      id: id ?? '', // FakeRepo will assign a real ID if creating
+      id: depositId,
       serialNo: serialNo,
       accountNo: accountNo,
       installmentAmount: installmentAmount,
@@ -73,10 +76,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
         : await repository.createRecurringDeposit(deposit);
 
     return switch (result) {
-      Success() => () {
-        ref.invalidateSelf(); // Triggers a re-fetch and rebuild
-        return const Success<void, String>(null);
-      }(),
+      Success() => const Success<void, String>(null),
       Failure(error: final err) => Failure<void, String>(err),
     };
   }
@@ -86,11 +86,9 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     final result = await repository.deleteRecurringDeposit(id);
 
     return switch (result) {
-      Success() => () {
-        ref.invalidateSelf();
-        return const Success<void, String>(null);
-      }(),
+      Success() => const Success<void, String>(null),
       Failure(error: final err) => Failure<void, String>(err),
     };
   }
 }
+

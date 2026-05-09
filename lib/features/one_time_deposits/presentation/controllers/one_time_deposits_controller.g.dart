@@ -14,7 +14,7 @@ final oneTimeDepositsControllerProvider = OneTimeDepositsControllerProvider._();
 
 final class OneTimeDepositsControllerProvider
     extends
-        $AsyncNotifierProvider<
+        $StreamNotifierProvider<
           OneTimeDepositsController,
           UnmodifiableListView<OneTimeDeposit>
         > {
@@ -38,11 +38,11 @@ final class OneTimeDepositsControllerProvider
 }
 
 String _$oneTimeDepositsControllerHash() =>
-    r'ac98defdeb006326fab01436e08987b152be36d9';
+    r'a35637d63c7eecc3d8ed17ba526b30871ce99a1a';
 
 abstract class _$OneTimeDepositsController
-    extends $AsyncNotifier<UnmodifiableListView<OneTimeDeposit>> {
-  FutureOr<UnmodifiableListView<OneTimeDeposit>> build();
+    extends $StreamNotifier<UnmodifiableListView<OneTimeDeposit>> {
+  Stream<UnmodifiableListView<OneTimeDeposit>> build();
   @$mustCallSuper
   @override
   void runBuild() {

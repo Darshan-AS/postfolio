@@ -22,6 +22,7 @@
 - Refactored Form Screens (`RecurringDeposit`, `OneTimeDeposit`, `Customer`) to reduce `build` method length and complexity.
 - Introduced `FormSectionHeader` to standardize section headers and reduce repetitive styling code.
 - Fixed convention violations where inline filtering was used instead of dedicated providers (e.g., `customerByIdProvider`).
+- Migrated `OneTimeDepositRepository` and `RecurringDepositRepository` to `cloud_firestore` with real-time stream sync, utilizing UUID generation for client-side offline support.
 
 ## Next Steps
 - **Form State Refactor**: Migrate local hook-based form state inside form screens to dedicated Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) for strictly pure business logic.

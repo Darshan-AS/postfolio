@@ -8,23 +8,25 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
 
+import 'package:uuid/uuid.dart';
+
 part 'one_time_deposits_controller.g.dart';
 
 @riverpod
 class OneTimeDepositsController extends _$OneTimeDepositsController {
   @override
-  FutureOr<UnmodifiableListView<OneTimeDeposit>> build() async {
-    return _fetchOneTimeDeposits();
+  Stream<UnmodifiableListView<OneTimeDeposit>> build() {
+    return _watchOneTimeDeposits();
   }
 
-  Future<UnmodifiableListView<OneTimeDeposit>> _fetchOneTimeDeposits() async {
+  Stream<UnmodifiableListView<OneTimeDeposit>> _watchOneTimeDeposits() {
     final repository = ref.read(oneTimeDepositRepositoryProvider);
-    final result = await repository.fetchOneTimeDeposits();
-
-    return switch (result) {
-      Success(value: final deposits) => UnmodifiableListView(deposits),
-      Failure(error: final error) => throw Exception(error),
-    };
+    return repository.watchOneTimeDeposits().map((result) {
+      return switch (result) {
+        Success(value: final deposits) => UnmodifiableListView(deposits),
+        Failure(error: final error) => throw Exception(error),
+      };
+    });
   }
 
   Future<Result<void, String>> saveOneTimeDeposit({
@@ -41,8 +43,10 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
     String? linkedSavingsAccountNo,
     List<Nominee> nominees = const [],
   }) async {
+    final depositId = id ?? const Uuid().v4();
+
     final createResult = OneTimeDeposit.create(
-      id: id ?? '', // FakeRepo will assign a real ID if creating
+      id: depositId,
       accountNo: accountNo,
       principalAmount: principalAmount,
       termYears: termYears,
@@ -70,10 +74,7 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
         : await repository.createOneTimeDeposit(deposit);
 
     return switch (result) {
-      Success() => () {
-        ref.invalidateSelf(); // Triggers a re-fetch and rebuild
-        return const Success<void, String>(null);
-      }(),
+      Success() => const Success<void, String>(null),
       Failure(error: final err) => Failure<void, String>(err),
     };
   }
@@ -83,11 +84,9 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
     final result = await repository.deleteOneTimeDeposit(id);
 
     return switch (result) {
-      Success() => () {
-        ref.invalidateSelf();
-        return const Success<void, String>(null);
-      }(),
+      Success() => const Success<void, String>(null),
       Failure(error: final err) => Failure<void, String>(err),
     };
   }
 }
+

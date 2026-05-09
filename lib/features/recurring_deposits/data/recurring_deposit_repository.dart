@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/models/nominee.dart';
@@ -10,14 +13,80 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'recurring_deposit_repository.g.dart';
 
 abstract class RecurringDepositRepository {
-  Future<Result<List<RecurringDeposit>, String>> fetchRecurringDeposits();
+  Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits();
   Future<Result<void, String>> createRecurringDeposit(RecurringDeposit deposit);
   Future<Result<void, String>> updateRecurringDeposit(RecurringDeposit deposit);
   Future<Result<void, String>> deleteRecurringDeposit(String id);
 }
 
+class FirestoreRecurringDepositRepository implements RecurringDepositRepository {
+  final firestore.FirebaseFirestore _firestore;
+
+  FirestoreRecurringDepositRepository(this._firestore);
+
+  firestore.CollectionReference<Map<String, dynamic>> get _deposits =>
+      _firestore.collection('recurring_deposits');
+
+  @override
+  Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits() {
+    return _deposits.snapshots().map((snapshot) {
+      try {
+        final deposits = snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return RecurringDeposit.fromJson(data);
+        }).toList();
+        return Success(deposits);
+      } catch (e) {
+        return Failure(e.toString());
+      }
+    });
+  }
+
+  @override
+  Future<Result<void, String>> createRecurringDeposit(RecurringDeposit deposit) async {
+    try {
+      final docRef = _deposits.doc(deposit.id);
+
+      final data = deposit.toJson();
+      data.remove('id');
+
+      docRef.set(data);
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
+  Future<Result<void, String>> updateRecurringDeposit(RecurringDeposit deposit) async {
+    try {
+      final data = deposit.toJson();
+      data.remove('id');
+      
+      _deposits.doc(deposit.id).update(data);
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
+  Future<Result<void, String>> deleteRecurringDeposit(String id) async {
+    try {
+      _deposits.doc(id).delete();
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+}
+
 class FakeRecurringDepositRepository implements RecurringDepositRepository {
-  static final List<RecurringDeposit> _deposits = [
+  final _controller =
+      StreamController<Result<List<RecurringDeposit>, String>>.broadcast();
+
+  final List<RecurringDeposit> _deposits = [
     RecurringDeposit(
       id: '201',
       serialNo: 'RD-001',
@@ -112,13 +181,16 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     ),
   ];
 
+  void _emit() {
+    if (!_controller.isClosed) {
+      _controller.add(Success([..._deposits]));
+    }
+  }
+
   @override
-  Future<Result<List<RecurringDeposit>, String>>
-  fetchRecurringDeposits() async {
-    await Future.delayed(
-      const Duration(seconds: 1),
-    ); // Simulate network latency
-    return Success([..._deposits]);
+  Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits() async* {
+    yield Success([..._deposits]);
+    yield* _controller.stream;
   }
 
   @override
@@ -126,8 +198,9 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     RecurringDeposit deposit,
   ) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    final newDeposit = deposit.copyWith(id: const Uuid().v4());
+    final newDeposit = deposit.copyWith(id: deposit.id.isEmpty ? const Uuid().v4() : deposit.id);
     _deposits.add(newDeposit);
+    _emit();
     return const Success(null);
   }
 
@@ -139,6 +212,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     final index = _deposits.indexWhere((d) => d.id == deposit.id);
     if (index != -1) {
       _deposits[index] = deposit;
+      _emit();
       return const Success(null);
     }
     return const Failure('Recurring Deposit not found');
@@ -150,6 +224,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     final initialLength = _deposits.length;
     _deposits.removeWhere((d) => d.id == id);
     if (_deposits.length < initialLength) {
+      _emit();
       return const Success(null);
     }
     return const Failure('Recurring Deposit not found');
@@ -159,5 +234,12 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 // Global Provider for the Repository.
 @riverpod
 RecurringDepositRepository recurringDepositRepository(Ref ref) {
-  return FakeRecurringDepositRepository();
+  const useFakeData = bool.fromEnvironment(
+    'USE_FAKE_DATA',
+    defaultValue: false,
+  );
+  if (useFakeData) {
+    return FakeRecurringDepositRepository();
+  }
+  return FirestoreRecurringDepositRepository(firestore.FirebaseFirestore.instance);
 }
