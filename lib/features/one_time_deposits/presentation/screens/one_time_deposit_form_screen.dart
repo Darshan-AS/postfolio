@@ -67,7 +67,7 @@ class _OneTimeDepositForm extends HookConsumerWidget {
     final selectedTermMonths = useState<int>(initialTermMonths);
     final selectedStatus = useState<DepositStatus>(deposit?.status ?? DepositStatus.active);
     final startDate = useState<DateTime>(deposit?.startDate ?? DateTime.now());
-    final nominees = useState<List<Nominee>>(deposit != null ? List.of(deposit.nominees) : []);
+    final nominees = useState<List<Nominee>>(deposit?.nominees.toList() ?? []);
 
     final isSaving = useState(false);
 
@@ -162,7 +162,6 @@ class _OneTimeDepositForm extends HookConsumerWidget {
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
           children: [
             ..._buildAccountInformation(
-              context,
               selectedCustomerId: selectedCustomerId,
               accountNoController: accountNoController,
               selectedStatus: selectedStatus,
@@ -179,7 +178,6 @@ class _OneTimeDepositForm extends HookConsumerWidget {
               projection: projection,
             ),
             ..._buildLinkedAccountsAndNominees(
-              context,
               linkedAccountController: linkedAccountController,
               nominees: nominees,
             ),
@@ -188,171 +186,169 @@ class _OneTimeDepositForm extends HookConsumerWidget {
       ),
     );
   }
+}
 
-  List<Widget> _buildAccountInformation(
-    BuildContext context, {
-    required ValueNotifier<String?> selectedCustomerId,
-    required TextEditingController accountNoController,
-    required ValueNotifier<DepositStatus> selectedStatus,
-  }) {
-    return [
-      FormSectionHeader(
-        title: t.oneTimeDeposits.sections.accountInformation,
-        padding: EdgeInsets.zero,
+List<Widget> _buildAccountInformation({
+  required ValueNotifier<String?> selectedCustomerId,
+  required TextEditingController accountNoController,
+  required ValueNotifier<DepositStatus> selectedStatus,
+}) {
+  return [
+    FormSectionHeader(
+      title: t.oneTimeDeposits.sections.accountInformation,
+      padding: EdgeInsets.zero,
+    ),
+    AppSpacings.gapMd,
+    CustomerSelectionField(
+      initialCustomerId: selectedCustomerId.value,
+      onCustomerSelected: (customer) {
+        selectedCustomerId.value = customer?.id;
+      },
+    ),
+    AppSpacings.gapLg,
+    AppTextField(
+      controller: accountNoController,
+      labelText: t.oneTimeDeposits.fields.accountNo,
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedTicket01,
+        size: AppDimensions.iconMd,
       ),
-      AppSpacings.gapMd,
-      CustomerSelectionField(
-        initialCustomerId: selectedCustomerId.value,
-        onCustomerSelected: (customer) {
-          selectedCustomerId.value = customer?.id;
-        },
+      validator: OneTimeDeposit.validateAccountNo,
+      textInputAction: TextInputAction.next,
+    ),
+    AppSpacings.gapLg,
+    AppSegmentedButtonField<DepositStatus>(
+      value: selectedStatus.value,
+      labelText: t.oneTimeDeposits.fields.status,
+      segments: DepositStatus.values
+          .map((status) => ButtonSegment(
+                value: status,
+                label: Text(status.displayName),
+              ))
+          .toList(),
+      onChanged: (status) {
+        selectedStatus.value = status;
+      },
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedActivity01,
+        size: AppDimensions.iconMd,
       ),
-      AppSpacings.gapLg,
-      AppTextField(
-        controller: accountNoController,
-        labelText: t.oneTimeDeposits.fields.accountNo,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedTicket01,
-          size: AppDimensions.iconMd,
-        ),
-        validator: OneTimeDeposit.validateAccountNo,
-        textInputAction: TextInputAction.next,
-      ),
-      AppSpacings.gapLg,
-      AppSegmentedButtonField<DepositStatus>(
-        value: selectedStatus.value,
-        labelText: t.oneTimeDeposits.fields.status,
-        segments: DepositStatus.values
-            .map((status) => ButtonSegment(
-                  value: status,
-                  label: Text(status.displayName),
-                ))
-            .toList(),
-        onChanged: (status) {
-          selectedStatus.value = status;
-        },
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedActivity01,
-          size: AppDimensions.iconMd,
-        ),
-      ),
-    ];
-  }
+    ),
+  ];
+}
 
-  List<Widget> _buildInvestmentDetails(
-    BuildContext context, {
-    required ValueNotifier<OneTimeSchemeType> selectedScheme,
-    required ValueNotifier<int> selectedTermYears,
-    required ValueNotifier<int> selectedTermMonths,
-    required TextEditingController principalAmountController,
-    required TextEditingController interestRateController,
-    required ValueNotifier<DateTime> startDate,
-    required TextEditingController startDateController,
-    required InvestmentProjection projection,
-  }) {
-    return [
-      FormSectionHeader(title: t.oneTimeDeposits.sections.investmentDetails),
-      AppDropdownField<OneTimeSchemeType>(
-        value: selectedScheme.value,
-        labelText: t.oneTimeDeposits.fields.schemeType,
-        items: OneTimeSchemeType.values
-            .map((scheme) => DropdownMenuItem(
-                  value: scheme,
-                  child: Text(scheme.displayName),
-                ))
-            .toList(),
-        onChanged: (scheme) {
-          if (scheme != null) {
-            selectedScheme.value = scheme;
-            selectedTermYears.value = scheme.defaultTenureYears;
+List<Widget> _buildInvestmentDetails(
+  BuildContext context, {
+  required ValueNotifier<OneTimeSchemeType> selectedScheme,
+  required ValueNotifier<int> selectedTermYears,
+  required ValueNotifier<int> selectedTermMonths,
+  required TextEditingController principalAmountController,
+  required TextEditingController interestRateController,
+  required ValueNotifier<DateTime> startDate,
+  required TextEditingController startDateController,
+  required InvestmentProjection projection,
+}) {
+  return [
+    FormSectionHeader(title: t.oneTimeDeposits.sections.investmentDetails),
+    AppDropdownField<OneTimeSchemeType>(
+      value: selectedScheme.value,
+      labelText: t.oneTimeDeposits.fields.schemeType,
+      items: OneTimeSchemeType.values
+          .map((scheme) => DropdownMenuItem(
+                value: scheme,
+                child: Text(scheme.displayName),
+              ))
+          .toList(),
+      onChanged: (scheme) {
+        if (scheme != null) {
+          selectedScheme.value = scheme;
+          selectedTermYears.value = scheme.defaultTenureYears;
+        }
+      },
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedLayers01,
+        size: AppDimensions.iconMd,
+      ),
+    ),
+    AppSpacings.gapLg,
+    AppTextField(
+      controller: principalAmountController,
+      labelText: t.oneTimeDeposits.fields.principalAmount,
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedCoins01,
+        size: AppDimensions.iconMd,
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      textInputAction: TextInputAction.next,
+    ),
+    AppSpacings.gapLg,
+    AppTextField(
+      controller: interestRateController,
+      labelText: t.oneTimeDeposits.fields.interestRate,
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedPercent,
+        size: AppDimensions.iconMd,
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      textInputAction: TextInputAction.next,
+    ),
+    AppSpacings.gapLg,
+    AppDateField(
+      controller: startDateController,
+      labelText: t.oneTimeDeposits.fields.startDate,
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: startDate.value,
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+        );
+        if (picked != null) {
+          startDate.value = picked;
+          if (context.mounted) {
+            startDateController.text = picked.toAppFormat();
           }
-        },
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedLayers01,
-          size: AppDimensions.iconMd,
-        ),
-      ),
-      AppSpacings.gapLg,
-      AppTextField(
-        controller: principalAmountController,
-        labelText: t.oneTimeDeposits.fields.principalAmount,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedCoins01,
-          size: AppDimensions.iconMd,
-        ),
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        textInputAction: TextInputAction.next,
-      ),
-      AppSpacings.gapLg,
-      AppTextField(
-        controller: interestRateController,
-        labelText: t.oneTimeDeposits.fields.interestRate,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedPercent,
-          size: AppDimensions.iconMd,
-        ),
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        textInputAction: TextInputAction.next,
-      ),
-      AppSpacings.gapLg,
-      AppDateField(
-        controller: startDateController,
-        labelText: t.oneTimeDeposits.fields.startDate,
-        onTap: () async {
-          final picked = await showDatePicker(
-            context: context,
-            initialDate: startDate.value,
-            firstDate: DateTime(2000),
-            lastDate: DateTime(2100),
-          );
-          if (picked != null) {
-            startDate.value = picked;
-            if (context.mounted) {
-              startDateController.text = picked.toAppFormat();
-            }
-          }
-        },
-      ),
-      AppSpacings.gapLg,
-      AppDurationInput(
-        isFixedTenure: selectedScheme.value.isFixedTenure,
-        allowedTenuresInYears: selectedScheme.value.allowedTenuresInYears,
-        selectedYears: selectedTermYears.value,
-        selectedMonths: selectedTermMonths.value,
-        onChanged: (years, months) {
-          selectedTermYears.value = years;
-          selectedTermMonths.value = months;
-        },
-      ),
-      AppSpacings.gapXl,
-      InvestmentProjectionCard(projection: projection),
-    ];
-  }
+        }
+      },
+    ),
+    AppSpacings.gapLg,
+    AppDurationInput(
+      isFixedTenure: selectedScheme.value.isFixedTenure,
+      allowedTenuresInYears: selectedScheme.value.allowedTenuresInYears,
+      selectedYears: selectedTermYears.value,
+      selectedMonths: selectedTermMonths.value,
+      onChanged: (years, months) {
+        selectedTermYears.value = years;
+        selectedTermMonths.value = months;
+      },
+    ),
+    AppSpacings.gapXl,
+    InvestmentProjectionCard(projection: projection),
+  ];
+}
 
-  List<Widget> _buildLinkedAccountsAndNominees(
-    BuildContext context, {
-    required TextEditingController linkedAccountController,
-    required ValueNotifier<List<Nominee>> nominees,
-  }) {
-    return [
-      FormSectionHeader(title: t.common.sections.linkedAccounts),
-      AppTextField(
-        controller: linkedAccountController,
-        labelText: t.oneTimeDeposits.fields.linkedSavingsAccount,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedBank,
-          size: AppDimensions.iconMd,
-        ),
-        textInputAction: TextInputAction.done,
+List<Widget> _buildLinkedAccountsAndNominees({
+  required TextEditingController linkedAccountController,
+  required ValueNotifier<List<Nominee>> nominees,
+}) {
+  return [
+    FormSectionHeader(title: t.common.sections.linkedAccounts),
+    AppTextField(
+      controller: linkedAccountController,
+      labelText: t.oneTimeDeposits.fields.linkedSavingsAccount,
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedBank,
+        size: AppDimensions.iconMd,
       ),
-      AppSpacings.gapMd,
-      NomineesInputSection(
-        nominees: nominees.value,
-        onChanged: (newNominees) {
-          nominees.value = newNominees;
-        },
-      ),
-      AppSpacings.gapXxl,
-    ];
-  }
+      textInputAction: TextInputAction.done,
+    ),
+    AppSpacings.gapMd,
+    NomineesInputSection(
+      nominees: nominees.value,
+      onChanged: (newNominees) {
+        nominees.value = newNominees;
+      },
+    ),
+    AppSpacings.gapXxl,
+  ];
 }

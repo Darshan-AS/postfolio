@@ -101,111 +101,110 @@ class InvestmentProjectionCard extends StatelessWidget {
       ),
     ).animate().fade(duration: 300.ms).slideY(begin: 0.05, end: 0);
   }
-
-  List<Widget> _buildWealthAccumulationDetails(
-    BuildContext context,
-    WealthAccumulation w,
-    NumberFormat formatter,
-  ) {
-    final theme = Theme.of(context);
-    return [
-      AppSpacings.gapMd,
-      Divider(color: theme.colorScheme.outlineVariant),
-      AppSpacings.gapMd,
-      _AnimatedStatRow(
-        label: t.projection.estimatedMaturity,
-        value: w.maturityAmount,
-        formatter: formatter,
-        valueStyle: theme.textTheme.headlineSmall?.copyWith(
-          color: theme.colorScheme.onSurface,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    ];
-  }
-
-  List<Widget> _buildIncomeGenerationDetails(
-    BuildContext context,
-    IncomeGeneration i,
-    NumberFormat formatter,
-  ) {
-    final theme = Theme.of(context);
-    return [
-      AppSpacings.gapSm,
-      _AnimatedStatRow(
-        label: t.projection.payout(
-          frequency: i.payoutFrequency.displayName,
-        ),
-        value: i.periodicPayoutAmount,
-        formatter: formatter,
-        valueStyle: theme.textTheme.titleMedium?.copyWith(
-          color: theme.colorScheme.secondary,
-        ),
-      ).animate().fade().slideY(begin: 0.1, end: 0),
-      AppSpacings.gapMd,
-      Divider(color: theme.colorScheme.outlineVariant),
-      AppSpacings.gapMd,
-      _AnimatedStatRow(
-        label: t.projection.totalReturn,
-        value: i.totalInvested + i.totalInterestEarned,
-        formatter: formatter,
-        valueStyle: theme.textTheme.headlineSmall?.copyWith(
-          color: theme.colorScheme.onSurface,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      AppSpacings.gapSm,
-      _AnimatedStatRow(
-        label: t.projection.estimatedMaturity,
-        value: i.maturityAmount,
-        formatter: formatter,
-        valueStyle: theme.textTheme.titleMedium,
-      ),
-    ];
-  }
-
-  List<Widget> _buildWealthAccumulationNote(BuildContext context, WealthAccumulation w) {
-    final theme = Theme.of(context);
-    if (w.note == null) return [];
-
-    return [
-      AppSpacings.gapSm,
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            t.projection.doublesIn,
-            style: theme.textTheme.bodyMedium,
-          ),
-          Text(
-            w.note!,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ).animate().fade(),
-    ];
-  }
-
-  List<Widget> _buildIncomeGenerationNote(BuildContext context, IncomeGeneration i) {
-    final theme = Theme.of(context);
-    if (i.note == null) return [];
-
-    return [
-      AppSpacings.gapMd,
-      Text(
-        i.note!,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.primary,
-          fontStyle: FontStyle.italic,
-        ),
-      ).animate().fade(),
-    ];
-  }
 }
 
+List<Widget> _buildWealthAccumulationDetails(
+  BuildContext context,
+  WealthAccumulation w,
+  NumberFormat formatter,
+) {
+  final theme = Theme.of(context);
+  return [
+    AppSpacings.gapMd,
+    Divider(color: theme.colorScheme.outlineVariant),
+    AppSpacings.gapMd,
+    _AnimatedStatRow(
+      label: t.projection.estimatedMaturity,
+      value: w.maturityAmount,
+      formatter: formatter,
+      valueStyle: theme.textTheme.headlineSmall?.copyWith(
+        color: theme.colorScheme.onSurface,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  ];
+}
+
+List<Widget> _buildIncomeGenerationDetails(
+  BuildContext context,
+  IncomeGeneration i,
+  NumberFormat formatter,
+) {
+  final theme = Theme.of(context);
+  return [
+    AppSpacings.gapSm,
+    _AnimatedStatRow(
+      label: t.projection.payout(
+        frequency: i.payoutFrequency.displayName,
+      ),
+      value: i.periodicPayoutAmount,
+      formatter: formatter,
+      valueStyle: theme.textTheme.titleMedium?.copyWith(
+        color: theme.colorScheme.secondary,
+      ),
+    ).animate().fade().slideY(begin: 0.1, end: 0),
+    AppSpacings.gapMd,
+    Divider(color: theme.colorScheme.outlineVariant),
+    AppSpacings.gapMd,
+    _AnimatedStatRow(
+      label: t.projection.totalReturn,
+      value: i.totalInvested + i.totalInterestEarned,
+      formatter: formatter,
+      valueStyle: theme.textTheme.headlineSmall?.copyWith(
+        color: theme.colorScheme.onSurface,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    AppSpacings.gapSm,
+    _AnimatedStatRow(
+      label: t.projection.estimatedMaturity,
+      value: i.maturityAmount,
+      formatter: formatter,
+      valueStyle: theme.textTheme.titleMedium,
+    ),
+  ];
+}
+
+List<Widget> _buildWealthAccumulationNote(BuildContext context, WealthAccumulation w) {
+  final theme = Theme.of(context);
+  if (w.note == null) return [];
+
+  return [
+    AppSpacings.gapSm,
+    Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          t.projection.doublesIn,
+          style: theme.textTheme.bodyMedium,
+        ),
+        Text(
+          w.note!,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    ).animate().fade(),
+  ];
+}
+
+List<Widget> _buildIncomeGenerationNote(BuildContext context, IncomeGeneration i) {
+  final theme = Theme.of(context);
+  if (i.note == null) return [];
+
+  return [
+    AppSpacings.gapMd,
+    Text(
+      i.note!,
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.primary,
+        fontStyle: FontStyle.italic,
+      ),
+    ).animate().fade(),
+  ];
+}
 
 class _AnimatedStatRow extends StatelessWidget {
   final String label;

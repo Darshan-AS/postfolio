@@ -8,6 +8,11 @@ import 'package:postfolio/core/models/investment_projection.dart';
 class ProjectionCalculator {
   const ProjectionCalculator._();
 
+  static const int _monthsInYear = 12;
+  static const int _monthsInQuarter = 3;
+  static const int _quartersInYear = 4;
+  static const double _percentageDivisor = 100.0;
+
   /// Calculate projection for Recurring Deposit (RD)
   /// Compounding Frequency: Quarterly.
   static InvestmentProjection calculateRD({
@@ -18,15 +23,21 @@ class ProjectionCalculator {
     required int termMonths,
     int defaultedMonths = 0,
   }) {
-    final totalMonths = (termYears * 12) + termMonths;
+    final totalMonths = (termYears * _monthsInYear) + termMonths;
+    final decimalInterestRate = interestRate / _percentageDivisor;
+    final quarterlyInterestRate = decimalInterestRate / _quartersInYear;
 
-    // RD Compounding Formula: M = sum(P * (1 + r/400)^t_i)
+    // RD Compounding Formula: M = sum(P * (1 + r/n)^(n*t_i))
     // t_i is the time in quarters the i-th deposit stays in the account
     final maturityAmount = List.generate(totalMonths, (index) {
-      // totalMonths - index gives us months remaining for this deposit (from totalMonths down to 1)
-      final quarters = (totalMonths - index) / 3.0;
-      return monthlyInstallment * pow(1 + (interestRate / 400), quarters);
-    }).fold<double>(0.0, (sum, value) => sum + value);
+      // totalMonths - index gives us months remaining for this deposit
+      final monthsRemaining = totalMonths - index;
+      final quartersRemaining = monthsRemaining / _monthsInQuarter;
+      return monthlyInstallment * pow(1 + quarterlyInterestRate, quartersRemaining);
+    }).fold<double>(
+      0.0,
+      (accumulatedTotal, installmentMaturity) => accumulatedTotal + installmentMaturity,
+    );
 
     final totalInvested = monthlyInstallment * totalMonths;
     final totalInterestEarned = maturityAmount - totalInvested;
@@ -54,8 +65,11 @@ class ProjectionCalculator {
     required DateTime startDate,
     required int termYears,
   }) {
-    // Annual Payout: P * [ (1 + r/400)^4 - 1 ]
-    final annualPayout = principal * (pow(1 + (interestRate / 400), 4) - 1);
+    final decimalInterestRate = interestRate / _percentageDivisor;
+    final quarterlyInterestRate = decimalInterestRate / _quartersInYear;
+
+    // Annual Payout: P * [ (1 + r/n)^n - 1 ]
+    final annualPayout = principal * (pow(1 + quarterlyInterestRate, _quartersInYear) - 1);
     final totalInterestEarned = annualPayout * termYears;
 
     final maturityDate = DateTime(
@@ -82,9 +96,11 @@ class ProjectionCalculator {
     required DateTime startDate,
     int termYears = 5, // MIS is typically fixed to 5 years
   }) {
-    // Monthly Payout: P * (r/1200)
-    final monthlyPayout = principal * (interestRate / 1200);
-    final totalMonths = termYears * 12;
+    final decimalInterestRate = interestRate / _percentageDivisor;
+
+    // Monthly Payout: P * (r / 12)
+    final monthlyPayout = principal * (decimalInterestRate / _monthsInYear);
+    final totalMonths = termYears * _monthsInYear;
     final totalInterestEarned = monthlyPayout * totalMonths;
 
     final maturityDate = DateTime(
@@ -111,8 +127,10 @@ class ProjectionCalculator {
     required DateTime startDate,
     int termYears = 5, // NSC is typically fixed to 5 years
   }) {
-    // Maturity Amount: P * (1 + r/100)^5
-    final maturityAmount = principal * pow(1 + (interestRate / 100), termYears);
+    final decimalInterestRate = interestRate / _percentageDivisor;
+
+    // Maturity Amount: P * (1 + r)^t
+    final maturityAmount = principal * pow(1 + decimalInterestRate, termYears);
     final totalInterestEarned = maturityAmount - principal;
 
     final maturityDate = DateTime(
@@ -136,15 +154,17 @@ class ProjectionCalculator {
     required double interestRate,
     required DateTime startDate,
   }) {
+    final decimalInterestRate = interestRate / _percentageDivisor;
+
     // Principal strictly doubles
     final maturityAmount = principal * 2;
     final totalInterestEarned = principal;
 
     int timeInMonths = 0;
     if (interestRate > 0) {
-      // Time to double: 2 = (1 + r/100)^t => t = ln(2) / ln(1 + r/100)
-      final timeInYears = log(2) / log(1 + (interestRate / 100));
-      timeInMonths = (timeInYears * 12).round();
+      // Time to double: 2 = (1 + r)^t => t = ln(2) / ln(1 + r)
+      final timeInYears = log(2) / log(1 + decimalInterestRate);
+      timeInMonths = (timeInYears * _monthsInYear).round();
     }
 
     final maturityDate = DateTime(
@@ -153,8 +173,8 @@ class ProjectionCalculator {
       startDate.day,
     );
 
-    final years = timeInMonths ~/ 12;
-    final months = timeInMonths % 12;
+    final years = timeInMonths ~/ _monthsInYear;
+    final months = timeInMonths % _monthsInYear;
     final durationNote = timeInMonths > 0
         ? '$years Years & $months Months'
         : null;
@@ -175,35 +195,30 @@ class ProjectionCalculator {
     required double interestRate,
     required DateTime startDate,
     required int termYears,
-  }) {
-    switch (schemeType) {
-      case OneTimeSchemeType.timeDeposit:
-        return calculateTD(
-          principal: principalAmount,
-          interestRate: interestRate,
-          startDate: startDate,
-          termYears: termYears,
-        );
-      case OneTimeSchemeType.monthlyIncomeScheme:
-        return calculateMIS(
-          principal: principalAmount,
-          interestRate: interestRate,
-          startDate: startDate,
-          termYears: termYears,
-        );
-      case OneTimeSchemeType.nationalSavingsCertificate:
-        return calculateNSC(
-          principal: principalAmount,
-          interestRate: interestRate,
-          startDate: startDate,
-          termYears: termYears,
-        );
-      case OneTimeSchemeType.kisanVikasPatra:
-        return calculateKVP(
-          principal: principalAmount,
-          interestRate: interestRate,
-          startDate: startDate,
-        );
-    }
-  }
+  }) =>
+      switch (schemeType) {
+        OneTimeSchemeType.timeDeposit => calculateTD(
+            principal: principalAmount,
+            interestRate: interestRate,
+            startDate: startDate,
+            termYears: termYears,
+          ),
+        OneTimeSchemeType.monthlyIncomeScheme => calculateMIS(
+            principal: principalAmount,
+            interestRate: interestRate,
+            startDate: startDate,
+            termYears: termYears,
+          ),
+        OneTimeSchemeType.nationalSavingsCertificate => calculateNSC(
+            principal: principalAmount,
+            interestRate: interestRate,
+            startDate: startDate,
+            termYears: termYears,
+          ),
+        OneTimeSchemeType.kisanVikasPatra => calculateKVP(
+            principal: principalAmount,
+            interestRate: interestRate,
+            startDate: startDate,
+          ),
+      };
 }

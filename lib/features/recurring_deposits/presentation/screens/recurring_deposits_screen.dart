@@ -55,91 +55,14 @@ class RecurringDepositsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: depositsState.when(
-        data: (deposits) {
-          if (deposits.isEmpty) {
-            return Center(child: Text(t.recurringDeposits.noDepositsFound));
-          }
-          return RefreshIndicator(
-            onRefresh: () =>
-                ref.refresh(recurringDepositsControllerProvider.future),
-            child: ListView.separated(
-              padding: const EdgeInsets.only(
-                bottom: AppDimensions.listBottomPaddingFAB,
-              ),
-              itemCount: deposits.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final deposit = deposits[index];
-                return RecurringDepositCard(
-                  customerId: deposit.customerId,
-                  serialNo: deposit.serialNo,
-                  accountNo: deposit.accountNo,
-                  installmentAmount: deposit.installmentAmount,
-                  status: deposit.status,
-                  maturityDate: deposit.maturityDate,
-                  onTap: () =>
-                      RecurringDepositDetailRoute(deposit.id).push(context),
-                  onEdit: () =>
-                      RecurringDepositEditRoute(deposit.id).push(context),
-                  onDelete: () async {
-                    final confirmed = await AppDialogs.confirmDelete(
-                      context,
-                      title: t.recurringDeposits.deleteDeposit,
-                      content: t.recurringDeposits.deleteDepositConfirmation,
-                    );
-                    if (confirmed == true) {
-                      final result = await ref
-                          .read(recurringDepositsControllerProvider.notifier)
-                          .deleteRecurringDeposit(deposit.id);
-
-                      if (result is Failure && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              t.recurringDeposits.failedToDeleteDeposit(
-                                error: (result as Failure).error.toString(),
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                );
-              },
-            ),
-          );
-        },
-        loading: () => Skeletonizer(
-          enabled: true,
-          child: ListView.separated(
-            padding: const EdgeInsets.only(
-              bottom: AppDimensions.listBottomPaddingFAB,
-            ),
-            itemCount: 5,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final dummy = RecurringDeposit.dummy;
-              return RecurringDepositCard(
-                customerId: dummy.customerId,
-                serialNo: dummy.serialNo,
-                accountNo: dummy.accountNo,
-                installmentAmount: dummy.installmentAmount,
-                status: dummy.status,
-                maturityDate: dummy.maturityDate,
-                onTap: () {},
-                onEdit: () {},
-                onDelete: () {},
-              );
-            },
+      body: switch (depositsState) {
+        AsyncData(:final value) => _buildDataState(context, ref, value),
+        AsyncError(:final error) => ErrorStateView(
+            message: error.toString(),
+            onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
           ),
-        ),
-        error: (error, stack) => ErrorStateView(
-          message: error.toString(),
-          onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
-        ),
-      ),
+        _ => _buildLoadingState(),
+      },
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => const RecurringDepositCreateRoute().push(context),
         icon: const HugeIcon(
@@ -147,6 +70,86 @@ class RecurringDepositsScreen extends ConsumerWidget {
           size: AppDimensions.iconMd,
         ),
         label: Text(t.recurringDeposits.newDeposit),
+      ),
+    );
+  }
+
+  Widget _buildDataState(BuildContext context, WidgetRef ref, List<RecurringDeposit> deposits) {
+    if (deposits.isEmpty) {
+      return Center(child: Text(t.recurringDeposits.noDepositsFound));
+    }
+    return RefreshIndicator(
+      onRefresh: () => ref.refresh(recurringDepositsControllerProvider.future),
+      child: ListView.separated(
+        padding: const EdgeInsets.only(
+          bottom: AppDimensions.listBottomPaddingFAB,
+        ),
+        itemCount: deposits.length,
+        separatorBuilder: (context, index) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final deposit = deposits[index];
+          return RecurringDepositCard(
+            customerId: deposit.customerId,
+            serialNo: deposit.serialNo,
+            accountNo: deposit.accountNo,
+            installmentAmount: deposit.installmentAmount,
+            status: deposit.status,
+            maturityDate: deposit.maturityDate,
+            onTap: () => RecurringDepositDetailRoute(deposit.id).push(context),
+            onEdit: () => RecurringDepositEditRoute(deposit.id).push(context),
+            onDelete: () async {
+              final confirmed = await AppDialogs.confirmDelete(
+                context,
+                title: t.recurringDeposits.deleteDeposit,
+                content: t.recurringDeposits.deleteDepositConfirmation,
+              );
+              if (confirmed == true) {
+                final result = await ref
+                    .read(recurringDepositsControllerProvider.notifier)
+                    .deleteRecurringDeposit(deposit.id);
+
+                if (result is Failure && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        t.recurringDeposits.failedToDeleteDeposit(
+                          error: (result as Failure).error.toString(),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+              }
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Skeletonizer(
+      enabled: true,
+      child: ListView.separated(
+        padding: const EdgeInsets.only(
+          bottom: AppDimensions.listBottomPaddingFAB,
+        ),
+        itemCount: 5,
+        separatorBuilder: (context, index) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final dummy = RecurringDeposit.dummy;
+          return RecurringDepositCard(
+            customerId: dummy.customerId,
+            serialNo: dummy.serialNo,
+            accountNo: dummy.accountNo,
+            installmentAmount: dummy.installmentAmount,
+            status: dummy.status,
+            maturityDate: dummy.maturityDate,
+            onTap: () {},
+            onEdit: () {},
+            onDelete: () {},
+          );
+        },
       ),
     );
   }

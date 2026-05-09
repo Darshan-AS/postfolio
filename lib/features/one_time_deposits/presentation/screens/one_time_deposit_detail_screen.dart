@@ -61,51 +61,26 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
             badge: StatusBadge(status: deposit.status.displayName),
           ),
           body: [
-            deposit.projection.when(
-              wealthAccumulation: (
-                totalInvested,
-                maturityAmount,
-                totalInterestEarned,
-                _,
-                note,
-              ) => Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (note != null && note.isNotEmpty)
-                    KvpMultiplierBanner(doublesInText: note),
-                  WealthAccumulationGrid(
-                    totalInvested: totalInvested,
-                    projectedInterest: totalInterestEarned,
-                    maturityAmount: maturityAmount,
-                  ),
-                ],
-              ),
-              incomeGeneration: (
-                totalInvested,
-                _,
-                totalInterestEarned,
-                _,
-                _,
-                payoutFrequency,
-                _,
-              ) => IncomeGenerationGrid(
-                principal: deposit.principalAmount,
-                periodicPayout: deposit.projection.whenOrNull(
-                      incomeGeneration: (
-                        _,
-                        _,
-                        _,
-                        _,
-                        periodicPayoutAmount,
-                        _,
-                        _,
-                      ) => periodicPayoutAmount,
-                    ) ??
-                    0,
-                payoutFrequency: payoutFrequency.displayName,
-                totalInterestEarned: totalInterestEarned,
-              ),
-            ),
+            switch (deposit.projection) {
+              WealthAccumulation(:final totalInvested, :final maturityAmount, :final totalInterestEarned, :final note) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (note != null && note.isNotEmpty)
+                      KvpMultiplierBanner(doublesInText: note),
+                    WealthAccumulationGrid(
+                      totalInvested: totalInvested,
+                      projectedInterest: totalInterestEarned,
+                      maturityAmount: maturityAmount,
+                    ),
+                  ],
+                ),
+              IncomeGeneration(:final totalInterestEarned, :final payoutFrequency, :final periodicPayoutAmount) => IncomeGenerationGrid(
+                  principal: deposit.principalAmount,
+                  periodicPayout: periodicPayoutAmount,
+                  payoutFrequency: payoutFrequency.displayName,
+                  totalInterestEarned: totalInterestEarned,
+                ),
+            },
             AppSpacings.gapXxl,
             DetailSection(
               title: t.oneTimeDeposits.sections.investmentDetails,

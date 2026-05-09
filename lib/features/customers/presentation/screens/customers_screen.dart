@@ -73,100 +73,14 @@ class CustomersScreen extends ConsumerWidget {
         ],
       ),
       // 2. Handle the AsyncValue UI states smoothly
-      body: customersState.when(
-        data: (customers) {
-          if (customers.isEmpty) {
-            return Center(child: Text(t.customers.noCustomersFound));
-          }
-          return RefreshIndicator(
-            onRefresh: () async {
-              // Trigger a manual refresh from the controller
-              ref.invalidate(customersControllerProvider);
-              await ref.read(customersControllerProvider.future);
-            },
-            child: ListView.separated(
-              padding: const EdgeInsets.only(
-                bottom: AppDimensions.listBottomPaddingFAB,
-              ),
-              itemCount: customers.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final customer = customers[index];
-                return CustomerCard(
-                  name: customer.name,
-                  phone: customer.phone ?? t.common.notProvided,
-                  onTap: () => CustomerDetailRoute(customer.id).push(context),
-                  onEdit: () => CustomerEditRoute(customer.id).push(context),
-                  onDelete: () async {
-                    final confirmed = await AppDialogs.confirmDelete(
-                      context,
-                      title: t.customers.deleteCustomer,
-                      content: t.customers.deleteCustomerConfirmation,
-                    );
-                    if (confirmed == true) {
-                      final result = await ref
-                          .read(customersControllerProvider.notifier)
-                          .deleteCustomer(customer.id);
-
-                      if (result is Failure && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              t.customers.failedToDeleteCustomer(
-                                error: (result as Failure).error.toString(),
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  onPhoneTapped: () => ref
-                      .read(intentServiceProvider)
-                      .launchPhone(customer.phone ?? ''),
-                  onWhatsAppTapped: () => ref
-                      .read(intentServiceProvider)
-                      .launchWhatsApp(customer.phone ?? ''),
-                  onSmsTapped: () => ref
-                      .read(intentServiceProvider)
-                      .launchSms(customer.phone ?? ''),
-                  onLocationTapped: () => ref
-                      .read(intentServiceProvider)
-                      .launchMapSearch(customer.name),
-                );
-              },
-            ),
-          );
-        },
-        loading: () => Skeletonizer(
-          enabled: true,
-          child: ListView.separated(
-            padding: const EdgeInsets.only(
-              bottom: AppDimensions.listBottomPaddingFAB,
-            ),
-            itemCount: 5,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final dummy = Customer.dummy;
-              return CustomerCard(
-                name: dummy.name,
-                phone: dummy.phone ?? '',
-                onTap: () {},
-                onEdit: () {},
-                onDelete: () {},
-                onPhoneTapped: () {},
-                onWhatsAppTapped: () {},
-                onSmsTapped: () {},
-                onLocationTapped: () {},
-              );
-            },
+      body: switch (customersState) {
+        AsyncData(:final value) => _buildDataState(context, ref, value),
+        AsyncError(:final error) => ErrorStateView(
+            message: error.toString(),
+            onRetry: () => ref.invalidate(customersControllerProvider),
           ),
-        ),
-        error: (error, stack) => ErrorStateView(
-          message: error.toString(),
-          onRetry: () => ref.invalidate(customersControllerProvider),
-        ),
-      ),
+        _ => _buildLoadingState(),
+      },
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => const CustomerCreateRoute().push(context),
         icon: const HugeIcon(
@@ -174,6 +88,97 @@ class CustomersScreen extends ConsumerWidget {
           size: AppDimensions.iconMd,
         ),
         label: Text(t.customers.newCustomer),
+      ),
+    );
+  }
+
+  Widget _buildDataState(BuildContext context, WidgetRef ref, List<Customer> customers) {
+    if (customers.isEmpty) {
+      return Center(child: Text(t.customers.noCustomersFound));
+    }
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(customersControllerProvider);
+        await ref.read(customersControllerProvider.future);
+      },
+      child: ListView.separated(
+        padding: const EdgeInsets.only(
+          bottom: AppDimensions.listBottomPaddingFAB,
+        ),
+        itemCount: customers.length,
+        separatorBuilder: (context, index) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final customer = customers[index];
+          return CustomerCard(
+            name: customer.name,
+            phone: customer.phone ?? t.common.notProvided,
+            onTap: () => CustomerDetailRoute(customer.id).push(context),
+            onEdit: () => CustomerEditRoute(customer.id).push(context),
+            onDelete: () async {
+              final confirmed = await AppDialogs.confirmDelete(
+                context,
+                title: t.customers.deleteCustomer,
+                content: t.customers.deleteCustomerConfirmation,
+              );
+              if (confirmed == true) {
+                final result = await ref
+                    .read(customersControllerProvider.notifier)
+                    .deleteCustomer(customer.id);
+
+                if (result is Failure && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        t.customers.failedToDeleteCustomer(
+                          error: (result as Failure).error.toString(),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+              }
+            },
+            onPhoneTapped: () => ref
+                .read(intentServiceProvider)
+                .launchPhone(customer.phone ?? ''),
+            onWhatsAppTapped: () => ref
+                .read(intentServiceProvider)
+                .launchWhatsApp(customer.phone ?? ''),
+            onSmsTapped: () => ref
+                .read(intentServiceProvider)
+                .launchSms(customer.phone ?? ''),
+            onLocationTapped: () => ref
+                .read(intentServiceProvider)
+                .launchMapSearch(customer.name),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Skeletonizer(
+      enabled: true,
+      child: ListView.separated(
+        padding: const EdgeInsets.only(
+          bottom: AppDimensions.listBottomPaddingFAB,
+        ),
+        itemCount: 5,
+        separatorBuilder: (context, index) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final dummy = Customer.dummy;
+          return CustomerCard(
+            name: dummy.name,
+            phone: dummy.phone ?? '',
+            onTap: () {},
+            onEdit: () {},
+            onDelete: () {},
+            onPhoneTapped: () {},
+            onWhatsAppTapped: () {},
+            onSmsTapped: () {},
+            onLocationTapped: () {},
+          );
+        },
       ),
     );
   }

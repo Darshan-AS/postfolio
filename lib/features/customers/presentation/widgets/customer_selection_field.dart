@@ -110,11 +110,11 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
         children: [
           _buildSearchBar(context, searchQuery),
           Expanded(
-            child: state.when(
-              data: (customers) => _buildDataState(context, customers, searchQuery.value),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => _buildErrorState(ref, error.toString()),
-            ),
+            child: switch (state) {
+              AsyncData(:final value) => _buildDataState(context, value, searchQuery.value),
+              AsyncError(:final error) => _buildErrorState(ref, error.toString()),
+              _ => const Center(child: CircularProgressIndicator()),
+            },
           ),
         ],
       ),

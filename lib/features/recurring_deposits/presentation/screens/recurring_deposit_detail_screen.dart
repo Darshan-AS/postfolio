@@ -87,20 +87,14 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
               ],
             ),
             AppSpacings.gapXxl,
-            deposit.projection.when(
-              wealthAccumulation: (
-                totalInvested,
-                maturityAmount,
-                totalInterestEarned,
-                _,
-                _,
-              ) => WealthAccumulationGrid(
-                totalInvested: totalInvested,
-                projectedInterest: totalInterestEarned,
-                maturityAmount: maturityAmount,
-              ),
-              incomeGeneration: (_, _, _, _, _, _, _) => const SizedBox.shrink(),
-            ),
+            switch (deposit.projection) {
+              WealthAccumulation(:final totalInvested, :final maturityAmount, :final totalInterestEarned) => WealthAccumulationGrid(
+                  totalInvested: totalInvested,
+                  projectedInterest: totalInterestEarned,
+                  maturityAmount: maturityAmount,
+                ),
+              IncomeGeneration() => const SizedBox.shrink(),
+            },
             AppSpacings.gapXxl,
             DetailSection(
               title: t.recurringDeposits.sections.investmentDetails,

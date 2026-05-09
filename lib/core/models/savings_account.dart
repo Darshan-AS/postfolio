@@ -28,10 +28,11 @@ sealed class SavingsAccount with _$SavingsAccount {
   static String? validateNominees(List<Nominee> nominees) {
     if (nominees.isEmpty) return null; // Valid if empty
 
-    double totalPercentage = 0;
-    for (final n in nominees) {
-      totalPercentage += n.percentage;
-    }
+    final totalPercentage = nominees.fold<double>(
+      0.0,
+      (sum, nominee) => sum + nominee.percentage,
+    );
+
     if (totalPercentage != 100.0) {
       return 'Total nominee percentage must be exactly 100%';
     }

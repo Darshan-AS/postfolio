@@ -112,92 +112,17 @@ class CustomerDetailScreen extends ConsumerWidget {
           ),
           body: [
             if (customer.address != null || customer.dateOfBirth != null) ...[
-              DetailSection(
-                title: t.customers.sections.personalInfo,
-                children: [
-                  if (customer.address != null)
-                    DetailItem(
-                      icon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedLocation01,
-                        size: AppDimensions.iconMd,
-                      ),
-                      label: t.customers.fields.homeAddress,
-                      value: customer.address!,
-                    ),
-                  if (customer.address != null && customer.dateOfBirth != null)
-                    const Divider(height: 1),
-                  if (customer.dateOfBirth != null)
-                    DetailItem(
-                      icon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedCalendar01,
-                        size: AppDimensions.iconMd,
-                      ),
-                      label: t.customers.fields.dateOfBirth,
-                      value: customer.dateOfBirth!.toAppFormat(),
-                    ),
-                ],
-              ),
+              _buildPersonalInfo(customer),
               AppSpacings.gapLg,
             ],
             if (customer.cifNumber != null ||
                 customer.aadhaarNumber != null ||
                 customer.panNumber != null) ...[
-              DetailSection(
-                title: t.customers.sections.identityDocuments,
-                children: [
-                  if (customer.cifNumber != null)
-                    DetailItem(
-                      icon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedTicket01,
-                        size: AppDimensions.iconMd,
-                      ),
-                      label: t.customers.fields.cif,
-                      value: customer.cifNumber!,
-                    ),
-                  if (customer.cifNumber != null &&
-                      (customer.aadhaarNumber != null ||
-                          customer.panNumber != null))
-                    const Divider(height: 1),
-                  if (customer.aadhaarNumber != null)
-                    DetailItem(
-                      icon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedId,
-                        size: AppDimensions.iconMd,
-                      ),
-                      label: t.customers.fields.aadhaarNumber,
-                      value: customer.aadhaarNumber!,
-                    ),
-                  if (customer.aadhaarNumber != null &&
-                      customer.panNumber != null)
-                    const Divider(height: 1),
-                  if (customer.panNumber != null)
-                    DetailItem(
-                      icon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedCreditCard,
-                        size: AppDimensions.iconMd,
-                      ),
-                      label: t.customers.fields.panNumber,
-                      value: customer.panNumber!,
-                    ),
-                ],
-              ),
+              _buildIdentityDocuments(customer),
               AppSpacings.gapLg,
             ],
             if (customer.savingsAccount != null) ...[
-              DetailSection(
-                title: t.customers.sections.savingsBank,
-                children: [
-                  if (customer.savingsAccount?.accountNumber != null)
-                    DetailItem(
-                      icon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedBank,
-                        size: AppDimensions.iconMd,
-                      ),
-                      label: t.customers.fields.sbAccountNumber,
-                      value: customer.savingsAccount!.accountNumber,
-                    ),
-                ],
-              ),
+              _buildSavingsBank(customer),
               AppSpacings.gapLg,
               if (customer.savingsAccount?.nominees != null)
                 NomineesDetailSection(
@@ -209,4 +134,89 @@ class CustomerDetailScreen extends ConsumerWidget {
       },
     );
   }
+}
+
+Widget _buildPersonalInfo(Customer customer) {
+  return DetailSection(
+    title: t.customers.sections.personalInfo,
+    children: [
+      if (customer.address != null)
+        DetailItem(
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedLocation01,
+            size: AppDimensions.iconMd,
+          ),
+          label: t.customers.fields.homeAddress,
+          value: customer.address!,
+        ),
+      if (customer.address != null && customer.dateOfBirth != null)
+        const Divider(height: 1),
+      if (customer.dateOfBirth != null)
+        DetailItem(
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedCalendar01,
+            size: AppDimensions.iconMd,
+          ),
+          label: t.customers.fields.dateOfBirth,
+          value: customer.dateOfBirth!.toAppFormat(),
+        ),
+    ],
+  );
+}
+
+Widget _buildIdentityDocuments(Customer customer) {
+  return DetailSection(
+    title: t.customers.sections.identityDocuments,
+    children: [
+      if (customer.cifNumber != null)
+        DetailItem(
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedTicket01,
+            size: AppDimensions.iconMd,
+          ),
+          label: t.customers.fields.cif,
+          value: customer.cifNumber!,
+        ),
+      if (customer.cifNumber != null &&
+          (customer.aadhaarNumber != null || customer.panNumber != null))
+        const Divider(height: 1),
+      if (customer.aadhaarNumber != null)
+        DetailItem(
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedId,
+            size: AppDimensions.iconMd,
+          ),
+          label: t.customers.fields.aadhaarNumber,
+          value: customer.aadhaarNumber!,
+        ),
+      if (customer.aadhaarNumber != null && customer.panNumber != null)
+        const Divider(height: 1),
+      if (customer.panNumber != null)
+        DetailItem(
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedCreditCard,
+            size: AppDimensions.iconMd,
+          ),
+          label: t.customers.fields.panNumber,
+          value: customer.panNumber!,
+        ),
+    ],
+  );
+}
+
+Widget _buildSavingsBank(Customer customer) {
+  return DetailSection(
+    title: t.customers.sections.savingsBank,
+    children: [
+      if (customer.savingsAccount?.accountNumber != null)
+        DetailItem(
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedBank,
+            size: AppDimensions.iconMd,
+          ),
+          label: t.customers.fields.sbAccountNumber,
+          value: customer.savingsAccount!.accountNumber,
+        ),
+    ],
+  );
 }

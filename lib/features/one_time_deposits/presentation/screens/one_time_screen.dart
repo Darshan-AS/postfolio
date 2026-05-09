@@ -55,89 +55,14 @@ class OneTimeDepositsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: depositsState.when(
-        data: (deposits) {
-          if (deposits.isEmpty) {
-            return Center(child: Text(t.oneTimeDeposits.noDepositsFound));
-          }
-          return RefreshIndicator(
-            onRefresh: () =>
-                ref.refresh(oneTimeDepositsControllerProvider.future),
-            child: ListView.separated(
-              padding: const EdgeInsets.only(
-                bottom: AppDimensions.listBottomPaddingFAB,
-              ),
-              itemCount: deposits.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final deposit = deposits[index];
-                return OneTimeDepositCard(
-                  customerId: deposit.customerId,
-                  accountNo: deposit.accountNo,
-                  principalAmount: deposit.principalAmount,
-                  status: deposit.status,
-                  maturityDate: deposit.maturityDate,
-                  onTap: () =>
-                      OneTimeDepositDetailRoute(deposit.id).push(context),
-                  onEdit: () =>
-                      OneTimeDepositEditRoute(deposit.id).push(context),
-                  onDelete: () async {
-                    final confirmed = await AppDialogs.confirmDelete(
-                      context,
-                      title: t.oneTimeDeposits.deleteDeposit,
-                      content: t.oneTimeDeposits.deleteDepositConfirmation,
-                    );
-                    if (confirmed == true) {
-                      final result = await ref
-                          .read(oneTimeDepositsControllerProvider.notifier)
-                          .deleteOneTimeDeposit(deposit.id);
-
-                      if (result is Failure && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              t.oneTimeDeposits.failedToDeleteDeposit(
-                                error: (result as Failure).error.toString(),
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                );
-              },
-            ),
-          );
-        },
-        loading: () => Skeletonizer(
-          enabled: true,
-          child: ListView.separated(
-            padding: const EdgeInsets.only(
-              bottom: AppDimensions.listBottomPaddingFAB,
-            ),
-            itemCount: 5,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final dummy = OneTimeDeposit.dummy;
-              return OneTimeDepositCard(
-                customerId: dummy.customerId,
-                accountNo: dummy.accountNo,
-                principalAmount: dummy.principalAmount,
-                status: dummy.status,
-                maturityDate: dummy.maturityDate,
-                onTap: () {},
-                onEdit: () {},
-                onDelete: () {},
-              );
-            },
+      body: switch (depositsState) {
+        AsyncData(:final value) => _buildDataState(context, ref, value),
+        AsyncError(:final error) => ErrorStateView(
+            message: error.toString(),
+            onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
           ),
-        ),
-        error: (error, stack) => ErrorStateView(
-          message: error.toString(),
-          onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
-        ),
-      ),
+        _ => _buildLoadingState(),
+      },
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => const OneTimeDepositCreateRoute().push(context),
         icon: const HugeIcon(
@@ -145,6 +70,84 @@ class OneTimeDepositsScreen extends ConsumerWidget {
           size: AppDimensions.iconMd,
         ),
         label: Text(t.oneTimeDeposits.newDeposit),
+      ),
+    );
+  }
+
+  Widget _buildDataState(BuildContext context, WidgetRef ref, List<OneTimeDeposit> deposits) {
+    if (deposits.isEmpty) {
+      return Center(child: Text(t.oneTimeDeposits.noDepositsFound));
+    }
+    return RefreshIndicator(
+      onRefresh: () => ref.refresh(oneTimeDepositsControllerProvider.future),
+      child: ListView.separated(
+        padding: const EdgeInsets.only(
+          bottom: AppDimensions.listBottomPaddingFAB,
+        ),
+        itemCount: deposits.length,
+        separatorBuilder: (context, index) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final deposit = deposits[index];
+          return OneTimeDepositCard(
+            customerId: deposit.customerId,
+            accountNo: deposit.accountNo,
+            principalAmount: deposit.principalAmount,
+            status: deposit.status,
+            maturityDate: deposit.maturityDate,
+            onTap: () => OneTimeDepositDetailRoute(deposit.id).push(context),
+            onEdit: () => OneTimeDepositEditRoute(deposit.id).push(context),
+            onDelete: () async {
+              final confirmed = await AppDialogs.confirmDelete(
+                context,
+                title: t.oneTimeDeposits.deleteDeposit,
+                content: t.oneTimeDeposits.deleteDepositConfirmation,
+              );
+              if (confirmed == true) {
+                final result = await ref
+                    .read(oneTimeDepositsControllerProvider.notifier)
+                    .deleteOneTimeDeposit(deposit.id);
+
+                if (result is Failure && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        t.oneTimeDeposits.failedToDeleteDeposit(
+                          error: (result as Failure).error.toString(),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+              }
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Skeletonizer(
+      enabled: true,
+      child: ListView.separated(
+        padding: const EdgeInsets.only(
+          bottom: AppDimensions.listBottomPaddingFAB,
+        ),
+        itemCount: 5,
+        separatorBuilder: (context, index) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final dummy = OneTimeDeposit.dummy;
+          return OneTimeDepositCard(
+            customerId: dummy.customerId,
+            accountNo: dummy.accountNo,
+            principalAmount: dummy.principalAmount,
+            status: dummy.status,
+            maturityDate: dummy.maturityDate,
+            onTap: () {},
+            onEdit: () {},
+            onDelete: () {},
+          );
+        },
       ),
     );
   }

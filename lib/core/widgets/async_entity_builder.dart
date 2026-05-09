@@ -32,11 +32,11 @@ class AsyncEntityBuilder<T> extends StatelessWidget {
       return builder(null);
     }
 
-    return state.when(
-      data: (entities) => _buildDataState(context, entities),
-      loading: () => _buildLoadingState(context),
-      error: (error, stack) => _buildErrorState(context, error.toString()),
-    );
+    return switch (state) {
+      AsyncData(:final value) => _buildDataState(context, value),
+      AsyncError(:final error) => _buildErrorState(context, error.toString()),
+      _ => _buildLoadingState(context),
+    };
   }
 
   Widget _buildDataState(BuildContext context, List<T> entities) {

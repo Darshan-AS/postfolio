@@ -146,7 +146,7 @@ class EntityListTile extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        trailing != null ? trailing! : const SizedBox.shrink(),
+        trailing ?? const SizedBox.shrink(),
         for (final action in inlineActions)
           IconButton(
             icon: action.icon,
