@@ -40,7 +40,7 @@ Map<String, dynamic> _$OneTimeDepositToJson(_OneTimeDeposit instance) =>
       'schemeType': _$OneTimeSchemeTypeEnumMap[instance.schemeType]!,
       'startDate': instance.startDate.toIso8601String(),
       'linkedSavingsAccountNo': instance.linkedSavingsAccountNo,
-      'nominees': instance.nominees,
+      'nominees': instance.nominees.map((e) => e.toJson()).toList(),
       'status': _$DepositStatusEnumMap[instance.status]!,
     };
 

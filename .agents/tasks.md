@@ -106,6 +106,7 @@
 - [ ] Implement comprehensive form field validations across all create/update screens.
 - [ ] Implement image capture and display functionality for customer profiles.
 - [ ] **Routing UX:** Navigate to corresponding customer detail screen when clicking on a customer in the deposit detail view.
+- [ ] **Customer Detail UX:** List all associated deposits (One-Time and Recurring) directly within the customer's detail view.
 - [ ] **UI Cleanup - Formatting:** Display Aadhaar number in format "XXXX XXXX XXXX" across the app.
 - [ ] Redesign the leading visual element in deposit list tiles to replace the generic circular icons.
 - [x] Implement a predefined dropdown with a manual entry fallback for Nominee relationship fields across all forms.
@@ -152,7 +153,7 @@
 - [ ] **Detail View - General Premature Closure**: Implement early withdrawal calculation logic for all applicable schemes (TD, MIS, SCSS, KVP, MSSC, PPF) based on domain rules. When "Close Account" is clicked, show the applicable penalties, deductions, and the exact "if withdrawn today" amount.
 
 ## Known Bugs & Issues
-- [ ] **Customer Form - Saving Issue**: Entering only a name and saving a customer works, but entering all details and saving fails or does not work.
+- [x] **Customer Form - Saving Issue**: Entering only a name and saving a customer works, but entering all details and saving fails or does not work.
 - [ ] **Form View - Keyboard Spacer**: Clicking on a text field in a form (e.g., customer form) brings up the keyboard and a lot of empty white space on top of it.
 - [x] **Date Picker UI Bug**: On selecting a new date in the date widget (e.g., RD Start Date or TD Start Date), the form text field does not visually update in the UI to reflect the newly picked date.
 - [x] **KVP Projection Crash**: The Form UI crashes for KVP selection with unsupported operation infinity when interest rate is cleared or 0.

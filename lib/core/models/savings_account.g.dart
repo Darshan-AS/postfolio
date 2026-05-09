@@ -19,5 +19,5 @@ _SavingsAccount _$SavingsAccountFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$SavingsAccountToJson(_SavingsAccount instance) =>
     <String, dynamic>{
       'accountNumber': instance.accountNumber,
-      'nominees': instance.nominees,
+      'nominees': instance.nominees.map((e) => e.toJson()).toList(),
     };

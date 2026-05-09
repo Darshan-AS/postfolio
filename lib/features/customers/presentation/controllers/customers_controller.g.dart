@@ -38,7 +38,7 @@ final class CustomersControllerProvider
 }
 
 String _$customersControllerHash() =>
-    r'75d0fa21511d1bf2aecc66649efc240c7e68bffd';
+    r'66f167d1de442284b3d6d56a4177c100ec88a317';
 
 abstract class _$CustomersController
     extends $StreamNotifier<UnmodifiableListView<Customer>> {

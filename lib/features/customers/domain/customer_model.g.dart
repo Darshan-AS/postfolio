@@ -33,5 +33,5 @@ Map<String, dynamic> _$CustomerToJson(_Customer instance) => <String, dynamic>{
   'dateOfBirth': instance.dateOfBirth?.toIso8601String(),
   'aadhaarNumber': instance.aadhaarNumber,
   'panNumber': instance.panNumber,
-  'savingsAccount': instance.savingsAccount,
+  'savingsAccount': instance.savingsAccount?.toJson(),
 };

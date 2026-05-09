@@ -42,7 +42,7 @@ Map<String, dynamic> _$RecurringDepositToJson(_RecurringDeposit instance) =>
       'schemeType': _$RecurringSchemeTypeEnumMap[instance.schemeType]!,
       'startDate': instance.startDate.toIso8601String(),
       'linkedAutoDebitAccountNo': instance.linkedAutoDebitAccountNo,
-      'nominees': instance.nominees,
+      'nominees': instance.nominees.map((e) => e.toJson()).toList(),
       'status': _$DepositStatusEnumMap[instance.status]!,
     };
 
