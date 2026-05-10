@@ -51,17 +51,21 @@ class DetailItem extends StatelessWidget {
   final String label;
   final String value;
   final Widget? icon;
+  final VoidCallback? onTap;
+  final Widget? trailing;
 
   const DetailItem({
     super.key,
     required this.label,
     required this.value,
     this.icon,
+    this.onTap,
+    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    Widget content = Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.paddingLg,
         vertical: AppDimensions.paddingMd,
@@ -100,9 +104,24 @@ class DetailItem extends StatelessWidget {
               ],
             ),
           ),
+          if (trailing != null) trailing!,
+          if (onTap != null && trailing == null)
+            Icon(
+              Icons.chevron_right_rounded,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
         ],
       ),
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        child: content,
+      );
+    }
+
+    return content;
   }
 }
 

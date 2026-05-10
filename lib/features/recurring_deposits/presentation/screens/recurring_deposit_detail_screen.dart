@@ -173,6 +173,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                           .watch(customerByIdProvider(deposit.customerId))
                           ?.name ??
                       deposit.customerId,
+                  onTap: () => CustomerDetailRoute(deposit.customerId).push(context),
                 ),
               ],
             ),
