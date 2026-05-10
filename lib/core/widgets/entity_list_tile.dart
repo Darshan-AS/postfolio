@@ -88,10 +88,16 @@ class EntityListTile extends StatelessWidget {
     final inlineActions = actions.where((a) => a.isInline).toList();
     final menuActions = actions.where((a) => !a.isInline).toList();
 
+    final hasActionButtons = inlineActions.isNotEmpty || menuActions.isNotEmpty;
+    final rightPadding =
+        hasActionButtons ? AppDimensions.paddingSm : AppDimensions.paddingLg;
+
     return ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingLg,
-            vertical: AppDimensions.paddingSm,
+          contentPadding: EdgeInsets.only(
+            left: AppDimensions.paddingLg,
+            right: rightPadding,
+            top: AppDimensions.paddingSm,
+            bottom: AppDimensions.paddingSm,
           ),
           onTap: onTap,
           leading: _buildLeading(theme),
@@ -143,15 +149,19 @@ class EntityListTile extends StatelessWidget {
     );
   }
 
-  Widget _buildTrailing(
+  Widget? _buildTrailing(
     ThemeData theme,
     List<EntityAction> inlineActions,
     List<EntityAction> menuActions,
   ) {
+    final hasActionButtons = inlineActions.isNotEmpty || menuActions.isNotEmpty;
+    if (trailing == null && !hasActionButtons) return null;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        trailing ?? const SizedBox.shrink(),
+        if (trailing != null) trailing!,
+        if (trailing != null && hasActionButtons) AppSpacings.gapXs,
         for (final action in inlineActions)
           IconButton(
             icon: action.icon,
