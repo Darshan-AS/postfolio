@@ -1,4 +1,5 @@
 import 'package:faker/faker.dart';
+import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
@@ -63,12 +64,15 @@ class FakeDataSource {
       final int termYears;
       final int termMonths;
 
-      if (scheme.isFixedTenure) {
+      final interestRate = random.decimal(scale: 2, min: 5.0) + 5.0;
+
+      if (scheme.tenureInputType != TenureInputType.derived) {
         termYears = random.element(scheme.allowedTenuresInYears);
         termMonths = 0;
       } else {
-        termYears = random.integer(10, min: 1);
-        termMonths = random.integer(11, min: 0);
+        final timeInMonths = ProjectionCalculator.calculateKvpTermMonths(interestRate);
+        termYears = timeInMonths ~/ 12;
+        termMonths = timeInMonths % 12;
       }
 
       return OneTimeDeposit(
@@ -77,7 +81,7 @@ class FakeDataSource {
         principalAmount: random.integer(500000, min: 10000).toDouble(),
         termYears: termYears,
         termMonths: termMonths,
-        interestRate: random.decimal(scale: 2, min: 5.0) + 5.0,
+        interestRate: interestRate,
         customerId: random.element(customerIds),
         schemeType: scheme,
         startDate: faker.date.dateTimeBetween(DateTime(2020), DateTime.now()),
@@ -99,7 +103,7 @@ class FakeDataSource {
     final recurringSchemes = RecurringSchemeType.values;
     recurringDeposits = List.generate(15, (index) {
       final scheme = random.element(recurringSchemes);
-      final termYears = scheme.isFixedTenure
+      final termYears = scheme.tenureInputType != TenureInputType.derived
           ? random.element(scheme.allowedTenuresInYears)
           : 5;
 

@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/app_form_fields.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class AppDurationInput extends HookWidget {
-  final bool isFixedTenure;
+  final TenureInputType tenureInputType;
   final List<int> allowedTenuresInYears;
   final int selectedYears;
   final int selectedMonths;
+  final String? derivedString;
   final void Function(int years, int months) onChanged;
 
   const AppDurationInput({
     super.key,
-    required this.isFixedTenure,
+    required this.tenureInputType,
     required this.allowedTenuresInYears,
     required this.selectedYears,
     required this.selectedMonths,
+    this.derivedString,
     required this.onChanged,
   });
 
@@ -27,8 +29,8 @@ class AppDurationInput extends HookWidget {
     final yearsController = useTextEditingController(
       text: selectedYears.toString(),
     );
-    final monthsController = useTextEditingController(
-      text: selectedMonths.toString(),
+    final derivedController = useTextEditingController(
+      text: derivedString ?? '',
     );
 
     // Sync controllers with external state if it changes
@@ -37,18 +39,20 @@ class AppDurationInput extends HookWidget {
         if (yearsController.text != selectedYears.toString()) {
           yearsController.text = selectedYears.toString();
         }
-        if (monthsController.text != selectedMonths.toString()) {
-          monthsController.text = selectedMonths.toString();
+        if (derivedController.text != (derivedString ?? '')) {
+          derivedController.text = derivedString ?? '';
         }
       });
       return null;
-    }, [selectedYears, selectedMonths]);
+    }, [selectedYears, selectedMonths, derivedString]);
 
-    if (isFixedTenure) {
-      return _buildFixedTenure(context, yearsController);
+    switch (tenureInputType) {
+      case TenureInputType.singleFixed:
+      case TenureInputType.fixedOptions:
+        return _buildFixedTenure(context, yearsController);
+      case TenureInputType.derived:
+        return _buildDerivedTenure(context, derivedController);
     }
-
-    return _buildCustomTenure(context, yearsController, monthsController);
   }
 
   Widget _buildFixedTenure(
@@ -91,47 +95,19 @@ class AppDurationInput extends HookWidget {
     );
   }
 
-  Widget _buildCustomTenure(
+  Widget _buildDerivedTenure(
     BuildContext context,
-    TextEditingController yearsController,
-    TextEditingController monthsController,
+    TextEditingController derivedController,
   ) {
-    return Row(
-      children: [
-        Expanded(
-          child: AppTextField(
-            controller: yearsController,
-            labelText: t.common.duration.termYears,
-            prefixIcon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedCalendar01,
-              size: AppDimensions.iconMd,
-            ),
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.next,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (val) {
-              onChanged(int.tryParse(val) ?? 0, selectedMonths);
-            },
-          ),
-        ),
-        AppSpacings.gapMd,
-        Expanded(
-          child: AppTextField(
-            controller: monthsController,
-            labelText: t.common.duration.termMonths,
-            prefixIcon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedCalendar02,
-              size: AppDimensions.iconMd,
-            ),
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.next,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (val) {
-              onChanged(selectedYears, int.tryParse(val) ?? 0);
-            },
-          ),
-        ),
-      ],
+    return AppTextField(
+      controller: derivedController,
+      labelText: t.common.duration.termYears,
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedCalendar01,
+        size: AppDimensions.iconMd,
+      ),
+      readOnly: true,
+      enabled: true,
     );
   }
 }

@@ -158,18 +158,11 @@ class ProjectionCalculator {
     required double interestRate,
     required DateTime startDate,
   }) {
-    final decimalInterestRate = interestRate / _percentageDivisor;
-
     // Principal strictly doubles
     final maturityAmount = principal * 2;
     final totalInterestEarned = principal;
 
-    int timeInMonths = 0;
-    if (interestRate > 0) {
-      // Time to double: 2 = (1 + r)^t => t = ln(2) / ln(1 + r)
-      final timeInYears = log(2) / log(1 + decimalInterestRate);
-      timeInMonths = (timeInYears * _monthsInYear).round();
-    }
+    int timeInMonths = calculateKvpTermMonths(interestRate);
 
     final maturityDate = DateTime(
       startDate.year,
@@ -190,6 +183,14 @@ class ProjectionCalculator {
       maturityDate: maturityDate,
       note: durationNote,
     );
+  }
+
+  /// Calculates the time in months it takes to double at a given interest rate.
+  static int calculateKvpTermMonths(double interestRate) {
+    if (interestRate <= 0) return 0;
+    final decimalInterestRate = interestRate / _percentageDivisor;
+    final timeInYears = log(2) / log(1 + decimalInterestRate);
+    return (timeInYears * _monthsInYear).round();
   }
 
   /// Helper to route One Time Deposits to the correct calculation

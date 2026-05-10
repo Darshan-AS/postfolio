@@ -15,6 +15,8 @@ enum OneTimeSchemeType {
   String get displayName => t.enums.oneTimeSchemeType[name] ?? name;
 }
 
+enum TenureInputType { singleFixed, fixedOptions, derived }
+
 @JsonEnum()
 enum RecurringSchemeType {
   recurringDeposit;
@@ -23,7 +25,7 @@ enum RecurringSchemeType {
 }
 
 extension RecurringSchemeRules on RecurringSchemeType {
-  bool get isFixedTenure => true;
+  TenureInputType get tenureInputType => TenureInputType.singleFixed;
 
   List<int> get allowedTenuresInYears {
     switch (this) {
@@ -36,7 +38,17 @@ extension RecurringSchemeRules on RecurringSchemeType {
 }
 
 extension OneTimeSchemeRules on OneTimeSchemeType {
-  bool get isFixedTenure => this != OneTimeSchemeType.kisanVikasPatra;
+  TenureInputType get tenureInputType {
+    switch (this) {
+      case OneTimeSchemeType.timeDeposit:
+        return TenureInputType.fixedOptions;
+      case OneTimeSchemeType.monthlyIncomeScheme:
+      case OneTimeSchemeType.nationalSavingsCertificate:
+        return TenureInputType.singleFixed;
+      case OneTimeSchemeType.kisanVikasPatra:
+        return TenureInputType.derived;
+    }
+  }
 
   List<int> get allowedTenuresInYears {
     switch (this) {
@@ -50,5 +62,5 @@ extension OneTimeSchemeRules on OneTimeSchemeType {
     }
   }
 
-  int get defaultTenureYears => isFixedTenure ? allowedTenuresInYears.first : 9;
+  int get defaultTenureYears => tenureInputType == TenureInputType.derived ? 9 : allowedTenuresInYears.first;
 }

@@ -139,8 +139,8 @@ class _RecurringDepositForm extends HookConsumerWidget {
                   double.tryParse(installmentAmountController.text.trim()) ??
                   0.0,
               termYears: selectedTermYears.value,
-              termMonths: selectedScheme.value.isFixedTenure
-                  ? 0
+              termMonths: selectedScheme.value.tenureInputType == TenureInputType.derived
+                  ? 0 // RD doesn't have derived, but keeping pattern
                   : selectedTermMonths.value,
               interestRate:
                   double.tryParse(interestRateController.text.trim()) ?? 0.0,
@@ -364,7 +364,7 @@ List<Widget> _buildInvestmentDetails(
     ),
     AppSpacings.gapLg,
     AppDurationInput(
-      isFixedTenure: selectedScheme.value.isFixedTenure,
+      tenureInputType: selectedScheme.value.tenureInputType,
       allowedTenuresInYears: selectedScheme.value.allowedTenuresInYears,
       selectedYears: selectedTermYears.value,
       selectedMonths: selectedTermMonths.value,

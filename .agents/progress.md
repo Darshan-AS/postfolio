@@ -18,6 +18,7 @@
 - Upgraded the Deposit Status selection in form screens from a standard dropdown to an intuitive `SegmentedButton` using a newly created `AppSegmentedButtonField`.
 - Refactored `Nominee` relationship from raw strings to a strongly-typed `NomineeRelationship` enum, utilizing `@JsonEnum` and `slang` map code generation for boilerplate-free JSON and localization handling.
 - Upgraded `NomineesInputSection` to use `AppDropdownField` for predefined relationships with a fallback dynamic text field for 'Other'.
+- Replaced binary `isFixedTenure` boolean with a strict `TenureInputType` enum (`singleFixed`, `fixedOptions`, `derived`) to enforce domain rules and completely eliminate arbitrary free-text custom tenures, successfully fixing the mismatch in KVP's dynamic tenure projections.
 - Standardized `LoginScreen` to use theme dimensions and `flutter_animate` transitions, and added a Sign Out button to `DashboardScreen` and `MainShellScaffold` using Slang localized strings.
 - Refactored Form Screens (`RecurringDeposit`, `OneTimeDeposit`, `Customer`) to reduce `build` method length and complexity.
 - Introduced `FormSectionHeader` to standardize section headers and reduce repetitive styling code.

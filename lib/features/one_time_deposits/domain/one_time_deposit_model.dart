@@ -98,7 +98,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
 
     if (validationError != null) return Failure(validationError);
 
-    if (schemeType.isFixedTenure) {
+    if (schemeType.tenureInputType != TenureInputType.derived) {
       if (!schemeType.allowedTenuresInYears.contains(termYears)) {
         return Failure(
           t.errors.invalidTenure(

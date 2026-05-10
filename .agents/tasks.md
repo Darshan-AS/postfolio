@@ -135,7 +135,7 @@
   - [x] **Refine Projection UX:** Accurately split "Total Return" from principal for Income Generation schemes (MIS/TD) and display KVP's dynamic "Doubles In" duration prominently using full spelling for calendar units.
 - [x] **UI Cleanup - Date Formatting:** Standardize date displays across the entire app using `slang`'s `intl` integration.
 - [ ] **UI Cleanup - Relative Time Formatting:** Add relative time display (e.g., "Created 2 hours ago", "Matures in 3 months") where precise dates are less critical, potentially using the `timeago` or `jiffy` packages.
-- [ ] **UI Cleanup - Non-Editable Fixed Fields:** Make form fields read-only (non-editable) when they only have a single valid value or don't require user input. For example, lock the "Scheme Type" selection for Recurring Deposits, and make the "Term Length" field non-editable for single-tenure schemes like MIS and NSC.
+- [x] **UI Cleanup - Non-Editable Fixed Fields:** Make form fields read-only (non-editable) when they only have a single valid value or don't require user input. For example, lock the "Scheme Type" selection for Recurring Deposits, and make the "Term Length" field non-editable for single-tenure schemes like MIS and NSC.
 - [x] **UI Cleanup - Deposit Status Selection:** Upgrade the "Deposit Status" widget in the form screens from a standard dropdown to a more intuitive UI component (e.g., a SegmentedButton or ChoiceChips).
 - [ ] Add filtering capabilities to deposit list screens (e.g., view by Active, Matured, Closed status).
 - [x] **UI Cleanup - Hero Animations:** Add unique `heroTag` properties to the `FloatingActionButton`s and implement physical expanding Hero animations transitioning into the Create Form screens.

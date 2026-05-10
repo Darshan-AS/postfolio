@@ -100,7 +100,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
 
     if (validationError != null) return Failure(validationError);
 
-    if (schemeType.isFixedTenure) {
+    if (schemeType.tenureInputType != TenureInputType.derived) {
       if (!schemeType.allowedTenuresInYears.contains(termYears)) {
         return Failure(
           t.errors.invalidTenure(

@@ -116,6 +116,23 @@ class _OneTimeDepositForm extends HookConsumerWidget {
       ],
     );
 
+    // Keep hidden state in sync for derived tenures like KVP
+    useEffect(() {
+      if (selectedScheme.value.tenureInputType == TenureInputType.derived) {
+        final timeInMonths = ProjectionCalculator.calculateKvpTermMonths(currentInterest);
+        final years = timeInMonths ~/ 12;
+        final months = timeInMonths % 12;
+        
+        if (selectedTermYears.value != years || selectedTermMonths.value != months) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            selectedTermYears.value = years;
+            selectedTermMonths.value = months;
+          });
+        }
+      }
+      return null;
+    }, [selectedScheme.value, currentInterest]);
+
     Future<void> save() async {
       if (formKey.currentState!.validate()) {
         if (selectedCustomerId.value == null) {
@@ -134,9 +151,9 @@ class _OneTimeDepositForm extends HookConsumerWidget {
               principalAmount:
                   double.tryParse(principalAmountController.text.trim()) ?? 0.0,
               termYears: selectedTermYears.value,
-              termMonths: selectedScheme.value.isFixedTenure
-                  ? 0
-                  : selectedTermMonths.value,
+              termMonths: selectedScheme.value.tenureInputType == TenureInputType.derived
+                  ? selectedTermMonths.value
+                  : 0,
               interestRate:
                   double.tryParse(interestRateController.text.trim()) ?? 0.0,
               customerId: selectedCustomerId.value ?? '',
@@ -345,10 +362,11 @@ List<Widget> _buildInvestmentDetails(
     ),
     AppSpacings.gapLg,
     AppDurationInput(
-      isFixedTenure: selectedScheme.value.isFixedTenure,
+      tenureInputType: selectedScheme.value.tenureInputType,
       allowedTenuresInYears: selectedScheme.value.allowedTenuresInYears,
       selectedYears: selectedTermYears.value,
       selectedMonths: selectedTermMonths.value,
+      derivedString: projection is WealthAccumulation ? projection.note : null,
       onChanged: (years, months) {
         selectedTermYears.value = years;
         selectedTermMonths.value = months;
