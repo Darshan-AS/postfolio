@@ -20,8 +20,11 @@ class AppWidgetThemes {
     ),
   );
 
-  static DividerThemeData get dividerTheme =>
-      const DividerThemeData(color: AppColors.divider, space: 1, thickness: 1);
+  static DividerThemeData get dividerTheme => const DividerThemeData(
+    color: AppColors.divider,
+    space: AppDimensions.dividerHeight,
+    thickness: AppDimensions.dividerThickness,
+  );
 
   static IconButtonThemeData get iconButtonTheme => IconButtonThemeData(
     style: IconButton.styleFrom(
@@ -41,7 +44,10 @@ class AppWidgetThemes {
     color: AppColors.surface,
     elevation: 0,
     shape: RoundedRectangleBorder(
-      side: const BorderSide(color: AppColors.divider, width: 1),
+      side: const BorderSide(
+        color: AppColors.divider,
+        width: AppDimensions.borderSm,
+      ),
       borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
     ),
   );
@@ -102,7 +108,10 @@ class AppWidgetThemes {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+          borderSide: BorderSide(
+            color: colorScheme.primary,
+            width: AppDimensions.borderMd,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
@@ -110,7 +119,10 @@ class AppWidgetThemes {
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          borderSide: BorderSide(color: colorScheme.error, width: 2),
+          borderSide: BorderSide(
+            color: colorScheme.error,
+            width: AppDimensions.borderMd,
+          ),
         ),
       );
 }

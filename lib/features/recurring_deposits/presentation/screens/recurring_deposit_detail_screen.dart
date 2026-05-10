@@ -115,7 +115,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                   value:
                       '${deposit.termYears} Years, ${deposit.termMonths} Months',
                 ),
-                const Divider(height: 1),
+                const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedPercent,
@@ -138,7 +138,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                   label: t.recurringDeposits.fields.startDate,
                   value: deposit.startDate.toAppFormat(),
                 ),
-                const Divider(height: 1),
+                const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedCalendar03,
@@ -161,7 +161,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                   label: t.recurringDeposits.fields.serialNo,
                   value: deposit.serialNo,
                 ),
-                const Divider(height: 1),
+                const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedUser,

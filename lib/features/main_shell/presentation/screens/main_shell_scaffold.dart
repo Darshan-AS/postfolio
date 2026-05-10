@@ -105,7 +105,10 @@ class MainShellScaffold extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      const VerticalDivider(thickness: 1, width: 1),
+                      const VerticalDivider(
+                        thickness: AppDimensions.dividerThickness,
+                        width: AppDimensions.dividerThickness,
+                      ),
                       Expanded(child: shellContent),
                     ],
                   ),

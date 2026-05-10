@@ -27,7 +27,9 @@ class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
               child: SizedBox(
                 width: AppDimensions.iconMd,
                 height: AppDimensions.iconMd,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(
+                  strokeWidth: AppDimensions.strokeWidthSm,
+                ),
               ),
             ),
           )

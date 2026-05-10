@@ -105,7 +105,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   value:
                       '${deposit.termYears} Years, ${deposit.termMonths} Months',
                 ),
-                const Divider(height: 1),
+                const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedPercent,
@@ -128,7 +128,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   label: t.oneTimeDeposits.fields.depositDate,
                   value: deposit.startDate.toAppFormat(),
                 ),
-                const Divider(height: 1),
+                const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedCalendar03,
@@ -158,7 +158,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 ),
                 if (deposit.linkedSavingsAccountNo != null &&
                     deposit.linkedSavingsAccountNo!.isNotEmpty) ...[
-                  const Divider(height: 1),
+                  const Divider(height: AppDimensions.dividerHeight),
                   DetailItem(
                     icon: const HugeIcon(
                       icon: HugeIcons.strokeRoundedBank,

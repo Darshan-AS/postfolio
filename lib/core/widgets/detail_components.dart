@@ -226,8 +226,10 @@ class StatusBadge extends StatelessWidget {
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: fgColor,
           fontWeight: FontWeight.bold,
-          fontSize: compact ? 10 : null,
-          letterSpacing: compact ? 0.2 : 0.5,
+          fontSize: compact ? AppDimensions.fontXs : null,
+          letterSpacing: compact
+              ? AppDimensions.letterSpacingSm
+              : AppDimensions.letterSpacingMd,
         ),
       ),
     );

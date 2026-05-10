@@ -158,7 +158,7 @@ Widget _buildPersonalInfo(Customer customer) {
           value: customer.address!,
         ),
       if (customer.address != null && customer.dateOfBirth != null)
-        const Divider(height: 1),
+        const Divider(height: AppDimensions.dividerHeight),
       if (customer.dateOfBirth != null)
         DetailItem(
           icon: const HugeIcon(
@@ -187,7 +187,7 @@ Widget _buildIdentityDocuments(Customer customer) {
         ),
       if (customer.cifNumber != null &&
           (customer.aadhaarNumber != null || customer.panNumber != null))
-        const Divider(height: 1),
+        const Divider(height: AppDimensions.dividerHeight),
       if (customer.aadhaarNumber != null)
         DetailItem(
           icon: const HugeIcon(
@@ -198,7 +198,7 @@ Widget _buildIdentityDocuments(Customer customer) {
           value: customer.aadhaarNumber!,
         ),
       if (customer.aadhaarNumber != null && customer.panNumber != null)
-        const Divider(height: 1),
+        const Divider(height: AppDimensions.dividerHeight),
       if (customer.panNumber != null)
         DetailItem(
           icon: const HugeIcon(
@@ -287,7 +287,7 @@ class _CustomerDepositsSection extends ConsumerWidget {
                             },
                           ),
                           if (index < oneTimeDeposits.length - 1)
-                            const Divider(height: 1),
+                            const Divider(height: AppDimensions.dividerHeight),
                         ],
                       ),
                     ))
@@ -330,7 +330,7 @@ class _CustomerDepositsSection extends ConsumerWidget {
                             },
                           ),
                           if (index < recurringDeposits.length - 1)
-                            const Divider(height: 1),
+                            const Divider(height: AppDimensions.dividerHeight),
                         ],
                       ),
                     ))

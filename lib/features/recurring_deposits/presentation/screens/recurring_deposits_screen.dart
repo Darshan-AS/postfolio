@@ -91,7 +91,7 @@ class RecurringDepositsScreen extends ConsumerWidget {
           bottom: AppDimensions.listBottomPaddingFAB,
         ),
         itemCount: deposits.length,
-        separatorBuilder: (context, index) => const Divider(height: 1),
+        separatorBuilder: (context, index) => const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
           final deposit = deposits[index];
           return Consumer(
@@ -152,7 +152,7 @@ class RecurringDepositsScreen extends ConsumerWidget {
           bottom: AppDimensions.listBottomPaddingFAB,
         ),
         itemCount: 5,
-        separatorBuilder: (context, index) => const Divider(height: 1),
+        separatorBuilder: (context, index) => const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
           final dummy = RecurringDeposit.dummy;
           return RecurringDepositCard(

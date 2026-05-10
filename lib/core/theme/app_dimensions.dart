@@ -18,6 +18,19 @@ class AppDimensions {
   // Buttons
   static const double buttonHeight = 56.0;
 
+  // Borders & Dividers
+  static const double borderNone = 0.0;
+  static const double borderSm = 1.0;
+  static const double borderMd = 2.0;
+  static const double dividerThickness = 1.0;
+  static const double dividerHeight = 1.0;
+  static const double strokeWidthSm = 2.0;
+
+  // Fonts & Text Styles
+  static const double fontXs = 10.0;
+  static const double letterSpacingSm = 0.2;
+  static const double letterSpacingMd = 0.5;
+
   // Radii
   static const double radiusSm = 4.0;
   static const double radiusMd = 8.0;

@@ -111,7 +111,7 @@ class CustomersScreen extends ConsumerWidget {
           bottom: AppDimensions.listBottomPaddingFAB,
         ),
         itemCount: customers.length,
-        separatorBuilder: (context, index) => const Divider(height: 1),
+        separatorBuilder: (context, index) => const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
           final customer = customers[index];
           return CustomerCard(
@@ -167,7 +167,7 @@ class CustomersScreen extends ConsumerWidget {
           bottom: AppDimensions.listBottomPaddingFAB,
         ),
         itemCount: 5,
-        separatorBuilder: (context, index) => const Divider(height: 1),
+        separatorBuilder: (context, index) => const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
           final dummy = Customer.dummy;
           return CustomerCard(
