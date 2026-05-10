@@ -12,6 +12,10 @@ errors:
   invalidPhone: "Invalid phone number (7-15 digits)"
   sbAccountRequiredForNominee: "Savings Account Number is required to add nominees"
   nomineePercentageTotal: "Total nominee percentage must be exactly 100%"
+  invalidAadhaar: "Aadhaar number must be 12 digits"
+  invalidPan: "Invalid PAN number format (e.g. ABCDE1234F)"
+  invalidCif: "CIF number must be at least 9 characters"
+  invalidInterestRate: "Interest rate must be between 0 and 100"
 
 format:
   date: "dd MMM yyyy"

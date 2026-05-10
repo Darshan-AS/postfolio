@@ -98,6 +98,18 @@ class TranslationsErrorsEn {
 
 	/// en: 'Total nominee percentage must be exactly 100%'
 	String get nomineePercentageTotal => 'Total nominee percentage must be exactly 100%';
+
+	/// en: 'Aadhaar number must be 12 digits'
+	String get invalidAadhaar => 'Aadhaar number must be 12 digits';
+
+	/// en: 'Invalid PAN number format (e.g. ABCDE1234F)'
+	String get invalidPan => 'Invalid PAN number format (e.g. ABCDE1234F)';
+
+	/// en: 'CIF number must be at least 9 characters'
+	String get invalidCif => 'CIF number must be at least 9 characters';
+
+	/// en: 'Interest rate must be between 0 and 100'
+	String get invalidInterestRate => 'Interest rate must be between 0 and 100';
 }
 
 // Path: format
@@ -790,6 +802,10 @@ extension on Translations {
 			'errors.invalidPhone' => 'Invalid phone number (7-15 digits)',
 			'errors.sbAccountRequiredForNominee' => 'Savings Account Number is required to add nominees',
 			'errors.nomineePercentageTotal' => 'Total nominee percentage must be exactly 100%',
+			'errors.invalidAadhaar' => 'Aadhaar number must be 12 digits',
+			'errors.invalidPan' => 'Invalid PAN number format (e.g. ABCDE1234F)',
+			'errors.invalidCif' => 'CIF number must be at least 9 characters',
+			'errors.invalidInterestRate' => 'Interest rate must be between 0 and 100',
 			'format.date' => 'dd MMM yyyy',
 			'format.dateCompact' => 'dd/MM/yyyy',
 			'format.dateTime' => 'dd MMM yyyy, hh:mm a',

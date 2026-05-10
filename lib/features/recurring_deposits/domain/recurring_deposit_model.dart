@@ -73,6 +73,9 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   static String? validateTerm(int years, int months) =>
       BaseDeposit.validateTerm(years, months);
 
+  static String? validateInterestRate(double? rate) =>
+      BaseDeposit.validateInterestRate(rate);
+
   static Result<RecurringDeposit, String> create({
     required String id,
     required String serialNo,
@@ -92,6 +95,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
         BaseDeposit.validateAccountNo(accountNo) ??
         BaseDeposit.validateAmount(installmentAmount, 'Installment amount') ??
         BaseDeposit.validateTerm(termYears, termMonths) ??
+        BaseDeposit.validateInterestRate(interestRate) ??
         Nominee.validateNominees(nominees);
 
     if (validationError != null) return Failure(validationError);

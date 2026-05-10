@@ -300,6 +300,10 @@ List<Widget> _buildInvestmentDetails(
         size: AppDimensions.iconMd,
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: (val) => OneTimeDeposit.validateAmount(
+        double.tryParse(val ?? ''),
+        t.oneTimeDeposits.fields.principalAmount,
+      ),
       textInputAction: TextInputAction.next,
     ),
     AppSpacings.gapLg,
@@ -311,6 +315,9 @@ List<Widget> _buildInvestmentDetails(
         size: AppDimensions.iconMd,
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: (val) => OneTimeDeposit.validateInterestRate(
+        double.tryParse(val ?? ''),
+      ),
       textInputAction: TextInputAction.next,
     ),
     AppSpacings.gapLg,

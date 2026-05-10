@@ -71,6 +71,9 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
   static String? validateTerm(int years, int months) =>
       BaseDeposit.validateTerm(years, months);
 
+  static String? validateInterestRate(double? rate) =>
+      BaseDeposit.validateInterestRate(rate);
+
   static Result<OneTimeDeposit, String> create({
     required String id,
     required String accountNo,
@@ -89,6 +92,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
         BaseDeposit.validateAccountNo(accountNo) ??
         BaseDeposit.validateAmount(principalAmount, 'Principal Amount') ??
         BaseDeposit.validateTerm(termYears, termMonths) ??
+        BaseDeposit.validateInterestRate(interestRate) ??
         Nominee.validateNominees(nominees);
 
     if (validationError != null) return Failure(validationError);

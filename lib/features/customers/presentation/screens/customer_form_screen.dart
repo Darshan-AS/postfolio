@@ -298,6 +298,7 @@ List<Widget> _buildSavingsBank({
         icon: HugeIcons.strokeRoundedBank,
         size: AppDimensions.iconMd,
       ),
+      validator: (val) => Customer.validateSavingsAccount(val, nominees.value),
       textInputAction: TextInputAction.next,
     ),
     AppSpacings.gapMd,

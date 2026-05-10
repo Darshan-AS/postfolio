@@ -34,4 +34,11 @@ abstract interface class BaseDeposit {
     if (years < 0 || months < 0) return t.errors.negativeTerm;
     return null;
   }
+
+  static String? validateInterestRate(double? rate) {
+    if (rate != null && (rate < 0 || rate > 100)) {
+      return t.errors.invalidInterestRate;
+    }
+    return null;
+  }
 }

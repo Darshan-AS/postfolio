@@ -66,6 +66,35 @@ sealed class Customer with _$Customer {
     return null;
   }
 
+  static String? validateAadhaar(String? aadhaar) {
+    if (aadhaar == null || aadhaar.trim().isEmpty) return null; // Optional
+    final cleanAadhaar = aadhaar.replaceAll(RegExp(r'\s+'), '');
+    final regex = RegExp(r'^\d{12}$');
+    if (!regex.hasMatch(cleanAadhaar)) return t.errors.invalidAadhaar;
+    return null;
+  }
+
+  static String? validatePan(String? pan) {
+    if (pan == null || pan.trim().isEmpty) return null; // Optional
+    final cleanPan = pan.trim().toUpperCase();
+    final regex = RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$');
+    if (!regex.hasMatch(cleanPan)) return t.errors.invalidPan;
+    return null;
+  }
+
+  static String? validateCif(String? cif) {
+    if (cif == null || cif.trim().isEmpty) return null; // Optional
+    if (cif.trim().length < 9) return t.errors.invalidCif;
+    return null;
+  }
+
+  static String? validateSavingsAccount(String? accountNum, List<Nominee> nominees) {
+    if ((accountNum == null || accountNum.trim().isEmpty) && nominees.isNotEmpty) {
+      return t.errors.sbAccountRequiredForNominee;
+    }
+    return null;
+  }
+
   // Smart Factory that enforces validation, returning a Result for pure functional error handling
   static Result<Customer, String> create({
     required String id,
@@ -88,6 +117,9 @@ sealed class Customer with _$Customer {
         validateName(name) ??
         validateEmail(email) ??
         validatePhone(phone) ??
+        validateAadhaar(aadhaarNumber) ??
+        validatePan(panNumber) ??
+        validateCif(cifNumber) ??
         (clean(savingsAccountNumber) == null &&
                 (savingsNominees?.isNotEmpty ?? false)
             ? t.errors.sbAccountRequiredForNominee

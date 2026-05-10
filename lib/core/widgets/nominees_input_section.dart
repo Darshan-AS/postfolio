@@ -307,6 +307,7 @@ Widget _buildPercentageField({
       size: AppDimensions.iconMd,
     ),
     keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    validator: (val) => Nominee.validatePercentage(double.tryParse(val ?? '')),
     textInputAction: TextInputAction.done,
     onChanged: (_) => onChanged(),
   );

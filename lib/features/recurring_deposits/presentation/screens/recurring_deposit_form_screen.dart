@@ -319,6 +319,10 @@ List<Widget> _buildInvestmentDetails(
         size: AppDimensions.iconMd,
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: (val) => RecurringDeposit.validateAmount(
+        double.tryParse(val ?? ''),
+        t.recurringDeposits.fields.installmentAmount,
+      ),
       textInputAction: TextInputAction.next,
     ),
     AppSpacings.gapLg,
@@ -330,6 +334,9 @@ List<Widget> _buildInvestmentDetails(
         size: AppDimensions.iconMd,
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: (val) => RecurringDeposit.validateInterestRate(
+        double.tryParse(val ?? ''),
+      ),
       textInputAction: TextInputAction.next,
     ),
     AppSpacings.gapLg,
