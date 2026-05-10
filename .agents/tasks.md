@@ -107,7 +107,7 @@
 - [ ] Implement image capture and display functionality for customer profiles.
 - [x] **Routing UX:** Navigate to corresponding customer detail screen when clicking on a customer in the deposit detail view.
 - [x] **Customer Detail UX:** List all associated deposits (One-Time and Recurring) directly within the customer's detail view.
-- [ ] **UI Cleanup - Formatting:** Display Aadhaar number in format "XXXX XXXX XXXX" across the app.
+- [x] **UI Cleanup - Formatting:** Display Aadhaar number in format "XXXX XXXX XXXX" across the app.
 - [ ] Redesign the leading visual element in deposit list tiles to replace the generic circular icons.
 - [x] Implement a predefined dropdown with a manual entry fallback for Nominee relationship fields across all forms.
 - [ ] Apply distinct color coding to differentiate deposit types in list views.
@@ -161,3 +161,7 @@
 - [x] **Form View - TD Calculation**: The maturity amount should have interest added in.
 - [x] **Form View - MIS Projection**: Add a field to show maturity amount + total earned (e.g., "Total Value" or "Total Return").
 - [x] **Form View - KVP Projection**: Show a human-readable time period indicating when the deposit doubles.
+
+## Phase 10: Internationalization & Localization (Future)
+- [ ] **Phone Numbers**: Migrate from custom Dart extensions to a `libphonenumber` backed package (e.g., `phone_numbers_parser`) to support E.164 parsing, validation, and display formatting for all global country codes.
+- [ ] **Currencies**: Refactor `DoubleFormatExtension` (`toRupeeFormat`) to a dynamic currency formatter that reads the user's preferred locale or account currency, rather than hardcoding the `en_IN` locale and `₹` symbol.

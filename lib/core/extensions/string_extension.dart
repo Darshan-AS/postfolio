@@ -6,13 +6,26 @@ extension StringFormatExtension on String {
     return '${clean.substring(0, 4)} ${clean.substring(4, 8)} ${clean.substring(8, 12)}';
   }
 
-  /// Formats phone number into "+91 XXXXX XXXXX"
+  /// Formats phone number consistently into "+91 XXXXX XXXXX"
+  /// Handles inputs with/without '+', with/without '91', and arbitrary spaces.
   String toPhoneFormat() {
-    final clean = replaceAll(RegExp(r'\s+'), '');
-    if (clean.startsWith('+91') && clean.length == 13) {
-      return '${clean.substring(0, 3)} ${clean.substring(3, 8)} ${clean.substring(8)}';
+    // Extract only digits
+    final digits = replaceAll(RegExp(r'\D'), '');
+
+    String coreNumber;
+
+    if (digits.length == 10) {
+      // User entered 10 digits without country code
+      coreNumber = digits;
+    } else if (digits.length == 12 && digits.startsWith('91')) {
+      // User entered 12 digits with country code (e.g., 919876543210)
+      coreNumber = digits.substring(2);
+    } else {
+      // Not a standard 10-digit Indian number, return original
+      return this;
     }
-    return this;
+
+    return '+91 ${coreNumber.substring(0, 5)} ${coreNumber.substring(5, 10)}';
   }
 
   /// Formats PAN number by converting to uppercase
