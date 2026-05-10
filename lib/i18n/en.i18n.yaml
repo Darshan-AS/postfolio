@@ -11,6 +11,7 @@ errors:
   invalidEmail: "Invalid email format"
   invalidPhone: "Invalid phone number (7-15 digits)"
   sbAccountRequiredForNominee: "Savings Account Number is required to add nominees"
+  nomineePercentageTotal: "Total nominee percentage must be exactly 100%"
 
 format:
   date: "dd MMM yyyy"

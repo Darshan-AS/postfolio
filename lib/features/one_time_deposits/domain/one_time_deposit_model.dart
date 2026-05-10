@@ -88,7 +88,8 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     final validationError =
         BaseDeposit.validateAccountNo(accountNo) ??
         BaseDeposit.validateAmount(principalAmount, 'Principal Amount') ??
-        BaseDeposit.validateTerm(termYears, termMonths);
+        BaseDeposit.validateTerm(termYears, termMonths) ??
+        Nominee.validateNominees(nominees);
 
     if (validationError != null) return Failure(validationError);
 

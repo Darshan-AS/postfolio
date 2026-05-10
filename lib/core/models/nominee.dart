@@ -78,6 +78,20 @@ sealed class Nominee with _$Nominee {
     return null;
   }
 
+  static String? validateNominees(List<Nominee> nominees) {
+    if (nominees.isEmpty) return null; // Valid if empty
+
+    final totalPercentage = nominees.fold<double>(
+      0.0,
+      (sum, nominee) => sum + nominee.percentage,
+    );
+
+    if (totalPercentage != 100.0) {
+      return t.errors.nomineePercentageTotal;
+    }
+    return null;
+  }
+
   static Result<Nominee, String> create({
     required String name,
     required NomineeRelationship relationship,

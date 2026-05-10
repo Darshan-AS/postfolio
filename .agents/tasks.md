@@ -37,7 +37,7 @@
 - [x] Add pull-to-refresh to listing screens.
 - [x] Unify `Nominee` model and widgets across Customers and Deposits, removing duplicate logic.
 - [ ] Add `riverpod_lint` and `custom_lint` for static analysis of Riverpod rules.
-- [ ] Add domain validation to ensure Nominee percentages sum exactly to 100%.
+- [x] Add domain validation to ensure Nominee percentages sum exactly to 100%.
 - [ ] Update Nominee UI to a better input widget/slider that enforces the 100% rule.
 - [x] Fix uneven horizontal padding in List Views (right side currently has more empty space than the left).
 - [x] Standardize Input Decorations across all form fields using `AppInputDecoration.m3`.

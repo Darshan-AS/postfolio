@@ -91,7 +91,8 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     final validationError =
         BaseDeposit.validateAccountNo(accountNo) ??
         BaseDeposit.validateAmount(installmentAmount, 'Installment amount') ??
-        BaseDeposit.validateTerm(termYears, termMonths);
+        BaseDeposit.validateTerm(termYears, termMonths) ??
+        Nominee.validateNominees(nominees);
 
     if (validationError != null) return Failure(validationError);
 

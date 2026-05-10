@@ -27,6 +27,7 @@
 - Secured Firestore data by scoping repository queries directly to the authenticated user's ID (`users/{userId}/...`), resolving data leakage across users.
 - Improved UX by allowing users to navigate directly to the customer detail screen from deposit details.
 - Enhanced `CustomerDetailScreen` UX by directly listing all associated "One-Time Deposits" and "Recurring Deposits" inside the customer detail view, giving comprehensive portfolio oversight without switching contexts.
+- Added strict domain validation to `Nominee` model to ensure that percentage allocations exactly sum to 100%, and centralized this logic across `SavingsAccount`, `OneTimeDeposit`, and `RecurringDeposit`.
 
 ## Next Steps
 - **Form State Refactor**: Migrate local hook-based form state inside form screens to dedicated Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) for strictly pure business logic.

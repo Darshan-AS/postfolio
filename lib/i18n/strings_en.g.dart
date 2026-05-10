@@ -95,6 +95,9 @@ class TranslationsErrorsEn {
 
 	/// en: 'Savings Account Number is required to add nominees'
 	String get sbAccountRequiredForNominee => 'Savings Account Number is required to add nominees';
+
+	/// en: 'Total nominee percentage must be exactly 100%'
+	String get nomineePercentageTotal => 'Total nominee percentage must be exactly 100%';
 }
 
 // Path: format
@@ -786,6 +789,7 @@ extension on Translations {
 			'errors.invalidEmail' => 'Invalid email format',
 			'errors.invalidPhone' => 'Invalid phone number (7-15 digits)',
 			'errors.sbAccountRequiredForNominee' => 'Savings Account Number is required to add nominees',
+			'errors.nomineePercentageTotal' => 'Total nominee percentage must be exactly 100%',
 			'format.date' => 'dd MMM yyyy',
 			'format.dateCompact' => 'dd/MM/yyyy',
 			'format.dateTime' => 'dd MMM yyyy, hh:mm a',

@@ -25,20 +25,6 @@ sealed class SavingsAccount with _$SavingsAccount {
     return null;
   }
 
-  static String? validateNominees(List<Nominee> nominees) {
-    if (nominees.isEmpty) return null; // Valid if empty
-
-    final totalPercentage = nominees.fold<double>(
-      0.0,
-      (sum, nominee) => sum + nominee.percentage,
-    );
-
-    if (totalPercentage != 100.0) {
-      return 'Total nominee percentage must be exactly 100%';
-    }
-    return null;
-  }
-
   static Result<SavingsAccount, String> create({
     required String accountNumber,
     List<Nominee> nominees = const [],
@@ -46,7 +32,7 @@ sealed class SavingsAccount with _$SavingsAccount {
     // Functional validation chain
     final error =
         validateAccountNumber(accountNumber) ??
-        (nominees.isNotEmpty ? validateNominees(nominees) : null);
+        (nominees.isNotEmpty ? Nominee.validateNominees(nominees) : null);
 
     if (error != null) return Failure(error);
 
