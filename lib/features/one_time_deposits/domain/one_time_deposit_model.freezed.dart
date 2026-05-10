@@ -214,7 +214,7 @@ return $default(_that.id,_that.accountNo,_that.principalAmount,_that.termYears,_
 @JsonSerializable()
 
 class _OneTimeDeposit extends OneTimeDeposit {
-  const _OneTimeDeposit({required this.id, required this.accountNo, required this.principalAmount, required this.termYears, required this.termMonths, this.interestRate = 0.0, required this.customerId, required this.schemeType, required this.startDate, this.linkedSavingsAccountNo, final  List<Nominee> nominees = const [], this.status = DepositStatus.active}): _nominees = nominees,super._();
+  const _OneTimeDeposit({required this.id, required this.accountNo, required this.principalAmount, required this.termYears, required this.termMonths, required this.interestRate, required this.customerId, required this.schemeType, required this.startDate, this.linkedSavingsAccountNo, final  List<Nominee> nominees = const [], this.status = DepositStatus.active}): _nominees = nominees,super._();
   factory _OneTimeDeposit.fromJson(Map<String, dynamic> json) => _$OneTimeDepositFromJson(json);
 
 @override final  String id;
@@ -222,7 +222,7 @@ class _OneTimeDeposit extends OneTimeDeposit {
 @override final  double principalAmount;
 @override final  int termYears;
 @override final  int termMonths;
-@override@JsonKey() final  double interestRate;
+@override final  double interestRate;
 @override final  String customerId;
 @override final  OneTimeSchemeType schemeType;
 @override final  DateTime startDate;

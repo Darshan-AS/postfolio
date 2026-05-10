@@ -103,7 +103,7 @@ class RecurringDepositsScreen extends ConsumerWidget {
 
               return RecurringDepositCard(
                 title: customerName,
-                subtitle: deposit.serialNo.isNotEmpty
+                subtitle: (deposit.serialNo?.isNotEmpty ?? false)
                     ? '(${deposit.serialNo}) ${deposit.accountNo}'
                     : deposit.accountNo,
                 installmentAmount: deposit.installmentAmount,

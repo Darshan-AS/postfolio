@@ -133,7 +133,7 @@ class _RecurringDepositForm extends HookConsumerWidget {
             .read(recurringDepositsControllerProvider.notifier)
             .saveRecurringDeposit(
               id: deposit?.id,
-              serialNo: serialNoController.text.trim(),
+              serialNo: serialNoController.text.trim().isEmpty ? null : serialNoController.text.trim(),
               accountNo: accountNoController.text.trim(),
               installmentAmount:
                   double.tryParse(installmentAmountController.text.trim()) ??
@@ -251,6 +251,7 @@ List<Widget> _buildAccountInformation({
         icon: HugeIcons.strokeRoundedTicket01,
         size: AppDimensions.iconMd,
       ),
+      isRequired: true,
       validator: RecurringDeposit.validateAccountNo,
       textInputAction: TextInputAction.next,
     ),
@@ -318,6 +319,7 @@ List<Widget> _buildInvestmentDetails(
         icon: HugeIcons.strokeRoundedCoins01,
         size: AppDimensions.iconMd,
       ),
+      isRequired: true,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       validator: (val) => RecurringDeposit.validateAmount(
         double.tryParse(val ?? ''),
@@ -333,9 +335,11 @@ List<Widget> _buildInvestmentDetails(
         icon: HugeIcons.strokeRoundedPercent,
         size: AppDimensions.iconMd,
       ),
+      isRequired: true,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       validator: (val) => RecurringDeposit.validateInterestRate(
         double.tryParse(val ?? ''),
+        t.recurringDeposits.fields.interestRate,
       ),
       textInputAction: TextInputAction.next,
     ),

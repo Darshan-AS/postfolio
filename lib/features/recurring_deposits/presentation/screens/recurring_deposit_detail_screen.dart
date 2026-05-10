@@ -159,7 +159,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                     size: AppDimensions.iconMd,
                   ),
                   label: t.recurringDeposits.fields.serialNo,
-                  value: deposit.serialNo,
+                  value: deposit.serialNo ?? '-',
                 ),
                 const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(

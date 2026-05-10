@@ -21,7 +21,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     required double principalAmount,
     required int termYears,
     required int termMonths,
-    @Default(0.0) double interestRate,
+    required double interestRate,
     required String customerId,
     required OneTimeSchemeType schemeType,
     required DateTime startDate,
@@ -55,6 +55,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     principalAmount: 10000.0,
     termYears: 5,
     termMonths: 0,
+    interestRate: 6.5,
     customerId: 'Loading Dummy Name...',
     schemeType: OneTimeSchemeType.timeDeposit,
     startDate: DateTime.now(),
@@ -71,8 +72,8 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
   static String? validateTerm(int years, int months) =>
       BaseDeposit.validateTerm(years, months);
 
-  static String? validateInterestRate(double? rate) =>
-      BaseDeposit.validateInterestRate(rate);
+  static String? validateInterestRate(double? rate, String fieldName) =>
+      BaseDeposit.validateInterestRate(rate, fieldName);
 
   static Result<OneTimeDeposit, String> create({
     required String id,
@@ -80,7 +81,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     required double principalAmount,
     required int termYears,
     required int termMonths,
-    double interestRate = 0.0,
+    required double interestRate,
     required String customerId,
     required OneTimeSchemeType schemeType,
     required DateTime startDate,
@@ -90,9 +91,9 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
   }) {
     final validationError =
         BaseDeposit.validateAccountNo(accountNo) ??
-        BaseDeposit.validateAmount(principalAmount, 'Principal Amount') ??
+        BaseDeposit.validateAmount(principalAmount, t.oneTimeDeposits.fields.principalAmount) ??
         BaseDeposit.validateTerm(termYears, termMonths) ??
-        BaseDeposit.validateInterestRate(interestRate) ??
+        BaseDeposit.validateInterestRate(interestRate, t.oneTimeDeposits.fields.interestRate) ??
         Nominee.validateNominees(nominees);
 
     if (validationError != null) return Failure(validationError);

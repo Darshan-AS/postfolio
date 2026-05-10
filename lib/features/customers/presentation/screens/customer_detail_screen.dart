@@ -306,7 +306,7 @@ class _CustomerDepositsSection extends ConsumerWidget {
                       Column(
                         children: [
                           RecurringDepositCard(
-                            title: deposit.serialNo.isNotEmpty
+                            title: (deposit.serialNo?.isNotEmpty ?? false)
                                 ? '(${deposit.serialNo}) ${deposit.accountNo}'
                                 : deposit.accountNo,
                             subtitle: deposit.maturityDate.toAppFormat(),

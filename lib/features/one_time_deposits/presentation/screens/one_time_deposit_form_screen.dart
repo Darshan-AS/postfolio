@@ -232,6 +232,7 @@ List<Widget> _buildAccountInformation({
         icon: HugeIcons.strokeRoundedTicket01,
         size: AppDimensions.iconMd,
       ),
+      isRequired: true,
       validator: OneTimeDeposit.validateAccountNo,
       textInputAction: TextInputAction.next,
     ),
@@ -299,6 +300,7 @@ List<Widget> _buildInvestmentDetails(
         icon: HugeIcons.strokeRoundedCoins01,
         size: AppDimensions.iconMd,
       ),
+      isRequired: true,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       validator: (val) => OneTimeDeposit.validateAmount(
         double.tryParse(val ?? ''),
@@ -314,9 +316,11 @@ List<Widget> _buildInvestmentDetails(
         icon: HugeIcons.strokeRoundedPercent,
         size: AppDimensions.iconMd,
       ),
+      isRequired: true,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       validator: (val) => OneTimeDeposit.validateInterestRate(
         double.tryParse(val ?? ''),
+        t.oneTimeDeposits.fields.interestRate,
       ),
       textInputAction: TextInputAction.next,
     ),

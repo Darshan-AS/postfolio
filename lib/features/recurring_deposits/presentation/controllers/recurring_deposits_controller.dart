@@ -31,7 +31,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
 
   Future<Result<void, String>> saveRecurringDeposit({
     String? id,
-    required String serialNo,
+    String? serialNo,
     required String accountNo,
     required double installmentAmount,
     required int termYears,

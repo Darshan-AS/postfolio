@@ -13,7 +13,7 @@ _OneTimeDeposit _$OneTimeDepositFromJson(Map<String, dynamic> json) =>
       principalAmount: (json['principalAmount'] as num).toDouble(),
       termYears: (json['termYears'] as num).toInt(),
       termMonths: (json['termMonths'] as num).toInt(),
-      interestRate: (json['interestRate'] as num?)?.toDouble() ?? 0.0,
+      interestRate: (json['interestRate'] as num).toDouble(),
       customerId: json['customerId'] as String,
       schemeType: $enumDecode(_$OneTimeSchemeTypeEnumMap, json['schemeType']),
       startDate: DateTime.parse(json['startDate'] as String),

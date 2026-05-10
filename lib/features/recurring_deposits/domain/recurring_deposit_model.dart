@@ -17,7 +17,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
 
   const factory RecurringDeposit({
     required String id,
-    required String serialNo,
+    String? serialNo,
     required String accountNo,
     required double installmentAmount,
     required int termYears,
@@ -73,12 +73,12 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   static String? validateTerm(int years, int months) =>
       BaseDeposit.validateTerm(years, months);
 
-  static String? validateInterestRate(double? rate) =>
-      BaseDeposit.validateInterestRate(rate);
+  static String? validateInterestRate(double? rate, String fieldName) =>
+      BaseDeposit.validateInterestRate(rate, fieldName);
 
   static Result<RecurringDeposit, String> create({
     required String id,
-    required String serialNo,
+    String? serialNo,
     required String accountNo,
     required double installmentAmount,
     required int termYears,
@@ -93,9 +93,9 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   }) {
     final validationError =
         BaseDeposit.validateAccountNo(accountNo) ??
-        BaseDeposit.validateAmount(installmentAmount, 'Installment amount') ??
+        BaseDeposit.validateAmount(installmentAmount, t.recurringDeposits.fields.installmentAmount) ??
         BaseDeposit.validateTerm(termYears, termMonths) ??
-        BaseDeposit.validateInterestRate(interestRate) ??
+        BaseDeposit.validateInterestRate(interestRate, t.recurringDeposits.fields.interestRate) ??
         Nominee.validateNominees(nominees);
 
     if (validationError != null) return Failure(validationError);
@@ -117,7 +117,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     return Success(
       RecurringDeposit(
         id: id,
-        serialNo: serialNo.trim(),
+        serialNo: serialNo?.trim().isEmpty == true ? null : serialNo?.trim(),
         accountNo: accountNo.trim(),
         installmentAmount: installmentAmount,
         termYears: termYears,

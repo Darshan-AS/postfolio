@@ -103,7 +103,7 @@
 ## Phase 8: Enhancements & Refinements (Pending)
 - [x] Implement a **"Demo Mode"** feature toggle. When activated via a persistent UI button on the login screen, the app bypasses Firebase Auth constraints and wires all repository providers to their `FakeDataRepository` counterparts instead of `FirestoreRepository`, allowing a complete offline, zero-setup interactive demonstration.
 - [x] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.
-- [ ] Implement comprehensive form field validations across all create/update screens.
+- [x] Implement comprehensive form field validations across all create/update screens.
 - [ ] Implement image capture and display functionality for customer profiles.
 - [x] **Routing UX:** Navigate to corresponding customer detail screen when clicking on a customer in the deposit detail view.
 - [x] **Customer Detail UX:** List all associated deposits (One-Time and Recurring) directly within the customer's detail view.

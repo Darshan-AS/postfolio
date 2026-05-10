@@ -35,8 +35,10 @@ abstract interface class BaseDeposit {
     return null;
   }
 
-  static String? validateInterestRate(double? rate) {
-    if (rate != null && (rate < 0 || rate > 100)) {
+  static String? validateInterestRate(double? rate, String fieldName) {
+    if (rate == null) return t.errors.requiredField(field: fieldName);
+    if (rate <= 0) return t.errors.greaterThanZero(field: fieldName);
+    if (rate > 100) {
       return t.errors.invalidInterestRate;
     }
     return null;

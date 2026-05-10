@@ -9,7 +9,7 @@ part of 'recurring_deposit_model.dart';
 _RecurringDeposit _$RecurringDepositFromJson(Map<String, dynamic> json) =>
     _RecurringDeposit(
       id: json['id'] as String,
-      serialNo: json['serialNo'] as String,
+      serialNo: json['serialNo'] as String?,
       accountNo: json['accountNo'] as String,
       installmentAmount: (json['installmentAmount'] as num).toDouble(),
       termYears: (json['termYears'] as num).toInt(),
