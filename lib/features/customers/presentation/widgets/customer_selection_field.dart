@@ -11,6 +11,8 @@ import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/entity_list_tile.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
+import 'package:postfolio/core/extensions/string_extension.dart';
+
 class CustomerSelectionField extends HookConsumerWidget {
   final Customer? initialCustomer;
   final String? initialCustomerId;
@@ -186,7 +188,7 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
           subtitle: Text(
             [
               if (customer.cifNumber != null) 'CIF: ${customer.cifNumber}',
-              if (customer.phone != null) customer.phone,
+              if (customer.phone != null) customer.phone!.toPhoneFormat(),
             ].join(' • '),
           ),
           onTap: () => Navigator.of(context).pop(customer),

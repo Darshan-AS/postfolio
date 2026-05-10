@@ -14,6 +14,8 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import 'package:postfolio/core/extensions/string_extension.dart';
+
 class CustomersScreen extends ConsumerWidget {
   const CustomersScreen({super.key});
 
@@ -116,7 +118,7 @@ class CustomersScreen extends ConsumerWidget {
           final customer = customers[index];
           return CustomerCard(
             name: customer.name,
-            phone: customer.phone ?? t.common.notProvided,
+            phone: customer.phone?.toPhoneFormat() ?? t.common.notProvided,
             onTap: () => CustomerDetailRoute(customer.id).push(context),
             onEdit: () => CustomerEditRoute(customer.id).push(context),
             onDelete: () async {

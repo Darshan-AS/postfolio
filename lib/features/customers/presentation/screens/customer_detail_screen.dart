@@ -19,6 +19,8 @@ import 'package:postfolio/features/recurring_deposits/presentation/widgets/recur
 import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
+import 'package:postfolio/core/extensions/string_extension.dart';
+
 class CustomerDetailScreen extends ConsumerWidget {
   final String customerId;
 
@@ -66,7 +68,7 @@ class CustomerDetailScreen extends ConsumerWidget {
               children: [
                 if (customer.phone != null)
                   Text(
-                    customer.phone!,
+                    customer.phone!.toPhoneFormat(),
                     style: textTheme.bodyLarge?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -195,7 +197,7 @@ Widget _buildIdentityDocuments(Customer customer) {
             size: AppDimensions.iconMd,
           ),
           label: t.customers.fields.aadhaarNumber,
-          value: customer.aadhaarNumber!,
+          value: customer.aadhaarNumber!.toAadhaarFormat(),
         ),
       if (customer.aadhaarNumber != null && customer.panNumber != null)
         const Divider(height: AppDimensions.dividerHeight),
@@ -206,7 +208,7 @@ Widget _buildIdentityDocuments(Customer customer) {
             size: AppDimensions.iconMd,
           ),
           label: t.customers.fields.panNumber,
-          value: customer.panNumber!,
+          value: customer.panNumber!.toPanFormat(),
         ),
     ],
   );

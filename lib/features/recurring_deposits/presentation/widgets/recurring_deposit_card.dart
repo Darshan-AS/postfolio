@@ -5,7 +5,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/entity_list_tile.dart';
-import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/extensions/double_extension.dart';
 
 class RecurringDepositCard extends StatelessWidget {
   final String title;
@@ -64,7 +64,7 @@ class RecurringDepositCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '${t.format.currencySymbol}${installmentAmount.toStringAsFixed(0)}',
+              installmentAmount.toRupeeFormat(),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.secondary,
                 fontWeight: FontWeight.bold,

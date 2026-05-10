@@ -6,7 +6,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 
 import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/entity_list_tile.dart';
-import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/extensions/double_extension.dart';
 
 class OneTimeDepositCard extends StatelessWidget {
   final String title;
@@ -63,7 +63,7 @@ class OneTimeDepositCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '${t.format.currencySymbol}${principalAmount.toStringAsFixed(0)}',
+              principalAmount.toRupeeFormat(),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,

@@ -33,3 +33,4 @@
 - **Form State Refactor**: Migrate local hook-based form state inside form screens to dedicated Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) for strictly pure business logic.
 - **Implement Commission Logic**: Add the next set of domain math features to automatically deduce gross/net commissions and TDS.
 - **Fixed/Locked UI Fields**: Make form fields read-only for specific schemes (e.g., lock Scheme Type for RD, term length for MIS/NSC).
+- Standardized primitive formatting using pure Dart extensions (`toRupeeFormat()`, `toPhoneFormat()`, `toAadhaarFormat()`, `toPanFormat()`) across the UI layer, aligning with the project's declarative conventions and keeping widgets dumb.

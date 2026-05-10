@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/extensions/double_extension.dart';
 
 class DetailSection extends StatelessWidget {
   final String title;
@@ -167,7 +168,7 @@ class DetailAmountCard extends StatelessWidget {
             ),
             AppSpacings.gapSm,
             Text(
-              '₹${amount.toStringAsFixed(2)}',
+              amount.toRupeeFormat(decimalDigits: 2),
               style: theme.textTheme.titleLarge?.copyWith(
                 color: fg,
                 fontWeight: FontWeight.bold,
@@ -357,7 +358,7 @@ class IncomeGenerationGrid extends StatelessWidget {
               ),
               AppSpacings.gapSm,
               Text(
-                '₹${totalInterestEarned.toStringAsFixed(2)}',
+                totalInterestEarned.toRupeeFormat(decimalDigits: 2),
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: theme.colorScheme.onSecondaryContainer,
                   fontWeight: FontWeight.bold,

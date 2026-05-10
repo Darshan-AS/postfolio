@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
+import 'package:postfolio/core/extensions/double_extension.dart';
 
 class InvestmentProjectionCard extends StatelessWidget {
   final InvestmentProjection? projection;
@@ -19,12 +19,6 @@ class InvestmentProjectionCard extends StatelessWidget {
     if (proj == null) {
       return const SizedBox.shrink();
     }
-
-    final formatCurrency = NumberFormat.currency(
-      symbol: '₹',
-      locale: 'en_IN',
-      decimalDigits: 0,
-    );
 
     return Card(
       elevation: 0,
@@ -53,13 +47,11 @@ class InvestmentProjectionCard extends StatelessWidget {
               _AnimatedStatRow(
                 label: t.projection.totalInvested,
                 value: proj.totalInvested,
-                formatter: formatCurrency,
               ),
               AppSpacings.gapSm,
               _AnimatedStatRow(
                 label: t.projection.totalInterestEarned,
                 value: proj.totalInterestEarned,
-                formatter: formatCurrency,
                 valueStyle: theme.textTheme.titleMedium?.copyWith(
                   color: theme.colorScheme.tertiary,
                 ),
@@ -67,9 +59,9 @@ class InvestmentProjectionCard extends StatelessWidget {
               ),
               ...proj.map(
                 wealthAccumulation: (w) =>
-                    _buildWealthAccumulationDetails(context, w, formatCurrency),
+                    _buildWealthAccumulationDetails(context, w),
                 incomeGeneration: (i) =>
-                    _buildIncomeGenerationDetails(context, i, formatCurrency),
+                    _buildIncomeGenerationDetails(context, i),
               ),
               AppSpacings.gapSm,
               Row(
@@ -101,7 +93,6 @@ class InvestmentProjectionCard extends StatelessWidget {
 List<Widget> _buildWealthAccumulationDetails(
   BuildContext context,
   WealthAccumulation w,
-  NumberFormat formatter,
 ) {
   final theme = Theme.of(context);
   return [
@@ -111,7 +102,6 @@ List<Widget> _buildWealthAccumulationDetails(
     _AnimatedStatRow(
       label: t.projection.estimatedMaturity,
       value: w.maturityAmount,
-      formatter: formatter,
       valueStyle: theme.textTheme.headlineSmall?.copyWith(
         color: theme.colorScheme.onSurface,
         fontWeight: FontWeight.bold,
@@ -123,7 +113,6 @@ List<Widget> _buildWealthAccumulationDetails(
 List<Widget> _buildIncomeGenerationDetails(
   BuildContext context,
   IncomeGeneration i,
-  NumberFormat formatter,
 ) {
   final theme = Theme.of(context);
   return [
@@ -131,7 +120,6 @@ List<Widget> _buildIncomeGenerationDetails(
     _AnimatedStatRow(
       label: t.projection.payout(frequency: i.payoutFrequency.displayName),
       value: i.periodicPayoutAmount,
-      formatter: formatter,
       valueStyle: theme.textTheme.titleMedium?.copyWith(
         color: theme.colorScheme.secondary,
       ),
@@ -142,7 +130,6 @@ List<Widget> _buildIncomeGenerationDetails(
     _AnimatedStatRow(
       label: t.projection.totalReturn,
       value: i.totalInvested + i.totalInterestEarned,
-      formatter: formatter,
       valueStyle: theme.textTheme.headlineSmall?.copyWith(
         color: theme.colorScheme.onSurface,
         fontWeight: FontWeight.bold,
@@ -152,7 +139,6 @@ List<Widget> _buildIncomeGenerationDetails(
     _AnimatedStatRow(
       label: t.projection.estimatedMaturity,
       value: i.maturityAmount,
-      formatter: formatter,
       valueStyle: theme.textTheme.titleMedium,
     ),
   ];
@@ -205,14 +191,12 @@ List<Widget> _buildIncomeGenerationNote(
 class _AnimatedStatRow extends StatelessWidget {
   final String label;
   final double value;
-  final NumberFormat formatter;
   final TextStyle? valueStyle;
   final String prefix;
 
   const _AnimatedStatRow({
     required this.label,
     required this.value,
-    required this.formatter,
     this.valueStyle,
     this.prefix = '',
   });
@@ -229,7 +213,7 @@ class _AnimatedStatRow extends StatelessWidget {
           curve: Curves.easeOutCubic,
           builder: (context, val, child) {
             return Text(
-              '$prefix${formatter.format(val)}',
+              '$prefix${val.toRupeeFormat()}',
               style: valueStyle ?? Theme.of(context).textTheme.titleMedium,
             );
           },
