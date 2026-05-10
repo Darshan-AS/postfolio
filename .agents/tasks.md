@@ -106,7 +106,7 @@
 - [ ] Implement comprehensive form field validations across all create/update screens.
 - [ ] Implement image capture and display functionality for customer profiles.
 - [x] **Routing UX:** Navigate to corresponding customer detail screen when clicking on a customer in the deposit detail view.
-- [ ] **Customer Detail UX:** List all associated deposits (One-Time and Recurring) directly within the customer's detail view.
+- [x] **Customer Detail UX:** List all associated deposits (One-Time and Recurring) directly within the customer's detail view.
 - [ ] **UI Cleanup - Formatting:** Display Aadhaar number in format "XXXX XXXX XXXX" across the app.
 - [ ] Redesign the leading visual element in deposit list tiles to replace the generic circular icons.
 - [x] Implement a predefined dropdown with a manual entry fallback for Nominee relationship fields across all forms.

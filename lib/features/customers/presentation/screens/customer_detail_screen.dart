@@ -12,6 +12,11 @@ import 'package:postfolio/core/widgets/nominees_detail_section.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
+import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
+import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
+import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class CustomerDetailScreen extends ConsumerWidget {
@@ -124,11 +129,14 @@ class CustomerDetailScreen extends ConsumerWidget {
             if (customer.savingsAccount != null) ...[
               _buildSavingsBank(customer),
               AppSpacings.gapLg,
-              if (customer.savingsAccount?.nominees != null)
+              if (customer.savingsAccount?.nominees != null) ...[
                 NomineesDetailSection(
                   nominees: customer.savingsAccount!.nominees,
                 ),
+                AppSpacings.gapLg,
+              ],
             ],
+            _CustomerDepositsSection(customerId: customerId),
           ],
         );
       },
@@ -220,3 +228,120 @@ Widget _buildSavingsBank(Customer customer) {
     ],
   );
 }
+
+class _CustomerDepositsSection extends ConsumerWidget {
+  final String customerId;
+
+  const _CustomerDepositsSection({required this.customerId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final oneTimeDepositsAsync = ref.watch(oneTimeDepositsControllerProvider);
+    final recurringDepositsAsync = ref.watch(recurringDepositsControllerProvider);
+
+    final oneTimeDeposits = oneTimeDepositsAsync.value
+            ?.where((d) => d.customerId == customerId)
+            .toList() ??
+        [];
+    final recurringDeposits = recurringDepositsAsync.value
+            ?.where((d) => d.customerId == customerId)
+            .toList() ??
+        [];
+
+    if (oneTimeDeposits.isEmpty && recurringDeposits.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (oneTimeDeposits.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingLg,
+                vertical: AppDimensions.paddingMd),
+            child: Text(
+              t.oneTimeDeposits.title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ),
+          ...oneTimeDeposits.map(
+            (deposit) => Padding(
+              padding: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
+              child: OneTimeDepositCard(
+                customerId: deposit.customerId,
+                accountNo: deposit.accountNo,
+                principalAmount: deposit.principalAmount,
+                status: deposit.status,
+                maturityDate: deposit.maturityDate,
+                showCustomerName: false,
+                onTap: () =>
+                    OneTimeDepositDetailRoute(deposit.id).push(context),
+                onEdit: () =>
+                    OneTimeDepositEditRoute(deposit.id).push(context),
+                onDelete: () async {
+                  final confirmed = await AppDialogs.confirmDelete(
+                    context,
+                    title: t.oneTimeDeposits.deleteDeposit,
+                    content: t.oneTimeDeposits.deleteDepositConfirmation,
+                  );
+                  if (confirmed == true && context.mounted) {
+                    await ref
+                        .read(oneTimeDepositsControllerProvider.notifier)
+                        .deleteOneTimeDeposit(deposit.id);
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
+        if (recurringDeposits.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingLg,
+                vertical: AppDimensions.paddingMd),
+            child: Text(
+              t.recurringDeposits.title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ),
+          ...recurringDeposits.map(
+            (deposit) => Padding(
+              padding: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
+              child: RecurringDepositCard(
+                customerId: deposit.customerId,
+                serialNo: deposit.serialNo,
+                accountNo: deposit.accountNo,
+                installmentAmount: deposit.installmentAmount,
+                status: deposit.status,
+                maturityDate: deposit.maturityDate,
+                showCustomerName: false,
+                onTap: () =>
+                    RecurringDepositDetailRoute(deposit.id).push(context),
+                onEdit: () =>
+                    RecurringDepositEditRoute(deposit.id).push(context),
+                onDelete: () async {
+                  final confirmed = await AppDialogs.confirmDelete(
+                    context,
+                    title: t.recurringDeposits.deleteDeposit,
+                    content: t.recurringDeposits.deleteDepositConfirmation,
+                  );
+                  if (confirmed == true && context.mounted) {
+                    await ref
+                        .read(recurringDepositsControllerProvider.notifier)
+                        .deleteRecurringDeposit(deposit.id);
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+

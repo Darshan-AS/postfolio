@@ -20,6 +20,7 @@ class RecurringDepositCard extends ConsumerWidget {
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final bool showCustomerName;
 
   const RecurringDepositCard({
     super.key,
@@ -32,6 +33,7 @@ class RecurringDepositCard extends ConsumerWidget {
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
+    this.showCustomerName = true,
   });
 
   @override
@@ -48,20 +50,21 @@ class RecurringDepositCard extends ConsumerWidget {
       leadingForegroundColor: Theme.of(
         context,
       ).colorScheme.onSecondaryContainer,
-      title: customerName,
+      title: showCustomerName ? customerName : (serialNo.isNotEmpty ? '($serialNo) $accountNo' : accountNo),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: AppDimensions.paddingXs),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              serialNo.isNotEmpty ? '($serialNo) $accountNo' : accountNo,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+            if (showCustomerName)
+              Text(
+                serialNo.isNotEmpty ? '($serialNo) $accountNo' : accountNo,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
             Text(
               maturityDate.toAppFormat(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(

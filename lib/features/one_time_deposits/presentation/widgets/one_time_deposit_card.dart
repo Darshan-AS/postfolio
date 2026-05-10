@@ -20,6 +20,7 @@ class OneTimeDepositCard extends ConsumerWidget {
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final bool showCustomerName;
 
   const OneTimeDepositCard({
     super.key,
@@ -31,6 +32,7 @@ class OneTimeDepositCard extends ConsumerWidget {
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
+    this.showCustomerName = true,
   });
 
   @override
@@ -45,20 +47,21 @@ class OneTimeDepositCard extends ConsumerWidget {
       ),
       leadingBackgroundColor: Theme.of(context).colorScheme.primaryContainer,
       leadingForegroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-      title: customerName,
+      title: showCustomerName ? customerName : accountNo,
       subtitle: Padding(
         padding: const EdgeInsets.only(top: AppDimensions.paddingXs),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              accountNo,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+            if (showCustomerName)
+              Text(
+                accountNo,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
             Text(
               maturityDate.toAppFormat(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
