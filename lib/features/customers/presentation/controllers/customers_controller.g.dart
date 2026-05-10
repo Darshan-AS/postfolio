@@ -71,8 +71,9 @@ abstract class _$CustomersController
 final customerByIdProvider = CustomerByIdFamily._();
 
 final class CustomerByIdProvider
-    extends $FunctionalProvider<Customer?, Customer?, Customer?>
-    with $Provider<Customer?> {
+    extends
+        $FunctionalProvider<AsyncValue<Customer>, Customer, Stream<Customer>>
+    with $FutureModifier<Customer>, $StreamProvider<Customer> {
   CustomerByIdProvider._({
     required CustomerByIdFamily super.from,
     required String super.argument,
@@ -96,21 +97,13 @@ final class CustomerByIdProvider
 
   @$internal
   @override
-  $ProviderElement<Customer?> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $StreamProviderElement<Customer> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
 
   @override
-  Customer? create(Ref ref) {
+  Stream<Customer> create(Ref ref) {
     final argument = this.argument as String;
     return customerById(ref, argument);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Customer? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<Customer?>(value),
-    );
   }
 
   @override
@@ -124,10 +117,10 @@ final class CustomerByIdProvider
   }
 }
 
-String _$customerByIdHash() => r'6808e6a3fff55554e13fc6c2055aea4f70bead37';
+String _$customerByIdHash() => r'a5973a8e3130cf53db6487ef7817b4aad03fec04';
 
 final class CustomerByIdFamily extends $Family
-    with $FunctionalFamilyOverride<Customer?, String> {
+    with $FunctionalFamilyOverride<Stream<Customer>, String> {
   CustomerByIdFamily._()
     : super(
         retry: null,

@@ -12,6 +12,7 @@ import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
 class RecurringDepositsScreen extends ConsumerWidget {
   const RecurringDepositsScreen({super.key});
@@ -93,38 +94,49 @@ class RecurringDepositsScreen extends ConsumerWidget {
         separatorBuilder: (context, index) => const Divider(height: 1),
         itemBuilder: (context, index) {
           final deposit = deposits[index];
-          return RecurringDepositCard(
-            customerId: deposit.customerId,
-            serialNo: deposit.serialNo,
-            accountNo: deposit.accountNo,
-            installmentAmount: deposit.installmentAmount,
-            status: deposit.status,
-            maturityDate: deposit.maturityDate,
-            onTap: () => RecurringDepositDetailRoute(deposit.id).push(context),
-            onEdit: () => RecurringDepositEditRoute(deposit.id).push(context),
-            onDelete: () async {
-              final confirmed = await AppDialogs.confirmDelete(
-                context,
-                title: t.recurringDeposits.deleteDeposit,
-                content: t.recurringDeposits.deleteDepositConfirmation,
-              );
-              if (confirmed == true) {
-                final result = await ref
-                    .read(recurringDepositsControllerProvider.notifier)
-                    .deleteRecurringDeposit(deposit.id);
+          return Consumer(
+            builder: (context, ref, child) {
+              final customerAsync =
+                  ref.watch(customerByIdProvider(deposit.customerId));
+              final customerName =
+                  customerAsync.value?.name ?? deposit.accountNo;
 
-                if (result is Failure && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        t.recurringDeposits.failedToDeleteDeposit(
-                          error: (result as Failure).error.toString(),
-                        ),
-                      ),
-                    ),
+              return RecurringDepositCard(
+                title: customerName,
+                subtitle: deposit.serialNo.isNotEmpty
+                    ? '(${deposit.serialNo}) ${deposit.accountNo}'
+                    : deposit.accountNo,
+                installmentAmount: deposit.installmentAmount,
+                status: deposit.status,
+                onTap: () =>
+                    RecurringDepositDetailRoute(deposit.id).push(context),
+                onEdit: () =>
+                    RecurringDepositEditRoute(deposit.id).push(context),
+                onDelete: () async {
+                  final confirmed = await AppDialogs.confirmDelete(
+                    context,
+                    title: t.recurringDeposits.deleteDeposit,
+                    content: t.recurringDeposits.deleteDepositConfirmation,
                   );
-                }
-              }
+                  if (confirmed == true) {
+                    final result = await ref
+                        .read(recurringDepositsControllerProvider.notifier)
+                        .deleteRecurringDeposit(deposit.id);
+
+                    if (result is Failure && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            t.recurringDeposits.failedToDeleteDeposit(
+                              error: (result as Failure).error.toString(),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                },
+              );
             },
           );
         },
@@ -144,12 +156,10 @@ class RecurringDepositsScreen extends ConsumerWidget {
         itemBuilder: (context, index) {
           final dummy = RecurringDeposit.dummy;
           return RecurringDepositCard(
-            customerId: dummy.customerId,
-            serialNo: dummy.serialNo,
-            accountNo: dummy.accountNo,
+            title: dummy.accountNo,
+            subtitle: dummy.accountNo,
             installmentAmount: dummy.installmentAmount,
             status: dummy.status,
-            maturityDate: dummy.maturityDate,
             onTap: () {},
             onEdit: () {},
             onDelete: () {},

@@ -86,7 +86,12 @@ class CustomersController extends _$CustomersController {
 }
 
 @riverpod
-Customer? customerById(Ref ref, String id) {
-  final customersState = ref.watch(customersControllerProvider);
-  return customersState.value?.where((c) => c.id == id).firstOrNull;
+Stream<Customer> customerById(Ref ref, String id) {
+  final repository = ref.watch(customerRepositoryProvider);
+  return repository.watchCustomerById(id).map((result) {
+    return switch (result) {
+      Success(value: final customer) => customer,
+      Failure(error: final error) => throw Exception(error),
+    };
+  });
 }

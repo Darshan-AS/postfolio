@@ -12,6 +12,7 @@ import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
 class OneTimeDepositsScreen extends ConsumerWidget {
   const OneTimeDepositsScreen({super.key});
@@ -93,37 +94,47 @@ class OneTimeDepositsScreen extends ConsumerWidget {
         separatorBuilder: (context, index) => const Divider(height: 1),
         itemBuilder: (context, index) {
           final deposit = deposits[index];
-          return OneTimeDepositCard(
-            customerId: deposit.customerId,
-            accountNo: deposit.accountNo,
-            principalAmount: deposit.principalAmount,
-            status: deposit.status,
-            maturityDate: deposit.maturityDate,
-            onTap: () => OneTimeDepositDetailRoute(deposit.id).push(context),
-            onEdit: () => OneTimeDepositEditRoute(deposit.id).push(context),
-            onDelete: () async {
-              final confirmed = await AppDialogs.confirmDelete(
-                context,
-                title: t.oneTimeDeposits.deleteDeposit,
-                content: t.oneTimeDeposits.deleteDepositConfirmation,
-              );
-              if (confirmed == true) {
-                final result = await ref
-                    .read(oneTimeDepositsControllerProvider.notifier)
-                    .deleteOneTimeDeposit(deposit.id);
+          return Consumer(
+            builder: (context, ref, child) {
+              final customerAsync =
+                  ref.watch(customerByIdProvider(deposit.customerId));
+              final customerName =
+                  customerAsync.value?.name ?? deposit.accountNo;
 
-                if (result is Failure && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        t.oneTimeDeposits.failedToDeleteDeposit(
-                          error: (result as Failure).error.toString(),
-                        ),
-                      ),
-                    ),
+              return OneTimeDepositCard(
+                title: customerName,
+                subtitle: deposit.accountNo,
+                principalAmount: deposit.principalAmount,
+                status: deposit.status,
+                onTap:
+                    () => OneTimeDepositDetailRoute(deposit.id).push(context),
+                onEdit:
+                    () => OneTimeDepositEditRoute(deposit.id).push(context),
+                onDelete: () async {
+                  final confirmed = await AppDialogs.confirmDelete(
+                    context,
+                    title: t.oneTimeDeposits.deleteDeposit,
+                    content: t.oneTimeDeposits.deleteDepositConfirmation,
                   );
-                }
-              }
+                  if (confirmed == true) {
+                    final result = await ref
+                        .read(oneTimeDepositsControllerProvider.notifier)
+                        .deleteOneTimeDeposit(deposit.id);
+
+                    if (result is Failure && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            t.oneTimeDeposits.failedToDeleteDeposit(
+                              error: (result as Failure).error.toString(),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                },
+              );
             },
           );
         },
@@ -143,11 +154,10 @@ class OneTimeDepositsScreen extends ConsumerWidget {
         itemBuilder: (context, index) {
           final dummy = OneTimeDeposit.dummy;
           return OneTimeDepositCard(
-            customerId: dummy.customerId,
-            accountNo: dummy.accountNo,
+            title: dummy.accountNo,
+            subtitle: dummy.accountNo,
             principalAmount: dummy.principalAmount,
             status: dummy.status,
-            maturityDate: dummy.maturityDate,
             onTap: () {},
             onEdit: () {},
             onDelete: () {},

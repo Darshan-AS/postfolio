@@ -1,45 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 
 import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/entity_list_tile.dart';
 import 'package:postfolio/i18n/strings.g.dart';
-import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
-import 'package:postfolio/core/extensions/date_time_extension.dart';
 
-class OneTimeDepositCard extends ConsumerWidget {
-  final String customerId;
-  final String accountNo;
+class OneTimeDepositCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
   final double principalAmount;
   final DepositStatus status;
-  final DateTime maturityDate;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  final bool showCustomerName;
 
   const OneTimeDepositCard({
     super.key,
-    required this.customerId,
-    required this.accountNo,
+    required this.title,
+    required this.subtitle,
     required this.principalAmount,
     required this.status,
-    required this.maturityDate,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
-    this.showCustomerName = true,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final customerName =
-        ref.watch(customerByIdProvider(customerId))?.name ?? customerId;
-
+  Widget build(BuildContext context) {
     return EntityListTile(
       leadingIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
@@ -47,23 +37,14 @@ class OneTimeDepositCard extends ConsumerWidget {
       ),
       leadingBackgroundColor: Theme.of(context).colorScheme.primaryContainer,
       leadingForegroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-      title: showCustomerName ? customerName : accountNo,
+      title: title,
       subtitle: Padding(
         padding: const EdgeInsets.only(top: AppDimensions.paddingXs),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (showCustomerName)
-              Text(
-                accountNo,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
             Text(
-              maturityDate.toAppFormat(),
+              subtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),

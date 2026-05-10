@@ -151,7 +151,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   label: t.oneTimeDeposits.fields.customerId,
                   value:
                       ref
-                          .watch(customerByIdProvider(deposit.customerId))
+                          .watch(customerByIdProvider(deposit.customerId)).value
                           ?.name ??
                       deposit.customerId,
                   onTap: () => CustomerDetailRoute(deposit.customerId).push(context),

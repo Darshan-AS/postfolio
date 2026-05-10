@@ -48,7 +48,8 @@ class CustomerSelectionField extends HookConsumerWidget {
     Customer? displayCustomer = selectedCustomer.value;
 
     if (displayCustomer == null && initialCustomerId != null) {
-      displayCustomer = ref.watch(customerByIdProvider(initialCustomerId!));
+      final customerState = ref.watch(customerByIdProvider(initialCustomerId!));
+      displayCustomer = customerState.value;
     }
 
     return InkWell(

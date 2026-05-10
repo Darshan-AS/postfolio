@@ -271,12 +271,10 @@ class _CustomerDepositsSection extends ConsumerWidget {
             (deposit) => Padding(
               padding: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
               child: OneTimeDepositCard(
-                customerId: deposit.customerId,
-                accountNo: deposit.accountNo,
+                title: deposit.accountNo,
+                subtitle: deposit.maturityDate.toAppFormat(),
                 principalAmount: deposit.principalAmount,
                 status: deposit.status,
-                maturityDate: deposit.maturityDate,
-                showCustomerName: false,
                 onTap: () =>
                     OneTimeDepositDetailRoute(deposit.id).push(context),
                 onEdit: () =>
@@ -313,13 +311,12 @@ class _CustomerDepositsSection extends ConsumerWidget {
             (deposit) => Padding(
               padding: const EdgeInsets.only(bottom: AppDimensions.paddingSm),
               child: RecurringDepositCard(
-                customerId: deposit.customerId,
-                serialNo: deposit.serialNo,
-                accountNo: deposit.accountNo,
+                title: deposit.serialNo.isNotEmpty
+                    ? '(${deposit.serialNo}) ${deposit.accountNo}'
+                    : deposit.accountNo,
+                subtitle: deposit.maturityDate.toAppFormat(),
                 installmentAmount: deposit.installmentAmount,
                 status: deposit.status,
-                maturityDate: deposit.maturityDate,
-                showCustomerName: false,
                 onTap: () =>
                     RecurringDepositDetailRoute(deposit.id).push(context),
                 onEdit: () =>

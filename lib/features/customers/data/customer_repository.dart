@@ -13,6 +13,7 @@ part 'customer_repository.g.dart';
 
 abstract class CustomerRepository {
   Stream<Result<List<Customer>, String>> watchCustomers();
+  Stream<Result<Customer, String>> watchCustomerById(String id);
   Future<Result<void, String>> createCustomer(Customer customer);
   Future<Result<void, String>> updateCustomer(Customer customer);
   Future<Result<void, String>> deleteCustomer(String id);
@@ -37,6 +38,22 @@ class FirestoreCustomerRepository implements CustomerRepository {
           return Customer.fromJson(data);
         }).toList();
         return Success(customers);
+      } catch (e) {
+        return Failure(e.toString());
+      }
+    });
+  }
+
+  @override
+  Stream<Result<Customer, String>> watchCustomerById(String id) {
+    return _customers.doc(id).snapshots().map((snapshot) {
+      try {
+        if (!snapshot.exists) {
+          return const Failure('Customer not found');
+        }
+        final data = snapshot.data()!;
+        data['id'] = snapshot.id;
+        return Success(Customer.fromJson(data));
       } catch (e) {
         return Failure(e.toString());
       }
@@ -103,6 +120,29 @@ class FakeCustomerRepository implements CustomerRepository {
     yield Success([..._customers]);
     // Then yield any future updates
     yield* _controller.stream;
+  }
+
+  @override
+  Stream<Result<Customer, String>> watchCustomerById(String id) async* {
+    final customer = _customers.where((c) => c.id == id).firstOrNull;
+    if (customer != null) {
+      yield Success(customer);
+    } else {
+      yield const Failure('Customer not found');
+    }
+    
+    yield* _controller.stream.map((result) {
+      return switch (result) {
+        Success(value: final customers) => () {
+            final c = customers.where((c) => c.id == id).firstOrNull;
+            if (c != null) {
+              return Success<Customer, String>(c);
+            }
+            return const Failure<Customer, String>('Customer not found');
+          }(),
+        Failure(error: final error) => Failure(error),
+      };
+    });
   }
 
   @override
