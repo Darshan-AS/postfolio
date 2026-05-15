@@ -1,0 +1,9 @@
+// Per-developer overrides. Copy this file to `Local.xcconfig` and fill in your values.
+// `Local.xcconfig` is gitignored so your personal team ID never lands in the repo.
+//
+// Find your team ID in Xcode: Settings > Accounts > select your Apple ID > "Manage Certificates…"
+// or run: xcrun altool --list-providers (paid accounts only).
+
+DEVELOPMENT_TEAM = YOUR_TEAM_ID_HERE
+CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = Apple Development

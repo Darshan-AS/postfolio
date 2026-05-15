@@ -53,3 +53,8 @@ windows/Runner/GoogleService-Info.plist
 
 # Flutterfire / Firepit logs
 firepit-log.txt
+
+# Per-developer Xcode signing overrides (team ID, etc.)
+macos/Runner/Configs/Local.xcconfig
+ios/Runner/Configs/Local.xcconfig
+node_modules
