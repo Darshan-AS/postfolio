@@ -12,3 +12,6 @@ PRODUCT_BUNDLE_IDENTIFIER = com.example.postfolio
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+
+// Per-developer overrides (DEVELOPMENT_TEAM, signing identity). Optional; gitignored.
+#include? "Local.xcconfig"
