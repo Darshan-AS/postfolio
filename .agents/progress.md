@@ -31,6 +31,7 @@
 - Added strict domain validation to `Nominee` model to ensure that percentage allocations exactly sum to 100%, and centralized this logic across `SavingsAccount`, `OneTimeDeposit`, and `RecurringDeposit`.
 - Configured **Firebase Emulator** support for Firestore (port 8080) and added a dedicated `USE_EMULATOR` flag logic in `main.dart` for seamless local development.
 - Developed a comprehensive **Migration Tool** (`lib/run_migration.dart`) that parses legacy CSV data (Customers, Deposits, RD) and bootstraps the local Firestore emulator environment.
+- Fixed a critical Firestore document path error in the migration script by sanitizing account numbers containing slashes before using them as document IDs.
 - Standardized repository authentication guards to use `StateError` and improved error handling across data layers.
 - Fixed a startup crash/debugger pause occurring on unauthenticated launch by ensuring repositories handle the unauthenticated state gracefully during route resolution.
 

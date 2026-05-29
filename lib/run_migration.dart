@@ -102,9 +102,10 @@ Customer _parseCustomer(List<dynamic> row, String id) {
 }
 
 OneTimeDeposit _parseOneTimeDeposit(List<dynamic> row, String customerId) {
+  final accountNo = row[0].toString().trim();
   return OneTimeDeposit(
-    id: row[0].toString().trim(), // Use Account No as ID
-    accountNo: row[0].toString().trim(),
+    id: accountNo.replaceAll('/', '-'), // Sanitize for Firestore ID
+    accountNo: accountNo,
     principalAmount: _parseCurrency(row.length > 1 ? row[1].toString() : ''),
     termYears: int.tryParse(row.length > 2 ? row[2].toString().trim() : '') ?? 0,
     termMonths: int.tryParse(row.length > 3 ? row[3].toString().trim() : '') ?? 0,
@@ -118,10 +119,11 @@ OneTimeDeposit _parseOneTimeDeposit(List<dynamic> row, String customerId) {
 }
 
 RecurringDeposit _parseRecurringDeposit(List<dynamic> row, String customerId) {
+  final accountNo = row[1].toString().trim();
   return RecurringDeposit(
-    id: row[1].toString().trim(), // Use Account No as ID
+    id: accountNo.replaceAll('/', '-'), // Sanitize for Firestore ID
     serialNo: row[0].toString().trim(),
-    accountNo: row[1].toString().trim(),
+    accountNo: accountNo,
     installmentAmount: _parseCurrency(row.length > 2 ? row[2].toString() : ''),
     termYears: int.tryParse(row.length > 3 ? row[3].toString().trim() : '') ?? 5, // Default to 5
     termMonths: 0,
