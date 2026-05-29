@@ -96,7 +96,7 @@
 - [x] Setup Client-Side ID generation for Customers using `uuid` to improve Firestore syncing and offline-support.
 - [x] Build Firestore repositories for Deposits, RD, and Schemes.
 - [x] **Refactor Data Fetching**: Transition detail screens from list-based filtering (`AsyncValue<List<T>>`) to single-document fetching (`AsyncValue<T>`) using Riverpod family providers to improve efficiency with Firestore. Rewrite `AsyncEntityBuilder` accordingly.
-- [x] Configure **Firebase Emulator** support for local development (Firestore on port 8080).
+- [x] Configure **Firebase Emulator** support for local development (Firestore on port 8080, Auth on port 9099).
 
 ## Phase 8: Enhancements & Refinements (In Progress)
 - [x] Implement a **"Demo Mode"** feature toggle. When activated via a persistent UI button on the login screen, the app bypasses Firebase Auth constraints and wires all repository providers to their `FakeDataRepository` counterparts instead of `FirestoreRepository`, allowing a complete offline, zero-setup interactive demonstration.

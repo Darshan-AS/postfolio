@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:postfolio/firebase_options.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
@@ -29,6 +30,7 @@ void main() async {
         host = 'localhost';
       }
       FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+      await FirebaseAuth.instance.useAuthEmulator(host, 9099);
       debugPrint('Connected to Firebase Emulator');
     } catch (e) {
       debugPrint('Failed to connect to Firebase Emulator: $e');

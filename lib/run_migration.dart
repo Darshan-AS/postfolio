@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -172,6 +171,7 @@ void main() async {
   
   // Use Firestore Emulator
   FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+  await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
   
   runApp(const MaterialApp(home: MigrationRunner()));
 }

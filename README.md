@@ -36,10 +36,12 @@ flutter run
 Runs the app connected to the local Firebase Emulator Suite. This is recommended for development to avoid costs and data pollution.
 
 **Step A: Start the Emulators**
-In a separate terminal, start the Firestore emulator. It is recommended to specify your project ID to ensure the emulator uses the correct configuration:
+In a separate terminal, start the Firestore and Authentication emulators. It is recommended to specify your project ID to ensure the emulator uses the correct configuration:
 ```bash
 firebase emulators:start --project=postfolio-app
 ```
+
+> **Tip**: You can access the **Emulator UI** at `http://localhost:4000` to manage local users and view Firestore data.
 
 **Step B: Run the App**
 Run the app with the `USE_EMULATOR` flag:
