@@ -48,6 +48,9 @@
 - [x] Refactor domain enums to remove verbose boilerplate and switch statements using `@JsonEnum` and `slang` translation maps.
 - [ ] Add `riverpod_lint` and `custom_lint` for static analysis of Riverpod rules.
 - [ ] Update Nominee UI to a better input widget/slider that enforces the 100% rule.
+- [ ] Organize the Savings Bank (SB) account number and its associated nomination details into a single cohesive UI section.
+- [ ] Ensure that the relationship of each nominee to the account holder is clearly displayed in the UI.
+- [ ] Remove duplicate display of the interest rate in the Recurring Deposits (RD) UI.
 
 ## Phase 4: Deposits & RD Features (Completed)
 - [x] Build `OneTimeDepositRepository` and `OneTimeDepositsController`.
@@ -64,6 +67,7 @@
 - [x] Build `ProjectionCalculator` pure utility class for PO scheme rules.
 - [x] Refactor Deposit models to strictly compute maturity projections (removing persisted inputs).
 - [x] Build `InvestmentProjectionCard` UI for live previews.
+- [x] Build `run_migration.dart` utility to bootstrap local emulator data from legacy CSV exports.
 - [ ] Implement Gross/Net Commission logic and TDS rules.
 
 ## Phase 6: Structural Refactoring (In Progress)
@@ -92,6 +96,7 @@
 - [x] Setup Client-Side ID generation for Customers using `uuid` to improve Firestore syncing and offline-support.
 - [x] Build Firestore repositories for Deposits, RD, and Schemes.
 - [x] **Refactor Data Fetching**: Transition detail screens from list-based filtering (`AsyncValue<List<T>>`) to single-document fetching (`AsyncValue<T>`) using Riverpod family providers to improve efficiency with Firestore. Rewrite `AsyncEntityBuilder` accordingly.
+- [x] Configure **Firebase Emulator** support for local development (Firestore on port 8080).
 
 ## Phase 8: Enhancements & Refinements (In Progress)
 - [x] Implement a **"Demo Mode"** feature toggle. When activated via a persistent UI button on the login screen, the app bypasses Firebase Auth constraints and wires all repository providers to their `FakeDataRepository` counterparts instead of `FirestoreRepository`, allowing a complete offline, zero-setup interactive demonstration.

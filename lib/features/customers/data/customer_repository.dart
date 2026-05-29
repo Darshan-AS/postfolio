@@ -198,11 +198,7 @@ CustomerRepository customerRepository(Ref ref) {
   );
 
   if (userId == null) {
-    // If not authenticated, we can't provide a working Firestore repository
-    // Instead of throwing immediately (which might break riverpod startup),
-    // we can return a dummy or let the caller handle errors.
-    // However, since UI is guarded by auth, this shouldn't normally happen.
-    throw Exception('User must be authenticated to access CustomerRepository');
+    throw StateError('User is not authenticated. Cannot access CustomerRepository.');
   }
 
   return FirestoreCustomerRepository(firestore.FirebaseFirestore.instance, userId);

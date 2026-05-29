@@ -169,7 +169,7 @@ RecurringDepositRepository recurringDepositRepository(Ref ref) {
   );
 
   if (userId == null) {
-    throw Exception('User must be authenticated to access RecurringDepositRepository');
+    throw StateError('User is not authenticated. Cannot access RecurringDepositRepository.');
   }
 
   return FirestoreRecurringDepositRepository(

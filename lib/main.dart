@@ -1,6 +1,9 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:postfolio/firebase_options.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
@@ -9,9 +12,29 @@ import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 
+const bool useFirebaseEmulator = bool.fromEnvironment('USE_EMULATOR', defaultValue: false);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  if (useFirebaseEmulator) {
+    try {
+      final String host;
+      if (kIsWeb) {
+        host = 'localhost';
+      } else if (Platform.isAndroid) {
+        host = '10.0.2.2';
+      } else {
+        host = 'localhost';
+      }
+      FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+      debugPrint('Connected to Firebase Emulator');
+    } catch (e) {
+      debugPrint('Failed to connect to Firebase Emulator: $e');
+    }
+  }
+
   final prefs = await SharedPreferences.getInstance();
   LocaleSettings.useDeviceLocale();
 

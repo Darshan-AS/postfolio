@@ -168,7 +168,7 @@ OneTimeDepositRepository oneTimeDepositRepository(Ref ref) {
   );
 
   if (userId == null) {
-    throw Exception('User must be authenticated to access OneTimeDepositRepository');
+    throw StateError('User is not authenticated. Cannot access OneTimeDepositRepository.');
   }
 
   return FirestoreOneTimeDepositRepository(

@@ -29,6 +29,10 @@
 - Improved UX by allowing users to navigate directly to the customer detail screen from deposit details.
 - Enhanced `CustomerDetailScreen` UX by directly listing all associated "One-Time Deposits" and "Recurring Deposits" inside the customer detail view, giving comprehensive portfolio oversight without switching contexts.
 - Added strict domain validation to `Nominee` model to ensure that percentage allocations exactly sum to 100%, and centralized this logic across `SavingsAccount`, `OneTimeDeposit`, and `RecurringDeposit`.
+- Configured **Firebase Emulator** support for Firestore (port 8080) and added a dedicated `USE_EMULATOR` flag logic in `main.dart` for seamless local development.
+- Developed a comprehensive **Migration Tool** (`lib/run_migration.dart`) that parses legacy CSV data (Customers, Deposits, RD) and bootstraps the local Firestore emulator environment.
+- Standardized repository authentication guards to use `StateError` and improved error handling across data layers.
+- Fixed a startup crash/debugger pause occurring on unauthenticated launch by ensuring repositories handle the unauthenticated state gracefully during route resolution.
 
 ## Next Steps
 - **Form State Refactor**: Migrate local hook-based form state inside form screens to dedicated Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) for strictly pure business logic.
