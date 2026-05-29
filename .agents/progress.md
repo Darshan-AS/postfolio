@@ -32,6 +32,7 @@
 - Configured **Firebase Emulator** support for Firestore (port 8080) and added a dedicated `USE_EMULATOR` flag logic in `main.dart` for seamless local development.
 - Developed a comprehensive **Migration Tool** (`lib/run_migration.dart`) that parses legacy CSV data (Customers, Deposits, RD) and bootstraps the local Firestore emulator environment.
 - Fixed a critical Firestore document path error in the migration script by sanitizing account numbers containing slashes before using them as document IDs.
+- Enhanced the migration tool with real-time statistics tracking and a summary UI showing CSV totals, migration counts, and skip reasons.
 - Standardized repository authentication guards to use `StateError` and improved error handling across data layers.
 - Fixed a startup crash/debugger pause occurring on unauthenticated launch by ensuring repositories handle the unauthenticated state gracefully during route resolution.
 

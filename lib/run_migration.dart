@@ -136,6 +136,32 @@ RecurringDeposit _parseRecurringDeposit(List<dynamic> row, String customerId) {
   );
 }
 
+// --- Migration Stats Model ---
+
+class MigrationStats {
+  final int csvTotal;
+  final int processed;
+  final int migrated;
+  final int skippedMissingCustomer;
+  final int skippedDuplicate;
+
+  MigrationStats({
+    this.csvTotal = 0,
+    this.processed = 0,
+    this.migrated = 0,
+    this.skippedMissingCustomer = 0,
+    this.skippedDuplicate = 0,
+  });
+
+  @override
+  String toString() {
+    if (processed < csvTotal && processed > 0) {
+      return 'Batch: $processed/$csvTotal, Migrated: $migrated, Duplicates: $skippedDuplicate';
+    }
+    return 'Total: $csvTotal, Migrated: $migrated, Missing Cust: $skippedMissingCustomer, Duplicates: $skippedDuplicate';
+  }
+}
+
 // --- Flutter App Shell for Migration ---
 
 void main() async {
@@ -159,6 +185,7 @@ class MigrationRunner extends StatefulWidget {
 
 class _MigrationRunnerState extends State<MigrationRunner> {
   String status = "Ready to migrate. Enter target UID or Sign In.";
+  String statsDisplay = "";
   final _uuid = const Uuid();
   final _uidController = TextEditingController();
   final _countController = TextEditingController(text: '10');
@@ -261,14 +288,15 @@ class _MigrationRunnerState extends State<MigrationRunner> {
     setState(() {
       _isMigrating = true;
       status = "Starting migration for UID: $uid...";
+      statsDisplay = "Scanning CSVs...";
     });
 
     final firestore = FirebaseFirestore.instance;
 
     try {
       final limit = maxCustomers ?? 999999;
-      await _migrateCustomers(firestore, uid, limit);
-      await _migrateDeposits(
+      final custStats = await _migrateCustomers(firestore, uid, limit);
+      final otStats = await _migrateDeposits(
         firestore,
         uid: uid,
         collectionName: 'one_time_deposits',
@@ -278,7 +306,7 @@ class _MigrationRunnerState extends State<MigrationRunner> {
         customerNameIndex: 5,
         accountNoIndex: 0,
       );
-      await _migrateDeposits(
+      final rdStats = await _migrateDeposits(
         firestore,
         uid: uid,
         collectionName: 'recurring_deposits',
@@ -290,7 +318,15 @@ class _MigrationRunnerState extends State<MigrationRunner> {
       );
 
       setState(() {
-        status = "Emulator Migration Complete! 🎉\nMigrated data to users/$uid\nCheck your Firebase Local Emulator UI.";
+        status = "Emulator Migration Complete! 🎉\nMigrated data to users/$uid";
+        statsDisplay = """
+--- Migration Summary ---
+Customers: $custStats
+One-Time: $otStats
+Recurring: $rdStats
+-------------------------
+Check your Firebase Local Emulator UI.
+""";
         _isMigrating = false;
       });
     } catch (e, stack) {
@@ -301,19 +337,24 @@ class _MigrationRunnerState extends State<MigrationRunner> {
     }
   }
 
-  Future<void> _migrateCustomers(FirebaseFirestore firestore, String uid, int maxCustomers) async {
+  Future<MigrationStats> _migrateCustomers(FirebaseFirestore firestore, String uid, int maxCustomers) async {
     setState(() => status = "Migrating first $maxCustomers Customers to Emulator...");
     final rawData = await rootBundle.loadString('data/customers.csv');
     final rows = const CsvToListConverter(eol: '\n').convert(rawData);
 
     var batch = firestore.batch();
-    int count = 0;
+    int migratedCount = 0;
+    int csvTotal = 0;
+    int duplicateCount = 0;
+    int processedCount = 0;
 
     for (int i = 1; i < rows.length; i++) {
-      if (count >= maxCustomers) break;
-
       final row = rows[i];
       if (row.isEmpty || row[0].toString().trim().isEmpty) continue;
+      csvTotal++;
+
+      if (migratedCount >= maxCustomers) continue;
+      processedCount++;
 
       final name = row.length > 0 ? row[0].toString().trim() : '';
       final phone = row.length > 1 ? row[1].toString().trim() : '';
@@ -330,22 +371,30 @@ class _MigrationRunnerState extends State<MigrationRunner> {
         
         _customerCache[cacheKey] = newId;
         _customerNameFallbackCache[name] = newId;
-        count++;
+        migratedCount++;
 
-        if (count % 400 == 0) {
+        if (migratedCount % 400 == 0) {
           await batch.commit();
           batch = firestore.batch();
         }
+      } else {
+        duplicateCount++;
       }
     }
 
-    if (count % 400 != 0 || (count > 0 && count < 400)) {
+    if (migratedCount % 400 != 0 || (migratedCount > 0 && migratedCount < 400)) {
       await batch.commit();
     }
-    print('Committed $count customers to emulator.');
+    
+    return MigrationStats(
+      csvTotal: csvTotal,
+      processed: processedCount,
+      migrated: migratedCount,
+      skippedDuplicate: duplicateCount,
+    );
   }
 
-  Future<void> _migrateDeposits(
+  Future<MigrationStats> _migrateDeposits(
     FirebaseFirestore firestore, {
     required String uid,
     required String collectionName,
@@ -360,41 +409,58 @@ class _MigrationRunnerState extends State<MigrationRunner> {
     final rows = const CsvToListConverter(eol: '\n').convert(rawData);
 
     var batch = firestore.batch();
-    int count = 0;
+    int migratedCount = 0;
+    int csvTotal = 0;
+    int missingCustomerCount = 0;
+    int duplicateCount = 0;
+    int relevantToBatch = 0;
 
     for (int i = 1; i < rows.length; i++) {
       final row = rows[i];
       if (row.isEmpty || row[0].toString().trim().isEmpty) continue;
+      csvTotal++;
 
       final accountNo = row.length > accountNoIndex ? row[accountNoIndex].toString().trim() : '';
       final customerName = row.length > customerNameIndex ? row[customerNameIndex].toString().trim() : '';
       
       final customerId = _customerNameFallbackCache[customerName];
 
-      if (customerId != null && !cache.contains(accountNo)) {
-        final deposit = parser(row, customerId);
+      if (customerId != null) {
+        relevantToBatch++;
+        if (!cache.contains(accountNo)) {
+          final deposit = parser(row, customerId);
 
-        batch.set(
-          firestore.collection('users').doc(uid).collection(collectionName).doc(deposit.id),
-          deposit.toJson(),
-        );
-        
-        cache.add(accountNo);
-        count++;
+          batch.set(
+            firestore.collection('users').doc(uid).collection(collectionName).doc(deposit.id),
+            deposit.toJson(),
+          );
+          
+          cache.add(accountNo);
+          migratedCount++;
 
-        if (count % 400 == 0) {
-          await batch.commit();
-          batch = firestore.batch();
+          if (migratedCount % 400 == 0) {
+            await batch.commit();
+            batch = firestore.batch();
+          }
+        } else {
+          duplicateCount++;
         }
-      } else if (customerId == null) {
-        // print("Warning: Skipping deposit $accountNo. Customer '$customerName' not found.");
+      } else {
+        missingCustomerCount++;
       }
     }
 
-    if (count % 400 != 0 || (count > 0 && count < 400)) {
+    if (migratedCount % 400 != 0 || (migratedCount > 0 && migratedCount < 400)) {
       await batch.commit();
     }
-    print('Committed $count $collectionName to emulator.');
+    
+    return MigrationStats(
+      csvTotal: csvTotal,
+      processed: relevantToBatch,
+      migrated: migratedCount,
+      skippedMissingCustomer: missingCustomerCount,
+      skippedDuplicate: duplicateCount,
+    );
   }
 
   @override
@@ -469,6 +535,24 @@ class _MigrationRunnerState extends State<MigrationRunner> {
                 style: const TextStyle(fontSize: 18),
                 textAlign: TextAlign.center,
               ),
+              if (statsDisplay.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 24),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: SelectableText(
+                    statsDisplay,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
