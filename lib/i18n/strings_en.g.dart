@@ -239,6 +239,8 @@ class TranslationsFiltersEn {
 	/// en: 'Filters'
 	String get title => 'Filters';
 
+	late final TranslationsFiltersSectionsEn sections = TranslationsFiltersSectionsEn.internal(_root);
+
 	/// en: 'Status'
 	String get status => 'Status';
 }
@@ -653,6 +655,24 @@ class TranslationsCommonSectionsEn {
 	String get linkedAccounts => 'Linked Accounts';
 }
 
+// Path: filters.sections
+class TranslationsFiltersSectionsEn {
+	TranslationsFiltersSectionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Status'
+	String get status => 'Status';
+
+	/// en: 'Urgency'
+	String get urgency => 'Urgency';
+
+	/// en: 'Scheme Type'
+	String get scheme => 'Scheme Type';
+}
+
 // Path: customers.actions
 class TranslationsCustomersActionsEn {
 	TranslationsCustomersActionsEn.internal(this._root);
@@ -980,6 +1000,9 @@ extension on Translations {
 			'sorting.options.maturityAsc' => 'Maturity (Sooner)',
 			'sorting.options.maturityDesc' => 'Maturity (Later)',
 			'filters.title' => 'Filters',
+			'filters.sections.status' => 'Status',
+			'filters.sections.urgency' => 'Urgency',
+			'filters.sections.scheme' => 'Scheme Type',
 			'filters.status' => 'Status',
 			'projection.title' => 'Live Projection',
 			'projection.totalInvested' => 'Total Invested',

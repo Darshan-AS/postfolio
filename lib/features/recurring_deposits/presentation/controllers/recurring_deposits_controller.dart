@@ -48,6 +48,10 @@ class RecurringListCriteria extends _$RecurringListCriteria {
   }
 
   void clearAll() => state = const RDSearchCriteria();
+
+  void clearFilters() {
+    state = state.copyWith(statusFilters: const [], urgencyFilters: const []);
+  }
 }
 
 @riverpod

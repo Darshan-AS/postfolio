@@ -17,7 +17,8 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
 import 'package:postfolio/core/widgets/app_sort_bottom_sheet.dart';
-import 'package:postfolio/core/widgets/app_filter_chip_bar.dart';
+import 'package:postfolio/core/widgets/app_filter_bottom_sheet.dart';
+import 'package:postfolio/core/widgets/app_filter_section.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
@@ -41,21 +42,11 @@ class RecurringDepositsScreen extends HookConsumerWidget {
           ),
           onPressed: () {},
         ),
-        title: Row(
-          children: [
-            HugeIcon(
-              icon: HugeIcons.strokeRoundedTransaction,
-              size: AppDimensions.iconMd,
-              color: Theme.of(context).colorScheme.secondary,
-            ),
-            AppSpacings.gapSm,
-            Text(
-              t.recurringDeposits.title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-            ),
-          ],
+        title: Text(
+          t.recurringDeposits.title,
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
         actions: [
           IconButton(
@@ -91,6 +82,60 @@ class RecurringDepositsScreen extends HookConsumerWidget {
               );
             },
           ),
+          IconButton(
+            icon: Badge(
+              isLabelVisible:
+                  (criteria.statusFilters.length +
+                      criteria.urgencyFilters.length) >
+                  0,
+              label: Text(
+                '${criteria.statusFilters.length + criteria.urgencyFilters.length}',
+              ),
+              child: const HugeIcon(
+                icon: HugeIcons.strokeRoundedFilter,
+                size: AppDimensions.iconMd,
+              ),
+            ),
+            onPressed: () {
+              AppFilterBottomSheet.show(
+                context: context,
+                builder: (context) => Consumer(
+                  builder: (context, ref, child) {
+                    final criteria = ref.watch(recurringListCriteriaProvider);
+                    return AppFilterBottomSheet(
+                      title: t.filters.title,
+                      onClearAll: () => ref
+                          .read(recurringListCriteriaProvider.notifier)
+                          .clearFilters(),
+                      filterSections: [
+                        AppFilterSection<MaturityUrgency>(
+                          title: t.filters.sections.urgency,
+                          options: const [
+                            MaturityUrgency.overdue,
+                            MaturityUrgency.maturingSoon,
+                          ],
+                          selectedOptions: criteria.urgencyFilters,
+                          labelBuilder: (urgency) => urgency.displayName,
+                          onSelected: (urgency) => ref
+                              .read(recurringListCriteriaProvider.notifier)
+                              .toggleUrgencyFilter(urgency),
+                        ),
+                        AppFilterSection<DepositStatus>(
+                          title: t.filters.sections.status,
+                          options: DepositStatus.values,
+                          selectedOptions: criteria.statusFilters,
+                          labelBuilder: (status) => status.displayName,
+                          onSelected: (status) => ref
+                              .read(recurringListCriteriaProvider.notifier)
+                              .toggleFilter(status),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              );
+            },
+          ),
         ],
       ),
       body: Column(
@@ -111,27 +156,6 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             ),
             AppSpacings.gapMd,
           ],
-          AppFilterChipBar<MaturityUrgency>(
-            options: const [
-              MaturityUrgency.overdue,
-              MaturityUrgency.maturingSoon,
-            ],
-            selectedOptions: criteria.urgencyFilters,
-            labelBuilder: (urgency) => urgency.displayName,
-            onSelected: (urgency) => ref
-                .read(recurringListCriteriaProvider.notifier)
-                .toggleUrgencyFilter(urgency),
-          ),
-          AppSpacings.gapSm,
-          AppFilterChipBar<DepositStatus>(
-            options: DepositStatus.values,
-            selectedOptions: criteria.statusFilters,
-            labelBuilder: (status) => status.displayName,
-            onSelected: (status) => ref
-                .read(recurringListCriteriaProvider.notifier)
-                .toggleFilter(status),
-          ),
-          AppSpacings.gapSm,
           Expanded(
             child: switch (depositsState) {
               AsyncData(:final value) => _buildDataState(context, ref, value),

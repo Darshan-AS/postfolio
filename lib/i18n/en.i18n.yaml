@@ -65,6 +65,10 @@ sorting:
 
 filters:
   title: "Filters"
+  sections:
+    status: "Status"
+    urgency: "Urgency"
+    scheme: "Scheme Type"
   status: "Status"
 
 projection:

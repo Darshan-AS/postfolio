@@ -124,9 +124,9 @@
 - [x] Support Filter features across all entity listing screens.
 - [x] Support Sort features across all entity listing screens.
 - [x] Add UI controls for search/filter/sort:
-  - Add horizontally scrollable Filter Chip Bar for status filtering on deposit screens.
-  - Implement a reusable Sort Bottom Sheet triggered by a sort icon in the App Bar.
-  - Add friendly "No results found" empty states with a "Clear Filters" action.
+  - [x] Add a Filter Bottom Sheet for filtering on deposit screens.
+  - [x] Implement a reusable Sort Bottom Sheet triggered by a sort icon in the App Bar.
+  - [x] Add friendly "No results found" empty states with a "Clear Filters" action.
 - [x] Polish the Search Bar UI/UX (migrated to official M3 SearchBar with custom theme and added a dedicated "Cancel" button).
 - [ ] Persist all sort and filter selections as user preferences so defaults are retained across sessions.
 - [ ] Add `maturityWarningDays` (default 7d) as a user preference so agents can customize their notification window.

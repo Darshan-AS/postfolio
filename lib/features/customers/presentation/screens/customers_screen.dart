@@ -40,21 +40,11 @@ class CustomersScreen extends HookConsumerWidget {
           ),
           onPressed: () {},
         ),
-        title: Row(
-          children: [
-            HugeIcon(
-              icon: HugeIcons.strokeRoundedUserMultiple,
-              size: AppDimensions.iconMd,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            AppSpacings.gapSm,
-            Text(
-              t.nav.customers,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-            ),
-          ],
+        title: Text(
+          t.nav.customers,
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
         actions: [
           IconButton(
@@ -89,14 +79,6 @@ class CustomersScreen extends HookConsumerWidget {
                     .updateSort(option),
               );
             },
-          ),
-          IconButton(
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedRefresh,
-              size: AppDimensions.iconMd,
-            ),
-            // Trigger a manual refresh from the controller
-            onPressed: () => ref.refresh(customersControllerProvider),
           ),
         ],
       ),

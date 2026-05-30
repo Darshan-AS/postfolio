@@ -17,7 +17,8 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
 import 'package:postfolio/core/widgets/app_sort_bottom_sheet.dart';
-import 'package:postfolio/core/widgets/app_filter_chip_bar.dart';
+import 'package:postfolio/core/widgets/app_filter_bottom_sheet.dart';
+import 'package:postfolio/core/widgets/app_filter_section.dart';
 import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
@@ -42,21 +43,11 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
           ),
           onPressed: () {},
         ),
-        title: Row(
-          children: [
-            HugeIcon(
-              icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
-              size: AppDimensions.iconMd,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            AppSpacings.gapSm,
-            Text(
-              t.oneTimeDeposits.title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-            ),
-          ],
+        title: Text(
+          t.oneTimeDeposits.title,
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
         actions: [
           IconButton(
@@ -90,6 +81,70 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
               );
             },
           ),
+          IconButton(
+            icon: Badge(
+              isLabelVisible:
+                  (criteria.statusFilters.length +
+                      criteria.urgencyFilters.length +
+                      criteria.schemeFilters.length) >
+                  0,
+              label: Text(
+                '${criteria.statusFilters.length + criteria.urgencyFilters.length + criteria.schemeFilters.length}',
+              ),
+              child: const HugeIcon(
+                icon: HugeIcons.strokeRoundedFilter,
+                size: AppDimensions.iconMd,
+              ),
+            ),
+            onPressed: () {
+              AppFilterBottomSheet.show(
+                context: context,
+                builder: (context) => Consumer(
+                  builder: (context, ref, child) {
+                    final criteria = ref.watch(oneTimeListCriteriaProvider);
+                    return AppFilterBottomSheet(
+                      title: t.filters.title,
+                      onClearAll: () => ref
+                          .read(oneTimeListCriteriaProvider.notifier)
+                          .clearFilters(),
+                      filterSections: [
+                        AppFilterSection<MaturityUrgency>(
+                          title: t.filters.sections.urgency,
+                          options: const [
+                            MaturityUrgency.overdue,
+                            MaturityUrgency.maturingSoon,
+                          ],
+                          selectedOptions: criteria.urgencyFilters,
+                          labelBuilder: (urgency) => urgency.displayName,
+                          onSelected: (urgency) => ref
+                              .read(oneTimeListCriteriaProvider.notifier)
+                              .toggleUrgencyFilter(urgency),
+                        ),
+                        AppFilterSection<DepositStatus>(
+                          title: t.filters.sections.status,
+                          options: DepositStatus.values,
+                          selectedOptions: criteria.statusFilters,
+                          labelBuilder: (status) => status.displayName,
+                          onSelected: (status) => ref
+                              .read(oneTimeListCriteriaProvider.notifier)
+                              .toggleStatusFilter(status),
+                        ),
+                        AppFilterSection<OneTimeSchemeType>(
+                          title: t.filters.sections.scheme,
+                          options: OneTimeSchemeType.values,
+                          selectedOptions: criteria.schemeFilters,
+                          labelBuilder: (type) => type.shortName,
+                          onSelected: (type) => ref
+                              .read(oneTimeListCriteriaProvider.notifier)
+                              .toggleSchemeFilter(type),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              );
+            },
+          ),
         ],
       ),
       body: Column(
@@ -108,36 +163,6 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
             ),
             AppSpacings.gapMd,
           ],
-          AppFilterChipBar<MaturityUrgency>(
-            options: const [
-              MaturityUrgency.overdue,
-              MaturityUrgency.maturingSoon,
-            ],
-            selectedOptions: criteria.urgencyFilters,
-            labelBuilder: (urgency) => urgency.displayName,
-            onSelected: (urgency) => ref
-                .read(oneTimeListCriteriaProvider.notifier)
-                .toggleUrgencyFilter(urgency),
-          ),
-          AppSpacings.gapSm,
-          AppFilterChipBar<DepositStatus>(
-            options: DepositStatus.values,
-            selectedOptions: criteria.statusFilters,
-            labelBuilder: (status) => status.displayName,
-            onSelected: (status) => ref
-                .read(oneTimeListCriteriaProvider.notifier)
-                .toggleStatusFilter(status),
-          ),
-          AppSpacings.gapSm,
-          AppFilterChipBar<OneTimeSchemeType>(
-            options: OneTimeSchemeType.values,
-            selectedOptions: criteria.schemeFilters,
-            labelBuilder: (type) => type.shortName,
-            onSelected: (type) => ref
-                .read(oneTimeListCriteriaProvider.notifier)
-                .toggleSchemeFilter(type),
-          ),
-          AppSpacings.gapSm,
           Expanded(
             child: switch (depositsState) {
               AsyncData(:final value) => _buildDataState(context, ref, value),

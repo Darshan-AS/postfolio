@@ -58,6 +58,14 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
   }
 
   void clearAll() => state = const OTDSearchCriteria();
+
+  void clearFilters() {
+    state = state.copyWith(
+      statusFilters: const [],
+      urgencyFilters: const [],
+      schemeFilters: const [],
+    );
+  }
 }
 
 @riverpod

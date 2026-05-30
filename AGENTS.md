@@ -51,7 +51,7 @@ When starting a new conversation or picking up this repository, you MUST immedia
   - **`progress.md`**: High-level summary of the **Current State** and **Next Steps**. Update this at the end of your session. It should reflect the global state of the project.
   - **`.agents/session_logs/`**: Create a new log for **every session**. Name it `YYYY-MM-DD_session_N.md`. This log should contain granular details of changes made, decisions taken, and specific files touched.
   - **`conventions.md`**: Update this file if a new architectural or design decision was taken during your session.
-  - **`tasks.md`**: Check off tasks as you complete them. If new tasks or next steps were discussed/recommended, append them to the appropriate phase.
+  - **`tasks.md`**: Check off tasks as you complete them. If new tasks or next steps were discussed/recommended, append them to the appropriate phase. Always use checkboxes (`- [ ]` or `- [x]`) for task items, even for sub-tasks.
 
 ## Conventions
 {Patterns that differ from common practices—include specific examples}

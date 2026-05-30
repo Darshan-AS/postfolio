@@ -51,6 +51,6 @@
 - Updated Riverpod notifiers and derived list providers to execute offline-first, in-memory searches, filters, and sorts.
 - Migrated the custom search bar to the official Material 3 `SearchBar` widget, customized with a flat design and 12.0 corner radius to align with the project's premium design system. Added a dedicated "Cancel" button for improved UX on listing screens.
 - Implemented comprehensive Filter and Sort UI across Customers, One-Time Deposits, and Recurring Deposits screens.
-- Created reusable `AppSortBottomSheet` and `AppFilterChipBar` components to maintain UI consistency.
+- Created reusable `AppSortBottomSheet` and `AppFilterBottomSheet` components to maintain UI consistency and save vertical screen space.
 - Enhanced empty states with a "Clear Filters" action that resets search and filter criteria.
 - Standardized filter chip styling via a centralized `ChipThemeData` in the global theme.
