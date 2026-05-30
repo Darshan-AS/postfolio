@@ -99,7 +99,7 @@ Customer _parseCustomer(List<dynamic> row, String id) {
 
   return Customer(
     id: id,
-    name: row.length > 0 ? row[0].toString().trim() : '',
+    name: row.isNotEmpty ? row[0].toString().trim() : '',
     phone: row.length > 1 ? row[1].toString().trim() : '',
     cifNumber: row.length > 2 ? row[2].toString().trim() : '',
     dateOfBirth: dob,
@@ -416,7 +416,7 @@ Check your Firebase Local Emulator UI.
       if (migratedCount >= maxCustomers) continue;
       processedCount++;
 
-      final name = row.length > 0 ? row[0].toString().trim() : '';
+      final name = row.isNotEmpty ? row[0].toString().trim() : '';
       final phone = row.length > 1 ? row[1].toString().trim() : '';
       final cacheKey = '${name}_$phone';
 

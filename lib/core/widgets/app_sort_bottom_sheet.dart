@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/i18n/strings.g.dart';
 
 class AppSortBottomSheet<T> extends HookWidget {
   final String title;
@@ -79,23 +78,25 @@ class AppSortBottomSheet<T> extends HookWidget {
           ),
           const Divider(),
           Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: options.length,
-              itemBuilder: (context, index) {
-                final option = options[index];
-                return RadioListTile<T>(
-                  title: Text(labelBuilder(option)),
-                  value: option,
-                  groupValue: localSelectedOption.value,
-                  onChanged: (value) {
-                    if (value != null) {
-                      localSelectedOption.value = value;
-                      onSelected(value);
-                    }
-                  },
-                );
+            child: RadioGroup<T>(
+              groupValue: localSelectedOption.value,
+              onChanged: (value) {
+                if (value != null) {
+                  localSelectedOption.value = value;
+                  onSelected(value);
+                }
               },
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  final option = options[index];
+                  return RadioListTile<T>(
+                    title: Text(labelBuilder(option)),
+                    value: option,
+                  );
+                },
+              ),
             ),
           ),
           AppSpacings.gapLg,

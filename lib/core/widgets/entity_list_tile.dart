@@ -174,7 +174,7 @@ class EntityListTile extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (trailing != null) trailing!,
+        ?trailing,
         if (trailing != null && hasActionButtons) AppSpacings.gapXs,
         for (final action in inlineActions)
           IconButton(
