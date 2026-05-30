@@ -6,6 +6,10 @@ on:
       - 'v*' # Triggers when you push a tag like v1.0.0
   workflow_dispatch: # Allows manual triggering
 
+# REQUIRED: Give the GITHUB_TOKEN write access to create releases
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     name: Build, Release, and Distribute
@@ -47,6 +51,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Write Release Notes to File
+        env:
+          CHANGELOG: ${{ steps.release_notes.outputs.changelog }}
+        run: echo "$CHANGELOG" > release-notes.txt
+
       - name: Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
@@ -54,8 +63,8 @@ jobs:
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIAL_FILE_CONTENT }}
           groups: testers
           file: build/app/outputs/flutter-apk/app-release.apk
-          # We pass the generated changelog directly to Firebase
-          releaseNotes: ${{ steps.release_notes.outputs.changelog }}
+          # We pass the generated changelog file directly to Firebase
+          releaseNotesFile: release-notes.txt
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
