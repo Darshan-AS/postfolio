@@ -77,6 +77,51 @@ If you need to bootstrap your local environment with legacy data (CSV/JSON), use
 
 ---
 
+## Multi-Machine Setup (Google Sign-In)
+
+If you are developing this project on multiple machines (e.g., switching between MacBook and Linux), you must register the unique debug SHA-1 fingerprint for **each** machine in the Firebase Console to enable Google Sign-In.
+
+### 1. Retrieve SHA-1 Fingerprint
+Run the following command on your new machine to get the debug fingerprint:
+```bash
+# Linux/macOS
+cd android && ./gradlew signingReport
+```
+Look for the `SHA1` value under the `debug` variant.
+
+### 2. Register in Firebase Console
+1. Go to **Project Settings** > **General** in the [Firebase Console](https://console.firebase.google.com/).
+2. Select the Android app (`com.example.postfolio`).
+3. Click **Add fingerprint** and paste your machine's SHA-1.
+4. (Optional) Also add the SHA-256 fingerprint for full support.
+
+### 3. Sync Configuration
+Once the fingerprint is added in the console, synchronize your local files:
+```bash
+# Ensure flutterfire-cli is in your PATH (see Environment Setup below)
+flutterfire configure --project=postfolio-app --yes
+```
+This automatically updates `android/app/google-services.json` and `lib/firebase_options.dart`.
+
+---
+
+## Environment Setup
+
+### PATH Configuration
+Ensure your shell profile (e.g., `~/.zshrc` or `~/.bashrc`) includes the following paths to use the Flutter and Dart CLI tools effectively:
+
+```bash
+# Flutter SDK
+export PATH="$PATH:[PATH_TO_FLUTTER]/bin"
+
+# Dart Global Packages (e.g. flutterfire)
+export PATH="$PATH:$HOME/.pub-cache/bin"
+```
+
+For more details, see the official [Google Sign-In for Flutter](https://pub.dev/packages/google_sign_in) and [FlutterFire CLI](https://firebase.google.com/docs/flutter/setup) documentation.
+
+---
+
 ## Architecture & Conventions
 
 This project follows strict architectural patterns:

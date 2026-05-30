@@ -120,14 +120,19 @@
 - [x] **UI Cleanup - Hero Animations:** Add unique `heroTag` properties to the `FloatingActionButton`s and implement physical expanding Hero animations transitioning into the Create Form screens.
 - [x] Create and integrate an enum for relationships in the `Nominee` model.
 - [ ] Implement image capture and display functionality for customer profiles.
+- [ ] Support Search feature in Customers, One-Time Deposits, and Recurring Deposits.
+- [ ] Support Filter features across all entity listing screens.
+- [ ] Support Sort features across all entity listing screens.
+- [ ] Highlight deposits based on maturity status:
+  - About to mature (e.g., within 30 days)
+  - Matured but not closed
+  - Completely closed
 - [ ] Redesign the leading visual element in deposit list tiles to replace the generic circular icons.
 - [ ] Apply distinct color coding to differentiate deposit types in list views.
 - [ ] Enhance the visual prominence of the scheme type in deposit detail views.
 - [ ] **Domain Math - Commission Calculators:** Implement functions to auto-calculate Gross Commission and auto-deduct the 2% TDS to derive the Net Payout.
 - [ ] **Domain Math - Penalties & Rebates:** Implement transaction evaluation logic to automatically calculate RD Late Fees and Advance Deposit Rebates.
 - [ ] **UI Cleanup - Relative Time Formatting:** Add relative time display using the `timeago` or `jiffy` packages.
-- [ ] Add filtering capabilities to deposit list screens (e.g., view by Active, Matured, Closed status).
-- [ ] Integrate search functionality across all entity listing screens (Customers, Deposits, RDs).
 - [ ] Explore migrating `termYears` and `termMonths` into a custom Domain-Driven Value Object.
 - [ ] Implement and support dark theme across the application.
 - [ ] Implement local App Lock (Biometrics/PIN) for additional privacy and security.

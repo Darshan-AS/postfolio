@@ -11,6 +11,21 @@
             ]
         },
         {
+            "name": "Migration (Emulator)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/run_migration.dart",
+            "toolArgs": [
+                "--dart-define=USE_EMULATOR=true"
+            ]
+        },
+        {
+            "name": "Migration (Production)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/run_migration.dart"
+        },
+        {
             "name": "Postfolio (Current Device)",
             "request": "launch",
             "type": "dart",

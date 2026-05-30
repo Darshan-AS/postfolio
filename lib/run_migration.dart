@@ -163,15 +163,32 @@ class MigrationStats {
 
 // --- Flutter App Shell for Migration ---
 
+const bool useFirebaseEmulator = bool.fromEnvironment('USE_EMULATOR', defaultValue: false);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   
-  // Use Firestore Emulator
-  FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-  await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+  if (useFirebaseEmulator) {
+    try {
+      final String host;
+      if (kIsWeb) {
+        host = 'localhost';
+      } else {
+        // Migration script might be run on Android emulator
+        host = (defaultTargetPlatform == TargetPlatform.android) ? '10.0.2.2' : 'localhost';
+      }
+      FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+      await FirebaseAuth.instance.useAuthEmulator(host, 9099);
+      debugPrint('Connected to Firebase Emulator at $host');
+    } catch (e) {
+      debugPrint('Failed to connect to Firebase Emulator: $e');
+    }
+  } else {
+    debugPrint('Connected to Firebase Production');
+  }
   
   runApp(const MaterialApp(home: MigrationRunner()));
 }

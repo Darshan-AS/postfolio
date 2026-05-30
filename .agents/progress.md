@@ -35,12 +35,16 @@
 - Fixed a critical Firestore document path error in the migration script by sanitizing account numbers containing slashes before using them as document IDs.
 - Enhanced the migration tool with real-time statistics tracking and a summary UI showing CSV totals, migration counts, and skip reasons.
 - Integrated the migration tool with the Authentication emulator to allow local testing of authenticated scopes.
-- Updated project documentation (`README.md`) with comprehensive emulator setup and cleanup instructions.
+- Updated project documentation (`README.md`) with comprehensive emulator setup, multi-machine Google Sign-In instructions, and environment cleanup steps.
 - Standardized repository authentication guards to use `StateError` and improved error handling across data layers.
 - Fixed a startup crash/debugger pause occurring on unauthenticated launch by ensuring repositories handle the unauthenticated state gracefully during route resolution.
+- Resolved Google Sign-In "Account reauth failed" on Android by registering the machine-specific SHA-1 fingerprint and updating the project configuration via FlutterFire CLI.
+- Configured Linux environment shell profile (`.zshrc`) with correct paths for Flutter and Dart global tools.
 
 ## Next Steps
 - **Form State Refactor**: Migrate local hook-based form state inside form screens to dedicated Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) for strictly pure business logic.
-- **Implement Commission Logic**: Add the next set of domain math features to automatically deduce gross/net commissions and TDS.
+- **Commission Logic Implementation**: Add the next set of domain math features to automatically deduce gross/net commissions and TDS.
+- **Search, Filter, and Sort**: Implement comprehensive search, filtering, and sorting capabilities across Customers, One-Time Deposits, and Recurring Deposits listing screens.
+- **Maturity Highlights**: Implement visual highlighting for deposits based on their maturity status (about to mature, matured, closed).
 - **Fixed/Locked UI Fields**: Make form fields read-only for specific schemes (e.g., lock Scheme Type for RD, term length for MIS/NSC).
 - Standardized primitive formatting using pure Dart extensions (`toRupeeFormat()`, `toPhoneFormat()`, `toAadhaarFormat()`, `toPanFormat()`) across the UI layer, aligning with the project's declarative conventions and keeping widgets dumb.
