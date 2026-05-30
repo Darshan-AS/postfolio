@@ -38,6 +38,7 @@
 - Integrated the migration tool with the Authentication emulator to allow local testing of authenticated scopes.
 - Updated project documentation (`README.md`) with comprehensive emulator setup, multi-machine Google Sign-In instructions, and environment cleanup steps.
 - Standardized repository authentication guards to use `StateError` and improved error handling across data layers.
+- Fixed a Demo Mode data inconsistency where `FakeDataSource` was assigning random `DepositStatus` values irrespective of chronological maturity dates, preventing accurate date-based sorting. Mock deposits are now constrained to prevent future dates from erroneously appearing as "matured" or "overdue".
 - Fixed a startup crash/debugger pause occurring on unauthenticated launch by ensuring repositories handle the unauthenticated state gracefully during route resolution.
 - Resolved Google Sign-In "Account reauth failed" on Android by registering the machine-specific SHA-1 fingerprint and updating the project configuration via FlutterFire CLI.
 - Configured Linux environment shell profile (`.zshrc`) with correct paths for Flutter and Dart global tools.

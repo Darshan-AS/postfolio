@@ -155,6 +155,9 @@
 - [ ] Integrate `flutter_native_splash` to generate native splash screens.
 - [ ] **Detail View - RD Premature Closure**: Prompt user for applicable penalty interest rate and show the premature withdrawal amount.
 - [ ] **Detail View - General Premature Closure**: Implement early withdrawal calculation logic for all applicable schemes.
+- [ ] Show maturity date in list view.
+- [ ] Adjust spacing across the app (reduce padding/margin).
+- [ ] Round off amounts to nearest integer.
 
 ## Phase 9: Responsive Architecture (Pending)
 - [ ] Add `flutter_adaptive_scaffold` to the project for official Material 3 adaptive layouts.

@@ -78,6 +78,21 @@ class FakeDataSource {
         termMonths = timeInMonths % 12;
       }
 
+      final startDate = faker.date.dateTimeBetween(DateTime(2020), DateTime.now());
+      final maturityDate = DateTime(
+        startDate.year + termYears,
+        startDate.month + termMonths,
+        startDate.day,
+      );
+      
+      DepositStatus status;
+      if (maturityDate.isBefore(DateTime.now())) {
+        status = random.element([DepositStatus.active, DepositStatus.matured, DepositStatus.closed]);
+      } else {
+        // Cannot be matured if the maturity date is in the future
+        status = random.element([DepositStatus.active, DepositStatus.active, DepositStatus.closed]);
+      }
+
       return OneTimeDeposit(
         id: faker.guid.guid(),
         accountNo: faker.randomGenerator.fromCharSet('0123456789', 10),
@@ -87,8 +102,8 @@ class FakeDataSource {
         interestRate: interestRate,
         customerId: random.element(customerIds),
         schemeType: scheme,
-        startDate: faker.date.dateTimeBetween(DateTime(2020), DateTime.now()),
-        status: random.element(depositStatuses),
+        startDate: startDate,
+        status: status,
         nominees: List.generate(
           random.integer(3),
           (_) => Nominee(
@@ -108,6 +123,21 @@ class FakeDataSource {
           ? random.element(scheme.allowedTenuresInYears)
           : 5;
 
+      final startDate = faker.date.dateTimeBetween(DateTime(2020), DateTime.now());
+      final maturityDate = DateTime(
+        startDate.year + termYears,
+        startDate.month,
+        startDate.day,
+      );
+
+      DepositStatus status;
+      if (maturityDate.isBefore(DateTime.now())) {
+        status = random.element([DepositStatus.active, DepositStatus.matured, DepositStatus.closed]);
+      } else {
+        // Cannot be matured if the maturity date is in the future
+        status = random.element([DepositStatus.active, DepositStatus.active, DepositStatus.closed]);
+      }
+
       return RecurringDeposit(
         id: faker.guid.guid(),
         serialNo: 'RD-${random.integer(9999, min: 1000)}',
@@ -118,8 +148,8 @@ class FakeDataSource {
         interestRate: random.decimal(scale: 2, min: 5.0) + 5.0,
         customerId: random.element(customerIds),
         schemeType: scheme,
-        startDate: faker.date.dateTimeBetween(DateTime(2020), DateTime.now()),
-        status: random.element(depositStatuses),
+        startDate: startDate,
+        status: status,
         nominees: List.generate(
           random.integer(3),
           (_) => Nominee(
