@@ -74,10 +74,9 @@ class EntityDetailScaffold extends StatelessWidget {
   PreferredSizeWidget _buildAppBar(ThemeData theme, BuildContext context) {
     return AppBar(
       title: Text(appBarTitle),
-      leading:
-          onBack != null
-              ? BackButton(onPressed: onBack)
-              : null, // Let Scaffold handle default
+      leading: onBack != null
+          ? BackButton(onPressed: onBack)
+          : null, // Let Scaffold handle default
       actions: [
         IconButton(
           icon: const HugeIcon(

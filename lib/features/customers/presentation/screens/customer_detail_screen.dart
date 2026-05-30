@@ -18,6 +18,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/controllers/r
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
 import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/models/base_deposit.dart';
 
 import 'package:postfolio/core/extensions/string_extension.dart';
 
@@ -180,7 +181,8 @@ Widget _buildIdentityDocuments(Customer customer) {
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.aadhaarNumber,
-        value: customer.aadhaarNumber?.toAadhaarFormat() ?? t.common.notProvided,
+        value:
+            customer.aadhaarNumber?.toAadhaarFormat() ?? t.common.notProvided,
       ),
       const Divider(height: AppDimensions.dividerHeight),
       DetailItem(
@@ -252,10 +254,13 @@ class _CustomerDepositsSection extends ConsumerWidget {
                     Column(
                       children: [
                         OneTimeDepositCard(
-                          title: deposit.accountNo ?? t.common.notProvided,
-                          subtitle: deposit.maturityDate.toAppFormat(),
+                          title: deposit.schemeType.displayName,
+                          subtitle: deposit.accountNo ?? t.common.notProvided,
                           principalAmount: deposit.principalAmount,
                           status: deposit.status,
+                          urgency: deposit.maturityUrgency,
+                          relativeTimeText: deposit.maturityRelativeTime,
+                          maturityDate: deposit.maturityDate,
                           onTap: () => OneTimeDepositDetailRoute(
                             deposit.id,
                           ).push(context),
@@ -302,9 +307,12 @@ class _CustomerDepositsSection extends ConsumerWidget {
                           title: (deposit.serialNo?.isNotEmpty ?? false)
                               ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
                               : (deposit.accountNo ?? t.common.notProvided),
-                          subtitle: deposit.maturityDate.toAppFormat(),
+                          subtitle: '',
                           installmentAmount: deposit.installmentAmount,
                           status: deposit.status,
+                          urgency: deposit.maturityUrgency,
+                          relativeTimeText: deposit.maturityRelativeTime,
+                          maturityDate: deposit.maturityDate,
                           onTap: () => RecurringDepositDetailRoute(
                             deposit.id,
                           ).push(context),

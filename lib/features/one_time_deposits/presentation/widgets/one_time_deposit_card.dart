@@ -8,6 +8,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/entity_list_tile.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 
 class OneTimeDepositCard extends StatelessWidget {
   final String title;
@@ -16,6 +17,7 @@ class OneTimeDepositCard extends StatelessWidget {
   final DepositStatus status;
   final MaturityUrgency urgency;
   final String? relativeTimeText;
+  final DateTime? maturityDate;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -28,6 +30,7 @@ class OneTimeDepositCard extends StatelessWidget {
     required this.status,
     this.urgency = MaturityUrgency.normal,
     this.relativeTimeText,
+    this.maturityDate,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -56,14 +59,34 @@ class OneTimeDepositCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+            if (subtitle.isNotEmpty)
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+            if (maturityDate != null) ...[
+              if (subtitle.isNotEmpty) AppSpacings.gapXs,
+              Row(
+                children: [
+                  HugeIcon(
+                    icon: HugeIcons.strokeRoundedCalendar01,
+                    size: AppDimensions.iconSm,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    maturityDate!.toAppFormat(),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

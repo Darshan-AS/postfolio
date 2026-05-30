@@ -32,11 +32,13 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     final criteria = ref.watch(recurringListCriteriaProvider);
 
     int statusModifications = 0;
-    if (!criteria.statusFilters.contains(DepositStatus.active)) statusModifications++;
-    if (criteria.statusFilters.contains(DepositStatus.closed)) statusModifications++;
+    if (!criteria.statusFilters.contains(DepositStatus.active))
+      statusModifications++;
+    if (criteria.statusFilters.contains(DepositStatus.closed))
+      statusModifications++;
 
-    final activeFilterCount = statusModifications +
-        criteria.urgencyFilters.length;
+    final activeFilterCount =
+        statusModifications + criteria.urgencyFilters.length;
 
     return Scaffold(
       appBar: AppBar(
@@ -172,10 +174,13 @@ class RecurringDepositsScreen extends HookConsumerWidget {
   ) {
     if (deposits.isEmpty) {
       final criteria = ref.read(recurringListCriteriaProvider);
-      final isDefaultStatus = criteria.statusFilters.length == 1 &&
+      final isDefaultStatus =
+          criteria.statusFilters.length == 1 &&
           criteria.statusFilters.contains(DepositStatus.active);
       final hasFilters =
-          criteria.searchQuery.isNotEmpty || !isDefaultStatus || criteria.urgencyFilters.isNotEmpty;
+          criteria.searchQuery.isNotEmpty ||
+          !isDefaultStatus ||
+          criteria.urgencyFilters.isNotEmpty;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -218,7 +223,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
                 customerByIdProvider(deposit.customerId),
               );
               final customerName =
-                  customerAsync.value?.name ?? (deposit.accountNo ?? t.common.notProvided);
+                  customerAsync.value?.name ??
+                  (deposit.accountNo ?? t.common.notProvided);
 
               return RecurringDepositCard(
                 title: customerName,
@@ -229,6 +235,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
                 status: deposit.status,
                 urgency: deposit.maturityUrgency,
                 relativeTimeText: deposit.maturityRelativeTime,
+                maturityDate: deposit.maturityDate,
                 onTap: () =>
                     RecurringDepositDetailRoute(deposit.id).push(context),
                 onEdit: () =>
@@ -284,6 +291,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             status: dummy.status,
             urgency: MaturityUrgency.normal,
             relativeTimeText: null,
+            maturityDate: dummy.maturityDate,
             onTap: () {},
             onEdit: () {},
             onDelete: () {},

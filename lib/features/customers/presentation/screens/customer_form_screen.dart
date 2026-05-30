@@ -144,7 +144,9 @@ class _CustomerForm extends HookConsumerWidget {
       },
       child: Scaffold(
         appBar: FormAppBar(
-          title: isUpdating ? t.customers.editCustomer : t.customers.newCustomer,
+          title: isUpdating
+              ? t.customers.editCustomer
+              : t.customers.newCustomer,
           isSaving: isSaving.value,
           onSave: save,
           onBack: handleBack,
@@ -170,7 +172,8 @@ class _CustomerForm extends HookConsumerWidget {
                   panNumberController: panNumberController,
                 ),
                 ..._buildSavingsBank(
-                  savingsAccountNumberController: savingsAccountNumberController,
+                  savingsAccountNumberController:
+                      savingsAccountNumberController,
                   nominees: nominees,
                 ),
               ],

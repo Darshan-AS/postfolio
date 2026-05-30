@@ -231,9 +231,7 @@ class _OneTimeDepositForm extends HookConsumerWidget {
                 startDateController: startDateController,
                 projection: projection,
               ),
-              ..._buildNomineesSection(
-                nominees: nominees,
-              ),
+              ..._buildNomineesSection(nominees: nominees),
             ],
           ),
         ),

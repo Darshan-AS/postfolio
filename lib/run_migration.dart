@@ -190,7 +190,8 @@ class MigrationStats {
     this.diffLog = const [],
   });
 
-  String get diffText => diffLog.isEmpty ? "" : "\nDetails:\n${diffLog.join('\n')}";
+  String get diffText =>
+      diffLog.isEmpty ? "" : "\nDetails:\n${diffLog.join('\n')}";
 
   @override
   String toString() {
@@ -298,25 +299,24 @@ class _MigrationRunnerState extends State<MigrationRunner> {
 
     return await showDialog<bool>(
           context: context,
-          builder:
-              (context) => AlertDialog(
-                title: Text(title, style: const TextStyle(color: AppColors.error)),
-                content: Text(message),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text("Cancel"),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      foregroundColor: AppColors.surface,
-                    ),
-                    child: const Text("Proceed"),
-                  ),
-                ],
+          builder: (context) => AlertDialog(
+            title: Text(title, style: const TextStyle(color: AppColors.error)),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("Cancel"),
               ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: AppColors.surface,
+                ),
+                child: const Text("Proceed"),
+              ),
+            ],
+          ),
         ) ??
         false;
   }
@@ -446,7 +446,8 @@ class _MigrationRunnerState extends State<MigrationRunner> {
 
       setState(() {
         final envLabel = useFirebaseEmulator ? "Emulator" : "Production";
-        status = "$envLabel Migration Complete! 🎉\nMigrated data to users/$uid";
+        status =
+            "$envLabel Migration Complete! 🎉\nMigrated data to users/$uid";
         statsDisplay =
             """
 --- Migration Summary ---
@@ -488,7 +489,8 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
 
     for (int i = 1; i < rows.length; i++) {
       final row = rows[i];
-      if (row.isEmpty || row.every((e) => e.toString().trim().isEmpty)) continue;
+      if (row.isEmpty || row.every((e) => e.toString().trim().isEmpty))
+        continue;
       csvTotal++;
 
       if (migratedCount >= maxCustomers) continue;
@@ -580,7 +582,8 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
 
     for (int i = 1; i < rows.length; i++) {
       final row = rows[i];
-      if (row.isEmpty || row.every((e) => e.toString().trim().isEmpty)) continue;
+      if (row.isEmpty || row.every((e) => e.toString().trim().isEmpty))
+        continue;
       csvTotal++;
 
       try {
@@ -590,7 +593,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
         final customerName = row.length > customerNameIndex
             ? row[customerNameIndex].toString().trim()
             : '';
-        
+
         if (customerName.isEmpty) {
           errorCount++;
           diffLog.add("Skipped (Row ${i + 1}): Missing Customer Name in CSV");
@@ -619,7 +622,9 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
               cache.add(accountNo);
             } else {
               emptyAccountMigratedCount++;
-              diffLog.add("Migrated Empty Account: $customerName (Generated ID: ${deposit.id})");
+              diffLog.add(
+                "Migrated Empty Account: $customerName (Generated ID: ${deposit.id})",
+              );
             }
             migratedCount++;
 
@@ -633,7 +638,9 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
           }
         } else {
           missingCustomerCount++;
-          diffLog.add("Missing Customer: $customerName (Account: ${accountNo.isEmpty ? 'Empty' : accountNo})");
+          diffLog.add(
+            "Missing Customer: $customerName (Account: ${accountNo.isEmpty ? 'Empty' : accountNo})",
+          );
         }
       } catch (e) {
         errorCount++;
@@ -675,14 +682,14 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                   vertical: AppDimensions.paddingXs,
                 ),
                 decoration: BoxDecoration(
-                  color:
-                      useFirebaseEmulator
-                          ? AppColors.success.withValues(alpha: 0.1)
-                          : AppColors.error.withValues(alpha: 0.1),
+                  color: useFirebaseEmulator
+                      ? AppColors.success.withValues(alpha: 0.1)
+                      : AppColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   border: Border.all(
-                    color:
-                        useFirebaseEmulator ? AppColors.success : AppColors.error,
+                    color: useFirebaseEmulator
+                        ? AppColors.success
+                        : AppColors.error,
                   ),
                 ),
                 child: Row(
@@ -690,18 +697,18 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                   children: [
                     Icon(
                       useFirebaseEmulator ? Icons.bug_report : Icons.warning,
-                      color:
-                          useFirebaseEmulator ? AppColors.success : AppColors.error,
+                      color: useFirebaseEmulator
+                          ? AppColors.success
+                          : AppColors.error,
                       size: 16,
                     ),
                     AppSpacings.gapSm,
                     Text(
                       useFirebaseEmulator ? "EMULATOR MODE" : "PRODUCTION MODE",
                       style: TextStyle(
-                        color:
-                            useFirebaseEmulator
-                                ? AppColors.success
-                                : AppColors.error,
+                        color: useFirebaseEmulator
+                            ? AppColors.success
+                            : AppColors.error,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),

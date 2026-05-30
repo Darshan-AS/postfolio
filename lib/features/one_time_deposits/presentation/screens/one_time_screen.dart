@@ -33,10 +33,13 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
     final criteria = ref.watch(oneTimeListCriteriaProvider);
 
     int statusModifications = 0;
-    if (!criteria.statusFilters.contains(DepositStatus.active)) statusModifications++;
-    if (criteria.statusFilters.contains(DepositStatus.closed)) statusModifications++;
+    if (!criteria.statusFilters.contains(DepositStatus.active))
+      statusModifications++;
+    if (criteria.statusFilters.contains(DepositStatus.closed))
+      statusModifications++;
 
-    final activeFilterCount = statusModifications +
+    final activeFilterCount =
+        statusModifications +
         criteria.urgencyFilters.length +
         criteria.schemeFilters.length;
 
@@ -181,7 +184,8 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
   ) {
     if (deposits.isEmpty) {
       final criteria = ref.read(oneTimeListCriteriaProvider);
-      final isDefaultStatus = criteria.statusFilters.length == 1 &&
+      final isDefaultStatus =
+          criteria.statusFilters.length == 1 &&
           criteria.statusFilters.contains(DepositStatus.active);
       final hasFilters =
           criteria.searchQuery.isNotEmpty ||
@@ -230,7 +234,8 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                 customerByIdProvider(deposit.customerId),
               );
               final customerName =
-                  customerAsync.value?.name ?? (deposit.accountNo ?? t.common.notProvided);
+                  customerAsync.value?.name ??
+                  (deposit.accountNo ?? t.common.notProvided);
 
               return OneTimeDepositCard(
                 title: customerName,
@@ -239,6 +244,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                 status: deposit.status,
                 urgency: deposit.maturityUrgency,
                 relativeTimeText: deposit.maturityRelativeTime,
+                maturityDate: deposit.maturityDate,
                 onTap: () =>
                     OneTimeDepositDetailRoute(deposit.id).push(context),
                 onEdit: () => OneTimeDepositEditRoute(deposit.id).push(context),
@@ -293,6 +299,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
             status: dummy.status,
             urgency: MaturityUrgency.normal,
             relativeTimeText: null,
+            maturityDate: dummy.maturityDate,
             onTap: () {},
             onEdit: () {},
             onDelete: () {},

@@ -75,7 +75,9 @@ class DetailItem extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final displayValue = (value == null || value!.isEmpty) ? t.common.notProvided : value!;
+    final displayValue = (value == null || value!.isEmpty)
+        ? t.common.notProvided
+        : value!;
 
     Widget content = Padding(
       padding: const EdgeInsets.symmetric(

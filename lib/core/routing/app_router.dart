@@ -21,10 +21,13 @@ import 'package:postfolio/core/routing/app_routes.dart';
 part 'app_router.g.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _dashboardNavigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _depositsNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _dashboardNavigatorKey =
+    GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _depositsNavigatorKey =
+    GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _rdNavigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _customersNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _customersNavigatorKey =
+    GlobalKey<NavigatorState>();
 
 @riverpod
 GoRouter goRouter(Ref ref) {

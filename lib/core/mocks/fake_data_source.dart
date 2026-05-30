@@ -78,13 +78,16 @@ class FakeDataSource {
         termMonths = timeInMonths % 12;
       }
 
-      final startDate = faker.date.dateTimeBetween(DateTime(2020), DateTime.now());
+      final startDate = faker.date.dateTimeBetween(
+        DateTime(2020),
+        DateTime.now(),
+      );
       final maturityDate = DateTime(
         startDate.year + termYears,
         startDate.month + termMonths,
         startDate.day,
       );
-      
+
       DepositStatus status;
       if (maturityDate.isBefore(DateTime.now())) {
         status = random.element([DepositStatus.active, DepositStatus.closed]);
@@ -123,7 +126,10 @@ class FakeDataSource {
           ? random.element(scheme.allowedTenuresInYears)
           : 5;
 
-      final startDate = faker.date.dateTimeBetween(DateTime(2020), DateTime.now());
+      final startDate = faker.date.dateTimeBetween(
+        DateTime(2020),
+        DateTime.now(),
+      );
       final maturityDate = DateTime(
         startDate.year + termYears,
         startDate.month,
