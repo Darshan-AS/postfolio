@@ -169,6 +169,10 @@
 - [ ] **Phone Numbers**: Migrate from custom Dart extensions to a `libphonenumber` backed package (e.g., `phone_numbers_parser`).
 - [ ] **Currencies**: Refactor `DoubleFormatExtension` to a dynamic currency formatter that reads the user's preferred locale.
 
+## Phase 12: CI/CD & Distribution (Pending)
+- [x] Automate build process and release per-platform APKs using GitHub Actions.
+- [x] Distribute beta builds to internal testers using Firebase App Distribution.
+
 ## Known Bugs & Issues
 
 ### Resolved
