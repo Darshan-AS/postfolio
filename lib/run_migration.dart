@@ -21,6 +21,14 @@ import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/models/savings_account.dart';
 import 'package:postfolio/firebase_options.dart';
 
+// --- Migration Assets ---
+
+class MigrationAssets {
+  static const String customers = 'data/customers.csv';
+  static const String oneTimeDeposits = 'data/onetime_deposits.csv';
+  static const String recurringDeposits = 'data/recurring_deposits.csv';
+}
+
 // --- Pure Functions for Parsing ---
 
 double _parseCurrency(String val) =>
@@ -163,6 +171,7 @@ class MigrationStats {
   final int migrated;
   final int skippedMissingCustomer;
   final int skippedDuplicate;
+  final List<String> diffLog;
 
   MigrationStats({
     this.csvTotal = 0,
@@ -170,24 +179,30 @@ class MigrationStats {
     this.migrated = 0,
     this.skippedMissingCustomer = 0,
     this.skippedDuplicate = 0,
+    this.diffLog = const [],
   });
+
+  String get diffText => diffLog.isEmpty ? "" : "\nDetails:\n${diffLog.join('\n')}";
 
   @override
   String toString() {
+    String summary;
     if (processed < csvTotal && processed > 0) {
-      return t.migration.summaryBatch(
+      summary = t.migration.summaryBatch(
         processed: processed,
         total: csvTotal,
         migrated: migrated,
         duplicates: skippedDuplicate,
       );
+    } else {
+      summary = t.migration.summaryAll(
+        total: csvTotal,
+        migrated: migrated,
+        missingCust: skippedMissingCustomer,
+        duplicates: skippedDuplicate,
+      );
     }
-    return t.migration.summaryAll(
-      total: csvTotal,
-      migrated: migrated,
-      missingCust: skippedMissingCustomer,
-      duplicates: skippedDuplicate,
-    );
+    return "$summary$diffText";
   }
 }
 
@@ -249,22 +264,62 @@ class _MigrationRunnerState extends State<MigrationRunner> {
   @override
   void initState() {
     super.initState();
+    final env = useFirebaseEmulator ? "Emulator" : "PRODUCTION";
+    status = "Ready to migrate ($env). Enter target UID or Sign In.";
+
     if (FirebaseAuth.instance.currentUser != null) {
       _uidController.text = FirebaseAuth.instance.currentUser!.uid;
     } else {
       _uidController.text = 'test_user_123';
     }
 
-    // Automatically run migration for 10 customers on start
+    // Automatically run migration for 10 customers on start (Emulator only)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _runMigration(maxCustomers: 10);
+      if (useFirebaseEmulator) {
+        _runMigration(maxCustomers: 10);
+      }
     });
+  }
+
+  Future<bool> _confirmProductionAction(String title, String message) async {
+    if (useFirebaseEmulator) return true;
+
+    return await showDialog<bool>(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: Text(title, style: const TextStyle(color: AppColors.error)),
+                content: Text(message),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text("Cancel"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: AppColors.surface,
+                    ),
+                    child: const Text("Proceed"),
+                  ),
+                ],
+              ),
+        ) ??
+        false;
   }
 
   Future<void> _deleteAllData() async {
     final uid = _uidController.text.trim();
     if (uid.isEmpty) {
       setState(() => status = "Error: Please enter a target UID to delete.");
+      return;
+    }
+
+    if (!await _confirmProductionAction(
+      "Confirm Deletion",
+      "You are in PRODUCTION mode. This will PERMANENTLY delete all customers and deposits for UID: $uid. Are you sure?",
+    )) {
       return;
     }
 
@@ -338,6 +393,13 @@ class _MigrationRunnerState extends State<MigrationRunner> {
       return;
     }
 
+    if (!await _confirmProductionAction(
+      "Confirm Migration",
+      "You are in PRODUCTION mode. This will write data to the real Firestore for UID: $uid. Proceed?",
+    )) {
+      return;
+    }
+
     setState(() {
       _isMigrating = true;
       status = "Starting migration for UID: $uid...";
@@ -353,7 +415,7 @@ class _MigrationRunnerState extends State<MigrationRunner> {
         firestore,
         uid: uid,
         collectionName: 'one_time_deposits',
-        csvPath: 'data/onetime_deposits.csv',
+        csvPath: MigrationAssets.oneTimeDeposits,
         cache: _oneTimeCache,
         parser: _parseOneTimeDeposit,
         customerNameIndex: 5,
@@ -363,7 +425,7 @@ class _MigrationRunnerState extends State<MigrationRunner> {
         firestore,
         uid: uid,
         collectionName: 'recurring_deposits',
-        csvPath: 'data/recurring_deposits.csv',
+        csvPath: MigrationAssets.recurringDeposits,
         cache: _recurringCache,
         parser: _parseRecurringDeposit,
         customerNameIndex: 5,
@@ -371,7 +433,8 @@ class _MigrationRunnerState extends State<MigrationRunner> {
       );
 
       setState(() {
-        status = "Emulator Migration Complete! 🎉\nMigrated data to users/$uid";
+        final envLabel = useFirebaseEmulator ? "Emulator" : "Production";
+        status = "$envLabel Migration Complete! 🎉\nMigrated data to users/$uid";
         statsDisplay =
             """
 --- Migration Summary ---
@@ -379,7 +442,7 @@ Customers: $custStats
 One-Time: $otStats
 Recurring: $rdStats
 -------------------------
-Check your Firebase Local Emulator UI.
+${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now live in Production Firestore."}
 """;
         _isMigrating = false;
       });
@@ -396,10 +459,11 @@ Check your Firebase Local Emulator UI.
     String uid,
     int maxCustomers,
   ) async {
+    final envLabel = useFirebaseEmulator ? "Emulator" : "Production";
     setState(
-      () => status = "Migrating first $maxCustomers Customers to Emulator...",
+      () => status = "Migrating first $maxCustomers Customers to $envLabel...",
     );
-    final rawData = await rootBundle.loadString('data/customers.csv');
+    final rawData = await rootBundle.loadString(MigrationAssets.customers);
     final rows = const CsvToListConverter(eol: '\n').convert(rawData);
 
     var batch = firestore.batch();
@@ -407,6 +471,7 @@ Check your Firebase Local Emulator UI.
     int csvTotal = 0;
     int duplicateCount = 0;
     int processedCount = 0;
+    final List<String> diffLog = [];
 
     for (int i = 1; i < rows.length; i++) {
       final row = rows[i];
@@ -443,6 +508,7 @@ Check your Firebase Local Emulator UI.
         }
       } else {
         duplicateCount++;
+        diffLog.add("Duplicate: $name ($phone)");
       }
     }
 
@@ -457,6 +523,7 @@ Check your Firebase Local Emulator UI.
       processed: processedCount,
       migrated: migratedCount,
       skippedDuplicate: duplicateCount,
+      diffLog: diffLog,
     );
   }
 
@@ -482,6 +549,7 @@ Check your Firebase Local Emulator UI.
     int missingCustomerCount = 0;
     int duplicateCount = 0;
     int relevantToBatch = 0;
+    final List<String> diffLog = [];
 
     for (int i = 1; i < rows.length; i++) {
       final row = rows[i];
@@ -520,9 +588,11 @@ Check your Firebase Local Emulator UI.
           }
         } else {
           duplicateCount++;
+          diffLog.add("Duplicate Account: $accountNo ($customerName)");
         }
       } else {
         missingCustomerCount++;
+        diffLog.add("Missing Customer: $customerName (Account: $accountNo)");
       }
     }
 
@@ -538,6 +608,7 @@ Check your Firebase Local Emulator UI.
       migrated: migratedCount,
       skippedMissingCustomer: missingCustomerCount,
       skippedDuplicate: duplicateCount,
+      diffLog: diffLog,
     );
   }
 
@@ -551,6 +622,47 @@ Check your Firebase Local Emulator UI.
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.paddingLg,
+                  vertical: AppDimensions.paddingXs,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      useFirebaseEmulator
+                          ? AppColors.success.withOpacity(0.1)
+                          : AppColors.error.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                  border: Border.all(
+                    color:
+                        useFirebaseEmulator ? AppColors.success : AppColors.error,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      useFirebaseEmulator ? Icons.bug_report : Icons.warning,
+                      color:
+                          useFirebaseEmulator ? AppColors.success : AppColors.error,
+                      size: 16,
+                    ),
+                    AppSpacings.gapSm,
+                    Text(
+                      useFirebaseEmulator ? "EMULATOR MODE" : "PRODUCTION MODE",
+                      style: TextStyle(
+                        color:
+                            useFirebaseEmulator
+                                ? AppColors.success
+                                : AppColors.error,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              AppSpacings.gapXl,
               TextField(
                 controller: _uidController,
                 decoration: InputDecoration(
