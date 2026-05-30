@@ -133,15 +133,12 @@ class OneTimeDepositCard extends StatelessWidget {
                 ],
               ),
             ],
-            if (status != DepositStatus.active ||
-                urgency == MaturityUrgency.normal) ...[
-              AppSpacings.gapXs,
-              StatusBadge(
-                status: status.displayName,
-                compact: true,
-                urgency: urgency,
-              ),
-            ],
+            AppSpacings.gapXs,
+            StatusBadge(
+              status: status.displayName,
+              compact: true,
+              urgency: urgency,
+            ),
           ],
         ),
       ),

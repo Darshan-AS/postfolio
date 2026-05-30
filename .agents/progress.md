@@ -69,3 +69,4 @@
 - **Form State Refactor**: Migrate local hook-based form state inside form screens to dedicated Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) for strictly pure business logic.
 - **Maturity Highlights**: Implement visual highlighting for deposits based on their maturity status (about to mature, matured, closed).
 - **Fixed/Locked UI Fields**: Make form fields read-only for specific schemes (e.g., lock Scheme Type for RD, term length for MIS/NSC).
+- Refactored `EntityListTile` to a custom `Row` layout, bypassing `ListTile`'s strict constraints that caused trailing vertical scale-down and horizontal alignment issues. Deposit cards now dynamically adjust height and align badges flawlessly.

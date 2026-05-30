@@ -5,6 +5,7 @@ class AppDimensions {
   static const double breakpointTablet = 600.0;
 
   // Padding & Margins
+  static const double paddingNone = 0.0;
   static const double paddingXs = 4.0;
   static const double paddingSm = 8.0;
   static const double paddingMd = 12.0;
@@ -23,6 +24,7 @@ class AppDimensions {
   static const double borderNone = 0.0;
   static const double borderSm = 1.0;
   static const double borderMd = 2.0;
+  static const double borderLg = 4.0;
   static const double dividerThickness = 1.0;
   static const double dividerHeight = 1.0;
   static const double strokeWidthSm = 2.0;

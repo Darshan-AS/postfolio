@@ -92,34 +92,102 @@ class EntityListTile extends StatelessWidget {
 
     final hasActionButtons = inlineActions.isNotEmpty || menuActions.isNotEmpty;
     final rightPadding = hasActionButtons
-        ? AppDimensions.paddingSm
+        ? AppDimensions.paddingNone
         : AppDimensions.paddingLg;
 
-    Widget tile = ListTile(
-      contentPadding: EdgeInsets.only(
-        left: AppDimensions.paddingLg,
-        right: rightPadding,
-        top: AppDimensions.paddingSm,
-        bottom: AppDimensions.paddingSm,
-      ),
+    Widget tile = InkWell(
       onTap: onTap,
-      leading: _buildLeading(theme),
-      title: Text(
-        title,
-        style: theme.textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.bold,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: AppDimensions.paddingLg,
+          right: rightPadding,
+          top: AppDimensions.paddingMd,
+          bottom: AppDimensions.paddingMd,
         ),
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildLeading(theme),
+            AppSpacings.gapMd,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  ?subtitle,
+                ],
+              ),
+            ),
+            if (trailing != null || hasActionButtons) AppSpacings.gapSm,
+            ?trailing,
+            if (trailing != null && hasActionButtons) AppSpacings.gapXs,
+            for (final action in inlineActions)
+              IconButton(
+                padding: EdgeInsets.zero,
+                icon: action.icon,
+                iconSize: AppDimensions.iconMd,
+                tooltip: action.label,
+                color: action.isDestructive
+                    ? theme.colorScheme.error
+                    : theme.colorScheme.primary,
+                onPressed: action.onTap,
+              ),
+            if (menuActions.isNotEmpty)
+              PopupMenuButton<EntityAction>(
+                padding: EdgeInsets.zero,
+                icon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedMoreVertical,
+                  size: AppDimensions.iconMd,
+                ),
+                iconSize: AppDimensions.iconMd,
+                tooltip: t.common.moreOptions,
+                onSelected: (action) => action.onTap(),
+                itemBuilder: (context) => menuActions.map((action) {
+                  final color = action.isDestructive
+                      ? theme.colorScheme.error
+                      : theme.colorScheme.onSurface;
+
+                  return PopupMenuItem(
+                    value: action,
+                    child: Row(
+                      children: [
+                        IconTheme(
+                          data: IconThemeData(
+                            color: color,
+                            size: AppDimensions.iconMd,
+                          ),
+                          child: action.icon,
+                        ),
+                        AppSpacings.gapSm,
+                        Text(action.label),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+          ],
+        ),
       ),
-      subtitle: subtitle,
-      trailing: _buildTrailing(theme, inlineActions, menuActions),
     );
 
     if (indicatorColor != null) {
       tile = DecoratedBox(
         decoration: BoxDecoration(
-          border: Border(left: BorderSide(color: indicatorColor!, width: 4.0)),
+          border: Border(
+            left: BorderSide(
+              color: indicatorColor!,
+              width: AppDimensions.borderLg,
+            ),
+          ),
         ),
         child: tile,
       );
@@ -160,68 +228,6 @@ class EntityListTile extends StatelessWidget {
                   ),
                 )
               : null),
-    );
-  }
-
-  Widget? _buildTrailing(
-    ThemeData theme,
-    List<EntityAction> inlineActions,
-    List<EntityAction> menuActions,
-  ) {
-    final hasActionButtons = inlineActions.isNotEmpty || menuActions.isNotEmpty;
-    if (trailing == null && !hasActionButtons) return null;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ?trailing,
-        if (trailing != null && hasActionButtons) AppSpacings.gapXs,
-        for (final action in inlineActions)
-          IconButton(
-            icon: action.icon,
-            iconSize: AppDimensions.iconMd,
-            tooltip: action.label,
-            color: action.isDestructive
-                ? theme.colorScheme.error
-                : theme.colorScheme.primary,
-            onPressed: action.onTap,
-          ),
-        if (menuActions.isNotEmpty)
-          PopupMenuButton<EntityAction>(
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedMoreVertical,
-              size: AppDimensions.iconMd,
-            ),
-            iconSize: AppDimensions.iconMd,
-            tooltip: t.common.moreOptions,
-            onSelected: (action) => action.onTap(),
-            itemBuilder: (context) => menuActions.map((action) {
-              final color = action.isDestructive
-                  ? theme.colorScheme.error
-                  : theme.colorScheme.onSurface;
-
-              return PopupMenuItem(
-                value: action,
-                child: Row(
-                  children: [
-                    IconTheme(
-                      data: IconThemeData(
-                        color: color,
-                        size: AppDimensions.iconMd,
-                      ),
-                      child: action.icon,
-                    ),
-                    AppSpacings.gapSm,
-                    Text(
-                      action.label,
-                      style: theme.textTheme.bodyMedium?.copyWith(color: color),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-      ],
     );
   }
 }
