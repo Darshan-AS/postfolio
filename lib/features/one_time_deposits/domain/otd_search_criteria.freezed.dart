@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$OTDSearchCriteria {
 
- String get searchQuery; OTDSortOption get sortBy; List<DepositStatus> get statusFilters; List<OneTimeSchemeType> get schemeFilters;
+ String get searchQuery; OTDSortOption get sortBy; List<DepositStatus> get statusFilters; List<MaturityUrgency> get urgencyFilters; List<OneTimeSchemeType> get schemeFilters;
 /// Create a copy of OTDSearchCriteria
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $OTDSearchCriteriaCopyWith<OTDSearchCriteria> get copyWith => _$OTDSearchCriteri
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OTDSearchCriteria&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.sortBy, sortBy) || other.sortBy == sortBy)&&const DeepCollectionEquality().equals(other.statusFilters, statusFilters)&&const DeepCollectionEquality().equals(other.schemeFilters, schemeFilters));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OTDSearchCriteria&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.sortBy, sortBy) || other.sortBy == sortBy)&&const DeepCollectionEquality().equals(other.statusFilters, statusFilters)&&const DeepCollectionEquality().equals(other.urgencyFilters, urgencyFilters)&&const DeepCollectionEquality().equals(other.schemeFilters, schemeFilters));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,searchQuery,sortBy,const DeepCollectionEquality().hash(statusFilters),const DeepCollectionEquality().hash(schemeFilters));
+int get hashCode => Object.hash(runtimeType,searchQuery,sortBy,const DeepCollectionEquality().hash(statusFilters),const DeepCollectionEquality().hash(urgencyFilters),const DeepCollectionEquality().hash(schemeFilters));
 
 @override
 String toString() {
-  return 'OTDSearchCriteria(searchQuery: $searchQuery, sortBy: $sortBy, statusFilters: $statusFilters, schemeFilters: $schemeFilters)';
+  return 'OTDSearchCriteria(searchQuery: $searchQuery, sortBy: $sortBy, statusFilters: $statusFilters, urgencyFilters: $urgencyFilters, schemeFilters: $schemeFilters)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $OTDSearchCriteriaCopyWith<$Res>  {
   factory $OTDSearchCriteriaCopyWith(OTDSearchCriteria value, $Res Function(OTDSearchCriteria) _then) = _$OTDSearchCriteriaCopyWithImpl;
 @useResult
 $Res call({
- String searchQuery, OTDSortOption sortBy, List<DepositStatus> statusFilters, List<OneTimeSchemeType> schemeFilters
+ String searchQuery, OTDSortOption sortBy, List<DepositStatus> statusFilters, List<MaturityUrgency> urgencyFilters, List<OneTimeSchemeType> schemeFilters
 });
 
 
@@ -62,12 +62,13 @@ class _$OTDSearchCriteriaCopyWithImpl<$Res>
 
 /// Create a copy of OTDSearchCriteria
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? searchQuery = null,Object? sortBy = null,Object? statusFilters = null,Object? schemeFilters = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? searchQuery = null,Object? sortBy = null,Object? statusFilters = null,Object? urgencyFilters = null,Object? schemeFilters = null,}) {
   return _then(_self.copyWith(
 searchQuery: null == searchQuery ? _self.searchQuery : searchQuery // ignore: cast_nullable_to_non_nullable
 as String,sortBy: null == sortBy ? _self.sortBy : sortBy // ignore: cast_nullable_to_non_nullable
 as OTDSortOption,statusFilters: null == statusFilters ? _self.statusFilters : statusFilters // ignore: cast_nullable_to_non_nullable
-as List<DepositStatus>,schemeFilters: null == schemeFilters ? _self.schemeFilters : schemeFilters // ignore: cast_nullable_to_non_nullable
+as List<DepositStatus>,urgencyFilters: null == urgencyFilters ? _self.urgencyFilters : urgencyFilters // ignore: cast_nullable_to_non_nullable
+as List<MaturityUrgency>,schemeFilters: null == schemeFilters ? _self.schemeFilters : schemeFilters // ignore: cast_nullable_to_non_nullable
 as List<OneTimeSchemeType>,
   ));
 }
@@ -150,10 +151,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String searchQuery,  OTDSortOption sortBy,  List<DepositStatus> statusFilters,  List<OneTimeSchemeType> schemeFilters)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String searchQuery,  OTDSortOption sortBy,  List<DepositStatus> statusFilters,  List<MaturityUrgency> urgencyFilters,  List<OneTimeSchemeType> schemeFilters)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OTDSearchCriteria() when $default != null:
-return $default(_that.searchQuery,_that.sortBy,_that.statusFilters,_that.schemeFilters);case _:
+return $default(_that.searchQuery,_that.sortBy,_that.statusFilters,_that.urgencyFilters,_that.schemeFilters);case _:
   return orElse();
 
 }
@@ -171,10 +172,10 @@ return $default(_that.searchQuery,_that.sortBy,_that.statusFilters,_that.schemeF
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String searchQuery,  OTDSortOption sortBy,  List<DepositStatus> statusFilters,  List<OneTimeSchemeType> schemeFilters)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String searchQuery,  OTDSortOption sortBy,  List<DepositStatus> statusFilters,  List<MaturityUrgency> urgencyFilters,  List<OneTimeSchemeType> schemeFilters)  $default,) {final _that = this;
 switch (_that) {
 case _OTDSearchCriteria():
-return $default(_that.searchQuery,_that.sortBy,_that.statusFilters,_that.schemeFilters);}
+return $default(_that.searchQuery,_that.sortBy,_that.statusFilters,_that.urgencyFilters,_that.schemeFilters);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -188,10 +189,10 @@ return $default(_that.searchQuery,_that.sortBy,_that.statusFilters,_that.schemeF
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String searchQuery,  OTDSortOption sortBy,  List<DepositStatus> statusFilters,  List<OneTimeSchemeType> schemeFilters)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String searchQuery,  OTDSortOption sortBy,  List<DepositStatus> statusFilters,  List<MaturityUrgency> urgencyFilters,  List<OneTimeSchemeType> schemeFilters)?  $default,) {final _that = this;
 switch (_that) {
 case _OTDSearchCriteria() when $default != null:
-return $default(_that.searchQuery,_that.sortBy,_that.statusFilters,_that.schemeFilters);case _:
+return $default(_that.searchQuery,_that.sortBy,_that.statusFilters,_that.urgencyFilters,_that.schemeFilters);case _:
   return null;
 
 }
@@ -203,7 +204,7 @@ return $default(_that.searchQuery,_that.sortBy,_that.statusFilters,_that.schemeF
 
 
 class _OTDSearchCriteria implements OTDSearchCriteria {
-  const _OTDSearchCriteria({this.searchQuery = '', this.sortBy = OTDSortOption.maturityAsc, final  List<DepositStatus> statusFilters = const [], final  List<OneTimeSchemeType> schemeFilters = const []}): _statusFilters = statusFilters,_schemeFilters = schemeFilters;
+  const _OTDSearchCriteria({this.searchQuery = '', this.sortBy = OTDSortOption.maturityAsc, final  List<DepositStatus> statusFilters = const [], final  List<MaturityUrgency> urgencyFilters = const [], final  List<OneTimeSchemeType> schemeFilters = const []}): _statusFilters = statusFilters,_urgencyFilters = urgencyFilters,_schemeFilters = schemeFilters;
   
 
 @override@JsonKey() final  String searchQuery;
@@ -213,6 +214,13 @@ class _OTDSearchCriteria implements OTDSearchCriteria {
   if (_statusFilters is EqualUnmodifiableListView) return _statusFilters;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_statusFilters);
+}
+
+ final  List<MaturityUrgency> _urgencyFilters;
+@override@JsonKey() List<MaturityUrgency> get urgencyFilters {
+  if (_urgencyFilters is EqualUnmodifiableListView) return _urgencyFilters;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_urgencyFilters);
 }
 
  final  List<OneTimeSchemeType> _schemeFilters;
@@ -233,16 +241,16 @@ _$OTDSearchCriteriaCopyWith<_OTDSearchCriteria> get copyWith => __$OTDSearchCrit
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OTDSearchCriteria&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.sortBy, sortBy) || other.sortBy == sortBy)&&const DeepCollectionEquality().equals(other._statusFilters, _statusFilters)&&const DeepCollectionEquality().equals(other._schemeFilters, _schemeFilters));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OTDSearchCriteria&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.sortBy, sortBy) || other.sortBy == sortBy)&&const DeepCollectionEquality().equals(other._statusFilters, _statusFilters)&&const DeepCollectionEquality().equals(other._urgencyFilters, _urgencyFilters)&&const DeepCollectionEquality().equals(other._schemeFilters, _schemeFilters));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,searchQuery,sortBy,const DeepCollectionEquality().hash(_statusFilters),const DeepCollectionEquality().hash(_schemeFilters));
+int get hashCode => Object.hash(runtimeType,searchQuery,sortBy,const DeepCollectionEquality().hash(_statusFilters),const DeepCollectionEquality().hash(_urgencyFilters),const DeepCollectionEquality().hash(_schemeFilters));
 
 @override
 String toString() {
-  return 'OTDSearchCriteria(searchQuery: $searchQuery, sortBy: $sortBy, statusFilters: $statusFilters, schemeFilters: $schemeFilters)';
+  return 'OTDSearchCriteria(searchQuery: $searchQuery, sortBy: $sortBy, statusFilters: $statusFilters, urgencyFilters: $urgencyFilters, schemeFilters: $schemeFilters)';
 }
 
 
@@ -253,7 +261,7 @@ abstract mixin class _$OTDSearchCriteriaCopyWith<$Res> implements $OTDSearchCrit
   factory _$OTDSearchCriteriaCopyWith(_OTDSearchCriteria value, $Res Function(_OTDSearchCriteria) _then) = __$OTDSearchCriteriaCopyWithImpl;
 @override @useResult
 $Res call({
- String searchQuery, OTDSortOption sortBy, List<DepositStatus> statusFilters, List<OneTimeSchemeType> schemeFilters
+ String searchQuery, OTDSortOption sortBy, List<DepositStatus> statusFilters, List<MaturityUrgency> urgencyFilters, List<OneTimeSchemeType> schemeFilters
 });
 
 
@@ -270,12 +278,13 @@ class __$OTDSearchCriteriaCopyWithImpl<$Res>
 
 /// Create a copy of OTDSearchCriteria
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? searchQuery = null,Object? sortBy = null,Object? statusFilters = null,Object? schemeFilters = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? searchQuery = null,Object? sortBy = null,Object? statusFilters = null,Object? urgencyFilters = null,Object? schemeFilters = null,}) {
   return _then(_OTDSearchCriteria(
 searchQuery: null == searchQuery ? _self.searchQuery : searchQuery // ignore: cast_nullable_to_non_nullable
 as String,sortBy: null == sortBy ? _self.sortBy : sortBy // ignore: cast_nullable_to_non_nullable
 as OTDSortOption,statusFilters: null == statusFilters ? _self._statusFilters : statusFilters // ignore: cast_nullable_to_non_nullable
-as List<DepositStatus>,schemeFilters: null == schemeFilters ? _self._schemeFilters : schemeFilters // ignore: cast_nullable_to_non_nullable
+as List<DepositStatus>,urgencyFilters: null == urgencyFilters ? _self._urgencyFilters : urgencyFilters // ignore: cast_nullable_to_non_nullable
+as List<MaturityUrgency>,schemeFilters: null == schemeFilters ? _self._schemeFilters : schemeFilters // ignore: cast_nullable_to_non_nullable
 as List<OneTimeSchemeType>,
   ));
 }

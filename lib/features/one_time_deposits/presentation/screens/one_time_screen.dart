@@ -20,7 +20,9 @@ import 'package:postfolio/core/widgets/app_sort_bottom_sheet.dart';
 import 'package:postfolio/core/widgets/app_filter_chip_bar.dart';
 import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/models/base_deposit.dart';
 
 class OneTimeDepositsScreen extends HookConsumerWidget {
   const OneTimeDepositsScreen({super.key});
@@ -106,6 +108,18 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
             ),
             AppSpacings.gapMd,
           ],
+          AppFilterChipBar<MaturityUrgency>(
+            options: const [
+              MaturityUrgency.overdue,
+              MaturityUrgency.maturingSoon,
+            ],
+            selectedOptions: criteria.urgencyFilters,
+            labelBuilder: (urgency) => urgency.displayName,
+            onSelected: (urgency) => ref
+                .read(oneTimeListCriteriaProvider.notifier)
+                .toggleUrgencyFilter(urgency),
+          ),
+          AppSpacings.gapSm,
           AppFilterChipBar<DepositStatus>(
             options: DepositStatus.values,
             selectedOptions: criteria.statusFilters,
@@ -156,7 +170,8 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
   ) {
     if (deposits.isEmpty) {
       final criteria = ref.read(oneTimeListCriteriaProvider);
-      final hasFilters = criteria.searchQuery.isNotEmpty ||
+      final hasFilters =
+          criteria.searchQuery.isNotEmpty ||
           criteria.statusFilters.isNotEmpty ||
           criteria.schemeFilters.isNotEmpty;
       return Center(
@@ -208,6 +223,8 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                 subtitle: deposit.accountNo,
                 principalAmount: deposit.principalAmount,
                 status: deposit.status,
+                urgency: deposit.maturityUrgency,
+                relativeTimeText: deposit.maturityRelativeTime,
                 onTap: () =>
                     OneTimeDepositDetailRoute(deposit.id).push(context),
                 onEdit: () => OneTimeDepositEditRoute(deposit.id).push(context),
@@ -260,6 +277,8 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
             subtitle: dummy.accountNo,
             principalAmount: dummy.principalAmount,
             status: dummy.status,
+            urgency: MaturityUrgency.normal,
+            relativeTimeText: null,
             onTap: () {},
             onEdit: () {},
             onDelete: () {},

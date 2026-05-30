@@ -225,6 +225,15 @@ enums:
     kisanVikasPatra: "Kisan Vikas Patra (KVP)"
   recurringSchemeType(map):
     recurringDeposit: "Recurring Deposit (RD)"
+  maturityUrgency(map):
+    normal: "Normal"
+    maturingSoon: "Maturing Soon"
+    overdue: "Overdue/Action Required"
+    closed: "Closed"
+  maturityRelativeTime:
+    maturingIn: "Maturing in $days d"
+    maturingToday: "Maturing today"
+    maturedAgo: "Matured $days d ago"
   nomineeRelationship(map):
     husband: "Husband"
     wife: "Wife"

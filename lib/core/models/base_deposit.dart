@@ -1,5 +1,6 @@
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -42,5 +43,53 @@ abstract interface class BaseDeposit {
       return t.errors.invalidInterestRate;
     }
     return null;
+  }
+}
+
+extension BaseDepositMaturityUrgency on BaseDeposit {
+  MaturityUrgency get maturityUrgency {
+    if (status == DepositStatus.closed) {
+      return MaturityUrgency.closed;
+    }
+
+    // Check if maturing within 30 days
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final maturity = DateTime(
+      maturityDate.year,
+      maturityDate.month,
+      maturityDate.day,
+    );
+    final daysUntilMaturity = maturity.difference(today).inDays;
+
+    if (daysUntilMaturity >= 0 && daysUntilMaturity <= 30) {
+      return MaturityUrgency.maturingSoon;
+    }
+
+    // If it's past maturity date
+    if (daysUntilMaturity < 0 || status == DepositStatus.matured) {
+      return MaturityUrgency.overdue;
+    }
+
+    return MaturityUrgency.normal;
+  }
+
+  String get maturityRelativeTime {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final maturity = DateTime(
+      maturityDate.year,
+      maturityDate.month,
+      maturityDate.day,
+    );
+    final daysUntilMaturity = maturity.difference(today).inDays;
+
+    if (daysUntilMaturity == 0) {
+      return t.enums.maturityRelativeTime.maturingToday;
+    } else if (daysUntilMaturity > 0) {
+      return t.enums.maturityRelativeTime.maturingIn(days: daysUntilMaturity);
+    } else {
+      return t.enums.maturityRelativeTime.maturedAgo(days: daysUntilMaturity.abs());
+    }
   }
 }

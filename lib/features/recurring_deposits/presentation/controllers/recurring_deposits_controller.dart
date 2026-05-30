@@ -11,6 +11,8 @@ import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_rep
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
 import 'package:uuid/uuid.dart';
+import 'package:postfolio/core/models/base_deposit.dart';
+import 'package:postfolio/core/enums/maturity_urgency.dart';
 
 part 'recurring_deposits_controller.g.dart';
 
@@ -28,6 +30,20 @@ class RecurringListCriteria extends _$RecurringListCriteria {
       );
     } else {
       state = state.copyWith(statusFilters: [...state.statusFilters, status]);
+    }
+  }
+
+  void toggleUrgencyFilter(MaturityUrgency urgency) {
+    if (state.urgencyFilters.contains(urgency)) {
+      state = state.copyWith(
+        urgencyFilters: state.urgencyFilters
+            .where((u) => u != urgency)
+            .toList(),
+      );
+    } else {
+      state = state.copyWith(
+        urgencyFilters: [...state.urgencyFilters, urgency],
+      );
     }
   }
 
@@ -53,6 +69,12 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
   if (criteria.statusFilters.isNotEmpty) {
     result = result
         .where((d) => criteria.statusFilters.contains(d.status))
+        .toList();
+  }
+
+  if (criteria.urgencyFilters.isNotEmpty) {
+    result = result
+        .where((d) => criteria.urgencyFilters.contains(d.maturityUrgency))
         .toList();
   }
 

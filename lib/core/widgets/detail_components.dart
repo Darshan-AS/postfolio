@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
+import 'package:postfolio/core/enums/maturity_urgency.dart';
 
 class DetailSection extends StatelessWidget {
   final String title;
@@ -185,25 +186,43 @@ class DetailAmountCard extends StatelessWidget {
 class StatusBadge extends StatelessWidget {
   final String status;
   final bool compact;
+  final MaturityUrgency urgency;
+  final String? relativeTimeText;
 
-  const StatusBadge({super.key, required this.status, this.compact = false});
+  const StatusBadge({
+    super.key,
+    required this.status,
+    this.compact = false,
+    this.urgency = MaturityUrgency.normal,
+    this.relativeTimeText,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isClosed = status.toLowerCase() == 'closed';
-    final isMatured = status.toLowerCase() == 'matured';
-
     final colorScheme = Theme.of(context).colorScheme;
-    final bgColor = isClosed
-        ? colorScheme.errorContainer
-        : (isMatured
-              ? colorScheme.tertiaryContainer
-              : colorScheme.primaryContainer);
-    final fgColor = isClosed
-        ? colorScheme.onErrorContainer
-        : (isMatured
-              ? colorScheme.onTertiaryContainer
-              : colorScheme.onPrimaryContainer);
+
+    final Color bgColor;
+    final Color fgColor;
+
+    if (urgency == MaturityUrgency.overdue ||
+        status.toLowerCase() == 'closed') {
+      bgColor = colorScheme.errorContainer;
+      fgColor = colorScheme.onErrorContainer;
+    } else if (urgency == MaturityUrgency.maturingSoon ||
+        status.toLowerCase() == 'matured') {
+      bgColor = colorScheme.tertiaryContainer;
+      fgColor = colorScheme.onTertiaryContainer;
+    } else {
+      bgColor = colorScheme.primaryContainer;
+      fgColor = colorScheme.onPrimaryContainer;
+    }
+
+    final displayText =
+        (urgency == MaturityUrgency.maturingSoon ||
+                urgency == MaturityUrgency.overdue) &&
+            relativeTimeText != null
+        ? relativeTimeText!
+        : status;
 
     return Container(
       padding: compact
@@ -222,7 +241,7 @@ class StatusBadge extends StatelessWidget {
         ),
       ),
       child: Text(
-        status.toUpperCase(),
+        displayText.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: fgColor,
           fontWeight: FontWeight.bold,

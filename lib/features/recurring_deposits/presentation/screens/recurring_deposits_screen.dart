@@ -20,6 +20,8 @@ import 'package:postfolio/core/widgets/app_sort_bottom_sheet.dart';
 import 'package:postfolio/core/widgets/app_filter_chip_bar.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/enums/maturity_urgency.dart';
+import 'package:postfolio/core/models/base_deposit.dart';
 
 class RecurringDepositsScreen extends HookConsumerWidget {
   const RecurringDepositsScreen({super.key});
@@ -109,6 +111,18 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             ),
             AppSpacings.gapMd,
           ],
+          AppFilterChipBar<MaturityUrgency>(
+            options: const [
+              MaturityUrgency.overdue,
+              MaturityUrgency.maturingSoon,
+            ],
+            selectedOptions: criteria.urgencyFilters,
+            labelBuilder: (urgency) => urgency.displayName,
+            onSelected: (urgency) => ref
+                .read(recurringListCriteriaProvider.notifier)
+                .toggleUrgencyFilter(urgency),
+          ),
+          AppSpacings.gapSm,
           AppFilterChipBar<DepositStatus>(
             options: DepositStatus.values,
             selectedOptions: criteria.statusFilters,
@@ -203,6 +217,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
                     : deposit.accountNo,
                 installmentAmount: deposit.installmentAmount,
                 status: deposit.status,
+                urgency: deposit.maturityUrgency,
+                relativeTimeText: deposit.maturityRelativeTime,
                 onTap: () =>
                     RecurringDepositDetailRoute(deposit.id).push(context),
                 onEdit: () =>
@@ -256,6 +272,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             subtitle: dummy.accountNo,
             installmentAmount: dummy.installmentAmount,
             status: dummy.status,
+            urgency: MaturityUrgency.normal,
+            relativeTimeText: null,
             onTap: () {},
             onEdit: () {},
             onDelete: () {},

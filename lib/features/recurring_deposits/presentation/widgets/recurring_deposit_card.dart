@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/entity_list_tile.dart';
@@ -12,6 +13,8 @@ class RecurringDepositCard extends StatelessWidget {
   final String subtitle;
   final double installmentAmount;
   final DepositStatus status;
+  final MaturityUrgency urgency;
+  final String? relativeTimeText;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -22,6 +25,8 @@ class RecurringDepositCard extends StatelessWidget {
     required this.subtitle,
     required this.installmentAmount,
     required this.status,
+    this.urgency = MaturityUrgency.normal,
+    this.relativeTimeText,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -29,7 +34,15 @@ class RecurringDepositCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color? indicatorColor;
+    if (urgency == MaturityUrgency.overdue) {
+      indicatorColor = Theme.of(context).colorScheme.errorContainer;
+    } else if (urgency == MaturityUrgency.maturingSoon) {
+      indicatorColor = Theme.of(context).colorScheme.tertiaryContainer;
+    }
+
     return EntityListTile(
+      indicatorColor: indicatorColor,
       leadingIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedTransaction,
         size: AppDimensions.iconMd,
@@ -71,7 +84,12 @@ class RecurringDepositCard extends StatelessWidget {
               ),
             ),
             AppSpacings.gapXs,
-            StatusBadge(status: status.displayName, compact: true),
+            StatusBadge(
+              status: status.displayName,
+              compact: true,
+              urgency: urgency,
+              relativeTimeText: relativeTimeText,
+            ),
           ],
         ),
       ),

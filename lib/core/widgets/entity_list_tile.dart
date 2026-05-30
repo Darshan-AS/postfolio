@@ -62,6 +62,7 @@ class EntityListTile extends StatelessWidget {
   final String? leadingText;
   final Color? leadingBackgroundColor;
   final Color? leadingForegroundColor;
+  final Color? indicatorColor;
   final String title;
   final Widget? subtitle;
   final Widget? trailing;
@@ -74,6 +75,7 @@ class EntityListTile extends StatelessWidget {
     this.leadingText,
     this.leadingBackgroundColor,
     this.leadingForegroundColor,
+    this.indicatorColor,
     required this.title,
     this.subtitle,
     this.trailing,
@@ -93,26 +95,37 @@ class EntityListTile extends StatelessWidget {
         ? AppDimensions.paddingSm
         : AppDimensions.paddingLg;
 
-    return ListTile(
-          contentPadding: EdgeInsets.only(
-            left: AppDimensions.paddingLg,
-            right: rightPadding,
-            top: AppDimensions.paddingSm,
-            bottom: AppDimensions.paddingSm,
-          ),
-          onTap: onTap,
-          leading: _buildLeading(theme),
-          title: Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: subtitle,
-          trailing: _buildTrailing(theme, inlineActions, menuActions),
-        )
+    Widget tile = ListTile(
+      contentPadding: EdgeInsets.only(
+        left: AppDimensions.paddingLg,
+        right: rightPadding,
+        top: AppDimensions.paddingSm,
+        bottom: AppDimensions.paddingSm,
+      ),
+      onTap: onTap,
+      leading: _buildLeading(theme),
+      title: Text(
+        title,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+        ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: subtitle,
+      trailing: _buildTrailing(theme, inlineActions, menuActions),
+    );
+
+    if (indicatorColor != null) {
+      tile = DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(left: BorderSide(color: indicatorColor!, width: 4.0)),
+        ),
+        child: tile,
+      );
+    }
+
+    return tile
         .animate()
         .fade(duration: AppAnimations.medium, curve: AppAnimations.defaultCurve)
         .slideY(

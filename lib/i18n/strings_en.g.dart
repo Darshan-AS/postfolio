@@ -512,6 +512,13 @@ class TranslationsEnumsEn {
 	Map<String, String> get recurringSchemeType => {
 		'recurringDeposit': 'Recurring Deposit (RD)',
 	};
+	Map<String, String> get maturityUrgency => {
+		'normal': 'Normal',
+		'maturingSoon': 'Maturing Soon',
+		'overdue': 'Overdue/Action Required',
+		'closed': 'Closed',
+	};
+	late final TranslationsEnumsMaturityRelativeTimeEn maturityRelativeTime = TranslationsEnumsMaturityRelativeTimeEn.internal(_root);
 	Map<String, String> get nomineeRelationship => {
 		'husband': 'Husband',
 		'wife': 'Wife',
@@ -846,6 +853,24 @@ class TranslationsRecurringDepositsFieldsEn {
 	String get linkedAutoDebitAccount => 'Linked Auto Debit Account';
 }
 
+// Path: enums.maturityRelativeTime
+class TranslationsEnumsMaturityRelativeTimeEn {
+	TranslationsEnumsMaturityRelativeTimeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Maturing in $days d'
+	String maturingIn({required Object days}) => 'Maturing in ${days} d';
+
+	/// en: 'Maturing today'
+	String get maturingToday => 'Maturing today';
+
+	/// en: 'Matured $days d ago'
+	String maturedAgo({required Object days}) => 'Matured ${days} d ago';
+}
+
 /// The flat map containing all translations for locale <en>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -1035,6 +1060,13 @@ extension on Translations {
 			'enums.oneTimeSchemeType.nationalSavingsCertificate' => 'National Savings Certificate (NSC)',
 			'enums.oneTimeSchemeType.kisanVikasPatra' => 'Kisan Vikas Patra (KVP)',
 			'enums.recurringSchemeType.recurringDeposit' => 'Recurring Deposit (RD)',
+			'enums.maturityUrgency.normal' => 'Normal',
+			'enums.maturityUrgency.maturingSoon' => 'Maturing Soon',
+			'enums.maturityUrgency.overdue' => 'Overdue/Action Required',
+			'enums.maturityUrgency.closed' => 'Closed',
+			'enums.maturityRelativeTime.maturingIn' => ({required Object days}) => 'Maturing in ${days} d',
+			'enums.maturityRelativeTime.maturingToday' => 'Maturing today',
+			'enums.maturityRelativeTime.maturedAgo' => ({required Object days}) => 'Matured ${days} d ago',
 			'enums.nomineeRelationship.husband' => 'Husband',
 			'enums.nomineeRelationship.wife' => 'Wife',
 			'enums.nomineeRelationship.son' => 'Son',

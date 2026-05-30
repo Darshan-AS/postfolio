@@ -11,6 +11,8 @@ import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repos
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
 import 'package:uuid/uuid.dart';
+import 'package:postfolio/core/models/base_deposit.dart';
+import 'package:postfolio/core/enums/maturity_urgency.dart';
 
 part 'one_time_deposits_controller.g.dart';
 
@@ -31,15 +33,27 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
     }
   }
 
+  void toggleUrgencyFilter(MaturityUrgency urgency) {
+    if (state.urgencyFilters.contains(urgency)) {
+      state = state.copyWith(
+        urgencyFilters: state.urgencyFilters
+            .where((u) => u != urgency)
+            .toList(),
+      );
+    } else {
+      state = state.copyWith(
+        urgencyFilters: [...state.urgencyFilters, urgency],
+      );
+    }
+  }
+
   void toggleSchemeFilter(OneTimeSchemeType type) {
     if (state.schemeFilters.contains(type)) {
       state = state.copyWith(
         schemeFilters: state.schemeFilters.where((t) => t != type).toList(),
       );
     } else {
-      state = state.copyWith(
-        schemeFilters: [...state.schemeFilters, type],
-      );
+      state = state.copyWith(schemeFilters: [...state.schemeFilters, type]);
     }
   }
 
@@ -67,10 +81,16 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
         .where((d) => criteria.statusFilters.contains(d.status))
         .toList();
   }
-  
+
   if (criteria.schemeFilters.isNotEmpty) {
     result = result
         .where((d) => criteria.schemeFilters.contains(d.schemeType))
+        .toList();
+  }
+
+  if (criteria.urgencyFilters.isNotEmpty) {
+    result = result
+        .where((d) => criteria.urgencyFilters.contains(d.maturityUrgency))
         .toList();
   }
 
