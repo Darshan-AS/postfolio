@@ -133,6 +133,15 @@ class EntityListTile extends StatelessWidget {
             for (final action in inlineActions)
               IconButton(
                 padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: AppDimensions.actionButtonSize,
+                  minHeight: AppDimensions.actionButtonSize,
+                  maxWidth: AppDimensions.actionButtonSize,
+                  maxHeight: AppDimensions.actionButtonSize,
+                ),
+                style: IconButton.styleFrom(
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
                 icon: action.icon,
                 iconSize: AppDimensions.iconMd,
                 tooltip: action.label,
@@ -150,6 +159,18 @@ class EntityListTile extends StatelessWidget {
                 ),
                 iconSize: AppDimensions.iconMd,
                 tooltip: t.common.moreOptions,
+                style: IconButton.styleFrom(
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  minimumSize: const Size(
+                    AppDimensions.actionButtonSize,
+                    AppDimensions.actionButtonSize,
+                  ),
+                  maximumSize: const Size(
+                    AppDimensions.actionButtonSize,
+                    AppDimensions.actionButtonSize,
+                  ),
+                  padding: EdgeInsets.zero,
+                ),
                 onSelected: (action) => action.onTap(),
                 itemBuilder: (context) => menuActions.map((action) {
                   final color = action.isDestructive
