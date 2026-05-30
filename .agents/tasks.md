@@ -90,6 +90,7 @@
 - [x] Add necessary packages: `firebase_core`, `firebase_auth`, `google_sign_in`, and `cloud_firestore`.
 - [x] Update iOS `Info.plist` with the URL Scheme from `GoogleService-Info.plist` and verify Android SHA keys.
 - [x] Expose Firebase instances (`FirebaseAuth`, `GoogleSignIn`) using Riverpod Providers.
+- [ ] Configure Firebase App Check using Debug provider in development and Play Integrity/App Attest in release builds to secure against unauthorized requests.
 - [x] **Authentication Domain:** Create `AppUser` model and sealed `AuthState` union (Freezed).
 - [x] **Authentication Data Layer:** Build `AuthRepository` for Google Sign-In and mapping to Firebase.
 - [x] **Authentication Presentation:** Build `AuthController` and the `LoginScreen` widget.
