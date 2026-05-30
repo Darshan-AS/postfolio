@@ -15,6 +15,7 @@ class EntityDetailScaffold extends StatelessWidget {
   final String deleteDialogContent;
   final Widget header;
   final List<Widget> body;
+  final VoidCallback? onBack;
 
   const EntityDetailScaffold({
     super.key,
@@ -25,6 +26,7 @@ class EntityDetailScaffold extends StatelessWidget {
     required this.deleteDialogContent,
     required this.header,
     required this.body,
+    this.onBack,
   });
 
   void _confirmDelete(BuildContext context) async {
@@ -40,7 +42,11 @@ class EntityDetailScaffold extends StatelessWidget {
     if (!context.mounted) return;
 
     if (error == null) {
-      context.pop();
+      if (onBack != null) {
+        onBack!();
+      } else {
+        context.pop();
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(behavior: SnackBarBehavior.floating, content: Text(error)),
@@ -52,15 +58,26 @@ class EntityDetailScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: _buildAppBar(theme, context),
-      body: _buildBody(theme),
+    return PopScope(
+      canPop: onBack == null,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        onBack?.call();
+      },
+      child: Scaffold(
+        appBar: _buildAppBar(theme, context),
+        body: _buildBody(theme),
+      ),
     );
   }
 
   PreferredSizeWidget _buildAppBar(ThemeData theme, BuildContext context) {
     return AppBar(
       title: Text(appBarTitle),
+      leading:
+          onBack != null
+              ? BackButton(onPressed: onBack)
+              : null, // Let Scaffold handle default
       actions: [
         IconButton(
           icon: const HugeIcon(

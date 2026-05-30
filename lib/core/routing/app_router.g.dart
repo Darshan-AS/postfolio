@@ -12,6 +12,7 @@ RouteBase get $mainShellRoute => StatefulShellRouteData.$route(
   factory: $MainShellRouteExtension._fromState,
   branches: [
     StatefulShellBranchData.$branch(
+      navigatorKey: DashboardBranch.$navigatorKey,
       routes: [
         GoRouteData.$route(
           path: '/dashboard',
@@ -20,6 +21,7 @@ RouteBase get $mainShellRoute => StatefulShellRouteData.$route(
       ],
     ),
     StatefulShellBranchData.$branch(
+      navigatorKey: DepositsBranch.$navigatorKey,
       routes: [
         GoRouteData.$route(
           path: '/deposits',
@@ -30,7 +32,7 @@ RouteBase get $mainShellRoute => StatefulShellRouteData.$route(
               factory: $OneTimeDepositCreateRoute._fromState,
             ),
             GoRouteData.$route(
-              path: ':depositId',
+              path: ':otdId',
               factory: $OneTimeDepositDetailRoute._fromState,
               routes: [
                 GoRouteData.$route(
@@ -44,6 +46,7 @@ RouteBase get $mainShellRoute => StatefulShellRouteData.$route(
       ],
     ),
     StatefulShellBranchData.$branch(
+      navigatorKey: RdBranch.$navigatorKey,
       routes: [
         GoRouteData.$route(
           path: '/rd',
@@ -54,7 +57,7 @@ RouteBase get $mainShellRoute => StatefulShellRouteData.$route(
               factory: $RecurringDepositCreateRoute._fromState,
             ),
             GoRouteData.$route(
-              path: ':depositId',
+              path: ':rdId',
               factory: $RecurringDepositDetailRoute._fromState,
               routes: [
                 GoRouteData.$route(
@@ -68,6 +71,7 @@ RouteBase get $mainShellRoute => StatefulShellRouteData.$route(
       ],
     ),
     StatefulShellBranchData.$branch(
+      navigatorKey: CustomersBranch.$navigatorKey,
       routes: [
         GoRouteData.$route(
           path: '/customers',
@@ -164,14 +168,13 @@ mixin $OneTimeDepositCreateRoute on GoRouteData {
 
 mixin $OneTimeDepositDetailRoute on GoRouteData {
   static OneTimeDepositDetailRoute _fromState(GoRouterState state) =>
-      OneTimeDepositDetailRoute(state.pathParameters['depositId']!);
+      OneTimeDepositDetailRoute(state.pathParameters['otdId']!);
 
   OneTimeDepositDetailRoute get _self => this as OneTimeDepositDetailRoute;
 
   @override
-  String get location => GoRouteData.$location(
-    '/deposits/${Uri.encodeComponent(_self.depositId)}',
-  );
+  String get location =>
+      GoRouteData.$location('/deposits/${Uri.encodeComponent(_self.otdId)}');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -189,13 +192,13 @@ mixin $OneTimeDepositDetailRoute on GoRouteData {
 
 mixin $OneTimeDepositEditRoute on GoRouteData {
   static OneTimeDepositEditRoute _fromState(GoRouterState state) =>
-      OneTimeDepositEditRoute(state.pathParameters['depositId']!);
+      OneTimeDepositEditRoute(state.pathParameters['otdId']!);
 
   OneTimeDepositEditRoute get _self => this as OneTimeDepositEditRoute;
 
   @override
   String get location => GoRouteData.$location(
-    '/deposits/${Uri.encodeComponent(_self.depositId)}/edit',
+    '/deposits/${Uri.encodeComponent(_self.otdId)}/edit',
   );
 
   @override
@@ -256,13 +259,13 @@ mixin $RecurringDepositCreateRoute on GoRouteData {
 
 mixin $RecurringDepositDetailRoute on GoRouteData {
   static RecurringDepositDetailRoute _fromState(GoRouterState state) =>
-      RecurringDepositDetailRoute(state.pathParameters['depositId']!);
+      RecurringDepositDetailRoute(state.pathParameters['rdId']!);
 
   RecurringDepositDetailRoute get _self => this as RecurringDepositDetailRoute;
 
   @override
   String get location =>
-      GoRouteData.$location('/rd/${Uri.encodeComponent(_self.depositId)}');
+      GoRouteData.$location('/rd/${Uri.encodeComponent(_self.rdId)}');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -280,13 +283,13 @@ mixin $RecurringDepositDetailRoute on GoRouteData {
 
 mixin $RecurringDepositEditRoute on GoRouteData {
   static RecurringDepositEditRoute _fromState(GoRouterState state) =>
-      RecurringDepositEditRoute(state.pathParameters['depositId']!);
+      RecurringDepositEditRoute(state.pathParameters['rdId']!);
 
   RecurringDepositEditRoute get _self => this as RecurringDepositEditRoute;
 
   @override
   String get location =>
-      GoRouteData.$location('/rd/${Uri.encodeComponent(_self.depositId)}/edit');
+      GoRouteData.$location('/rd/${Uri.encodeComponent(_self.rdId)}/edit');
 
   @override
   void go(BuildContext context) => context.go(location);

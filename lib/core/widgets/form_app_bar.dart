@@ -7,18 +7,21 @@ class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final bool isSaving;
   final VoidCallback onSave;
+  final VoidCallback? onBack;
 
   const FormAppBar({
     super.key,
     required this.title,
     required this.isSaving,
     required this.onSave,
+    this.onBack,
   });
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
       title: Text(title),
+      leading: onBack != null ? BackButton(onPressed: onBack) : null,
       actions: [
         if (isSaving)
           const Padding(

@@ -165,7 +165,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
-        onPressed: () => const OneTimeDepositCreateRoute().push(context),
+        onPressed: () => const OneTimeDepositCreateRoute().go(context),
         icon: const HugeIcon(
           icon: HugeIcons.strokeRoundedAdd01,
           size: AppDimensions.iconMd,
@@ -246,8 +246,8 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                 urgency: deposit.maturityUrgency,
                 relativeTimeText: deposit.maturityRelativeTime,
                 onTap: () =>
-                    OneTimeDepositDetailRoute(deposit.id).push(context),
-                onEdit: () => OneTimeDepositEditRoute(deposit.id).push(context),
+                    OneTimeDepositDetailRoute(deposit.id).go(context),
+                onEdit: () => OneTimeDepositEditRoute(deposit.id).go(context),
                 onDelete: () async {
                   final confirmed = await AppDialogs.confirmDelete(
                     context,

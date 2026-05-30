@@ -7,6 +7,8 @@ This document tracks the architectural decisions, structural rules, and conventi
 - **Dependency Injection**: Handled entirely via Riverpod providers.
 - **Folder Structure**: Feature-first with inner Layered Architecture (`data/`, `domain/`, `presentation/`).
 - **Routing**: `go_router` combined with `go_router_builder` for type-safe routing.
+  - **Declarative Navigation**: Always prefer `.go(context)` over `.push(context)` for navigating to routes that are defined within the route hierarchy (e.g., going from a list to a detail page). This ensures `go_router` maintains a correct declarative state and prevents "ImperativeRouteMatch" exceptions when using the system back button.
+  - **Imperative Navigation**: Use `.push(context)` sparingly, primarily for routes that are not part of the main URI hierarchy or when you specifically need to `await` a result from the pushed route.
 - **Directory Structure Adjustments**: 
   - Keep the `lib/core/` folder. Do **NOT** bring everything inside it directly into `lib/`.
   - The only folders that should live directly alongside `features/` in `lib/` are: `core/`, `i18n/`, and `main.dart`.

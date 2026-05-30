@@ -58,3 +58,6 @@
 - Fixed a translation key mismatch for `linkedAutoDebitAccountNo` and `linkedSavingsAccountNo`, ensuring consistency between Domain models and Localization files.
 - Refactored all Form Screens to be "dumber" by moving string sanitization and numeric parsing logic from the UI into the Controllers and Domain models.
 - Standardized Controller `save` methods to accept raw strings, aligning with the project's architectural cleanup goals.
+- Fixed a critical `GoRouter` exception (`ImperativeRouteMatch.complete`) occurring on system back button presses by migrating all primary navigation from imperative `.push()` to declarative `.go()`.
+- Updated architectural guidelines to enforce declarative routing for hierarchical paths.
+- Identified counter-intuitive routing behavior in "Edit -> Back" flows (returning to Detail instead of List) and added it to the task roadmap for re-evaluation.

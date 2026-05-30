@@ -156,7 +156,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
-        onPressed: () => const RecurringDepositCreateRoute().push(context),
+        onPressed: () => const RecurringDepositCreateRoute().go(context),
         icon: const HugeIcon(
           icon: HugeIcons.strokeRoundedAdd01,
           size: AppDimensions.iconMd,
@@ -236,9 +236,9 @@ class RecurringDepositsScreen extends HookConsumerWidget {
                 urgency: deposit.maturityUrgency,
                 relativeTimeText: deposit.maturityRelativeTime,
                 onTap: () =>
-                    RecurringDepositDetailRoute(deposit.id).push(context),
+                    RecurringDepositDetailRoute(deposit.id).go(context),
                 onEdit: () =>
-                    RecurringDepositEditRoute(deposit.id).push(context),
+                    RecurringDepositEditRoute(deposit.id).go(context),
                 onDelete: () async {
                   final confirmed = await AppDialogs.confirmDelete(
                     context,

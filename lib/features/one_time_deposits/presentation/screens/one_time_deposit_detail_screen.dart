@@ -33,7 +33,8 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
       builder: (deposit) {
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
-          onEdit: () => OneTimeDepositEditRoute(depositId).push(context),
+          onBack: () => const OneTimeDepositsRoute().go(context),
+          onEdit: () => OneTimeDepositEditRoute(depositId).go(context),
           deleteDialogTitle: t.oneTimeDeposits.deleteDeposit,
           deleteDialogContent: t.oneTimeDeposits.deleteDepositConfirmation,
           onDelete: () async {
@@ -158,7 +159,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                           ?.name ??
                       deposit.customerId,
                   onTap: () =>
-                      CustomerDetailRoute(deposit.customerId).push(context),
+                      CustomerDetailRoute(deposit.customerId).go(context),
                 ),
               ],
             ),

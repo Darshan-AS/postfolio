@@ -3,7 +3,6 @@ import 'package:hugeicons/hugeicons.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:go_router/go_router.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
@@ -16,6 +15,7 @@ import 'package:postfolio/core/widgets/app_form_fields.dart';
 import 'package:postfolio/core/widgets/form_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
+import 'package:postfolio/core/routing/app_router.dart';
 
 class CustomerFormScreen extends ConsumerWidget {
   final String? customerId;
@@ -45,6 +45,7 @@ class _CustomerForm extends HookConsumerWidget {
     final formKey = useMemoized(() => GlobalKey<FormState>());
 
     final customer = existingCustomer;
+    final isUpdating = customer != null;
 
     final nameController = useTextEditingController(text: customer?.name);
     final emailController = useTextEditingController(text: customer?.email);
@@ -110,7 +111,11 @@ class _CustomerForm extends HookConsumerWidget {
 
         switch (result) {
           case Success():
-            context.pop();
+            if (isUpdating) {
+              CustomerDetailRoute(customer.id).go(context);
+            } else {
+              const CustomersRoute().go(context);
+            }
           case Failure(error: final err):
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -123,39 +128,53 @@ class _CustomerForm extends HookConsumerWidget {
       }
     }
 
-    final isUpdating = customer != null;
+    void handleBack() {
+      if (isUpdating) {
+        CustomerDetailRoute(customer.id).go(context);
+      } else {
+        const CustomersRoute().go(context);
+      }
+    }
 
-    return Scaffold(
-      appBar: FormAppBar(
-        title: isUpdating ? t.customers.editCustomer : t.customers.newCustomer,
-        isSaving: isSaving.value,
-        onSave: save,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: Form(
-          key: formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ..._buildPersonalInfo(
-                nameController: nameController,
-                phoneController: phoneController,
-                emailController: emailController,
-                dateOfBirthController: dateOfBirthController,
-                addressController: addressController,
-                onSelectDate: () => selectDate(context),
-              ),
-              ..._buildIdentityDocuments(
-                cifNumberController: cifNumberController,
-                aadhaarNumberController: aadhaarNumberController,
-                panNumberController: panNumberController,
-              ),
-              ..._buildSavingsBank(
-                savingsAccountNumberController: savingsAccountNumberController,
-                nominees: nominees,
-              ),
-            ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        handleBack();
+      },
+      child: Scaffold(
+        appBar: FormAppBar(
+          title: isUpdating ? t.customers.editCustomer : t.customers.newCustomer,
+          isSaving: isSaving.value,
+          onSave: save,
+          onBack: handleBack,
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppDimensions.paddingLg),
+          child: Form(
+            key: formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ..._buildPersonalInfo(
+                  nameController: nameController,
+                  phoneController: phoneController,
+                  emailController: emailController,
+                  dateOfBirthController: dateOfBirthController,
+                  addressController: addressController,
+                  onSelectDate: () => selectDate(context),
+                ),
+                ..._buildIdentityDocuments(
+                  cifNumberController: cifNumberController,
+                  aadhaarNumberController: aadhaarNumberController,
+                  panNumberController: panNumberController,
+                ),
+                ..._buildSavingsBank(
+                  savingsAccountNumberController: savingsAccountNumberController,
+                  nominees: nominees,
+                ),
+              ],
+            ),
           ),
         ),
       ),

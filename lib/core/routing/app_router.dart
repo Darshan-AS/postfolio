@@ -21,6 +21,10 @@ import 'package:postfolio/core/routing/app_routes.dart';
 part 'app_router.g.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _dashboardNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _depositsNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _rdNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _customersNavigatorKey = GlobalKey<NavigatorState>();
 
 @riverpod
 GoRouter goRouter(Ref ref) {
@@ -71,7 +75,7 @@ GoRouter goRouter(Ref ref) {
           routes: [
             TypedGoRoute<OneTimeDepositCreateRoute>(path: AppRoutes.newRoute),
             TypedGoRoute<OneTimeDepositDetailRoute>(
-              path: AppRoutes.depositIdParam,
+              path: AppRoutes.otdIdParam,
               routes: [
                 TypedGoRoute<OneTimeDepositEditRoute>(
                   path: AppRoutes.editRoute,
@@ -89,7 +93,7 @@ GoRouter goRouter(Ref ref) {
           routes: [
             TypedGoRoute<RecurringDepositCreateRoute>(path: AppRoutes.newRoute),
             TypedGoRoute<RecurringDepositDetailRoute>(
-              path: AppRoutes.depositIdParam,
+              path: AppRoutes.rdIdParam,
               routes: [
                 TypedGoRoute<RecurringDepositEditRoute>(
                   path: AppRoutes.editRoute,
@@ -133,18 +137,26 @@ class MainShellRoute extends StatefulShellRouteData {
 
 class DashboardBranch extends StatefulShellBranchData {
   const DashboardBranch();
+
+  static final GlobalKey<NavigatorState> $navigatorKey = _dashboardNavigatorKey;
 }
 
 class DepositsBranch extends StatefulShellBranchData {
   const DepositsBranch();
+
+  static final GlobalKey<NavigatorState> $navigatorKey = _depositsNavigatorKey;
 }
 
 class RdBranch extends StatefulShellBranchData {
   const RdBranch();
+
+  static final GlobalKey<NavigatorState> $navigatorKey = _rdNavigatorKey;
 }
 
 class CustomersBranch extends StatefulShellBranchData {
   const CustomersBranch();
+
+  static final GlobalKey<NavigatorState> $navigatorKey = _customersNavigatorKey;
 }
 
 class DashboardRoute extends GoRouteData with $DashboardRoute {
@@ -177,23 +189,23 @@ class OneTimeDepositCreateRoute extends GoRouteData
 
 class OneTimeDepositDetailRoute extends GoRouteData
     with $OneTimeDepositDetailRoute {
-  final String depositId;
-  const OneTimeDepositDetailRoute(this.depositId);
+  final String otdId;
+  const OneTimeDepositDetailRoute(this.otdId);
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return OneTimeDepositDetailScreen(depositId: depositId);
+    return OneTimeDepositDetailScreen(depositId: otdId);
   }
 }
 
 class OneTimeDepositEditRoute extends GoRouteData
     with $OneTimeDepositEditRoute {
-  final String depositId;
-  const OneTimeDepositEditRoute(this.depositId);
+  final String otdId;
+  const OneTimeDepositEditRoute(this.otdId);
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return OneTimeDepositFormScreen(depositId: depositId);
+    return OneTimeDepositFormScreen(depositId: otdId);
   }
 }
 
@@ -218,23 +230,23 @@ class RecurringDepositCreateRoute extends GoRouteData
 
 class RecurringDepositDetailRoute extends GoRouteData
     with $RecurringDepositDetailRoute {
-  final String depositId;
-  const RecurringDepositDetailRoute(this.depositId);
+  final String rdId;
+  const RecurringDepositDetailRoute(this.rdId);
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return RecurringDepositDetailScreen(depositId: depositId);
+    return RecurringDepositDetailScreen(depositId: rdId);
   }
 }
 
 class RecurringDepositEditRoute extends GoRouteData
     with $RecurringDepositEditRoute {
-  final String depositId;
-  const RecurringDepositEditRoute(this.depositId);
+  final String rdId;
+  const RecurringDepositEditRoute(this.rdId);
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return RecurringDepositFormScreen(depositId: depositId);
+    return RecurringDepositFormScreen(depositId: rdId);
   }
 }
 

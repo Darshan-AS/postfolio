@@ -25,7 +25,7 @@ These guidelines apply to all code generated and modified in this workspace. Adh
 - **Seamless Cross-Platform UI**: Ensure the UI is seamless across all supported platforms (iOS, Android, Web, Desktop). Use responsive design principles (e.g., `LayoutBuilder`, `MediaQuery`) and platform-aware styling where appropriate to ensure the app feels native and polished everywhere.
 
 ## Routing & Infrastructure
-- **Routing**: Use **`go_router`** for declarative routing without the need for code generation.
+- **Routing**: Use **`go_router`** with **`go_router_builder`** for type-safe, declarative routing. Prefer using `.go(context)` for navigating within the route hierarchy to maintain a consistent declarative state and avoid `ImperativeRouteMatch` exceptions (especially on system back button presses). Use `.push(context)` only when a truly imperative overlay is required or when waiting for a return value.
 - **Backend & Database**: Use **Firebase (Firestore)** as the Backend-as-a-Service. Rely on Firestore's native offline-persistence instead of maintaining a separate local database (like Isar/Drift). All data repositories should interact directly with Firestore.
 
 ## Build and Test

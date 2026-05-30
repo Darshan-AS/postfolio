@@ -42,7 +42,8 @@ class CustomerDetailScreen extends ConsumerWidget {
       builder: (customer) {
         return EntityDetailScaffold(
           appBarTitle: t.customers.customerDetails,
-          onEdit: () => CustomerEditRoute(customerId).push(context),
+          onBack: () => const CustomersRoute().go(context),
+          onEdit: () => CustomerEditRoute(customerId).go(context),
           deleteDialogTitle: t.customers.deleteCustomer,
           deleteDialogContent: t.customers.deleteCustomerConfirmation,
           onDelete: () async {
@@ -262,9 +263,9 @@ class _CustomerDepositsSection extends ConsumerWidget {
                           status: deposit.status,
                           onTap: () => OneTimeDepositDetailRoute(
                             deposit.id,
-                          ).push(context),
+                          ).go(context),
                           onEdit: () =>
-                              OneTimeDepositEditRoute(deposit.id).push(context),
+                              OneTimeDepositEditRoute(deposit.id).go(context),
                           onDelete: () async {
                             final confirmed = await AppDialogs.confirmDelete(
                               context,
@@ -311,10 +312,10 @@ class _CustomerDepositsSection extends ConsumerWidget {
                           status: deposit.status,
                           onTap: () => RecurringDepositDetailRoute(
                             deposit.id,
-                          ).push(context),
+                          ).go(context),
                           onEdit: () => RecurringDepositEditRoute(
                             deposit.id,
-                          ).push(context),
+                          ).go(context),
                           onDelete: () async {
                             final confirmed = await AppDialogs.confirmDelete(
                               context,

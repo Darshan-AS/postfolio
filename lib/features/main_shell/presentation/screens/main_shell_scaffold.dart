@@ -7,17 +7,30 @@ import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/routing/app_router.dart';
 
 class MainShellScaffold extends ConsumerWidget {
   const MainShellScaffold({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
-  void _goBranch(int index) {
-    navigationShell.goBranch(
-      index,
-      initialLocation: index == navigationShell.currentIndex,
-    );
+  void _goBranch(BuildContext context, int index) {
+    if (index == navigationShell.currentIndex) {
+      // If already on this tab, go to the root of the branch
+      // to provide "pop to root" behavior declaratively.
+      switch (index) {
+        case 0:
+          const DashboardRoute().go(context);
+        case 1:
+          const OneTimeDepositsRoute().go(context);
+        case 2:
+          const RecurringDepositsRoute().go(context);
+        case 3:
+          const CustomersRoute().go(context);
+      }
+    } else {
+      navigationShell.goBranch(index);
+    }
   }
 
   @override
@@ -46,7 +59,8 @@ class MainShellScaffold extends ConsumerWidget {
                     children: [
                       NavigationRail(
                         selectedIndex: navigationShell.currentIndex,
-                        onDestinationSelected: _goBranch,
+                        onDestinationSelected: (index) =>
+                            _goBranch(context, index),
                         labelType: NavigationRailLabelType.all,
                         trailing: Expanded(
                           child: Align(
@@ -128,7 +142,7 @@ class MainShellScaffold extends ConsumerWidget {
           ),
           bottomNavigationBar: NavigationBar(
             selectedIndex: navigationShell.currentIndex,
-            onDestinationSelected: _goBranch,
+            onDestinationSelected: (index) => _goBranch(context, index),
             destinations: [
               NavigationDestination(
                 icon: const HugeIcon(

@@ -148,6 +148,7 @@
 - [ ] Integrate `firebase_crashlytics` for automatic error tracking and reporting.
 - [ ] Integrate `firebase_analytics` to track user engagement and app usage metrics.
 - [ ] Integrate `share_plus` into `IntentService` to allow agents to share deposit details/reports.
+- [ ] **Routing UX Re-evaluation:** Refactor routing logic to handle context-aware "back" navigation (e.g., clicking 'Edit' from a List view should return to the List on back/cancel, rather than always returning to the Detail view).
 - [ ] Integrate `flutter_native_splash` to generate native splash screens.
 - [ ] **Detail View - RD Premature Closure**: Prompt user for applicable penalty interest rate and show the premature withdrawal amount.
 - [ ] **Detail View - General Premature Closure**: Implement early withdrawal calculation logic for all applicable schemes.

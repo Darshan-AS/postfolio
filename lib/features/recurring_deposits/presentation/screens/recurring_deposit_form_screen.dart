@@ -3,7 +3,6 @@ import 'package:hugeicons/hugeicons.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_selection_field.dart';
@@ -20,6 +19,7 @@ import 'package:postfolio/core/widgets/app_duration_input.dart';
 import 'package:postfolio/core/widgets/investment_projection_card.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
+import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
@@ -51,6 +51,7 @@ class _RecurringDepositForm extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final deposit = existingDeposit;
+    final isUpdating = deposit != null;
 
     final serialNoController = useTextEditingController(
       text: deposit?.serialNo,
@@ -153,7 +154,11 @@ class _RecurringDepositForm extends HookConsumerWidget {
 
         switch (result) {
           case Success():
-            context.pop();
+            if (isUpdating) {
+              RecurringDepositDetailRoute(deposit.id).go(context);
+            } else {
+              const RecurringDepositsRoute().go(context);
+            }
           case Failure(error: final err):
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -168,42 +173,56 @@ class _RecurringDepositForm extends HookConsumerWidget {
       }
     }
 
-    final isUpdating = deposit != null;
+    void handleBack() {
+      if (isUpdating) {
+        RecurringDepositDetailRoute(deposit.id).go(context);
+      } else {
+        const RecurringDepositsRoute().go(context);
+      }
+    }
 
-    return Scaffold(
-      appBar: FormAppBar(
-        title: isUpdating
-            ? t.recurringDeposits.editDeposit
-            : t.recurringDeposits.newDeposit,
-        isSaving: isSaving.value,
-        onSave: save,
-      ),
-      body: Form(
-        key: formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(AppDimensions.paddingLg),
-          children: [
-            ..._buildAccountInformation(
-              selectedCustomerId: selectedCustomerId,
-              serialNoController: serialNoController,
-              accountNoController: accountNoController,
-              selectedStatus: selectedStatus,
-            ),
-            ..._buildInvestmentDetails(
-              context,
-              selectedScheme: selectedScheme,
-              selectedTermYears: selectedTermYears,
-              selectedTermMonths: selectedTermMonths,
-              installmentAmountController: installmentAmountController,
-              interestRateController: interestRateController,
-              startDate: startDate,
-              startDateController: startDateController,
-              projection: projection,
-            ),
-            ..._buildNomineesSection(
-              nominees: nominees,
-            ),
-          ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        handleBack();
+      },
+      child: Scaffold(
+        appBar: FormAppBar(
+          title: isUpdating
+              ? t.recurringDeposits.editDeposit
+              : t.recurringDeposits.newDeposit,
+          isSaving: isSaving.value,
+          onSave: save,
+          onBack: handleBack,
+        ),
+        body: Form(
+          key: formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(AppDimensions.paddingLg),
+            children: [
+              ..._buildAccountInformation(
+                selectedCustomerId: selectedCustomerId,
+                serialNoController: serialNoController,
+                accountNoController: accountNoController,
+                selectedStatus: selectedStatus,
+              ),
+              ..._buildInvestmentDetails(
+                context,
+                selectedScheme: selectedScheme,
+                selectedTermYears: selectedTermYears,
+                selectedTermMonths: selectedTermMonths,
+                installmentAmountController: installmentAmountController,
+                interestRateController: interestRateController,
+                startDate: startDate,
+                startDateController: startDateController,
+                projection: projection,
+              ),
+              ..._buildNomineesSection(
+                nominees: nominees,
+              ),
+            ],
+          ),
         ),
       ),
     );

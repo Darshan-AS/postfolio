@@ -8,6 +8,7 @@ class AppRoutes {
   static const newRoute = 'new';
   static const editRoute = 'edit';
 
-  static const depositIdParam = ':depositId';
+  static const otdIdParam = ':otdId';
+  static const rdIdParam = ':rdId';
   static const customerIdParam = ':customerId';
 }
