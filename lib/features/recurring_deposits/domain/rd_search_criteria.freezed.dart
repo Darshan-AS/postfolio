@@ -203,7 +203,7 @@ return $default(_that.searchQuery,_that.sortBy,_that.statusFilters,_that.urgency
 
 
 class _RDSearchCriteria implements RDSearchCriteria {
-  const _RDSearchCriteria({this.searchQuery = '', this.sortBy = RDSortOption.maturityAsc, final  List<DepositStatus> statusFilters = const [], final  List<MaturityUrgency> urgencyFilters = const []}): _statusFilters = statusFilters,_urgencyFilters = urgencyFilters;
+  const _RDSearchCriteria({this.searchQuery = '', this.sortBy = RDSortOption.maturityAsc, final  List<DepositStatus> statusFilters = const [DepositStatus.active, DepositStatus.matured], final  List<MaturityUrgency> urgencyFilters = const []}): _statusFilters = statusFilters,_urgencyFilters = urgencyFilters;
   
 
 @override@JsonKey() final  String searchQuery;

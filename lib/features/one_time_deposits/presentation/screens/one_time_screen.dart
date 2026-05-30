@@ -32,6 +32,15 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
     final depositsState = ref.watch(filteredOneTimeDepositsProvider);
     final criteria = ref.watch(oneTimeListCriteriaProvider);
 
+    int statusModifications = 0;
+    if (!criteria.statusFilters.contains(DepositStatus.active)) statusModifications++;
+    if (!criteria.statusFilters.contains(DepositStatus.matured)) statusModifications++;
+    if (criteria.statusFilters.contains(DepositStatus.closed)) statusModifications++;
+
+    final activeFilterCount = statusModifications +
+        criteria.urgencyFilters.length +
+        criteria.schemeFilters.length;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -82,14 +91,8 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
               ),
               IconButton(
                 icon: Badge(
-                  isLabelVisible:
-                      (criteria.statusFilters.length +
-                          criteria.urgencyFilters.length +
-                          criteria.schemeFilters.length) >
-                      0,
-                  label: Text(
-                    '${criteria.statusFilters.length + criteria.urgencyFilters.length + criteria.schemeFilters.length}',
-                  ),
+                  isLabelVisible: activeFilterCount > 0,
+                  label: Text('$activeFilterCount'),
                   child: const HugeIcon(
                     icon: HugeIcons.strokeRoundedFilter,
                     size: AppDimensions.iconMd,
@@ -179,9 +182,13 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
   ) {
     if (deposits.isEmpty) {
       final criteria = ref.read(oneTimeListCriteriaProvider);
+      final isDefaultStatus = criteria.statusFilters.length == 2 &&
+          criteria.statusFilters.contains(DepositStatus.active) &&
+          criteria.statusFilters.contains(DepositStatus.matured);
       final hasFilters =
           criteria.searchQuery.isNotEmpty ||
-          criteria.statusFilters.isNotEmpty ||
+          !isDefaultStatus ||
+          criteria.urgencyFilters.isNotEmpty ||
           criteria.schemeFilters.isNotEmpty;
       return Center(
         child: Column(

@@ -31,6 +31,14 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     final depositsState = ref.watch(filteredRecurringDepositsProvider);
     final criteria = ref.watch(recurringListCriteriaProvider);
 
+    int statusModifications = 0;
+    if (!criteria.statusFilters.contains(DepositStatus.active)) statusModifications++;
+    if (!criteria.statusFilters.contains(DepositStatus.matured)) statusModifications++;
+    if (criteria.statusFilters.contains(DepositStatus.closed)) statusModifications++;
+
+    final activeFilterCount = statusModifications +
+        criteria.urgencyFilters.length;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -81,13 +89,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
               ),
               IconButton(
                 icon: Badge(
-                  isLabelVisible:
-                      (criteria.statusFilters.length +
-                          criteria.urgencyFilters.length) >
-                      0,
-                  label: Text(
-                    '${criteria.statusFilters.length + criteria.urgencyFilters.length}',
-                  ),
+                  isLabelVisible: activeFilterCount > 0,
+                  label: Text('$activeFilterCount'),
                   child: const HugeIcon(
                     icon: HugeIcons.strokeRoundedFilter,
                     size: AppDimensions.iconMd,
@@ -170,8 +173,11 @@ class RecurringDepositsScreen extends HookConsumerWidget {
   ) {
     if (deposits.isEmpty) {
       final criteria = ref.read(recurringListCriteriaProvider);
+      final isDefaultStatus = criteria.statusFilters.length == 2 &&
+          criteria.statusFilters.contains(DepositStatus.active) &&
+          criteria.statusFilters.contains(DepositStatus.matured);
       final hasFilters =
-          criteria.searchQuery.isNotEmpty || criteria.statusFilters.isNotEmpty;
+          criteria.searchQuery.isNotEmpty || !isDefaultStatus || criteria.urgencyFilters.isNotEmpty;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
