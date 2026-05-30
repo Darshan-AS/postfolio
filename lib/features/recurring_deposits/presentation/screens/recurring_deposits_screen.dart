@@ -111,7 +111,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
           ],
           AppFilterChipBar<DepositStatus>(
             options: DepositStatus.values,
-            selectedOptions: criteria.activeFilters,
+            selectedOptions: criteria.statusFilters,
             labelBuilder: (status) => status.displayName,
             onSelected: (status) => ref
                 .read(recurringListCriteriaProvider.notifier)
@@ -151,7 +151,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     if (deposits.isEmpty) {
       final criteria = ref.read(recurringListCriteriaProvider);
       final hasFilters =
-          criteria.searchQuery.isNotEmpty || criteria.activeFilters.isNotEmpty;
+          criteria.searchQuery.isNotEmpty || criteria.statusFilters.isNotEmpty;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

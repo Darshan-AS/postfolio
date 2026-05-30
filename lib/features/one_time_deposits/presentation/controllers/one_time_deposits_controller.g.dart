@@ -42,7 +42,7 @@ final class OneTimeListCriteriaProvider
 }
 
 String _$oneTimeListCriteriaHash() =>
-    r'dec7da22c718211c05244564a11497bd3b134e70';
+    r'6aa81406530e87c15bf2b9d858cbe43dd8ff9287';
 
 abstract class _$OneTimeListCriteria extends $Notifier<OTDSearchCriteria> {
   OTDSearchCriteria build();
@@ -102,7 +102,7 @@ final class FilteredOneTimeDepositsProvider
 }
 
 String _$filteredOneTimeDepositsHash() =>
-    r'0b77ac950cdc2bcb863709a676346167b474e656';
+    r'4e3911d3707ed07d51c8c98c9be6823e5cef01db';
 
 @ProviderFor(OneTimeDepositsController)
 final oneTimeDepositsControllerProvider = OneTimeDepositsControllerProvider._();

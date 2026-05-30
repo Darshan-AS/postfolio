@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RDSearchCriteria {
 
- String get searchQuery; RDSortOption get sortBy; List<DepositStatus> get activeFilters;
+ String get searchQuery; RDSortOption get sortBy; List<DepositStatus> get statusFilters;
 /// Create a copy of RDSearchCriteria
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $RDSearchCriteriaCopyWith<RDSearchCriteria> get copyWith => _$RDSearchCriteriaCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RDSearchCriteria&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.sortBy, sortBy) || other.sortBy == sortBy)&&const DeepCollectionEquality().equals(other.activeFilters, activeFilters));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RDSearchCriteria&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.sortBy, sortBy) || other.sortBy == sortBy)&&const DeepCollectionEquality().equals(other.statusFilters, statusFilters));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,searchQuery,sortBy,const DeepCollectionEquality().hash(activeFilters));
+int get hashCode => Object.hash(runtimeType,searchQuery,sortBy,const DeepCollectionEquality().hash(statusFilters));
 
 @override
 String toString() {
-  return 'RDSearchCriteria(searchQuery: $searchQuery, sortBy: $sortBy, activeFilters: $activeFilters)';
+  return 'RDSearchCriteria(searchQuery: $searchQuery, sortBy: $sortBy, statusFilters: $statusFilters)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $RDSearchCriteriaCopyWith<$Res>  {
   factory $RDSearchCriteriaCopyWith(RDSearchCriteria value, $Res Function(RDSearchCriteria) _then) = _$RDSearchCriteriaCopyWithImpl;
 @useResult
 $Res call({
- String searchQuery, RDSortOption sortBy, List<DepositStatus> activeFilters
+ String searchQuery, RDSortOption sortBy, List<DepositStatus> statusFilters
 });
 
 
@@ -62,11 +62,11 @@ class _$RDSearchCriteriaCopyWithImpl<$Res>
 
 /// Create a copy of RDSearchCriteria
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? searchQuery = null,Object? sortBy = null,Object? activeFilters = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? searchQuery = null,Object? sortBy = null,Object? statusFilters = null,}) {
   return _then(_self.copyWith(
 searchQuery: null == searchQuery ? _self.searchQuery : searchQuery // ignore: cast_nullable_to_non_nullable
 as String,sortBy: null == sortBy ? _self.sortBy : sortBy // ignore: cast_nullable_to_non_nullable
-as RDSortOption,activeFilters: null == activeFilters ? _self.activeFilters : activeFilters // ignore: cast_nullable_to_non_nullable
+as RDSortOption,statusFilters: null == statusFilters ? _self.statusFilters : statusFilters // ignore: cast_nullable_to_non_nullable
 as List<DepositStatus>,
   ));
 }
@@ -149,10 +149,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String searchQuery,  RDSortOption sortBy,  List<DepositStatus> activeFilters)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String searchQuery,  RDSortOption sortBy,  List<DepositStatus> statusFilters)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RDSearchCriteria() when $default != null:
-return $default(_that.searchQuery,_that.sortBy,_that.activeFilters);case _:
+return $default(_that.searchQuery,_that.sortBy,_that.statusFilters);case _:
   return orElse();
 
 }
@@ -170,10 +170,10 @@ return $default(_that.searchQuery,_that.sortBy,_that.activeFilters);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String searchQuery,  RDSortOption sortBy,  List<DepositStatus> activeFilters)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String searchQuery,  RDSortOption sortBy,  List<DepositStatus> statusFilters)  $default,) {final _that = this;
 switch (_that) {
 case _RDSearchCriteria():
-return $default(_that.searchQuery,_that.sortBy,_that.activeFilters);}
+return $default(_that.searchQuery,_that.sortBy,_that.statusFilters);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -187,10 +187,10 @@ return $default(_that.searchQuery,_that.sortBy,_that.activeFilters);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String searchQuery,  RDSortOption sortBy,  List<DepositStatus> activeFilters)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String searchQuery,  RDSortOption sortBy,  List<DepositStatus> statusFilters)?  $default,) {final _that = this;
 switch (_that) {
 case _RDSearchCriteria() when $default != null:
-return $default(_that.searchQuery,_that.sortBy,_that.activeFilters);case _:
+return $default(_that.searchQuery,_that.sortBy,_that.statusFilters);case _:
   return null;
 
 }
@@ -202,16 +202,16 @@ return $default(_that.searchQuery,_that.sortBy,_that.activeFilters);case _:
 
 
 class _RDSearchCriteria implements RDSearchCriteria {
-  const _RDSearchCriteria({this.searchQuery = '', this.sortBy = RDSortOption.maturityAsc, final  List<DepositStatus> activeFilters = const []}): _activeFilters = activeFilters;
+  const _RDSearchCriteria({this.searchQuery = '', this.sortBy = RDSortOption.maturityAsc, final  List<DepositStatus> statusFilters = const []}): _statusFilters = statusFilters;
   
 
 @override@JsonKey() final  String searchQuery;
 @override@JsonKey() final  RDSortOption sortBy;
- final  List<DepositStatus> _activeFilters;
-@override@JsonKey() List<DepositStatus> get activeFilters {
-  if (_activeFilters is EqualUnmodifiableListView) return _activeFilters;
+ final  List<DepositStatus> _statusFilters;
+@override@JsonKey() List<DepositStatus> get statusFilters {
+  if (_statusFilters is EqualUnmodifiableListView) return _statusFilters;
   // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_activeFilters);
+  return EqualUnmodifiableListView(_statusFilters);
 }
 
 
@@ -225,16 +225,16 @@ _$RDSearchCriteriaCopyWith<_RDSearchCriteria> get copyWith => __$RDSearchCriteri
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RDSearchCriteria&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.sortBy, sortBy) || other.sortBy == sortBy)&&const DeepCollectionEquality().equals(other._activeFilters, _activeFilters));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RDSearchCriteria&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.sortBy, sortBy) || other.sortBy == sortBy)&&const DeepCollectionEquality().equals(other._statusFilters, _statusFilters));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,searchQuery,sortBy,const DeepCollectionEquality().hash(_activeFilters));
+int get hashCode => Object.hash(runtimeType,searchQuery,sortBy,const DeepCollectionEquality().hash(_statusFilters));
 
 @override
 String toString() {
-  return 'RDSearchCriteria(searchQuery: $searchQuery, sortBy: $sortBy, activeFilters: $activeFilters)';
+  return 'RDSearchCriteria(searchQuery: $searchQuery, sortBy: $sortBy, statusFilters: $statusFilters)';
 }
 
 
@@ -245,7 +245,7 @@ abstract mixin class _$RDSearchCriteriaCopyWith<$Res> implements $RDSearchCriter
   factory _$RDSearchCriteriaCopyWith(_RDSearchCriteria value, $Res Function(_RDSearchCriteria) _then) = __$RDSearchCriteriaCopyWithImpl;
 @override @useResult
 $Res call({
- String searchQuery, RDSortOption sortBy, List<DepositStatus> activeFilters
+ String searchQuery, RDSortOption sortBy, List<DepositStatus> statusFilters
 });
 
 
@@ -262,11 +262,11 @@ class __$RDSearchCriteriaCopyWithImpl<$Res>
 
 /// Create a copy of RDSearchCriteria
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? searchQuery = null,Object? sortBy = null,Object? activeFilters = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? searchQuery = null,Object? sortBy = null,Object? statusFilters = null,}) {
   return _then(_RDSearchCriteria(
 searchQuery: null == searchQuery ? _self.searchQuery : searchQuery // ignore: cast_nullable_to_non_nullable
 as String,sortBy: null == sortBy ? _self.sortBy : sortBy // ignore: cast_nullable_to_non_nullable
-as RDSortOption,activeFilters: null == activeFilters ? _self._activeFilters : activeFilters // ignore: cast_nullable_to_non_nullable
+as RDSortOption,statusFilters: null == statusFilters ? _self._statusFilters : statusFilters // ignore: cast_nullable_to_non_nullable
 as List<DepositStatus>,
   ));
 }

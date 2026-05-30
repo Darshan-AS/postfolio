@@ -18,6 +18,6 @@ sealed class RDSearchCriteria with _$RDSearchCriteria {
   const factory RDSearchCriteria({
     @Default('') String searchQuery,
     @Default(RDSortOption.maturityAsc) RDSortOption sortBy,
-    @Default([]) List<DepositStatus> activeFilters,
+    @Default([]) List<DepositStatus> statusFilters,
   }) = _RDSearchCriteria;
 }

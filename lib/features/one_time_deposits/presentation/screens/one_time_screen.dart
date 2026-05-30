@@ -20,6 +20,7 @@ import 'package:postfolio/core/widgets/app_sort_bottom_sheet.dart';
 import 'package:postfolio/core/widgets/app_filter_chip_bar.dart';
 import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/enums/scheme_type.dart';
 
 class OneTimeDepositsScreen extends HookConsumerWidget {
   const OneTimeDepositsScreen({super.key});
@@ -107,11 +108,20 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
           ],
           AppFilterChipBar<DepositStatus>(
             options: DepositStatus.values,
-            selectedOptions: criteria.activeFilters,
+            selectedOptions: criteria.statusFilters,
             labelBuilder: (status) => status.displayName,
             onSelected: (status) => ref
                 .read(oneTimeListCriteriaProvider.notifier)
-                .toggleFilter(status),
+                .toggleStatusFilter(status),
+          ),
+          AppSpacings.gapSm,
+          AppFilterChipBar<OneTimeSchemeType>(
+            options: OneTimeSchemeType.values,
+            selectedOptions: criteria.schemeFilters,
+            labelBuilder: (type) => type.shortName,
+            onSelected: (type) => ref
+                .read(oneTimeListCriteriaProvider.notifier)
+                .toggleSchemeFilter(type),
           ),
           AppSpacings.gapSm,
           Expanded(
@@ -146,8 +156,9 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
   ) {
     if (deposits.isEmpty) {
       final criteria = ref.read(oneTimeListCriteriaProvider);
-      final hasFilters =
-          criteria.searchQuery.isNotEmpty || criteria.activeFilters.isNotEmpty;
+      final hasFilters = criteria.searchQuery.isNotEmpty ||
+          criteria.statusFilters.isNotEmpty ||
+          criteria.schemeFilters.isNotEmpty;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

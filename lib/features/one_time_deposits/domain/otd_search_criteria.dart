@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/enums/scheme_type.dart';
 
 part 'otd_search_criteria.freezed.dart';
 
@@ -18,6 +19,7 @@ sealed class OTDSearchCriteria with _$OTDSearchCriteria {
   const factory OTDSearchCriteria({
     @Default('') String searchQuery,
     @Default(OTDSortOption.maturityAsc) OTDSortOption sortBy,
-    @Default([]) List<DepositStatus> activeFilters,
+    @Default([]) List<DepositStatus> statusFilters,
+    @Default([]) List<OneTimeSchemeType> schemeFilters,
   }) = _OTDSearchCriteria;
 }

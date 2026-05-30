@@ -4,8 +4,8 @@ import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
-import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
@@ -21,13 +21,25 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
   void updateSort(OTDSortOption sort) => state = state.copyWith(sortBy: sort);
-  void toggleFilter(DepositStatus status) {
-    if (state.activeFilters.contains(status)) {
+  void toggleStatusFilter(DepositStatus status) {
+    if (state.statusFilters.contains(status)) {
       state = state.copyWith(
-        activeFilters: state.activeFilters.where((s) => s != status).toList(),
+        statusFilters: state.statusFilters.where((s) => s != status).toList(),
       );
     } else {
-      state = state.copyWith(activeFilters: [...state.activeFilters, status]);
+      state = state.copyWith(statusFilters: [...state.statusFilters, status]);
+    }
+  }
+
+  void toggleSchemeFilter(OneTimeSchemeType type) {
+    if (state.schemeFilters.contains(type)) {
+      state = state.copyWith(
+        schemeFilters: state.schemeFilters.where((t) => t != type).toList(),
+      );
+    } else {
+      state = state.copyWith(
+        schemeFilters: [...state.schemeFilters, type],
+      );
     }
   }
 
@@ -50,9 +62,15 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
   var result = asyncDeposits.toList();
 
   // Filters
-  if (criteria.activeFilters.isNotEmpty) {
+  if (criteria.statusFilters.isNotEmpty) {
     result = result
-        .where((d) => criteria.activeFilters.contains(d.status))
+        .where((d) => criteria.statusFilters.contains(d.status))
+        .toList();
+  }
+  
+  if (criteria.schemeFilters.isNotEmpty) {
+    result = result
+        .where((d) => criteria.schemeFilters.contains(d.schemeType))
         .toList();
   }
 

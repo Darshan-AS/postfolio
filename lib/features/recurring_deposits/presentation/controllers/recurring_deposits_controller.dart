@@ -1,10 +1,10 @@
 import 'dart:collection';
 
 import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.dart';
+import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
-import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
@@ -22,12 +22,12 @@ class RecurringListCriteria extends _$RecurringListCriteria {
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
   void updateSort(RDSortOption sort) => state = state.copyWith(sortBy: sort);
   void toggleFilter(DepositStatus status) {
-    if (state.activeFilters.contains(status)) {
+    if (state.statusFilters.contains(status)) {
       state = state.copyWith(
-        activeFilters: state.activeFilters.where((s) => s != status).toList(),
+        statusFilters: state.statusFilters.where((s) => s != status).toList(),
       );
     } else {
-      state = state.copyWith(activeFilters: [...state.activeFilters, status]);
+      state = state.copyWith(statusFilters: [...state.statusFilters, status]);
     }
   }
 
@@ -50,9 +50,9 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
   var result = asyncDeposits.toList();
 
   // Filters
-  if (criteria.activeFilters.isNotEmpty) {
+  if (criteria.statusFilters.isNotEmpty) {
     result = result
-        .where((d) => criteria.activeFilters.contains(d.status))
+        .where((d) => criteria.statusFilters.contains(d.status))
         .toList();
   }
 
