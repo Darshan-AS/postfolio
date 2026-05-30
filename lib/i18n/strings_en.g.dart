@@ -515,7 +515,7 @@ class TranslationsEnumsEn {
 	Map<String, String> get maturityUrgency => {
 		'normal': 'Normal',
 		'maturingSoon': 'Maturing Soon',
-		'overdue': 'Overdue/Action Required',
+		'overdue': 'Overdue',
 		'closed': 'Closed',
 	};
 	late final TranslationsEnumsMaturityRelativeTimeEn maturityRelativeTime = TranslationsEnumsMaturityRelativeTimeEn.internal(_root);
@@ -1062,7 +1062,7 @@ extension on Translations {
 			'enums.recurringSchemeType.recurringDeposit' => 'Recurring Deposit (RD)',
 			'enums.maturityUrgency.normal' => 'Normal',
 			'enums.maturityUrgency.maturingSoon' => 'Maturing Soon',
-			'enums.maturityUrgency.overdue' => 'Overdue/Action Required',
+			'enums.maturityUrgency.overdue' => 'Overdue',
 			'enums.maturityUrgency.closed' => 'Closed',
 			'enums.maturityRelativeTime.maturingIn' => ({required Object days}) => 'Maturing in ${days} d',
 			'enums.maturityRelativeTime.maturingToday' => 'Maturing today',

@@ -129,10 +129,11 @@
   - Add friendly "No results found" empty states with a "Clear Filters" action.
 - [x] Polish the Search Bar UI/UX (migrated to official M3 SearchBar with custom theme and added a dedicated "Cancel" button).
 - [ ] Persist all sort and filter selections as user preferences so defaults are retained across sessions.
-- [ ] Highlight deposits based on maturity status:
-  - [ ] About to mature (e.g., within 30 days)
-  - [ ] Matured but not closed
-  - [ ] Completely closed
+- [ ] Add `maturityWarningDays` (default 7d) as a user preference so agents can customize their notification window.
+- [x] Highlight deposits based on maturity status:
+  - [x] About to mature (computed via `maturityWarningDays` threshold)
+  - [x] Matured but not closed (overdue)
+  - [x] Completely closed
 - [ ] Redesign the leading visual element in deposit list tiles to replace the generic circular icons.
 - [ ] Apply distinct color coding to differentiate deposit types in list views.
 - [ ] Enhance the visual prominence of the scheme type in deposit detail views.

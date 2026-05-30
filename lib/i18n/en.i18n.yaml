@@ -228,7 +228,7 @@ enums:
   maturityUrgency(map):
     normal: "Normal"
     maturingSoon: "Maturing Soon"
-    overdue: "Overdue/Action Required"
+    overdue: "Overdue"
     closed: "Closed"
   maturityRelativeTime:
     maturingIn: "Maturing in $days d"
