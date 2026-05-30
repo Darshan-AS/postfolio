@@ -10,6 +10,11 @@ class AppWidgetThemes {
     foregroundColor: AppColors.textPrimary,
     elevation: 0,
     centerTitle: false,
+    titleTextStyle: TextStyle(
+      fontSize: AppDimensions.fontLg,
+      fontWeight: FontWeight.w600,
+      color: AppColors.textPrimary,
+    ),
     iconTheme: IconThemeData(
       color: AppColors.textPrimary,
       size: AppDimensions.iconMd,

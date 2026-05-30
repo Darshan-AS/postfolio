@@ -49,12 +49,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
           ),
           onPressed: () {},
         ),
-        title: Text(
-          t.recurringDeposits.title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-        ),
+        title: Text(t.recurringDeposits.title),
       ),
       body: Column(
         children: [

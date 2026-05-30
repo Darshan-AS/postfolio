@@ -52,12 +52,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
           ),
           onPressed: () {},
         ),
-        title: Text(
-          t.oneTimeDeposits.title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-        ),
+        title: Text(t.oneTimeDeposits.title),
       ),
       body: Column(
         children: [

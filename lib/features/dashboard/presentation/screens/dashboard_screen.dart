@@ -12,6 +12,13 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedMenu01,
+            size: AppDimensions.iconMd,
+          ),
+          onPressed: () {},
+        ),
         title: Text(t.nav.dashboard),
         actions: [
           IconButton(
@@ -26,7 +33,7 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Center(child: Text(t.dashboard.charts)),
+      body: const SizedBox.shrink(),
     );
   }
 }

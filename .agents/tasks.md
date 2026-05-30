@@ -22,6 +22,7 @@
 - [x] Integrate `go_router_builder` for type-safe routing.
 - [x] Centralize hardcoded colors into `lib/core/theme/`.
 - [x] Remove direct static AppTheme usages and hardcoded TextStyles from UI layers, relying strictly on Theme.of(context).
+- [x] Standardize AppBar styling by removing hardcoded typography from UI screens and centralizing it in `AppWidgetThemes`.
 - [x] Centralize hardcoded dimensions and spacings into `AppSpacings` and `AppDimensions`.
 - [x] Replace hardcoded padding with `AppDimensions` in deposit cards.
 - [x] Standardize ListView layouts and padding across screens.
@@ -156,7 +157,10 @@
 - [ ] **Detail View - RD Premature Closure**: Prompt user for applicable penalty interest rate and show the premature withdrawal amount.
 - [ ] **Detail View - General Premature Closure**: Implement early withdrawal calculation logic for all applicable schemes.
 - [ ] Show maturity date in list view.
-- [ ] Adjust spacing across the app (reduce padding/margin).
+- [x] Fix trailing layout constraints and status badge visibility in deposit cards.
+- [x] Streamline entity list tile layouts and tighten action button spacing.
+- [x] Adjust spacing across the app (reduce padding/margin).
+- [x] Hide intent actions (SMS, Phone, WhatsApp) for customers when contact information is missing.
 - [x] Round off amounts to nearest integer.
 
 ## Phase 9: Responsive Architecture (Pending)

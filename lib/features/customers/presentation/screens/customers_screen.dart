@@ -36,12 +36,7 @@ class CustomersScreen extends HookConsumerWidget {
           ),
           onPressed: () {},
         ),
-        title: Text(
-          t.nav.customers,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-        ),
+        title: Text(t.nav.customers),
       ),
       // 2. Handle the AsyncValue UI states smoothly
       body: Column(

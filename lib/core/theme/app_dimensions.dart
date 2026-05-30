@@ -36,6 +36,7 @@ class AppDimensions {
   static const double fontXs = 10.0;
   static const double fontSm = 14.0;
   static const double fontMd = 16.0;
+  static const double fontLg = 22.0;
   static const double letterSpacingSm = 0.2;
   static const double letterSpacingMd = 0.5;
 
