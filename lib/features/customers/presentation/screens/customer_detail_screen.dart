@@ -42,8 +42,7 @@ class CustomerDetailScreen extends ConsumerWidget {
       builder: (customer) {
         return EntityDetailScaffold(
           appBarTitle: t.customers.customerDetails,
-          onBack: () => const CustomersRoute().go(context),
-          onEdit: () => CustomerEditRoute(customerId).go(context),
+          onEdit: () => CustomerEditRoute(customerId).push(context),
           deleteDialogTitle: t.customers.deleteCustomer,
           deleteDialogContent: t.customers.deleteCustomerConfirmation,
           onDelete: () async {
@@ -68,17 +67,13 @@ class CustomerDetailScreen extends ConsumerWidget {
             subtitle: Column(
               children: [
                 Text(
-                  (customer.phone == null || customer.phone!.isEmpty)
-                      ? t.common.notProvided
-                      : customer.phone!.toPhoneFormat(),
+                  customer.phone?.toPhoneFormat() ?? t.common.notProvided,
                   style: textTheme.bodyLarge?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 Text(
-                  (customer.email == null || customer.email!.isEmpty)
-                      ? t.common.notProvided
-                      : customer.email!,
+                  customer.email ?? t.common.notProvided,
                   style: textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -151,7 +146,7 @@ Widget _buildPersonalInfo(Customer customer) {
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.homeAddress,
-        value: customer.address,
+        value: customer.address ?? t.common.notProvided,
       ),
       const Divider(height: AppDimensions.dividerHeight),
       DetailItem(
@@ -160,7 +155,7 @@ Widget _buildPersonalInfo(Customer customer) {
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.dateOfBirth,
-        value: customer.dateOfBirth?.toAppFormat(),
+        value: customer.dateOfBirth?.toAppFormat() ?? t.common.notProvided,
       ),
     ],
   );
@@ -176,7 +171,7 @@ Widget _buildIdentityDocuments(Customer customer) {
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.cif,
-        value: customer.cifNumber,
+        value: customer.cifNumber ?? t.common.notProvided,
       ),
       const Divider(height: AppDimensions.dividerHeight),
       DetailItem(
@@ -185,7 +180,7 @@ Widget _buildIdentityDocuments(Customer customer) {
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.aadhaarNumber,
-        value: customer.aadhaarNumber?.toAadhaarFormat(),
+        value: customer.aadhaarNumber?.toAadhaarFormat() ?? t.common.notProvided,
       ),
       const Divider(height: AppDimensions.dividerHeight),
       DetailItem(
@@ -194,7 +189,7 @@ Widget _buildIdentityDocuments(Customer customer) {
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.panNumber,
-        value: customer.panNumber?.toPanFormat(),
+        value: customer.panNumber?.toPanFormat() ?? t.common.notProvided,
       ),
     ],
   );
@@ -210,7 +205,7 @@ Widget _buildSavingsBank(Customer customer) {
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.sbAccountNumber,
-        value: customer.savingsAccount?.accountNumber,
+        value: customer.savingsAccount?.accountNumber ?? t.common.notProvided,
       ),
     ],
   );
@@ -263,9 +258,9 @@ class _CustomerDepositsSection extends ConsumerWidget {
                           status: deposit.status,
                           onTap: () => OneTimeDepositDetailRoute(
                             deposit.id,
-                          ).go(context),
+                          ).push(context),
                           onEdit: () =>
-                              OneTimeDepositEditRoute(deposit.id).go(context),
+                              OneTimeDepositEditRoute(deposit.id).push(context),
                           onDelete: () async {
                             final confirmed = await AppDialogs.confirmDelete(
                               context,
@@ -312,10 +307,10 @@ class _CustomerDepositsSection extends ConsumerWidget {
                           status: deposit.status,
                           onTap: () => RecurringDepositDetailRoute(
                             deposit.id,
-                          ).go(context),
+                          ).push(context),
                           onEdit: () => RecurringDepositEditRoute(
                             deposit.id,
-                          ).go(context),
+                          ).push(context),
                           onDelete: () async {
                             final confirmed = await AppDialogs.confirmDelete(
                               context,

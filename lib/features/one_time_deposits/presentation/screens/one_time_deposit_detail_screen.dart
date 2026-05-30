@@ -33,8 +33,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
       builder: (deposit) {
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
-          onBack: () => const OneTimeDepositsRoute().go(context),
-          onEdit: () => OneTimeDepositEditRoute(depositId).go(context),
+          onEdit: () => OneTimeDepositEditRoute(depositId).push(context),
           deleteDialogTitle: t.oneTimeDeposits.deleteDeposit,
           deleteDialogContent: t.oneTimeDeposits.deleteDepositConfirmation,
           onDelete: () async {
@@ -52,9 +51,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
               size: AppDimensions.iconLg,
             ),
-            title: (deposit!.accountNo == null || deposit.accountNo!.isEmpty)
-                ? t.common.notProvided
-                : deposit.accountNo!,
+            title: deposit!.accountNo ?? t.common.notProvided,
             subtitle: Text(
               deposit.schemeType.displayName,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -159,7 +156,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                           ?.name ??
                       deposit.customerId,
                   onTap: () =>
-                      CustomerDetailRoute(deposit.customerId).go(context),
+                      CustomerDetailRoute(deposit.customerId).push(context),
                 ),
               ],
             ),

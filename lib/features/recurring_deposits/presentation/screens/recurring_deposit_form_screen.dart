@@ -360,6 +360,7 @@ List<Widget> _buildInvestmentDetails(
     AppDateField(
       controller: startDateController,
       labelText: t.recurringDeposits.fields.startDate,
+      isRequired: true,
       onTap: () async {
         final picked = await showDatePicker(
           context: context,

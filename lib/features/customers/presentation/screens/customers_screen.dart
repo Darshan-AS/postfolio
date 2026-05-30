@@ -95,7 +95,7 @@ class CustomersScreen extends HookConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
-        onPressed: () => const CustomerCreateRoute().go(context),
+        onPressed: () => const CustomerCreateRoute().push(context),
         icon: const HugeIcon(
           icon: HugeIcons.strokeRoundedAdd01,
           size: AppDimensions.iconMd,
@@ -154,11 +154,9 @@ class CustomersScreen extends HookConsumerWidget {
           final customer = customers[index];
           return CustomerCard(
             name: customer.name,
-            phone: (customer.phone == null || customer.phone!.isEmpty)
-                ? t.common.notProvided
-                : customer.phone!.toPhoneFormat(),
-            onTap: () => CustomerDetailRoute(customer.id).go(context),
-            onEdit: () => CustomerEditRoute(customer.id).go(context),
+            phone: customer.phone?.toPhoneFormat() ?? t.common.notProvided,
+            onTap: () => CustomerDetailRoute(customer.id).push(context),
+            onEdit: () => CustomerEditRoute(customer.id).push(context),
             onDelete: () async {
               final confirmed = await AppDialogs.confirmDelete(
                 context,

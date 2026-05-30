@@ -116,7 +116,7 @@ class DetailItem extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing != null) trailing!,
+          ?trailing,
           if (onTap != null && trailing == null)
             HugeIcon(
               icon: HugeIcons.strokeRoundedArrowRight01,

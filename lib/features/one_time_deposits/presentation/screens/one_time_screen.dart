@@ -165,7 +165,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
-        onPressed: () => const OneTimeDepositCreateRoute().go(context),
+        onPressed: () => const OneTimeDepositCreateRoute().push(context),
         icon: const HugeIcon(
           icon: HugeIcons.strokeRoundedAdd01,
           size: AppDimensions.iconMd,
@@ -231,23 +231,19 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
               final customerAsync = ref.watch(
                 customerByIdProvider(deposit.customerId),
               );
-              final customerName = customerAsync.value?.name ??
-                  ((deposit.accountNo == null || deposit.accountNo!.isEmpty)
-                      ? t.common.notProvided
-                      : deposit.accountNo!);
+              final customerName =
+                  customerAsync.value?.name ?? (deposit.accountNo ?? t.common.notProvided);
 
               return OneTimeDepositCard(
                 title: customerName,
-                subtitle: (deposit.accountNo == null || deposit.accountNo!.isEmpty)
-                    ? t.common.notProvided
-                    : deposit.accountNo!,
+                subtitle: deposit.accountNo ?? t.common.notProvided,
                 principalAmount: deposit.principalAmount,
                 status: deposit.status,
                 urgency: deposit.maturityUrgency,
                 relativeTimeText: deposit.maturityRelativeTime,
                 onTap: () =>
-                    OneTimeDepositDetailRoute(deposit.id).go(context),
-                onEdit: () => OneTimeDepositEditRoute(deposit.id).go(context),
+                    OneTimeDepositDetailRoute(deposit.id).push(context),
+                onEdit: () => OneTimeDepositEditRoute(deposit.id).push(context),
                 onDelete: () async {
                   final confirmed = await AppDialogs.confirmDelete(
                     context,

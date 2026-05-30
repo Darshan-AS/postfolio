@@ -61,3 +61,5 @@
 - Fixed a critical `GoRouter` exception (`ImperativeRouteMatch.complete`) occurring on system back button presses by migrating all primary navigation from imperative `.push()` to declarative `.go()`.
 - Updated architectural guidelines to enforce declarative routing for hierarchical paths.
 - Identified counter-intuitive routing behavior in "Edit -> Back" flows (returning to Detail instead of List) and added it to the task roadmap for re-evaluation.
+- Fixed UI/Domain parity by adding `isRequired: true` to missing required fields in all form screens, ensuring accurate visual representation of strict domain validation rules.
+- Fixed static analysis errors by removing `linkedSavingsAccount` and `linkedAutoDebitAccountNo` from UI components, as they were not defined in domain models, and updated null-aware element syntax in `detail_components.dart`.

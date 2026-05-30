@@ -362,6 +362,7 @@ List<Widget> _buildInvestmentDetails(
     AppDateField(
       controller: startDateController,
       labelText: t.oneTimeDeposits.fields.startDate,
+      isRequired: true,
       onTap: () async {
         final picked = await showDatePicker(
           context: context,

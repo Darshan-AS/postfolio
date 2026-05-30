@@ -288,6 +288,7 @@ Widget _buildCustomRelationshipField({
       icon: HugeIcons.strokeRoundedUserMultiple,
       size: AppDimensions.iconMd,
     ),
+    isRequired: true,
     textInputAction: TextInputAction.next,
     onChanged: (_) => onChanged(),
     validator: (val) {
@@ -310,6 +311,7 @@ Widget _buildPercentageField({
       icon: HugeIcons.strokeRoundedPercent,
       size: AppDimensions.iconMd,
     ),
+    isRequired: true,
     keyboardType: const TextInputType.numberWithOptions(decimal: true),
     validator: (val) => Nominee.validatePercentage(double.tryParse(val ?? '')),
     textInputAction: TextInputAction.done,

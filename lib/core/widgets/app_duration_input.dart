@@ -70,6 +70,7 @@ class AppDurationInput extends HookWidget {
           icon: HugeIcons.strokeRoundedCalendar01,
           size: AppDimensions.iconMd,
         ),
+        isRequired: true,
         readOnly: true,
         enabled: true,
       );
@@ -79,6 +80,7 @@ class AppDurationInput extends HookWidget {
     return AppSegmentedButtonField<int>(
       value: selectedYears,
       labelText: t.common.duration.termYears,
+      isRequired: true,
       prefixIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedCalendar01,
         size: AppDimensions.iconMd,
@@ -106,6 +108,7 @@ class AppDurationInput extends HookWidget {
         icon: HugeIcons.strokeRoundedCalendar01,
         size: AppDimensions.iconMd,
       ),
+      isRequired: true,
       readOnly: true,
       enabled: true,
     );

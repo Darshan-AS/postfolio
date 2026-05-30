@@ -156,7 +156,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
-        onPressed: () => const RecurringDepositCreateRoute().go(context),
+        onPressed: () => const RecurringDepositCreateRoute().push(context),
         icon: const HugeIcon(
           icon: HugeIcons.strokeRoundedAdd01,
           size: AppDimensions.iconMd,
@@ -219,26 +219,22 @@ class RecurringDepositsScreen extends HookConsumerWidget {
               final customerAsync = ref.watch(
                 customerByIdProvider(deposit.customerId),
               );
-              final customerName = customerAsync.value?.name ??
-                  ((deposit.accountNo == null || deposit.accountNo!.isEmpty)
-                      ? t.common.notProvided
-                      : deposit.accountNo!);
+              final customerName =
+                  customerAsync.value?.name ?? (deposit.accountNo ?? t.common.notProvided);
 
               return RecurringDepositCard(
                 title: customerName,
                 subtitle: (deposit.serialNo?.isNotEmpty ?? false)
-                    ? '(${deposit.serialNo}) ${((deposit.accountNo == null || deposit.accountNo!.isEmpty) ? t.common.notProvided : deposit.accountNo!)}'
-                    : ((deposit.accountNo == null || deposit.accountNo!.isEmpty)
-                        ? t.common.notProvided
-                        : deposit.accountNo!),
+                    ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
+                    : (deposit.accountNo ?? t.common.notProvided),
                 installmentAmount: deposit.installmentAmount,
                 status: deposit.status,
                 urgency: deposit.maturityUrgency,
                 relativeTimeText: deposit.maturityRelativeTime,
                 onTap: () =>
-                    RecurringDepositDetailRoute(deposit.id).go(context),
+                    RecurringDepositDetailRoute(deposit.id).push(context),
                 onEdit: () =>
-                    RecurringDepositEditRoute(deposit.id).go(context),
+                    RecurringDepositEditRoute(deposit.id).push(context),
                 onDelete: () async {
                   final confirmed = await AppDialogs.confirmDelete(
                     context,

@@ -33,8 +33,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
       builder: (deposit) {
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
-          onBack: () => const RecurringDepositsRoute().go(context),
-          onEdit: () => RecurringDepositEditRoute(depositId).go(context),
+          onEdit: () => RecurringDepositEditRoute(depositId).push(context),
           deleteDialogTitle: t.recurringDeposits.deleteDeposit,
           deleteDialogContent: t.recurringDeposits.deleteDepositConfirmation,
           onDelete: () async {
@@ -58,9 +57,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
               icon: HugeIcons.strokeRoundedTransaction,
               size: AppDimensions.iconLg,
             ),
-            title: (deposit!.accountNo == null || deposit.accountNo!.isEmpty)
-                ? t.common.notProvided
-                : deposit.accountNo!,
+            title: deposit!.accountNo ?? t.common.notProvided,
             subtitle: Text(
               deposit.schemeType.displayName,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -162,7 +159,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                     size: AppDimensions.iconMd,
                   ),
                   label: t.recurringDeposits.fields.serialNo,
-                  value: deposit.serialNo,
+                  value: deposit.serialNo ?? t.common.notProvided,
                 ),
                 const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
@@ -178,7 +175,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                           ?.name ??
                       deposit.customerId,
                   onTap: () =>
-                      CustomerDetailRoute(deposit.customerId).go(context),
+                      CustomerDetailRoute(deposit.customerId).push(context),
                 ),
               ],
             ),
