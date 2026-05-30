@@ -6,10 +6,7 @@ import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-enum EntityActionType { edit, delete, call, whatsapp, sms, location }
-
 class EntityAction {
-  final EntityActionType type;
   final String label;
   final Widget icon;
 
@@ -18,7 +15,6 @@ class EntityAction {
   final bool isInline;
 
   const EntityAction({
-    required this.type,
     required this.label,
     required this.icon,
 
@@ -32,7 +28,6 @@ class EntityAction {
     bool isInline = false,
   }) {
     return EntityAction(
-      type: EntityActionType.edit,
       label: t.common.edit,
       icon: const HugeIcon(
         icon: HugeIcons.strokeRoundedEdit02,
@@ -45,7 +40,6 @@ class EntityAction {
 
   factory EntityAction.delete({required VoidCallback onTap}) {
     return EntityAction(
-      type: EntityActionType.delete,
       label: t.common.delete,
       icon: const HugeIcon(
         icon: HugeIcons.strokeRoundedDelete02,

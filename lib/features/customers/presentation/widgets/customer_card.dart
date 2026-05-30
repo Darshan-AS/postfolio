@@ -13,8 +13,6 @@ class CustomerCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onPhoneTapped;
   final VoidCallback onWhatsAppTapped;
-  final VoidCallback onSmsTapped;
-  final VoidCallback onLocationTapped;
 
   const CustomerCard({
     super.key,
@@ -25,8 +23,6 @@ class CustomerCard extends StatelessWidget {
     required this.onDelete,
     required this.onPhoneTapped,
     required this.onWhatsAppTapped,
-    required this.onSmsTapped,
-    required this.onLocationTapped,
   });
 
   @override
@@ -44,45 +40,27 @@ class CustomerCard extends StatelessWidget {
           : null,
       onTap: onTap,
       actions: [
-        EntityAction.edit(onTap: onEdit, isInline: true),
-        EntityAction(
-          type: EntityActionType.call,
-          label: t.customers.actions.call,
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedCall02,
-            size: AppDimensions.iconMd,
+        if (phone.isNotEmpty) ...[
+          EntityAction(
+            label: t.customers.actions.call,
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedCall02,
+              size: AppDimensions.iconMd,
+            ),
+            onTap: onPhoneTapped,
+            isInline: true,
           ),
-          onTap: onPhoneTapped,
-          isInline: true,
-        ),
-        EntityAction(
-          type: EntityActionType.whatsapp,
-          label: t.customers.actions.whatsapp,
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedWhatsapp,
-            size: AppDimensions.iconMd,
+          EntityAction(
+            label: t.customers.actions.whatsapp,
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedWhatsapp,
+              size: AppDimensions.iconMd,
+            ),
+            onTap: onWhatsAppTapped,
+            isInline: true,
           ),
-          onTap: onWhatsAppTapped,
-          isInline: true,
-        ),
-        EntityAction(
-          type: EntityActionType.sms,
-          label: t.customers.actions.sms,
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedComment01,
-            size: AppDimensions.iconMd,
-          ),
-          onTap: onSmsTapped,
-        ),
-        EntityAction(
-          type: EntityActionType.location,
-          label: t.customers.actions.location,
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedLocation01,
-            size: AppDimensions.iconMd,
-          ),
-          onTap: onLocationTapped,
-        ),
+        ],
+        EntityAction.edit(onTap: onEdit),
         EntityAction.delete(onTap: onDelete),
       ],
     );

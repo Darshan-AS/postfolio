@@ -187,10 +187,6 @@ class CustomersScreen extends HookConsumerWidget {
             onWhatsAppTapped: () => ref
                 .read(intentServiceProvider)
                 .launchWhatsApp(customer.phone ?? ''),
-            onSmsTapped: () =>
-                ref.read(intentServiceProvider).launchSms(customer.phone ?? ''),
-            onLocationTapped: () =>
-                ref.read(intentServiceProvider).launchMapSearch(customer.name),
           );
         },
       ),
@@ -217,8 +213,6 @@ class CustomersScreen extends HookConsumerWidget {
             onDelete: () {},
             onPhoneTapped: () {},
             onWhatsAppTapped: () {},
-            onSmsTapped: () {},
-            onLocationTapped: () {},
           );
         },
       ),
