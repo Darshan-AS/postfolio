@@ -128,6 +128,7 @@
   - [x] Implement a reusable Sort Bottom Sheet triggered by a sort icon in the App Bar.
   - [x] Add friendly "No results found" empty states with a "Clear Filters" action.
 - [x] Polish the Search Bar UI/UX (migrated to official M3 SearchBar with custom theme and added a dedicated "Cancel" button).
+- [x] Implement a persistent Unified Search Bar with inline sort and filter actions across all listing screens.
 - [ ] Persist all sort and filter selections as user preferences so defaults are retained across sessions.
 - [ ] Add `maturityWarningDays` (default 7d) as a user preference so agents can customize their notification window.
 - [x] Highlight deposits based on maturity status:

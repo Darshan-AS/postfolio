@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:postfolio/core/routing/app_router.dart';
-import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_card.dart';
@@ -30,7 +28,6 @@ class CustomersScreen extends HookConsumerWidget {
     // 1. Watch the derived filtered provider state
     final customersState = ref.watch(filteredCustomersProvider);
     final criteria = ref.watch(customerListCriteriaProvider);
-    final searchVisible = useState(false);
 
     return Scaffold(
       appBar: AppBar(
@@ -47,73 +44,43 @@ class CustomersScreen extends HookConsumerWidget {
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
-        actions: [
-          IconButton(
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedSearch01,
-              size: AppDimensions.iconMd,
-            ),
-            onPressed: () {
-              searchVisible.value = !searchVisible.value;
-              if (!searchVisible.value) {
-                ref
-                    .read(customerListCriteriaProvider.notifier)
-                    .updateSearch('');
-              }
-            },
-          ),
-          IconButton(
-            icon: Badge(
-              isLabelVisible: criteria.sortBy != CustomerSortOption.nameAsc,
-              smallSize: AppDimensions.badgeSizeSm,
-              child: const HugeIcon(
-                icon: HugeIcons.strokeRoundedSorting01,
-                size: AppDimensions.iconMd,
-              ),
-            ),
-            onPressed: () {
-              AppSortBottomSheet.show<CustomerSortOption>(
-                context: context,
-                title: t.sorting.title,
-                options: CustomerSortOption.values,
-                selectedOption: criteria.sortBy,
-                labelBuilder: (option) =>
-                    t.sorting.options[option.name] ?? option.name,
-                onSelected: (option) => ref
-                    .read(customerListCriteriaProvider.notifier)
-                    .updateSort(option),
-              );
-            },
-          ),
-        ],
       ),
       // 2. Handle the AsyncValue UI states smoothly
       body: Column(
         children: [
-          AnimatedSize(
-            duration: AppAnimations.fast,
-            curve: AppAnimations.defaultCurve,
-            child: !searchVisible.value
-                ? const SizedBox(width: double.infinity)
-                : Column(
-                    children: [
-                      AppSpacings.gapSm,
-                      AppSearchBar(
-                        hintText: t.customers.searchHint,
-                        onChanged: (val) => ref
-                            .read(customerListCriteriaProvider.notifier)
-                            .updateSearch(val),
-                        onClose: () {
-                          searchVisible.value = false;
-                          ref
-                              .read(customerListCriteriaProvider.notifier)
-                              .updateSearch('');
-                        },
-                      ),
-                      AppSpacings.gapMd,
-                    ],
+          AppSpacings.gapSm,
+          AppSearchBar(
+            hintText: t.customers.searchHint,
+            onChanged: (val) => ref
+                .read(customerListCriteriaProvider.notifier)
+                .updateSearch(val),
+            trailing: [
+              IconButton(
+                icon: Badge(
+                  isLabelVisible: criteria.sortBy != CustomerSortOption.nameAsc,
+                  smallSize: AppDimensions.badgeSizeSm,
+                  child: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedSorting01,
+                    size: AppDimensions.iconMd,
                   ),
+                ),
+                onPressed: () {
+                  AppSortBottomSheet.show<CustomerSortOption>(
+                    context: context,
+                    title: t.sorting.title,
+                    options: CustomerSortOption.values,
+                    selectedOption: criteria.sortBy,
+                    labelBuilder: (option) =>
+                        t.sorting.options[option.name] ?? option.name,
+                    onSelected: (option) => ref
+                        .read(customerListCriteriaProvider.notifier)
+                        .updateSort(option),
+                  );
+                },
+              ),
+            ],
           ),
+          AppSpacings.gapMd,
           Expanded(
             child: switch (customersState) {
               AsyncData(:final value) => _buildDataState(context, ref, value),

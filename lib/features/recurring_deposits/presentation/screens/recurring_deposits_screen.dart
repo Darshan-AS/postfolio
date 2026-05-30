@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:postfolio/core/routing/app_router.dart';
-import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
@@ -32,7 +30,6 @@ class RecurringDepositsScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final depositsState = ref.watch(filteredRecurringDepositsProvider);
     final criteria = ref.watch(recurringListCriteriaProvider);
-    final searchVisible = useState(false);
 
     return Scaffold(
       appBar: AppBar(
@@ -49,126 +46,98 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
-        actions: [
-          IconButton(
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedSearch01,
-              size: AppDimensions.iconMd,
-            ),
-            onPressed: () {
-              searchVisible.value = !searchVisible.value;
-              if (!searchVisible.value) {
-                ref
-                    .read(recurringListCriteriaProvider.notifier)
-                    .updateSearch('');
-              }
-            },
-          ),
-          IconButton(
-            icon: Badge(
-              isLabelVisible: criteria.sortBy != RDSortOption.maturityAsc,
-              smallSize: AppDimensions.badgeSizeSm,
-              child: const HugeIcon(
-                icon: HugeIcons.strokeRoundedSorting01,
-                size: AppDimensions.iconMd,
-              ),
-            ),
-            onPressed: () {
-              AppSortBottomSheet.show<RDSortOption>(
-                context: context,
-                title: t.sorting.title,
-                options: RDSortOption.values,
-                selectedOption: criteria.sortBy,
-                labelBuilder: (option) =>
-                    t.sorting.options[option.name] ?? option.name,
-                onSelected: (option) => ref
-                    .read(recurringListCriteriaProvider.notifier)
-                    .updateSort(option),
-              );
-            },
-          ),
-          IconButton(
-            icon: Badge(
-              isLabelVisible:
-                  (criteria.statusFilters.length +
-                      criteria.urgencyFilters.length) >
-                  0,
-              label: Text(
-                '${criteria.statusFilters.length + criteria.urgencyFilters.length}',
-              ),
-              child: const HugeIcon(
-                icon: HugeIcons.strokeRoundedFilter,
-                size: AppDimensions.iconMd,
-              ),
-            ),
-            onPressed: () {
-              AppFilterBottomSheet.show(
-                context: context,
-                builder: (context) => Consumer(
-                  builder: (context, ref, child) {
-                    final criteria = ref.watch(recurringListCriteriaProvider);
-                    return AppFilterBottomSheet(
-                      title: t.filters.title,
-                      onClearAll: () => ref
-                          .read(recurringListCriteriaProvider.notifier)
-                          .clearFilters(),
-                      filterSections: [
-                        AppFilterSection<MaturityUrgency>(
-                          title: t.filters.sections.urgency,
-                          options: const [
-                            MaturityUrgency.overdue,
-                            MaturityUrgency.maturingSoon,
-                          ],
-                          selectedOptions: criteria.urgencyFilters,
-                          labelBuilder: (urgency) => urgency.displayName,
-                          onSelected: (urgency) => ref
-                              .read(recurringListCriteriaProvider.notifier)
-                              .toggleUrgencyFilter(urgency),
-                        ),
-                        AppFilterSection<DepositStatus>(
-                          title: t.filters.sections.status,
-                          options: DepositStatus.values,
-                          selectedOptions: criteria.statusFilters,
-                          labelBuilder: (status) => status.displayName,
-                          onSelected: (status) => ref
-                              .read(recurringListCriteriaProvider.notifier)
-                              .toggleFilter(status),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
-          AnimatedSize(
-            duration: AppAnimations.fast,
-            curve: AppAnimations.defaultCurve,
-            child: !searchVisible.value
-                ? const SizedBox(width: double.infinity)
-                : Column(
-                    children: [
-                      AppSpacings.gapSm,
-                      AppSearchBar(
-                        hintText: t.recurringDeposits.searchHint,
-                        onChanged: (val) => ref
-                            .read(recurringListCriteriaProvider.notifier)
-                            .updateSearch(val),
-                        onClose: () {
-                          searchVisible.value = false;
-                          ref
-                              .read(recurringListCriteriaProvider.notifier)
-                              .updateSearch('');
-                        },
-                      ),
-                      AppSpacings.gapMd,
-                    ],
+          AppSpacings.gapSm,
+          AppSearchBar(
+            hintText: t.recurringDeposits.searchHint,
+            onChanged: (val) => ref
+                .read(recurringListCriteriaProvider.notifier)
+                .updateSearch(val),
+            trailing: [
+              IconButton(
+                icon: Badge(
+                  isLabelVisible: criteria.sortBy != RDSortOption.maturityAsc,
+                  smallSize: AppDimensions.badgeSizeSm,
+                  child: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedSorting01,
+                    size: AppDimensions.iconMd,
                   ),
+                ),
+                onPressed: () {
+                  AppSortBottomSheet.show<RDSortOption>(
+                    context: context,
+                    title: t.sorting.title,
+                    options: RDSortOption.values,
+                    selectedOption: criteria.sortBy,
+                    labelBuilder: (option) =>
+                        t.sorting.options[option.name] ?? option.name,
+                    onSelected: (option) => ref
+                        .read(recurringListCriteriaProvider.notifier)
+                        .updateSort(option),
+                  );
+                },
+              ),
+              IconButton(
+                icon: Badge(
+                  isLabelVisible:
+                      (criteria.statusFilters.length +
+                          criteria.urgencyFilters.length) >
+                      0,
+                  label: Text(
+                    '${criteria.statusFilters.length + criteria.urgencyFilters.length}',
+                  ),
+                  child: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedFilter,
+                    size: AppDimensions.iconMd,
+                  ),
+                ),
+                onPressed: () {
+                  AppFilterBottomSheet.show(
+                    context: context,
+                    builder: (context) => Consumer(
+                      builder: (context, ref, child) {
+                        final criteria = ref.watch(
+                          recurringListCriteriaProvider,
+                        );
+                        return AppFilterBottomSheet(
+                          title: t.filters.title,
+                          onClearAll: () => ref
+                              .read(recurringListCriteriaProvider.notifier)
+                              .clearFilters(),
+                          filterSections: [
+                            AppFilterSection<MaturityUrgency>(
+                              title: t.filters.sections.urgency,
+                              options: const [
+                                MaturityUrgency.overdue,
+                                MaturityUrgency.maturingSoon,
+                              ],
+                              selectedOptions: criteria.urgencyFilters,
+                              labelBuilder: (urgency) => urgency.displayName,
+                              onSelected: (urgency) => ref
+                                  .read(recurringListCriteriaProvider.notifier)
+                                  .toggleUrgencyFilter(urgency),
+                            ),
+                            AppFilterSection<DepositStatus>(
+                              title: t.filters.sections.status,
+                              options: DepositStatus.values,
+                              selectedOptions: criteria.statusFilters,
+                              labelBuilder: (status) => status.displayName,
+                              onSelected: (status) => ref
+                                  .read(recurringListCriteriaProvider.notifier)
+                                  .toggleFilter(status),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
+          AppSpacings.gapMd,
           Expanded(
             child: switch (depositsState) {
               AsyncData(:final value) => _buildDataState(context, ref, value),

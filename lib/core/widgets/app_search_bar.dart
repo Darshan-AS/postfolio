@@ -10,12 +10,14 @@ class AppSearchBar extends HookWidget {
   final String? hintText;
   final ValueChanged<String> onChanged;
   final VoidCallback? onClose;
+  final List<Widget>? trailing;
 
   const AppSearchBar({
     super.key,
     this.hintText,
     required this.onChanged,
     this.onClose,
+    this.trailing,
   });
 
   @override
@@ -79,6 +81,7 @@ class AppSearchBar extends HookWidget {
                       size: AppDimensions.iconMd,
                     ),
                   ),
+                ...?trailing,
               ],
             ),
           ),
