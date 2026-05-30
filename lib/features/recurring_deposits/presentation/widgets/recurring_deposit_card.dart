@@ -69,20 +69,28 @@ class RecurringDepositCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-            if (maturityDate != null) ...[
+            if (relativeTimeText != null &&
+                (urgency == MaturityUrgency.maturingSoon ||
+                    urgency == MaturityUrgency.matured)) ...[
               if (subtitle.isNotEmpty) AppSpacings.gapXs,
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   HugeIcon(
-                    icon: HugeIcons.strokeRoundedCalendar01,
+                    icon: HugeIcons.strokeRoundedTimer02,
                     size: AppDimensions.iconSm,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: urgency == MaturityUrgency.matured
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.tertiary,
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    maturityDate!.toAppFormat(),
+                    relativeTimeText!,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: urgency == MaturityUrgency.matured
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.tertiary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -106,13 +114,35 @@ class RecurringDepositCard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            AppSpacings.gapXs,
-            StatusBadge(
-              status: status.displayName,
-              compact: true,
-              urgency: urgency,
-              relativeTimeText: relativeTimeText,
-            ),
+            if (maturityDate != null) ...[
+              AppSpacings.gapXs,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  HugeIcon(
+                    icon: HugeIcons.strokeRoundedCalendar01,
+                    size: AppDimensions.iconSm,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    maturityDate!.toAppFormat(),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            if (status != DepositStatus.active ||
+                urgency == MaturityUrgency.normal) ...[
+              AppSpacings.gapXs,
+              StatusBadge(
+                status: status.displayName,
+                compact: true,
+                urgency: urgency,
+              ),
+            ],
           ],
         ),
       ),

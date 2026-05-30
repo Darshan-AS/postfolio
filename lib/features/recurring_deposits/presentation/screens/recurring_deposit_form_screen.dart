@@ -60,7 +60,7 @@ class _RecurringDepositForm extends HookConsumerWidget {
       text: deposit?.accountNo,
     );
     final installmentAmountController = useTextEditingController(
-      text: deposit?.installmentAmount.toString(),
+      text: deposit?.installmentAmount.round().toString(),
     );
     final interestRateController = useTextEditingController(
       text: deposit?.interestRate.toString(),

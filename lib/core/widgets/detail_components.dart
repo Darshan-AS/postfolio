@@ -179,7 +179,7 @@ class DetailAmountCard extends StatelessWidget {
             ),
             AppSpacings.gapSm,
             Text(
-              amount.toRupeeFormat(decimalDigits: 2),
+              amount.toRupeeFormat(),
               style: theme.textTheme.titleLarge?.copyWith(
                 color: fg,
                 fontWeight: FontWeight.bold,
@@ -388,7 +388,7 @@ class IncomeGenerationGrid extends StatelessWidget {
               ),
               AppSpacings.gapSm,
               Text(
-                totalInterestEarned.toRupeeFormat(decimalDigits: 2),
+                totalInterestEarned.toRupeeFormat(),
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: theme.colorScheme.onSecondaryContainer,
                   fontWeight: FontWeight.bold,

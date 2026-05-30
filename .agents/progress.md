@@ -44,12 +44,6 @@
 - Resolved Google Sign-In "Account reauth failed" on Android by registering the machine-specific SHA-1 fingerprint and updating the project configuration via FlutterFire CLI.
 - Configured Linux environment shell profile (`.zshrc`) with correct paths for Flutter and Dart global tools.
 - Bumped app version to 1.0.4+5 and updated release pipeline documentation for keystore decoding.
-
-## Next Steps
-- **Commission Logic Implementation**: Add the next set of domain math features to automatically deduce gross/net commissions and TDS.
-- **Form State Refactor**: Migrate local hook-based form state inside form screens to dedicated Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) for strictly pure business logic.
-- **Maturity Highlights**: Implement visual highlighting for deposits based on their maturity status (about to mature, matured, closed).
-- **Fixed/Locked UI Fields**: Make form fields read-only for specific schemes (e.g., lock Scheme Type for RD, term length for MIS/NSC).
 - Standardized primitive formatting using pure Dart extensions (`toRupeeFormat()`, `toPhoneFormat()`, `toAadhaarFormat()`, `toPanFormat()`) across the UI layer, aligning with the project's declarative conventions and keeping widgets dumb.
 - Designed and implemented independent `SearchCriteria` domain models (`CustomerSearchCriteria`, `RDSearchCriteria`, `OTDSearchCriteria`) replacing the generic shared pattern.
 - Updated Riverpod notifiers and derived list providers to execute offline-first, in-memory searches, filters, and sorts.
@@ -68,3 +62,10 @@
 - Fixed UI/Domain parity by adding `isRequired: true` to missing required fields in all form screens, ensuring accurate visual representation of strict domain validation rules.
 - Fixed static analysis errors by removing `linkedSavingsAccount` and `linkedAutoDebitAccountNo` from UI components, as they were not defined in domain models, and updated null-aware element syntax in `detail_components.dart`.
 - Refactored `DepositStatus` and `MaturityUrgency` enums to eliminate redundancy. Removed the explicit `matured` state from `DepositStatus` (now only `active` and `closed`) and renamed `MaturityUrgency.overdue` to `MaturityUrgency.matured`, establishing a clean boundary between contractual state and chronological timeline.
+- Refactored `toRupeeFormat` to strictly display integers by invoking `.round()` and removing custom decimal configurations, enforcing simplified displays across cards, projections, detail pages, and form fields.
+
+## Next Steps
+- **Commission Logic Implementation**: Add the next set of domain math features to automatically deduce gross/net commissions and TDS.
+- **Form State Refactor**: Migrate local hook-based form state inside form screens to dedicated Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) for strictly pure business logic.
+- **Maturity Highlights**: Implement visual highlighting for deposits based on their maturity status (about to mature, matured, closed).
+- **Fixed/Locked UI Fields**: Make form fields read-only for specific schemes (e.g., lock Scheme Type for RD, term length for MIS/NSC).

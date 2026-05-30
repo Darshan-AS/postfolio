@@ -57,7 +57,7 @@ class _OneTimeDepositForm extends HookConsumerWidget {
       text: deposit?.accountNo,
     );
     final principalAmountController = useTextEditingController(
-      text: deposit?.principalAmount.toString(),
+      text: deposit?.principalAmount.round().toString(),
     );
     final interestRateController = useTextEditingController(
       text: deposit?.interestRate.toString(),
