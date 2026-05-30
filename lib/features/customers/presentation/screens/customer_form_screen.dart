@@ -93,30 +93,15 @@ class _CustomerForm extends HookConsumerWidget {
             .read(customersControllerProvider.notifier)
             .saveCustomer(
               id: customer?.id,
-              name: nameController.text.trim(),
-              email: emailController.text.trim().isEmpty
-                  ? null
-                  : emailController.text.trim(),
-              phone: phoneController.text.trim().isEmpty
-                  ? null
-                  : phoneController.text.trim(),
-              address: addressController.text.trim().isEmpty
-                  ? null
-                  : addressController.text.trim(),
-              cifNumber: cifNumberController.text.trim().isEmpty
-                  ? null
-                  : cifNumberController.text.trim(),
+              name: nameController.text,
+              email: emailController.text,
+              phone: phoneController.text,
+              address: addressController.text,
+              cifNumber: cifNumberController.text,
               dateOfBirth: selectedDate.value,
-              aadhaarNumber: aadhaarNumberController.text.trim().isEmpty
-                  ? null
-                  : aadhaarNumberController.text.trim(),
-              panNumber: panNumberController.text.trim().isEmpty
-                  ? null
-                  : panNumberController.text.trim(),
-              savingsAccountNumber:
-                  savingsAccountNumberController.text.trim().isEmpty
-                  ? null
-                  : savingsAccountNumberController.text.trim(),
+              aadhaarNumber: aadhaarNumberController.text,
+              panNumber: panNumberController.text,
+              savingsAccountNumber: savingsAccountNumberController.text,
               savingsNominees: nominees.value,
             );
 

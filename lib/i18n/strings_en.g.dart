@@ -191,8 +191,8 @@ class TranslationsCommonEn {
 	/// en: 'OK'
 	String get ok => 'OK';
 
-	/// en: 'Not provided'
-	String get notProvided => 'Not provided';
+	/// en: '—'
+	String get notProvided => '—';
 
 	/// en: 'More options'
 	String get moreOptions => 'More options';
@@ -846,7 +846,7 @@ class TranslationsOneTimeDepositsFieldsEn {
 	String get depositDate => 'Deposit Date';
 
 	/// en: 'Linked Savings Account'
-	String get linkedSavingsAccount => 'Linked Savings Account';
+	String get linkedSavingsAccountNo => 'Linked Savings Account';
 }
 
 // Path: recurringDeposits.sections
@@ -921,7 +921,7 @@ class TranslationsRecurringDepositsFieldsEn {
 	String get linkedSavingsAccount => 'Linked Savings Account';
 
 	/// en: 'Linked Auto Debit Account'
-	String get linkedAutoDebitAccount => 'Linked Auto Debit Account';
+	String get linkedAutoDebitAccountNo => 'Linked Auto Debit Account';
 }
 
 // Path: enums.maturityRelativeTime
@@ -988,7 +988,7 @@ extension on Translations {
 			'common.error' => 'Error',
 			'common.retry' => 'Retry',
 			'common.ok' => 'OK',
-			'common.notProvided' => 'Not provided',
+			'common.notProvided' => '—',
 			'common.moreOptions' => 'More options',
 			'common.noResults' => 'No results found',
 			'common.demoModeActive' => 'Demo Mode Active. Data is not saved to the cloud.',
@@ -1088,7 +1088,7 @@ extension on Translations {
 			'oneTimeDeposits.fields.startDate' => 'Start Date',
 			'oneTimeDeposits.fields.maturityDate' => 'Maturity Date',
 			'oneTimeDeposits.fields.depositDate' => 'Deposit Date',
-			'oneTimeDeposits.fields.linkedSavingsAccount' => 'Linked Savings Account',
+			'oneTimeDeposits.fields.linkedSavingsAccountNo' => 'Linked Savings Account',
 			'recurringDeposits.title' => 'Recurring Deposits',
 			'recurringDeposits.newDeposit' => 'New RD',
 			'recurringDeposits.editDeposit' => 'Edit RD',
@@ -1118,7 +1118,7 @@ extension on Translations {
 			'recurringDeposits.fields.startDate' => 'Start Date',
 			'recurringDeposits.fields.maturityDate' => 'Maturity Date',
 			'recurringDeposits.fields.linkedSavingsAccount' => 'Linked Savings Account',
-			'recurringDeposits.fields.linkedAutoDebitAccount' => 'Linked Auto Debit Account',
+			'recurringDeposits.fields.linkedAutoDebitAccountNo' => 'Linked Auto Debit Account',
 			'nominees.title' => 'Nominees',
 			'nominees.addNominee' => 'Add Nominee',
 			'nominees.editNominee' => 'Edit Nominee',

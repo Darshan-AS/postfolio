@@ -51,7 +51,9 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
               size: AppDimensions.iconLg,
             ),
-            title: deposit!.accountNo ?? t.common.notProvided,
+            title: (deposit!.accountNo == null || deposit.accountNo!.isEmpty)
+                ? t.common.notProvided
+                : deposit.accountNo!,
             subtitle: Text(
               deposit.schemeType.displayName,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -158,18 +160,15 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   onTap: () =>
                       CustomerDetailRoute(deposit.customerId).push(context),
                 ),
-                if (deposit.linkedSavingsAccountNo != null &&
-                    deposit.linkedSavingsAccountNo!.isNotEmpty) ...[
-                  const Divider(height: AppDimensions.dividerHeight),
-                  DetailItem(
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedBank,
-                      size: AppDimensions.iconMd,
-                    ),
-                    label: t.oneTimeDeposits.fields.linkedSavingsAccount,
-                    value: deposit.linkedSavingsAccountNo!,
+                const Divider(height: AppDimensions.dividerHeight),
+                DetailItem(
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedBank,
+                    size: AppDimensions.iconMd,
                   ),
-                ],
+                  label: t.oneTimeDeposits.fields.linkedSavingsAccountNo,
+                  value: deposit.linkedSavingsAccountNo,
+                ),
               ],
             ),
             AppSpacings.gapLg,

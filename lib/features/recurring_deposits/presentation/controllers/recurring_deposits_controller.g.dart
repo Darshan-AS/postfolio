@@ -134,7 +134,7 @@ final class RecurringDepositsControllerProvider
 }
 
 String _$recurringDepositsControllerHash() =>
-    r'9846166a0dece21c9392a2b56e78c5acddea1218';
+    r'd5a8035d1b4105bbbbaa6411c68de62be2553d83';
 
 abstract class _$RecurringDepositsController
     extends $StreamNotifier<UnmodifiableListView<RecurringDeposit>> {

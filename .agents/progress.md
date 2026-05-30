@@ -55,3 +55,6 @@
 - Enhanced empty states with a "Clear Filters" action that resets search and filter criteria.
 - Standardized filter chip styling via a centralized `ChipThemeData` in the global theme.
 - Improved Search, Filter, and Sort UI/UX consistency by unifying them into a persistent `AppSearchBar` immediately below the AppBar. Sort and Filter buttons are now injected directly as trailing widgets within the search bar to save vertical space and improve discoverability.
+- Fixed a translation key mismatch for `linkedAutoDebitAccountNo` and `linkedSavingsAccountNo`, ensuring consistency between Domain models and Localization files.
+- Refactored all Form Screens to be "dumber" by moving string sanitization and numeric parsing logic from the UI into the Controllers and Domain models.
+- Standardized Controller `save` methods to accept raw strings, aligning with the project's architectural cleanup goals.

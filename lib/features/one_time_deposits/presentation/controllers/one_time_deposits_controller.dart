@@ -165,10 +165,10 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
   Future<Result<void, String>> saveOneTimeDeposit({
     String? id,
     String? accountNo,
-    required double principalAmount,
+    required String principalAmount,
     required int termYears,
     required int termMonths,
-    double interestRate = 0.0,
+    String interestRate = '0.0',
     required String customerId,
     required OneTimeSchemeType schemeType,
     DepositStatus status = DepositStatus.active,
@@ -178,13 +178,16 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
   }) async {
     final depositId = id ?? const Uuid().v4();
 
+    final amount = double.tryParse(principalAmount.trim()) ?? 0.0;
+    final rate = double.tryParse(interestRate.trim()) ?? 0.0;
+
     final createResult = OneTimeDeposit.create(
       id: depositId,
       accountNo: accountNo,
-      principalAmount: principalAmount,
+      principalAmount: amount,
       termYears: termYears,
       termMonths: termMonths,
-      interestRate: interestRate,
+      interestRate: rate,
       customerId: customerId,
       schemeType: schemeType,
       status: status,

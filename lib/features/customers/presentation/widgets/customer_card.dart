@@ -34,7 +34,7 @@ class CustomerCard extends StatelessWidget {
     return EntityListTile(
       leadingText: name.isNotEmpty ? name[0].toUpperCase() : '?',
       title: name,
-      subtitle: phone.isNotEmpty && phone != t.common.notProvided
+      subtitle: phone.isNotEmpty
           ? Text(
               phone,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(

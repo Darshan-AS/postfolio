@@ -45,7 +45,7 @@ common:
   error: "Error"
   retry: "Retry"
   ok: "OK"
-  notProvided: "Not provided"
+  notProvided: "—"
   moreOptions: "More options"
   noResults: "No results found"
   demoModeActive: "Demo Mode Active. Data is not saved to the cloud."
@@ -169,7 +169,7 @@ oneTimeDeposits:
     startDate: "Start Date"
     maturityDate: "Maturity Date"
     depositDate: "Deposit Date"
-    linkedSavingsAccount: "Linked Savings Account"
+    linkedSavingsAccountNo: "Linked Savings Account"
 
 recurringDeposits:
   title: "Recurring Deposits"
@@ -205,7 +205,7 @@ recurringDeposits:
     startDate: "Start Date"
     maturityDate: "Maturity Date"
     linkedSavingsAccount: "Linked Savings Account"
-    linkedAutoDebitAccount: "Linked Auto Debit Account"
+    linkedAutoDebitAccountNo: "Linked Auto Debit Account"
 
 nominees:
   title: "Nominees"

@@ -66,20 +66,22 @@ class CustomerDetailScreen extends ConsumerWidget {
             title: customer.name,
             subtitle: Column(
               children: [
-                if (customer.phone != null)
-                  Text(
-                    customer.phone!.toPhoneFormat(),
-                    style: textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                Text(
+                  (customer.phone == null || customer.phone!.isEmpty)
+                      ? t.common.notProvided
+                      : customer.phone!.toPhoneFormat(),
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
-                if (customer.email != null)
-                  Text(
-                    customer.email!,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                ),
+                Text(
+                  (customer.email == null || customer.email!.isEmpty)
+                      ? t.common.notProvided
+                      : customer.email!,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
+                ),
               ],
             ),
             bottomActions: [
@@ -118,25 +120,17 @@ class CustomerDetailScreen extends ConsumerWidget {
             ],
           ),
           body: [
-            if (customer.address != null || customer.dateOfBirth != null) ...[
-              _buildPersonalInfo(customer),
+            _buildPersonalInfo(customer),
+            AppSpacings.gapLg,
+            _buildIdentityDocuments(customer),
+            AppSpacings.gapLg,
+            _buildSavingsBank(customer),
+            AppSpacings.gapLg,
+            if (customer.savingsAccount?.nominees != null) ...[
+              NomineesDetailSection(
+                nominees: customer.savingsAccount!.nominees,
+              ),
               AppSpacings.gapLg,
-            ],
-            if (customer.cifNumber != null ||
-                customer.aadhaarNumber != null ||
-                customer.panNumber != null) ...[
-              _buildIdentityDocuments(customer),
-              AppSpacings.gapLg,
-            ],
-            if (customer.savingsAccount != null) ...[
-              _buildSavingsBank(customer),
-              AppSpacings.gapLg,
-              if (customer.savingsAccount?.nominees != null) ...[
-                NomineesDetailSection(
-                  nominees: customer.savingsAccount!.nominees,
-                ),
-                AppSpacings.gapLg,
-              ],
             ],
             _CustomerDepositsSection(customerId: customerId),
           ],
@@ -150,26 +144,23 @@ Widget _buildPersonalInfo(Customer customer) {
   return DetailSection(
     title: t.customers.sections.personalInfo,
     children: [
-      if (customer.address != null)
-        DetailItem(
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedLocation01,
-            size: AppDimensions.iconMd,
-          ),
-          label: t.customers.fields.homeAddress,
-          value: customer.address!,
+      DetailItem(
+        icon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedLocation01,
+          size: AppDimensions.iconMd,
         ),
-      if (customer.address != null && customer.dateOfBirth != null)
-        const Divider(height: AppDimensions.dividerHeight),
-      if (customer.dateOfBirth != null)
-        DetailItem(
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedCalendar01,
-            size: AppDimensions.iconMd,
-          ),
-          label: t.customers.fields.dateOfBirth,
-          value: customer.dateOfBirth!.toAppFormat(),
+        label: t.customers.fields.homeAddress,
+        value: customer.address,
+      ),
+      const Divider(height: AppDimensions.dividerHeight),
+      DetailItem(
+        icon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedCalendar01,
+          size: AppDimensions.iconMd,
         ),
+        label: t.customers.fields.dateOfBirth,
+        value: customer.dateOfBirth?.toAppFormat(),
+      ),
     ],
   );
 }
@@ -178,38 +169,32 @@ Widget _buildIdentityDocuments(Customer customer) {
   return DetailSection(
     title: t.customers.sections.identityDocuments,
     children: [
-      if (customer.cifNumber != null)
-        DetailItem(
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedTicket01,
-            size: AppDimensions.iconMd,
-          ),
-          label: t.customers.fields.cif,
-          value: customer.cifNumber!,
+      DetailItem(
+        icon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedTicket01,
+          size: AppDimensions.iconMd,
         ),
-      if (customer.cifNumber != null &&
-          (customer.aadhaarNumber != null || customer.panNumber != null))
-        const Divider(height: AppDimensions.dividerHeight),
-      if (customer.aadhaarNumber != null)
-        DetailItem(
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedId,
-            size: AppDimensions.iconMd,
-          ),
-          label: t.customers.fields.aadhaarNumber,
-          value: customer.aadhaarNumber!.toAadhaarFormat(),
+        label: t.customers.fields.cif,
+        value: customer.cifNumber,
+      ),
+      const Divider(height: AppDimensions.dividerHeight),
+      DetailItem(
+        icon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedId,
+          size: AppDimensions.iconMd,
         ),
-      if (customer.aadhaarNumber != null && customer.panNumber != null)
-        const Divider(height: AppDimensions.dividerHeight),
-      if (customer.panNumber != null)
-        DetailItem(
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedCreditCard,
-            size: AppDimensions.iconMd,
-          ),
-          label: t.customers.fields.panNumber,
-          value: customer.panNumber!.toPanFormat(),
+        label: t.customers.fields.aadhaarNumber,
+        value: customer.aadhaarNumber?.toAadhaarFormat(),
+      ),
+      const Divider(height: AppDimensions.dividerHeight),
+      DetailItem(
+        icon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedCreditCard,
+          size: AppDimensions.iconMd,
         ),
+        label: t.customers.fields.panNumber,
+        value: customer.panNumber?.toPanFormat(),
+      ),
     ],
   );
 }
@@ -218,15 +203,14 @@ Widget _buildSavingsBank(Customer customer) {
   return DetailSection(
     title: t.customers.sections.savingsBank,
     children: [
-      if (customer.savingsAccount?.accountNumber != null)
-        DetailItem(
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedBank,
-            size: AppDimensions.iconMd,
-          ),
-          label: t.customers.fields.sbAccountNumber,
-          value: customer.savingsAccount!.accountNumber,
+      DetailItem(
+        icon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedBank,
+          size: AppDimensions.iconMd,
         ),
+        label: t.customers.fields.sbAccountNumber,
+        value: customer.savingsAccount?.accountNumber,
+      ),
     ],
   );
 }

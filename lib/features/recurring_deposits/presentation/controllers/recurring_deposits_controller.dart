@@ -171,10 +171,10 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     String? id,
     String? serialNo,
     String? accountNo,
-    required double installmentAmount,
+    required String installmentAmount,
     required int termYears,
     required int termMonths,
-    required double interestRate,
+    required String interestRate,
     required String customerId,
     required RecurringSchemeType schemeType,
     DepositStatus status = DepositStatus.active,
@@ -184,14 +184,17 @@ class RecurringDepositsController extends _$RecurringDepositsController {
   }) async {
     final depositId = id ?? const Uuid().v4();
 
+    final amount = double.tryParse(installmentAmount.trim()) ?? 0.0;
+    final rate = double.tryParse(interestRate.trim()) ?? 0.0;
+
     final createResult = RecurringDeposit.create(
       id: depositId,
       serialNo: serialNo,
       accountNo: accountNo,
-      installmentAmount: installmentAmount,
+      installmentAmount: amount,
       termYears: termYears,
       termMonths: termMonths,
-      interestRate: interestRate,
+      interestRate: rate,
       customerId: customerId,
       schemeType: schemeType,
       status: status,

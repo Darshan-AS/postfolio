@@ -134,28 +134,21 @@ class _RecurringDepositForm extends HookConsumerWidget {
             .read(recurringDepositsControllerProvider.notifier)
             .saveRecurringDeposit(
               id: deposit?.id,
-              serialNo: serialNoController.text.trim().isEmpty
-                  ? null
-                  : serialNoController.text.trim(),
-              accountNo: accountNoController.text.trim().isEmpty
-                  ? null
-                  : accountNoController.text.trim(),
-              installmentAmount:
-                  double.tryParse(installmentAmountController.text.trim()) ??
-                  0.0,
+              serialNo: serialNoController.text,
+              accountNo: accountNoController.text,
+              installmentAmount: installmentAmountController.text,
               termYears: selectedTermYears.value,
               termMonths:
                   selectedScheme.value.tenureInputType ==
                       TenureInputType.derived
                   ? 0 // RD doesn't have derived, but keeping pattern
                   : selectedTermMonths.value,
-              interestRate:
-                  double.tryParse(interestRateController.text.trim()) ?? 0.0,
+              interestRate: interestRateController.text,
               customerId: selectedCustomerId.value ?? '',
               schemeType: selectedScheme.value,
               status: selectedStatus.value,
               startDate: startDate.value,
-              linkedAutoDebitAccountNo: linkedAccountController.text.trim(),
+              linkedAutoDebitAccountNo: linkedAccountController.text,
               nominees: nominees.value,
             );
 
@@ -392,7 +385,7 @@ List<Widget> _buildLinkedAccountsAndNominees({
     FormSectionHeader(title: t.common.sections.linkedAccounts),
     AppTextField(
       controller: linkedAccountController,
-      labelText: t.recurringDeposits.fields.linkedAutoDebitAccount,
+      labelText: t.recurringDeposits.fields.linkedAutoDebitAccountNo,
       prefixIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedBank,
         size: AppDimensions.iconMd,

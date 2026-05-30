@@ -154,7 +154,9 @@ class CustomersScreen extends HookConsumerWidget {
           final customer = customers[index];
           return CustomerCard(
             name: customer.name,
-            phone: customer.phone?.toPhoneFormat() ?? t.common.notProvided,
+            phone: (customer.phone == null || customer.phone!.isEmpty)
+                ? t.common.notProvided
+                : customer.phone!.toPhoneFormat(),
             onTap: () => CustomerDetailRoute(customer.id).push(context),
             onEdit: () => CustomerEditRoute(customer.id).push(context),
             onDelete: () async {
@@ -211,7 +213,7 @@ class CustomersScreen extends HookConsumerWidget {
           final dummy = Customer.dummy;
           return CustomerCard(
             name: dummy.name,
-            phone: dummy.phone ?? '',
+            phone: dummy.phone ?? t.common.notProvided,
             onTap: () {},
             onEdit: () {},
             onDelete: () {},

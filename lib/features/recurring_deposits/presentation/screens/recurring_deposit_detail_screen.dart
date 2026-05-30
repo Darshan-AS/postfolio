@@ -57,7 +57,9 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
               icon: HugeIcons.strokeRoundedTransaction,
               size: AppDimensions.iconLg,
             ),
-            title: deposit!.accountNo ?? t.common.notProvided,
+            title: (deposit!.accountNo == null || deposit.accountNo!.isEmpty)
+                ? t.common.notProvided
+                : deposit.accountNo!,
             subtitle: Text(
               deposit.schemeType.displayName,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -159,7 +161,16 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                     size: AppDimensions.iconMd,
                   ),
                   label: t.recurringDeposits.fields.serialNo,
-                  value: deposit.serialNo ?? '-',
+                  value: deposit.serialNo,
+                ),
+                const Divider(height: AppDimensions.dividerHeight),
+                DetailItem(
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedBank,
+                    size: AppDimensions.iconMd,
+                  ),
+                  label: t.recurringDeposits.fields.linkedAutoDebitAccountNo,
+                  value: deposit.linkedAutoDebitAccountNo,
                 ),
                 const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(

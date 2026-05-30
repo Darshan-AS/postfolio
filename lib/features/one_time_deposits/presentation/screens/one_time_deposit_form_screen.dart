@@ -151,24 +151,20 @@ class _OneTimeDepositForm extends HookConsumerWidget {
             .read(oneTimeDepositsControllerProvider.notifier)
             .saveOneTimeDeposit(
               id: deposit?.id,
-              accountNo: accountNoController.text.trim().isEmpty
-                  ? null
-                  : accountNoController.text.trim(),
-              principalAmount:
-                  double.tryParse(principalAmountController.text.trim()) ?? 0.0,
+              accountNo: accountNoController.text,
+              principalAmount: principalAmountController.text,
               termYears: selectedTermYears.value,
               termMonths:
                   selectedScheme.value.tenureInputType ==
                       TenureInputType.derived
                   ? selectedTermMonths.value
                   : 0,
-              interestRate:
-                  double.tryParse(interestRateController.text.trim()) ?? 0.0,
+              interestRate: interestRateController.text,
               customerId: selectedCustomerId.value ?? '',
               schemeType: selectedScheme.value,
               status: selectedStatus.value,
               startDate: startDate.value,
-              linkedSavingsAccountNo: linkedAccountController.text.trim(),
+              linkedSavingsAccountNo: linkedAccountController.text,
               nominees: nominees.value,
             );
 
@@ -392,7 +388,7 @@ List<Widget> _buildLinkedAccountsAndNominees({
     FormSectionHeader(title: t.common.sections.linkedAccounts),
     AppTextField(
       controller: linkedAccountController,
-      labelText: t.oneTimeDeposits.fields.linkedSavingsAccount,
+      labelText: t.oneTimeDeposits.fields.linkedSavingsAccountNo,
       prefixIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedBank,
         size: AppDimensions.iconMd,

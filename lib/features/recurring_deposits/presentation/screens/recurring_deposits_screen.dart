@@ -219,14 +219,18 @@ class RecurringDepositsScreen extends HookConsumerWidget {
               final customerAsync = ref.watch(
                 customerByIdProvider(deposit.customerId),
               );
-              final customerName =
-                  customerAsync.value?.name ?? (deposit.accountNo ?? t.common.notProvided);
+              final customerName = customerAsync.value?.name ??
+                  ((deposit.accountNo == null || deposit.accountNo!.isEmpty)
+                      ? t.common.notProvided
+                      : deposit.accountNo!);
 
               return RecurringDepositCard(
                 title: customerName,
                 subtitle: (deposit.serialNo?.isNotEmpty ?? false)
-                    ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
-                    : (deposit.accountNo ?? t.common.notProvided),
+                    ? '(${deposit.serialNo}) ${((deposit.accountNo == null || deposit.accountNo!.isEmpty) ? t.common.notProvided : deposit.accountNo!)}'
+                    : ((deposit.accountNo == null || deposit.accountNo!.isEmpty)
+                        ? t.common.notProvided
+                        : deposit.accountNo!),
                 installmentAmount: deposit.installmentAmount,
                 status: deposit.status,
                 urgency: deposit.maturityUrgency,
@@ -280,8 +284,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
         itemBuilder: (context, index) {
           final dummy = RecurringDeposit.dummy;
           return RecurringDepositCard(
-            title: dummy.accountNo ?? '...',
-            subtitle: dummy.accountNo ?? '...',
+            title: dummy.accountNo ?? t.common.notProvided,
+            subtitle: dummy.accountNo ?? t.common.notProvided,
             installmentAmount: dummy.installmentAmount,
             status: dummy.status,
             urgency: MaturityUrgency.normal,

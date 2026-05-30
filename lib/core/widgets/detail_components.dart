@@ -3,6 +3,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 class DetailSection extends StatelessWidget {
   final String title;
@@ -52,7 +53,8 @@ class DetailSection extends StatelessWidget {
 
 class DetailItem extends StatelessWidget {
   final String label;
-  final String value;
+  final String? value;
+  final bool hideIfNull;
   final Widget? icon;
   final VoidCallback? onTap;
   final Widget? trailing;
@@ -60,7 +62,8 @@ class DetailItem extends StatelessWidget {
   const DetailItem({
     super.key,
     required this.label,
-    required this.value,
+    this.value,
+    this.hideIfNull = false,
     this.icon,
     this.onTap,
     this.trailing,
@@ -68,6 +71,12 @@ class DetailItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (hideIfNull && (value == null || value!.isEmpty)) {
+      return const SizedBox.shrink();
+    }
+
+    final displayValue = (value == null || value!.isEmpty) ? t.common.notProvided : value!;
+
     Widget content = Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.paddingLg,
@@ -98,7 +107,7 @@ class DetailItem extends StatelessWidget {
                 ),
                 AppSpacings.gapXs,
                 Text(
-                  value,
+                  displayValue,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.w500,
@@ -107,7 +116,7 @@ class DetailItem extends StatelessWidget {
               ],
             ),
           ),
-          ?trailing,
+          if (trailing != null) trailing!,
           if (onTap != null && trailing == null)
             HugeIcon(
               icon: HugeIcons.strokeRoundedArrowRight01,
