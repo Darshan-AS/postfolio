@@ -18,8 +18,6 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:postfolio/features/customers/domain/customer_search_criteria.dart';
 import 'package:postfolio/core/widgets/app_sort_bottom_sheet.dart';
 
-import 'package:postfolio/core/extensions/string_extension.dart';
-
 class CustomersScreen extends HookConsumerWidget {
   const CustomersScreen({super.key});
 
@@ -154,7 +152,7 @@ class CustomersScreen extends HookConsumerWidget {
           final customer = customers[index];
           return CustomerCard(
             name: customer.name,
-            phone: customer.phone?.toPhoneFormat() ?? t.common.notProvided,
+            phone: customer.phone,
             onTap: () => CustomerDetailRoute(customer.id).push(context),
             onEdit: () => CustomerEditRoute(customer.id).push(context),
             onDelete: () async {
@@ -207,7 +205,7 @@ class CustomersScreen extends HookConsumerWidget {
           final dummy = Customer.dummy;
           return CustomerCard(
             name: dummy.name,
-            phone: dummy.phone ?? t.common.notProvided,
+            phone: dummy.phone,
             onTap: () {},
             onEdit: () {},
             onDelete: () {},

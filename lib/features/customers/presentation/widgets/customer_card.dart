@@ -4,10 +4,11 @@ import 'package:hugeicons/hugeicons.dart';
 import '../../../../core/widgets/entity_list_tile.dart';
 import '../../../../i18n/strings.g.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/extensions/string_extension.dart';
 
 class CustomerCard extends StatelessWidget {
   final String name;
-  final String phone;
+  final String? phone;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -17,7 +18,7 @@ class CustomerCard extends StatelessWidget {
   const CustomerCard({
     super.key,
     required this.name,
-    required this.phone,
+    this.phone,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -27,20 +28,20 @@ class CustomerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasPhone = phone != null && phone!.isNotEmpty;
+
     return EntityListTile(
       leadingText: name.isNotEmpty ? name[0].toUpperCase() : '?',
       title: name,
-      subtitle: phone.isNotEmpty
-          ? Text(
-              phone,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            )
-          : null,
+      subtitle: Text(
+        hasPhone ? phone!.toPhoneFormat() : t.common.notProvided,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
       onTap: onTap,
       actions: [
-        if (phone.isNotEmpty) ...[
+        if (hasPhone) ...[
           EntityAction(
             label: t.customers.actions.call,
             icon: const HugeIcon(
