@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:postfolio/core/models/list_criteria.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
@@ -7,10 +8,94 @@ import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
+import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
 import 'package:uuid/uuid.dart';
 
 part 'recurring_deposits_controller.g.dart';
+
+@riverpod
+class RecurringListCriteria extends _$RecurringListCriteria {
+  @override
+  ListCriteria build() => const ListCriteria();
+
+  void updateSearch(String query) => state = state.copyWith(searchQuery: query);
+  void updateSort(SortOption sort) => state = state.copyWith(sortBy: sort);
+  void toggleFilter(DepositStatus status) {
+    if (state.activeFilters.contains(status)) {
+      state = state.copyWith(
+        activeFilters: state.activeFilters.where((s) => s != status).toList(),
+      );
+    } else {
+      state = state.copyWith(
+        activeFilters: [...state.activeFilters, status],
+      );
+    }
+  }
+  void clearAll() => state = const ListCriteria();
+}
+
+@riverpod
+Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(Ref ref) async {
+  final criteria = ref.watch(recurringListCriteriaProvider);
+  final asyncDeposits = await ref.watch(recurringDepositsControllerProvider.future);
+  
+  // We may also need customer names to search by them
+  final asyncCustomers = await ref.watch(customersControllerProvider.future);
+  final customerMap = {for (var c in asyncCustomers) c.id: c.name};
+
+  var result = asyncDeposits.toList();
+
+  // Filters
+  if (criteria.activeFilters.isNotEmpty) {
+    result = result.where((d) => criteria.activeFilters.contains(d.status)).toList();
+  }
+
+  // Search
+  if (criteria.searchQuery.isNotEmpty) {
+    final query = criteria.searchQuery.toLowerCase().trim();
+    result = result.where((d) {
+      final customerName = customerMap[d.customerId]?.toLowerCase() ?? '';
+      return d.accountNo.toLowerCase().contains(query) ||
+             customerName.contains(query) || 
+             d.schemeType.displayName.toLowerCase().contains(query) ||
+             (d.serialNo?.toLowerCase().contains(query) ?? false);
+    }).toList();
+  }
+
+  // Sort
+  switch (criteria.sortBy) {
+    case SortOption.newest:
+      result.sort((a, b) => b.startDate.compareTo(a.startDate));
+      break;
+    case SortOption.oldest:
+      result.sort((a, b) => a.startDate.compareTo(b.startDate));
+      break;
+    case SortOption.highestAmount:
+      result.sort((a, b) => b.installmentAmount.compareTo(a.installmentAmount));
+      break;
+    case SortOption.maturityProximity:
+      final now = DateTime.now();
+      result.sort((a, b) {
+        final diffA = a.maturityDate.difference(now).abs();
+        final diffB = b.maturityDate.difference(now).abs();
+        return diffA.compareTo(diffB);
+      });
+      break;
+    case SortOption.nameAsc:
+    case SortOption.nameDesc:
+      result.sort((a, b) {
+        final nameA = customerMap[a.customerId]?.toLowerCase() ?? '';
+        final nameB = customerMap[b.customerId]?.toLowerCase() ?? '';
+        return criteria.sortBy == SortOption.nameAsc 
+            ? nameA.compareTo(nameB) 
+            : nameB.compareTo(nameA);
+      });
+      break;
+  }
+
+  return UnmodifiableListView(result);
+}
 
 @riverpod
 class RecurringDepositsController extends _$RecurringDepositsController {

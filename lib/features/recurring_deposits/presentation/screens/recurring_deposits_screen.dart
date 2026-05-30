@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/widgets/app_search_bar.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -14,12 +16,13 @@ import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
-class RecurringDepositsScreen extends ConsumerWidget {
+class RecurringDepositsScreen extends HookConsumerWidget {
   const RecurringDepositsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final depositsState = ref.watch(recurringDepositsControllerProvider);
+    final depositsState = ref.watch(filteredRecurringDepositsProvider);
+    final searchVisible = useState(false);
 
     return Scaffold(
       appBar: AppBar(
@@ -52,18 +55,37 @@ class RecurringDepositsScreen extends ConsumerWidget {
               icon: HugeIcons.strokeRoundedSearch01,
               size: AppDimensions.iconMd,
             ),
-            onPressed: () {},
+            onPressed: () {
+              searchVisible.value = !searchVisible.value;
+              if (!searchVisible.value) {
+                ref.read(recurringListCriteriaProvider.notifier).updateSearch('');
+              }
+            },
           ),
         ],
       ),
-      body: switch (depositsState) {
-        AsyncData(:final value) => _buildDataState(context, ref, value),
-        AsyncError(:final error) => ErrorStateView(
-          message: error.toString(),
-          onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
-        ),
-        _ => _buildLoadingState(),
-      },
+      body: Column(
+        children: [
+          if (searchVisible.value) ...[
+            AppSpacings.gapSm,
+            AppSearchBar(
+              hintText: t.customers.searchHint,
+              onChanged: (val) => ref.read(recurringListCriteriaProvider.notifier).updateSearch(val),
+            ),
+            AppSpacings.gapMd,
+          ],
+          Expanded(
+            child: switch (depositsState) {
+              AsyncData(:final value) => _buildDataState(context, ref, value),
+              AsyncError(:final error) => ErrorStateView(
+                message: error.toString(),
+                onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
+              ),
+              _ => _buildLoadingState(),
+            },
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
         onPressed: () => const RecurringDepositCreateRoute().push(context),

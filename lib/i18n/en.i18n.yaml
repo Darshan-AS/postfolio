@@ -25,6 +25,7 @@ format:
   bulletSeparator: " • "
 
 common:
+  search: "Search..."
   duration:
     termYears: "Term (Years)"
     termMonths: "Term (Months)"

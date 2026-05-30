@@ -9,6 +9,100 @@ part of 'customers_controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(CustomerListCriteria)
+final customerListCriteriaProvider = CustomerListCriteriaProvider._();
+
+final class CustomerListCriteriaProvider
+    extends $NotifierProvider<CustomerListCriteria, ListCriteria> {
+  CustomerListCriteriaProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'customerListCriteriaProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$customerListCriteriaHash();
+
+  @$internal
+  @override
+  CustomerListCriteria create() => CustomerListCriteria();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ListCriteria value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ListCriteria>(value),
+    );
+  }
+}
+
+String _$customerListCriteriaHash() =>
+    r'393a23e8892396adea10122f00515c4f9c70ed8d';
+
+abstract class _$CustomerListCriteria extends $Notifier<ListCriteria> {
+  ListCriteria build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<ListCriteria, ListCriteria>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<ListCriteria, ListCriteria>,
+              ListCriteria,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(filteredCustomers)
+final filteredCustomersProvider = FilteredCustomersProvider._();
+
+final class FilteredCustomersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<UnmodifiableListView<Customer>>,
+          UnmodifiableListView<Customer>,
+          FutureOr<UnmodifiableListView<Customer>>
+        >
+    with
+        $FutureModifier<UnmodifiableListView<Customer>>,
+        $FutureProvider<UnmodifiableListView<Customer>> {
+  FilteredCustomersProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'filteredCustomersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$filteredCustomersHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<UnmodifiableListView<Customer>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<UnmodifiableListView<Customer>> create(Ref ref) {
+    return filteredCustomers(ref);
+  }
+}
+
+String _$filteredCustomersHash() => r'10adde682baae1e463568ee5361dc22d7fa5df5e';
+
 @ProviderFor(CustomersController)
 final customersControllerProvider = CustomersControllerProvider._();
 

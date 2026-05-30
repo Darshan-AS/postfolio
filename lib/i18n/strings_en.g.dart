@@ -143,6 +143,10 @@ class TranslationsCommonEn {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+
+	/// en: 'Search...'
+	String get search => 'Search...';
+
 	late final TranslationsCommonDurationEn duration = TranslationsCommonDurationEn.internal(_root);
 
 	/// en: 'Loading...'
@@ -811,6 +815,7 @@ extension on Translations {
 			'format.dateTime' => 'dd MMM yyyy, hh:mm a',
 			'format.currencySymbol' => '₹',
 			'format.bulletSeparator' => ' • ',
+			'common.search' => 'Search...',
 			'common.duration.termYears' => 'Term (Years)',
 			'common.duration.termMonths' => 'Term (Months)',
 			'common.duration.yearAbbreviation' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 Yr', other: '${n} Yrs', ), 

@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:postfolio/core/models/list_criteria.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -8,6 +9,54 @@ import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:uuid/uuid.dart';
 
 part 'customers_controller.g.dart';
+
+@riverpod
+class CustomerListCriteria extends _$CustomerListCriteria {
+  @override
+  ListCriteria build() => const ListCriteria();
+
+  void updateSearch(String query) => state = state.copyWith(searchQuery: query);
+  void updateSort(SortOption sort) => state = state.copyWith(sortBy: sort);
+  void clearAll() => state = const ListCriteria();
+}
+
+@riverpod
+Future<UnmodifiableListView<Customer>> filteredCustomers(Ref ref) async {
+  final criteria = ref.watch(customerListCriteriaProvider);
+  final asyncCustomers = await ref.watch(customersControllerProvider.future);
+
+  var result = asyncCustomers.toList();
+
+  // Search
+  if (criteria.searchQuery.isNotEmpty) {
+    final query = criteria.searchQuery.toLowerCase().trim();
+    result = result.where((c) {
+      return c.name.toLowerCase().contains(query) ||
+             (c.phone?.contains(query) ?? false) ||
+             (c.cifNumber?.toLowerCase().contains(query) ?? false) ||
+             (c.aadhaarNumber?.contains(query) ?? false) ||
+             (c.panNumber?.toLowerCase().contains(query) ?? false);
+    }).toList();
+  }
+
+  // Sort
+  switch (criteria.sortBy) {
+    case SortOption.nameAsc:
+      result.sort((a, b) => a.name.compareTo(b.name));
+      break;
+    case SortOption.nameDesc:
+      result.sort((a, b) => b.name.compareTo(a.name));
+      break;
+    case SortOption.newest:
+    case SortOption.oldest:
+    case SortOption.highestAmount:
+    case SortOption.maturityProximity:
+      // Customers don't have these by default, fallback to nameAsc or just keep as is
+      break;
+  }
+
+  return UnmodifiableListView(result);
+}
 
 @riverpod
 class CustomersController extends _$CustomersController {
