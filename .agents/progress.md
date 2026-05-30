@@ -41,6 +41,7 @@
 - Fixed a startup crash/debugger pause occurring on unauthenticated launch by ensuring repositories handle the unauthenticated state gracefully during route resolution.
 - Resolved Google Sign-In "Account reauth failed" on Android by registering the machine-specific SHA-1 fingerprint and updating the project configuration via FlutterFire CLI.
 - Configured Linux environment shell profile (`.zshrc`) with correct paths for Flutter and Dart global tools.
+- Bumped app version to 1.0.4+5 and updated release pipeline documentation for keystore decoding.
 
 ## Next Steps
 - **Commission Logic Implementation**: Add the next set of domain math features to automatically deduce gross/net commissions and TDS.

@@ -35,6 +35,9 @@ jobs:
         run: flutter pub get
 
       - name: Decode Keystore
+        # Decodes the base64 keystore secret and injects it into the android/app folder.
+        # This ensures the CI build has the exact same SHA-1 hash registered in Firebase,
+        # which is strictly required for Google Sign-In to work on distributed apps.
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
