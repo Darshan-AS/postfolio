@@ -33,6 +33,7 @@
 - Added a dedicated `USE_EMULATOR` flag logic in `main.dart` for seamless local development.
 - Developed a comprehensive **Migration Tool** (`lib/run_migration.dart`) that parses legacy CSV data (Customers, Deposits, RD) and bootstraps the local Firestore emulator environment.
 - Fixed a critical Firestore document path error in the migration script by sanitizing account numbers containing slashes before using them as document IDs.
+- Fixed migration script deduplication logic to correctly handle and migrate rows with empty account numbers instead of incorrectly marking them as duplicates.
 - Enhanced the migration tool with real-time statistics tracking and a summary UI showing CSV totals, migration counts, and skip reasons.
 - Integrated the migration tool with the Authentication emulator to allow local testing of authenticated scopes.
 - Updated project documentation (`README.md`) with comprehensive emulator setup, multi-machine Google Sign-In instructions, and environment cleanup steps.

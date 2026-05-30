@@ -119,7 +119,7 @@ Customer _parseCustomer(List<dynamic> row, String id) {
 }
 
 OneTimeDeposit _parseOneTimeDeposit(List<dynamic> row, String customerId) {
-  final accountNo = row[0].toString().trim();
+  final accountNo = row.isNotEmpty ? row[0].toString().trim() : '';
   return OneTimeDeposit(
     id: accountNo.isEmpty
         ? const Uuid().v4()
@@ -143,12 +143,12 @@ OneTimeDeposit _parseOneTimeDeposit(List<dynamic> row, String customerId) {
 }
 
 RecurringDeposit _parseRecurringDeposit(List<dynamic> row, String customerId) {
-  final accountNo = row[1].toString().trim();
+  final accountNo = row.length > 1 ? row[1].toString().trim() : '';
   return RecurringDeposit(
     id: accountNo.isEmpty
         ? const Uuid().v4()
         : accountNo.replaceAll('/', '-'), // Sanitize for Firestore ID
-    serialNo: row[0].toString().trim(),
+    serialNo: row.isNotEmpty ? row[0].toString().trim() : '',
     accountNo: accountNo.isEmpty ? null : accountNo,
     installmentAmount: _parseCurrency(row.length > 2 ? row[2].toString() : ''),
     termYears:
@@ -175,6 +175,8 @@ class MigrationStats {
   final int migrated;
   final int skippedMissingCustomer;
   final int skippedDuplicate;
+  final int emptyAccountMigrated;
+  final int errorCount;
   final List<String> diffLog;
 
   MigrationStats({
@@ -183,6 +185,8 @@ class MigrationStats {
     this.migrated = 0,
     this.skippedMissingCustomer = 0,
     this.skippedDuplicate = 0,
+    this.emptyAccountMigrated = 0,
+    this.errorCount = 0,
     this.diffLog = const [],
   });
 
@@ -197,6 +201,8 @@ class MigrationStats {
         total: csvTotal,
         migrated: migrated,
         duplicates: skippedDuplicate,
+        emptyAccounts: emptyAccountMigrated,
+        errors: errorCount,
       );
     } else {
       summary = t.migration.summaryAll(
@@ -204,6 +210,8 @@ class MigrationStats {
         migrated: migrated,
         missingCust: skippedMissingCustomer,
         duplicates: skippedDuplicate,
+        emptyAccounts: emptyAccountMigrated,
+        errors: errorCount,
       );
     }
     return "$summary$diffText";
@@ -475,44 +483,56 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
     int csvTotal = 0;
     int duplicateCount = 0;
     int processedCount = 0;
+    int errorCount = 0;
     final List<String> diffLog = [];
 
     for (int i = 1; i < rows.length; i++) {
       final row = rows[i];
-      if (row.isEmpty || row[0].toString().trim().isEmpty) continue;
+      if (row.isEmpty || row.every((e) => e.toString().trim().isEmpty)) continue;
       csvTotal++;
 
       if (migratedCount >= maxCustomers) continue;
       processedCount++;
 
-      final name = row.isNotEmpty ? row[0].toString().trim() : '';
-      final phone = row.length > 1 ? row[1].toString().trim() : '';
-      final cacheKey = '${name}_$phone';
-
-      if (!_customerCache.containsKey(cacheKey)) {
-        final newId = _uuid.v4();
-        final customer = _parseCustomer(row, newId);
-
-        batch.set(
-          firestore
-              .collection('users')
-              .doc(uid)
-              .collection('customers')
-              .doc(newId),
-          customer.toJson(),
-        );
-
-        _customerCache[cacheKey] = newId;
-        _customerNameFallbackCache[name] = newId;
-        migratedCount++;
-
-        if (migratedCount % AppConstants.firestoreBatchLimit == 0) {
-          await batch.commit();
-          batch = firestore.batch();
+      try {
+        final name = row.isNotEmpty ? row[0].toString().trim() : '';
+        if (name.isEmpty) {
+          errorCount++;
+          diffLog.add("Skipped (Row ${i + 1}): Missing Customer Name");
+          continue;
         }
-      } else {
-        duplicateCount++;
-        diffLog.add("Duplicate: $name ($phone)");
+
+        final phone = row.length > 1 ? row[1].toString().trim() : '';
+        final cacheKey = '${name}_$phone';
+
+        if (!_customerCache.containsKey(cacheKey)) {
+          final newId = _uuid.v4();
+          final customer = _parseCustomer(row, newId);
+
+          batch.set(
+            firestore
+                .collection('users')
+                .doc(uid)
+                .collection('customers')
+                .doc(newId),
+            customer.toJson(),
+          );
+
+          _customerCache[cacheKey] = newId;
+          _customerNameFallbackCache[name] = newId;
+          migratedCount++;
+
+          if (migratedCount % AppConstants.firestoreBatchLimit == 0) {
+            await batch.commit();
+            batch = firestore.batch();
+          }
+        } else {
+          duplicateCount++;
+          diffLog.add("Duplicate: $name ($phone)");
+        }
+      } catch (e) {
+        errorCount++;
+        diffLog.add("Error (Row ${i + 1}): $e");
       }
     }
 
@@ -527,6 +547,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
       processed: processedCount,
       migrated: migratedCount,
       skippedDuplicate: duplicateCount,
+      errorCount: errorCount,
       diffLog: diffLog,
     );
   }
@@ -553,50 +574,70 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
     int missingCustomerCount = 0;
     int duplicateCount = 0;
     int relevantToBatch = 0;
+    int emptyAccountMigratedCount = 0;
+    int errorCount = 0;
     final List<String> diffLog = [];
 
     for (int i = 1; i < rows.length; i++) {
       final row = rows[i];
-      if (row.isEmpty || row[0].toString().trim().isEmpty) continue;
+      if (row.isEmpty || row.every((e) => e.toString().trim().isEmpty)) continue;
       csvTotal++;
 
-      final accountNo = row.length > accountNoIndex
-          ? row[accountNoIndex].toString().trim()
-          : '';
-      final customerName = row.length > customerNameIndex
-          ? row[customerNameIndex].toString().trim()
-          : '';
+      try {
+        final accountNo = row.length > accountNoIndex
+            ? row[accountNoIndex].toString().trim()
+            : '';
+        final customerName = row.length > customerNameIndex
+            ? row[customerNameIndex].toString().trim()
+            : '';
+        
+        if (customerName.isEmpty) {
+          errorCount++;
+          diffLog.add("Skipped (Row ${i + 1}): Missing Customer Name in CSV");
+          continue;
+        }
 
-      final customerId = _customerNameFallbackCache[customerName];
+        final customerId = _customerNameFallbackCache[customerName];
 
-      if (customerId != null) {
-        relevantToBatch++;
-        if (!cache.contains(accountNo)) {
-          final deposit = parser(row, customerId);
+        if (customerId != null) {
+          relevantToBatch++;
+          final isDuplicate = accountNo.isNotEmpty && cache.contains(accountNo);
 
-          batch.set(
-            firestore
-                .collection('users')
-                .doc(uid)
-                .collection(collectionName)
-                .doc(deposit.id),
-            deposit.toJson(),
-          );
+          if (!isDuplicate) {
+            final deposit = parser(row, customerId);
 
-          cache.add(accountNo);
-          migratedCount++;
+            batch.set(
+              firestore
+                  .collection('users')
+                  .doc(uid)
+                  .collection(collectionName)
+                  .doc(deposit.id),
+              deposit.toJson(),
+            );
 
-          if (migratedCount % AppConstants.firestoreBatchLimit == 0) {
-            await batch.commit();
-            batch = firestore.batch();
+            if (accountNo.isNotEmpty) {
+              cache.add(accountNo);
+            } else {
+              emptyAccountMigratedCount++;
+              diffLog.add("Migrated Empty Account: $customerName (Generated ID: ${deposit.id})");
+            }
+            migratedCount++;
+
+            if (migratedCount % AppConstants.firestoreBatchLimit == 0) {
+              await batch.commit();
+              batch = firestore.batch();
+            }
+          } else {
+            duplicateCount++;
+            diffLog.add("Duplicate Account: $accountNo ($customerName)");
           }
         } else {
-          duplicateCount++;
-          diffLog.add("Duplicate Account: $accountNo ($customerName)");
+          missingCustomerCount++;
+          diffLog.add("Missing Customer: $customerName (Account: ${accountNo.isEmpty ? 'Empty' : accountNo})");
         }
-      } else {
-        missingCustomerCount++;
-        diffLog.add("Missing Customer: $customerName (Account: $accountNo)");
+      } catch (e) {
+        errorCount++;
+        diffLog.add("Error (Row ${i + 1}): $e");
       }
     }
 
@@ -612,6 +653,8 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
       migrated: migratedCount,
       skippedMissingCustomer: missingCustomerCount,
       skippedDuplicate: duplicateCount,
+      emptyAccountMigrated: emptyAccountMigratedCount,
+      errorCount: errorCount,
       diffLog: diffLog,
     );
   }

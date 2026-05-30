@@ -606,11 +606,11 @@ class TranslationsMigrationEn {
 	/// en: 'Delete All'
 	String get deleteAll => 'Delete All';
 
-	/// en: 'Batch: ${processed}/${total}, Migrated: ${migrated}, Duplicates: ${duplicates}'
-	String summaryBatch({required Object processed, required Object total, required Object migrated, required Object duplicates}) => 'Batch: ${processed}/${total}, Migrated: ${migrated}, Duplicates: ${duplicates}';
+	/// en: 'Batch: ${processed}/${total}, Migrated: ${migrated}, Duplicates: ${duplicates}, Empty Accs: ${emptyAccounts}, Errors: ${errors}'
+	String summaryBatch({required Object processed, required Object total, required Object migrated, required Object duplicates, required Object emptyAccounts, required Object errors}) => 'Batch: ${processed}/${total}, Migrated: ${migrated}, Duplicates: ${duplicates}, Empty Accs: ${emptyAccounts}, Errors: ${errors}';
 
-	/// en: 'Total: ${total}, Migrated: ${migrated}, Missing Cust: ${missingCust}, Duplicates: ${duplicates}'
-	String summaryAll({required Object total, required Object migrated, required Object missingCust, required Object duplicates}) => 'Total: ${total}, Migrated: ${migrated}, Missing Cust: ${missingCust}, Duplicates: ${duplicates}';
+	/// en: 'Total: ${total}, Migrated: ${migrated}, Missing Cust: ${missingCust}, Duplicates: ${duplicates}, Empty Accs: ${emptyAccounts}, Errors: ${errors}'
+	String summaryAll({required Object total, required Object migrated, required Object missingCust, required Object duplicates, required Object emptyAccounts, required Object errors}) => 'Total: ${total}, Migrated: ${migrated}, Missing Cust: ${missingCust}, Duplicates: ${duplicates}, Empty Accs: ${emptyAccounts}, Errors: ${errors}';
 
 	/// en: 'Target User ID (UID)'
 	String get targetUid => 'Target User ID (UID)';
@@ -1153,8 +1153,8 @@ extension on Translations {
 			'migration.migrateBatch' => 'Migrate Batch',
 			'migration.migrateAll' => 'Migrate All',
 			'migration.deleteAll' => 'Delete All',
-			'migration.summaryBatch' => ({required Object processed, required Object total, required Object migrated, required Object duplicates}) => 'Batch: ${processed}/${total}, Migrated: ${migrated}, Duplicates: ${duplicates}',
-			'migration.summaryAll' => ({required Object total, required Object migrated, required Object missingCust, required Object duplicates}) => 'Total: ${total}, Migrated: ${migrated}, Missing Cust: ${missingCust}, Duplicates: ${duplicates}',
+			'migration.summaryBatch' => ({required Object processed, required Object total, required Object migrated, required Object duplicates, required Object emptyAccounts, required Object errors}) => 'Batch: ${processed}/${total}, Migrated: ${migrated}, Duplicates: ${duplicates}, Empty Accs: ${emptyAccounts}, Errors: ${errors}',
+			'migration.summaryAll' => ({required Object total, required Object migrated, required Object missingCust, required Object duplicates, required Object emptyAccounts, required Object errors}) => 'Total: ${total}, Migrated: ${migrated}, Missing Cust: ${missingCust}, Duplicates: ${duplicates}, Empty Accs: ${emptyAccounts}, Errors: ${errors}',
 			'migration.targetUid' => 'Target User ID (UID)',
 			'migration.targetUidHelper' => 'Enter your Firebase Auth UID to migrate data into your account.',
 			'migration.batchSize' => 'Batch Size',
