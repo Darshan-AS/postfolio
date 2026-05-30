@@ -51,4 +51,5 @@ firepit-log.txt
 macos/Runner/Configs/Local.xcconfig
 ios/Runner/Configs/Local.xcconfig
 node_modules
-data/
+data/*
+!data/.gitkeep
