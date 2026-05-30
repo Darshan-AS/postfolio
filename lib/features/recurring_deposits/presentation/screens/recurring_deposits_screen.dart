@@ -71,6 +71,10 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             AppSearchBar(
               hintText: t.customers.searchHint,
               onChanged: (val) => ref.read(recurringListCriteriaProvider.notifier).updateSearch(val),
+              onClose: () {
+                searchVisible.value = false;
+                ref.read(recurringListCriteriaProvider.notifier).updateSearch('');
+              },
             ),
             AppSpacings.gapMd,
           ],

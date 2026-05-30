@@ -125,4 +125,30 @@ class AppWidgetThemes {
           ),
         ),
       );
+
+  static SearchBarThemeData searchBarTheme(ColorScheme colorScheme) =>
+      SearchBarThemeData(
+        elevation: const WidgetStatePropertyAll(0),
+        backgroundColor: WidgetStatePropertyAll(
+          colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        ),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+            side: BorderSide(color: colorScheme.outlineVariant),
+          ),
+        ),
+        textStyle: WidgetStatePropertyAll(
+          TextStyle(
+            color: colorScheme.onSurface,
+            fontSize: 16,
+          ),
+        ),
+        hintStyle: WidgetStatePropertyAll(
+          TextStyle(
+            color: colorScheme.onSurfaceVariant,
+            fontSize: 16,
+          ),
+        ),
+      );
 }

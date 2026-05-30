@@ -123,6 +123,11 @@
 - [x] Support Search feature in Customers, One-Time Deposits, and Recurring Deposits.
 - [x] Support Filter features across all entity listing screens.
 - [x] Support Sort features across all entity listing screens.
+- [ ] Add UI controls for search/filter/sort:
+  - Add horizontally scrollable Filter Chip Bar for status filtering on deposit screens.
+  - Implement a reusable Sort Bottom Sheet triggered by a sort icon in the App Bar.
+  - Add friendly "No results found" empty states with a "Clear Filters" action.
+- [x] Polish the Search Bar UI/UX (migrated to official M3 SearchBar with custom theme and added a dedicated "Cancel" button).
 - [ ] Highlight deposits based on maturity status:
   - About to mature (e.g., within 30 days)
   - Matured but not closed

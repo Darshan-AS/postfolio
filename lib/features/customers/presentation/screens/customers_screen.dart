@@ -90,6 +90,10 @@ class CustomersScreen extends HookConsumerWidget {
             AppSearchBar(
               hintText: t.customers.searchHint,
               onChanged: (val) => ref.read(customerListCriteriaProvider.notifier).updateSearch(val),
+              onClose: () {
+                searchVisible.value = false;
+                ref.read(customerListCriteriaProvider.notifier).updateSearch('');
+              },
             ),
             AppSpacings.gapMd,
           ],

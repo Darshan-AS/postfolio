@@ -5,94 +5,90 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'dart:async';
 
-void useDebouncer(VoidCallback callback, [Duration duration = const Duration(milliseconds: 300)]) {
-  final timer = useRef<Timer?>(null);
-  
-  useEffect(() {
-    return () => timer.value?.cancel();
-  }, const []);
-
-  timer.value?.cancel();
-  timer.value = Timer(duration, callback);
-}
-
 class AppSearchBar extends HookWidget {
   final String? hintText;
   final ValueChanged<String> onChanged;
+  final VoidCallback? onClose;
   
   const AppSearchBar({
     super.key,
     this.hintText,
     required this.onChanged,
+    this.onClose,
   });
 
   @override
   Widget build(BuildContext context) {
-    final controller = useTextEditingController();
+    final controller = useMemoized(() => SearchController());
     final focusNode = useFocusNode();
-    final isFocused = useState(false);
-
-    useEffect(() {
-      void listener() {
-        isFocused.value = focusNode.hasFocus;
-      }
-      focusNode.addListener(listener);
-      return () => focusNode.removeListener(listener);
-    }, [focusNode]);
-
-    // Use standard Hook approach for debouncing
     final debounceTimer = useRef<Timer?>(null);
 
+    // Dispose controller
+    useEffect(() => controller.dispose, [controller]);
+    
+    // Listen to text changes with debouncing
+    useEffect(() {
+      void listener() {
+        debounceTimer.value?.cancel();
+        debounceTimer.value = Timer(const Duration(milliseconds: 300), () {
+          onChanged(controller.text);
+        });
+      }
+
+      controller.addListener(listener);
+      return () {
+        controller.removeListener(listener);
+        debounceTimer.value?.cancel();
+      };
+    }, [controller]);
+
+    // Rebuild when text changes to update trailing icons
+    useListenable(controller);
+
+    useEffect(() {
+      if (onClose != null) {
+        focusNode.requestFocus();
+      }
+      return null;
+    }, []);
+
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        onChanged: (value) {
-          debounceTimer.value?.cancel();
-          debounceTimer.value = Timer(const Duration(milliseconds: 300), () {
-            onChanged(value);
-          });
-        },
-        decoration: InputDecoration(
-          hintText: hintText ?? t.common.search,
-          prefixIcon: HugeIcon(
-            icon: HugeIcons.strokeRoundedSearch01,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            size: AppDimensions.iconMd,
-          ),
-          suffixIcon: controller.text.isNotEmpty
-              ? IconButton(
-                  icon: HugeIcon(
-                    icon: HugeIcons.strokeRoundedCancel01,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    size: AppDimensions.iconMd,
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+      child: Row(
+        children: [
+          Expanded(
+            child: SearchBar(
+              controller: controller,
+              focusNode: focusNode,
+              hintText: hintText ?? t.common.search,
+              leading: HugeIcon(
+                icon: HugeIcons.strokeRoundedSearch01,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                size: AppDimensions.iconMd,
+              ),
+              trailing: [
+                if (controller.text.isNotEmpty)
+                  IconButton(
+                    onPressed: () {
+                      controller.clear();
+                    },
+                    icon: HugeIcon(
+                      icon: HugeIcons.strokeRoundedCancel01,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      size: AppDimensions.iconMd,
+                    ),
                   ),
-                  onPressed: () {
-                    controller.clear();
-                    onChanged('');
-                    focusNode.unfocus();
-                  },
-                )
-              : null,
-          filled: true,
-          fillColor: isFocused.value 
-              ? Theme.of(context).colorScheme.surface
-              : Theme.of(context).colorScheme.surfaceContainerHighest,
-          contentPadding: EdgeInsets.symmetric(
-            vertical: AppDimensions.paddingMd,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.primary,
+              ],
             ),
           ),
-        ),
+          if (onClose != null) ...[
+            AppSpacings.gapSm,
+            TextButton(
+              onPressed: onClose,
+              child: Text(t.common.cancel),
+            ),
+          ],
+        ],
       ),
     );
   }

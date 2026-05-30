@@ -44,6 +44,7 @@ This document tracks the architectural decisions, structural rules, and conventi
 - **ScreenUtil**: Reject `flutter_screenutil` (`.w`, `.h`, `.sp`) as it breaks responsive layouts on Web and Desktop. Strip all such dimensions during widget migrations.
 - **UI Utilities**: Adopt `skeletonizer` for handling loading states, `flutter_animate` for declarative animations, and `hugeicons` for a cohesive premium icon library (migrating away from Material/Cupertino/FontAwesome). Adopt `cached_network_image` and `flutter_svg` for media handling.
 - **App Launch / Splash**: Adopt `flutter_native_splash` utilizing the Hybrid Splash pattern (`preserve()` and `remove()`) to prevent white screen flashes.
+- **Official Widget Priority**: Always prefer official Flutter Material 3 widgets and standard Material patterns. For example, use the official `SearchBar` widget even if it requires significant theme overrides, rather than building a custom bar from raw `TextField`s. This ensures the app benefits from native accessibility, focus management, and future framework improvements.
 - **Code Reuse**: Identify shared UI components early and centralize them in `lib/core/shared/widgets/`. Generic foundational widgets (e.g., `AppButton`, `AppCard`, `AppTextField`) belong here. Domain-specific UI scaffolding (e.g., `EntityDetailScaffold`, `FormAppBar`, `CustomerCard`) belong in `features/` and should utilize the generic widgets internally.
 
 ## 5. Anti-Patterns to Avoid

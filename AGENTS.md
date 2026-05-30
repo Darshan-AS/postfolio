@@ -19,6 +19,7 @@ These guidelines apply to all code generated and modified in this workspace. Adh
   - UI rebuilds via `ref.watch`.
 
 ## UI & Presentation Layer
+- **Official & Standard Widgets**: Prioritize using official Material 3 widgets (e.g., `SearchBar`, `SegmentedButton`, `FilterChip`) or widely-adopted community packages (e.g., `hugeicons`) over custom-built components. Only "invent" or build from scratch when official widgets cannot be themed or extended to meet critical UX requirements.
 - **Dumb Widgets**: Widgets should be completely "dumb". They are strictly responsible for displaying data and capturing user input. Never perform API calls, complex logic, or database operations directly inside a widget.
 - **ConsumerWidget**: Prefer `ConsumerWidget` or `ConsumerStatefulWidget` (via Riverpod) over vanilla `StatefulWidget` unless handling ephemeral UI-only state (like an animation controller or a text field focus).
 - **Seamless Cross-Platform UI**: Ensure the UI is seamless across all supported platforms (iOS, Android, Web, Desktop). Use responsive design principles (e.g., `LayoutBuilder`, `MediaQuery`) and platform-aware styling where appropriate to ensure the app feels native and polished everywhere.

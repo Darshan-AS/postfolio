@@ -27,6 +27,7 @@ class AppTheme {
       segmentedButtonTheme: AppWidgetThemes.segmentedButtonTheme(colorScheme),
       inputDecorationTheme: AppWidgetThemes.inputDecorationTheme(colorScheme),
       iconButtonTheme: AppWidgetThemes.iconButtonTheme,
+      searchBarTheme: AppWidgetThemes.searchBarTheme(colorScheme),
     );
   }
 }
