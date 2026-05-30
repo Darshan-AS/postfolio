@@ -51,19 +51,14 @@ jobs:
         # Generates per-architecture APKs to keep download sizes small on GitHub
         run: flutter build apk --split-per-abi --release
 
-      - name: Generate Release Notes
-        # We generate the release notes first so Firebase can use them
+      - name: Extract Release Notes
+        # Extracts release notes for the current version from CHANGELOG.md
         id: release_notes
-        uses: mikepenz/release-changelog-builder-action@v4
-        with:
-          configuration: ".github/changelog-config.json"
-          token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ffurrer2/extract-release-notes@v2
 
       - name: Write Release Notes to File
         env:
-          CHANGELOG: ${{ steps.release_notes.outputs.changelog }}
+          CHANGELOG: ${{ steps.release_notes.outputs.release_notes }}
         run: echo "$CHANGELOG" > release-notes.txt
 
       - name: Upload to Firebase App Distribution
@@ -82,6 +77,6 @@ jobs:
         with:
           files: build/app/outputs/flutter-apk/app-*.apk
           # We pass the EXACT same changelog to GitHub Releases
-          body: ${{ steps.release_notes.outputs.changelog }}
+          body: ${{ steps.release_notes.outputs.release_notes }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
