@@ -239,13 +239,17 @@ class _CustomerDepositsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final oneTimeDepositsAsync = ref.watch(oneTimeDepositsControllerProvider);
-    final recurringDepositsAsync = ref.watch(recurringDepositsControllerProvider);
+    final recurringDepositsAsync = ref.watch(
+      recurringDepositsControllerProvider,
+    );
 
-    final oneTimeDeposits = oneTimeDepositsAsync.value
+    final oneTimeDeposits =
+        oneTimeDepositsAsync.value
             ?.where((d) => d.customerId == customerId)
             .toList() ??
         [];
-    final recurringDeposits = recurringDepositsAsync.value
+    final recurringDeposits =
+        recurringDepositsAsync.value
             ?.where((d) => d.customerId == customerId)
             .toList() ??
         [];
@@ -262,37 +266,43 @@ class _CustomerDepositsSection extends ConsumerWidget {
             title: t.oneTimeDeposits.title,
             children: oneTimeDeposits
                 .asMap()
-                .map((index, deposit) => MapEntry(
-                      index,
-                      Column(
-                        children: [
-                          OneTimeDepositCard(
-                            title: deposit.accountNo,
-                            subtitle: deposit.maturityDate.toAppFormat(),
-                            principalAmount: deposit.principalAmount,
-                            status: deposit.status,
-                            onTap: () =>
-                                OneTimeDepositDetailRoute(deposit.id).push(context),
-                            onEdit: () =>
-                                OneTimeDepositEditRoute(deposit.id).push(context),
-                            onDelete: () async {
-                              final confirmed = await AppDialogs.confirmDelete(
-                                context,
-                                title: t.oneTimeDeposits.deleteDeposit,
-                                content: t.oneTimeDeposits.deleteDepositConfirmation,
-                              );
-                              if (confirmed == true && context.mounted) {
-                                await ref
-                                    .read(oneTimeDepositsControllerProvider.notifier)
-                                    .deleteOneTimeDeposit(deposit.id);
-                              }
-                            },
-                          ),
-                          if (index < oneTimeDeposits.length - 1)
-                            const Divider(height: AppDimensions.dividerHeight),
-                        ],
-                      ),
-                    ))
+                .map(
+                  (index, deposit) => MapEntry(
+                    index,
+                    Column(
+                      children: [
+                        OneTimeDepositCard(
+                          title: deposit.accountNo,
+                          subtitle: deposit.maturityDate.toAppFormat(),
+                          principalAmount: deposit.principalAmount,
+                          status: deposit.status,
+                          onTap: () => OneTimeDepositDetailRoute(
+                            deposit.id,
+                          ).push(context),
+                          onEdit: () =>
+                              OneTimeDepositEditRoute(deposit.id).push(context),
+                          onDelete: () async {
+                            final confirmed = await AppDialogs.confirmDelete(
+                              context,
+                              title: t.oneTimeDeposits.deleteDeposit,
+                              content:
+                                  t.oneTimeDeposits.deleteDepositConfirmation,
+                            );
+                            if (confirmed == true && context.mounted) {
+                              await ref
+                                  .read(
+                                    oneTimeDepositsControllerProvider.notifier,
+                                  )
+                                  .deleteOneTimeDeposit(deposit.id);
+                            }
+                          },
+                        ),
+                        if (index < oneTimeDeposits.length - 1)
+                          const Divider(height: AppDimensions.dividerHeight),
+                      ],
+                    ),
+                  ),
+                )
                 .values
                 .toList(),
           ),
@@ -303,39 +313,47 @@ class _CustomerDepositsSection extends ConsumerWidget {
             title: t.recurringDeposits.title,
             children: recurringDeposits
                 .asMap()
-                .map((index, deposit) => MapEntry(
-                      index,
-                      Column(
-                        children: [
-                          RecurringDepositCard(
-                            title: (deposit.serialNo?.isNotEmpty ?? false)
-                                ? '(${deposit.serialNo}) ${deposit.accountNo}'
-                                : deposit.accountNo,
-                            subtitle: deposit.maturityDate.toAppFormat(),
-                            installmentAmount: deposit.installmentAmount,
-                            status: deposit.status,
-                            onTap: () =>
-                                RecurringDepositDetailRoute(deposit.id).push(context),
-                            onEdit: () =>
-                                RecurringDepositEditRoute(deposit.id).push(context),
-                            onDelete: () async {
-                              final confirmed = await AppDialogs.confirmDelete(
-                                context,
-                                title: t.recurringDeposits.deleteDeposit,
-                                content: t.recurringDeposits.deleteDepositConfirmation,
-                              );
-                              if (confirmed == true && context.mounted) {
-                                await ref
-                                    .read(recurringDepositsControllerProvider.notifier)
-                                    .deleteRecurringDeposit(deposit.id);
-                              }
-                            },
-                          ),
-                          if (index < recurringDeposits.length - 1)
-                            const Divider(height: AppDimensions.dividerHeight),
-                        ],
-                      ),
-                    ))
+                .map(
+                  (index, deposit) => MapEntry(
+                    index,
+                    Column(
+                      children: [
+                        RecurringDepositCard(
+                          title: (deposit.serialNo?.isNotEmpty ?? false)
+                              ? '(${deposit.serialNo}) ${deposit.accountNo}'
+                              : deposit.accountNo,
+                          subtitle: deposit.maturityDate.toAppFormat(),
+                          installmentAmount: deposit.installmentAmount,
+                          status: deposit.status,
+                          onTap: () => RecurringDepositDetailRoute(
+                            deposit.id,
+                          ).push(context),
+                          onEdit: () => RecurringDepositEditRoute(
+                            deposit.id,
+                          ).push(context),
+                          onDelete: () async {
+                            final confirmed = await AppDialogs.confirmDelete(
+                              context,
+                              title: t.recurringDeposits.deleteDeposit,
+                              content:
+                                  t.recurringDeposits.deleteDepositConfirmation,
+                            );
+                            if (confirmed == true && context.mounted) {
+                              await ref
+                                  .read(
+                                    recurringDepositsControllerProvider
+                                        .notifier,
+                                  )
+                                  .deleteRecurringDeposit(deposit.id);
+                            }
+                          },
+                        ),
+                        if (index < recurringDeposits.length - 1)
+                          const Divider(height: AppDimensions.dividerHeight),
+                      ],
+                    ),
+                  ),
+                )
                 .values
                 .toList(),
           ),
@@ -345,4 +363,3 @@ class _CustomerDepositsSection extends ConsumerWidget {
     );
   }
 }
-

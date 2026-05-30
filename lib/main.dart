@@ -13,12 +13,15 @@ import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 
-const bool useFirebaseEmulator = bool.fromEnvironment('USE_EMULATOR', defaultValue: false);
+const bool useFirebaseEmulator = bool.fromEnvironment(
+  'USE_EMULATOR',
+  defaultValue: false,
+);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  
+
   if (useFirebaseEmulator) {
     try {
       final String host;

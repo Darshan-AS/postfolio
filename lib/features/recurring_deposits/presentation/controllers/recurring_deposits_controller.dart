@@ -27,19 +27,22 @@ class RecurringListCriteria extends _$RecurringListCriteria {
         activeFilters: state.activeFilters.where((s) => s != status).toList(),
       );
     } else {
-      state = state.copyWith(
-        activeFilters: [...state.activeFilters, status],
-      );
+      state = state.copyWith(activeFilters: [...state.activeFilters, status]);
     }
   }
+
   void clearAll() => state = const RDSearchCriteria();
 }
 
 @riverpod
-Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(Ref ref) async {
+Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
+  Ref ref,
+) async {
   final criteria = ref.watch(recurringListCriteriaProvider);
-  final asyncDeposits = await ref.watch(recurringDepositsControllerProvider.future);
-  
+  final asyncDeposits = await ref.watch(
+    recurringDepositsControllerProvider.future,
+  );
+
   // We may also need customer names to search by them
   final asyncCustomers = await ref.watch(customersControllerProvider.future);
   final customerMap = {for (var c in asyncCustomers) c.id: c.name};
@@ -48,7 +51,9 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(Ref ref
 
   // Filters
   if (criteria.activeFilters.isNotEmpty) {
-    result = result.where((d) => criteria.activeFilters.contains(d.status)).toList();
+    result = result
+        .where((d) => criteria.activeFilters.contains(d.status))
+        .toList();
   }
 
   // Search
@@ -57,9 +62,9 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(Ref ref
     result = result.where((d) {
       final customerName = customerMap[d.customerId]?.toLowerCase() ?? '';
       return d.accountNo.toLowerCase().contains(query) ||
-             customerName.contains(query) || 
-             d.schemeType.displayName.toLowerCase().contains(query) ||
-             (d.serialNo?.toLowerCase().contains(query) ?? false);
+          customerName.contains(query) ||
+          d.schemeType.displayName.toLowerCase().contains(query) ||
+          (d.serialNo?.toLowerCase().contains(query) ?? false);
     }).toList();
   }
 
@@ -87,8 +92,8 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(Ref ref
       result.sort((a, b) {
         final nameA = customerMap[a.customerId]?.toLowerCase() ?? '';
         final nameB = customerMap[b.customerId]?.toLowerCase() ?? '';
-        return criteria.sortBy == RDSortOption.nameAsc 
-            ? nameA.compareTo(nameB) 
+        return criteria.sortBy == RDSortOption.nameAsc
+            ? nameA.compareTo(nameB)
             : nameB.compareTo(nameA);
       });
       break;

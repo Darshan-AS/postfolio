@@ -47,6 +47,8 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsErrorsEn errors = TranslationsErrorsEn.internal(_root);
 	late final TranslationsFormatEn format = TranslationsFormatEn.internal(_root);
 	late final TranslationsCommonEn common = TranslationsCommonEn.internal(_root);
+	late final TranslationsSortingEn sorting = TranslationsSortingEn.internal(_root);
+	late final TranslationsFiltersEn filters = TranslationsFiltersEn.internal(_root);
 	late final TranslationsProjectionEn projection = TranslationsProjectionEn.internal(_root);
 	late final TranslationsNavEn nav = TranslationsNavEn.internal(_root);
 	late final TranslationsCustomersEn customers = TranslationsCustomersEn.internal(_root);
@@ -164,6 +166,18 @@ class TranslationsCommonEn {
 	/// en: 'Cancel'
 	String get cancel => 'Cancel';
 
+	/// en: 'Clear'
+	String get clear => 'Clear';
+
+	/// en: 'Clear Filters'
+	String get clearFilters => 'Clear Filters';
+
+	/// en: 'Details'
+	String get details => 'Details';
+
+	/// en: 'Deposit Details'
+	String get depositDetails => 'Deposit Details';
+
 	/// en: 'Error'
 	String get error => 'Error';
 
@@ -179,10 +193,49 @@ class TranslationsCommonEn {
 	/// en: 'More options'
 	String get moreOptions => 'More options';
 
+	/// en: 'No results found'
+	String get noResults => 'No results found';
+
 	/// en: 'Demo Mode Active. Data is not saved to the cloud.'
 	String get demoModeActive => 'Demo Mode Active. Data is not saved to the cloud.';
 
 	late final TranslationsCommonSectionsEn sections = TranslationsCommonSectionsEn.internal(_root);
+}
+
+// Path: sorting
+class TranslationsSortingEn {
+	TranslationsSortingEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Sort By'
+	String get title => 'Sort By';
+
+	Map<String, String> get options => {
+		'newest': 'Newest First',
+		'oldest': 'Oldest First',
+		'nameAsc': 'Name (A-Z)',
+		'nameDesc': 'Name (Z-A)',
+		'highestAmount': 'Highest Amount',
+		'maturityProximity': 'Maturity Date',
+	};
+}
+
+// Path: filters
+class TranslationsFiltersEn {
+	TranslationsFiltersEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Filters'
+	String get title => 'Filters';
+
+	/// en: 'Status'
+	String get status => 'Status';
 }
 
 // Path: projection
@@ -824,13 +877,27 @@ extension on Translations {
 			'common.edit' => 'Edit',
 			'common.delete' => 'Delete',
 			'common.cancel' => 'Cancel',
+			'common.clear' => 'Clear',
+			'common.clearFilters' => 'Clear Filters',
+			'common.details' => 'Details',
+			'common.depositDetails' => 'Deposit Details',
 			'common.error' => 'Error',
 			'common.retry' => 'Retry',
 			'common.ok' => 'OK',
 			'common.notProvided' => 'Not provided',
 			'common.moreOptions' => 'More options',
+			'common.noResults' => 'No results found',
 			'common.demoModeActive' => 'Demo Mode Active. Data is not saved to the cloud.',
 			'common.sections.linkedAccounts' => 'Linked Accounts',
+			'sorting.title' => 'Sort By',
+			'sorting.options.newest' => 'Newest First',
+			'sorting.options.oldest' => 'Oldest First',
+			'sorting.options.nameAsc' => 'Name (A-Z)',
+			'sorting.options.nameDesc' => 'Name (Z-A)',
+			'sorting.options.highestAmount' => 'Highest Amount',
+			'sorting.options.maturityProximity' => 'Maturity Date',
+			'filters.title' => 'Filters',
+			'filters.status' => 'Status',
 			'projection.title' => 'Live Projection',
 			'projection.totalInvested' => 'Total Invested',
 			'projection.totalInterestEarned' => 'Projected Interest',

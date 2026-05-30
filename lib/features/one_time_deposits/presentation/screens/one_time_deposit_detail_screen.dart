@@ -32,7 +32,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
       dummyEntity: OneTimeDeposit.dummy,
       builder: (deposit) {
         return EntityDetailScaffold(
-          appBarTitle: "Deposit Details",
+          appBarTitle: t.common.depositDetails,
           onEdit: () => OneTimeDepositEditRoute(depositId).push(context),
           deleteDialogTitle: t.oneTimeDeposits.deleteDeposit,
           deleteDialogContent: t.oneTimeDeposits.deleteDepositConfirmation,
@@ -151,10 +151,12 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   label: t.oneTimeDeposits.fields.customerId,
                   value:
                       ref
-                          .watch(customerByIdProvider(deposit.customerId)).value
+                          .watch(customerByIdProvider(deposit.customerId))
+                          .value
                           ?.name ??
                       deposit.customerId,
-                  onTap: () => CustomerDetailRoute(deposit.customerId).push(context),
+                  onTap: () =>
+                      CustomerDetailRoute(deposit.customerId).push(context),
                 ),
                 if (deposit.linkedSavingsAccountNo != null &&
                     deposit.linkedSavingsAccountNo!.isNotEmpty) ...[

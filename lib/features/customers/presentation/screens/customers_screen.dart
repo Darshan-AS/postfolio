@@ -16,6 +16,9 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import 'package:postfolio/features/customers/domain/customer_search_criteria.dart';
+import 'package:postfolio/core/widgets/app_sort_bottom_sheet.dart';
+
 import 'package:postfolio/core/extensions/string_extension.dart';
 
 class CustomersScreen extends HookConsumerWidget {
@@ -25,6 +28,7 @@ class CustomersScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // 1. Watch the derived filtered provider state
     final customersState = ref.watch(filteredCustomersProvider);
+    final criteria = ref.watch(customerListCriteriaProvider);
     final searchVisible = useState(false);
 
     return Scaffold(
@@ -61,16 +65,30 @@ class CustomersScreen extends HookConsumerWidget {
             onPressed: () {
               searchVisible.value = !searchVisible.value;
               if (!searchVisible.value) {
-                ref.read(customerListCriteriaProvider.notifier).updateSearch('');
+                ref
+                    .read(customerListCriteriaProvider.notifier)
+                    .updateSearch('');
               }
             },
           ),
           IconButton(
             icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedCheckList,
+              icon: HugeIcons.strokeRoundedSorting01,
               size: AppDimensions.iconMd,
             ),
-            onPressed: () {},
+            onPressed: () {
+              AppSortBottomSheet.show<CustomerSortOption>(
+                context: context,
+                title: t.sorting.title,
+                options: CustomerSortOption.values,
+                selectedOption: criteria.sortBy,
+                labelBuilder: (option) =>
+                    t.sorting.options[option.name] ?? option.name,
+                onSelected: (option) => ref
+                    .read(customerListCriteriaProvider.notifier)
+                    .updateSort(option),
+              );
+            },
           ),
           IconButton(
             icon: const HugeIcon(
@@ -89,10 +107,14 @@ class CustomersScreen extends HookConsumerWidget {
             AppSpacings.gapSm,
             AppSearchBar(
               hintText: t.customers.searchHint,
-              onChanged: (val) => ref.read(customerListCriteriaProvider.notifier).updateSearch(val),
+              onChanged: (val) => ref
+                  .read(customerListCriteriaProvider.notifier)
+                  .updateSearch(val),
               onClose: () {
                 searchVisible.value = false;
-                ref.read(customerListCriteriaProvider.notifier).updateSearch('');
+                ref
+                    .read(customerListCriteriaProvider.notifier)
+                    .updateSearch('');
               },
             ),
             AppSpacings.gapMd,
@@ -127,7 +149,32 @@ class CustomersScreen extends HookConsumerWidget {
     List<Customer> customers,
   ) {
     if (customers.isEmpty) {
-      return Center(child: Text(t.customers.noCustomersFound));
+      final hasFilters = ref
+          .read(customerListCriteriaProvider)
+          .searchQuery
+          .isNotEmpty;
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              hasFilters ? t.common.noResults : t.customers.noCustomersFound,
+            ),
+            if (hasFilters) ...[
+              AppSpacings.gapMd,
+              TextButton.icon(
+                onPressed: () =>
+                    ref.read(customerListCriteriaProvider.notifier).clearAll(),
+                icon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedFilterRemove,
+                  size: AppDimensions.iconSm,
+                ),
+                label: Text(t.common.clearFilters),
+              ),
+            ],
+          ],
+        ),
+      );
     }
     return RefreshIndicator(
       onRefresh: () async {
@@ -139,7 +186,8 @@ class CustomersScreen extends HookConsumerWidget {
           bottom: AppDimensions.listBottomPaddingFAB,
         ),
         itemCount: customers.length,
-        separatorBuilder: (context, index) => const Divider(height: AppDimensions.dividerHeight),
+        separatorBuilder: (context, index) =>
+            const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
           final customer = customers[index];
           return CustomerCard(
@@ -195,7 +243,8 @@ class CustomersScreen extends HookConsumerWidget {
           bottom: AppDimensions.listBottomPaddingFAB,
         ),
         itemCount: 5,
-        separatorBuilder: (context, index) => const Divider(height: AppDimensions.dividerHeight),
+        separatorBuilder: (context, index) =>
+            const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
           final dummy = Customer.dummy;
           return CustomerCard(

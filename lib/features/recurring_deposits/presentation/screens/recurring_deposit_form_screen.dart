@@ -9,6 +9,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_selection_field.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
+import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/nominees_input_section.dart';
@@ -133,13 +134,17 @@ class _RecurringDepositForm extends HookConsumerWidget {
             .read(recurringDepositsControllerProvider.notifier)
             .saveRecurringDeposit(
               id: deposit?.id,
-              serialNo: serialNoController.text.trim().isEmpty ? null : serialNoController.text.trim(),
+              serialNo: serialNoController.text.trim().isEmpty
+                  ? null
+                  : serialNoController.text.trim(),
               accountNo: accountNoController.text.trim(),
               installmentAmount:
                   double.tryParse(installmentAmountController.text.trim()) ??
                   0.0,
               termYears: selectedTermYears.value,
-              termMonths: selectedScheme.value.tenureInputType == TenureInputType.derived
+              termMonths:
+                  selectedScheme.value.tenureInputType ==
+                      TenureInputType.derived
                   ? 0 // RD doesn't have derived, but keeping pattern
                   : selectedTermMonths.value,
               interestRate:
@@ -222,8 +227,8 @@ List<Widget> _buildAccountInformation({
   required ValueNotifier<DepositStatus> selectedStatus,
 }) {
   return [
-    const FormSectionHeader(
-      title: 'Account Information',
+    FormSectionHeader(
+      title: t.recurringDeposits.sections.accountInformation,
       padding: EdgeInsets.zero,
     ),
     AppSpacings.gapMd,
@@ -351,8 +356,8 @@ List<Widget> _buildInvestmentDetails(
         final picked = await showDatePicker(
           context: context,
           initialDate: startDate.value,
-          firstDate: DateTime(2000),
-          lastDate: DateTime(2100),
+          firstDate: DateTime(AppConstants.firstStartYear),
+          lastDate: DateTime(AppConstants.lastDatePickerYear),
         );
         if (picked != null) {
           startDate.value = picked;

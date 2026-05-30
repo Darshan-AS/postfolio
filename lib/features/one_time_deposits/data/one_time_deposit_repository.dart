@@ -27,7 +27,10 @@ class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
   FirestoreOneTimeDepositRepository(this._firestore, this._userId);
 
   firestore.CollectionReference<Map<String, dynamic>> get _deposits =>
-      _firestore.collection('users').doc(_userId).collection('one_time_deposits');
+      _firestore
+          .collection('users')
+          .doc(_userId)
+          .collection('one_time_deposits');
 
   @override
   Stream<Result<List<OneTimeDeposit>, String>> watchOneTimeDeposits() {
@@ -163,12 +166,12 @@ OneTimeDepositRepository oneTimeDepositRepository(Ref ref) {
   }
 
   final authState = ref.watch(authControllerProvider);
-  final userId = authState.mapOrNull(
-    authenticated: (state) => state.user.id,
-  );
+  final userId = authState.mapOrNull(authenticated: (state) => state.user.id);
 
   if (userId == null) {
-    throw StateError('User is not authenticated. Cannot access OneTimeDepositRepository.');
+    throw StateError(
+      'User is not authenticated. Cannot access OneTimeDepositRepository.',
+    );
   }
 
   return FirestoreOneTimeDepositRepository(

@@ -29,7 +29,8 @@ class NomineesDetailSection extends StatelessWidget {
                 label: nominees[i].displayRelationship,
                 value: '${nominees[i].name} (${nominees[i].percentage}%)',
               ),
-              if (i < nominees.length - 1) const Divider(height: AppDimensions.dividerHeight),
+              if (i < nominees.length - 1)
+                const Divider(height: AppDimensions.dividerHeight),
             ],
           ],
         ),

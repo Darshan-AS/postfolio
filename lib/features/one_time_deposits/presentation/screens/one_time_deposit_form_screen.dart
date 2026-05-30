@@ -9,6 +9,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_selection_field.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
+import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/nominees_input_section.dart';
@@ -119,11 +120,14 @@ class _OneTimeDepositForm extends HookConsumerWidget {
     // Keep hidden state in sync for derived tenures like KVP
     useEffect(() {
       if (selectedScheme.value.tenureInputType == TenureInputType.derived) {
-        final timeInMonths = ProjectionCalculator.calculateKvpTermMonths(currentInterest);
+        final timeInMonths = ProjectionCalculator.calculateKvpTermMonths(
+          currentInterest,
+        );
         final years = timeInMonths ~/ 12;
         final months = timeInMonths % 12;
-        
-        if (selectedTermYears.value != years || selectedTermMonths.value != months) {
+
+        if (selectedTermYears.value != years ||
+            selectedTermMonths.value != months) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             selectedTermYears.value = years;
             selectedTermMonths.value = months;
@@ -151,7 +155,9 @@ class _OneTimeDepositForm extends HookConsumerWidget {
               principalAmount:
                   double.tryParse(principalAmountController.text.trim()) ?? 0.0,
               termYears: selectedTermYears.value,
-              termMonths: selectedScheme.value.tenureInputType == TenureInputType.derived
+              termMonths:
+                  selectedScheme.value.tenureInputType ==
+                      TenureInputType.derived
                   ? selectedTermMonths.value
                   : 0,
               interestRate:
@@ -349,8 +355,8 @@ List<Widget> _buildInvestmentDetails(
         final picked = await showDatePicker(
           context: context,
           initialDate: startDate.value,
-          firstDate: DateTime(2000),
-          lastDate: DateTime(2100),
+          firstDate: DateTime(AppConstants.firstStartYear),
+          lastDate: DateTime(AppConstants.lastDatePickerYear),
         );
         if (picked != null) {
           startDate.value = picked;

@@ -23,7 +23,7 @@ class MainShellScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDemoMode = ref.watch(demoModeProvider);
-    
+
     Widget shellContent = navigationShell;
     if (isDemoMode) {
       shellContent = MediaQuery.removePadding(

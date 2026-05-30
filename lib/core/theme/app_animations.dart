@@ -8,6 +8,7 @@ class AppAnimations {
   static Duration get fast => 150.ms;
   static Duration get medium => 300.ms;
   static Duration get slow => 400.ms;
+  static Duration get debounce => 300.ms;
 
   // Intervals (for staggered animations like lists)
   static Duration get stagger => 50.ms;

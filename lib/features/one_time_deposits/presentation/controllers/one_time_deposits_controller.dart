@@ -27,19 +27,22 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
         activeFilters: state.activeFilters.where((s) => s != status).toList(),
       );
     } else {
-      state = state.copyWith(
-        activeFilters: [...state.activeFilters, status],
-      );
+      state = state.copyWith(activeFilters: [...state.activeFilters, status]);
     }
   }
+
   void clearAll() => state = const OTDSearchCriteria();
 }
 
 @riverpod
-Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(Ref ref) async {
+Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
+  Ref ref,
+) async {
   final criteria = ref.watch(oneTimeListCriteriaProvider);
-  final asyncDeposits = await ref.watch(oneTimeDepositsControllerProvider.future);
-  
+  final asyncDeposits = await ref.watch(
+    oneTimeDepositsControllerProvider.future,
+  );
+
   // We may also need customer names to search by them
   final asyncCustomers = await ref.watch(customersControllerProvider.future);
   final customerMap = {for (var c in asyncCustomers) c.id: c.name};
@@ -48,7 +51,9 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(Ref ref) as
 
   // Filters
   if (criteria.activeFilters.isNotEmpty) {
-    result = result.where((d) => criteria.activeFilters.contains(d.status)).toList();
+    result = result
+        .where((d) => criteria.activeFilters.contains(d.status))
+        .toList();
   }
 
   // Search
@@ -57,8 +62,8 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(Ref ref) as
     result = result.where((d) {
       final customerName = customerMap[d.customerId]?.toLowerCase() ?? '';
       return d.accountNo.toLowerCase().contains(query) ||
-             customerName.contains(query) || 
-             d.schemeType.displayName.toLowerCase().contains(query);
+          customerName.contains(query) ||
+          d.schemeType.displayName.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -86,8 +91,8 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(Ref ref) as
       result.sort((a, b) {
         final nameA = customerMap[a.customerId]?.toLowerCase() ?? '';
         final nameB = customerMap[b.customerId]?.toLowerCase() ?? '';
-        return criteria.sortBy == OTDSortOption.nameAsc 
-            ? nameA.compareTo(nameB) 
+        return criteria.sortBy == OTDSortOption.nameAsc
+            ? nameA.compareTo(nameB)
             : nameB.compareTo(nameA);
       });
       break;

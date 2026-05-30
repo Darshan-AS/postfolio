@@ -89,8 +89,9 @@ class EntityListTile extends StatelessWidget {
     final menuActions = actions.where((a) => !a.isInline).toList();
 
     final hasActionButtons = inlineActions.isNotEmpty || menuActions.isNotEmpty;
-    final rightPadding =
-        hasActionButtons ? AppDimensions.paddingSm : AppDimensions.paddingLg;
+    final rightPadding = hasActionButtons
+        ? AppDimensions.paddingSm
+        : AppDimensions.paddingLg;
 
     return ListTile(
           contentPadding: EdgeInsets.only(

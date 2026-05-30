@@ -16,12 +16,18 @@ import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
+import 'package:postfolio/core/widgets/app_sort_bottom_sheet.dart';
+import 'package:postfolio/core/widgets/app_filter_chip_bar.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
+
 class RecurringDepositsScreen extends HookConsumerWidget {
   const RecurringDepositsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final depositsState = ref.watch(filteredRecurringDepositsProvider);
+    final criteria = ref.watch(recurringListCriteriaProvider);
     final searchVisible = useState(false);
 
     return Scaffold(
@@ -58,8 +64,29 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             onPressed: () {
               searchVisible.value = !searchVisible.value;
               if (!searchVisible.value) {
-                ref.read(recurringListCriteriaProvider.notifier).updateSearch('');
+                ref
+                    .read(recurringListCriteriaProvider.notifier)
+                    .updateSearch('');
               }
+            },
+          ),
+          IconButton(
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedSorting01,
+              size: AppDimensions.iconMd,
+            ),
+            onPressed: () {
+              AppSortBottomSheet.show<RDSortOption>(
+                context: context,
+                title: t.sorting.title,
+                options: RDSortOption.values,
+                selectedOption: criteria.sortBy,
+                labelBuilder: (option) =>
+                    t.sorting.options[option.name] ?? option.name,
+                onSelected: (option) => ref
+                    .read(recurringListCriteriaProvider.notifier)
+                    .updateSort(option),
+              );
             },
           ),
         ],
@@ -70,20 +97,34 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             AppSpacings.gapSm,
             AppSearchBar(
               hintText: t.customers.searchHint,
-              onChanged: (val) => ref.read(recurringListCriteriaProvider.notifier).updateSearch(val),
+              onChanged: (val) => ref
+                  .read(recurringListCriteriaProvider.notifier)
+                  .updateSearch(val),
               onClose: () {
                 searchVisible.value = false;
-                ref.read(recurringListCriteriaProvider.notifier).updateSearch('');
+                ref
+                    .read(recurringListCriteriaProvider.notifier)
+                    .updateSearch('');
               },
             ),
             AppSpacings.gapMd,
           ],
+          AppFilterChipBar<DepositStatus>(
+            options: DepositStatus.values,
+            selectedOptions: criteria.activeFilters,
+            labelBuilder: (status) => status.displayName,
+            onSelected: (status) => ref
+                .read(recurringListCriteriaProvider.notifier)
+                .toggleFilter(status),
+          ),
+          AppSpacings.gapSm,
           Expanded(
             child: switch (depositsState) {
               AsyncData(:final value) => _buildDataState(context, ref, value),
               AsyncError(:final error) => ErrorStateView(
                 message: error.toString(),
-                onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
+                onRetry: () =>
+                    ref.invalidate(recurringDepositsControllerProvider),
               ),
               _ => _buildLoadingState(),
             },
@@ -108,7 +149,33 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     List<RecurringDeposit> deposits,
   ) {
     if (deposits.isEmpty) {
-      return Center(child: Text(t.recurringDeposits.noDepositsFound));
+      final criteria = ref.read(recurringListCriteriaProvider);
+      final hasFilters =
+          criteria.searchQuery.isNotEmpty || criteria.activeFilters.isNotEmpty;
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              hasFilters
+                  ? t.common.noResults
+                  : t.recurringDeposits.noDepositsFound,
+            ),
+            if (hasFilters) ...[
+              AppSpacings.gapMd,
+              TextButton.icon(
+                onPressed: () =>
+                    ref.read(recurringListCriteriaProvider.notifier).clearAll(),
+                icon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedFilterRemove,
+                  size: AppDimensions.iconSm,
+                ),
+                label: Text(t.common.clearFilters),
+              ),
+            ],
+          ],
+        ),
+      );
     }
     return RefreshIndicator(
       onRefresh: () => ref.refresh(recurringDepositsControllerProvider.future),
@@ -117,13 +184,15 @@ class RecurringDepositsScreen extends HookConsumerWidget {
           bottom: AppDimensions.listBottomPaddingFAB,
         ),
         itemCount: deposits.length,
-        separatorBuilder: (context, index) => const Divider(height: AppDimensions.dividerHeight),
+        separatorBuilder: (context, index) =>
+            const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
           final deposit = deposits[index];
           return Consumer(
             builder: (context, ref, child) {
-              final customerAsync =
-                  ref.watch(customerByIdProvider(deposit.customerId));
+              final customerAsync = ref.watch(
+                customerByIdProvider(deposit.customerId),
+              );
               final customerName =
                   customerAsync.value?.name ?? deposit.accountNo;
 
@@ -178,7 +247,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
           bottom: AppDimensions.listBottomPaddingFAB,
         ),
         itemCount: 5,
-        separatorBuilder: (context, index) => const Divider(height: AppDimensions.dividerHeight),
+        separatorBuilder: (context, index) =>
+            const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
           final dummy = RecurringDeposit.dummy;
           return RecurringDepositCard(

@@ -70,7 +70,9 @@ class FakeDataSource {
         termYears = random.element(scheme.allowedTenuresInYears);
         termMonths = 0;
       } else {
-        final timeInMonths = ProjectionCalculator.calculateKvpTermMonths(interestRate);
+        final timeInMonths = ProjectionCalculator.calculateKvpTermMonths(
+          interestRate,
+        );
         termYears = timeInMonths ~/ 12;
         termMonths = timeInMonths % 12;
       }

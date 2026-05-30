@@ -88,8 +88,12 @@ sealed class Customer with _$Customer {
     return null;
   }
 
-  static String? validateSavingsAccount(String? accountNum, List<Nominee> nominees) {
-    if ((accountNum == null || accountNum.trim().isEmpty) && nominees.isNotEmpty) {
+  static String? validateSavingsAccount(
+    String? accountNum,
+    List<Nominee> nominees,
+  ) {
+    if ((accountNum == null || accountNum.trim().isEmpty) &&
+        nominees.isNotEmpty) {
       return t.errors.sbAccountRequiredForNominee;
     }
     return null;

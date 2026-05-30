@@ -62,5 +62,7 @@ extension OneTimeSchemeRules on OneTimeSchemeType {
     }
   }
 
-  int get defaultTenureYears => tenureInputType == TenureInputType.derived ? 9 : allowedTenuresInYears.first;
+  int get defaultTenureYears => tenureInputType == TenureInputType.derived
+      ? 9
+      : allowedTenuresInYears.first;
 }

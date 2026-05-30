@@ -141,14 +141,41 @@ class AppWidgetThemes {
         textStyle: WidgetStatePropertyAll(
           TextStyle(
             color: colorScheme.onSurface,
-            fontSize: 16,
+            fontSize: AppDimensions.fontMd,
           ),
         ),
         hintStyle: WidgetStatePropertyAll(
           TextStyle(
             color: colorScheme.onSurfaceVariant,
-            fontSize: 16,
+            fontSize: AppDimensions.fontMd,
           ),
         ),
       );
+
+  static ChipThemeData chipTheme(ColorScheme colorScheme) => ChipThemeData(
+    backgroundColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+    selectedColor: colorScheme.primaryContainer,
+    secondarySelectedColor: colorScheme.primaryContainer,
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppDimensions.paddingSm,
+      vertical: AppDimensions.paddingXs,
+    ),
+    labelStyle: TextStyle(
+      color: colorScheme.onSurface,
+      fontSize: AppDimensions.fontSm,
+      fontWeight: FontWeight.w500,
+    ),
+    secondaryLabelStyle: TextStyle(
+      color: colorScheme.onPrimaryContainer,
+      fontSize: AppDimensions.fontSm,
+      fontWeight: FontWeight.w600,
+    ),
+    brightness: colorScheme.brightness,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      side: BorderSide(color: colorScheme.outlineVariant),
+    ),
+    showCheckmark: true,
+    checkmarkColor: colorScheme.primary,
+  );
 }

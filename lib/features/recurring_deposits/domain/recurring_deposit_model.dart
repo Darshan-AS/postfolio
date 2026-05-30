@@ -93,9 +93,15 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   }) {
     final validationError =
         BaseDeposit.validateAccountNo(accountNo) ??
-        BaseDeposit.validateAmount(installmentAmount, t.recurringDeposits.fields.installmentAmount) ??
+        BaseDeposit.validateAmount(
+          installmentAmount,
+          t.recurringDeposits.fields.installmentAmount,
+        ) ??
         BaseDeposit.validateTerm(termYears, termMonths) ??
-        BaseDeposit.validateInterestRate(interestRate, t.recurringDeposits.fields.interestRate) ??
+        BaseDeposit.validateInterestRate(
+          interestRate,
+          t.recurringDeposits.fields.interestRate,
+        ) ??
         Nominee.validateNominees(nominees);
 
     if (validationError != null) return Failure(validationError);

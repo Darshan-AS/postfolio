@@ -16,7 +16,8 @@ class CustomerListCriteria extends _$CustomerListCriteria {
   CustomerSearchCriteria build() => const CustomerSearchCriteria();
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  void updateSort(CustomerSortOption sort) => state = state.copyWith(sortBy: sort);
+  void updateSort(CustomerSortOption sort) =>
+      state = state.copyWith(sortBy: sort);
   void clearAll() => state = const CustomerSearchCriteria();
 }
 
@@ -32,20 +33,24 @@ Future<UnmodifiableListView<Customer>> filteredCustomers(Ref ref) async {
     final query = criteria.searchQuery.toLowerCase().trim();
     result = result.where((c) {
       return c.name.toLowerCase().contains(query) ||
-             (c.phone?.contains(query) ?? false) ||
-             (c.cifNumber?.toLowerCase().contains(query) ?? false) ||
-             (c.aadhaarNumber?.contains(query) ?? false) ||
-             (c.panNumber?.toLowerCase().contains(query) ?? false);
+          (c.phone?.contains(query) ?? false) ||
+          (c.cifNumber?.toLowerCase().contains(query) ?? false) ||
+          (c.aadhaarNumber?.contains(query) ?? false) ||
+          (c.panNumber?.toLowerCase().contains(query) ?? false);
     }).toList();
   }
 
   // Sort
   switch (criteria.sortBy) {
     case CustomerSortOption.nameAsc:
-      result.sort((a, b) => a.name.compareTo(b.name));
+      result.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
       break;
     case CustomerSortOption.nameDesc:
-      result.sort((a, b) => b.name.compareTo(a.name));
+      result.sort(
+        (a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()),
+      );
       break;
     case CustomerSortOption.newest:
       // Customers don't have a creation date right now, but this could be used if added

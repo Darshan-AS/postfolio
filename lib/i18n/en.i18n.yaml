@@ -37,14 +37,33 @@ common:
   edit: "Edit"
   delete: "Delete"
   cancel: "Cancel"
+  clear: "Clear"
+  clearFilters: "Clear Filters"
+  details: "Details"
+  depositDetails: "Deposit Details"
   error: "Error"
   retry: "Retry"
   ok: "OK"
   notProvided: "Not provided"
   moreOptions: "More options"
+  noResults: "No results found"
   demoModeActive: "Demo Mode Active. Data is not saved to the cloud."
   sections:
     linkedAccounts: "Linked Accounts"
+
+sorting:
+  title: "Sort By"
+  options(map):
+    newest: "Newest First"
+    oldest: "Oldest First"
+    nameAsc: "Name (A-Z)"
+    nameDesc: "Name (Z-A)"
+    highestAmount: "Highest Amount"
+    maturityProximity: "Maturity Date"
+
+filters:
+  title: "Filters"
+  status: "Status"
 
 projection:
   title: "Live Projection"

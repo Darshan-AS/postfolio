@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 
@@ -107,8 +108,9 @@ class DetailItem extends StatelessWidget {
           ),
           if (trailing != null) trailing!,
           if (onTap != null && trailing == null)
-            Icon(
-              Icons.chevron_right_rounded,
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedArrowRight01,
+              size: AppDimensions.iconMd,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
         ],
@@ -116,10 +118,7 @@ class DetailItem extends StatelessWidget {
     );
 
     if (onTap != null) {
-      return InkWell(
-        onTap: onTap,
-        child: content,
-      );
+      return InkWell(onTap: onTap, child: content);
     }
 
     return content;

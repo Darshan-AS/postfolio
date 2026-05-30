@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'dart:async';
@@ -9,7 +10,7 @@ class AppSearchBar extends HookWidget {
   final String? hintText;
   final ValueChanged<String> onChanged;
   final VoidCallback? onClose;
-  
+
   const AppSearchBar({
     super.key,
     this.hintText,
@@ -25,12 +26,12 @@ class AppSearchBar extends HookWidget {
 
     // Dispose controller
     useEffect(() => controller.dispose, [controller]);
-    
+
     // Listen to text changes with debouncing
     useEffect(() {
       void listener() {
         debounceTimer.value?.cancel();
-        debounceTimer.value = Timer(const Duration(milliseconds: 300), () {
+        debounceTimer.value = Timer(AppAnimations.debounce, () {
           onChanged(controller.text);
         });
       }
@@ -83,10 +84,7 @@ class AppSearchBar extends HookWidget {
           ),
           if (onClose != null) ...[
             AppSpacings.gapSm,
-            TextButton(
-              onPressed: onClose,
-              child: Text(t.common.cancel),
-            ),
+            TextButton(onPressed: onClose, child: Text(t.common.cancel)),
           ],
         ],
       ),

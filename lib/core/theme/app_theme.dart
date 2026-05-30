@@ -28,6 +28,7 @@ class AppTheme {
       inputDecorationTheme: AppWidgetThemes.inputDecorationTheme(colorScheme),
       iconButtonTheme: AppWidgetThemes.iconButtonTheme,
       searchBarTheme: AppWidgetThemes.searchBarTheme(colorScheme),
+      chipTheme: AppWidgetThemes.chipTheme(colorScheme),
     );
   }
 }

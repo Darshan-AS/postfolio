@@ -6,6 +6,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
+import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/nominees_input_section.dart';
@@ -76,7 +77,7 @@ class _CustomerForm extends HookConsumerWidget {
       final DateTime? picked = await showDatePicker(
         context: context,
         initialDate: selectedDate.value ?? DateTime.now(),
-        firstDate: DateTime(1900),
+        firstDate: DateTime(AppConstants.firstDatePickerYear),
         lastDate: DateTime.now(),
       );
       if (picked != null && picked != selectedDate.value) {
@@ -240,7 +241,7 @@ List<Widget> _buildPersonalInfo({
         icon: HugeIcons.strokeRoundedHome01,
         size: AppDimensions.iconMd,
       ),
-      maxLines: 3,
+      maxLines: AppConstants.addressMaxLines,
     ),
   ];
 }

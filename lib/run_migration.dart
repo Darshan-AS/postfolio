@@ -33,8 +33,9 @@ DateTime _parseDate(String val) {
   }
 }
 
-DepositStatus _parseStatus(String val) =>
-    val.trim().toUpperCase() == 'Y' ? DepositStatus.closed : DepositStatus.active;
+DepositStatus _parseStatus(String val) => val.trim().toUpperCase() == 'Y'
+    ? DepositStatus.closed
+    : DepositStatus.active;
 
 NomineeRelationship _parseNomineeRelation(String val) {
   final s = val.toLowerCase().trim();
@@ -55,11 +56,14 @@ List<Nominee> _parseNominees(String name, String relation) {
   if (name.trim().isEmpty) return [];
   return [
     Nominee(
-      name: name.trim(), 
+      name: name.trim(),
       relationship: _parseNomineeRelation(relation),
       percentage: 100.0,
-      customRelationship: _parseNomineeRelation(relation) == NomineeRelationship.other ? relation.trim() : null,
-    )
+      customRelationship:
+          _parseNomineeRelation(relation) == NomineeRelationship.other
+          ? relation.trim()
+          : null,
+    ),
   ];
 }
 
@@ -68,7 +72,7 @@ OneTimeSchemeType _mapOneTimeScheme(String schemeStr) {
   if (s.contains('kvp')) return OneTimeSchemeType.kisanVikasPatra;
   if (s.contains('nsc')) return OneTimeSchemeType.nationalSavingsCertificate;
   if (s.contains('mis')) return OneTimeSchemeType.monthlyIncomeScheme;
-  return OneTimeSchemeType.timeDeposit; 
+  return OneTimeSchemeType.timeDeposit;
 }
 
 Customer _parseCustomer(List<dynamic> row, String id) {
@@ -80,7 +84,9 @@ Customer _parseCustomer(List<dynamic> row, String id) {
   final sbNomineeRel = row.length > 9 ? row[9].toString().trim() : '';
 
   SavingsAccount? savingsAccount;
-  if (sbAccountNumber.isNotEmpty || sbNomineeName.isNotEmpty || sbNomineeRel.isNotEmpty) {
+  if (sbAccountNumber.isNotEmpty ||
+      sbNomineeName.isNotEmpty ||
+      sbNomineeRel.isNotEmpty) {
     savingsAccount = SavingsAccount(
       accountNumber: sbAccountNumber,
       nominees: _parseNominees(sbNomineeName, sbNomineeRel),
@@ -106,13 +112,18 @@ OneTimeDeposit _parseOneTimeDeposit(List<dynamic> row, String customerId) {
     id: accountNo.replaceAll('/', '-'), // Sanitize for Firestore ID
     accountNo: accountNo,
     principalAmount: _parseCurrency(row.length > 1 ? row[1].toString() : ''),
-    termYears: int.tryParse(row.length > 2 ? row[2].toString().trim() : '') ?? 0,
-    termMonths: int.tryParse(row.length > 3 ? row[3].toString().trim() : '') ?? 0,
+    termYears:
+        int.tryParse(row.length > 2 ? row[2].toString().trim() : '') ?? 0,
+    termMonths:
+        int.tryParse(row.length > 3 ? row[3].toString().trim() : '') ?? 0,
     interestRate: _parsePercentage(row.length > 4 ? row[4].toString() : ''),
     customerId: customerId,
     schemeType: _mapOneTimeScheme(row.length > 6 ? row[6].toString() : ''),
     startDate: _parseDate(row.length > 8 ? row[8].toString() : ''),
-    nominees: _parseNominees(row.length > 10 ? row[10].toString() : '', row.length > 12 ? row[12].toString() : ''),
+    nominees: _parseNominees(
+      row.length > 10 ? row[10].toString() : '',
+      row.length > 12 ? row[12].toString() : '',
+    ),
     status: _parseStatus(row.length > 11 ? row[11].toString() : ''),
   );
 }
@@ -124,13 +135,18 @@ RecurringDeposit _parseRecurringDeposit(List<dynamic> row, String customerId) {
     serialNo: row[0].toString().trim(),
     accountNo: accountNo,
     installmentAmount: _parseCurrency(row.length > 2 ? row[2].toString() : ''),
-    termYears: int.tryParse(row.length > 3 ? row[3].toString().trim() : '') ?? 5, // Default to 5
+    termYears:
+        int.tryParse(row.length > 3 ? row[3].toString().trim() : '') ??
+        5, // Default to 5
     termMonths: 0,
     interestRate: _parsePercentage(row.length > 4 ? row[4].toString() : ''),
     customerId: customerId,
     schemeType: RecurringSchemeType.recurringDeposit,
     startDate: _parseDate(row.length > 7 ? row[7].toString() : ''),
-    nominees: _parseNominees(row.length > 9 ? row[9].toString() : '', row.length > 11 ? row[11].toString() : ''),
+    nominees: _parseNominees(
+      row.length > 9 ? row[9].toString() : '',
+      row.length > 11 ? row[11].toString() : '',
+    ),
     status: _parseStatus(row.length > 10 ? row[10].toString() : ''),
   );
 }
@@ -163,14 +179,15 @@ class MigrationStats {
 
 // --- Flutter App Shell for Migration ---
 
-const bool useFirebaseEmulator = bool.fromEnvironment('USE_EMULATOR', defaultValue: false);
+const bool useFirebaseEmulator = bool.fromEnvironment(
+  'USE_EMULATOR',
+  defaultValue: false,
+);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   if (useFirebaseEmulator) {
     try {
       final String host;
@@ -178,7 +195,9 @@ void main() async {
         host = 'localhost';
       } else {
         // Migration script might be run on Android emulator
-        host = (defaultTargetPlatform == TargetPlatform.android) ? '10.0.2.2' : 'localhost';
+        host = (defaultTargetPlatform == TargetPlatform.android)
+            ? '10.0.2.2'
+            : 'localhost';
       }
       FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
       await FirebaseAuth.instance.useAuthEmulator(host, 9099);
@@ -189,7 +208,7 @@ void main() async {
   } else {
     debugPrint('Connected to Firebase Production');
   }
-  
+
   runApp(const MaterialApp(home: MigrationRunner()));
 }
 
@@ -257,7 +276,7 @@ class _MigrationRunnerState extends State<MigrationRunner> {
       await deleteCollection('customers');
       await deleteCollection('one_time_deposits');
       await deleteCollection('recurring_deposits');
-      
+
       _customerCache.clear();
       _customerNameFallbackCache.clear();
       _oneTimeCache.clear();
@@ -288,7 +307,10 @@ class _MigrationRunnerState extends State<MigrationRunner> {
           });
         }
       } else {
-        setState(() => status = "Sign in only supported on web migration. Please paste UID manually.");
+        setState(
+          () => status =
+              "Sign in only supported on web migration. Please paste UID manually.",
+        );
       }
     } catch (e) {
       setState(() => status = "Sign in error: $e");
@@ -336,7 +358,8 @@ class _MigrationRunnerState extends State<MigrationRunner> {
 
       setState(() {
         status = "Emulator Migration Complete! 🎉\nMigrated data to users/$uid";
-        statsDisplay = """
+        statsDisplay =
+            """
 --- Migration Summary ---
 Customers: $custStats
 One-Time: $otStats
@@ -354,8 +377,14 @@ Check your Firebase Local Emulator UI.
     }
   }
 
-  Future<MigrationStats> _migrateCustomers(FirebaseFirestore firestore, String uid, int maxCustomers) async {
-    setState(() => status = "Migrating first $maxCustomers Customers to Emulator...");
+  Future<MigrationStats> _migrateCustomers(
+    FirebaseFirestore firestore,
+    String uid,
+    int maxCustomers,
+  ) async {
+    setState(
+      () => status = "Migrating first $maxCustomers Customers to Emulator...",
+    );
     final rawData = await rootBundle.loadString('data/customers.csv');
     final rows = const CsvToListConverter(eol: '\n').convert(rawData);
 
@@ -382,10 +411,14 @@ Check your Firebase Local Emulator UI.
         final customer = _parseCustomer(row, newId);
 
         batch.set(
-          firestore.collection('users').doc(uid).collection('customers').doc(newId),
+          firestore
+              .collection('users')
+              .doc(uid)
+              .collection('customers')
+              .doc(newId),
           customer.toJson(),
         );
-        
+
         _customerCache[cacheKey] = newId;
         _customerNameFallbackCache[name] = newId;
         migratedCount++;
@@ -399,10 +432,11 @@ Check your Firebase Local Emulator UI.
       }
     }
 
-    if (migratedCount % 400 != 0 || (migratedCount > 0 && migratedCount < 400)) {
+    if (migratedCount % 400 != 0 ||
+        (migratedCount > 0 && migratedCount < 400)) {
       await batch.commit();
     }
-    
+
     return MigrationStats(
       csvTotal: csvTotal,
       processed: processedCount,
@@ -421,7 +455,9 @@ Check your Firebase Local Emulator UI.
     required int customerNameIndex,
     required int accountNoIndex,
   }) async {
-    setState(() => status = "Migrating $collectionName for imported customers...");
+    setState(
+      () => status = "Migrating $collectionName for imported customers...",
+    );
     final rawData = await rootBundle.loadString(csvPath);
     final rows = const CsvToListConverter(eol: '\n').convert(rawData);
 
@@ -437,9 +473,13 @@ Check your Firebase Local Emulator UI.
       if (row.isEmpty || row[0].toString().trim().isEmpty) continue;
       csvTotal++;
 
-      final accountNo = row.length > accountNoIndex ? row[accountNoIndex].toString().trim() : '';
-      final customerName = row.length > customerNameIndex ? row[customerNameIndex].toString().trim() : '';
-      
+      final accountNo = row.length > accountNoIndex
+          ? row[accountNoIndex].toString().trim()
+          : '';
+      final customerName = row.length > customerNameIndex
+          ? row[customerNameIndex].toString().trim()
+          : '';
+
       final customerId = _customerNameFallbackCache[customerName];
 
       if (customerId != null) {
@@ -448,10 +488,14 @@ Check your Firebase Local Emulator UI.
           final deposit = parser(row, customerId);
 
           batch.set(
-            firestore.collection('users').doc(uid).collection(collectionName).doc(deposit.id),
+            firestore
+                .collection('users')
+                .doc(uid)
+                .collection(collectionName)
+                .doc(deposit.id),
             deposit.toJson(),
           );
-          
+
           cache.add(accountNo);
           migratedCount++;
 
@@ -467,10 +511,11 @@ Check your Firebase Local Emulator UI.
       }
     }
 
-    if (migratedCount % 400 != 0 || (migratedCount > 0 && migratedCount < 400)) {
+    if (migratedCount % 400 != 0 ||
+        (migratedCount > 0 && migratedCount < 400)) {
       await batch.commit();
     }
-    
+
     return MigrationStats(
       csvTotal: csvTotal,
       processed: relevantToBatch,
@@ -494,7 +539,8 @@ Check your Firebase Local Emulator UI.
                 controller: _uidController,
                 decoration: const InputDecoration(
                   labelText: 'Target User ID (UID)',
-                  helperText: 'Enter your Firebase Auth UID to migrate data into your account.',
+                  helperText:
+                      'Enter your Firebase Auth UID to migrate data into your account.',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -505,7 +551,10 @@ Check your Firebase Local Emulator UI.
                     child: TextField(
                       controller: _countController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Batch Size', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Batch Size',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -526,20 +575,32 @@ Check your Firebase Local Emulator UI.
                     onPressed: _isMigrating
                         ? null
                         : () {
-                            final count = int.tryParse(_countController.text) ?? 10;
+                            final count =
+                                int.tryParse(_countController.text) ?? 10;
                             _runMigration(maxCustomers: count);
                           },
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
                     child: const Text("Migrate Batch"),
                   ),
                   ElevatedButton(
-                    onPressed: _isMigrating ? null : () => _runMigration(maxCustomers: null),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                    onPressed: _isMigrating
+                        ? null
+                        : () => _runMigration(maxCustomers: null),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
                     child: const Text("Migrate All"),
                   ),
                   ElevatedButton(
                     onPressed: _isMigrating ? null : _deleteAllData,
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                    ),
                     child: const Text("Delete All"),
                   ),
                 ],

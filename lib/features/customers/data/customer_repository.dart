@@ -130,16 +130,16 @@ class FakeCustomerRepository implements CustomerRepository {
     } else {
       yield const Failure('Customer not found');
     }
-    
+
     yield* _controller.stream.map((result) {
       return switch (result) {
         Success(value: final customers) => () {
-            final c = customers.where((c) => c.id == id).firstOrNull;
-            if (c != null) {
-              return Success<Customer, String>(c);
-            }
-            return const Failure<Customer, String>('Customer not found');
-          }(),
+          final c = customers.where((c) => c.id == id).firstOrNull;
+          if (c != null) {
+            return Success<Customer, String>(c);
+          }
+          return const Failure<Customer, String>('Customer not found');
+        }(),
         Failure(error: final error) => Failure(error),
       };
     });
@@ -191,15 +191,18 @@ CustomerRepository customerRepository(Ref ref) {
     ref.onDispose(repo.dispose);
     return repo;
   }
-  
+
   final authState = ref.watch(authControllerProvider);
-  final userId = authState.mapOrNull(
-    authenticated: (state) => state.user.id,
-  );
+  final userId = authState.mapOrNull(authenticated: (state) => state.user.id);
 
   if (userId == null) {
-    throw StateError('User is not authenticated. Cannot access CustomerRepository.');
+    throw StateError(
+      'User is not authenticated. Cannot access CustomerRepository.',
+    );
   }
 
-  return FirestoreCustomerRepository(firestore.FirebaseFirestore.instance, userId);
+  return FirestoreCustomerRepository(
+    firestore.FirebaseFirestore.instance,
+    userId,
+  );
 }

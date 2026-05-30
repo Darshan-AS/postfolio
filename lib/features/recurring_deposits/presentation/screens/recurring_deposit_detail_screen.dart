@@ -32,7 +32,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
       dummyEntity: RecurringDeposit.dummy,
       builder: (deposit) {
         return EntityDetailScaffold(
-          appBarTitle: "Deposit Details",
+          appBarTitle: t.common.depositDetails,
           onEdit: () => RecurringDepositEditRoute(depositId).push(context),
           deleteDialogTitle: t.recurringDeposits.deleteDeposit,
           deleteDialogContent: t.recurringDeposits.deleteDepositConfirmation,
@@ -170,10 +170,12 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                   label: t.recurringDeposits.fields.customerId,
                   value:
                       ref
-                          .watch(customerByIdProvider(deposit.customerId)).value
+                          .watch(customerByIdProvider(deposit.customerId))
+                          .value
                           ?.name ??
                       deposit.customerId,
-                  onTap: () => CustomerDetailRoute(deposit.customerId).push(context),
+                  onTap: () =>
+                      CustomerDetailRoute(deposit.customerId).push(context),
                 ),
               ],
             ),
