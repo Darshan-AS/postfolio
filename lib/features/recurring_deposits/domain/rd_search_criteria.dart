@@ -12,6 +12,8 @@ enum RDSortOption {
   highestAmount,
   maturityAsc,
   maturityDesc,
+  serialNoAsc,
+  serialNoDesc,
 }
 
 @freezed
@@ -19,7 +21,8 @@ sealed class RDSearchCriteria with _$RDSearchCriteria {
   const factory RDSearchCriteria({
     @Default('') String searchQuery,
     @Default(RDSortOption.maturityAsc) RDSortOption sortBy,
-    @Default([DepositStatus.active, DepositStatus.matured]) List<DepositStatus> statusFilters,
+    @Default([DepositStatus.active, DepositStatus.matured])
+    List<DepositStatus> statusFilters,
     @Default([]) List<MaturityUrgency> urgencyFilters,
   }) = _RDSearchCriteria;
 }

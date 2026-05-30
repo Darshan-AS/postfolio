@@ -62,6 +62,8 @@ sorting:
     highestAmount: "Highest Amount"
     maturityAsc: "Maturity (Sooner)"
     maturityDesc: "Maturity (Later)"
+    serialNoAsc: "Serial No (Asc)"
+    serialNoDesc: "Serial No (Desc)"
 
 filters:
   title: "Filters"

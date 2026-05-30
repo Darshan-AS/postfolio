@@ -225,6 +225,8 @@ class TranslationsSortingEn {
 		'highestAmount': 'Highest Amount',
 		'maturityAsc': 'Maturity (Sooner)',
 		'maturityDesc': 'Maturity (Later)',
+		'serialNoAsc': 'Serial No (Asc)',
+		'serialNoDesc': 'Serial No (Desc)',
 	};
 }
 
@@ -999,6 +1001,8 @@ extension on Translations {
 			'sorting.options.highestAmount' => 'Highest Amount',
 			'sorting.options.maturityAsc' => 'Maturity (Sooner)',
 			'sorting.options.maturityDesc' => 'Maturity (Later)',
+			'sorting.options.serialNoAsc' => 'Serial No (Asc)',
+			'sorting.options.serialNoDesc' => 'Serial No (Desc)',
 			'filters.title' => 'Filters',
 			'filters.sections.status' => 'Status',
 			'filters.sections.urgency' => 'Urgency',

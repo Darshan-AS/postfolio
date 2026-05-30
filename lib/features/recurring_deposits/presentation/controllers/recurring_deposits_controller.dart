@@ -124,6 +124,27 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
             : nameB.compareTo(nameA);
       });
       break;
+    case RDSortOption.serialNoAsc:
+    case RDSortOption.serialNoDesc:
+      result.sort((a, b) {
+        final sA = a.serialNo ?? '';
+        final sB = b.serialNo ?? '';
+
+        final numA = int.tryParse(sA);
+        final numB = int.tryParse(sB);
+
+        int comparison;
+        if (numA != null && numB != null) {
+          comparison = numA.compareTo(numB);
+        } else {
+          comparison = sA.compareTo(sB);
+        }
+
+        return criteria.sortBy == RDSortOption.serialNoAsc
+            ? comparison
+            : -comparison;
+      });
+      break;
   }
 
   return UnmodifiableListView(result);
