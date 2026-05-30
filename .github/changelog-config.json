@@ -1,0 +1,36 @@
+{
+  "categories": [
+    {
+      "title": "## 🚀 Features",
+      "labels": ["feature", "feat"]
+    },
+    {
+      "title": "## 🐛 Fixes",
+      "labels": ["fix", "bug"]
+    },
+    {
+      "title": "## 🛠 Maintenance",
+      "labels": ["chore", "refactor", "docs"]
+    }
+  ],
+  "template": "#{{CHANGELOG}}",
+  "pr_template": "- #{{TITLE}}",
+  "commit_template": "- #{{MESSAGE}} (#{{HASH}})",
+  "ignore_labels": ["ignore"],
+  "sort": "ASC",
+  "extract_labels": [
+    {
+      "pattern": "^(?:Feat|feat|feature)\\(?.*\\)?:",
+      "label": "feat"
+    },
+    {
+      "pattern": "^(?:Fix|fix|bug)\\(?.*\\)?:",
+      "label": "fix"
+    },
+    {
+      "pattern": "^(?:Chore|chore|refactor|docs)\\(?.*\\)?:",
+      "label": "chore"
+    }
+  ],
+  "commit_mode": true
+}

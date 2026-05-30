@@ -47,6 +47,7 @@ jobs:
         id: release_notes
         uses: mikepenz/release-changelog-builder-action@v4
         with:
+          configuration: ".github/changelog-config.json"
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
