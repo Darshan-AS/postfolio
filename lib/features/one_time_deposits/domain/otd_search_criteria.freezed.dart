@@ -202,7 +202,7 @@ return $default(_that.searchQuery,_that.sortBy,_that.activeFilters);case _:
 
 
 class _OTDSearchCriteria implements OTDSearchCriteria {
-  const _OTDSearchCriteria({this.searchQuery = '', this.sortBy = OTDSortOption.newest, final  List<DepositStatus> activeFilters = const []}): _activeFilters = activeFilters;
+  const _OTDSearchCriteria({this.searchQuery = '', this.sortBy = OTDSortOption.maturityAsc, final  List<DepositStatus> activeFilters = const []}): _activeFilters = activeFilters;
   
 
 @override@JsonKey() final  String searchQuery;

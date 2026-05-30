@@ -202,7 +202,7 @@ return $default(_that.searchQuery,_that.sortBy,_that.activeFilters);case _:
 
 
 class _RDSearchCriteria implements RDSearchCriteria {
-  const _RDSearchCriteria({this.searchQuery = '', this.sortBy = RDSortOption.newest, final  List<DepositStatus> activeFilters = const []}): _activeFilters = activeFilters;
+  const _RDSearchCriteria({this.searchQuery = '', this.sortBy = RDSortOption.maturityAsc, final  List<DepositStatus> activeFilters = const []}): _activeFilters = activeFilters;
   
 
 @override@JsonKey() final  String searchQuery;

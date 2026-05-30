@@ -128,10 +128,11 @@
   - Implement a reusable Sort Bottom Sheet triggered by a sort icon in the App Bar.
   - Add friendly "No results found" empty states with a "Clear Filters" action.
 - [x] Polish the Search Bar UI/UX (migrated to official M3 SearchBar with custom theme and added a dedicated "Cancel" button).
+- [ ] Persist all sort and filter selections as user preferences so defaults are retained across sessions.
 - [ ] Highlight deposits based on maturity status:
-  - About to mature (e.g., within 30 days)
-  - Matured but not closed
-  - Completely closed
+  - [ ] About to mature (e.g., within 30 days)
+  - [ ] Matured but not closed
+  - [ ] Completely closed
 - [ ] Redesign the leading visual element in deposit list tiles to replace the generic circular icons.
 - [ ] Apply distinct color coding to differentiate deposit types in list views.
 - [ ] Enhance the visual prominence of the scheme type in deposit detail views.

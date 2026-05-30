@@ -9,14 +9,15 @@ enum OTDSortOption {
   nameAsc,
   nameDesc,
   highestAmount,
-  maturityProximity,
+  maturityAsc,
+  maturityDesc,
 }
 
 @freezed
 sealed class OTDSearchCriteria with _$OTDSearchCriteria {
   const factory OTDSearchCriteria({
     @Default('') String searchQuery,
-    @Default(OTDSortOption.newest) OTDSortOption sortBy,
+    @Default(OTDSortOption.maturityAsc) OTDSortOption sortBy,
     @Default([]) List<DepositStatus> activeFilters,
   }) = _OTDSearchCriteria;
 }

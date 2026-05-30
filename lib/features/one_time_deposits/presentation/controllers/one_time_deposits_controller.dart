@@ -78,13 +78,11 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
     case OTDSortOption.highestAmount:
       result.sort((a, b) => b.principalAmount.compareTo(a.principalAmount));
       break;
-    case OTDSortOption.maturityProximity:
-      final now = DateTime.now();
-      result.sort((a, b) {
-        final diffA = a.maturityDate.difference(now).abs();
-        final diffB = b.maturityDate.difference(now).abs();
-        return diffA.compareTo(diffB);
-      });
+    case OTDSortOption.maturityAsc:
+      result.sort((a, b) => a.maturityDate.compareTo(b.maturityDate));
+      break;
+    case OTDSortOption.maturityDesc:
+      result.sort((a, b) => b.maturityDate.compareTo(a.maturityDate));
       break;
     case OTDSortOption.nameAsc:
     case OTDSortOption.nameDesc:

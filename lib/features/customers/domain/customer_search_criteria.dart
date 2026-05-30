@@ -8,6 +8,6 @@ enum CustomerSortOption { nameAsc, nameDesc, newest, oldest }
 sealed class CustomerSearchCriteria with _$CustomerSearchCriteria {
   const factory CustomerSearchCriteria({
     @Default('') String searchQuery,
-    @Default(CustomerSortOption.newest) CustomerSortOption sortBy,
+    @Default(CustomerSortOption.nameAsc) CustomerSortOption sortBy,
   }) = _CustomerSearchCriteria;
 }

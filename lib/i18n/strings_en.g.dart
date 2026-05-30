@@ -219,7 +219,8 @@ class TranslationsSortingEn {
 		'nameAsc': 'Name (A-Z)',
 		'nameDesc': 'Name (Z-A)',
 		'highestAmount': 'Highest Amount',
-		'maturityProximity': 'Maturity Date',
+		'maturityAsc': 'Maturity (Soonest First)',
+		'maturityDesc': 'Maturity (Furthest First)',
 	};
 }
 
@@ -895,7 +896,8 @@ extension on Translations {
 			'sorting.options.nameAsc' => 'Name (A-Z)',
 			'sorting.options.nameDesc' => 'Name (Z-A)',
 			'sorting.options.highestAmount' => 'Highest Amount',
-			'sorting.options.maturityProximity' => 'Maturity Date',
+			'sorting.options.maturityAsc' => 'Maturity (Soonest First)',
+			'sorting.options.maturityDesc' => 'Maturity (Furthest First)',
 			'filters.title' => 'Filters',
 			'filters.status' => 'Status',
 			'projection.title' => 'Live Projection',

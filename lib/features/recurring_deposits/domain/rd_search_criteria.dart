@@ -9,14 +9,15 @@ enum RDSortOption {
   nameAsc,
   nameDesc,
   highestAmount,
-  maturityProximity,
+  maturityAsc,
+  maturityDesc,
 }
 
 @freezed
 sealed class RDSearchCriteria with _$RDSearchCriteria {
   const factory RDSearchCriteria({
     @Default('') String searchQuery,
-    @Default(RDSortOption.newest) RDSortOption sortBy,
+    @Default(RDSortOption.maturityAsc) RDSortOption sortBy,
     @Default([]) List<DepositStatus> activeFilters,
   }) = _RDSearchCriteria;
 }

@@ -59,7 +59,8 @@ sorting:
     nameAsc: "Name (A-Z)"
     nameDesc: "Name (Z-A)"
     highestAmount: "Highest Amount"
-    maturityProximity: "Maturity Date"
+    maturityAsc: "Maturity (Sooner)"
+    maturityDesc: "Maturity (Later)"
 
 filters:
   title: "Filters"

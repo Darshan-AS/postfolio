@@ -103,7 +103,7 @@ final class FilteredCustomersProvider
   }
 }
 
-String _$filteredCustomersHash() => r'e53c2a104f1bbe620076980c24218e8d7bcd5b64';
+String _$filteredCustomersHash() => r'75f0a049fb86558e699eda720117f6f68e783572';
 
 @ProviderFor(CustomersController)
 final customersControllerProvider = CustomersControllerProvider._();

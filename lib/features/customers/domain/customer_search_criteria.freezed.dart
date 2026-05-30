@@ -201,7 +201,7 @@ return $default(_that.searchQuery,_that.sortBy);case _:
 
 
 class _CustomerSearchCriteria implements CustomerSearchCriteria {
-  const _CustomerSearchCriteria({this.searchQuery = '', this.sortBy = CustomerSortOption.newest});
+  const _CustomerSearchCriteria({this.searchQuery = '', this.sortBy = CustomerSortOption.nameAsc});
   
 
 @override@JsonKey() final  String searchQuery;
