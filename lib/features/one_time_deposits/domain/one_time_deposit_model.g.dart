@@ -17,7 +17,6 @@ _OneTimeDeposit _$OneTimeDepositFromJson(Map<String, dynamic> json) =>
       customerId: json['customerId'] as String,
       schemeType: $enumDecode(_$OneTimeSchemeTypeEnumMap, json['schemeType']),
       startDate: DateTime.parse(json['startDate'] as String),
-      linkedSavingsAccountNo: json['linkedSavingsAccountNo'] as String?,
       nominees:
           (json['nominees'] as List<dynamic>?)
               ?.map((e) => Nominee.fromJson(e as Map<String, dynamic>))
@@ -39,7 +38,6 @@ Map<String, dynamic> _$OneTimeDepositToJson(_OneTimeDeposit instance) =>
       'customerId': instance.customerId,
       'schemeType': _$OneTimeSchemeTypeEnumMap[instance.schemeType]!,
       'startDate': instance.startDate.toIso8601String(),
-      'linkedSavingsAccountNo': instance.linkedSavingsAccountNo,
       'nominees': instance.nominees.map((e) => e.toJson()).toList(),
       'status': _$DepositStatusEnumMap[instance.status]!,
     };

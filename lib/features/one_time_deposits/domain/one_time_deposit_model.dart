@@ -25,7 +25,6 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     required String customerId,
     required OneTimeSchemeType schemeType,
     required DateTime startDate,
-    String? linkedSavingsAccountNo,
     @Default([]) List<Nominee> nominees,
     @Default(DepositStatus.active) DepositStatus status,
   }) = _OneTimeDeposit;
@@ -85,7 +84,6 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     required String customerId,
     required OneTimeSchemeType schemeType,
     required DateTime startDate,
-    String? linkedSavingsAccountNo,
     List<Nominee> nominees = const [],
     DepositStatus status = DepositStatus.active,
   }) {
@@ -129,7 +127,6 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
         customerId: customerId,
         schemeType: schemeType,
         startDate: startDate,
-        linkedSavingsAccountNo: linkedSavingsAccountNo?.trim(),
         nominees: List.unmodifiable(nominees),
         status: status,
       ),

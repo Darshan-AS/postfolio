@@ -26,7 +26,6 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required String customerId,
     required RecurringSchemeType schemeType,
     required DateTime startDate,
-    String? linkedAutoDebitAccountNo,
     @Default([]) List<Nominee> nominees,
     @Default(DepositStatus.active) DepositStatus status,
   }) = _RecurringDeposit;
@@ -87,7 +86,6 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required String customerId,
     required RecurringSchemeType schemeType,
     required DateTime startDate,
-    String? linkedAutoDebitAccountNo,
     List<Nominee> nominees = const [],
     DepositStatus status = DepositStatus.active,
   }) {
@@ -132,7 +130,6 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
         customerId: customerId,
         schemeType: schemeType,
         startDate: startDate,
-        linkedAutoDebitAccountNo: linkedAutoDebitAccountNo?.trim(),
         nominees: List.unmodifiable(nominees),
         status: status,
       ),

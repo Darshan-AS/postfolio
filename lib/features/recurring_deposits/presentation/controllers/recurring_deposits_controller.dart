@@ -179,7 +179,6 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     required RecurringSchemeType schemeType,
     DepositStatus status = DepositStatus.active,
     required DateTime startDate,
-    String? linkedAutoDebitAccountNo,
     List<Nominee> nominees = const [],
   }) async {
     final depositId = id ?? const Uuid().v4();
@@ -199,7 +198,6 @@ class RecurringDepositsController extends _$RecurringDepositsController {
       schemeType: schemeType,
       status: status,
       startDate: startDate,
-      linkedAutoDebitAccountNo: linkedAutoDebitAccountNo,
       nominees: nominees,
     );
 

@@ -166,15 +166,6 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                 const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
                   icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedBank,
-                    size: AppDimensions.iconMd,
-                  ),
-                  label: t.recurringDeposits.fields.linkedAutoDebitAccountNo,
-                  value: deposit.linkedAutoDebitAccountNo,
-                ),
-                const Divider(height: AppDimensions.dividerHeight),
-                DetailItem(
-                  icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedUser,
                     size: AppDimensions.iconMd,
                   ),

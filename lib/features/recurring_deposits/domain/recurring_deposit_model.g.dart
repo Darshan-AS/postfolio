@@ -18,7 +18,6 @@ _RecurringDeposit _$RecurringDepositFromJson(Map<String, dynamic> json) =>
       customerId: json['customerId'] as String,
       schemeType: $enumDecode(_$RecurringSchemeTypeEnumMap, json['schemeType']),
       startDate: DateTime.parse(json['startDate'] as String),
-      linkedAutoDebitAccountNo: json['linkedAutoDebitAccountNo'] as String?,
       nominees:
           (json['nominees'] as List<dynamic>?)
               ?.map((e) => Nominee.fromJson(e as Map<String, dynamic>))
@@ -41,7 +40,6 @@ Map<String, dynamic> _$RecurringDepositToJson(_RecurringDeposit instance) =>
       'customerId': instance.customerId,
       'schemeType': _$RecurringSchemeTypeEnumMap[instance.schemeType]!,
       'startDate': instance.startDate.toIso8601String(),
-      'linkedAutoDebitAccountNo': instance.linkedAutoDebitAccountNo,
       'nominees': instance.nominees.map((e) => e.toJson()).toList(),
       'status': _$DepositStatusEnumMap[instance.status]!,
     };

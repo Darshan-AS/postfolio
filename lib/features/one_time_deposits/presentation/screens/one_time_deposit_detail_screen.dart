@@ -160,15 +160,6 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   onTap: () =>
                       CustomerDetailRoute(deposit.customerId).push(context),
                 ),
-                const Divider(height: AppDimensions.dividerHeight),
-                DetailItem(
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedBank,
-                    size: AppDimensions.iconMd,
-                  ),
-                  label: t.oneTimeDeposits.fields.linkedSavingsAccountNo,
-                  value: deposit.linkedSavingsAccountNo,
-                ),
               ],
             ),
             AppSpacings.gapLg,

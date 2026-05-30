@@ -88,8 +88,6 @@ class FakeDataSource {
         customerId: random.element(customerIds),
         schemeType: scheme,
         startDate: faker.date.dateTimeBetween(DateTime(2020), DateTime.now()),
-        linkedSavingsAccountNo:
-            'SA${faker.randomGenerator.fromCharSet('0123456789', 9)}',
         status: random.element(depositStatuses),
         nominees: List.generate(
           random.integer(3),
@@ -121,7 +119,6 @@ class FakeDataSource {
         customerId: random.element(customerIds),
         schemeType: scheme,
         startDate: faker.date.dateTimeBetween(DateTime(2020), DateTime.now()),
-        linkedAutoDebitAccountNo: 'SA${random.fromCharSet('0123456789', 9)}',
         status: random.element(depositStatuses),
         nominees: List.generate(
           random.integer(3),

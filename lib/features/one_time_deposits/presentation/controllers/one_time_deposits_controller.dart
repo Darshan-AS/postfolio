@@ -173,7 +173,6 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
     required OneTimeSchemeType schemeType,
     DepositStatus status = DepositStatus.active,
     required DateTime startDate,
-    String? linkedSavingsAccountNo,
     List<Nominee> nominees = const [],
   }) async {
     final depositId = id ?? const Uuid().v4();
@@ -192,7 +191,6 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
       schemeType: schemeType,
       status: status,
       startDate: startDate,
-      linkedSavingsAccountNo: linkedSavingsAccountNo,
       nominees: nominees,
     );
 

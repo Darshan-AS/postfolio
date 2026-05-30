@@ -202,8 +202,6 @@ class TranslationsCommonEn {
 
 	/// en: 'Demo Mode Active. Data is not saved to the cloud.'
 	String get demoModeActive => 'Demo Mode Active. Data is not saved to the cloud.';
-
-	late final TranslationsCommonSectionsEn sections = TranslationsCommonSectionsEn.internal(_root);
 }
 
 // Path: sorting
@@ -645,18 +643,6 @@ class TranslationsCommonDurationEn {
 	);
 }
 
-// Path: common.sections
-class TranslationsCommonSectionsEn {
-	TranslationsCommonSectionsEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Linked Accounts'
-	String get linkedAccounts => 'Linked Accounts';
-}
-
 // Path: filters.sections
 class TranslationsFiltersSectionsEn {
 	TranslationsFiltersSectionsEn.internal(this._root);
@@ -844,9 +830,6 @@ class TranslationsOneTimeDepositsFieldsEn {
 
 	/// en: 'Deposit Date'
 	String get depositDate => 'Deposit Date';
-
-	/// en: 'Linked Savings Account'
-	String get linkedSavingsAccountNo => 'Linked Savings Account';
 }
 
 // Path: recurringDeposits.sections
@@ -916,12 +899,6 @@ class TranslationsRecurringDepositsFieldsEn {
 
 	/// en: 'Maturity Date'
 	String get maturityDate => 'Maturity Date';
-
-	/// en: 'Linked Savings Account'
-	String get linkedSavingsAccount => 'Linked Savings Account';
-
-	/// en: 'Linked Auto Debit Account'
-	String get linkedAutoDebitAccountNo => 'Linked Auto Debit Account';
 }
 
 // Path: enums.maturityRelativeTime
@@ -992,7 +969,6 @@ extension on Translations {
 			'common.moreOptions' => 'More options',
 			'common.noResults' => 'No results found',
 			'common.demoModeActive' => 'Demo Mode Active. Data is not saved to the cloud.',
-			'common.sections.linkedAccounts' => 'Linked Accounts',
 			'sorting.title' => 'Sort By',
 			'sorting.options.newest' => 'Newest First',
 			'sorting.options.oldest' => 'Oldest First',
@@ -1088,7 +1064,6 @@ extension on Translations {
 			'oneTimeDeposits.fields.startDate' => 'Start Date',
 			'oneTimeDeposits.fields.maturityDate' => 'Maturity Date',
 			'oneTimeDeposits.fields.depositDate' => 'Deposit Date',
-			'oneTimeDeposits.fields.linkedSavingsAccountNo' => 'Linked Savings Account',
 			'recurringDeposits.title' => 'Recurring Deposits',
 			'recurringDeposits.newDeposit' => 'New RD',
 			'recurringDeposits.editDeposit' => 'Edit RD',
@@ -1117,8 +1092,6 @@ extension on Translations {
 			'recurringDeposits.fields.maturityAmount' => 'Maturity Amount',
 			'recurringDeposits.fields.startDate' => 'Start Date',
 			'recurringDeposits.fields.maturityDate' => 'Maturity Date',
-			'recurringDeposits.fields.linkedSavingsAccount' => 'Linked Savings Account',
-			'recurringDeposits.fields.linkedAutoDebitAccountNo' => 'Linked Auto Debit Account',
 			'nominees.title' => 'Nominees',
 			'nominees.addNominee' => 'Add Nominee',
 			'nominees.editNominee' => 'Edit Nominee',

@@ -61,9 +61,6 @@ class _OneTimeDepositForm extends HookConsumerWidget {
     final interestRateController = useTextEditingController(
       text: deposit?.interestRate.toString(),
     );
-    final linkedAccountController = useTextEditingController(
-      text: deposit?.linkedSavingsAccountNo,
-    );
 
     final selectedCustomerId = useState<String?>(deposit?.customerId);
     final selectedScheme = useState<OneTimeSchemeType>(
@@ -164,7 +161,6 @@ class _OneTimeDepositForm extends HookConsumerWidget {
               schemeType: selectedScheme.value,
               status: selectedStatus.value,
               startDate: startDate.value,
-              linkedSavingsAccountNo: linkedAccountController.text,
               nominees: nominees.value,
             );
 
@@ -217,8 +213,7 @@ class _OneTimeDepositForm extends HookConsumerWidget {
               startDateController: startDateController,
               projection: projection,
             ),
-            ..._buildLinkedAccountsAndNominees(
-              linkedAccountController: linkedAccountController,
+            ..._buildNomineesSection(
               nominees: nominees,
             ),
           ],
@@ -380,22 +375,10 @@ List<Widget> _buildInvestmentDetails(
   ];
 }
 
-List<Widget> _buildLinkedAccountsAndNominees({
-  required TextEditingController linkedAccountController,
+List<Widget> _buildNomineesSection({
   required ValueNotifier<List<Nominee>> nominees,
 }) {
   return [
-    FormSectionHeader(title: t.common.sections.linkedAccounts),
-    AppTextField(
-      controller: linkedAccountController,
-      labelText: t.oneTimeDeposits.fields.linkedSavingsAccountNo,
-      prefixIcon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedBank,
-        size: AppDimensions.iconMd,
-      ),
-      textInputAction: TextInputAction.done,
-    ),
-    AppSpacings.gapMd,
     NomineesInputSection(
       nominees: nominees.value,
       onChanged: (newNominees) {

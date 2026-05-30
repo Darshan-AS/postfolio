@@ -133,7 +133,7 @@ final class OneTimeDepositsControllerProvider
 }
 
 String _$oneTimeDepositsControllerHash() =>
-    r'3ecc97160515c2f93b5cfcfeda8e0168c4187c43';
+    r'fd9c0b7928766168a4957eceb85abb03c110f857';
 
 abstract class _$OneTimeDepositsController
     extends $StreamNotifier<UnmodifiableListView<OneTimeDeposit>> {
