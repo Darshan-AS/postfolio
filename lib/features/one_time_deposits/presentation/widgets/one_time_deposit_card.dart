@@ -36,7 +36,7 @@ class OneTimeDepositCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color? indicatorColor;
-    if (urgency == MaturityUrgency.overdue) {
+    if (urgency == MaturityUrgency.matured) {
       indicatorColor = Theme.of(context).colorScheme.errorContainer;
     } else if (urgency == MaturityUrgency.maturingSoon) {
       indicatorColor = Theme.of(context).colorScheme.tertiaryContainer;

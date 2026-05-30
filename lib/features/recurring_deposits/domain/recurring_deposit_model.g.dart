@@ -50,6 +50,5 @@ const _$RecurringSchemeTypeEnumMap = {
 
 const _$DepositStatusEnumMap = {
   DepositStatus.active: 'active',
-  DepositStatus.matured: 'matured',
   DepositStatus.closed: 'closed',
 };

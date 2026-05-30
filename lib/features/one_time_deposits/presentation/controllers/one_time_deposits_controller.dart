@@ -61,7 +61,7 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
 
   void clearFilters() {
     state = state.copyWith(
-      statusFilters: const [DepositStatus.active, DepositStatus.matured],
+      statusFilters: const [DepositStatus.active],
       urgencyFilters: const [],
       schemeFilters: const [],
     );

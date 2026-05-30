@@ -87,10 +87,10 @@ class FakeDataSource {
       
       DepositStatus status;
       if (maturityDate.isBefore(DateTime.now())) {
-        status = random.element([DepositStatus.active, DepositStatus.matured, DepositStatus.closed]);
+        status = random.element([DepositStatus.active, DepositStatus.closed]);
       } else {
-        // Cannot be matured if the maturity date is in the future
-        status = random.element([DepositStatus.active, DepositStatus.active, DepositStatus.closed]);
+        // Can only be closed if the maturity date is in the past
+        status = random.element([DepositStatus.active, DepositStatus.closed]);
       }
 
       return OneTimeDeposit(
@@ -132,10 +132,10 @@ class FakeDataSource {
 
       DepositStatus status;
       if (maturityDate.isBefore(DateTime.now())) {
-        status = random.element([DepositStatus.active, DepositStatus.matured, DepositStatus.closed]);
+        status = random.element([DepositStatus.active, DepositStatus.closed]);
       } else {
-        // Cannot be matured if the maturity date is in the future
-        status = random.element([DepositStatus.active, DepositStatus.active, DepositStatus.closed]);
+        // Can only be closed if the maturity date is in the past
+        status = random.element([DepositStatus.active, DepositStatus.closed]);
       }
 
       return RecurringDeposit(

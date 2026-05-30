@@ -33,7 +33,6 @@ class RecurringDepositsScreen extends HookConsumerWidget {
 
     int statusModifications = 0;
     if (!criteria.statusFilters.contains(DepositStatus.active)) statusModifications++;
-    if (!criteria.statusFilters.contains(DepositStatus.matured)) statusModifications++;
     if (criteria.statusFilters.contains(DepositStatus.closed)) statusModifications++;
 
     final activeFilterCount = statusModifications +
@@ -113,7 +112,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
                             AppFilterSection<MaturityUrgency>(
                               title: t.filters.sections.urgency,
                               options: const [
-                                MaturityUrgency.overdue,
+                                MaturityUrgency.matured,
                                 MaturityUrgency.maturingSoon,
                               ],
                               selectedOptions: criteria.urgencyFilters,
@@ -173,9 +172,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
   ) {
     if (deposits.isEmpty) {
       final criteria = ref.read(recurringListCriteriaProvider);
-      final isDefaultStatus = criteria.statusFilters.length == 2 &&
-          criteria.statusFilters.contains(DepositStatus.active) &&
-          criteria.statusFilters.contains(DepositStatus.matured);
+      final isDefaultStatus = criteria.statusFilters.length == 1 &&
+          criteria.statusFilters.contains(DepositStatus.active);
       final hasFilters =
           criteria.searchQuery.isNotEmpty || !isDefaultStatus || criteria.urgencyFilters.isNotEmpty;
       return Center(

@@ -66,3 +66,4 @@
 - Identified counter-intuitive routing behavior in "Edit -> Back" flows (returning to Detail instead of List) and added it to the task roadmap for re-evaluation.
 - Fixed UI/Domain parity by adding `isRequired: true` to missing required fields in all form screens, ensuring accurate visual representation of strict domain validation rules.
 - Fixed static analysis errors by removing `linkedSavingsAccount` and `linkedAutoDebitAccountNo` from UI components, as they were not defined in domain models, and updated null-aware element syntax in `detail_components.dart`.
+- Refactored `DepositStatus` and `MaturityUrgency` enums to eliminate redundancy. Removed the explicit `matured` state from `DepositStatus` (now only `active` and `closed`) and renamed `MaturityUrgency.overdue` to `MaturityUrgency.matured`, establishing a clean boundary between contractual state and chronological timeline.

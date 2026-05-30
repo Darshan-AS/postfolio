@@ -220,7 +220,6 @@ enums:
     annually: 'Annually'
   depositStatus(map):
     active: "Active"
-    matured: "Matured"
     closed: "Closed"
   oneTimeSchemeType(map):
     timeDeposit: "Time Deposit (TD)"
@@ -232,7 +231,7 @@ enums:
   maturityUrgency(map):
     normal: "Normal"
     maturingSoon: "Maturing Soon"
-    overdue: "Overdue"
+    matured: "Matured"
     closed: "Closed"
   maturityRelativeTime:
     maturingIn: "Maturing in $days d"

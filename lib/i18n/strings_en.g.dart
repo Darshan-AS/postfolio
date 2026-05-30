@@ -512,7 +512,6 @@ class TranslationsEnumsEn {
 	};
 	Map<String, String> get depositStatus => {
 		'active': 'Active',
-		'matured': 'Matured',
 		'closed': 'Closed',
 	};
 	Map<String, String> get oneTimeSchemeType => {
@@ -527,7 +526,7 @@ class TranslationsEnumsEn {
 	Map<String, String> get maturityUrgency => {
 		'normal': 'Normal',
 		'maturingSoon': 'Maturing Soon',
-		'overdue': 'Overdue',
+		'matured': 'Matured',
 		'closed': 'Closed',
 	};
 	late final TranslationsEnumsMaturityRelativeTimeEn maturityRelativeTime = TranslationsEnumsMaturityRelativeTimeEn.internal(_root);
@@ -1105,7 +1104,6 @@ extension on Translations {
 			'enums.payoutFrequency.quarterly' => 'Quarterly',
 			'enums.payoutFrequency.annually' => 'Annually',
 			'enums.depositStatus.active' => 'Active',
-			'enums.depositStatus.matured' => 'Matured',
 			'enums.depositStatus.closed' => 'Closed',
 			'enums.oneTimeSchemeType.timeDeposit' => 'Time Deposit (TD)',
 			'enums.oneTimeSchemeType.monthlyIncomeScheme' => 'Monthly Income Scheme (MIS)',
@@ -1114,7 +1112,7 @@ extension on Translations {
 			'enums.recurringSchemeType.recurringDeposit' => 'Recurring Deposit (RD)',
 			'enums.maturityUrgency.normal' => 'Normal',
 			'enums.maturityUrgency.maturingSoon' => 'Maturing Soon',
-			'enums.maturityUrgency.overdue' => 'Overdue',
+			'enums.maturityUrgency.matured' => 'Matured',
 			'enums.maturityUrgency.closed' => 'Closed',
 			'enums.maturityRelativeTime.maturingIn' => ({required Object days}) => 'Maturing in ${days} d',
 			'enums.maturityRelativeTime.maturingToday' => 'Maturing today',

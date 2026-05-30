@@ -5,7 +5,7 @@ import 'package:postfolio/i18n/strings.g.dart';
 enum MaturityUrgency {
   normal,
   maturingSoon,
-  overdue,
+  matured,
   closed;
 
   String get displayName => t.enums.maturityUrgency[name] ?? name;

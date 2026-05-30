@@ -213,14 +213,15 @@ class StatusBadge extends StatelessWidget {
     final Color bgColor;
     final Color fgColor;
 
-    if (urgency == MaturityUrgency.overdue ||
-        status.toLowerCase() == 'closed') {
+    if (urgency == MaturityUrgency.matured) {
       bgColor = colorScheme.errorContainer;
       fgColor = colorScheme.onErrorContainer;
-    } else if (urgency == MaturityUrgency.maturingSoon ||
-        status.toLowerCase() == 'matured') {
+    } else if (urgency == MaturityUrgency.maturingSoon) {
       bgColor = colorScheme.tertiaryContainer;
       fgColor = colorScheme.onTertiaryContainer;
+    } else if (status.toLowerCase() == 'closed') {
+      bgColor = colorScheme.surfaceVariant;
+      fgColor = colorScheme.onSurfaceVariant;
     } else {
       bgColor = colorScheme.primaryContainer;
       fgColor = colorScheme.onPrimaryContainer;
@@ -228,7 +229,7 @@ class StatusBadge extends StatelessWidget {
 
     final displayText =
         (urgency == MaturityUrgency.maturingSoon ||
-                urgency == MaturityUrgency.overdue) &&
+                urgency == MaturityUrgency.matured) &&
             relativeTimeText != null
         ? relativeTimeText!
         : status;

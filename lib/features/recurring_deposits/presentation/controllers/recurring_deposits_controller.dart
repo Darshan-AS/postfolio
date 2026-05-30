@@ -51,7 +51,7 @@ class RecurringListCriteria extends _$RecurringListCriteria {
 
   void clearFilters() {
     state = state.copyWith(
-      statusFilters: const [DepositStatus.active, DepositStatus.matured],
+      statusFilters: const [DepositStatus.active],
       urgencyFilters: const [],
     );
   }

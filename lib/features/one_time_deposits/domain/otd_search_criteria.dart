@@ -20,7 +20,7 @@ sealed class OTDSearchCriteria with _$OTDSearchCriteria {
   const factory OTDSearchCriteria({
     @Default('') String searchQuery,
     @Default(OTDSortOption.maturityAsc) OTDSortOption sortBy,
-    @Default([DepositStatus.active, DepositStatus.matured]) List<DepositStatus> statusFilters,
+    @Default([DepositStatus.active]) List<DepositStatus> statusFilters,
     @Default([]) List<MaturityUrgency> urgencyFilters,
     @Default([]) List<OneTimeSchemeType> schemeFilters,
   }) = _OTDSearchCriteria;

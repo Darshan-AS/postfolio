@@ -42,7 +42,7 @@ final class RecurringListCriteriaProvider
 }
 
 String _$recurringListCriteriaHash() =>
-    r'f1ff81f70edbb897abc3bc0558d64c9c8b6aaedc';
+    r'ec80ae244e29a7499cb936e2c7f9f1038eb13282';
 
 abstract class _$RecurringListCriteria extends $Notifier<RDSearchCriteria> {
   RDSearchCriteria build();

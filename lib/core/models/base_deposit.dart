@@ -66,8 +66,8 @@ extension BaseDepositMaturityUrgency on BaseDeposit {
     }
 
     // If it's past maturity date
-    if (daysUntilMaturity < 0 || status == DepositStatus.matured) {
-      return MaturityUrgency.overdue;
+    if (daysUntilMaturity < 0) {
+      return MaturityUrgency.matured;
     }
 
     return MaturityUrgency.normal;

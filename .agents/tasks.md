@@ -136,7 +136,7 @@
 - [ ] Add `maturityWarningDays` (default 7d) as a user preference so agents can customize their notification window.
 - [x] Highlight deposits based on maturity status:
   - [x] About to mature (computed via `maturityWarningDays` threshold)
-  - [x] Matured but not closed (overdue)
+  - [x] Matured but not closed (overdue) -> Renamed to `matured` in `MaturityUrgency`
   - [x] Completely closed
 - [ ] Redesign the leading visual element in deposit list tiles to replace the generic circular icons.
 - [ ] Apply distinct color coding to differentiate deposit types in list views.
