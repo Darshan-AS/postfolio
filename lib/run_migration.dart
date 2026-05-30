@@ -1,3 +1,4 @@
+import "package:postfolio/core/constants/app_constants.dart";
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,6 +8,9 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:csv/csv.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
+import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_colors.dart';
 
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
@@ -58,7 +62,7 @@ List<Nominee> _parseNominees(String name, String relation) {
     Nominee(
       name: name.trim(),
       relationship: _parseNomineeRelation(relation),
-      percentage: 100.0,
+      percentage: AppConstants.maxPercentage,
       customRelationship:
           _parseNomineeRelation(relation) == NomineeRelationship.other
           ? relation.trim()
@@ -171,9 +175,19 @@ class MigrationStats {
   @override
   String toString() {
     if (processed < csvTotal && processed > 0) {
-      return 'Batch: $processed/$csvTotal, Migrated: $migrated, Duplicates: $skippedDuplicate';
+      return t.migration.summaryBatch(
+        processed: processed,
+        total: csvTotal,
+        migrated: migrated,
+        duplicates: skippedDuplicate,
+      );
     }
-    return 'Total: $csvTotal, Migrated: $migrated, Missing Cust: $skippedMissingCustomer, Duplicates: $skippedDuplicate';
+    return t.migration.summaryAll(
+      total: csvTotal,
+      migrated: migrated,
+      missingCust: skippedMissingCustomer,
+      duplicates: skippedDuplicate,
+    );
   }
 }
 
@@ -423,7 +437,7 @@ Check your Firebase Local Emulator UI.
         _customerNameFallbackCache[name] = newId;
         migratedCount++;
 
-        if (migratedCount % 400 == 0) {
+        if (migratedCount % AppConstants.firestoreBatchLimit == 0) {
           await batch.commit();
           batch = firestore.batch();
         }
@@ -432,8 +446,9 @@ Check your Firebase Local Emulator UI.
       }
     }
 
-    if (migratedCount % 400 != 0 ||
-        (migratedCount > 0 && migratedCount < 400)) {
+    if (migratedCount % AppConstants.firestoreBatchLimit != 0 ||
+        (migratedCount > 0 &&
+            migratedCount < AppConstants.firestoreBatchLimit)) {
       await batch.commit();
     }
 
@@ -499,7 +514,7 @@ Check your Firebase Local Emulator UI.
           cache.add(accountNo);
           migratedCount++;
 
-          if (migratedCount % 400 == 0) {
+          if (migratedCount % AppConstants.firestoreBatchLimit == 0) {
             await batch.commit();
             batch = firestore.batch();
           }
@@ -511,8 +526,9 @@ Check your Firebase Local Emulator UI.
       }
     }
 
-    if (migratedCount % 400 != 0 ||
-        (migratedCount > 0 && migratedCount < 400)) {
+    if (migratedCount % AppConstants.firestoreBatchLimit != 0 ||
+        (migratedCount > 0 &&
+            migratedCount < AppConstants.firestoreBatchLimit)) {
       await batch.commit();
     }
 
@@ -528,44 +544,43 @@ Check your Firebase Local Emulator UI.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Emulator Migration Test')),
+      appBar: AppBar(title: Text(t.migration.title)),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(AppDimensions.paddingXl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextField(
                 controller: _uidController,
-                decoration: const InputDecoration(
-                  labelText: 'Target User ID (UID)',
-                  helperText:
-                      'Enter your Firebase Auth UID to migrate data into your account.',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: t.migration.targetUid,
+                  helperText: t.migration.targetUidHelper,
+                  border: const OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 16),
+              AppSpacings.gapLg,
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _countController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Batch Size',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: t.migration.batchSize,
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  AppSpacings.gapLg,
                   ElevatedButton.icon(
                     icon: const Icon(Icons.login),
-                    label: const Text('Sign In'),
+                    label: Text(t.migration.signIn),
                     onPressed: _isMigrating ? null : _signIn,
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              AppSpacings.gapXl,
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
@@ -580,34 +595,34 @@ Check your Firebase Local Emulator UI.
                             _runMigration(maxCustomers: count);
                           },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.surface,
                     ),
-                    child: const Text("Migrate Batch"),
+                    child: Text(t.migration.migrateBatch),
                   ),
                   ElevatedButton(
                     onPressed: _isMigrating
                         ? null
                         : () => _runMigration(maxCustomers: null),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.success,
+                      foregroundColor: AppColors.surface,
                     ),
-                    child: const Text("Migrate All"),
+                    child: Text(t.migration.migrateAll),
                   ),
                   ElevatedButton(
                     onPressed: _isMigrating ? null : _deleteAllData,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.error,
+                      foregroundColor: AppColors.surface,
                     ),
-                    child: const Text("Delete All"),
+                    child: Text(t.migration.deleteAll),
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+              AppSpacings.gapXxl,
               if (_isMigrating) const CircularProgressIndicator(),
-              const SizedBox(height: 16),
+              AppSpacings.gapLg,
               Text(
                 status,
                 style: const TextStyle(fontSize: 18),
@@ -615,12 +630,14 @@ Check your Firebase Local Emulator UI.
               ),
               if (statsDisplay.isNotEmpty)
                 Container(
-                  margin: const EdgeInsets.symmetric(vertical: 24),
-                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.symmetric(
+                    vertical: AppDimensions.paddingXl,
+                  ),
+                  padding: const EdgeInsets.all(AppDimensions.paddingLg),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[300]!),
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                    border: Border.all(color: AppColors.divider),
                   ),
                   child: SelectableText(
                     statsDisplay,

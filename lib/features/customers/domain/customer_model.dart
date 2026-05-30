@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/savings_account.dart';
+import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -44,8 +45,11 @@ sealed class Customer with _$Customer {
     if (name == null || name.trim().isEmpty) {
       return t.errors.requiredField(field: 'Name');
     }
-    if (name.trim().length < 2) {
-      return t.errors.minLength(field: 'Name', count: 2);
+    if (name.trim().length < AppConstants.minNameLength) {
+      return t.errors.minLength(
+        field: 'Name',
+        count: AppConstants.minNameLength,
+      );
     }
     return null;
   }
@@ -59,7 +63,13 @@ sealed class Customer with _$Customer {
 
   static String? validatePhone(String? phone) {
     if (phone == null || phone.trim().isEmpty) return null; // Optional field
-    final regex = RegExp(r'^\+?[0-9]{7,15}$');
+    final regex = RegExp(
+      r'^\+?[0-9]{'
+      '${AppConstants.phoneMinLength}'
+      ','
+      '${AppConstants.phoneMaxLength}'
+      r'}$',
+    );
     if (!regex.hasMatch(phone.trim())) {
       return t.errors.invalidPhone;
     }
@@ -69,7 +79,11 @@ sealed class Customer with _$Customer {
   static String? validateAadhaar(String? aadhaar) {
     if (aadhaar == null || aadhaar.trim().isEmpty) return null; // Optional
     final cleanAadhaar = aadhaar.replaceAll(RegExp(r'\s+'), '');
-    final regex = RegExp(r'^\d{12}$');
+    final regex = RegExp(
+      r'^\d{'
+      '${AppConstants.aadhaarLength}'
+      r'}$',
+    );
     if (!regex.hasMatch(cleanAadhaar)) return t.errors.invalidAadhaar;
     return null;
   }
@@ -84,7 +98,9 @@ sealed class Customer with _$Customer {
 
   static String? validateCif(String? cif) {
     if (cif == null || cif.trim().isEmpty) return null; // Optional
-    if (cif.trim().length < 9) return t.errors.invalidCif;
+    if (cif.trim().length < AppConstants.minCifLength) {
+      return t.errors.invalidCif;
+    }
     return null;
   }
 

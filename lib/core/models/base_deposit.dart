@@ -1,3 +1,4 @@
+import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
@@ -39,7 +40,7 @@ abstract interface class BaseDeposit {
   static String? validateInterestRate(double? rate, String fieldName) {
     if (rate == null) return t.errors.requiredField(field: fieldName);
     if (rate <= 0) return t.errors.greaterThanZero(field: fieldName);
-    if (rate > 100) {
+    if (rate > AppConstants.maxInterestRate) {
       return t.errors.invalidInterestRate;
     }
     return null;
@@ -52,7 +53,7 @@ extension BaseDepositMaturityUrgency on BaseDeposit {
       return MaturityUrgency.closed;
     }
 
-    // Check if maturing within 30 days
+    // Check if maturing within threshold days
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final maturity = DateTime(
@@ -62,7 +63,8 @@ extension BaseDepositMaturityUrgency on BaseDeposit {
     );
     final daysUntilMaturity = maturity.difference(today).inDays;
 
-    if (daysUntilMaturity >= 0 && daysUntilMaturity <= 30) {
+    if (daysUntilMaturity >= 0 &&
+        daysUntilMaturity <= AppConstants.maturingSoonThresholdDays) {
       return MaturityUrgency.maturingSoon;
     }
 
@@ -89,7 +91,9 @@ extension BaseDepositMaturityUrgency on BaseDeposit {
     } else if (daysUntilMaturity > 0) {
       return t.enums.maturityRelativeTime.maturingIn(days: daysUntilMaturity);
     } else {
-      return t.enums.maturityRelativeTime.maturedAgo(days: daysUntilMaturity.abs());
+      return t.enums.maturityRelativeTime.maturedAgo(
+        days: daysUntilMaturity.abs(),
+      );
     }
   }
 }

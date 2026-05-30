@@ -1,3 +1,4 @@
+import "package:postfolio/core/constants/app_constants.dart";
 import 'package:faker/faker.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
@@ -47,7 +48,7 @@ class FakeDataSource {
             (_) => Nominee(
               name: faker.person.name(),
               relationship: random.element(NomineeRelationship.values),
-              percentage: 100.0,
+              percentage: AppConstants.maxPercentage,
             ),
           ),
         ),
@@ -95,7 +96,7 @@ class FakeDataSource {
           (_) => Nominee(
             name: faker.person.name(),
             relationship: random.element(NomineeRelationship.values),
-            percentage: 100.0,
+            percentage: AppConstants.maxPercentage,
           ),
         ),
       );
@@ -127,7 +128,7 @@ class FakeDataSource {
           (_) => Nominee(
             name: faker.person.name(),
             relationship: random.element(NomineeRelationship.values),
-            percentage: 100.0,
+            percentage: AppConstants.maxPercentage,
           ),
         ),
       );

@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/constants/app_constants.dart';
 
 part 'nominee.freezed.dart';
 part 'nominee.g.dart';
@@ -54,7 +55,9 @@ sealed class Nominee with _$Nominee {
       : relationship.displayName;
 
   static String? validateName(String? name) {
-    if (name == null || name.trim().isEmpty) return 'Nominee name is required';
+    if (name == null || name.trim().isEmpty) {
+      return t.errors.requiredField(field: t.nominees.name);
+    }
     return null;
   }
 
@@ -64,16 +67,18 @@ sealed class Nominee with _$Nominee {
   ) {
     if (relationship == NomineeRelationship.other) {
       if (customRelation == null || customRelation.trim().isEmpty) {
-        return 'Custom relationship is required';
+        return t.errors.requiredField(field: t.nominees.customRelationship);
       }
     }
     return null;
   }
 
   static String? validatePercentage(double? percentage) {
-    if (percentage == null) return 'Percentage is required';
-    if (percentage <= 0 || percentage > 100) {
-      return 'Percentage must be between 0 and 100';
+    if (percentage == null) {
+      return t.errors.requiredField(field: t.nominees.percentage);
+    }
+    if (percentage <= 0 || percentage > AppConstants.maxPercentage) {
+      return t.errors.percentageRange;
     }
     return null;
   }
@@ -86,7 +91,7 @@ sealed class Nominee with _$Nominee {
       (sum, nominee) => sum + nominee.percentage,
     );
 
-    if (totalPercentage != 100.0) {
+    if (totalPercentage != AppConstants.maxPercentage) {
       return t.errors.nomineePercentageTotal;
     }
     return null;

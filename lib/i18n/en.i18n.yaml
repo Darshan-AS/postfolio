@@ -16,6 +16,7 @@ errors:
   invalidPan: "Invalid PAN number format (e.g. ABCDE1234F)"
   invalidCif: "CIF number must be at least 9 characters"
   invalidInterestRate: "Interest rate must be between 0 and 100"
+  percentageRange: "Percentage must be between 0 and 100"
 
 format:
   date: "dd MMM yyyy"
@@ -122,6 +123,7 @@ customers:
     nomineeName: "Nominee Name"
     relationship: "Relationship"
     percentage: "Percentage (%)"
+  customRelationship: "Custom Relationship"
 
 dashboard:
   charts: "Dashboard Charts Go Here"
@@ -207,6 +209,7 @@ nominees:
   name: "Nominee Name"
   relationship: "Relationship"
   percentage: "Percentage (%)"
+  customRelationship: "Custom Relationship"
   noNominees: "No nominees added yet."
 
 enums:
@@ -266,3 +269,16 @@ auth:
   signInWithGoogle: "Sign in with Google"
   tryDemoMode: "Try Demo Mode"
   signOut: "Sign Out"
+
+migration:
+  title: "Emulator Migration Test"
+  signIn: "Sign In"
+  migrateBatch: "Migrate Batch"
+  migrateAll: "Migrate All"
+  deleteAll: "Delete All"
+  summaryBatch: "Batch: ${processed}/${total}, Migrated: ${migrated}, Duplicates: ${duplicates}"
+  summaryAll: "Total: ${total}, Migrated: ${migrated}, Missing Cust: ${missingCust}, Duplicates: ${duplicates}"
+  targetUid: "Target User ID (UID)"
+  targetUidHelper: "Enter your Firebase Auth UID to migrate data into your account."
+  batchSize: "Batch Size"
+

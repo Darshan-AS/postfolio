@@ -5,6 +5,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/app_form_fields.dart';
+import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class NomineesInputSection extends HookWidget {
@@ -23,7 +24,7 @@ class NomineesInputSection extends HookWidget {
       const Nominee(
         name: '',
         relationship: NomineeRelationship.other,
-        percentage: 100,
+        percentage: AppConstants.maxPercentage,
       ),
     ]);
   }
@@ -136,7 +137,8 @@ class _NomineeItemForm extends HookWidget {
         }
         if (percentageController.text != nominee.percentage.toString() &&
             nominee.percentage !=
-                (double.tryParse(percentageController.text) ?? 100)) {
+                (double.tryParse(percentageController.text) ??
+                    AppConstants.maxPercentage)) {
           percentageController.text = nominee.percentage.toString();
         }
       });
@@ -152,7 +154,9 @@ class _NomineeItemForm extends HookWidget {
               relationshipState.value == NomineeRelationship.other
               ? customRelationshipController.text.trim()
               : null,
-          percentage: double.tryParse(percentageController.text.trim()) ?? 100,
+          percentage:
+              double.tryParse(percentageController.text.trim()) ??
+              AppConstants.maxPercentage,
         ),
       );
     }
@@ -288,7 +292,7 @@ Widget _buildCustomRelationshipField({
     onChanged: (_) => onChanged(),
     validator: (val) {
       if (val == null || val.trim().isEmpty) {
-        return 'Relationship is required';
+        return t.errors.requiredField(field: t.nominees.relationship);
       }
       return null;
     },

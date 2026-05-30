@@ -58,6 +58,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsNomineesEn nominees = TranslationsNomineesEn.internal(_root);
 	late final TranslationsEnumsEn enums = TranslationsEnumsEn.internal(_root);
 	late final TranslationsAuthEn auth = TranslationsAuthEn.internal(_root);
+	late final TranslationsMigrationEn migration = TranslationsMigrationEn.internal(_root);
 }
 
 // Path: errors
@@ -112,6 +113,9 @@ class TranslationsErrorsEn {
 
 	/// en: 'Interest rate must be between 0 and 100'
 	String get invalidInterestRate => 'Interest rate must be between 0 and 100';
+
+	/// en: 'Percentage must be between 0 and 100'
+	String get percentageRange => 'Percentage must be between 0 and 100';
 }
 
 // Path: format
@@ -343,6 +347,9 @@ class TranslationsCustomersEn {
 	late final TranslationsCustomersActionsEn actions = TranslationsCustomersActionsEn.internal(_root);
 	late final TranslationsCustomersSectionsEn sections = TranslationsCustomersSectionsEn.internal(_root);
 	late final TranslationsCustomersFieldsEn fields = TranslationsCustomersFieldsEn.internal(_root);
+
+	/// en: 'Custom Relationship'
+	String get customRelationship => 'Custom Relationship';
 }
 
 // Path: dashboard
@@ -482,6 +489,9 @@ class TranslationsNomineesEn {
 	/// en: 'Percentage (%)'
 	String get percentage => 'Percentage (%)';
 
+	/// en: 'Custom Relationship'
+	String get customRelationship => 'Custom Relationship';
+
 	/// en: 'No nominees added yet.'
 	String get noNominees => 'No nominees added yet.';
 }
@@ -569,6 +579,45 @@ class TranslationsAuthEn {
 
 	/// en: 'Sign Out'
 	String get signOut => 'Sign Out';
+}
+
+// Path: migration
+class TranslationsMigrationEn {
+	TranslationsMigrationEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Emulator Migration Test'
+	String get title => 'Emulator Migration Test';
+
+	/// en: 'Sign In'
+	String get signIn => 'Sign In';
+
+	/// en: 'Migrate Batch'
+	String get migrateBatch => 'Migrate Batch';
+
+	/// en: 'Migrate All'
+	String get migrateAll => 'Migrate All';
+
+	/// en: 'Delete All'
+	String get deleteAll => 'Delete All';
+
+	/// en: 'Batch: ${processed}/${total}, Migrated: ${migrated}, Duplicates: ${duplicates}'
+	String summaryBatch({required Object processed, required Object total, required Object migrated, required Object duplicates}) => 'Batch: ${processed}/${total}, Migrated: ${migrated}, Duplicates: ${duplicates}';
+
+	/// en: 'Total: ${total}, Migrated: ${migrated}, Missing Cust: ${missingCust}, Duplicates: ${duplicates}'
+	String summaryAll({required Object total, required Object migrated, required Object missingCust, required Object duplicates}) => 'Total: ${total}, Migrated: ${migrated}, Missing Cust: ${missingCust}, Duplicates: ${duplicates}';
+
+	/// en: 'Target User ID (UID)'
+	String get targetUid => 'Target User ID (UID)';
+
+	/// en: 'Enter your Firebase Auth UID to migrate data into your account.'
+	String get targetUidHelper => 'Enter your Firebase Auth UID to migrate data into your account.';
+
+	/// en: 'Batch Size'
+	String get batchSize => 'Batch Size';
 }
 
 // Path: common.duration
@@ -895,6 +944,7 @@ extension on Translations {
 			'errors.invalidPan' => 'Invalid PAN number format (e.g. ABCDE1234F)',
 			'errors.invalidCif' => 'CIF number must be at least 9 characters',
 			'errors.invalidInterestRate' => 'Interest rate must be between 0 and 100',
+			'errors.percentageRange' => 'Percentage must be between 0 and 100',
 			'format.date' => 'dd MMM yyyy',
 			'format.dateCompact' => 'dd/MM/yyyy',
 			'format.dateTime' => 'dd MMM yyyy, hh:mm a',
@@ -979,6 +1029,7 @@ extension on Translations {
 			'customers.fields.nomineeName' => 'Nominee Name',
 			'customers.fields.relationship' => 'Relationship',
 			'customers.fields.percentage' => 'Percentage (%)',
+			'customers.customRelationship' => 'Custom Relationship',
 			'dashboard.charts' => 'Dashboard Charts Go Here',
 			'oneTimeDeposits.title' => 'One-Time Deposits',
 			'oneTimeDeposits.newDeposit' => 'New Deposit',
@@ -1048,6 +1099,7 @@ extension on Translations {
 			'nominees.name' => 'Nominee Name',
 			'nominees.relationship' => 'Relationship',
 			'nominees.percentage' => 'Percentage (%)',
+			'nominees.customRelationship' => 'Custom Relationship',
 			'nominees.noNominees' => 'No nominees added yet.',
 			'enums.payoutFrequency.monthly' => 'Monthly',
 			'enums.payoutFrequency.quarterly' => 'Quarterly',
@@ -1096,6 +1148,16 @@ extension on Translations {
 			'auth.signInWithGoogle' => 'Sign in with Google',
 			'auth.tryDemoMode' => 'Try Demo Mode',
 			'auth.signOut' => 'Sign Out',
+			'migration.title' => 'Emulator Migration Test',
+			'migration.signIn' => 'Sign In',
+			'migration.migrateBatch' => 'Migrate Batch',
+			'migration.migrateAll' => 'Migrate All',
+			'migration.deleteAll' => 'Delete All',
+			'migration.summaryBatch' => ({required Object processed, required Object total, required Object migrated, required Object duplicates}) => 'Batch: ${processed}/${total}, Migrated: ${migrated}, Duplicates: ${duplicates}',
+			'migration.summaryAll' => ({required Object total, required Object migrated, required Object missingCust, required Object duplicates}) => 'Total: ${total}, Migrated: ${migrated}, Missing Cust: ${missingCust}, Duplicates: ${duplicates}',
+			'migration.targetUid' => 'Target User ID (UID)',
+			'migration.targetUidHelper' => 'Enter your Firebase Auth UID to migrate data into your account.',
+			'migration.batchSize' => 'Batch Size',
 			_ => null,
 		};
 	}
