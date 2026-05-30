@@ -220,13 +220,13 @@ class RecurringDepositsScreen extends HookConsumerWidget {
                 customerByIdProvider(deposit.customerId),
               );
               final customerName =
-                  customerAsync.value?.name ?? deposit.accountNo;
+                  customerAsync.value?.name ?? (deposit.accountNo ?? t.common.notProvided);
 
               return RecurringDepositCard(
                 title: customerName,
                 subtitle: (deposit.serialNo?.isNotEmpty ?? false)
-                    ? '(${deposit.serialNo}) ${deposit.accountNo}'
-                    : deposit.accountNo,
+                    ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
+                    : (deposit.accountNo ?? t.common.notProvided),
                 installmentAmount: deposit.installmentAmount,
                 status: deposit.status,
                 urgency: deposit.maturityUrgency,
@@ -280,8 +280,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
         itemBuilder: (context, index) {
           final dummy = RecurringDeposit.dummy;
           return RecurringDepositCard(
-            title: dummy.accountNo,
-            subtitle: dummy.accountNo,
+            title: dummy.accountNo ?? '...',
+            subtitle: dummy.accountNo ?? '...',
             installmentAmount: dummy.installmentAmount,
             status: dummy.status,
             urgency: MaturityUrgency.normal,

@@ -232,11 +232,11 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                 customerByIdProvider(deposit.customerId),
               );
               final customerName =
-                  customerAsync.value?.name ?? deposit.accountNo;
+                  customerAsync.value?.name ?? (deposit.accountNo ?? t.common.notProvided);
 
               return OneTimeDepositCard(
                 title: customerName,
-                subtitle: deposit.accountNo,
+                subtitle: deposit.accountNo ?? t.common.notProvided,
                 principalAmount: deposit.principalAmount,
                 status: deposit.status,
                 urgency: deposit.maturityUrgency,
@@ -289,8 +289,8 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
         itemBuilder: (context, index) {
           final dummy = OneTimeDeposit.dummy;
           return OneTimeDepositCard(
-            title: dummy.accountNo,
-            subtitle: dummy.accountNo,
+            title: dummy.accountNo ?? '...',
+            subtitle: dummy.accountNo ?? '...',
             principalAmount: dummy.principalAmount,
             status: dummy.status,
             urgency: MaturityUrgency.normal,

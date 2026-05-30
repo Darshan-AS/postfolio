@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$OneTimeDeposit {
 
- String get id; String get accountNo; double get principalAmount; int get termYears; int get termMonths; double get interestRate; String get customerId; OneTimeSchemeType get schemeType; DateTime get startDate; String? get linkedSavingsAccountNo; List<Nominee> get nominees; DepositStatus get status;
+ String get id; String? get accountNo; double get principalAmount; int get termYears; int get termMonths; double get interestRate; String get customerId; OneTimeSchemeType get schemeType; DateTime get startDate; String? get linkedSavingsAccountNo; List<Nominee> get nominees; DepositStatus get status;
 /// Create a copy of OneTimeDeposit
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $OneTimeDepositCopyWith<$Res>  {
   factory $OneTimeDepositCopyWith(OneTimeDeposit value, $Res Function(OneTimeDeposit) _then) = _$OneTimeDepositCopyWithImpl;
 @useResult
 $Res call({
- String id, String accountNo, double principalAmount, int termYears, int termMonths, double interestRate, String customerId, OneTimeSchemeType schemeType, DateTime startDate, String? linkedSavingsAccountNo, List<Nominee> nominees, DepositStatus status
+ String id, String? accountNo, double principalAmount, int termYears, int termMonths, double interestRate, String customerId, OneTimeSchemeType schemeType, DateTime startDate, String? linkedSavingsAccountNo, List<Nominee> nominees, DepositStatus status
 });
 
 
@@ -65,11 +65,11 @@ class _$OneTimeDepositCopyWithImpl<$Res>
 
 /// Create a copy of OneTimeDeposit
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? accountNo = null,Object? principalAmount = null,Object? termYears = null,Object? termMonths = null,Object? interestRate = null,Object? customerId = null,Object? schemeType = null,Object? startDate = null,Object? linkedSavingsAccountNo = freezed,Object? nominees = null,Object? status = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? accountNo = freezed,Object? principalAmount = null,Object? termYears = null,Object? termMonths = null,Object? interestRate = null,Object? customerId = null,Object? schemeType = null,Object? startDate = null,Object? linkedSavingsAccountNo = freezed,Object? nominees = null,Object? status = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,accountNo: null == accountNo ? _self.accountNo : accountNo // ignore: cast_nullable_to_non_nullable
-as String,principalAmount: null == principalAmount ? _self.principalAmount : principalAmount // ignore: cast_nullable_to_non_nullable
+as String,accountNo: freezed == accountNo ? _self.accountNo : accountNo // ignore: cast_nullable_to_non_nullable
+as String?,principalAmount: null == principalAmount ? _self.principalAmount : principalAmount // ignore: cast_nullable_to_non_nullable
 as double,termYears: null == termYears ? _self.termYears : termYears // ignore: cast_nullable_to_non_nullable
 as int,termMonths: null == termMonths ? _self.termMonths : termMonths // ignore: cast_nullable_to_non_nullable
 as int,interestRate: null == interestRate ? _self.interestRate : interestRate // ignore: cast_nullable_to_non_nullable
@@ -161,7 +161,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String accountNo,  double principalAmount,  int termYears,  int termMonths,  double interestRate,  String customerId,  OneTimeSchemeType schemeType,  DateTime startDate,  String? linkedSavingsAccountNo,  List<Nominee> nominees,  DepositStatus status)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? accountNo,  double principalAmount,  int termYears,  int termMonths,  double interestRate,  String customerId,  OneTimeSchemeType schemeType,  DateTime startDate,  String? linkedSavingsAccountNo,  List<Nominee> nominees,  DepositStatus status)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OneTimeDeposit() when $default != null:
 return $default(_that.id,_that.accountNo,_that.principalAmount,_that.termYears,_that.termMonths,_that.interestRate,_that.customerId,_that.schemeType,_that.startDate,_that.linkedSavingsAccountNo,_that.nominees,_that.status);case _:
@@ -182,7 +182,7 @@ return $default(_that.id,_that.accountNo,_that.principalAmount,_that.termYears,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String accountNo,  double principalAmount,  int termYears,  int termMonths,  double interestRate,  String customerId,  OneTimeSchemeType schemeType,  DateTime startDate,  String? linkedSavingsAccountNo,  List<Nominee> nominees,  DepositStatus status)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? accountNo,  double principalAmount,  int termYears,  int termMonths,  double interestRate,  String customerId,  OneTimeSchemeType schemeType,  DateTime startDate,  String? linkedSavingsAccountNo,  List<Nominee> nominees,  DepositStatus status)  $default,) {final _that = this;
 switch (_that) {
 case _OneTimeDeposit():
 return $default(_that.id,_that.accountNo,_that.principalAmount,_that.termYears,_that.termMonths,_that.interestRate,_that.customerId,_that.schemeType,_that.startDate,_that.linkedSavingsAccountNo,_that.nominees,_that.status);}
@@ -199,7 +199,7 @@ return $default(_that.id,_that.accountNo,_that.principalAmount,_that.termYears,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String accountNo,  double principalAmount,  int termYears,  int termMonths,  double interestRate,  String customerId,  OneTimeSchemeType schemeType,  DateTime startDate,  String? linkedSavingsAccountNo,  List<Nominee> nominees,  DepositStatus status)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? accountNo,  double principalAmount,  int termYears,  int termMonths,  double interestRate,  String customerId,  OneTimeSchemeType schemeType,  DateTime startDate,  String? linkedSavingsAccountNo,  List<Nominee> nominees,  DepositStatus status)?  $default,) {final _that = this;
 switch (_that) {
 case _OneTimeDeposit() when $default != null:
 return $default(_that.id,_that.accountNo,_that.principalAmount,_that.termYears,_that.termMonths,_that.interestRate,_that.customerId,_that.schemeType,_that.startDate,_that.linkedSavingsAccountNo,_that.nominees,_that.status);case _:
@@ -214,11 +214,11 @@ return $default(_that.id,_that.accountNo,_that.principalAmount,_that.termYears,_
 @JsonSerializable()
 
 class _OneTimeDeposit extends OneTimeDeposit {
-  const _OneTimeDeposit({required this.id, required this.accountNo, required this.principalAmount, required this.termYears, required this.termMonths, required this.interestRate, required this.customerId, required this.schemeType, required this.startDate, this.linkedSavingsAccountNo, final  List<Nominee> nominees = const [], this.status = DepositStatus.active}): _nominees = nominees,super._();
+  const _OneTimeDeposit({required this.id, this.accountNo, required this.principalAmount, required this.termYears, required this.termMonths, required this.interestRate, required this.customerId, required this.schemeType, required this.startDate, this.linkedSavingsAccountNo, final  List<Nominee> nominees = const [], this.status = DepositStatus.active}): _nominees = nominees,super._();
   factory _OneTimeDeposit.fromJson(Map<String, dynamic> json) => _$OneTimeDepositFromJson(json);
 
 @override final  String id;
-@override final  String accountNo;
+@override final  String? accountNo;
 @override final  double principalAmount;
 @override final  int termYears;
 @override final  int termMonths;
@@ -269,7 +269,7 @@ abstract mixin class _$OneTimeDepositCopyWith<$Res> implements $OneTimeDepositCo
   factory _$OneTimeDepositCopyWith(_OneTimeDeposit value, $Res Function(_OneTimeDeposit) _then) = __$OneTimeDepositCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String accountNo, double principalAmount, int termYears, int termMonths, double interestRate, String customerId, OneTimeSchemeType schemeType, DateTime startDate, String? linkedSavingsAccountNo, List<Nominee> nominees, DepositStatus status
+ String id, String? accountNo, double principalAmount, int termYears, int termMonths, double interestRate, String customerId, OneTimeSchemeType schemeType, DateTime startDate, String? linkedSavingsAccountNo, List<Nominee> nominees, DepositStatus status
 });
 
 
@@ -286,11 +286,11 @@ class __$OneTimeDepositCopyWithImpl<$Res>
 
 /// Create a copy of OneTimeDeposit
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? accountNo = null,Object? principalAmount = null,Object? termYears = null,Object? termMonths = null,Object? interestRate = null,Object? customerId = null,Object? schemeType = null,Object? startDate = null,Object? linkedSavingsAccountNo = freezed,Object? nominees = null,Object? status = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? accountNo = freezed,Object? principalAmount = null,Object? termYears = null,Object? termMonths = null,Object? interestRate = null,Object? customerId = null,Object? schemeType = null,Object? startDate = null,Object? linkedSavingsAccountNo = freezed,Object? nominees = null,Object? status = null,}) {
   return _then(_OneTimeDeposit(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,accountNo: null == accountNo ? _self.accountNo : accountNo // ignore: cast_nullable_to_non_nullable
-as String,principalAmount: null == principalAmount ? _self.principalAmount : principalAmount // ignore: cast_nullable_to_non_nullable
+as String,accountNo: freezed == accountNo ? _self.accountNo : accountNo // ignore: cast_nullable_to_non_nullable
+as String?,principalAmount: null == principalAmount ? _self.principalAmount : principalAmount // ignore: cast_nullable_to_non_nullable
 as double,termYears: null == termYears ? _self.termYears : termYears // ignore: cast_nullable_to_non_nullable
 as int,termMonths: null == termMonths ? _self.termMonths : termMonths // ignore: cast_nullable_to_non_nullable
 as int,interestRate: null == interestRate ? _self.interestRate : interestRate // ignore: cast_nullable_to_non_nullable

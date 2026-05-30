@@ -90,7 +90,7 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
     final query = criteria.searchQuery.toLowerCase().trim();
     result = result.where((d) {
       final customerName = customerMap[d.customerId]?.toLowerCase() ?? '';
-      return d.accountNo.toLowerCase().contains(query) ||
+      return (d.accountNo?.toLowerCase().contains(query) ?? false) ||
           customerName.contains(query) ||
           d.schemeType.displayName.toLowerCase().contains(query) ||
           (d.serialNo?.toLowerCase().contains(query) ?? false);
@@ -170,7 +170,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
   Future<Result<void, String>> saveRecurringDeposit({
     String? id,
     String? serialNo,
-    required String accountNo,
+    String? accountNo,
     required double installmentAmount,
     required int termYears,
     required int termMonths,

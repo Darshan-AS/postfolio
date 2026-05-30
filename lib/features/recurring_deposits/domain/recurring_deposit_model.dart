@@ -18,7 +18,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   const factory RecurringDeposit({
     required String id,
     String? serialNo,
-    required String accountNo,
+    String? accountNo,
     required double installmentAmount,
     required int termYears,
     required int termMonths,
@@ -79,7 +79,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   static Result<RecurringDeposit, String> create({
     required String id,
     String? serialNo,
-    required String accountNo,
+    String? accountNo,
     required double installmentAmount,
     required int termYears,
     required int termMonths,
@@ -124,7 +124,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
       RecurringDeposit(
         id: id,
         serialNo: serialNo?.trim().isEmpty == true ? null : serialNo?.trim(),
-        accountNo: accountNo.trim(),
+        accountNo: accountNo?.trim(),
         installmentAmount: installmentAmount,
         termYears: termYears,
         termMonths: termMonths,

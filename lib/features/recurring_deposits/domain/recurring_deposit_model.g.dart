@@ -10,7 +10,7 @@ _RecurringDeposit _$RecurringDepositFromJson(Map<String, dynamic> json) =>
     _RecurringDeposit(
       id: json['id'] as String,
       serialNo: json['serialNo'] as String?,
-      accountNo: json['accountNo'] as String,
+      accountNo: json['accountNo'] as String?,
       installmentAmount: (json['installmentAmount'] as num).toDouble(),
       termYears: (json['termYears'] as num).toInt(),
       termMonths: (json['termMonths'] as num).toInt(),

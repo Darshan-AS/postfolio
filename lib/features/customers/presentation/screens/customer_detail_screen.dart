@@ -272,7 +272,7 @@ class _CustomerDepositsSection extends ConsumerWidget {
                     Column(
                       children: [
                         OneTimeDepositCard(
-                          title: deposit.accountNo,
+                          title: deposit.accountNo ?? t.common.notProvided,
                           subtitle: deposit.maturityDate.toAppFormat(),
                           principalAmount: deposit.principalAmount,
                           status: deposit.status,
@@ -320,8 +320,8 @@ class _CustomerDepositsSection extends ConsumerWidget {
                       children: [
                         RecurringDepositCard(
                           title: (deposit.serialNo?.isNotEmpty ?? false)
-                              ? '(${deposit.serialNo}) ${deposit.accountNo}'
-                              : deposit.accountNo,
+                              ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
+                              : (deposit.accountNo ?? t.common.notProvided),
                           subtitle: deposit.maturityDate.toAppFormat(),
                           installmentAmount: deposit.installmentAmount,
                           status: deposit.status,

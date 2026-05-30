@@ -137,7 +137,9 @@ class _RecurringDepositForm extends HookConsumerWidget {
               serialNo: serialNoController.text.trim().isEmpty
                   ? null
                   : serialNoController.text.trim(),
-              accountNo: accountNoController.text.trim(),
+              accountNo: accountNoController.text.trim().isEmpty
+                  ? null
+                  : accountNoController.text.trim(),
               installmentAmount:
                   double.tryParse(installmentAmountController.text.trim()) ??
                   0.0,
@@ -256,7 +258,6 @@ List<Widget> _buildAccountInformation({
         icon: HugeIcons.strokeRoundedTicket01,
         size: AppDimensions.iconMd,
       ),
-      isRequired: true,
       validator: RecurringDeposit.validateAccountNo,
       textInputAction: TextInputAction.next,
     ),

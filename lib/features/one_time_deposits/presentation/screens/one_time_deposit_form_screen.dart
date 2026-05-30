@@ -151,7 +151,9 @@ class _OneTimeDepositForm extends HookConsumerWidget {
             .read(oneTimeDepositsControllerProvider.notifier)
             .saveOneTimeDeposit(
               id: deposit?.id,
-              accountNo: accountNoController.text.trim(),
+              accountNo: accountNoController.text.trim().isEmpty
+                  ? null
+                  : accountNoController.text.trim(),
               principalAmount:
                   double.tryParse(principalAmountController.text.trim()) ?? 0.0,
               termYears: selectedTermYears.value,
@@ -255,7 +257,6 @@ List<Widget> _buildAccountInformation({
         icon: HugeIcons.strokeRoundedTicket01,
         size: AppDimensions.iconMd,
       ),
-      isRequired: true,
       validator: OneTimeDeposit.validateAccountNo,
       textInputAction: TextInputAction.next,
     ),

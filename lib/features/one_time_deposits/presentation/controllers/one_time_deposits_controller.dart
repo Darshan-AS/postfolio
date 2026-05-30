@@ -107,7 +107,7 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
     final query = criteria.searchQuery.toLowerCase().trim();
     result = result.where((d) {
       final customerName = customerMap[d.customerId]?.toLowerCase() ?? '';
-      return d.accountNo.toLowerCase().contains(query) ||
+      return (d.accountNo?.toLowerCase().contains(query) ?? false) ||
           customerName.contains(query) ||
           d.schemeType.displayName.toLowerCase().contains(query);
     }).toList();
@@ -164,7 +164,7 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
 
   Future<Result<void, String>> saveOneTimeDeposit({
     String? id,
-    required String accountNo,
+    String? accountNo,
     required double principalAmount,
     required int termYears,
     required int termMonths,

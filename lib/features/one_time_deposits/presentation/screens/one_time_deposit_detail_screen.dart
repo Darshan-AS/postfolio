@@ -51,7 +51,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
               size: AppDimensions.iconLg,
             ),
-            title: deposit!.accountNo,
+            title: deposit!.accountNo ?? t.common.notProvided,
             subtitle: Text(
               deposit.schemeType.displayName,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(

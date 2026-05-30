@@ -121,8 +121,10 @@ Customer _parseCustomer(List<dynamic> row, String id) {
 OneTimeDeposit _parseOneTimeDeposit(List<dynamic> row, String customerId) {
   final accountNo = row[0].toString().trim();
   return OneTimeDeposit(
-    id: accountNo.replaceAll('/', '-'), // Sanitize for Firestore ID
-    accountNo: accountNo,
+    id: accountNo.isEmpty
+        ? const Uuid().v4()
+        : accountNo.replaceAll('/', '-'), // Sanitize for Firestore ID
+    accountNo: accountNo.isEmpty ? null : accountNo,
     principalAmount: _parseCurrency(row.length > 1 ? row[1].toString() : ''),
     termYears:
         int.tryParse(row.length > 2 ? row[2].toString().trim() : '') ?? 0,
@@ -143,9 +145,11 @@ OneTimeDeposit _parseOneTimeDeposit(List<dynamic> row, String customerId) {
 RecurringDeposit _parseRecurringDeposit(List<dynamic> row, String customerId) {
   final accountNo = row[1].toString().trim();
   return RecurringDeposit(
-    id: accountNo.replaceAll('/', '-'), // Sanitize for Firestore ID
+    id: accountNo.isEmpty
+        ? const Uuid().v4()
+        : accountNo.replaceAll('/', '-'), // Sanitize for Firestore ID
     serialNo: row[0].toString().trim(),
-    accountNo: accountNo,
+    accountNo: accountNo.isEmpty ? null : accountNo,
     installmentAmount: _parseCurrency(row.length > 2 ? row[2].toString() : ''),
     termYears:
         int.tryParse(row.length > 3 ? row[3].toString().trim() : '') ??
@@ -630,8 +634,8 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                 decoration: BoxDecoration(
                   color:
                       useFirebaseEmulator
-                          ? AppColors.success.withOpacity(0.1)
-                          : AppColors.error.withOpacity(0.1),
+                          ? AppColors.success.withValues(alpha: 0.1)
+                          : AppColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   border: Border.all(
                     color:

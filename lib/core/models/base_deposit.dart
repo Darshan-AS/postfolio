@@ -7,7 +7,7 @@ import 'package:postfolio/i18n/strings.g.dart';
 
 abstract interface class BaseDeposit {
   String get id;
-  String get accountNo;
+  String? get accountNo;
   int get termYears;
   int get termMonths;
   double get interestRate;
@@ -20,9 +20,6 @@ abstract interface class BaseDeposit {
   DepositStatus get status;
 
   static String? validateAccountNo(String? accountNo) {
-    if (accountNo == null || accountNo.trim().isEmpty) {
-      return t.errors.requiredField(field: 'Account number');
-    }
     return null;
   }
 
