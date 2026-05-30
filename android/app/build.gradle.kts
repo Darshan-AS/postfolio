@@ -33,11 +33,25 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        val keystoreFile = file("debug.keystore")
+        if (keystoreFile.exists()) {
+            create("injected_debug") {
+                storeFile = keystoreFile
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (file("debug.keystore").exists()) {
+                signingConfigs.getByName("injected_debug")
+            } else {
+                signingConfigs.getByName("debug") // Local fallback
+            }
         }
     }
 }
