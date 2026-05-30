@@ -94,7 +94,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
           if (searchVisible.value) ...[
             AppSpacings.gapSm,
             AppSearchBar(
-              hintText: t.customers.searchHint,
+              hintText: t.oneTimeDeposits.searchHint,
               onChanged: (val) => ref
                   .read(oneTimeListCriteriaProvider.notifier)
                   .updateSearch(val),

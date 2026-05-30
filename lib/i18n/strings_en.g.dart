@@ -219,8 +219,8 @@ class TranslationsSortingEn {
 		'nameAsc': 'Name (A-Z)',
 		'nameDesc': 'Name (Z-A)',
 		'highestAmount': 'Highest Amount',
-		'maturityAsc': 'Maturity (Soonest First)',
-		'maturityDesc': 'Maturity (Furthest First)',
+		'maturityAsc': 'Maturity (Sooner)',
+		'maturityDesc': 'Maturity (Later)',
 	};
 }
 
@@ -322,8 +322,8 @@ class TranslationsCustomersEn {
 	/// en: 'Select Customer'
 	String get selectCustomer => 'Select Customer';
 
-	/// en: 'Search by name, phone or CIF...'
-	String get searchHint => 'Search by name, phone or CIF...';
+	/// en: 'Search by name, phone, CIF, Aadhaar or PAN...'
+	String get searchHint => 'Search by name, phone, CIF, Aadhaar or PAN...';
 
 	/// en: 'Customer not found'
 	String get customerNotFound => 'Customer not found';
@@ -383,6 +383,9 @@ class TranslationsOneTimeDepositsEn {
 	/// en: 'Deposit not found'
 	String get depositNotFound => 'Deposit not found';
 
+	/// en: 'Search by account, customer or scheme...'
+	String get searchHint => 'Search by account, customer or scheme...';
+
 	/// en: 'Delete Deposit'
 	String get deleteDeposit => 'Delete Deposit';
 
@@ -427,6 +430,9 @@ class TranslationsRecurringDepositsEn {
 
 	/// en: 'RD not found'
 	String get depositNotFound => 'RD not found';
+
+	/// en: 'Search by account, serial, customer or scheme...'
+	String get searchHint => 'Search by account, serial, customer or scheme...';
 
 	/// en: 'Delete RD'
 	String get deleteDeposit => 'Delete RD';
@@ -896,8 +902,8 @@ extension on Translations {
 			'sorting.options.nameAsc' => 'Name (A-Z)',
 			'sorting.options.nameDesc' => 'Name (Z-A)',
 			'sorting.options.highestAmount' => 'Highest Amount',
-			'sorting.options.maturityAsc' => 'Maturity (Soonest First)',
-			'sorting.options.maturityDesc' => 'Maturity (Furthest First)',
+			'sorting.options.maturityAsc' => 'Maturity (Sooner)',
+			'sorting.options.maturityDesc' => 'Maturity (Later)',
 			'filters.title' => 'Filters',
 			'filters.status' => 'Status',
 			'projection.title' => 'Live Projection',
@@ -919,7 +925,7 @@ extension on Translations {
 			'customers.saveCustomer' => 'Save Customer',
 			'customers.noCustomersFound' => 'No customers found. Add one!',
 			'customers.selectCustomer' => 'Select Customer',
-			'customers.searchHint' => 'Search by name, phone or CIF...',
+			'customers.searchHint' => 'Search by name, phone, CIF, Aadhaar or PAN...',
 			'customers.customerNotFound' => 'Customer not found',
 			'customers.deleteCustomer' => 'Delete Customer',
 			'customers.deleteCustomerConfirmation' => 'Are you sure you want to delete this customer?',
@@ -955,6 +961,7 @@ extension on Translations {
 			'oneTimeDeposits.saveDeposit' => 'Save Deposit',
 			'oneTimeDeposits.noDepositsFound' => 'No one-time deposits found. Add one!',
 			'oneTimeDeposits.depositNotFound' => 'Deposit not found',
+			'oneTimeDeposits.searchHint' => 'Search by account, customer or scheme...',
 			'oneTimeDeposits.deleteDeposit' => 'Delete Deposit',
 			'oneTimeDeposits.deleteDepositConfirmation' => 'Are you sure you want to delete this deposit?',
 			'oneTimeDeposits.failedToSaveDeposit' => ({required Object error}) => 'Failed to save deposit: ${error}',
@@ -985,6 +992,7 @@ extension on Translations {
 			'recurringDeposits.saveDeposit' => 'Save RD',
 			'recurringDeposits.noDepositsFound' => 'No recurring deposits found. Add one!',
 			'recurringDeposits.depositNotFound' => 'RD not found',
+			'recurringDeposits.searchHint' => 'Search by account, serial, customer or scheme...',
 			'recurringDeposits.deleteDeposit' => 'Delete RD',
 			'recurringDeposits.deleteDepositConfirmation' => 'Are you sure you want to delete this RD?',
 			'recurringDeposits.failedToSaveDeposit' => ({required Object error}) => 'Failed to save RD: ${error}',
