@@ -4,6 +4,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:postfolio/core/routing/app_router.dart';
+import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
@@ -63,9 +64,13 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
             },
           ),
           IconButton(
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedSorting01,
-              size: AppDimensions.iconMd,
+            icon: Badge(
+              isLabelVisible: criteria.sortBy != OTDSortOption.maturityAsc,
+              smallSize: AppDimensions.badgeSizeSm,
+              child: const HugeIcon(
+                icon: HugeIcons.strokeRoundedSorting01,
+                size: AppDimensions.iconMd,
+              ),
             ),
             onPressed: () {
               AppSortBottomSheet.show<OTDSortOption>(
@@ -149,20 +154,30 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
       ),
       body: Column(
         children: [
-          if (searchVisible.value) ...[
-            AppSpacings.gapSm,
-            AppSearchBar(
-              hintText: t.oneTimeDeposits.searchHint,
-              onChanged: (val) => ref
-                  .read(oneTimeListCriteriaProvider.notifier)
-                  .updateSearch(val),
-              onClose: () {
-                searchVisible.value = false;
-                ref.read(oneTimeListCriteriaProvider.notifier).updateSearch('');
-              },
-            ),
-            AppSpacings.gapMd,
-          ],
+          AnimatedSize(
+            duration: AppAnimations.fast,
+            curve: AppAnimations.defaultCurve,
+            child: !searchVisible.value
+                ? const SizedBox(width: double.infinity)
+                : Column(
+                    children: [
+                      AppSpacings.gapSm,
+                      AppSearchBar(
+                        hintText: t.oneTimeDeposits.searchHint,
+                        onChanged: (val) => ref
+                            .read(oneTimeListCriteriaProvider.notifier)
+                            .updateSearch(val),
+                        onClose: () {
+                          searchVisible.value = false;
+                          ref
+                              .read(oneTimeListCriteriaProvider.notifier)
+                              .updateSearch('');
+                        },
+                      ),
+                      AppSpacings.gapMd,
+                    ],
+                  ),
+          ),
           Expanded(
             child: switch (depositsState) {
               AsyncData(:final value) => _buildDataState(context, ref, value),

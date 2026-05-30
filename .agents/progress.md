@@ -54,3 +54,4 @@
 - Created reusable `AppSortBottomSheet` and `AppFilterBottomSheet` components to maintain UI consistency and save vertical screen space.
 - Enhanced empty states with a "Clear Filters" action that resets search and filter criteria.
 - Standardized filter chip styling via a centralized `ChipThemeData` in the global theme.
+- Improved Search, Filter, and Sort UI/UX consistency by adding `AnimatedSize` to search bars. Refactored Bottom Sheets to follow modern "instant-apply" patterns by completely removing the bottom Action Bars. "Clear Filters" was moved up to the modal header, and users can simply swipe or tap "X" to dismiss after configuring. Added active sort indicators using badges in AppBars.

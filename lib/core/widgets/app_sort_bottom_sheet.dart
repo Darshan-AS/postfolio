@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-class AppSortBottomSheet<T> extends StatelessWidget {
+class AppSortBottomSheet<T> extends HookWidget {
   final String title;
   final List<T> options;
   final T selectedOption;
@@ -46,6 +48,8 @@ class AppSortBottomSheet<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localSelectedOption = useState<T>(selectedOption);
+
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -63,9 +67,12 @@ class AppSortBottomSheet<T> extends StatelessWidget {
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
-                TextButton(
+                IconButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(t.common.ok),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedCancel01,
+                    size: AppDimensions.iconMd,
+                  ),
                 ),
               ],
             ),
@@ -80,11 +87,11 @@ class AppSortBottomSheet<T> extends StatelessWidget {
                 return RadioListTile<T>(
                   title: Text(labelBuilder(option)),
                   value: option,
-                  groupValue: selectedOption,
+                  groupValue: localSelectedOption.value,
                   onChanged: (value) {
                     if (value != null) {
+                      localSelectedOption.value = value;
                       onSelected(value);
-                      Navigator.pop(context);
                     }
                   },
                 );

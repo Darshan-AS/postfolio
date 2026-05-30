@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -45,7 +46,6 @@ class AppFilterBottomSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   title,
@@ -53,9 +53,17 @@ class AppFilterBottomSheet extends StatelessWidget {
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
+                const Spacer(),
                 TextButton(
                   onPressed: onClearAll,
                   child: Text(t.common.clearFilters),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedCancel01,
+                    size: AppDimensions.iconMd,
+                  ),
                 ),
               ],
             ),
@@ -75,10 +83,6 @@ class AppFilterBottomSheet extends StatelessWidget {
               ),
             ),
             AppSpacings.gapLg,
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(t.common.ok),
-            ),
           ],
         ),
       ),

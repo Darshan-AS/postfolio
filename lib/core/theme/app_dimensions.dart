@@ -50,6 +50,8 @@ class AppDimensions {
   static const double iconMd = 24.0;
   static const double iconLg = 32.0;
   static const double iconXl = 48.0;
+  // Badges
+  static const double badgeSizeSm = 8.0;
 }
 
 class AppSpacings {
