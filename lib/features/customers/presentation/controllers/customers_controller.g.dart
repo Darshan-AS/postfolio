@@ -13,7 +13,7 @@ part of 'customers_controller.dart';
 final customerListCriteriaProvider = CustomerListCriteriaProvider._();
 
 final class CustomerListCriteriaProvider
-    extends $NotifierProvider<CustomerListCriteria, ListCriteria> {
+    extends $NotifierProvider<CustomerListCriteria, CustomerSearchCriteria> {
   CustomerListCriteriaProvider._()
     : super(
         from: null,
@@ -33,28 +33,30 @@ final class CustomerListCriteriaProvider
   CustomerListCriteria create() => CustomerListCriteria();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ListCriteria value) {
+  Override overrideWithValue(CustomerSearchCriteria value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<ListCriteria>(value),
+      providerOverride: $SyncValueProvider<CustomerSearchCriteria>(value),
     );
   }
 }
 
 String _$customerListCriteriaHash() =>
-    r'393a23e8892396adea10122f00515c4f9c70ed8d';
+    r'7a4a607f06b86b5a57d3780065ab25b2a55677ca';
 
-abstract class _$CustomerListCriteria extends $Notifier<ListCriteria> {
-  ListCriteria build();
+abstract class _$CustomerListCriteria
+    extends $Notifier<CustomerSearchCriteria> {
+  CustomerSearchCriteria build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<ListCriteria, ListCriteria>;
+    final ref =
+        this.ref as $Ref<CustomerSearchCriteria, CustomerSearchCriteria>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<ListCriteria, ListCriteria>,
-              ListCriteria,
+              AnyNotifier<CustomerSearchCriteria, CustomerSearchCriteria>,
+              CustomerSearchCriteria,
               Object?,
               Object?
             >;
@@ -101,7 +103,7 @@ final class FilteredCustomersProvider
   }
 }
 
-String _$filteredCustomersHash() => r'10adde682baae1e463568ee5361dc22d7fa5df5e';
+String _$filteredCustomersHash() => r'e53c2a104f1bbe620076980c24218e8d7bcd5b64';
 
 @ProviderFor(CustomersController)
 final customersControllerProvider = CustomersControllerProvider._();

@@ -13,7 +13,7 @@ part of 'recurring_deposits_controller.dart';
 final recurringListCriteriaProvider = RecurringListCriteriaProvider._();
 
 final class RecurringListCriteriaProvider
-    extends $NotifierProvider<RecurringListCriteria, ListCriteria> {
+    extends $NotifierProvider<RecurringListCriteria, RDSearchCriteria> {
   RecurringListCriteriaProvider._()
     : super(
         from: null,
@@ -33,28 +33,28 @@ final class RecurringListCriteriaProvider
   RecurringListCriteria create() => RecurringListCriteria();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ListCriteria value) {
+  Override overrideWithValue(RDSearchCriteria value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<ListCriteria>(value),
+      providerOverride: $SyncValueProvider<RDSearchCriteria>(value),
     );
   }
 }
 
 String _$recurringListCriteriaHash() =>
-    r'2d8010e3b286767a96101025e3ea96df90ea5704';
+    r'82fca76c4c4ad0f028c108cd2a376966cdcfc58d';
 
-abstract class _$RecurringListCriteria extends $Notifier<ListCriteria> {
-  ListCriteria build();
+abstract class _$RecurringListCriteria extends $Notifier<RDSearchCriteria> {
+  RDSearchCriteria build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<ListCriteria, ListCriteria>;
+    final ref = this.ref as $Ref<RDSearchCriteria, RDSearchCriteria>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<ListCriteria, ListCriteria>,
-              ListCriteria,
+              AnyNotifier<RDSearchCriteria, RDSearchCriteria>,
+              RDSearchCriteria,
               Object?,
               Object?
             >;
@@ -102,7 +102,7 @@ final class FilteredRecurringDepositsProvider
 }
 
 String _$filteredRecurringDepositsHash() =>
-    r'0b1be624b466c2496ed0f1e6fc2b2a7bc1b8a233';
+    r'6f3afa5f66fc388b9ad38aa9a45302a86492ccf7';
 
 @ProviderFor(RecurringDepositsController)
 final recurringDepositsControllerProvider =

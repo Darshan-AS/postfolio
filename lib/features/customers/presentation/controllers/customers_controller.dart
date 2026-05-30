@@ -1,6 +1,6 @@
 import 'dart:collection';
 
-import 'package:postfolio/core/models/list_criteria.dart';
+import 'package:postfolio/features/customers/domain/customer_search_criteria.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -13,11 +13,11 @@ part 'customers_controller.g.dart';
 @riverpod
 class CustomerListCriteria extends _$CustomerListCriteria {
   @override
-  ListCriteria build() => const ListCriteria();
+  CustomerSearchCriteria build() => const CustomerSearchCriteria();
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  void updateSort(SortOption sort) => state = state.copyWith(sortBy: sort);
-  void clearAll() => state = const ListCriteria();
+  void updateSort(CustomerSortOption sort) => state = state.copyWith(sortBy: sort);
+  void clearAll() => state = const CustomerSearchCriteria();
 }
 
 @riverpod
@@ -41,17 +41,16 @@ Future<UnmodifiableListView<Customer>> filteredCustomers(Ref ref) async {
 
   // Sort
   switch (criteria.sortBy) {
-    case SortOption.nameAsc:
+    case CustomerSortOption.nameAsc:
       result.sort((a, b) => a.name.compareTo(b.name));
       break;
-    case SortOption.nameDesc:
+    case CustomerSortOption.nameDesc:
       result.sort((a, b) => b.name.compareTo(a.name));
       break;
-    case SortOption.newest:
-    case SortOption.oldest:
-    case SortOption.highestAmount:
-    case SortOption.maturityProximity:
-      // Customers don't have these by default, fallback to nameAsc or just keep as is
+    case CustomerSortOption.newest:
+      // Customers don't have a creation date right now, but this could be used if added
+      break;
+    case CustomerSortOption.oldest:
       break;
   }
 

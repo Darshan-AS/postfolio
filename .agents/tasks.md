@@ -120,9 +120,9 @@
 - [x] **UI Cleanup - Hero Animations:** Add unique `heroTag` properties to the `FloatingActionButton`s and implement physical expanding Hero animations transitioning into the Create Form screens.
 - [x] Create and integrate an enum for relationships in the `Nominee` model.
 - [ ] Implement image capture and display functionality for customer profiles.
-- [ ] Support Search feature in Customers, One-Time Deposits, and Recurring Deposits.
-- [ ] Support Filter features across all entity listing screens.
-- [ ] Support Sort features across all entity listing screens.
+- [x] Support Search feature in Customers, One-Time Deposits, and Recurring Deposits.
+- [x] Support Filter features across all entity listing screens.
+- [x] Support Sort features across all entity listing screens.
 - [ ] Highlight deposits based on maturity status:
   - About to mature (e.g., within 30 days)
   - Matured but not closed

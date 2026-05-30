@@ -13,7 +13,7 @@ part of 'one_time_deposits_controller.dart';
 final oneTimeListCriteriaProvider = OneTimeListCriteriaProvider._();
 
 final class OneTimeListCriteriaProvider
-    extends $NotifierProvider<OneTimeListCriteria, ListCriteria> {
+    extends $NotifierProvider<OneTimeListCriteria, OTDSearchCriteria> {
   OneTimeListCriteriaProvider._()
     : super(
         from: null,
@@ -33,28 +33,28 @@ final class OneTimeListCriteriaProvider
   OneTimeListCriteria create() => OneTimeListCriteria();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ListCriteria value) {
+  Override overrideWithValue(OTDSearchCriteria value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<ListCriteria>(value),
+      providerOverride: $SyncValueProvider<OTDSearchCriteria>(value),
     );
   }
 }
 
 String _$oneTimeListCriteriaHash() =>
-    r'6e0093940332dee01599071e91aa0717f4e700b0';
+    r'dec7da22c718211c05244564a11497bd3b134e70';
 
-abstract class _$OneTimeListCriteria extends $Notifier<ListCriteria> {
-  ListCriteria build();
+abstract class _$OneTimeListCriteria extends $Notifier<OTDSearchCriteria> {
+  OTDSearchCriteria build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<ListCriteria, ListCriteria>;
+    final ref = this.ref as $Ref<OTDSearchCriteria, OTDSearchCriteria>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<ListCriteria, ListCriteria>,
-              ListCriteria,
+              AnyNotifier<OTDSearchCriteria, OTDSearchCriteria>,
+              OTDSearchCriteria,
               Object?,
               Object?
             >;
@@ -102,7 +102,7 @@ final class FilteredOneTimeDepositsProvider
 }
 
 String _$filteredOneTimeDepositsHash() =>
-    r'9f767b37e5a129d6f26e511b39b4b1b81bea9621';
+    r'4abfa4942366bb2336cbf8e863389a47bbc7c498';
 
 @ProviderFor(OneTimeDepositsController)
 final oneTimeDepositsControllerProvider = OneTimeDepositsControllerProvider._();

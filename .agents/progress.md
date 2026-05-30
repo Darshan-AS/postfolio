@@ -42,9 +42,10 @@
 - Configured Linux environment shell profile (`.zshrc`) with correct paths for Flutter and Dart global tools.
 
 ## Next Steps
-- **Form State Refactor**: Migrate local hook-based form state inside form screens to dedicated Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) for strictly pure business logic.
 - **Commission Logic Implementation**: Add the next set of domain math features to automatically deduce gross/net commissions and TDS.
-- **Search, Filter, and Sort**: Implement comprehensive search, filtering, and sorting capabilities across Customers, One-Time Deposits, and Recurring Deposits listing screens.
+- **Form State Refactor**: Migrate local hook-based form state inside form screens to dedicated Riverpod Form Notifiers (`OneTimeDepositFormNotifier`, `RecurringDepositFormNotifier`) for strictly pure business logic.
 - **Maturity Highlights**: Implement visual highlighting for deposits based on their maturity status (about to mature, matured, closed).
 - **Fixed/Locked UI Fields**: Make form fields read-only for specific schemes (e.g., lock Scheme Type for RD, term length for MIS/NSC).
 - Standardized primitive formatting using pure Dart extensions (`toRupeeFormat()`, `toPhoneFormat()`, `toAadhaarFormat()`, `toPanFormat()`) across the UI layer, aligning with the project's declarative conventions and keeping widgets dumb.
+- Designed and implemented independent `SearchCriteria` domain models (`CustomerSearchCriteria`, `RDSearchCriteria`, `OTDSearchCriteria`) replacing the generic shared pattern.
+- Updated Riverpod notifiers and derived list providers to execute offline-first, in-memory searches, filters, and sorts.

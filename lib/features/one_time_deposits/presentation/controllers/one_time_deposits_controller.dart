@@ -1,6 +1,6 @@
 import 'dart:collection';
 
-import 'package:postfolio/core/models/list_criteria.dart';
+import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
@@ -17,10 +17,10 @@ part 'one_time_deposits_controller.g.dart';
 @riverpod
 class OneTimeListCriteria extends _$OneTimeListCriteria {
   @override
-  ListCriteria build() => const ListCriteria();
+  OTDSearchCriteria build() => const OTDSearchCriteria();
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  void updateSort(SortOption sort) => state = state.copyWith(sortBy: sort);
+  void updateSort(OTDSortOption sort) => state = state.copyWith(sortBy: sort);
   void toggleFilter(DepositStatus status) {
     if (state.activeFilters.contains(status)) {
       state = state.copyWith(
@@ -32,7 +32,7 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
       );
     }
   }
-  void clearAll() => state = const ListCriteria();
+  void clearAll() => state = const OTDSearchCriteria();
 }
 
 @riverpod
@@ -64,16 +64,16 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(Ref ref) as
 
   // Sort
   switch (criteria.sortBy) {
-    case SortOption.newest:
+    case OTDSortOption.newest:
       result.sort((a, b) => b.startDate.compareTo(a.startDate));
       break;
-    case SortOption.oldest:
+    case OTDSortOption.oldest:
       result.sort((a, b) => a.startDate.compareTo(b.startDate));
       break;
-    case SortOption.highestAmount:
+    case OTDSortOption.highestAmount:
       result.sort((a, b) => b.principalAmount.compareTo(a.principalAmount));
       break;
-    case SortOption.maturityProximity:
+    case OTDSortOption.maturityProximity:
       final now = DateTime.now();
       result.sort((a, b) {
         final diffA = a.maturityDate.difference(now).abs();
@@ -81,12 +81,12 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(Ref ref) as
         return diffA.compareTo(diffB);
       });
       break;
-    case SortOption.nameAsc:
-    case SortOption.nameDesc:
+    case OTDSortOption.nameAsc:
+    case OTDSortOption.nameDesc:
       result.sort((a, b) {
         final nameA = customerMap[a.customerId]?.toLowerCase() ?? '';
         final nameB = customerMap[b.customerId]?.toLowerCase() ?? '';
-        return criteria.sortBy == SortOption.nameAsc 
+        return criteria.sortBy == OTDSortOption.nameAsc 
             ? nameA.compareTo(nameB) 
             : nameB.compareTo(nameA);
       });

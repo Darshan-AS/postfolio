@@ -1,6 +1,6 @@
 import 'dart:collection';
 
-import 'package:postfolio/core/models/list_criteria.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
@@ -17,10 +17,10 @@ part 'recurring_deposits_controller.g.dart';
 @riverpod
 class RecurringListCriteria extends _$RecurringListCriteria {
   @override
-  ListCriteria build() => const ListCriteria();
+  RDSearchCriteria build() => const RDSearchCriteria();
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  void updateSort(SortOption sort) => state = state.copyWith(sortBy: sort);
+  void updateSort(RDSortOption sort) => state = state.copyWith(sortBy: sort);
   void toggleFilter(DepositStatus status) {
     if (state.activeFilters.contains(status)) {
       state = state.copyWith(
@@ -32,7 +32,7 @@ class RecurringListCriteria extends _$RecurringListCriteria {
       );
     }
   }
-  void clearAll() => state = const ListCriteria();
+  void clearAll() => state = const RDSearchCriteria();
 }
 
 @riverpod
@@ -65,16 +65,16 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(Ref ref
 
   // Sort
   switch (criteria.sortBy) {
-    case SortOption.newest:
+    case RDSortOption.newest:
       result.sort((a, b) => b.startDate.compareTo(a.startDate));
       break;
-    case SortOption.oldest:
+    case RDSortOption.oldest:
       result.sort((a, b) => a.startDate.compareTo(b.startDate));
       break;
-    case SortOption.highestAmount:
+    case RDSortOption.highestAmount:
       result.sort((a, b) => b.installmentAmount.compareTo(a.installmentAmount));
       break;
-    case SortOption.maturityProximity:
+    case RDSortOption.maturityProximity:
       final now = DateTime.now();
       result.sort((a, b) {
         final diffA = a.maturityDate.difference(now).abs();
@@ -82,12 +82,12 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(Ref ref
         return diffA.compareTo(diffB);
       });
       break;
-    case SortOption.nameAsc:
-    case SortOption.nameDesc:
+    case RDSortOption.nameAsc:
+    case RDSortOption.nameDesc:
       result.sort((a, b) {
         final nameA = customerMap[a.customerId]?.toLowerCase() ?? '';
         final nameB = customerMap[b.customerId]?.toLowerCase() ?? '';
-        return criteria.sortBy == SortOption.nameAsc 
+        return criteria.sortBy == RDSortOption.nameAsc 
             ? nameA.compareTo(nameB) 
             : nameB.compareTo(nameA);
       });
