@@ -91,13 +91,22 @@
 - [x] Add necessary packages: `firebase_core`, `firebase_auth`, `google_sign_in`, and `cloud_firestore`.
 - [x] Update iOS `Info.plist` with the URL Scheme from `GoogleService-Info.plist` and verify Android SHA keys.
 - [x] Expose Firebase instances (`FirebaseAuth`, `GoogleSignIn`) using Riverpod Providers.
-- [ ] Configure Firebase App Check using Debug provider in development and Play Integrity/App Attest in release builds to secure against unauthorized requests.
+- [ ] Configure Firebase App Check (Audit Mode) with Play Integrity/App Attest for release and Debug Tokens for local dev.
+- [ ] Integrate Firebase Remote Config for dynamic app configurations (e.g., dynamic interest/commission rates, minimum required version for forced updates, feature kill switches).
 - [x] **Authentication Domain:** Create `AppUser` model and sealed `AuthState` union (Freezed).
 - [x] **Authentication Data Layer:** Build `AuthRepository` for Google Sign-In and mapping to Firebase.
 - [x] **Authentication Presentation:** Build `AuthController` and the `LoginScreen` widget.
 - [x] **Secure Routing:** Set up GoRouter `refreshListenable` and `redirect` guard for unauthenticated users.
 - [x] Build `FirestoreCustomerRepository` and swap out the Fake repository.
 - [x] Setup Client-Side ID generation for Customers using `uuid` to improve Firestore syncing and offline-support.
+
+## Phase 8: Optimization & Quota Management (Planned)
+- [ ] Implement Firestore optimization plan to fix quota exhaustion (see [firestore_optimization_plan.md](../docs/firestore_optimization_plan.md)):
+  - [ ] Denormalize Customer Data in Deposits
+  - [ ] Implement Server-Side Pagination & Infinite Scrolling UI
+  - [ ] Move Filtering/Sorting to Server-Side (Firestore `orderBy`)
+  - [ ] Implement Server-Side Prefix Search
+  - [ ] Enable Web Offline Persistence
 - [x] Build Firestore repositories for Deposits, RD, and Schemes.
 - [x] **Refactor Data Fetching**: Transition detail screens from list-based filtering (`AsyncValue<List<T>>`) to single-document fetching (`AsyncValue<T>`) using Riverpod family providers to improve efficiency with Firestore. Rewrite `AsyncEntityBuilder` accordingly.
 - [x] Configure **Firebase Emulator** support for local development (Firestore on port 8080, Auth on port 9099).
@@ -150,7 +159,7 @@
 - [ ] Implement and support dark theme across the application.
 - [ ] Implement local App Lock (Biometrics/PIN) for additional privacy and security.
 - [ ] Explore `flutter_flavorizr` for managing native app flavors (Dev, Staging, Prod).
-- [ ] Integrate `firebase_crashlytics` for automatic error tracking and reporting.
+- [x] Integrate `firebase_crashlytics` for automatic error tracking and reporting.
 - [ ] Integrate `firebase_analytics` to track user engagement and app usage metrics.
 - [ ] Integrate `share_plus` into `IntentService` to allow agents to share deposit details/reports.
 - [ ] **Routing UX Re-evaluation:** Refactor routing logic to handle context-aware "back" navigation (e.g., clicking 'Edit' from a List view should return to the List on back/cancel, rather than always returning to the Detail view).
@@ -185,6 +194,9 @@
 - [x] Automate build process and release per-platform APKs using GitHub Actions.
 - [x] Distribute beta builds to internal testers using Firebase App Distribution.
 - [x] Unified CI/CD: Append Firebase Web deployment to the mobile release workflow for strict Web/Mobile parity on `v*` tags.
+- [ ] Write end-to-end UI tests for critical user flows using the `integration_test` package.
+- [ ] Configure Firebase Test Lab to run tests on virtual/physical devices.
+- [ ] Set up an optional manual trigger (`workflow_dispatch` or Environments) in GitHub Actions for Test Lab to conserve free tier quota.
 
 ## Phase 13: Advanced Firebase Integrations (Future)
 - [ ] **Authentication**: Implement Passkey or Biometric Login to secure the app without requiring constant Google re-authentication.
