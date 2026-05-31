@@ -99,6 +99,7 @@
 - [x] **Secure Routing:** Set up GoRouter `refreshListenable` and `redirect` guard for unauthenticated users.
 - [x] Build `FirestoreCustomerRepository` and swap out the Fake repository.
 - [x] Setup Client-Side ID generation for Customers using `uuid` to improve Firestore syncing and offline-support.
+- [x] Integrate Firebase Performance Monitoring for automated tracing of app startup and offline-sync network behavior.
 
 ## Phase 8: Optimization & Quota Management (Planned)
 - [ ] Implement Firestore optimization plan to fix quota exhaustion (see [firestore_optimization_plan.md](../docs/firestore_optimization_plan.md)):
@@ -160,6 +161,7 @@
 - [ ] Implement local App Lock (Biometrics/PIN) for additional privacy and security.
 - [ ] Explore `flutter_flavorizr` for managing native app flavors (Dev, Staging, Prod).
 - [x] Integrate `firebase_crashlytics` for automatic error tracking and reporting.
+- [ ] Implement Custom Firebase Performance traces for intensive client-side processing (e.g., list sorting, heavy projections) (Planned for Optimization Phase).
 - [ ] Integrate `firebase_analytics` to track user engagement and app usage metrics.
 - [ ] Integrate `share_plus` into `IntentService` to allow agents to share deposit details/reports.
 - [ ] **Routing UX Re-evaluation:** Refactor routing logic to handle context-aware "back" navigation (e.g., clicking 'Edit' from a List view should return to the List on back/cancel, rather than always returning to the Detail view).
