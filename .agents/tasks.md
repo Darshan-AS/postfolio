@@ -184,6 +184,7 @@
 ## Phase 12: CI/CD & Distribution (Pending)
 - [x] Automate build process and release per-platform APKs using GitHub Actions.
 - [x] Distribute beta builds to internal testers using Firebase App Distribution.
+- [x] Unified CI/CD: Append Firebase Web deployment to the mobile release workflow for strict Web/Mobile parity on `v*` tags.
 
 ## Phase 13: Advanced Firebase Integrations (Future)
 - [ ] **Authentication**: Implement Passkey or Biometric Login to secure the app without requiring constant Google re-authentication.

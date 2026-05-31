@@ -71,3 +71,4 @@
 - **Fixed/Locked UI Fields**: Make form fields read-only for specific schemes (e.g., lock Scheme Type for RD, term length for MIS/NSC).
 - Refactored `EntityListTile` to a custom `Row` layout, bypassing `ListTile`'s strict constraints that caused trailing vertical scale-down and horizontal alignment issues. Deposit cards now dynamically adjust height and align badges flawlessly.
 - Configured Firebase Web Hosting for the application, enabling Single Page Application (SPA) routing, and deployed the production web build via `firebase deploy`.
+- Migrated Firebase Web Hosting deployment into the existing Tag-Driven `release.yml` workflow, ensuring perfect feature parity between Web and Mobile releases.

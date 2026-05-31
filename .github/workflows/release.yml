@@ -80,3 +80,14 @@ jobs:
           body: ${{ steps.release_notes.outputs.release_notes }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Web (For Parity)
+        run: flutter build web
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_CREDENTIAL_FILE_CONTENT }}
+          channelId: live
+          projectId: postfolio-app

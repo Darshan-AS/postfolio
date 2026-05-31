@@ -70,3 +70,10 @@ This document tracks the architectural decisions, structural rules, and conventi
   - No trailing periods.
   - Use imperative mood ("Add" instead of "Added").
   - Scope should represent the feature (e.g., `customers`, `deposits`, `core`).
+
+## 7. Release Process
+- **Prerequisites**: Before creating a release tag, you MUST complete the following:
+  1. **Determine Version Bump**: The AI agent must automatically analyze the recent session logs and commits to recommend a Semantic Versioning bump (Major, Minor, or Patch) based strictly on [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and increment the build number. The agent MUST confirm this version number with the user before proceeding.
+  2. **Update `pubspec.yaml`**: Update the `version:` key with the confirmed version.
+  3. **Update `CHANGELOG.md`**: Add a new `## [Version]` heading and date. Follow the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format exactly (categorizing by `### Added`, `### Changed`, `### Fixed`). Also, ensure the git compare links at the bottom of the file are updated for the new version. The GitHub Actions pipeline relies entirely on this changelog block for its Release Notes.
+- **Tag-Driven CD**: Releases are fully automated via GitHub Actions (`release.yml`). Once the prerequisites are committed, create a lightweight git tag matching the version (e.g., `git tag v1.1.1`) and push it to origin (`git push origin v1.1.1`). This action triggers the unified Mobile (APK distribution) and Web (Firebase Hosting) deployment pipeline ensuring strict parity.
