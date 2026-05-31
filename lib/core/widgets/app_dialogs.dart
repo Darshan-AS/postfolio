@@ -33,6 +33,39 @@ class AppDialogs {
     );
   }
 
+  static Future<bool?> confirmAction(
+    BuildContext context, {
+    required String title,
+    required String content,
+    String? confirmText,
+    Color? confirmBackgroundColor,
+    Color? confirmForegroundColor,
+  }) {
+    final theme = Theme.of(context);
+
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () => ctx.pop(false),
+            child: Text(t.common.cancel),
+          ),
+          FilledButton.tonal(
+            style: FilledButton.styleFrom(
+              backgroundColor: confirmBackgroundColor ?? theme.colorScheme.primaryContainer,
+              foregroundColor: confirmForegroundColor ?? theme.colorScheme.onPrimaryContainer,
+            ),
+            onPressed: () => ctx.pop(true),
+            child: Text(confirmText ?? t.common.ok),
+          ),
+        ],
+      ),
+    );
+  }
+
   static Future<void> showError(
     BuildContext context, {
     required String title,

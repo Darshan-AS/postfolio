@@ -18,6 +18,7 @@
 - Unified Deposit Detail screens to dynamically display projection metrics (Total Invested, Total Interest, Payout Frequency) using Dart 3 pattern matching against the `InvestmentProjection` sealed class.
 - Upgraded the Deposit Status selection in form screens from a standard dropdown to an intuitive `SegmentedButton` using a newly created `AppSegmentedButtonField`.
 - Refactored `Nominee` relationship from raw strings to a strongly-typed `NomineeRelationship` enum, utilizing `@JsonEnum` and `slang` map code generation for boilerplate-free JSON and localization handling.
+- Implemented Quick Actions (Close/Reopen) directly on deposit cards and detail views to optimize UX for status toggling.
 - Upgraded `NomineesInputSection` to use `AppDropdownField` for predefined relationships with a fallback dynamic text field for 'Other'.
 - Surfaced the exact absolute maturity date into the `EntityListTile` subtitle beneath the account number for both `OneTimeDepositCard` and `RecurringDepositCard`, providing better immediate context without cluttering the financial trailing column.
 - Replaced binary `isFixedTenure` boolean with a strict `TenureInputType` enum (`singleFixed`, `fixedOptions`, `derived`) to enforce domain rules and completely eliminate arbitrary free-text custom tenures, successfully fixing the mismatch in KVP's dynamic tenure projections.

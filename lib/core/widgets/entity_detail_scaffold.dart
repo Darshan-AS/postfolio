@@ -17,6 +17,7 @@ class EntityDetailScaffold extends StatelessWidget {
   final List<Widget> body;
   final VoidCallback? onBack;
   final Widget? floatingActionButton;
+  final List<Widget> customActions;
 
   const EntityDetailScaffold({
     super.key,
@@ -29,6 +30,7 @@ class EntityDetailScaffold extends StatelessWidget {
     required this.body,
     this.onBack,
     this.floatingActionButton,
+    this.customActions = const [],
   });
 
   void _confirmDelete(BuildContext context) async {
@@ -81,6 +83,7 @@ class EntityDetailScaffold extends StatelessWidget {
           ? BackButton(onPressed: onBack)
           : null, // Let Scaffold handle default
       actions: [
+        ...customActions,
         IconButton(
           icon: const HugeIcon(
             icon: HugeIcons.strokeRoundedEdit02,
