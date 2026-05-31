@@ -180,6 +180,7 @@
 - [x] Fix trailing layout constraints and status badge visibility in deposit cards.
 - [x] Streamline entity list tile layouts and tighten action button spacing.
 - [x] Adjust spacing across the app (reduce padding/margin).
+- [x] Fix white space layout bug in Demo Mode by standardizing nested scaffold keyboard resizing behavior.
 - [x] Hide intent actions (SMS, Phone, WhatsApp) for customers when contact information is missing.
 - [x] Round off amounts to nearest integer.
 
