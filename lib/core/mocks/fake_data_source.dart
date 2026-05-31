@@ -56,7 +56,6 @@ class FakeDataSource {
     });
 
     final customerIds = customers.map((c) => c.id).toList();
-    final depositStatuses = DepositStatus.values;
 
     // Generate One Time Deposits
     final oneTimeSchemes = OneTimeSchemeType.values;
