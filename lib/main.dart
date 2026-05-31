@@ -74,7 +74,8 @@ class PostfolioApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: t.appTitle,
-      theme: AppTheme.lightTheme, // Apply centralized theme
+      theme: AppTheme.lightTheme, // Apply centralized light theme
+      darkTheme: AppTheme.darkTheme, // Apply centralized dark theme
       routerConfig: goRouter,
       locale: TranslationProvider.of(context).flutterLocale,
       localizationsDelegates: const [

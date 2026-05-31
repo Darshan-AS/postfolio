@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:postfolio/core/theme/app_colors.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 
 class AppInputDecoration {
@@ -40,9 +39,9 @@ class AppInputDecoration {
           horizontal: AppDimensions.paddingMd,
         ),
         child: IconTheme(
-          data: const IconThemeData(
+          data: IconThemeData(
             size: AppDimensions.iconMd,
-            color: AppColors.textSecondary,
+            color: colorScheme.onSurfaceVariant,
           ),
           child: prefixIcon,
         ),
