@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0+9] - 2026-05-31
+
+### Added
+- **Contextual Creation**: Added Speed Dial to Customer Detail page for quick adding of Recurring and One-Time Deposits.
+- **Advanced Sorting**: Added ability to sort customers by "Newest First" and "Oldest First" using audit timestamps.
+- **Audit Tracking**: Integrated `createdAt`, `updatedAt`, and `migrationSource` into all domain models for better data lineage.
+- **Security**: Updated Firestore rules to grant administrative access based on verified email.
+
+### Changed
+- **UI Consistency**: Unified FAB and SpeedDial colors and behaviors across all screens for a more cohesive experience.
+- **Firestore Layer**: Refactored data layer to use `withConverter` for type-safe document interaction.
+- **Migration Tool**: Enhanced CSV parsing logic and added automatic emulator detection.
+
+### Fixed
+- **UI/UX**: Resolved a "double inset" keyboard layout bug in Demo Mode.
+- **Code Quality**: Resolved several linting and static analysis warnings.
+
 ## [1.1.2+8] - 2026-05-31
 
 ### Added
