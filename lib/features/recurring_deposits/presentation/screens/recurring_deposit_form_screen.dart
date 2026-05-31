@@ -26,8 +26,9 @@ import 'package:postfolio/core/extensions/date_time_extension.dart';
 
 class RecurringDepositFormScreen extends ConsumerWidget {
   final String? depositId;
+  final String? initialCustomerId;
 
-  const RecurringDepositFormScreen({super.key, this.depositId});
+  const RecurringDepositFormScreen({super.key, this.depositId, this.initialCustomerId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,15 +38,16 @@ class RecurringDepositFormScreen extends ConsumerWidget {
       idSelector: (d) => d.id,
       notFoundMessage: t.recurringDeposits.depositNotFound,
       onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
-      builder: (deposit) => _RecurringDepositForm(existingDeposit: deposit),
+      builder: (deposit) => _RecurringDepositForm(existingDeposit: deposit, initialCustomerId: initialCustomerId),
     );
   }
 }
 
 class _RecurringDepositForm extends HookConsumerWidget {
   final RecurringDeposit? existingDeposit;
+  final String? initialCustomerId;
 
-  const _RecurringDepositForm({this.existingDeposit});
+  const _RecurringDepositForm({this.existingDeposit, this.initialCustomerId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -66,7 +68,7 @@ class _RecurringDepositForm extends HookConsumerWidget {
       text: deposit?.interestRate.toString(),
     );
 
-    final selectedCustomerId = useState<String?>(deposit?.customerId);
+    final selectedCustomerId = useState<String?>(deposit?.customerId ?? initialCustomerId);
     final selectedScheme = useState<RecurringSchemeType>(
       deposit?.schemeType ?? RecurringSchemeType.recurringDeposit,
     );
@@ -118,6 +120,16 @@ class _RecurringDepositForm extends HookConsumerWidget {
       ],
     );
 
+    void handleBack() {
+      if (isUpdating) {
+        RecurringDepositDetailRoute(deposit.id).go(context);
+      } else if (initialCustomerId != null) {
+        CustomerDetailRoute(initialCustomerId!).go(context);
+      } else {
+        const RecurringDepositsRoute().go(context);
+      }
+    }
+
     Future<void> save() async {
       if (formKey.currentState!.validate()) {
         if (selectedCustomerId.value == null) {
@@ -154,11 +166,7 @@ class _RecurringDepositForm extends HookConsumerWidget {
 
         switch (result) {
           case Success():
-            if (isUpdating) {
-              RecurringDepositDetailRoute(deposit.id).go(context);
-            } else {
-              const RecurringDepositsRoute().go(context);
-            }
+            handleBack();
           case Failure(error: final err):
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -170,14 +178,6 @@ class _RecurringDepositForm extends HookConsumerWidget {
               ),
             );
         }
-      }
-    }
-
-    void handleBack() {
-      if (isUpdating) {
-        RecurringDepositDetailRoute(deposit.id).go(context);
-      } else {
-        const RecurringDepositsRoute().go(context);
       }
     }
 

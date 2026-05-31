@@ -58,6 +58,7 @@ This document tracks the architectural decisions, structural rules, and conventi
 
 ## 6. Git & Commit Conventions
 - **Conventional Commits**: All commits must follow the `<type>(<scope>): <summary>` format.
+- **Workflow Integrity**: All relevant `.md` files in `.agents/` (progress, tasks, session logs) MUST be updated **before** a commit is made, especially when a commit is explicitly requested or suggested. This ensures that every commit reflects the accurately documented state of the project.
 - **Prefixes**: 
   - `Feat`: New functionality.
   - `Fix`: Bug fixes.

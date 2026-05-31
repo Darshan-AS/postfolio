@@ -28,7 +28,8 @@
 - Fully implemented Demo Mode with a toggle on the login page allowing users to skip authentication and use fake repository data for demonstration purposes. Ensured UI strings use Slang `t` conventions. Users can exit demo mode by logging out from the dashboard.
 - Secured Firestore data by scoping repository queries directly to the authenticated user's ID (`users/{userId}/...`), resolving data leakage across users.
 - Improved UX by allowing users to navigate directly to the customer detail screen from deposit details.
-- Enhanced `CustomerDetailScreen` UX by directly listing all associated "One-Time Deposits" and "Recurring Deposits" inside the customer detail view, giving comprehensive portfolio oversight without switching contexts.
+- Implemented contextual deposit creation from the Customer Detail screen using a Material 3 Speed Dial FAB, with automatic pre-filling of customer data and return-navigation.
+- Standardized deposit icons across the entire application for visual consistency.
 - Added strict domain validation to `Nominee` model to ensure that percentage allocations exactly sum to 100%, and centralized this logic across `SavingsAccount`, `OneTimeDeposit`, and `RecurringDeposit`.
 - Configured **Firebase Emulator** support for Firestore (port 8080) and Authentication (port 9099).
 - Added a dedicated `USE_EMULATOR` flag logic in `main.dart` for seamless local development.

@@ -147,10 +147,19 @@ mixin $OneTimeDepositsRoute on GoRouteData {
 
 mixin $OneTimeDepositCreateRoute on GoRouteData {
   static OneTimeDepositCreateRoute _fromState(GoRouterState state) =>
-      const OneTimeDepositCreateRoute();
+      OneTimeDepositCreateRoute(
+        customerId: state.uri.queryParameters['customer-id'],
+      );
+
+  OneTimeDepositCreateRoute get _self => this as OneTimeDepositCreateRoute;
 
   @override
-  String get location => GoRouteData.$location('/deposits/new');
+  String get location => GoRouteData.$location(
+    '/deposits/new',
+    queryParams: {
+      if (_self.customerId != null) 'customer-id': _self.customerId,
+    },
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -238,10 +247,19 @@ mixin $RecurringDepositsRoute on GoRouteData {
 
 mixin $RecurringDepositCreateRoute on GoRouteData {
   static RecurringDepositCreateRoute _fromState(GoRouterState state) =>
-      const RecurringDepositCreateRoute();
+      RecurringDepositCreateRoute(
+        customerId: state.uri.queryParameters['customer-id'],
+      );
+
+  RecurringDepositCreateRoute get _self => this as RecurringDepositCreateRoute;
 
   @override
-  String get location => GoRouteData.$location('/rd/new');
+  String get location => GoRouteData.$location(
+    '/rd/new',
+    queryParams: {
+      if (_self.customerId != null) 'customer-id': _self.customerId,
+    },
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -466,4 +484,4 @@ final class GoRouterProvider
   }
 }
 
-String _$goRouterHash() => r'29df2cd7099844fa1d074043472056f03c98f45e';
+String _$goRouterHash() => r'8f197fa3363e0b2d2979f093b8aeca41b258c456';

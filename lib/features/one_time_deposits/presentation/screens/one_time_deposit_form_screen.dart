@@ -26,8 +26,9 @@ import 'package:postfolio/core/extensions/date_time_extension.dart';
 
 class OneTimeDepositFormScreen extends ConsumerWidget {
   final String? depositId;
+  final String? initialCustomerId;
 
-  const OneTimeDepositFormScreen({super.key, this.depositId});
+  const OneTimeDepositFormScreen({super.key, this.depositId, this.initialCustomerId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,15 +38,16 @@ class OneTimeDepositFormScreen extends ConsumerWidget {
       idSelector: (d) => d.id,
       notFoundMessage: t.oneTimeDeposits.depositNotFound,
       onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
-      builder: (deposit) => _OneTimeDepositForm(existingDeposit: deposit),
+      builder: (deposit) => _OneTimeDepositForm(existingDeposit: deposit, initialCustomerId: initialCustomerId),
     );
   }
 }
 
 class _OneTimeDepositForm extends HookConsumerWidget {
   final OneTimeDeposit? existingDeposit;
+  final String? initialCustomerId;
 
-  const _OneTimeDepositForm({this.existingDeposit});
+  const _OneTimeDepositForm({this.existingDeposit, this.initialCustomerId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -63,7 +65,7 @@ class _OneTimeDepositForm extends HookConsumerWidget {
       text: deposit?.interestRate.toString(),
     );
 
-    final selectedCustomerId = useState<String?>(deposit?.customerId);
+    final selectedCustomerId = useState<String?>(deposit?.customerId ?? initialCustomerId);
     final selectedScheme = useState<OneTimeSchemeType>(
       deposit?.schemeType ?? OneTimeSchemeType.timeDeposit,
     );
@@ -135,6 +137,16 @@ class _OneTimeDepositForm extends HookConsumerWidget {
       return null;
     }, [selectedScheme.value, currentInterest]);
 
+    void handleBack() {
+      if (isUpdating) {
+        OneTimeDepositDetailRoute(deposit.id).go(context);
+      } else if (initialCustomerId != null) {
+        CustomerDetailRoute(initialCustomerId!).go(context);
+      } else {
+        const OneTimeDepositsRoute().go(context);
+      }
+    }
+
     Future<void> save() async {
       if (formKey.currentState!.validate()) {
         if (selectedCustomerId.value == null) {
@@ -170,11 +182,7 @@ class _OneTimeDepositForm extends HookConsumerWidget {
 
         switch (result) {
           case Success():
-            if (isUpdating) {
-              OneTimeDepositDetailRoute(deposit.id).go(context);
-            } else {
-              const OneTimeDepositsRoute().go(context);
-            }
+            handleBack();
           case Failure(error: final err):
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -184,14 +192,6 @@ class _OneTimeDepositForm extends HookConsumerWidget {
               ),
             );
         }
-      }
-    }
-
-    void handleBack() {
-      if (isUpdating) {
-        OneTimeDepositDetailRoute(deposit.id).go(context);
-      } else {
-        const OneTimeDepositsRoute().go(context);
       }
     }
 

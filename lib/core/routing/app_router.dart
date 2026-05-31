@@ -182,11 +182,12 @@ class OneTimeDepositsRoute extends GoRouteData with $OneTimeDepositsRoute {
 
 class OneTimeDepositCreateRoute extends GoRouteData
     with $OneTimeDepositCreateRoute {
-  const OneTimeDepositCreateRoute();
+  final String? customerId;
+  const OneTimeDepositCreateRoute({this.customerId});
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const OneTimeDepositFormScreen();
+    return OneTimeDepositFormScreen(initialCustomerId: customerId);
   }
 }
 
@@ -223,11 +224,12 @@ class RecurringDepositsRoute extends GoRouteData with $RecurringDepositsRoute {
 
 class RecurringDepositCreateRoute extends GoRouteData
     with $RecurringDepositCreateRoute {
-  const RecurringDepositCreateRoute();
+  final String? customerId;
+  const RecurringDepositCreateRoute({this.customerId});
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const RecurringDepositFormScreen();
+    return RecurringDepositFormScreen(initialCustomerId: customerId);
   }
 }
 
