@@ -4,6 +4,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
+import 'package:postfolio/core/providers/theme_provider.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_card.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
@@ -37,6 +38,36 @@ class CustomersScreen extends HookConsumerWidget {
           onPressed: () {},
         ),
         title: Text(t.nav.customers),
+        actions: [
+          Consumer(
+            builder: (context, ref, child) {
+              final isAccessibleTheme =
+                  ref.watch(themeModeProvider) == AppThemeMode.accessibleSystem;
+              return IconButton(
+                isSelected: isAccessibleTheme,
+                icon: Icon(
+                  Icons.contrast,
+                  size: AppDimensions.iconMd,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                selectedIcon: Icon(
+                  Icons.contrast,
+                  size: AppDimensions.iconMd,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: isAccessibleTheme
+                      ? Theme.of(context).colorScheme.primaryContainer
+                      : null,
+                ),
+                onPressed: () {
+                  ref.read(themeModeProvider.notifier).toggleAccessibleTheme();
+                },
+                tooltip: t.common.toggleAccessibleTheme,
+              );
+            },
+          ),
+        ],
       ),
       // 2. Handle the AsyncValue UI states smoothly
       body: Column(
