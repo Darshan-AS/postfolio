@@ -12,6 +12,7 @@ import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_colors.dart';
 
+import 'package:postfolio/core/constants/firestore_keys.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
@@ -399,7 +400,7 @@ class _MigrationRunnerState extends State<MigrationRunner> {
     });
 
     final firestore = FirebaseFirestore.instance;
-    final userRef = firestore.collection('users').doc(uid);
+    final userRef = firestore.collection(FirestoreCollections.users).doc(uid);
 
     try {
       Future<void> deleteCollection(String name) async {
@@ -412,9 +413,9 @@ class _MigrationRunnerState extends State<MigrationRunner> {
         await batch.commit();
       }
 
-      await deleteCollection('customers');
-      await deleteCollection('one_time_deposits');
-      await deleteCollection('recurring_deposits');
+      await deleteCollection(FirestoreCollections.customers);
+      await deleteCollection(FirestoreCollections.oneTimeDeposits);
+      await deleteCollection(FirestoreCollections.recurringDeposits);
 
       _customerCache.clear();
       _oneTimeCache.clear();
@@ -492,7 +493,7 @@ class _MigrationRunnerState extends State<MigrationRunner> {
       final otStats = await _migrateDeposits(
         firestore,
         uid: uid,
-        collectionName: 'one_time_deposits',
+        collectionName: FirestoreCollections.oneTimeDeposits,
         csvPath: MigrationAssets.oneTimeDeposits,
         cache: _oneTimeCache,
         parser: _parseOneTimeDeposit,
@@ -500,7 +501,7 @@ class _MigrationRunnerState extends State<MigrationRunner> {
       final rdStats = await _migrateDeposits(
         firestore,
         uid: uid,
-        collectionName: 'recurring_deposits',
+        collectionName: FirestoreCollections.recurringDeposits,
         csvPath: MigrationAssets.recurringDeposits,
         cache: _recurringCache,
         parser: _parseRecurringDeposit,
@@ -580,9 +581,9 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
 
           batch.set(
             firestore
-                .collection('users')
+                .collection(FirestoreCollections.users)
                 .doc(uid)
-                .collection('customers')
+                .collection(FirestoreCollections.customers)
                 .doc(customer.id),
             data,
           );
@@ -678,7 +679,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
 
             batch.set(
               firestore
-                  .collection('users')
+                  .collection(FirestoreCollections.users)
                   .doc(uid)
                   .collection(collectionName)
                   .doc(deposit.id),
