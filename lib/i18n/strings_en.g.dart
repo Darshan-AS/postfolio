@@ -44,26 +44,26 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	/// en: 'Postfolio'
 	String get appTitle => 'Postfolio';
 
-	late final TranslationsErrorsEn errors = TranslationsErrorsEn.internal(_root);
-	late final TranslationsFormatEn format = TranslationsFormatEn.internal(_root);
-	late final TranslationsCommonEn common = TranslationsCommonEn.internal(_root);
-	late final TranslationsSortingEn sorting = TranslationsSortingEn.internal(_root);
-	late final TranslationsFiltersEn filters = TranslationsFiltersEn.internal(_root);
-	late final TranslationsProjectionEn projection = TranslationsProjectionEn.internal(_root);
-	late final TranslationsNavEn nav = TranslationsNavEn.internal(_root);
-	late final TranslationsCustomersEn customers = TranslationsCustomersEn.internal(_root);
-	late final TranslationsDashboardEn dashboard = TranslationsDashboardEn.internal(_root);
-	late final TranslationsOneTimeDepositsEn oneTimeDeposits = TranslationsOneTimeDepositsEn.internal(_root);
-	late final TranslationsRecurringDepositsEn recurringDeposits = TranslationsRecurringDepositsEn.internal(_root);
-	late final TranslationsNomineesEn nominees = TranslationsNomineesEn.internal(_root);
-	late final TranslationsEnumsEn enums = TranslationsEnumsEn.internal(_root);
-	late final TranslationsAuthEn auth = TranslationsAuthEn.internal(_root);
-	late final TranslationsMigrationEn migration = TranslationsMigrationEn.internal(_root);
+	late final Translations$errors$en errors = Translations$errors$en.internal(_root);
+	late final Translations$format$en format = Translations$format$en.internal(_root);
+	late final Translations$common$en common = Translations$common$en.internal(_root);
+	late final Translations$sorting$en sorting = Translations$sorting$en.internal(_root);
+	late final Translations$filters$en filters = Translations$filters$en.internal(_root);
+	late final Translations$projection$en projection = Translations$projection$en.internal(_root);
+	late final Translations$nav$en nav = Translations$nav$en.internal(_root);
+	late final Translations$customers$en customers = Translations$customers$en.internal(_root);
+	late final Translations$dashboard$en dashboard = Translations$dashboard$en.internal(_root);
+	late final Translations$oneTimeDeposits$en oneTimeDeposits = Translations$oneTimeDeposits$en.internal(_root);
+	late final Translations$recurringDeposits$en recurringDeposits = Translations$recurringDeposits$en.internal(_root);
+	late final Translations$nominees$en nominees = Translations$nominees$en.internal(_root);
+	late final Translations$enums$en enums = Translations$enums$en.internal(_root);
+	late final Translations$auth$en auth = Translations$auth$en.internal(_root);
+	late final Translations$migration$en migration = Translations$migration$en.internal(_root);
 }
 
 // Path: errors
-class TranslationsErrorsEn {
-	TranslationsErrorsEn.internal(this._root);
+class Translations$errors$en {
+	Translations$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -119,8 +119,8 @@ class TranslationsErrorsEn {
 }
 
 // Path: format
-class TranslationsFormatEn {
-	TranslationsFormatEn.internal(this._root);
+class Translations$format$en {
+	Translations$format$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -143,8 +143,8 @@ class TranslationsFormatEn {
 }
 
 // Path: common
-class TranslationsCommonEn {
-	TranslationsCommonEn.internal(this._root);
+class Translations$common$en {
+	Translations$common$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -153,7 +153,10 @@ class TranslationsCommonEn {
 	/// en: 'Search...'
 	String get search => 'Search...';
 
-	late final TranslationsCommonDurationEn duration = TranslationsCommonDurationEn.internal(_root);
+	/// en: 'Add'
+	String get add => 'Add';
+
+	late final Translations$common$duration$en duration = Translations$common$duration$en.internal(_root);
 
 	/// en: 'Loading...'
 	String get loading => 'Loading...';
@@ -205,8 +208,8 @@ class TranslationsCommonEn {
 }
 
 // Path: sorting
-class TranslationsSortingEn {
-	TranslationsSortingEn.internal(this._root);
+class Translations$sorting$en {
+	Translations$sorting$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -229,8 +232,8 @@ class TranslationsSortingEn {
 }
 
 // Path: filters
-class TranslationsFiltersEn {
-	TranslationsFiltersEn.internal(this._root);
+class Translations$filters$en {
+	Translations$filters$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -239,15 +242,15 @@ class TranslationsFiltersEn {
 	/// en: 'Filters'
 	String get title => 'Filters';
 
-	late final TranslationsFiltersSectionsEn sections = TranslationsFiltersSectionsEn.internal(_root);
+	late final Translations$filters$sections$en sections = Translations$filters$sections$en.internal(_root);
 
 	/// en: 'Status'
 	String get status => 'Status';
 }
 
 // Path: projection
-class TranslationsProjectionEn {
-	TranslationsProjectionEn.internal(this._root);
+class Translations$projection$en {
+	Translations$projection$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -279,8 +282,8 @@ class TranslationsProjectionEn {
 }
 
 // Path: nav
-class TranslationsNavEn {
-	TranslationsNavEn.internal(this._root);
+class Translations$nav$en {
+	Translations$nav$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -300,8 +303,8 @@ class TranslationsNavEn {
 }
 
 // Path: customers
-class TranslationsCustomersEn {
-	TranslationsCustomersEn.internal(this._root);
+class Translations$customers$en {
+	Translations$customers$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -346,17 +349,17 @@ class TranslationsCustomersEn {
 	/// en: 'Failed to delete customer: ${error}'
 	String failedToDeleteCustomer({required Object error}) => 'Failed to delete customer: ${error}';
 
-	late final TranslationsCustomersActionsEn actions = TranslationsCustomersActionsEn.internal(_root);
-	late final TranslationsCustomersSectionsEn sections = TranslationsCustomersSectionsEn.internal(_root);
-	late final TranslationsCustomersFieldsEn fields = TranslationsCustomersFieldsEn.internal(_root);
+	late final Translations$customers$actions$en actions = Translations$customers$actions$en.internal(_root);
+	late final Translations$customers$sections$en sections = Translations$customers$sections$en.internal(_root);
+	late final Translations$customers$fields$en fields = Translations$customers$fields$en.internal(_root);
 
 	/// en: 'Custom Relationship'
 	String get customRelationship => 'Custom Relationship';
 }
 
 // Path: dashboard
-class TranslationsDashboardEn {
-	TranslationsDashboardEn.internal(this._root);
+class Translations$dashboard$en {
+	Translations$dashboard$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -367,8 +370,8 @@ class TranslationsDashboardEn {
 }
 
 // Path: oneTimeDeposits
-class TranslationsOneTimeDepositsEn {
-	TranslationsOneTimeDepositsEn.internal(this._root);
+class Translations$oneTimeDeposits$en {
+	Translations$oneTimeDeposits$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -410,13 +413,13 @@ class TranslationsOneTimeDepositsEn {
 	/// en: 'Please select a customer'
 	String get selectCustomerPrompt => 'Please select a customer';
 
-	late final TranslationsOneTimeDepositsSectionsEn sections = TranslationsOneTimeDepositsSectionsEn.internal(_root);
-	late final TranslationsOneTimeDepositsFieldsEn fields = TranslationsOneTimeDepositsFieldsEn.internal(_root);
+	late final Translations$oneTimeDeposits$sections$en sections = Translations$oneTimeDeposits$sections$en.internal(_root);
+	late final Translations$oneTimeDeposits$fields$en fields = Translations$oneTimeDeposits$fields$en.internal(_root);
 }
 
 // Path: recurringDeposits
-class TranslationsRecurringDepositsEn {
-	TranslationsRecurringDepositsEn.internal(this._root);
+class Translations$recurringDeposits$en {
+	Translations$recurringDeposits$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -458,13 +461,13 @@ class TranslationsRecurringDepositsEn {
 	/// en: 'Please select a customer'
 	String get selectCustomerPrompt => 'Please select a customer';
 
-	late final TranslationsRecurringDepositsSectionsEn sections = TranslationsRecurringDepositsSectionsEn.internal(_root);
-	late final TranslationsRecurringDepositsFieldsEn fields = TranslationsRecurringDepositsFieldsEn.internal(_root);
+	late final Translations$recurringDeposits$sections$en sections = Translations$recurringDeposits$sections$en.internal(_root);
+	late final Translations$recurringDeposits$fields$en fields = Translations$recurringDeposits$fields$en.internal(_root);
 }
 
 // Path: nominees
-class TranslationsNomineesEn {
-	TranslationsNomineesEn.internal(this._root);
+class Translations$nominees$en {
+	Translations$nominees$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -499,8 +502,8 @@ class TranslationsNomineesEn {
 }
 
 // Path: enums
-class TranslationsEnumsEn {
-	TranslationsEnumsEn.internal(this._root);
+class Translations$enums$en {
+	Translations$enums$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -529,7 +532,7 @@ class TranslationsEnumsEn {
 		'matured': 'Matured',
 		'closed': 'Closed',
 	};
-	late final TranslationsEnumsMaturityRelativeTimeEn maturityRelativeTime = TranslationsEnumsMaturityRelativeTimeEn.internal(_root);
+	late final Translations$enums$maturityRelativeTime$en maturityRelativeTime = Translations$enums$maturityRelativeTime$en.internal(_root);
 	Map<String, String> get nomineeRelationship => {
 		'husband': 'Husband',
 		'wife': 'Wife',
@@ -559,8 +562,8 @@ class TranslationsEnumsEn {
 }
 
 // Path: auth
-class TranslationsAuthEn {
-	TranslationsAuthEn.internal(this._root);
+class Translations$auth$en {
+	Translations$auth$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -583,8 +586,8 @@ class TranslationsAuthEn {
 }
 
 // Path: migration
-class TranslationsMigrationEn {
-	TranslationsMigrationEn.internal(this._root);
+class Translations$migration$en {
+	Translations$migration$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -622,8 +625,8 @@ class TranslationsMigrationEn {
 }
 
 // Path: common.duration
-class TranslationsCommonDurationEn {
-	TranslationsCommonDurationEn.internal(this._root);
+class Translations$common$duration$en {
+	Translations$common$duration$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -643,8 +646,8 @@ class TranslationsCommonDurationEn {
 }
 
 // Path: filters.sections
-class TranslationsFiltersSectionsEn {
-	TranslationsFiltersSectionsEn.internal(this._root);
+class Translations$filters$sections$en {
+	Translations$filters$sections$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -661,8 +664,8 @@ class TranslationsFiltersSectionsEn {
 }
 
 // Path: customers.actions
-class TranslationsCustomersActionsEn {
-	TranslationsCustomersActionsEn.internal(this._root);
+class Translations$customers$actions$en {
+	Translations$customers$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -682,8 +685,8 @@ class TranslationsCustomersActionsEn {
 }
 
 // Path: customers.sections
-class TranslationsCustomersSectionsEn {
-	TranslationsCustomersSectionsEn.internal(this._root);
+class Translations$customers$sections$en {
+	Translations$customers$sections$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -700,8 +703,8 @@ class TranslationsCustomersSectionsEn {
 }
 
 // Path: customers.fields
-class TranslationsCustomersFieldsEn {
-	TranslationsCustomersFieldsEn.internal(this._root);
+class Translations$customers$fields$en {
+	Translations$customers$fields$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -757,8 +760,8 @@ class TranslationsCustomersFieldsEn {
 }
 
 // Path: oneTimeDeposits.sections
-class TranslationsOneTimeDepositsSectionsEn {
-	TranslationsOneTimeDepositsSectionsEn.internal(this._root);
+class Translations$oneTimeDeposits$sections$en {
+	Translations$oneTimeDeposits$sections$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -775,8 +778,8 @@ class TranslationsOneTimeDepositsSectionsEn {
 }
 
 // Path: oneTimeDeposits.fields
-class TranslationsOneTimeDepositsFieldsEn {
-	TranslationsOneTimeDepositsFieldsEn.internal(this._root);
+class Translations$oneTimeDeposits$fields$en {
+	Translations$oneTimeDeposits$fields$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -832,8 +835,8 @@ class TranslationsOneTimeDepositsFieldsEn {
 }
 
 // Path: recurringDeposits.sections
-class TranslationsRecurringDepositsSectionsEn {
-	TranslationsRecurringDepositsSectionsEn.internal(this._root);
+class Translations$recurringDeposits$sections$en {
+	Translations$recurringDeposits$sections$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -850,8 +853,8 @@ class TranslationsRecurringDepositsSectionsEn {
 }
 
 // Path: recurringDeposits.fields
-class TranslationsRecurringDepositsFieldsEn {
-	TranslationsRecurringDepositsFieldsEn.internal(this._root);
+class Translations$recurringDeposits$fields$en {
+	Translations$recurringDeposits$fields$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -901,8 +904,8 @@ class TranslationsRecurringDepositsFieldsEn {
 }
 
 // Path: enums.maturityRelativeTime
-class TranslationsEnumsMaturityRelativeTimeEn {
-	TranslationsEnumsMaturityRelativeTimeEn.internal(this._root);
+class Translations$enums$maturityRelativeTime$en {
+	Translations$enums$maturityRelativeTime$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -949,6 +952,7 @@ extension on Translations {
 			'format.currencySymbol' => '₹',
 			'format.bulletSeparator' => ' • ',
 			'common.search' => 'Search...',
+			'common.add' => 'Add',
 			'common.duration.termYears' => 'Term (Years)',
 			'common.duration.termMonths' => 'Term (Months)',
 			'common.duration.yearAbbreviation' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 Yr', other: '${n} Yrs', ), 

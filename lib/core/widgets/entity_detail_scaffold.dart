@@ -16,6 +16,7 @@ class EntityDetailScaffold extends StatelessWidget {
   final Widget header;
   final List<Widget> body;
   final VoidCallback? onBack;
+  final Widget? floatingActionButton;
 
   const EntityDetailScaffold({
     super.key,
@@ -27,6 +28,7 @@ class EntityDetailScaffold extends StatelessWidget {
     required this.header,
     required this.body,
     this.onBack,
+    this.floatingActionButton,
   });
 
   void _confirmDelete(BuildContext context) async {
@@ -67,6 +69,7 @@ class EntityDetailScaffold extends StatelessWidget {
       child: Scaffold(
         appBar: _buildAppBar(theme, context),
         body: _buildBody(theme),
+        floatingActionButton: floatingActionButton,
       ),
     );
   }

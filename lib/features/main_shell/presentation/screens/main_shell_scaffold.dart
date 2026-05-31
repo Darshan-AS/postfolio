@@ -98,7 +98,7 @@ class MainShellScaffold extends ConsumerWidget {
                           ),
                           NavigationRailDestination(
                             icon: const HugeIcon(
-                              icon: HugeIcons.strokeRoundedInvoice01,
+                              icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
                               size: AppDimensions.iconMd,
                             ),
                             label: Text(t.nav.oneTimeDeposits),
@@ -153,7 +153,7 @@ class MainShellScaffold extends ConsumerWidget {
               ),
               NavigationDestination(
                 icon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedInvoice01,
+                  icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
                   size: AppDimensions.iconMd,
                 ),
                 label: t.nav.oneTimeDeposits,

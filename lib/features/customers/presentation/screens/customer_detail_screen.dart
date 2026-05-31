@@ -20,6 +20,7 @@ import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
 
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:postfolio/core/extensions/string_extension.dart';
 
 class CustomerDetailScreen extends ConsumerWidget {
@@ -115,6 +116,46 @@ class CustomerDetailScreen extends ConsumerWidget {
                 ),
               ],
             ],
+          ),
+          floatingActionButton: SpeedDial(
+            spacing: AppDimensions.paddingSm,
+            spaceBetweenChildren: AppDimensions.paddingSm,
+            backgroundColor: colorScheme.primaryContainer,
+            foregroundColor: colorScheme.onPrimaryContainer,
+            activeChild: const HugeIcon(
+              icon: HugeIcons.strokeRoundedCancel01,
+              size: AppDimensions.iconMd,
+            ),
+            children: [
+              SpeedDialChild(
+                backgroundColor: colorScheme.secondaryContainer,
+                foregroundColor: colorScheme.onSecondaryContainer,
+                label: t.recurringDeposits.title,
+                onTap: () => RecurringDepositCreateRoute(
+                  customerId: customerId,
+                ).push(context),
+                child: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedTransaction,
+                  size: AppDimensions.iconMd,
+                ),
+              ),
+              SpeedDialChild(
+                backgroundColor: colorScheme.secondaryContainer,
+                foregroundColor: colorScheme.onSecondaryContainer,
+                label: t.oneTimeDeposits.title,
+                onTap: () => OneTimeDepositCreateRoute(
+                  customerId: customerId,
+                ).push(context),
+                child: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
+                  size: AppDimensions.iconMd,
+                ),
+              ),
+            ],
+            child: const HugeIcon(
+              icon: HugeIcons.strokeRoundedAdd01,
+              size: AppDimensions.iconMd,
+            ),
           ),
           body: [
             _buildPersonalInfo(customer),

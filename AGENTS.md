@@ -43,6 +43,7 @@ When starting a new conversation or picking up this repository, you MUST immedia
 
 ## Agent Workflow Rules
 - **Build Before Commit:** Ensure everything builds successfully before making a commit.
+- **Update Documentation Before Commit:** All relevant `.md` files in `.agents/` (progress, tasks, session logs) MUST be updated **before** a commit is made, especially when a commit is explicitly requested or suggested. This ensures that every commit reflects the accurately documented state of the project.
 - **Logical Commits:** Commits should only be made at logical stages, and only when the codebase is in a building/working state.
 - **Standardized Commit Messages:** Use Conventional Commits format: `<type>(<scope>): <summary>` (e.g., `Feat(auth): Add Firebase login`). 
   - Types: `Feat`, `Fix`, `Refactor`, `Docs`, `Chore`, `UI`.

@@ -27,6 +27,7 @@ format:
 
 common:
   search: "Search..."
+  add: "Add"
   duration:
     termYears: "Term (Years)"
     termMonths: "Term (Months)"

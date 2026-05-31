@@ -12,7 +12,9 @@
 - [x] Implement `CustomersController` (Riverpod).
 - [x] Build `CustomersScreen` (List View).
 - [x] Build `CustomerFormScreen` (Create/Update).
-- [x] Build `CustomerDetailScreen` (Read/Delete).
+- [x] Build `CustomerDetailScreen` (Read/Delete/Contextual Create).
+    - [x] Implement Speed Dial for One-Time/Recurring deposit creation.
+    - [x] Standardize icons across portfolio views.
 
 ## Phase 3: Architectural Cleanup (In Progress)
 - [x] Refactor `CustomerCard` native intents (SMS/Phone/Map) into an injected `IntentService`.
