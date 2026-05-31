@@ -25,6 +25,9 @@ _OneTimeDeposit _$OneTimeDepositFromJson(Map<String, dynamic> json) =>
       status:
           $enumDecodeNullable(_$DepositStatusEnumMap, json['status']) ??
           DepositStatus.active,
+      createdAt: const TimestampConverter().fromJson(json['createdAt']),
+      updatedAt: const TimestampConverter().fromJson(json['updatedAt']),
+      migrationSource: json['migrationSource'] as String?,
     );
 
 Map<String, dynamic> _$OneTimeDepositToJson(_OneTimeDeposit instance) =>
@@ -40,6 +43,9 @@ Map<String, dynamic> _$OneTimeDepositToJson(_OneTimeDeposit instance) =>
       'startDate': instance.startDate.toIso8601String(),
       'nominees': instance.nominees.map((e) => e.toJson()).toList(),
       'status': _$DepositStatusEnumMap[instance.status]!,
+      'createdAt': ?const TimestampConverter().toJson(instance.createdAt),
+      'updatedAt': ?const TimestampConverter().toJson(instance.updatedAt),
+      'migrationSource': ?instance.migrationSource,
     };
 
 const _$OneTimeSchemeTypeEnumMap = {

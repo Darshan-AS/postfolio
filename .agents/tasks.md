@@ -115,6 +115,10 @@
 - [x] Configure **Firebase Emulator** support for local development (Firestore on port 8080, Auth on port 9099).
 
 ## Phase 8: Enhancements & Refinements (In Progress)
+- [x] **System Metadata:** Add `createdAt`, `updatedAt` (using `FieldValue.serverTimestamp()`), and `migrationSource` (e.g., 'legacy_csv_v1_{timestamp}') to all Domain models. Update Firestore repositories and `run_migration.dart` to populate these fields.
+- [ ] **Data Integrity - Soft Deletes (Deferred):** Implement an `isDeleted` flag and document `version` on domain models (Customers, Deposits, RDs). 
+  - *Why this is critical:* Hard deleting a customer leaves orphaned deposits pointing to a non-existent `customerId`, breaking referential integrity. It also permanently destroys historical financial records which may be needed for commission audits.
+  - *Action:* Update queries to filter out `isDeleted == true` and implement a "soft delete" rather than a Firestore `delete()` operation.
 - [x] Implement a **"Demo Mode"** feature toggle. When activated via a persistent UI button on the login screen, the app bypasses Firebase Auth constraints and wires all repository providers to their `FakeDataRepository` counterparts instead of `FirestoreRepository`, allowing a complete offline, zero-setup interactive demonstration.
 - [x] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.
 - [x] Implement comprehensive form field validations across all create/update screens.

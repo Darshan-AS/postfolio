@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/savings_account.dart';
+import 'package:postfolio/core/utils/timestamp_converter.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -23,6 +24,9 @@ sealed class Customer with _$Customer {
     String? aadhaarNumber,
     String? panNumber,
     SavingsAccount? savingsAccount,
+    @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? createdAt,
+    @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? updatedAt,
+    @JsonKey(includeIfNull: false) String? migrationSource,
   }) = _Customer;
 
   factory Customer.fromJson(Map<String, dynamic> json) =>

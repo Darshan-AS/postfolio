@@ -21,6 +21,9 @@ _Customer _$CustomerFromJson(Map<String, dynamic> json) => _Customer(
   savingsAccount: json['savingsAccount'] == null
       ? null
       : SavingsAccount.fromJson(json['savingsAccount'] as Map<String, dynamic>),
+  createdAt: const TimestampConverter().fromJson(json['createdAt']),
+  updatedAt: const TimestampConverter().fromJson(json['updatedAt']),
+  migrationSource: json['migrationSource'] as String?,
 );
 
 Map<String, dynamic> _$CustomerToJson(_Customer instance) => <String, dynamic>{
@@ -34,4 +37,7 @@ Map<String, dynamic> _$CustomerToJson(_Customer instance) => <String, dynamic>{
   'aadhaarNumber': instance.aadhaarNumber,
   'panNumber': instance.panNumber,
   'savingsAccount': instance.savingsAccount?.toJson(),
+  'createdAt': ?const TimestampConverter().toJson(instance.createdAt),
+  'updatedAt': ?const TimestampConverter().toJson(instance.updatedAt),
+  'migrationSource': ?instance.migrationSource,
 };
