@@ -29,6 +29,27 @@ class MigrationAssets {
   static const String recurringDeposits = 'data/recurring_deposits.csv';
 }
 
+// --- Csv Headers Helper ---
+class CsvHeaders {
+  final Map<String, int> _indices = {};
+
+  CsvHeaders(List<dynamic> headerRow) {
+    for (int i = 0; i < headerRow.length; i++) {
+      _indices[headerRow[i].toString().trim()] = i;
+    }
+  }
+
+  String getString(
+    List<dynamic> row,
+    String columnName, {
+    String defaultValue = '',
+  }) {
+    final index = _indices[columnName];
+    if (index == null || index >= row.length) return defaultValue;
+    return row[index].toString().trim();
+  }
+}
+
 // --- Pure Functions for Parsing ---
 
 double _parseCurrency(String val) =>
@@ -87,13 +108,20 @@ OneTimeSchemeType _mapOneTimeScheme(String schemeStr) {
   return OneTimeSchemeType.timeDeposit;
 }
 
-Customer _parseCustomer(List<dynamic> row, String id) {
-  final dobStr = row.length > 3 ? row[3].toString().trim() : '';
+Customer _parseCustomer(List<dynamic> row, CsvHeaders headers) {
+  final idStr = headers.getString(row, 'Row ID');
+  final id = idStr.isNotEmpty ? idStr : const Uuid().v4();
+  final name = headers.getString(row, 'Name');
+  final phone = headers.getString(row, 'Mobile');
+  final cifNumber = headers.getString(row, 'CIF');
+  final dobStr = headers.getString(row, 'DOB');
   final dob = dobStr.isNotEmpty ? _parseDate(dobStr) : null;
-
-  final sbAccountNumber = row.length > 7 ? row[7].toString().trim() : '';
-  final sbNomineeName = row.length > 8 ? row[8].toString().trim() : '';
-  final sbNomineeRel = row.length > 9 ? row[9].toString().trim() : '';
+  final address = headers.getString(row, 'Address');
+  final aadhaarNumber = headers.getString(row, 'Aadhaar');
+  final panNumber = headers.getString(row, 'PAN');
+  final sbAccountNumber = headers.getString(row, 'SB Account No.');
+  final sbNomineeName = headers.getString(row, 'SB Nominee');
+  final sbNomineeRel = headers.getString(row, 'SB Nominee Relationship');
 
   SavingsAccount? savingsAccount;
   if (sbAccountNumber.isNotEmpty ||
@@ -107,63 +135,65 @@ Customer _parseCustomer(List<dynamic> row, String id) {
 
   return Customer(
     id: id,
-    name: row.isNotEmpty ? row[0].toString().trim() : '',
-    phone: row.length > 1 ? row[1].toString().trim() : '',
-    cifNumber: row.length > 2 ? row[2].toString().trim() : '',
+    name: name,
+    phone: phone,
+    cifNumber: cifNumber,
     dateOfBirth: dob,
-    address: row.length > 4 ? row[4].toString().trim() : '',
-    aadhaarNumber: row.length > 5 ? row[5].toString().trim() : '',
-    panNumber: row.length > 6 ? row[6].toString().trim() : '',
+    address: address,
+    aadhaarNumber: aadhaarNumber,
+    panNumber: panNumber,
     savingsAccount: savingsAccount,
   );
 }
 
-OneTimeDeposit _parseOneTimeDeposit(List<dynamic> row, String customerId) {
-  final accountNo = row.isNotEmpty ? row[0].toString().trim() : '';
+OneTimeDeposit _parseOneTimeDeposit(List<dynamic> row, CsvHeaders headers) {
+  final idStr = headers.getString(row, 'Id');
+  final id = idStr.isNotEmpty ? idStr : const Uuid().v4();
+  final accountNo = headers.getString(row, 'Account No.');
+  final customerId = headers.getString(row, 'Customer Id');
   return OneTimeDeposit(
-    id: accountNo.isEmpty
-        ? const Uuid().v4()
-        : accountNo.replaceAll('/', '-'), // Sanitize for Firestore ID
+    id: id,
     accountNo: accountNo.isEmpty ? null : accountNo,
-    principalAmount: _parseCurrency(row.length > 1 ? row[1].toString() : ''),
-    termYears:
-        int.tryParse(row.length > 2 ? row[2].toString().trim() : '') ?? 0,
-    termMonths:
-        int.tryParse(row.length > 3 ? row[3].toString().trim() : '') ?? 0,
-    interestRate: _parsePercentage(row.length > 4 ? row[4].toString() : ''),
+    principalAmount: _parseCurrency(headers.getString(row, 'Amount')),
+    termYears: int.tryParse(headers.getString(row, 'Term Years')) ?? 0,
+    termMonths: int.tryParse(headers.getString(row, 'Term Months')) ?? 0,
+    interestRate: _parsePercentage(headers.getString(row, 'Interest Rate')),
     customerId: customerId,
-    schemeType: _mapOneTimeScheme(row.length > 6 ? row[6].toString() : ''),
-    startDate: _parseDate(row.length > 8 ? row[8].toString() : ''),
+    schemeType: _mapOneTimeScheme(headers.getString(row, 'Scheme')),
+    startDate: _parseDate(headers.getString(row, 'Deposit Date')),
     nominees: _parseNominees(
-      row.length > 10 ? row[10].toString() : '',
-      row.length > 12 ? row[12].toString() : '',
+      headers.getString(row, 'Nominee'),
+      headers.getString(row, 'Nominee Relationship'),
     ),
-    status: _parseStatus(row.length > 11 ? row[11].toString() : ''),
+    status: _parseStatus(headers.getString(row, 'Closed')),
   );
 }
 
-RecurringDeposit _parseRecurringDeposit(List<dynamic> row, String customerId) {
-  final accountNo = row.length > 1 ? row[1].toString().trim() : '';
+RecurringDeposit _parseRecurringDeposit(
+  List<dynamic> row,
+  CsvHeaders headers,
+) {
+  final idStr = headers.getString(row, 'Id');
+  final id = idStr.isNotEmpty ? idStr : const Uuid().v4();
+  final serialNo = headers.getString(row, 'Serial No.');
+  final accountNo = headers.getString(row, 'Account No.');
+  final customerId = headers.getString(row, 'Customer Id');
   return RecurringDeposit(
-    id: accountNo.isEmpty
-        ? const Uuid().v4()
-        : accountNo.replaceAll('/', '-'), // Sanitize for Firestore ID
-    serialNo: row.isNotEmpty ? row[0].toString().trim() : '',
+    id: id,
+    serialNo: serialNo,
     accountNo: accountNo.isEmpty ? null : accountNo,
-    installmentAmount: _parseCurrency(row.length > 2 ? row[2].toString() : ''),
-    termYears:
-        int.tryParse(row.length > 3 ? row[3].toString().trim() : '') ??
-        5, // Default to 5
+    installmentAmount: _parseCurrency(headers.getString(row, 'Amount')),
+    termYears: int.tryParse(headers.getString(row, 'Term Years')) ?? 5, // Default to 5
     termMonths: 0,
-    interestRate: _parsePercentage(row.length > 4 ? row[4].toString() : ''),
+    interestRate: _parsePercentage(headers.getString(row, 'Interest Rate')),
     customerId: customerId,
     schemeType: RecurringSchemeType.recurringDeposit,
-    startDate: _parseDate(row.length > 7 ? row[7].toString() : ''),
+    startDate: _parseDate(headers.getString(row, 'Opening Date')),
     nominees: _parseNominees(
-      row.length > 9 ? row[9].toString() : '',
-      row.length > 11 ? row[11].toString() : '',
+      headers.getString(row, 'Nominee'),
+      headers.getString(row, 'Nominee Relationship'),
     ),
-    status: _parseStatus(row.length > 10 ? row[10].toString() : ''),
+    status: _parseStatus(headers.getString(row, 'Closed')),
   );
 }
 
@@ -264,13 +294,11 @@ class MigrationRunner extends StatefulWidget {
 class _MigrationRunnerState extends State<MigrationRunner> {
   String status = "Ready to migrate. Enter target UID or Sign In.";
   String statsDisplay = "";
-  final _uuid = const Uuid();
   final _uidController = TextEditingController();
   final _countController = TextEditingController(text: '10');
   bool _isMigrating = false;
 
   final Map<String, String> _customerCache = {};
-  final Map<String, String> _customerNameFallbackCache = {};
   final Set<String> _oneTimeCache = {};
   final Set<String> _recurringCache = {};
 
@@ -359,7 +387,6 @@ class _MigrationRunnerState extends State<MigrationRunner> {
       await deleteCollection('recurring_deposits');
 
       _customerCache.clear();
-      _customerNameFallbackCache.clear();
       _oneTimeCache.clear();
       _recurringCache.clear();
 
@@ -430,8 +457,6 @@ class _MigrationRunnerState extends State<MigrationRunner> {
         csvPath: MigrationAssets.oneTimeDeposits,
         cache: _oneTimeCache,
         parser: _parseOneTimeDeposit,
-        customerNameIndex: 5,
-        accountNoIndex: 0,
       );
       final rdStats = await _migrateDeposits(
         firestore,
@@ -440,8 +465,6 @@ class _MigrationRunnerState extends State<MigrationRunner> {
         csvPath: MigrationAssets.recurringDeposits,
         cache: _recurringCache,
         parser: _parseRecurringDeposit,
-        customerNameIndex: 5,
-        accountNoIndex: 1,
       );
 
       setState(() {
@@ -478,6 +501,9 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
     );
     final rawData = await rootBundle.loadString(MigrationAssets.customers);
     final rows = const CsvToListConverter(eol: '\n').convert(rawData);
+    if (rows.isEmpty) return MigrationStats();
+
+    final headers = CsvHeaders(rows.first);
 
     var batch = firestore.batch();
     int migratedCount = 0;
@@ -489,39 +515,35 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
 
     for (int i = 1; i < rows.length; i++) {
       final row = rows[i];
-      if (row.isEmpty || row.every((e) => e.toString().trim().isEmpty))
+      if (row.isEmpty || row.every((e) => e.toString().trim().isEmpty)) {
         continue;
+      }
       csvTotal++;
 
       if (migratedCount >= maxCustomers) continue;
       processedCount++;
 
       try {
-        final name = row.isNotEmpty ? row[0].toString().trim() : '';
-        if (name.isEmpty) {
+        final id = headers.getString(row, 'Row ID');
+        if (id.isEmpty) {
           errorCount++;
-          diffLog.add("Skipped (Row ${i + 1}): Missing Customer Name");
+          diffLog.add("Skipped (Row ${i + 1}): Missing Customer ID (Row ID)");
           continue;
         }
 
-        final phone = row.length > 1 ? row[1].toString().trim() : '';
-        final cacheKey = '${name}_$phone';
-
-        if (!_customerCache.containsKey(cacheKey)) {
-          final newId = _uuid.v4();
-          final customer = _parseCustomer(row, newId);
+        if (!_customerCache.containsKey(id)) {
+          final customer = _parseCustomer(row, headers);
 
           batch.set(
             firestore
                 .collection('users')
                 .doc(uid)
                 .collection('customers')
-                .doc(newId),
+                .doc(customer.id),
             customer.toJson(),
           );
 
-          _customerCache[cacheKey] = newId;
-          _customerNameFallbackCache[name] = newId;
+          _customerCache[id] = customer.id;
           migratedCount++;
 
           if (migratedCount % AppConstants.firestoreBatchLimit == 0) {
@@ -530,7 +552,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
           }
         } else {
           duplicateCount++;
-          diffLog.add("Duplicate: $name ($phone)");
+          diffLog.add("Duplicate Customer ID: $id");
         }
       } catch (e) {
         errorCount++;
@@ -560,15 +582,16 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
     required String collectionName,
     required String csvPath,
     required Set<String> cache,
-    required dynamic Function(List<dynamic>, String) parser,
-    required int customerNameIndex,
-    required int accountNoIndex,
+    required dynamic Function(List<dynamic>, CsvHeaders) parser,
   }) async {
     setState(
       () => status = "Migrating $collectionName for imported customers...",
     );
     final rawData = await rootBundle.loadString(csvPath);
     final rows = const CsvToListConverter(eol: '\n').convert(rawData);
+    if (rows.isEmpty) return MigrationStats();
+
+    final headers = CsvHeaders(rows.first);
 
     var batch = firestore.batch();
     int migratedCount = 0;
@@ -582,32 +605,29 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
 
     for (int i = 1; i < rows.length; i++) {
       final row = rows[i];
-      if (row.isEmpty || row.every((e) => e.toString().trim().isEmpty))
+      if (row.isEmpty || row.every((e) => e.toString().trim().isEmpty)) {
         continue;
+      }
       csvTotal++;
 
       try {
-        final accountNo = row.length > accountNoIndex
-            ? row[accountNoIndex].toString().trim()
-            : '';
-        final customerName = row.length > customerNameIndex
-            ? row[customerNameIndex].toString().trim()
-            : '';
+        final accountNo = headers.getString(row, 'Account No.');
+        final customerId = headers.getString(row, 'Customer Id');
 
-        if (customerName.isEmpty) {
+        if (customerId.isEmpty) {
           errorCount++;
-          diffLog.add("Skipped (Row ${i + 1}): Missing Customer Name in CSV");
+          diffLog.add("Skipped (Row ${i + 1}): Missing Customer ID in CSV");
           continue;
         }
 
-        final customerId = _customerNameFallbackCache[customerName];
+        final bool customerExists = _customerCache.containsKey(customerId);
 
-        if (customerId != null) {
+        if (customerExists) {
           relevantToBatch++;
           final isDuplicate = accountNo.isNotEmpty && cache.contains(accountNo);
 
           if (!isDuplicate) {
-            final deposit = parser(row, customerId);
+            final deposit = parser(row, headers);
 
             batch.set(
               firestore
@@ -623,7 +643,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
             } else {
               emptyAccountMigratedCount++;
               diffLog.add(
-                "Migrated Empty Account: $customerName (Generated ID: ${deposit.id})",
+                "Migrated Empty Account (Generated ID: ${deposit.id})",
               );
             }
             migratedCount++;
@@ -634,12 +654,12 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
             }
           } else {
             duplicateCount++;
-            diffLog.add("Duplicate Account: $accountNo ($customerName)");
+            diffLog.add("Duplicate Account: $accountNo");
           }
         } else {
           missingCustomerCount++;
           diffLog.add(
-            "Missing Customer: $customerName (Account: ${accountNo.isEmpty ? 'Empty' : accountNo})",
+            "Missing Customer ID: $customerId (Account: ${accountNo.isEmpty ? 'Empty' : accountNo})",
           );
         }
       } catch (e) {

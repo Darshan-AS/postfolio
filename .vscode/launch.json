@@ -6,6 +6,7 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "preLaunchTask": "Start Firebase Emulators",
             "toolArgs": [
                 "--dart-define=USE_EMULATOR=true"
             ]
@@ -15,6 +16,7 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/run_migration.dart",
+            "preLaunchTask": "Start Firebase Emulators",
             "toolArgs": [
                 "--dart-define=USE_EMULATOR=true"
             ]

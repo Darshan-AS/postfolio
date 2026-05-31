@@ -63,6 +63,10 @@
 - Fixed static analysis errors by removing `linkedSavingsAccount` and `linkedAutoDebitAccountNo` from UI components, as they were not defined in domain models, and updated null-aware element syntax in `detail_components.dart`.
 - Refactored `DepositStatus` and `MaturityUrgency` enums to eliminate redundancy. Removed the explicit `matured` state from `DepositStatus` (now only `active` and `closed`) and renamed `MaturityUrgency.overdue` to `MaturityUrgency.matured`, establishing a clean boundary between contractual state and chronological timeline.
 - Refactored `toRupeeFormat` to strictly display integers by invoking `.round()` and removing custom decimal configurations, enforcing simplified displays across cards, projections, detail pages, and form fields.
+- Configured VS Code Task (`.vscode/tasks.json`) to automatically start Firebase Emulators via `preLaunchTask`, utilizing `instanceLimit: 1` to seamlessly share the emulator instance across multiple launch configurations.
+- Diagnosed Java dependency issues blocking the Firebase Emulator task and configured `~/.zshrc` `JAVA_HOME` to use Android Studio's bundled JDK, bypassing macOS system constraints that blocked the Homebrew JDK installation.
+- Cleaned up obsolete Homebrew Java installation to prevent conflicts and save space.
+- Updated Migration tool to dynamically parse CSV headers instead of relying on hard-coded column indices, increasing robustness against column reordering or future formatting changes. Switched foreign key matching from name-based to unique 'Row ID's to resolve duplicate collision bugs.
 
 ## Next Steps
 - **Commission Logic Implementation**: Add the next set of domain math features to automatically deduce gross/net commissions and TDS.
