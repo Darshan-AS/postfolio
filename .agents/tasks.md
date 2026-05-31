@@ -193,10 +193,10 @@
 - [ ] **Cloud Storage**: Create a Digital Document Vault for securely uploading and viewing physical deposit slips, Aadhaar, and PAN cards.
 - [ ] **Cloud Functions (Requires Blaze Plan)**: Automate PDF Ledger Reports with a cron job that emails weekly maturity summaries to agents.
 - [ ] **Firebase Extensions (Requires Blaze Plan)**: Auto-Sync CRM data to Google Sheets using official extensions to provide agents with a live spreadsheet backup.
-- [ ] **Firebase Hosting**: Deploy a Web Desktop Dashboard to allow agents to perform heavy data entry on a laptop keyboard.
-  - [ ] Configure `firebase.json` with rewrites to `index.html` to fully support `go_router` deep linking.
-  - [ ] Set up a custom domain (e.g., `app.postfolio.in`) with auto-provisioned free SSL.
-  - [ ] Enable and verify Progressive Web App (PWA) capabilities so agents can "Install" the web app on their desktops.
+- [x] **Firebase Hosting**: Deploy a Web Desktop Dashboard to allow agents to perform heavy data entry on a laptop keyboard.
+  - [x] Configure `firebase.json` with rewrites to `index.html` to fully support `go_router` deep linking.
+  - [x] Set up a custom domain (e.g., `app.postfolio.in`) with auto-provisioned free SSL.
+  - [x] Enable and verify Progressive Web App (PWA) capabilities so agents can "Install" the web app on their desktops.
 - [ ] **Crashlytics**: Track Non-Fatal Math Errors from the `ProjectionCalculator` to gracefully catch and fix domain logic edge cases.
 - [ ] **Performance Monitoring**: Track UI render times (e.g., `InvestmentProjectionCard`) to ensure 60fps performance on large data sets.
 - [ ] **Remote Config**: Fetch Dynamic Interest Rates for Post Office schemes remotely so math calculations update instantly without requiring app store releases.

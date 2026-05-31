@@ -3,6 +3,7 @@
         "rules": "firestore.rules"
     },
     "hosting": {
+        "maxInstances": 5,
         "public": "build/web",
         "ignore": [
             "firebase.json",

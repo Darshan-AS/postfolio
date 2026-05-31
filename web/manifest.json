@@ -1,11 +1,11 @@
 {
-    "name": "postfolio",
-    "short_name": "postfolio",
-    "start_url": ".",
+    "name": "Postfolio",
+    "short_name": "Postfolio",
+    "start_url": "/",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Post Office Agent Dashboard",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
