@@ -118,10 +118,11 @@ class CustomerDetailScreen extends ConsumerWidget {
             ],
           ),
           floatingActionButton: SpeedDial(
+            heroTag: null,
             spacing: AppDimensions.paddingSm,
             spaceBetweenChildren: AppDimensions.paddingSm,
-            backgroundColor: colorScheme.primaryContainer,
-            foregroundColor: colorScheme.onPrimaryContainer,
+            backgroundColor: theme.floatingActionButtonTheme.backgroundColor,
+            foregroundColor: theme.floatingActionButtonTheme.foregroundColor,
             activeChild: const HugeIcon(
               icon: HugeIcons.strokeRoundedCancel01,
               size: AppDimensions.iconMd,
