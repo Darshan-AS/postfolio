@@ -28,6 +28,8 @@ format:
 common:
   search: "Search..."
   add: "Add"
+  close: "Close"
+  reopen: "Reopen"
   duration:
     termYears: "Term (Years)"
     termMonths: "Term (Months)"
@@ -143,6 +145,8 @@ oneTimeDeposits:
   searchHint: "Search by account, customer or scheme..."
   deleteDeposit: "Delete Deposit"
   deleteDepositConfirmation: "Are you sure you want to delete this deposit?"
+  closeDepositConfirmation: "Are you sure you want to mark this account as closed?"
+  reopenDepositConfirmation: "Are you sure you want to mark this account as active?"
   failedToSaveDeposit: "Failed to save deposit: ${error}"
   failedToDeleteDeposit: "Failed to delete deposit: ${error}"
   selectCustomerPrompt: "Please select a customer"
@@ -179,6 +183,8 @@ recurringDeposits:
   searchHint: "Search by account, serial, customer or scheme..."
   deleteDeposit: "Delete RD"
   deleteDepositConfirmation: "Are you sure you want to delete this RD?"
+  closeDepositConfirmation: "Are you sure you want to mark this RD as closed?"
+  reopenDepositConfirmation: "Are you sure you want to mark this RD as active?"
   failedToSaveDeposit: "Failed to save RD: ${error}"
   failedToDeleteDeposit: "Failed to delete RD: ${error}"
   selectCustomerPrompt: "Please select a customer"

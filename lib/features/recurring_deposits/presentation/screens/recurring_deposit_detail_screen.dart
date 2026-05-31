@@ -10,6 +10,8 @@ import 'package:postfolio/core/widgets/detail_components.dart';
 import 'package:postfolio/core/widgets/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/entity_detail_scaffold.dart';
 import 'package:postfolio/core/widgets/nominees_detail_section.dart';
+import 'package:postfolio/core/widgets/app_dialogs.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
@@ -33,6 +35,41 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
       builder: (deposit) {
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
+          customActions: [
+            if (deposit?.status != null)
+              IconButton(
+                icon: HugeIcon(
+                  icon: deposit!.status == DepositStatus.active 
+                      ? HugeIcons.strokeRoundedCheckmarkBadge01
+                      : HugeIcons.strokeRoundedArrowTurnBackward,
+                  size: AppDimensions.iconMd,
+                ),
+                tooltip: deposit.status == DepositStatus.active ? t.common.close : t.common.reopen,
+                onPressed: () async {
+                  final isActive = deposit.status == DepositStatus.active;
+                  final confirmed = await AppDialogs.confirmAction(
+                    context,
+                    title: isActive ? t.common.close : t.common.reopen,
+                    content: isActive
+                        ? t.recurringDeposits.closeDepositConfirmation
+                        : t.recurringDeposits.reopenDepositConfirmation,
+                    confirmText: isActive ? t.common.close : t.common.reopen,
+                  );
+                  if (confirmed == true && context.mounted) {
+                    final newStatus = isActive ? DepositStatus.closed : DepositStatus.active;
+                    final result = await ref
+                        .read(recurringDepositsControllerProvider.notifier)
+                        .toggleDepositStatus(depositId, newStatus);
+                    
+                    if (result is Failure && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text((result as Failure).error.toString())),
+                      );
+                    }
+                  }
+                },
+              ),
+          ],
           onEdit: () => RecurringDepositEditRoute(depositId).push(context),
           deleteDialogTitle: t.recurringDeposits.deleteDeposit,
           deleteDialogContent: t.recurringDeposits.deleteDepositConfirmation,

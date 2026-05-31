@@ -261,6 +261,29 @@ class RecurringDepositsScreen extends HookConsumerWidget {
                     }
                   }
                 },
+                onToggleStatus: () async {
+                  final isActive = deposit.status == DepositStatus.active;
+                  final confirmed = await AppDialogs.confirmAction(
+                    context,
+                    title: isActive ? t.common.close : t.common.reopen,
+                    content: isActive
+                        ? t.recurringDeposits.closeDepositConfirmation
+                        : t.recurringDeposits.reopenDepositConfirmation,
+                    confirmText: isActive ? t.common.close : t.common.reopen,
+                  );
+                  if (confirmed == true && context.mounted) {
+                    final newStatus = isActive ? DepositStatus.closed : DepositStatus.active;
+                    final result = await ref
+                        .read(recurringDepositsControllerProvider.notifier)
+                        .toggleDepositStatus(deposit.id, newStatus);
+                    
+                    if (result is Failure && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text((result as Failure).error.toString())),
+                      );
+                    }
+                  }
+                },
               );
             },
           );
@@ -292,6 +315,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             onTap: () {},
             onEdit: () {},
             onDelete: () {},
+            onToggleStatus: null,
           );
         },
       ),

@@ -9,6 +9,8 @@ import 'package:postfolio/core/widgets/entity_list_tile.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 
+import 'package:postfolio/i18n/strings.g.dart';
+
 class RecurringDepositCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -20,6 +22,7 @@ class RecurringDepositCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback? onToggleStatus;
 
   const RecurringDepositCard({
     super.key,
@@ -33,6 +36,7 @@ class RecurringDepositCard extends StatelessWidget {
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
+    this.onToggleStatus,
   });
 
   @override
@@ -144,6 +148,25 @@ class RecurringDepositCard extends StatelessWidget {
         ),
       ),
       actions: [
+        if (onToggleStatus != null)
+          if (status == DepositStatus.active)
+            EntityAction(
+              label: t.common.close,
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedCheckmarkBadge01,
+                size: AppDimensions.iconMd,
+              ),
+              onTap: onToggleStatus!,
+            )
+          else if (status == DepositStatus.closed)
+            EntityAction(
+              label: t.common.reopen,
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedArrowTurnBackward,
+                size: AppDimensions.iconMd,
+              ),
+              onTap: onToggleStatus!,
+            ),
         EntityAction.edit(onTap: onEdit),
         EntityAction.delete(onTap: onDelete),
       ],

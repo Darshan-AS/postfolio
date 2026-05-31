@@ -156,6 +156,12 @@ class Translations$common$en {
 	/// en: 'Add'
 	String get add => 'Add';
 
+	/// en: 'Close'
+	String get close => 'Close';
+
+	/// en: 'Reopen'
+	String get reopen => 'Reopen';
+
 	late final Translations$common$duration$en duration = Translations$common$duration$en.internal(_root);
 
 	/// en: 'Loading...'
@@ -404,6 +410,12 @@ class Translations$oneTimeDeposits$en {
 	/// en: 'Are you sure you want to delete this deposit?'
 	String get deleteDepositConfirmation => 'Are you sure you want to delete this deposit?';
 
+	/// en: 'Are you sure you want to mark this account as closed?'
+	String get closeDepositConfirmation => 'Are you sure you want to mark this account as closed?';
+
+	/// en: 'Are you sure you want to mark this account as active?'
+	String get reopenDepositConfirmation => 'Are you sure you want to mark this account as active?';
+
 	/// en: 'Failed to save deposit: ${error}'
 	String failedToSaveDeposit({required Object error}) => 'Failed to save deposit: ${error}';
 
@@ -451,6 +463,12 @@ class Translations$recurringDeposits$en {
 
 	/// en: 'Are you sure you want to delete this RD?'
 	String get deleteDepositConfirmation => 'Are you sure you want to delete this RD?';
+
+	/// en: 'Are you sure you want to mark this RD as closed?'
+	String get closeDepositConfirmation => 'Are you sure you want to mark this RD as closed?';
+
+	/// en: 'Are you sure you want to mark this RD as active?'
+	String get reopenDepositConfirmation => 'Are you sure you want to mark this RD as active?';
 
 	/// en: 'Failed to save RD: ${error}'
 	String failedToSaveDeposit({required Object error}) => 'Failed to save RD: ${error}';
@@ -953,6 +971,8 @@ extension on Translations {
 			'format.bulletSeparator' => ' • ',
 			'common.search' => 'Search...',
 			'common.add' => 'Add',
+			'common.close' => 'Close',
+			'common.reopen' => 'Reopen',
 			'common.duration.termYears' => 'Term (Years)',
 			'common.duration.termMonths' => 'Term (Months)',
 			'common.duration.yearAbbreviation' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '1 Yr', other: '${n} Yrs', ), 
@@ -1046,6 +1066,8 @@ extension on Translations {
 			'oneTimeDeposits.searchHint' => 'Search by account, customer or scheme...',
 			'oneTimeDeposits.deleteDeposit' => 'Delete Deposit',
 			'oneTimeDeposits.deleteDepositConfirmation' => 'Are you sure you want to delete this deposit?',
+			'oneTimeDeposits.closeDepositConfirmation' => 'Are you sure you want to mark this account as closed?',
+			'oneTimeDeposits.reopenDepositConfirmation' => 'Are you sure you want to mark this account as active?',
 			'oneTimeDeposits.failedToSaveDeposit' => ({required Object error}) => 'Failed to save deposit: ${error}',
 			'oneTimeDeposits.failedToDeleteDeposit' => ({required Object error}) => 'Failed to delete deposit: ${error}',
 			'oneTimeDeposits.selectCustomerPrompt' => 'Please select a customer',
@@ -1076,6 +1098,8 @@ extension on Translations {
 			'recurringDeposits.searchHint' => 'Search by account, serial, customer or scheme...',
 			'recurringDeposits.deleteDeposit' => 'Delete RD',
 			'recurringDeposits.deleteDepositConfirmation' => 'Are you sure you want to delete this RD?',
+			'recurringDeposits.closeDepositConfirmation' => 'Are you sure you want to mark this RD as closed?',
+			'recurringDeposits.reopenDepositConfirmation' => 'Are you sure you want to mark this RD as active?',
 			'recurringDeposits.failedToSaveDeposit' => ({required Object error}) => 'Failed to save RD: ${error}',
 			'recurringDeposits.failedToDeleteDeposit' => ({required Object error}) => 'Failed to delete RD: ${error}',
 			'recurringDeposits.selectCustomerPrompt' => 'Please select a customer',
