@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2+8] - 2026-05-31
+
+### Added
+- **Firebase Infrastructure**: Integrated Firebase App Distribution / Release Monitoring.
+- **Firebase Performance Monitoring**: Added tracing capabilities to monitor app performance.
+- **Global Error Reporting**: Integrated Firebase Crashlytics to catch and report errors globally.
+- **License**: Added MIT License to the project.
+- **Dependabot**: Added Dependabot configuration for automated dependency updates.
+
+### Changed
+- **Web App**: Configured Web PWA, limited Firebase hosting releases, and capitalized app name.
+
 ## [1.1.1+7] - 2026-05-31
 
 ### Added
@@ -59,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial test release.
 
+[1.1.2+8]: https://github.com/Darshan-AS/postfolio/compare/v1.1.1+7...v1.1.2+8
 [1.1.1+7]: https://github.com/Darshan-AS/postfolio/compare/v1.1.0+6...v1.1.1+7
 [1.1.0+6]: https://github.com/Darshan-AS/postfolio/compare/v1.0.4+5...v1.1.0+6
 [1.0.4+5]: https://github.com/Darshan-AS/postfolio/compare/v1.0.3+4...v1.0.4+5
