@@ -2,15 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // Helper function to check if the user is in the admin email list
+    function isAdmin() {
+      return request.auth != null 
+          && request.auth.token.email != null
+          && request.auth.token.email in ['itisdarshan@gmail.com'];
+    }
+
     // Secure the user's specific data silo
     match /users/{userId} {
       
-      // Allow a user to read and write ONLY if their Auth Token UID matches the userId in the path
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Allow a user to read and write ONLY if their Auth Token UID matches the userId in the path OR they are an admin
+      allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
       
       // Cascade this rule to all subcollections (customers, one_time_deposits, etc.)
       match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
       }
     }
     
