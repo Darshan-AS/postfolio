@@ -66,6 +66,19 @@ DateTime _parseDate(String val) {
   }
 }
 
+DateTime? _parseDateOrNull(String val) {
+  if (val.trim().isEmpty) return null;
+  try {
+    return DateFormat('M/d/yyyy h:mm:ss a').parse(val.trim());
+  } catch (_) {
+    try {
+      return DateFormat('M/d/yyyy').parse(val.trim());
+    } catch (_) {
+      return DateTime.tryParse(val.trim());
+    }
+  }
+}
+
 DepositStatus _parseStatus(String val) => val.trim().toUpperCase() == 'Y'
     ? DepositStatus.closed
     : DepositStatus.active;
@@ -108,7 +121,11 @@ OneTimeSchemeType _mapOneTimeScheme(String schemeStr) {
   return OneTimeSchemeType.timeDeposit;
 }
 
-Customer _parseCustomer(List<dynamic> row, CsvHeaders headers) {
+Customer _parseCustomer(
+  List<dynamic> row,
+  CsvHeaders headers,
+  DateTime? earliestDepositDate,
+) {
   final idStr = headers.getString(row, 'Row ID');
   final id = idStr.isNotEmpty ? idStr : const Uuid().v4();
   final name = headers.getString(row, 'Name');
@@ -122,6 +139,8 @@ Customer _parseCustomer(List<dynamic> row, CsvHeaders headers) {
   final sbAccountNumber = headers.getString(row, 'SB Account No.');
   final sbNomineeName = headers.getString(row, 'SB Nominee');
   final sbNomineeRel = headers.getString(row, 'SB Nominee Relationship');
+  final rowCreatedAt = _parseDateOrNull(headers.getString(row, 'Created On'));
+  final rowUpdatedAt = _parseDateOrNull(headers.getString(row, 'Updated On'));
 
   SavingsAccount? savingsAccount;
   if (sbAccountNumber.isNotEmpty ||
@@ -143,6 +162,9 @@ Customer _parseCustomer(List<dynamic> row, CsvHeaders headers) {
     aadhaarNumber: aadhaarNumber,
     panNumber: panNumber,
     savingsAccount: savingsAccount,
+    createdAt: rowCreatedAt ?? earliestDepositDate,
+    updatedAt: rowUpdatedAt ?? earliestDepositDate,
+    migrationSource: 'legacy_csv_v1_${DateTime.now().toIso8601String()}',
   );
 }
 
@@ -151,6 +173,8 @@ OneTimeDeposit _parseOneTimeDeposit(List<dynamic> row, CsvHeaders headers) {
   final id = idStr.isNotEmpty ? idStr : const Uuid().v4();
   final accountNo = headers.getString(row, 'Account No.');
   final customerId = headers.getString(row, 'Customer Id');
+  final createdAtStr = headers.getString(row, 'Created On');
+  final updatedAtStr = headers.getString(row, 'Updated On');
   return OneTimeDeposit(
     id: id,
     accountNo: accountNo.isEmpty ? null : accountNo,
@@ -166,24 +190,27 @@ OneTimeDeposit _parseOneTimeDeposit(List<dynamic> row, CsvHeaders headers) {
       headers.getString(row, 'Nominee Relationship'),
     ),
     status: _parseStatus(headers.getString(row, 'Closed')),
+    createdAt: _parseDateOrNull(createdAtStr),
+    updatedAt: _parseDateOrNull(updatedAtStr),
+    migrationSource: 'legacy_csv_v1_${DateTime.now().toIso8601String()}',
   );
 }
 
-RecurringDeposit _parseRecurringDeposit(
-  List<dynamic> row,
-  CsvHeaders headers,
-) {
+RecurringDeposit _parseRecurringDeposit(List<dynamic> row, CsvHeaders headers) {
   final idStr = headers.getString(row, 'Id');
   final id = idStr.isNotEmpty ? idStr : const Uuid().v4();
   final serialNo = headers.getString(row, 'Serial No.');
   final accountNo = headers.getString(row, 'Account No.');
   final customerId = headers.getString(row, 'Customer Id');
+  final createdAtStr = headers.getString(row, 'Created On');
+  final updatedAtStr = headers.getString(row, 'Updated On');
   return RecurringDeposit(
     id: id,
     serialNo: serialNo,
     accountNo: accountNo.isEmpty ? null : accountNo,
     installmentAmount: _parseCurrency(headers.getString(row, 'Amount')),
-    termYears: int.tryParse(headers.getString(row, 'Term Years')) ?? 5, // Default to 5
+    termYears:
+        int.tryParse(headers.getString(row, 'Term Years')) ?? 5, // Default to 5
     termMonths: 0,
     interestRate: _parsePercentage(headers.getString(row, 'Interest Rate')),
     customerId: customerId,
@@ -194,6 +221,9 @@ RecurringDeposit _parseRecurringDeposit(
       headers.getString(row, 'Nominee Relationship'),
     ),
     status: _parseStatus(headers.getString(row, 'Closed')),
+    createdAt: _parseDateOrNull(createdAtStr),
+    updatedAt: _parseDateOrNull(updatedAtStr),
+    migrationSource: 'legacy_csv_v1_${DateTime.now().toIso8601String()}',
   );
 }
 
@@ -449,7 +479,16 @@ class _MigrationRunnerState extends State<MigrationRunner> {
 
     try {
       final limit = maxCustomers ?? 999999;
-      final custStats = await _migrateCustomers(firestore, uid, limit);
+
+      // Pre-calculate earliest deposit dates for customers
+      final customerEarliestDates = await _calculateCustomerDates();
+
+      final custStats = await _migrateCustomers(
+        firestore,
+        uid,
+        limit,
+        customerEarliestDates,
+      );
       final otStats = await _migrateDeposits(
         firestore,
         uid: uid,
@@ -494,6 +533,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
     FirebaseFirestore firestore,
     String uid,
     int maxCustomers,
+    Map<String, DateTime> customerEarliestDates,
   ) async {
     final envLabel = useFirebaseEmulator ? "Emulator" : "Production";
     setState(
@@ -532,7 +572,11 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
         }
 
         if (!_customerCache.containsKey(id)) {
-          final customer = _parseCustomer(row, headers);
+          final earliestDate = customerEarliestDates[id];
+          final customer = _parseCustomer(row, headers, earliestDate);
+          final data = customer.toJson();
+          data['createdAt'] ??= FieldValue.serverTimestamp();
+          data['updatedAt'] ??= FieldValue.serverTimestamp();
 
           batch.set(
             firestore
@@ -540,7 +584,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                 .doc(uid)
                 .collection('customers')
                 .doc(customer.id),
-            customer.toJson(),
+            data,
           );
 
           _customerCache[id] = customer.id;
@@ -628,6 +672,9 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
 
           if (!isDuplicate) {
             final deposit = parser(row, headers);
+            final data = deposit.toJson();
+            data['createdAt'] ??= FieldValue.serverTimestamp();
+            data['updatedAt'] ??= FieldValue.serverTimestamp();
 
             batch.set(
               firestore
@@ -635,7 +682,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                   .doc(uid)
                   .collection(collectionName)
                   .doc(deposit.id),
-              deposit.toJson(),
+              data,
             );
 
             if (accountNo.isNotEmpty) {
@@ -840,4 +887,54 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
       ),
     );
   }
+}
+
+Future<Map<String, DateTime>> _calculateCustomerDates() async {
+  final customerEarliestDate = <String, DateTime>{};
+
+  void processRows(
+    List<List<dynamic>> rows,
+    CsvHeaders headers,
+    String dateColumn,
+  ) {
+    for (int i = 1; i < rows.length; i++) {
+      final row = rows[i];
+      if (row.isEmpty || row.every((e) => e.toString().trim().isEmpty)) {
+        continue;
+      }
+
+      final customerId = headers.getString(row, 'Customer Id');
+      final dateStr = headers.getString(row, dateColumn);
+
+      if (customerId.isNotEmpty && dateStr.isNotEmpty) {
+        final date = _parseDateOrNull(dateStr);
+        if (date != null) {
+          if (!customerEarliestDate.containsKey(customerId) ||
+              date.isBefore(customerEarliestDate[customerId]!)) {
+            customerEarliestDate[customerId] = date;
+          }
+        }
+      }
+    }
+  }
+
+  try {
+    final otRaw = await rootBundle.loadString(MigrationAssets.oneTimeDeposits);
+    final otRows = const CsvToListConverter(eol: '\n').convert(otRaw);
+    if (otRows.isNotEmpty) {
+      processRows(otRows, CsvHeaders(otRows.first), 'Deposit Date');
+    }
+
+    final rdRaw = await rootBundle.loadString(
+      MigrationAssets.recurringDeposits,
+    );
+    final rdRows = const CsvToListConverter(eol: '\n').convert(rdRaw);
+    if (rdRows.isNotEmpty) {
+      processRows(rdRows, CsvHeaders(rdRows.first), 'Opening Date');
+    }
+  } catch (e) {
+    debugPrint("Error calculating customer dates: $e");
+  }
+
+  return customerEarliestDate;
 }

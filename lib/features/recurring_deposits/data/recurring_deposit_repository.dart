@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
+import 'package:postfolio/core/constants/firestore_keys.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:uuid/uuid.dart';
@@ -39,7 +40,7 @@ class FirestoreRecurringDepositRepository
       try {
         final deposits = snapshot.docs.map((doc) {
           final data = doc.data();
-          data['id'] = doc.id;
+          data[FirestoreKeys.id] = doc.id;
           return RecurringDeposit.fromJson(data);
         }).toList();
         return Success(deposits);
@@ -57,7 +58,11 @@ class FirestoreRecurringDepositRepository
       final docRef = _deposits.doc(deposit.id);
 
       final data = deposit.toJson();
-      data.remove('id');
+      data.remove(FirestoreKeys.id);
+      
+      // Inject server timestamps for creation
+      data[FirestoreKeys.createdAt] = firestore.FieldValue.serverTimestamp();
+      data[FirestoreKeys.updatedAt] = firestore.FieldValue.serverTimestamp();
 
       docRef.set(data);
       return const Success(null);
@@ -72,7 +77,11 @@ class FirestoreRecurringDepositRepository
   ) async {
     try {
       final data = deposit.toJson();
-      data.remove('id');
+      data.remove(FirestoreKeys.id);
+      data.remove(FirestoreKeys.createdAt);
+      data.remove(FirestoreKeys.migrationSource);
+
+      data[FirestoreKeys.updatedAt] = firestore.FieldValue.serverTimestamp();
 
       _deposits.doc(deposit.id).update(data);
       return const Success(null);

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
+import 'package:postfolio/core/constants/firestore_keys.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/auth/domain/auth_state.dart';
@@ -34,7 +35,7 @@ class FirestoreCustomerRepository implements CustomerRepository {
       try {
         final customers = snapshot.docs.map((doc) {
           final data = doc.data();
-          data['id'] = doc.id; // Inject the document ID into the data
+          data[FirestoreKeys.id] = doc.id; // Inject the document ID into the data
           return Customer.fromJson(data);
         }).toList();
         return Success(customers);
@@ -52,7 +53,7 @@ class FirestoreCustomerRepository implements CustomerRepository {
           return const Failure('Customer not found');
         }
         final data = snapshot.data()!;
-        data['id'] = snapshot.id;
+        data[FirestoreKeys.id] = snapshot.id;
         return Success(Customer.fromJson(data));
       } catch (e) {
         return Failure(e.toString());
@@ -66,7 +67,11 @@ class FirestoreCustomerRepository implements CustomerRepository {
       final docRef = _customers.doc(customer.id);
 
       final data = customer.toJson();
-      data.remove('id'); // Remove id from body as it's the doc key
+      data.remove(FirestoreKeys.id); // Remove id from body as it's the doc key
+      
+      // Inject server timestamps for creation
+      data[FirestoreKeys.createdAt] = firestore.FieldValue.serverTimestamp();
+      data[FirestoreKeys.updatedAt] = firestore.FieldValue.serverTimestamp();
 
       // We use .set() without awaiting the server sync.
       // This allows offline writes to resolve immediately to the UI,
@@ -82,7 +87,12 @@ class FirestoreCustomerRepository implements CustomerRepository {
   Future<Result<void, String>> updateCustomer(Customer customer) async {
     try {
       final data = customer.toJson();
-      data.remove('id');
+      data.remove(FirestoreKeys.id);
+      data.remove(FirestoreKeys.createdAt); // Prevent overwriting createdAt
+      data.remove(FirestoreKeys.migrationSource); // Prevent overwriting migrationSource if set
+
+      // Inject server timestamp for update
+      data[FirestoreKeys.updatedAt] = firestore.FieldValue.serverTimestamp();
 
       _customers.doc(customer.id).update(data);
       return const Success(null);
