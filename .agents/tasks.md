@@ -71,6 +71,7 @@
 - [x] Build `run_migration.dart` utility to bootstrap local emulator data from legacy CSV exports.
 - [x] Fixed a critical Firestore document path error in the migration script by sanitizing account numbers containing slashes before using them as document IDs.
 - [x] Fixed migration script deduplication logic to correctly handle and migrate rows with empty account numbers instead of incorrectly marking them as duplicates.
+- [x] Rework migration script to dynamically parse CSV headers and use strict `Row ID` foreign keys, resolving customer name duplication bugs.
 - [ ] Implement Gross/Net Commission logic and TDS rules.
 
 ## Phase 6: Structural Refactoring (In Progress)
