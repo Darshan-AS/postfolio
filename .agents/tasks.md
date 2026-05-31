@@ -98,6 +98,7 @@
 - [x] **Authentication Presentation:** Build `AuthController` and the `LoginScreen` widget.
 - [x] **Secure Routing:** Set up GoRouter `refreshListenable` and `redirect` guard for unauthenticated users.
 - [x] Build `FirestoreCustomerRepository` and swap out the Fake repository.
+- [ ] Add Firebase Analytics wrapper (`AnalyticsService`), inject `FirebaseAnalyticsObserver` to `GoRouter`, and track key business events in controllers (e.g., `log_collection`, `create_rd_account`, `create_ot_account`, `add_customer`, and screen tracking).
 - [x] Setup Client-Side ID generation for Customers using `uuid` to improve Firestore syncing and offline-support.
 - [x] Integrate Firebase Performance Monitoring for automated tracing of app startup and offline-sync network behavior.
 
