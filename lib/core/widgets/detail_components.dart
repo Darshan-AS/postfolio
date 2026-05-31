@@ -222,7 +222,7 @@ class StatusBadge extends StatelessWidget {
       bgColor = colorScheme.tertiaryContainer;
       fgColor = colorScheme.onTertiaryContainer;
     } else if (status.toLowerCase() == 'closed') {
-      bgColor = colorScheme.surfaceVariant;
+      bgColor = colorScheme.surfaceContainerHighest;
       fgColor = colorScheme.onSurfaceVariant;
     } else {
       bgColor = colorScheme.primaryContainer;

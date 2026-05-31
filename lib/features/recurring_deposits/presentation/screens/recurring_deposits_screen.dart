@@ -32,10 +32,12 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     final criteria = ref.watch(recurringListCriteriaProvider);
 
     int statusModifications = 0;
-    if (!criteria.statusFilters.contains(DepositStatus.active))
+    if (!criteria.statusFilters.contains(DepositStatus.active)) {
       statusModifications++;
-    if (criteria.statusFilters.contains(DepositStatus.closed))
+    }
+    if (criteria.statusFilters.contains(DepositStatus.closed)) {
       statusModifications++;
+    }
 
     final activeFilterCount =
         statusModifications + criteria.urgencyFilters.length;
