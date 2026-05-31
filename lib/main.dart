@@ -10,6 +10,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:postfolio/firebase_options.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/providers/theme_provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -71,11 +72,34 @@ class PostfolioApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final goRouter = ref.watch(goRouterProvider);
+    final themeMode = ref.watch(themeModeProvider);
+
+    ThemeData lightTheme = AppTheme.lightTheme;
+    ThemeData darkTheme = AppTheme.darkTheme;
+    ThemeMode materialThemeMode = ThemeMode.system;
+
+    switch (themeMode) {
+      case AppThemeMode.light:
+        materialThemeMode = ThemeMode.light;
+        break;
+      case AppThemeMode.dark:
+        materialThemeMode = ThemeMode.dark;
+        break;
+      case AppThemeMode.accessibleSystem:
+        materialThemeMode = ThemeMode.system;
+        lightTheme = AppTheme.accessibleLightTheme;
+        darkTheme = AppTheme.accessibleDarkTheme;
+        break;
+      case AppThemeMode.system:
+        materialThemeMode = ThemeMode.system;
+        break;
+    }
 
     return MaterialApp.router(
       title: t.appTitle,
-      theme: AppTheme.lightTheme, // Apply centralized light theme
-      darkTheme: AppTheme.darkTheme, // Apply centralized dark theme
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: materialThemeMode,
       routerConfig: goRouter,
       locale: TranslationProvider.of(context).flutterLocale,
       localizationsDelegates: const [

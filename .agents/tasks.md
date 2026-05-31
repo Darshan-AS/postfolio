@@ -184,6 +184,7 @@
 - [x] Fix white space layout bug in Demo Mode by standardizing nested scaffold keyboard resizing behavior.
 - [x] Hide intent actions (SMS, Phone, WhatsApp) for customers when contact information is missing.
 - [x] Round off amounts to nearest integer.
+- [x] Add Wong/Tol accessible color palette concepts (Magenta for error, Yellow/Orange for success) for Red-Green Color Blindness.
 
 ## Phase 9: Responsive Architecture (Pending)
 - [ ] Add `flutter_adaptive_scaffold` to the project for official Material 3 adaptive layouts.

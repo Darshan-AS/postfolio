@@ -11,6 +11,7 @@ import 'package:postfolio/core/widgets/app_search_bar.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/providers/theme_provider.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
@@ -55,6 +56,36 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
           onPressed: () {},
         ),
         title: Text(t.oneTimeDeposits.title),
+        actions: [
+          Consumer(
+            builder: (context, ref, child) {
+              final isAccessibleTheme =
+                  ref.watch(themeModeProvider) == AppThemeMode.accessibleSystem;
+              return IconButton(
+                isSelected: isAccessibleTheme,
+                icon: Icon(
+                  Icons.contrast,
+                  size: AppDimensions.iconMd,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                selectedIcon: Icon(
+                  Icons.contrast,
+                  size: AppDimensions.iconMd,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: isAccessibleTheme
+                      ? Theme.of(context).colorScheme.primaryContainer
+                      : null,
+                ),
+                onPressed: () {
+                  ref.read(themeModeProvider.notifier).toggleAccessibleTheme();
+                },
+                tooltip: t.common.toggleAccessibleTheme,
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -280,14 +311,18 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                     confirmText: isActive ? t.common.close : t.common.reopen,
                   );
                   if (confirmed == true && context.mounted) {
-                    final newStatus = isActive ? DepositStatus.closed : DepositStatus.active;
+                    final newStatus = isActive
+                        ? DepositStatus.closed
+                        : DepositStatus.active;
                     final result = await ref
                         .read(oneTimeDepositsControllerProvider.notifier)
                         .toggleDepositStatus(deposit.id, newStatus);
-                    
+
                     if (result is Failure && context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text((result as Failure).error.toString())),
+                        SnackBar(
+                          content: Text((result as Failure).error.toString()),
+                        ),
                       );
                     }
                   }

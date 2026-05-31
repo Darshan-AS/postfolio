@@ -200,6 +200,9 @@ class Translations$common$en {
 	/// en: 'OK'
 	String get ok => 'OK';
 
+	/// en: 'Toggle Accessible Theme'
+	String get toggleAccessibleTheme => 'Toggle Accessible Theme';
+
 	/// en: '—'
 	String get notProvided => '—';
 
@@ -988,6 +991,7 @@ extension on Translations {
 			'common.error' => 'Error',
 			'common.retry' => 'Retry',
 			'common.ok' => 'OK',
+			'common.toggleAccessibleTheme' => 'Toggle Accessible Theme',
 			'common.notProvided' => '—',
 			'common.moreOptions' => 'More options',
 			'common.noResults' => 'No results found',

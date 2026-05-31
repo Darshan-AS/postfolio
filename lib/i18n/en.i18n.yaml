@@ -48,6 +48,7 @@ common:
   error: "Error"
   retry: "Retry"
   ok: "OK"
+  toggleAccessibleTheme: "Toggle Accessible Theme"
   notProvided: "—"
   moreOptions: "More options"
   noResults: "No results found"
