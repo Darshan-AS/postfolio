@@ -37,14 +37,22 @@ class MainShellScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDemoMode = ref.watch(demoModeProvider);
 
-    Widget shellContent = navigationShell;
-    if (isDemoMode) {
-      shellContent = MediaQuery.removePadding(
-        context: context,
-        removeTop: true,
-        child: shellContent,
-      );
-    }
+    // Use a Builder so that any MediaQuery modifications grab the data
+    // from INSIDE the Scaffold, after the Scaffold has already handled
+    // the keyboard viewInsets. Using the outer context bypasses the Scaffold's
+    // inset consumption, causing "Double Inset" layout bugs.
+    Widget shellContent = Builder(
+      builder: (innerContext) {
+        if (isDemoMode) {
+          return MediaQuery.removePadding(
+            context: innerContext,
+            removeTop: true,
+            child: navigationShell,
+          );
+        }
+        return navigationShell;
+      },
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {

@@ -68,6 +68,7 @@
 - Diagnosed Java dependency issues blocking the Firebase Emulator task and configured `~/.zshrc` `JAVA_HOME` to use Android Studio's bundled JDK, bypassing macOS system constraints that blocked the Homebrew JDK installation.
 - Cleaned up obsolete Homebrew Java installation to prevent conflicts and save space.
 - Updated Migration tool to dynamically parse CSV headers instead of relying on hard-coded column indices, increasing robustness against column reordering or future formatting changes. Switched foreign key matching from name-based to unique 'Row ID's to resolve duplicate collision bugs.
+- Fixed a layout bug where a "white space" appeared above the keyboard in Demo Mode by using a \`Builder\` to correctly fetch \`MediaQuery\` insets from inside the shell scaffold, establishing a new architectural convention for nested scaffolds to prevent "Double Inset" over-compensation.
 
 ## Next Steps
 - **Commission Logic Implementation**: Add the next set of domain math features to automatically deduce gross/net commissions and TDS.
