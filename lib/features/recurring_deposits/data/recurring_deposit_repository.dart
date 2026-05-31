@@ -28,21 +28,34 @@ class FirestoreRecurringDepositRepository
 
   FirestoreRecurringDepositRepository(this._firestore, this._userId);
 
-  firestore.CollectionReference<Map<String, dynamic>> get _deposits =>
-      _firestore
-          .collection('users')
-          .doc(_userId)
-          .collection('recurring_deposits');
+  firestore.CollectionReference<RecurringDeposit> get _deposits => _firestore
+      .collection(FirestoreCollections.users)
+      .doc(_userId)
+      .collection(FirestoreCollections.recurringDeposits)
+      .withConverter<RecurringDeposit>(
+        fromFirestore: (snapshot, _) {
+          final data = snapshot.data()!;
+          data[FirestoreKeys.id] = snapshot.id;
+          return RecurringDeposit.fromJson(data);
+        },
+        toFirestore: (deposit, _) {
+          final data = deposit.toJson();
+          data.remove(FirestoreKeys.id);
+          if (deposit.createdAt == null) {
+            data[FirestoreKeys.createdAt] =
+                firestore.FieldValue.serverTimestamp();
+          }
+          data[FirestoreKeys.updatedAt] =
+              firestore.FieldValue.serverTimestamp();
+          return data;
+        },
+      );
 
   @override
   Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits() {
     return _deposits.snapshots().map((snapshot) {
       try {
-        final deposits = snapshot.docs.map((doc) {
-          final data = doc.data();
-          data[FirestoreKeys.id] = doc.id;
-          return RecurringDeposit.fromJson(data);
-        }).toList();
+        final deposits = snapshot.docs.map((doc) => doc.data()).toList();
         return Success(deposits);
       } catch (e) {
         return Failure(e.toString());
@@ -55,16 +68,7 @@ class FirestoreRecurringDepositRepository
     RecurringDeposit deposit,
   ) async {
     try {
-      final docRef = _deposits.doc(deposit.id);
-
-      final data = deposit.toJson();
-      data.remove(FirestoreKeys.id);
-      
-      // Inject server timestamps for creation
-      data[FirestoreKeys.createdAt] = firestore.FieldValue.serverTimestamp();
-      data[FirestoreKeys.updatedAt] = firestore.FieldValue.serverTimestamp();
-
-      docRef.set(data);
+      _deposits.doc(deposit.id).set(deposit);
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
@@ -76,14 +80,7 @@ class FirestoreRecurringDepositRepository
     RecurringDeposit deposit,
   ) async {
     try {
-      final data = deposit.toJson();
-      data.remove(FirestoreKeys.id);
-      data.remove(FirestoreKeys.createdAt);
-      data.remove(FirestoreKeys.migrationSource);
-
-      data[FirestoreKeys.updatedAt] = firestore.FieldValue.serverTimestamp();
-
-      _deposits.doc(deposit.id).update(data);
+      _deposits.doc(deposit.id).set(deposit, firestore.SetOptions(merge: true));
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());

@@ -26,18 +26,34 @@ class FirestoreCustomerRepository implements CustomerRepository {
 
   FirestoreCustomerRepository(this._firestore, this._userId);
 
-  firestore.CollectionReference<Map<String, dynamic>> get _customers =>
-      _firestore.collection('users').doc(_userId).collection('customers');
+  firestore.CollectionReference<Customer> get _customers => _firestore
+      .collection(FirestoreCollections.users)
+      .doc(_userId)
+      .collection(FirestoreCollections.customers)
+      .withConverter<Customer>(
+        fromFirestore: (snapshot, _) {
+          final data = snapshot.data()!;
+          data[FirestoreKeys.id] = snapshot.id;
+          return Customer.fromJson(data);
+        },
+        toFirestore: (customer, _) {
+          final data = customer.toJson();
+          data.remove(FirestoreKeys.id); // ID is part of the doc metadata
+          if (customer.createdAt == null) {
+            data[FirestoreKeys.createdAt] =
+                firestore.FieldValue.serverTimestamp();
+          }
+          data[FirestoreKeys.updatedAt] =
+              firestore.FieldValue.serverTimestamp();
+          return data;
+        },
+      );
 
   @override
   Stream<Result<List<Customer>, String>> watchCustomers() {
     return _customers.snapshots().map((snapshot) {
       try {
-        final customers = snapshot.docs.map((doc) {
-          final data = doc.data();
-          data[FirestoreKeys.id] = doc.id; // Inject the document ID into the data
-          return Customer.fromJson(data);
-        }).toList();
+        final customers = snapshot.docs.map((doc) => doc.data()).toList();
         return Success(customers);
       } catch (e) {
         return Failure(e.toString());
@@ -52,9 +68,7 @@ class FirestoreCustomerRepository implements CustomerRepository {
         if (!snapshot.exists) {
           return const Failure('Customer not found');
         }
-        final data = snapshot.data()!;
-        data[FirestoreKeys.id] = snapshot.id;
-        return Success(Customer.fromJson(data));
+        return Success(snapshot.data()!);
       } catch (e) {
         return Failure(e.toString());
       }
@@ -64,19 +78,10 @@ class FirestoreCustomerRepository implements CustomerRepository {
   @override
   Future<Result<void, String>> createCustomer(Customer customer) async {
     try {
-      final docRef = _customers.doc(customer.id);
-
-      final data = customer.toJson();
-      data.remove(FirestoreKeys.id); // Remove id from body as it's the doc key
-      
-      // Inject server timestamps for creation
-      data[FirestoreKeys.createdAt] = firestore.FieldValue.serverTimestamp();
-      data[FirestoreKeys.updatedAt] = firestore.FieldValue.serverTimestamp();
-
       // We use .set() without awaiting the server sync.
       // This allows offline writes to resolve immediately to the UI,
       // relying on Firestore's background syncing.
-      docRef.set(data);
+      _customers.doc(customer.id).set(customer);
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
@@ -86,15 +91,9 @@ class FirestoreCustomerRepository implements CustomerRepository {
   @override
   Future<Result<void, String>> updateCustomer(Customer customer) async {
     try {
-      final data = customer.toJson();
-      data.remove(FirestoreKeys.id);
-      data.remove(FirestoreKeys.createdAt); // Prevent overwriting createdAt
-      data.remove(FirestoreKeys.migrationSource); // Prevent overwriting migrationSource if set
-
-      // Inject server timestamp for update
-      data[FirestoreKeys.updatedAt] = firestore.FieldValue.serverTimestamp();
-
-      _customers.doc(customer.id).update(data);
+      _customers
+          .doc(customer.id)
+          .set(customer, firestore.SetOptions(merge: true));
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
