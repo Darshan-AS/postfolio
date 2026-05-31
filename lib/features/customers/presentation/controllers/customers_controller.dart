@@ -53,9 +53,18 @@ Future<UnmodifiableListView<Customer>> filteredCustomers(Ref ref) async {
       );
       break;
     case CustomerSortOption.newest:
-      // Customers don't have a creation date right now, but this could be used if added
+      result.sort((a, b) {
+        final dateA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final dateB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return dateB.compareTo(dateA);
+      });
       break;
     case CustomerSortOption.oldest:
+      result.sort((a, b) {
+        final dateA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final dateB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return dateA.compareTo(dateB);
+      });
       break;
   }
 
