@@ -113,6 +113,7 @@
 - [x] Expand `SchemeType` enum and models to support an exhaustive list of Term Deposit variants.
 - [x] **Domain Math - Maturity Calculators & Projections:** Create `InvestmentProjection` model, `ProjectionCalculator` utility class, and refactor Base models to replace maturity fields with getters.
 - [x] Run `build_runner` to regenerate Freezed models and JSON serialization.
+- [x] Configured Firebase Web Hosting for SPA routing and deployed to default/custom domains.
 - [x] **UI Cleanup - Live Preview & "Dumb Widgets":** Use `flutter_hooks` to manage local ephemeral form state and isolate business math.
 - [x] Remove manual `maturityDate` and `maturityAmount` input fields from form screens.
 - [x] **Dynamic Form Previews:** Create and integrate an `InvestmentProjectionCard` to dynamically calculate and display projections.
@@ -183,6 +184,24 @@
 ## Phase 12: CI/CD & Distribution (Pending)
 - [x] Automate build process and release per-platform APKs using GitHub Actions.
 - [x] Distribute beta builds to internal testers using Firebase App Distribution.
+
+## Phase 13: Advanced Firebase Integrations (Future)
+- [ ] **Authentication**: Implement Passkey or Biometric Login to secure the app without requiring constant Google re-authentication.
+- [ ] **Cloud Firestore**: Implement Agency Mode / Shared Ledgers using an `accessList` in security rules to allow agents and assistants to collaborate on the same ledger.
+- [ ] **Realtime Database**: Implement Live Presence and Edit Locks to prevent data-overwrite collisions when multiple users edit the same customer profile.
+- [ ] **Cloud Storage**: Create a Digital Document Vault for securely uploading and viewing physical deposit slips, Aadhaar, and PAN cards.
+- [ ] **Cloud Functions (Requires Blaze Plan)**: Automate PDF Ledger Reports with a cron job that emails weekly maturity summaries to agents.
+- [ ] **Firebase Extensions (Requires Blaze Plan)**: Auto-Sync CRM data to Google Sheets using official extensions to provide agents with a live spreadsheet backup.
+- [ ] **Firebase Hosting**: Deploy a Web Desktop Dashboard to allow agents to perform heavy data entry on a laptop keyboard.
+  - [ ] Configure `firebase.json` with rewrites to `index.html` to fully support `go_router` deep linking.
+  - [ ] Set up a custom domain (e.g., `app.postfolio.in`) with auto-provisioned free SSL.
+  - [ ] Enable and verify Progressive Web App (PWA) capabilities so agents can "Install" the web app on their desktops.
+- [ ] **Crashlytics**: Track Non-Fatal Math Errors from the `ProjectionCalculator` to gracefully catch and fix domain logic edge cases.
+- [ ] **Performance Monitoring**: Track UI render times (e.g., `InvestmentProjectionCard`) to ensure 60fps performance on large data sets.
+- [ ] **Remote Config**: Fetch Dynamic Interest Rates for Post Office schemes remotely so math calculations update instantly without requiring app store releases.
+- [ ] **Cloud Messaging (FCM)**: Send proactive Maturity Alerts (Push Notifications) to remind agents of upcoming maturity dates.
+- [ ] **Google Analytics**: Track Feature Adoption (e.g., `filter_used`) to understand how agents are utilizing new search and filtering tools.
+- [ ] **In-App Messaging**: Display native pop-ups for Feature Discovery to announce new app capabilities to users after an update.
 
 ## Known Bugs & Issues
 
