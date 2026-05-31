@@ -1,67 +1,61 @@
 import 'package:flutter/material.dart';
-import 'package:postfolio/core/theme/app_colors.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 
 class AppWidgetThemes {
   AppWidgetThemes._();
 
-  static AppBarTheme get appBarTheme => const AppBarTheme(
-    backgroundColor: AppColors.surface,
-    foregroundColor: AppColors.textPrimary,
+  static AppBarTheme appBarTheme(ColorScheme colorScheme) => AppBarTheme(
+    backgroundColor: colorScheme.surface,
+    foregroundColor: colorScheme.onSurface,
     elevation: 0,
     centerTitle: false,
-    titleTextStyle: TextStyle(
-      fontSize: AppDimensions.fontLg,
-      fontWeight: FontWeight.w600,
-      color: AppColors.textPrimary,
-    ),
     iconTheme: IconThemeData(
-      color: AppColors.textPrimary,
+      color: colorScheme.onSurface,
       size: AppDimensions.iconMd,
     ),
     actionsIconTheme: IconThemeData(
-      color: AppColors.textPrimary,
+      color: colorScheme.onSurface,
       size: AppDimensions.iconMd,
     ),
   );
 
-  static DividerThemeData get dividerTheme => const DividerThemeData(
-    color: AppColors.divider,
+  static DividerThemeData dividerTheme(ColorScheme colorScheme) => DividerThemeData(
+    color: colorScheme.outlineVariant,
     space: AppDimensions.dividerHeight,
     thickness: AppDimensions.dividerThickness,
   );
 
-  static IconButtonThemeData get iconButtonTheme => IconButtonThemeData(
+  static IconButtonThemeData iconButtonTheme(ColorScheme colorScheme) => IconButtonThemeData(
     style: IconButton.styleFrom(
       iconSize: AppDimensions.iconMd,
-      foregroundColor: AppColors.textSecondary,
+      foregroundColor: colorScheme.onSurfaceVariant,
     ),
   );
 
-  static FloatingActionButtonThemeData get floatingActionButtonTheme =>
-      const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.surface,
+  static FloatingActionButtonThemeData floatingActionButtonTheme(ColorScheme colorScheme) =>
+      FloatingActionButtonThemeData(
+        backgroundColor: colorScheme.primaryContainer,
+        foregroundColor: colorScheme.onPrimaryContainer,
         elevation: 4,
       );
 
-  static CardThemeData get cardTheme => CardThemeData(
-    color: AppColors.surface,
+  static CardThemeData cardTheme(ColorScheme colorScheme) => CardThemeData(
+    color: colorScheme.surface,
     elevation: 0,
     shape: RoundedRectangleBorder(
-      side: const BorderSide(
-        color: AppColors.divider,
+      side: BorderSide(
+        color: colorScheme.outlineVariant,
         width: AppDimensions.borderSm,
       ),
       borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
     ),
   );
 
-  static ElevatedButtonThemeData get elevatedButtonTheme =>
+  static ElevatedButtonThemeData elevatedButtonTheme(ColorScheme colorScheme) =>
       ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.surface,
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           ),
@@ -69,8 +63,10 @@ class AppWidgetThemes {
         ),
       );
 
-  static FilledButtonThemeData get filledButtonTheme => FilledButtonThemeData(
+  static FilledButtonThemeData filledButtonTheme(ColorScheme colorScheme) => FilledButtonThemeData(
     style: FilledButton.styleFrom(
+      backgroundColor: colorScheme.primary,
+      foregroundColor: colorScheme.onPrimary,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
       ),
@@ -146,13 +142,11 @@ class AppWidgetThemes {
         textStyle: WidgetStatePropertyAll(
           TextStyle(
             color: colorScheme.onSurface,
-            fontSize: AppDimensions.fontMd,
           ),
         ),
         hintStyle: WidgetStatePropertyAll(
           TextStyle(
             color: colorScheme.onSurfaceVariant,
-            fontSize: AppDimensions.fontMd,
           ),
         ),
       );
@@ -167,12 +161,10 @@ class AppWidgetThemes {
     ),
     labelStyle: TextStyle(
       color: colorScheme.onSurface,
-      fontSize: AppDimensions.fontSm,
       fontWeight: FontWeight.w500,
     ),
     secondaryLabelStyle: TextStyle(
       color: colorScheme.onPrimaryContainer,
-      fontSize: AppDimensions.fontSm,
       fontWeight: FontWeight.w600,
     ),
     brightness: colorScheme.brightness,

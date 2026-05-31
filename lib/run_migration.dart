@@ -10,7 +10,6 @@ import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/theme/app_colors.dart';
 
 import 'package:postfolio/core/constants/firestore_keys.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
@@ -359,7 +358,7 @@ class _MigrationRunnerState extends State<MigrationRunner> {
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(title, style: const TextStyle(color: AppColors.error)),
+            title: Text(title, style: TextStyle(color: Theme.of(context).colorScheme.error)),
             content: Text(message),
             actions: [
               TextButton(
@@ -369,8 +368,8 @@ class _MigrationRunnerState extends State<MigrationRunner> {
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  foregroundColor: AppColors.surface,
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError,
                 ),
                 child: const Text("Proceed"),
               ),
@@ -751,13 +750,13 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                 ),
                 decoration: BoxDecoration(
                   color: useFirebaseEmulator
-                      ? AppColors.success.withValues(alpha: 0.1)
-                      : AppColors.error.withValues(alpha: 0.1),
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   border: Border.all(
                     color: useFirebaseEmulator
-                        ? AppColors.success
-                        : AppColors.error,
+                        ? Colors.green
+                        : Theme.of(context).colorScheme.error,
                   ),
                 ),
                 child: Row(
@@ -766,8 +765,8 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                     Icon(
                       useFirebaseEmulator ? Icons.bug_report : Icons.warning,
                       color: useFirebaseEmulator
-                          ? AppColors.success
-                          : AppColors.error,
+                          ? Colors.green
+                          : Theme.of(context).colorScheme.error,
                       size: 16,
                     ),
                     AppSpacings.gapSm,
@@ -775,8 +774,8 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                       useFirebaseEmulator ? "EMULATOR MODE" : "PRODUCTION MODE",
                       style: TextStyle(
                         color: useFirebaseEmulator
-                            ? AppColors.success
-                            : AppColors.error,
+                            ? Colors.green
+                            : Theme.of(context).colorScheme.error,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -829,8 +828,8 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                             _runMigration(maxCustomers: count);
                           },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.surface,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     ),
                     child: Text(t.migration.migrateBatch),
                   ),
@@ -839,16 +838,16 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                         ? null
                         : () => _runMigration(maxCustomers: null),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
-                      foregroundColor: AppColors.surface,
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
                     ),
                     child: Text(t.migration.migrateAll),
                   ),
                   ElevatedButton(
                     onPressed: _isMigrating ? null : _deleteAllData,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      foregroundColor: AppColors.surface,
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      foregroundColor: Theme.of(context).colorScheme.onError,
                     ),
                     child: Text(t.migration.deleteAll),
                   ),
@@ -869,9 +868,9 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                   ),
                   padding: const EdgeInsets.all(AppDimensions.paddingLg),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                    border: Border.all(color: AppColors.divider),
+                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                   ),
                   child: SelectableText(
                     statsDisplay,

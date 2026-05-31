@@ -23,6 +23,7 @@
 - [x] Centralize hardcoded route paths into a constants file.
 - [x] Integrate `go_router_builder` for type-safe routing.
 - [x] Centralize hardcoded colors into `lib/core/theme/`.
+- [x] Migrate to fully dynamic Material 3 Theming (ColorScheme, TextTheme, Dark Mode support).
 - [x] Remove direct static AppTheme usages and hardcoded TextStyles from UI layers, relying strictly on Theme.of(context).
 - [x] Standardize AppBar styling by removing hardcoded typography from UI screens and centralizing it in `AppWidgetThemes`.
 - [x] Centralize hardcoded dimensions and spacings into `AppSpacings` and `AppDimensions`.
