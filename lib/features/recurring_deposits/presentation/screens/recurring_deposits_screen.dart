@@ -7,18 +7,18 @@ import 'package:postfolio/features/recurring_deposits/presentation/controllers/r
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/app_search_bar.dart';
-import 'package:postfolio/core/widgets/error_state_view.dart';
-import 'package:postfolio/core/widgets/app_dialogs.dart';
+import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
+import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
+import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/core/widgets/shell_app_bar.dart';
+import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
-import 'package:postfolio/core/widgets/app_sort_bottom_sheet.dart';
-import 'package:postfolio/core/widgets/app_filter_bottom_sheet.dart';
-import 'package:postfolio/core/widgets/app_filter_section.dart';
+import 'package:postfolio/core/widgets/feedback/app_sort_bottom_sheet.dart';
+import 'package:postfolio/core/widgets/feedback/app_filter_bottom_sheet.dart';
+import 'package:postfolio/core/widgets/feedback/app_filter_section.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';

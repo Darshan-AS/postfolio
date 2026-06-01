@@ -16,7 +16,7 @@ This document tracks the architectural decisions, structural rules, and conventi
   - Reorganize the `lib/core/` directory to match the following separation of concerns:
     - `lib/core/services/` for infrastructure code (e.g., `storage_service.dart`).
     - `lib/core/extensions/` to centralize Dart extension methods.
-    - `lib/core/shared/widgets/` to clearly denote globally reusable UI components.
+    - `lib/core/widgets/` to clearly denote globally reusable UI components, heavily categorized into horizontal domains (`layout`, `forms`, `domain`, `feedback`, `common`).
 
 ## 2. Functional Programming & Purity
 - **Immutability**: Freezed for all domain models. Never mutate state.
@@ -48,7 +48,7 @@ This document tracks the architectural decisions, structural rules, and conventi
 - **UI Utilities**: Adopt `skeletonizer` for handling loading states, `flutter_animate` for declarative animations, and `hugeicons` for a cohesive premium icon library (migrating away from Material/Cupertino/FontAwesome). Adopt `cached_network_image` and `flutter_svg` for media handling.
 - **App Launch / Splash**: Adopt `flutter_native_splash` utilizing the Hybrid Splash pattern (`preserve()` and `remove()`) to prevent white screen flashes.
 - **Official Widget Priority**: Always prefer official Flutter Material 3 widgets and standard Material patterns. For example, use the official `SearchBar` widget even if it requires significant theme overrides, rather than building a custom bar from raw `TextField`s. This ensures the app benefits from native accessibility, focus management, and future framework improvements.
-- **Code Reuse**: Identify shared UI components early and centralize them in `lib/core/shared/widgets/`. Generic foundational widgets (e.g., `AppButton`, `AppCard`, `AppTextField`) belong here. Domain-specific UI scaffolding (e.g., `EntityDetailScaffold`, `FormAppBar`, `CustomerCard`) belong in `features/` and should utilize the generic widgets internally.
+- **Code Reuse**: Identify shared UI components early and centralize them in `lib/core/widgets/`. Generic foundational widgets (e.g., `AppButton`, `AppCard`, `AppTextField`) belong in appropriate sub-folders (`forms`, `layout`, `common`). Domain-specific UI scaffolding (e.g., `EntityDetailScaffold`, `FormAppBar`, `CustomerCard`) belong in `features/` and should utilize the generic widgets internally.
 
 ## 5. Anti-Patterns to Avoid
 1. **Committing Erroring States**: Never commit code that does not compile or pass the analyzer (`dart analyze`). Always format, build, and analyze before committing.

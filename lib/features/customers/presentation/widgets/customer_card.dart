@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
-import '../../../../core/widgets/entity_list_tile.dart';
+import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import '../../../../i18n/strings.g.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/extensions/string_extension.dart';

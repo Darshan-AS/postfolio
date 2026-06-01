@@ -5,10 +5,10 @@ import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/services/intent_service.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/core/widgets/detail_components.dart';
-import 'package:postfolio/core/widgets/async_entity_builder.dart';
-import 'package:postfolio/core/widgets/entity_detail_scaffold.dart';
-import 'package:postfolio/core/widgets/nominees_detail_section.dart';
+import 'package:postfolio/core/widgets/layout/detail_components.dart';
+import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
+import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
+import 'package:postfolio/core/widgets/domain/nominees_detail_section.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
@@ -16,7 +16,7 @@ import 'package:postfolio/features/one_time_deposits/presentation/controllers/on
 import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
-import 'package:postfolio/core/widgets/app_dialogs.dart';
+import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
 

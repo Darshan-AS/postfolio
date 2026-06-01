@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/shell_app_bar.dart';
+import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 

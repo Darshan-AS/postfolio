@@ -3,7 +3,7 @@ import 'package:hugeicons/hugeicons.dart';
 
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/detail_components.dart';
+import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class NomineesDetailSection extends StatelessWidget {

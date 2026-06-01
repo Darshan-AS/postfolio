@@ -7,17 +7,17 @@ import 'package:postfolio/features/customers/presentation/controllers/customers_
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_card.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/app_search_bar.dart';
-import 'package:postfolio/core/widgets/error_state_view.dart';
-import 'package:postfolio/core/widgets/app_dialogs.dart';
+import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
+import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
+import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/services/intent_service.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/core/widgets/shell_app_bar.dart';
+import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import 'package:postfolio/features/customers/domain/customer_search_criteria.dart';
-import 'package:postfolio/core/widgets/app_sort_bottom_sheet.dart';
+import 'package:postfolio/core/widgets/feedback/app_sort_bottom_sheet.dart';
 
 class CustomersScreen extends HookConsumerWidget {
   const CustomersScreen({super.key});

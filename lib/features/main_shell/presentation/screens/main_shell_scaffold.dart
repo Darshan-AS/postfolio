@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:postfolio/core/widgets/demo_banner.dart';
+import 'package:postfolio/core/widgets/common/demo_banner.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';

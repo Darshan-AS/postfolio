@@ -4,9 +4,9 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/app_form_fields.dart';
+import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
-import 'package:postfolio/core/widgets/nominee_form_hook.dart';
+import 'package:postfolio/core/widgets/domain/nominee_form_hook.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class NomineesInputSection extends HookWidget {
