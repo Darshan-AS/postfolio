@@ -2,12 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'theme_provider.g.dart';
 
-enum AppThemeMode {
-  system,
-  light,
-  dark,
-  accessibleSystem,
-}
+enum AppThemeMode { system, light, dark, accessibleSystem }
 
 @riverpod
 class ThemeModeNotifier extends _$ThemeModeNotifier {

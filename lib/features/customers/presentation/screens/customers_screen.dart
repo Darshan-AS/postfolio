@@ -4,7 +4,6 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
-import 'package:postfolio/core/providers/theme_provider.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_card.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
@@ -13,6 +12,7 @@ import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/core/services/intent_service.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/shell_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -29,46 +29,7 @@ class CustomersScreen extends HookConsumerWidget {
     final criteria = ref.watch(customerListCriteriaProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedMenu01,
-            size: AppDimensions.iconMd,
-          ),
-          onPressed: () {},
-        ),
-        title: Text(t.nav.customers),
-        actions: [
-          Consumer(
-            builder: (context, ref, child) {
-              final isAccessibleTheme =
-                  ref.watch(themeModeProvider) == AppThemeMode.accessibleSystem;
-              return IconButton(
-                isSelected: isAccessibleTheme,
-                icon: Icon(
-                  Icons.contrast,
-                  size: AppDimensions.iconMd,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                selectedIcon: Icon(
-                  Icons.contrast,
-                  size: AppDimensions.iconMd,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
-                style: IconButton.styleFrom(
-                  backgroundColor: isAccessibleTheme
-                      ? Theme.of(context).colorScheme.primaryContainer
-                      : null,
-                ),
-                onPressed: () {
-                  ref.read(themeModeProvider.notifier).toggleAccessibleTheme();
-                },
-                tooltip: t.common.toggleAccessibleTheme,
-              );
-            },
-          ),
-        ],
-      ),
+      appBar: ShellAppBar(title: t.nav.customers),
       // 2. Handle the AsyncValue UI states smoothly
       body: Column(
         children: [

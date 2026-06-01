@@ -6,6 +6,7 @@ import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/app_form_fields.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
+import 'package:postfolio/core/widgets/nominee_form_hook.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class NomineesInputSection extends HookWidget {
@@ -111,55 +112,7 @@ class _NomineeItemForm extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nameController = useTextEditingController(text: nominee.name);
-    final customRelationshipController = useTextEditingController(
-      text: nominee.customRelationship ?? '',
-    );
-    final percentageController = useTextEditingController(
-      text: nominee.percentage.toString(),
-    );
-    final relationshipState = useState<NomineeRelationship>(
-      nominee.relationship,
-    );
-
-    // Sync controllers if parent changes state externally, but prevent cursor jumping
-    useEffect(() {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (nameController.text != nominee.name) {
-          nameController.text = nominee.name;
-        }
-        if (customRelationshipController.text !=
-            (nominee.customRelationship ?? '')) {
-          customRelationshipController.text = nominee.customRelationship ?? '';
-        }
-        if (relationshipState.value != nominee.relationship) {
-          relationshipState.value = nominee.relationship;
-        }
-        if (percentageController.text != nominee.percentage.toString() &&
-            nominee.percentage !=
-                (double.tryParse(percentageController.text) ??
-                    AppConstants.maxPercentage)) {
-          percentageController.text = nominee.percentage.toString();
-        }
-      });
-      return null;
-    }, [nominee]);
-
-    void notifyChange() {
-      onChanged(
-        nominee.copyWith(
-          name: nameController.text.trim(),
-          relationship: relationshipState.value,
-          customRelationship:
-              relationshipState.value == NomineeRelationship.other
-              ? customRelationshipController.text.trim()
-              : null,
-          percentage:
-              double.tryParse(percentageController.text.trim()) ??
-              AppConstants.maxPercentage,
-        ),
-      );
-    }
+    final state = useNomineeFormState(nominee: nominee, onChanged: onChanged);
 
     return Card(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
@@ -183,25 +136,26 @@ class _NomineeItemForm extends HookWidget {
             _buildNomineeHeader(context, index: index, onRemove: onRemove),
             AppSpacings.gapSm,
             _buildNameField(
-              nameController: nameController,
-              onChanged: notifyChange,
+              nameController: state.nameController,
+              onChanged: state.notifyChange,
             ),
             AppSpacings.gapSm,
             _buildRelationshipField(
-              relationshipState: relationshipState,
-              onChanged: notifyChange,
+              relationshipState: state.relationshipState,
+              onChanged: state.notifyChange,
             ),
-            if (relationshipState.value == NomineeRelationship.other) ...[
+            if (state.relationshipState.value == NomineeRelationship.other) ...[
               AppSpacings.gapSm,
               _buildCustomRelationshipField(
-                customRelationshipController: customRelationshipController,
-                onChanged: notifyChange,
+                customRelationshipController:
+                    state.customRelationshipController,
+                onChanged: state.notifyChange,
               ),
             ],
             AppSpacings.gapSm,
             _buildPercentageField(
-              percentageController: percentageController,
-              onChanged: notifyChange,
+              percentageController: state.percentageController,
+              onChanged: state.notifyChange,
             ),
           ],
         ),

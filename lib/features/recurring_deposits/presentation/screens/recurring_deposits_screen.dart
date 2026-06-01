@@ -11,7 +11,7 @@ import 'package:postfolio/core/widgets/app_search_bar.dart';
 import 'package:postfolio/core/widgets/error_state_view.dart';
 import 'package:postfolio/core/widgets/app_dialogs.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/core/providers/theme_provider.dart';
+import 'package:postfolio/core/widgets/shell_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
@@ -44,46 +44,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
         statusModifications + criteria.urgencyFilters.length;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedMenu01,
-            size: AppDimensions.iconMd,
-          ),
-          onPressed: () {},
-        ),
-        title: Text(t.recurringDeposits.title),
-        actions: [
-          Consumer(
-            builder: (context, ref, child) {
-              final isAccessibleTheme =
-                  ref.watch(themeModeProvider) == AppThemeMode.accessibleSystem;
-              return IconButton(
-                isSelected: isAccessibleTheme,
-                icon: Icon(
-                  Icons.contrast,
-                  size: AppDimensions.iconMd,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                selectedIcon: Icon(
-                  Icons.contrast,
-                  size: AppDimensions.iconMd,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
-                style: IconButton.styleFrom(
-                  backgroundColor: isAccessibleTheme
-                      ? Theme.of(context).colorScheme.primaryContainer
-                      : null,
-                ),
-                onPressed: () {
-                  ref.read(themeModeProvider.notifier).toggleAccessibleTheme();
-                },
-                tooltip: t.common.toggleAccessibleTheme,
-              );
-            },
-          ),
-        ],
-      ),
+      appBar: ShellAppBar(title: t.recurringDeposits.title),
       body: Column(
         children: [
           AppSpacings.gapSm,

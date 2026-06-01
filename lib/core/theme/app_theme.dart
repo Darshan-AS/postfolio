@@ -44,42 +44,44 @@ class AppTheme {
   }
 
   static ThemeData get accessibleLightTheme {
-    final colorScheme = ColorScheme.fromSeed(
-      brightness: Brightness.light,
-      seedColor: _seedColor,
-    ).copyWith(
-      // Wong/Tol inspired color-blind safe semantic colors
-      // Error (Magenta)
-      error: const Color(0xFFD81B60),
-      errorContainer: const Color(0xFFF8BBD0),
-      onError: Colors.white,
-      onErrorContainer: const Color(0xFF880E4F),
-      // Success/Warning (Orange/Amber) instead of Green/Teal
-      tertiary: const Color(0xFFFF8F00),
-      tertiaryContainer: const Color(0xFFFFE082),
-      onTertiary: Colors.black,
-      onTertiaryContainer: const Color(0xFFE65100),
-    );
+    final colorScheme =
+        ColorScheme.fromSeed(
+          brightness: Brightness.light,
+          seedColor: _seedColor,
+        ).copyWith(
+          // Wong/Tol inspired color-blind safe semantic colors
+          // Error (Magenta)
+          error: const Color(0xFFD81B60),
+          errorContainer: const Color(0xFFF8BBD0),
+          onError: Colors.white,
+          onErrorContainer: const Color(0xFF880E4F),
+          // Success/Warning (Orange/Amber) instead of Green/Teal
+          tertiary: const Color(0xFFFF8F00),
+          tertiaryContainer: const Color(0xFFFFE082),
+          onTertiary: Colors.black,
+          onTertiaryContainer: const Color(0xFFE65100),
+        );
     return _buildTheme(colorScheme);
   }
 
   static ThemeData get accessibleDarkTheme {
-    final colorScheme = ColorScheme.fromSeed(
-      brightness: Brightness.dark,
-      seedColor: _seedColor,
-    ).copyWith(
-      // Wong/Tol inspired color-blind safe semantic colors
-      // Error (Magenta)
-      error: const Color(0xFFF48FB1),
-      errorContainer: const Color(0xFF880E4F),
-      onError: const Color(0xFF880E4F),
-      onErrorContainer: const Color(0xFFFCE4EC),
-      // Success/Warning (Orange/Amber) instead of Green/Teal
-      tertiary: const Color(0xFFFFCA28),
-      tertiaryContainer: const Color(0xFFF57C00),
-      onTertiary: const Color(0xFF4E342E),
-      onTertiaryContainer: const Color(0xFFFFF8E1),
-    );
+    final colorScheme =
+        ColorScheme.fromSeed(
+          brightness: Brightness.dark,
+          seedColor: _seedColor,
+        ).copyWith(
+          // Wong/Tol inspired color-blind safe semantic colors
+          // Error (Magenta)
+          error: const Color(0xFFF48FB1),
+          errorContainer: const Color(0xFF880E4F),
+          onError: const Color(0xFF880E4F),
+          onErrorContainer: const Color(0xFFFCE4EC),
+          // Success/Warning (Orange/Amber) instead of Green/Teal
+          tertiary: const Color(0xFFFFCA28),
+          tertiaryContainer: const Color(0xFFF57C00),
+          onTertiary: const Color(0xFF4E342E),
+          onTertiaryContainer: const Color(0xFFFFF8E1),
+        );
     return _buildTheme(colorScheme);
   }
 }

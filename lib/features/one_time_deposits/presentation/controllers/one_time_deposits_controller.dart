@@ -223,17 +223,20 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
     };
   }
 
-  Future<Result<void, String>> toggleDepositStatus(String id, DepositStatus newStatus) async {
+  Future<Result<void, String>> toggleDepositStatus(
+    String id,
+    DepositStatus newStatus,
+  ) async {
     final deposits = state.value;
     if (deposits == null) {
       return const Failure('Deposits not loaded');
     }
-    
+
     final deposit = deposits.where((d) => d.id == id).firstOrNull;
     if (deposit == null) {
       return const Failure('Deposit not found');
     }
-    
+
     final updatedDeposit = deposit.copyWith(status: newStatus);
     final repository = ref.read(oneTimeDepositRepositoryProvider);
     return await repository.updateOneTimeDeposit(updatedDeposit);

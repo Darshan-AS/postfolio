@@ -55,8 +55,11 @@ class AppDialogs {
           ),
           FilledButton.tonal(
             style: FilledButton.styleFrom(
-              backgroundColor: confirmBackgroundColor ?? theme.colorScheme.primaryContainer,
-              foregroundColor: confirmForegroundColor ?? theme.colorScheme.onPrimaryContainer,
+              backgroundColor:
+                  confirmBackgroundColor ?? theme.colorScheme.primaryContainer,
+              foregroundColor:
+                  confirmForegroundColor ??
+                  theme.colorScheme.onPrimaryContainer,
             ),
             onPressed: () => ctx.pop(true),
             child: Text(confirmText ?? t.common.ok),

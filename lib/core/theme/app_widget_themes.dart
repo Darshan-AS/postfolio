@@ -19,25 +19,28 @@ class AppWidgetThemes {
     ),
   );
 
-  static DividerThemeData dividerTheme(ColorScheme colorScheme) => DividerThemeData(
-    color: colorScheme.outlineVariant,
-    space: AppDimensions.dividerHeight,
-    thickness: AppDimensions.dividerThickness,
-  );
-
-  static IconButtonThemeData iconButtonTheme(ColorScheme colorScheme) => IconButtonThemeData(
-    style: IconButton.styleFrom(
-      iconSize: AppDimensions.iconMd,
-      foregroundColor: colorScheme.onSurfaceVariant,
-    ),
-  );
-
-  static FloatingActionButtonThemeData floatingActionButtonTheme(ColorScheme colorScheme) =>
-      FloatingActionButtonThemeData(
-        backgroundColor: colorScheme.primaryContainer,
-        foregroundColor: colorScheme.onPrimaryContainer,
-        elevation: 4,
+  static DividerThemeData dividerTheme(ColorScheme colorScheme) =>
+      DividerThemeData(
+        color: colorScheme.outlineVariant,
+        space: AppDimensions.dividerHeight,
+        thickness: AppDimensions.dividerThickness,
       );
+
+  static IconButtonThemeData iconButtonTheme(ColorScheme colorScheme) =>
+      IconButtonThemeData(
+        style: IconButton.styleFrom(
+          iconSize: AppDimensions.iconMd,
+          foregroundColor: colorScheme.onSurfaceVariant,
+        ),
+      );
+
+  static FloatingActionButtonThemeData floatingActionButtonTheme(
+    ColorScheme colorScheme,
+  ) => FloatingActionButtonThemeData(
+    backgroundColor: colorScheme.primaryContainer,
+    foregroundColor: colorScheme.onPrimaryContainer,
+    elevation: 4,
+  );
 
   static CardThemeData cardTheme(ColorScheme colorScheme) => CardThemeData(
     color: colorScheme.surface,
@@ -63,16 +66,17 @@ class AppWidgetThemes {
         ),
       );
 
-  static FilledButtonThemeData filledButtonTheme(ColorScheme colorScheme) => FilledButtonThemeData(
-    style: FilledButton.styleFrom(
-      backgroundColor: colorScheme.primary,
-      foregroundColor: colorScheme.onPrimary,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-      ),
-      textStyle: const TextStyle(fontWeight: FontWeight.bold),
-    ),
-  );
+  static FilledButtonThemeData filledButtonTheme(ColorScheme colorScheme) =>
+      FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      );
 
   static SegmentedButtonThemeData segmentedButtonTheme(
     ColorScheme colorScheme,
@@ -140,14 +144,10 @@ class AppWidgetThemes {
           ),
         ),
         textStyle: WidgetStatePropertyAll(
-          TextStyle(
-            color: colorScheme.onSurface,
-          ),
+          TextStyle(color: colorScheme.onSurface),
         ),
         hintStyle: WidgetStatePropertyAll(
-          TextStyle(
-            color: colorScheme.onSurfaceVariant,
-          ),
+          TextStyle(color: colorScheme.onSurfaceVariant),
         ),
       );
 
