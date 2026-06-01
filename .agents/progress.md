@@ -55,3 +55,4 @@
 - Refactored large form widgets (`_OneTimeDepositForm`, `_RecurringDepositForm`, `_CustomerForm`) by extracting complex state initializations, projection calculations, and save logic into pure `flutter_hooks` (`useOneTimeDepositForm`, `useRecurringDepositForm`, `useCustomerForm`), adhering to DRY principles and decoupling business/state logic from declarative UI layouts.
 - Abstracted `NomineesInputSection` logic into a reusable `useNomineeFormState` hook.
 - Extracted large grid components (`WealthAccumulationGrid`, `IncomeGenerationGrid`) from `detail_components.dart` into their own dedicated widget files.
+- Added `dynamic_color` package and implemented Material Monet dynamic theming support in `main.dart`.

@@ -6,7 +6,7 @@ class AppTheme {
 
   static const Color _seedColor = Colors.blue;
 
-  static ThemeData _buildTheme(ColorScheme colorScheme) {
+  static ThemeData buildTheme(ColorScheme colorScheme) {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
@@ -32,7 +32,7 @@ class AppTheme {
       brightness: Brightness.light,
       seedColor: _seedColor,
     );
-    return _buildTheme(colorScheme);
+    return buildTheme(colorScheme);
   }
 
   static ThemeData get darkTheme {
@@ -40,7 +40,7 @@ class AppTheme {
       brightness: Brightness.dark,
       seedColor: _seedColor,
     );
-    return _buildTheme(colorScheme);
+    return buildTheme(colorScheme);
   }
 
   static ThemeData get accessibleLightTheme {
@@ -61,7 +61,7 @@ class AppTheme {
           onTertiary: Colors.black,
           onTertiaryContainer: const Color(0xFFE65100),
         );
-    return _buildTheme(colorScheme);
+    return buildTheme(colorScheme);
   }
 
   static ThemeData get accessibleDarkTheme {
@@ -82,6 +82,6 @@ class AppTheme {
           onTertiary: const Color(0xFF4E342E),
           onTertiaryContainer: const Color(0xFFFFF8E1),
         );
-    return _buildTheme(colorScheme);
+    return buildTheme(colorScheme);
   }
 }
