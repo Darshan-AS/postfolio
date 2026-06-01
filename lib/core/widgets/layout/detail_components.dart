@@ -137,17 +137,17 @@ class DetailItem extends StatelessWidget {
   }
 }
 
-class DetailAmountCard extends StatelessWidget {
+class DetailStatCard extends StatelessWidget {
   final String title;
-  final double amount;
+  final String value;
   final Color? backgroundColor;
   final Color? textColor;
   final bool isExpanded;
 
-  const DetailAmountCard({
+  const DetailStatCard({
     super.key,
     required this.title,
-    required this.amount,
+    required this.value,
     this.backgroundColor,
     this.textColor,
     this.isExpanded = true,
@@ -179,7 +179,7 @@ class DetailAmountCard extends StatelessWidget {
             ),
             AppSpacings.gapSm,
             Text(
-              amount.toRupeeFormat(),
+              value,
               style: theme.textTheme.titleLarge?.copyWith(
                 color: fg,
                 fontWeight: FontWeight.bold,
@@ -191,6 +191,34 @@ class DetailAmountCard extends StatelessWidget {
     );
 
     return isExpanded ? Expanded(child: card) : card;
+  }
+}
+
+class DetailAmountCard extends StatelessWidget {
+  final String title;
+  final double amount;
+  final Color? backgroundColor;
+  final Color? textColor;
+  final bool isExpanded;
+
+  const DetailAmountCard({
+    super.key,
+    required this.title,
+    required this.amount,
+    this.backgroundColor,
+    this.textColor,
+    this.isExpanded = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DetailStatCard(
+      title: title,
+      value: amount.toRupeeFormat(),
+      backgroundColor: backgroundColor,
+      textColor: textColor,
+      isExpanded: isExpanded,
+    );
   }
 }
 

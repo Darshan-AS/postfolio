@@ -122,9 +122,9 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                   textColor: Theme.of(context).colorScheme.onSecondaryContainer,
                 ),
                 AppSpacings.gapLg,
-                DetailAmountCard(
+                DetailStatCard(
                   title: t.recurringDeposits.fields.interestRate,
-                  amount: deposit.interestRate,
+                  value: '${deposit.interestRate.toStringAsFixed(2)}%',
                   backgroundColor: Theme.of(
                     context,
                   ).colorScheme.surfaceContainerHighest,
