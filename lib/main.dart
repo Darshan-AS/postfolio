@@ -101,37 +101,22 @@ class PostfolioApp extends ConsumerWidget {
         ThemeData effectiveLightTheme = lightTheme;
         ThemeData effectiveDarkTheme = darkTheme;
 
-        if (lightDynamic != null) {
-          ColorScheme dynamicScheme = lightDynamic.harmonized();
-          if (themeMode == AppThemeMode.accessibleSystem) {
-            dynamicScheme = dynamicScheme.copyWith(
-              error: const Color(0xFFD81B60),
-              errorContainer: const Color(0xFFF8BBD0),
-              onError: Colors.white,
-              onErrorContainer: const Color(0xFF880E4F),
-              tertiary: const Color(0xFFFF8F00),
-              tertiaryContainer: const Color(0xFFFFE082),
-              onTertiary: Colors.black,
-              onTertiaryContainer: const Color(0xFFE65100),
+        // If the user explicitly wants the accessible theme, completely ignore Monet.
+        // This ensures the strict high-contrast semantic colors remain readable
+        // and aren't ruined by a low-contrast OS dynamic palette.
+        if (themeMode == AppThemeMode.accessibleSystem) {
+          effectiveLightTheme = AppTheme.accessibleLightTheme;
+          effectiveDarkTheme = AppTheme.accessibleDarkTheme;
+        } else {
+          // Otherwise, apply the OS dynamic colors if they are available.
+          if (lightDynamic != null) {
+            effectiveLightTheme = AppTheme.buildTheme(
+              lightDynamic.harmonized(),
             );
           }
-          effectiveLightTheme = AppTheme.buildTheme(dynamicScheme);
-        }
-        if (darkDynamic != null) {
-          ColorScheme dynamicScheme = darkDynamic.harmonized();
-          if (themeMode == AppThemeMode.accessibleSystem) {
-            dynamicScheme = dynamicScheme.copyWith(
-              error: const Color(0xFFF48FB1),
-              errorContainer: const Color(0xFF880E4F),
-              onError: const Color(0xFF880E4F),
-              onErrorContainer: const Color(0xFFFCE4EC),
-              tertiary: const Color(0xFFFFCA28),
-              tertiaryContainer: const Color(0xFFF57C00),
-              onTertiary: const Color(0xFF4E342E),
-              onTertiaryContainer: const Color(0xFFFFF8E1),
-            );
+          if (darkDynamic != null) {
+            effectiveDarkTheme = AppTheme.buildTheme(darkDynamic.harmonized());
           }
-          effectiveDarkTheme = AppTheme.buildTheme(dynamicScheme);
         }
 
         return MaterialApp.router(
