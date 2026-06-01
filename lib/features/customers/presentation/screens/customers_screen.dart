@@ -9,9 +9,6 @@ import 'package:postfolio/features/customers/presentation/widgets/customer_card.
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
-import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
-import 'package:postfolio/core/services/intent_service.dart';
-import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -137,42 +134,7 @@ class CustomersScreen extends HookConsumerWidget {
             const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
           final customer = customers[index];
-          return CustomerCard(
-            name: customer.name,
-            phone: customer.phone,
-            onTap: () => CustomerDetailRoute(customer.id).push(context),
-            onEdit: () => CustomerEditRoute(customer.id).push(context),
-            onDelete: () async {
-              final confirmed = await AppDialogs.confirmDelete(
-                context,
-                title: t.customers.deleteCustomer,
-                content: t.customers.deleteCustomerConfirmation,
-              );
-              if (confirmed == true) {
-                final result = await ref
-                    .read(customersControllerProvider.notifier)
-                    .deleteCustomer(customer.id);
-
-                if (result is Failure && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        t.customers.failedToDeleteCustomer(
-                          error: (result as Failure).error.toString(),
-                        ),
-                      ),
-                    ),
-                  );
-                }
-              }
-            },
-            onPhoneTapped: () => ref
-                .read(intentServiceProvider)
-                .launchPhone(customer.phone ?? ''),
-            onWhatsAppTapped: () => ref
-                .read(intentServiceProvider)
-                .launchWhatsApp(customer.phone ?? ''),
-          );
+          return CustomerCard(customer: customer);
         },
       ),
     );
@@ -189,16 +151,7 @@ class CustomersScreen extends HookConsumerWidget {
         separatorBuilder: (context, index) =>
             const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
-          final dummy = Customer.dummy;
-          return CustomerCard(
-            name: dummy.name,
-            phone: dummy.phone,
-            onTap: () {},
-            onEdit: () {},
-            onDelete: () {},
-            onPhoneTapped: () {},
-            onWhatsAppTapped: () {},
-          );
+          return CustomerCard.skeleton();
         },
       ),
     );

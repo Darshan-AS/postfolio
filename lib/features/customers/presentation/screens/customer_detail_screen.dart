@@ -16,9 +16,7 @@ import 'package:postfolio/features/one_time_deposits/presentation/controllers/on
 import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
-import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/i18n/strings.g.dart';
-import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
@@ -273,22 +271,42 @@ class _CustomerDepositsSection extends ConsumerWidget {
             ?.where((d) => d.customerId == customerId)
             .toList() ??
         [];
+
+    int compareMaturityDate(DateTime a, DateTime b) {
+      return a.compareTo(b); // ascending
+    }
+
     final activeOneTime =
-        oneTimeDeposits.where((d) => d.status == DepositStatus.active).toList();
+        oneTimeDeposits.where((d) => d.status == DepositStatus.active).toList()
+          ..sort((a, b) => compareMaturityDate(a.maturityDate, b.maturityDate));
+
     final closedOneTime =
-        oneTimeDeposits.where((d) => d.status == DepositStatus.closed).toList();
+        oneTimeDeposits.where((d) => d.status == DepositStatus.closed).toList()
+          ..sort((a, b) => compareMaturityDate(a.maturityDate, b.maturityDate));
 
     final recurringDeposits =
         recurringDepositsAsync.value
             ?.where((d) => d.customerId == customerId)
             .toList() ??
         [];
-    final activeRecurring = recurringDeposits
-        .where((d) => d.status == DepositStatus.active)
-        .toList();
-    final closedRecurring = recurringDeposits
-        .where((d) => d.status == DepositStatus.closed)
-        .toList();
+
+    int compareSerial(String? a, String? b) {
+      final aNum = int.tryParse(a ?? '0') ?? 0;
+      final bNum = int.tryParse(b ?? '0') ?? 0;
+      return bNum.compareTo(aNum); // descending
+    }
+
+    final activeRecurring =
+        recurringDeposits
+            .where((d) => d.status == DepositStatus.active)
+            .toList()
+          ..sort((a, b) => compareSerial(a.serialNo, b.serialNo));
+
+    final closedRecurring =
+        recurringDeposits
+            .where((d) => d.status == DepositStatus.closed)
+            .toList()
+          ..sort((a, b) => compareSerial(a.serialNo, b.serialNo));
 
     if (oneTimeDeposits.isEmpty && recurringDeposits.isEmpty) {
       return const SizedBox.shrink();
@@ -303,27 +321,8 @@ class _CustomerDepositsSection extends ConsumerWidget {
             activeDeposits: activeOneTime,
             closedDeposits: closedOneTime,
             itemBuilder: (deposit) => OneTimeDepositCard(
-              title: deposit.schemeType.displayName,
-              subtitle: deposit.accountNo ?? t.common.notProvided,
-              principalAmount: deposit.principalAmount,
-              status: deposit.status,
-              urgency: deposit.maturityUrgency,
-              relativeTimeText: deposit.maturityRelativeTime,
-              maturityDate: deposit.maturityDate,
-              onTap: () => OneTimeDepositDetailRoute(deposit.id).push(context),
-              onEdit: () => OneTimeDepositEditRoute(deposit.id).push(context),
-              onDelete: () async {
-                final confirmed = await AppDialogs.confirmDelete(
-                  context,
-                  title: t.oneTimeDeposits.deleteDeposit,
-                  content: t.oneTimeDeposits.deleteDepositConfirmation,
-                );
-                if (confirmed == true && context.mounted) {
-                  await ref
-                      .read(oneTimeDepositsControllerProvider.notifier)
-                      .deleteOneTimeDeposit(deposit.id);
-                }
-              },
+              deposit: deposit,
+              overrideTitle: deposit.schemeType.displayName,
             ),
           ),
         if (recurringDeposits.isNotEmpty)
@@ -332,29 +331,11 @@ class _CustomerDepositsSection extends ConsumerWidget {
             activeDeposits: activeRecurring,
             closedDeposits: closedRecurring,
             itemBuilder: (deposit) => RecurringDepositCard(
-              title: (deposit.serialNo?.isNotEmpty ?? false)
+              deposit: deposit,
+              overrideTitle: (deposit.serialNo?.isNotEmpty ?? false)
                   ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
                   : (deposit.accountNo ?? t.common.notProvided),
-              subtitle: '',
-              installmentAmount: deposit.installmentAmount,
-              status: deposit.status,
-              urgency: deposit.maturityUrgency,
-              relativeTimeText: deposit.maturityRelativeTime,
-              maturityDate: deposit.maturityDate,
-              onTap: () => RecurringDepositDetailRoute(deposit.id).push(context),
-              onEdit: () => RecurringDepositEditRoute(deposit.id).push(context),
-              onDelete: () async {
-                final confirmed = await AppDialogs.confirmDelete(
-                  context,
-                  title: t.recurringDeposits.deleteDeposit,
-                  content: t.recurringDeposits.deleteDepositConfirmation,
-                );
-                if (confirmed == true && context.mounted) {
-                  await ref
-                      .read(recurringDepositsControllerProvider.notifier)
-                      .deleteRecurringDeposit(deposit.id);
-                }
-              },
+              overrideSubtitle: '',
             ),
           ),
       ],
@@ -437,7 +418,8 @@ class _DepositCategorySection<T> extends StatelessWidget {
                               ),
                               if (index < closedDeposits.length - 1)
                                 const Divider(
-                                    height: AppDimensions.dividerHeight),
+                                  height: AppDimensions.dividerHeight,
+                                ),
                             ],
                           ),
                         ),
