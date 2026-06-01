@@ -19,6 +19,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/widgets/recur
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:postfolio/core/extensions/string_extension.dart';
@@ -272,11 +273,22 @@ class _CustomerDepositsSection extends ConsumerWidget {
             ?.where((d) => d.customerId == customerId)
             .toList() ??
         [];
+    final activeOneTime =
+        oneTimeDeposits.where((d) => d.status == DepositStatus.active).toList();
+    final closedOneTime =
+        oneTimeDeposits.where((d) => d.status == DepositStatus.closed).toList();
+
     final recurringDeposits =
         recurringDepositsAsync.value
             ?.where((d) => d.customerId == customerId)
             .toList() ??
         [];
+    final activeRecurring = recurringDeposits
+        .where((d) => d.status == DepositStatus.active)
+        .toList();
+    final closedRecurring = recurringDeposits
+        .where((d) => d.status == DepositStatus.closed)
+        .toList();
 
     if (oneTimeDeposits.isEmpty && recurringDeposits.isEmpty) {
       return const SizedBox.shrink();
@@ -285,110 +297,158 @@ class _CustomerDepositsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (oneTimeDeposits.isNotEmpty) ...[
-          DetailSection(
+        if (oneTimeDeposits.isNotEmpty)
+          _DepositCategorySection(
             title: t.oneTimeDeposits.title,
-            children: oneTimeDeposits
-                .asMap()
-                .map(
-                  (index, deposit) => MapEntry(
-                    index,
-                    Column(
-                      children: [
-                        OneTimeDepositCard(
-                          title: deposit.schemeType.displayName,
-                          subtitle: deposit.accountNo ?? t.common.notProvided,
-                          principalAmount: deposit.principalAmount,
-                          status: deposit.status,
-                          urgency: deposit.maturityUrgency,
-                          relativeTimeText: deposit.maturityRelativeTime,
-                          maturityDate: deposit.maturityDate,
-                          onTap: () => OneTimeDepositDetailRoute(
-                            deposit.id,
-                          ).push(context),
-                          onEdit: () =>
-                              OneTimeDepositEditRoute(deposit.id).push(context),
-                          onDelete: () async {
-                            final confirmed = await AppDialogs.confirmDelete(
-                              context,
-                              title: t.oneTimeDeposits.deleteDeposit,
-                              content:
-                                  t.oneTimeDeposits.deleteDepositConfirmation,
-                            );
-                            if (confirmed == true && context.mounted) {
-                              await ref
-                                  .read(
-                                    oneTimeDepositsControllerProvider.notifier,
-                                  )
-                                  .deleteOneTimeDeposit(deposit.id);
-                            }
-                          },
-                        ),
-                        if (index < oneTimeDeposits.length - 1)
-                          const Divider(height: AppDimensions.dividerHeight),
-                      ],
-                    ),
-                  ),
-                )
-                .values
-                .toList(),
+            activeDeposits: activeOneTime,
+            closedDeposits: closedOneTime,
+            itemBuilder: (deposit) => OneTimeDepositCard(
+              title: deposit.schemeType.displayName,
+              subtitle: deposit.accountNo ?? t.common.notProvided,
+              principalAmount: deposit.principalAmount,
+              status: deposit.status,
+              urgency: deposit.maturityUrgency,
+              relativeTimeText: deposit.maturityRelativeTime,
+              maturityDate: deposit.maturityDate,
+              onTap: () => OneTimeDepositDetailRoute(deposit.id).push(context),
+              onEdit: () => OneTimeDepositEditRoute(deposit.id).push(context),
+              onDelete: () async {
+                final confirmed = await AppDialogs.confirmDelete(
+                  context,
+                  title: t.oneTimeDeposits.deleteDeposit,
+                  content: t.oneTimeDeposits.deleteDepositConfirmation,
+                );
+                if (confirmed == true && context.mounted) {
+                  await ref
+                      .read(oneTimeDepositsControllerProvider.notifier)
+                      .deleteOneTimeDeposit(deposit.id);
+                }
+              },
+            ),
           ),
-          AppSpacings.gapLg,
-        ],
-        if (recurringDeposits.isNotEmpty) ...[
-          DetailSection(
+        if (recurringDeposits.isNotEmpty)
+          _DepositCategorySection(
             title: t.recurringDeposits.title,
-            children: recurringDeposits
+            activeDeposits: activeRecurring,
+            closedDeposits: closedRecurring,
+            itemBuilder: (deposit) => RecurringDepositCard(
+              title: (deposit.serialNo?.isNotEmpty ?? false)
+                  ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
+                  : (deposit.accountNo ?? t.common.notProvided),
+              subtitle: '',
+              installmentAmount: deposit.installmentAmount,
+              status: deposit.status,
+              urgency: deposit.maturityUrgency,
+              relativeTimeText: deposit.maturityRelativeTime,
+              maturityDate: deposit.maturityDate,
+              onTap: () => RecurringDepositDetailRoute(deposit.id).push(context),
+              onEdit: () => RecurringDepositEditRoute(deposit.id).push(context),
+              onDelete: () async {
+                final confirmed = await AppDialogs.confirmDelete(
+                  context,
+                  title: t.recurringDeposits.deleteDeposit,
+                  content: t.recurringDeposits.deleteDepositConfirmation,
+                );
+                if (confirmed == true && context.mounted) {
+                  await ref
+                      .read(recurringDepositsControllerProvider.notifier)
+                      .deleteRecurringDeposit(deposit.id);
+                }
+              },
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _DepositCategorySection<T> extends StatelessWidget {
+  final String title;
+  final List<T> activeDeposits;
+  final List<T> closedDeposits;
+  final Widget Function(T deposit) itemBuilder;
+
+  const _DepositCategorySection({
+    required this.title,
+    required this.activeDeposits,
+    required this.closedDeposits,
+    required this.itemBuilder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (activeDeposits.isEmpty && closedDeposits.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DetailSection(
+          title: title,
+          children: [
+            ...activeDeposits
                 .asMap()
                 .map(
                   (index, deposit) => MapEntry(
                     index,
                     Column(
                       children: [
-                        RecurringDepositCard(
-                          title: (deposit.serialNo?.isNotEmpty ?? false)
-                              ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
-                              : (deposit.accountNo ?? t.common.notProvided),
-                          subtitle: '',
-                          installmentAmount: deposit.installmentAmount,
-                          status: deposit.status,
-                          urgency: deposit.maturityUrgency,
-                          relativeTimeText: deposit.maturityRelativeTime,
-                          maturityDate: deposit.maturityDate,
-                          onTap: () => RecurringDepositDetailRoute(
-                            deposit.id,
-                          ).push(context),
-                          onEdit: () => RecurringDepositEditRoute(
-                            deposit.id,
-                          ).push(context),
-                          onDelete: () async {
-                            final confirmed = await AppDialogs.confirmDelete(
-                              context,
-                              title: t.recurringDeposits.deleteDeposit,
-                              content:
-                                  t.recurringDeposits.deleteDepositConfirmation,
-                            );
-                            if (confirmed == true && context.mounted) {
-                              await ref
-                                  .read(
-                                    recurringDepositsControllerProvider
-                                        .notifier,
-                                  )
-                                  .deleteRecurringDeposit(deposit.id);
-                            }
-                          },
-                        ),
-                        if (index < recurringDeposits.length - 1)
+                        itemBuilder(deposit),
+                        if (index < activeDeposits.length - 1 ||
+                            closedDeposits.isNotEmpty)
                           const Divider(height: AppDimensions.dividerHeight),
                       ],
                     ),
                   ),
                 )
-                .values
-                .toList(),
-          ),
-          AppSpacings.gapLg,
-        ],
+                .values,
+            if (closedDeposits.isNotEmpty)
+              Theme(
+                data: theme.copyWith(dividerColor: Colors.transparent),
+                child: ExpansionTile(
+                  shape: const Border(),
+                  collapsedShape: const Border(),
+                  collapsedIconColor: colorScheme.onSurfaceVariant,
+                  iconColor: colorScheme.primary,
+                  title: Text(
+                    t.common.countWithLabel(
+                      label: DepositStatus.closed.displayName,
+                      count: closedDeposits.length,
+                    ),
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  children: closedDeposits
+                      .asMap()
+                      .map(
+                        (index, deposit) => MapEntry(
+                          index,
+                          Column(
+                            children: [
+                              Opacity(
+                                opacity: AppDimensions.opacityMuted,
+                                child: itemBuilder(deposit),
+                              ),
+                              if (index < closedDeposits.length - 1)
+                                const Divider(
+                                    height: AppDimensions.dividerHeight),
+                            ],
+                          ),
+                        ),
+                      )
+                      .values
+                      .toList(),
+                ),
+              ),
+          ],
+        ),
+        AppSpacings.gapLg,
       ],
     );
   }
