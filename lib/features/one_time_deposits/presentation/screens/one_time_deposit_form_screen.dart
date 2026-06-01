@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_selection_field.dart';
@@ -10,25 +9,28 @@ import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_mod
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/nominees_input_section.dart';
 import 'package:postfolio/core/widgets/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/app_form_fields.dart';
 import 'package:postfolio/core/widgets/form_app_bar.dart';
 import 'package:postfolio/core/widgets/app_duration_input.dart';
 import 'package:postfolio/core/widgets/investment_projection_card.dart';
-import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
-import 'package:postfolio/core/routing/app_router.dart';
-import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
+
+import 'package:postfolio/features/one_time_deposits/presentation/hooks/use_one_time_deposit_form.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 class OneTimeDepositFormScreen extends ConsumerWidget {
   final String? depositId;
   final String? initialCustomerId;
 
-  const OneTimeDepositFormScreen({super.key, this.depositId, this.initialCustomerId});
+  const OneTimeDepositFormScreen({
+    super.key,
+    this.depositId,
+    this.initialCustomerId,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,7 +40,10 @@ class OneTimeDepositFormScreen extends ConsumerWidget {
       idSelector: (d) => d.id,
       notFoundMessage: t.oneTimeDeposits.depositNotFound,
       onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
-      builder: (deposit) => _OneTimeDepositForm(existingDeposit: deposit, initialCustomerId: initialCustomerId),
+      builder: (deposit) => _OneTimeDepositForm(
+        existingDeposit: deposit,
+        initialCustomerId: initialCustomerId,
+      ),
     );
   }
 }
@@ -51,187 +56,50 @@ class _OneTimeDepositForm extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final formKey = useMemoized(() => GlobalKey<FormState>());
-    final deposit = existingDeposit;
-    final isUpdating = deposit != null;
-
-    final accountNoController = useTextEditingController(
-      text: deposit?.accountNo,
+    final state = useOneTimeDepositForm(
+      context: context,
+      ref: ref,
+      deposit: existingDeposit,
+      initialCustomerId: initialCustomerId,
     );
-    final principalAmountController = useTextEditingController(
-      text: deposit?.principalAmount.round().toString(),
-    );
-    final interestRateController = useTextEditingController(
-      text: deposit?.interestRate.toString(),
-    );
-
-    final selectedCustomerId = useState<String?>(deposit?.customerId ?? initialCustomerId);
-    final selectedScheme = useState<OneTimeSchemeType>(
-      deposit?.schemeType ?? OneTimeSchemeType.timeDeposit,
-    );
-
-    // Default values if not updating
-    final initialTermYears =
-        deposit?.termYears ?? selectedScheme.value.defaultTenureYears;
-    final initialTermMonths = deposit?.termMonths ?? 0;
-
-    final selectedTermYears = useState<int>(initialTermYears);
-    final selectedTermMonths = useState<int>(initialTermMonths);
-    final selectedStatus = useState<DepositStatus>(
-      deposit?.status ?? DepositStatus.active,
-    );
-    final startDate = useState<DateTime>(deposit?.startDate ?? DateTime.now());
-    final nominees = useState<List<Nominee>>(deposit?.nominees.toList() ?? []);
-
-    final isSaving = useState(false);
-
-    final startDateController = useTextEditingController(
-      text: startDate.value.toAppFormat(),
-    );
-
-    // Live Projection Calculation
-    useListenable(principalAmountController);
-    useListenable(interestRateController);
-
-    final currentPrincipal =
-        double.tryParse(principalAmountController.text.trim()) ?? 0.0;
-    final currentInterest =
-        double.tryParse(interestRateController.text.trim()) ?? 0.0;
-
-    final projection = useMemoized(
-      () {
-        return ProjectionCalculator.calculateOneTimeDeposit(
-          schemeType: selectedScheme.value,
-          principalAmount: currentPrincipal,
-          interestRate: currentInterest,
-          startDate: startDate.value,
-          termYears: selectedTermYears.value,
-        );
-      },
-      [
-        currentPrincipal,
-        currentInterest,
-        startDate.value,
-        selectedTermYears.value,
-        selectedScheme.value,
-      ],
-    );
-
-    // Keep hidden state in sync for derived tenures like KVP
-    useEffect(() {
-      if (selectedScheme.value.tenureInputType == TenureInputType.derived) {
-        final timeInMonths = ProjectionCalculator.calculateKvpTermMonths(
-          currentInterest,
-        );
-        final years = timeInMonths ~/ 12;
-        final months = timeInMonths % 12;
-
-        if (selectedTermYears.value != years ||
-            selectedTermMonths.value != months) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            selectedTermYears.value = years;
-            selectedTermMonths.value = months;
-          });
-        }
-      }
-      return null;
-    }, [selectedScheme.value, currentInterest]);
-
-    void handleBack() {
-      if (isUpdating) {
-        OneTimeDepositDetailRoute(deposit.id).go(context);
-      } else if (initialCustomerId != null) {
-        CustomerDetailRoute(initialCustomerId!).go(context);
-      } else {
-        const OneTimeDepositsRoute().go(context);
-      }
-    }
-
-    Future<void> save() async {
-      if (formKey.currentState!.validate()) {
-        if (selectedCustomerId.value == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(t.oneTimeDeposits.selectCustomerPrompt)),
-          );
-          return;
-        }
-
-        isSaving.value = true;
-        final result = await ref
-            .read(oneTimeDepositsControllerProvider.notifier)
-            .saveOneTimeDeposit(
-              id: deposit?.id,
-              accountNo: accountNoController.text,
-              principalAmount: principalAmountController.text,
-              termYears: selectedTermYears.value,
-              termMonths:
-                  selectedScheme.value.tenureInputType ==
-                      TenureInputType.derived
-                  ? selectedTermMonths.value
-                  : 0,
-              interestRate: interestRateController.text,
-              customerId: selectedCustomerId.value ?? '',
-              schemeType: selectedScheme.value,
-              status: selectedStatus.value,
-              startDate: startDate.value,
-              nominees: nominees.value,
-            );
-
-        if (!context.mounted) return;
-        isSaving.value = false;
-
-        switch (result) {
-          case Success():
-            handleBack();
-          case Failure(error: final err):
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  t.oneTimeDeposits.failedToSaveDeposit(error: err.toString()),
-                ),
-              ),
-            );
-        }
-      }
-    }
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        handleBack();
+        state.handleBack();
       },
       child: Scaffold(
         appBar: FormAppBar(
-          title: isUpdating
+          title: state.isUpdating
               ? t.oneTimeDeposits.editDeposit
               : t.oneTimeDeposits.newDeposit,
-          isSaving: isSaving.value,
-          onSave: save,
-          onBack: handleBack,
+          isSaving: state.isSaving.value,
+          onSave: state.save,
+          onBack: state.handleBack,
         ),
         body: Form(
-          key: formKey,
+          key: state.formKey,
           child: ListView(
             padding: const EdgeInsets.all(AppDimensions.paddingLg),
             children: [
               ..._buildAccountInformation(
-                selectedCustomerId: selectedCustomerId,
-                accountNoController: accountNoController,
-                selectedStatus: selectedStatus,
+                selectedCustomerId: state.selectedCustomerId,
+                accountNoController: state.accountNoController,
+                selectedStatus: state.selectedStatus,
               ),
               ..._buildInvestmentDetails(
                 context,
-                selectedScheme: selectedScheme,
-                selectedTermYears: selectedTermYears,
-                selectedTermMonths: selectedTermMonths,
-                principalAmountController: principalAmountController,
-                interestRateController: interestRateController,
-                startDate: startDate,
-                startDateController: startDateController,
-                projection: projection,
+                selectedScheme: state.selectedScheme,
+                selectedTermYears: state.selectedTermYears,
+                selectedTermMonths: state.selectedTermMonths,
+                principalAmountController: state.principalAmountController,
+                interestRateController: state.interestRateController,
+                startDate: state.startDate,
+                startDateController: state.startDateController,
+                projection: state.projection,
               ),
-              ..._buildNomineesSection(nominees: nominees),
+              ..._buildNomineesSection(nominees: state.nominees),
             ],
           ),
         ),

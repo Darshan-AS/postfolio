@@ -242,3 +242,8 @@
 
 ### Open
 - [ ] **Form View - Keyboard Spacer**: Clicking on a text field in a form brings up the keyboard and a lot of empty white space on top of it.
+
+### Pending Architecture Refactors
+- [ ] **Cross-Feature Isolation**: Extract shared widgets (like `customer_selection_field`) into `lib/core/widgets/`. Move data-fetching providers into `domain/providers/` to allow features to read each other's data without importing `presentation` or `data` layers.
+- [ ] **Domain Purification (DTOs)**: Create Firestore DTOs (e.g., `CustomerDTO`) in the `data` layer. Remove `@TimestampConverter` and JSON serialization from `domain` models to completely decouple the Domain from Firebase.
+- [ ] **Auth Realignment**: Move `lib/features/auth` to `lib/core/auth` as it is a global infrastructure dependency rather than an isolated feature.

@@ -15,6 +15,8 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
+import 'package:postfolio/core/widgets/wealth_accumulation_grid.dart';
+import 'package:postfolio/core/widgets/income_generation_grid.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 
@@ -39,12 +41,14 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
             if (deposit?.status != null)
               IconButton(
                 icon: HugeIcon(
-                  icon: deposit!.status == DepositStatus.active 
+                  icon: deposit!.status == DepositStatus.active
                       ? HugeIcons.strokeRoundedCheckmarkBadge01
                       : HugeIcons.strokeRoundedArrowTurnBackward,
                   size: AppDimensions.iconMd,
                 ),
-                tooltip: deposit.status == DepositStatus.active ? t.common.close : t.common.reopen,
+                tooltip: deposit.status == DepositStatus.active
+                    ? t.common.close
+                    : t.common.reopen,
                 onPressed: () async {
                   final isActive = deposit.status == DepositStatus.active;
                   final confirmed = await AppDialogs.confirmAction(
@@ -56,14 +60,18 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                     confirmText: isActive ? t.common.close : t.common.reopen,
                   );
                   if (confirmed == true && context.mounted) {
-                    final newStatus = isActive ? DepositStatus.closed : DepositStatus.active;
+                    final newStatus = isActive
+                        ? DepositStatus.closed
+                        : DepositStatus.active;
                     final result = await ref
                         .read(oneTimeDepositsControllerProvider.notifier)
                         .toggleDepositStatus(depositId, newStatus);
-                    
+
                     if (result is Failure && context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text((result as Failure).error.toString())),
+                        SnackBar(
+                          content: Text((result as Failure).error.toString()),
+                        ),
                       );
                     }
                   }

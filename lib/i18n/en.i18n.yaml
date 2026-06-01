@@ -290,3 +290,13 @@ migration:
   targetUidHelper: "Enter your Firebase Auth UID to migrate data into your account."
   batchSize: "Batch Size"
 
+
+projections:
+  totalInvested: "Total Invested"
+  estInterest: "Est. Interest"
+  maturityAmount: "Maturity Amount"
+  totalReturnMaturity: "Total Return (Maturity)"
+  lockedPrincipal: "Locked Principal"
+  payoutTitle: "${frequency} Payout"
+  lifetimeInterestEarned: "Lifetime Interest Earned"
+  lifetimeInterestDescription: "Over the full term, before returning the principal."

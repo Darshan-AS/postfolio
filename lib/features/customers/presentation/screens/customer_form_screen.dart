@@ -2,20 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/nominees_input_section.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/widgets/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/app_form_fields.dart';
 import 'package:postfolio/core/widgets/form_app_bar.dart';
+
+import 'package:postfolio/features/customers/presentation/hooks/use_customer_form.dart';
 import 'package:postfolio/i18n/strings.g.dart';
-import 'package:postfolio/core/extensions/date_time_extension.dart';
-import 'package:postfolio/core/routing/app_router.dart';
 
 class CustomerFormScreen extends ConsumerWidget {
   final String? customerId;
@@ -42,139 +40,47 @@ class _CustomerForm extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final formKey = useMemoized(() => GlobalKey<FormState>());
-
-    final customer = existingCustomer;
-    final isUpdating = customer != null;
-
-    final nameController = useTextEditingController(text: customer?.name);
-    final emailController = useTextEditingController(text: customer?.email);
-    final phoneController = useTextEditingController(text: customer?.phone);
-    final addressController = useTextEditingController(text: customer?.address);
-    final cifNumberController = useTextEditingController(
-      text: customer?.cifNumber,
-    );
-    final aadhaarNumberController = useTextEditingController(
-      text: customer?.aadhaarNumber,
-    );
-    final panNumberController = useTextEditingController(
-      text: customer?.panNumber,
-    );
-    final savingsAccountNumberController = useTextEditingController(
-      text: customer?.savingsAccount?.accountNumber,
-    );
-
-    final nominees = useState<List<Nominee>>(
-      List.of(customer?.savingsAccount?.nominees ?? []),
-    );
-    final selectedDate = useState<DateTime?>(customer?.dateOfBirth);
-    final dateOfBirthController = useTextEditingController(
-      text: selectedDate.value != null ? selectedDate.value!.toAppFormat() : '',
-    );
-
-    final isSaving = useState(false);
-
-    Future<void> selectDate(BuildContext context) async {
-      final DateTime? picked = await showDatePicker(
-        context: context,
-        initialDate: selectedDate.value ?? DateTime.now(),
-        firstDate: DateTime(AppConstants.firstDatePickerYear),
-        lastDate: DateTime.now(),
-      );
-      if (picked != null && picked != selectedDate.value) {
-        selectedDate.value = picked;
-        dateOfBirthController.text = picked.toAppFormat();
-      }
-    }
-
-    Future<void> save() async {
-      if (formKey.currentState!.validate()) {
-        isSaving.value = true;
-        final result = await ref
-            .read(customersControllerProvider.notifier)
-            .saveCustomer(
-              id: customer?.id,
-              name: nameController.text,
-              email: emailController.text,
-              phone: phoneController.text,
-              address: addressController.text,
-              cifNumber: cifNumberController.text,
-              dateOfBirth: selectedDate.value,
-              aadhaarNumber: aadhaarNumberController.text,
-              panNumber: panNumberController.text,
-              savingsAccountNumber: savingsAccountNumberController.text,
-              savingsNominees: nominees.value,
-            );
-
-        if (!context.mounted) return;
-        isSaving.value = false;
-
-        switch (result) {
-          case Success():
-            if (isUpdating) {
-              CustomerDetailRoute(customer.id).go(context);
-            } else {
-              const CustomersRoute().go(context);
-            }
-          case Failure(error: final err):
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  t.customers.failedToSaveCustomer(error: err.toString()),
-                ),
-              ),
-            );
-        }
-      }
-    }
-
-    void handleBack() {
-      if (isUpdating) {
-        CustomerDetailRoute(customer.id).go(context);
-      } else {
-        const CustomersRoute().go(context);
-      }
-    }
+    final state = useCustomerForm(ref: ref, customer: existingCustomer);
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        handleBack();
+        state.handleBack(context);
       },
       child: Scaffold(
         appBar: FormAppBar(
-          title: isUpdating
+          title: state.isUpdating
               ? t.customers.editCustomer
               : t.customers.newCustomer,
-          isSaving: isSaving.value,
-          onSave: save,
-          onBack: handleBack,
+          isSaving: state.isSaving.value,
+          onSave: () => state.save(context),
+          onBack: () => state.handleBack(context),
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
           child: Form(
-            key: formKey,
+            key: state.formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ..._buildPersonalInfo(
-                  nameController: nameController,
-                  phoneController: phoneController,
-                  emailController: emailController,
-                  dateOfBirthController: dateOfBirthController,
-                  addressController: addressController,
-                  onSelectDate: () => selectDate(context),
+                  nameController: state.nameController,
+                  phoneController: state.phoneController,
+                  emailController: state.emailController,
+                  dateOfBirthController: state.dateOfBirthController,
+                  addressController: state.addressController,
+                  onSelectDate: () => state.selectDate(context),
                 ),
                 ..._buildIdentityDocuments(
-                  cifNumberController: cifNumberController,
-                  aadhaarNumberController: aadhaarNumberController,
-                  panNumberController: panNumberController,
+                  cifNumberController: state.cifNumberController,
+                  aadhaarNumberController: state.aadhaarNumberController,
+                  panNumberController: state.panNumberController,
                 ),
                 ..._buildSavingsBank(
                   savingsAccountNumberController:
-                      savingsAccountNumberController,
-                  nominees: nominees,
+                      state.savingsAccountNumberController,
+                  nominees: state.nominees,
                 ),
               ],
             ),

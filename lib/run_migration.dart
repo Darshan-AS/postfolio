@@ -358,7 +358,10 @@ class _MigrationRunnerState extends State<MigrationRunner> {
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(title, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            title: Text(
+              title,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
             content: Text(message),
             actions: [
               TextButton(
@@ -751,7 +754,9 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                 decoration: BoxDecoration(
                   color: useFirebaseEmulator
                       ? Colors.green.withValues(alpha: 0.1)
-                      : Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
+                      : Theme.of(
+                          context,
+                        ).colorScheme.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   border: Border.all(
                     color: useFirebaseEmulator
@@ -868,9 +873,12 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                   ),
                   padding: const EdgeInsets.all(AppDimensions.paddingLg),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                   ),
                   child: SelectableText(
                     statsDisplay,

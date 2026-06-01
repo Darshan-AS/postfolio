@@ -59,6 +59,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$enums$en enums = Translations$enums$en.internal(_root);
 	late final Translations$auth$en auth = Translations$auth$en.internal(_root);
 	late final Translations$migration$en migration = Translations$migration$en.internal(_root);
+	late final Translations$projections$en projections = Translations$projections$en.internal(_root);
 }
 
 // Path: errors
@@ -645,6 +646,39 @@ class Translations$migration$en {
 	String get batchSize => 'Batch Size';
 }
 
+// Path: projections
+class Translations$projections$en {
+	Translations$projections$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Total Invested'
+	String get totalInvested => 'Total Invested';
+
+	/// en: 'Est. Interest'
+	String get estInterest => 'Est. Interest';
+
+	/// en: 'Maturity Amount'
+	String get maturityAmount => 'Maturity Amount';
+
+	/// en: 'Total Return (Maturity)'
+	String get totalReturnMaturity => 'Total Return (Maturity)';
+
+	/// en: 'Locked Principal'
+	String get lockedPrincipal => 'Locked Principal';
+
+	/// en: '${frequency} Payout'
+	String payoutTitle({required Object frequency}) => '${frequency} Payout';
+
+	/// en: 'Lifetime Interest Earned'
+	String get lifetimeInterestEarned => 'Lifetime Interest Earned';
+
+	/// en: 'Over the full term, before returning the principal.'
+	String get lifetimeInterestDescription => 'Over the full term, before returning the principal.';
+}
+
 // Path: common.duration
 class Translations$common$duration$en {
 	Translations$common$duration$en.internal(this._root);
@@ -1188,6 +1222,14 @@ extension on Translations {
 			'migration.targetUid' => 'Target User ID (UID)',
 			'migration.targetUidHelper' => 'Enter your Firebase Auth UID to migrate data into your account.',
 			'migration.batchSize' => 'Batch Size',
+			'projections.totalInvested' => 'Total Invested',
+			'projections.estInterest' => 'Est. Interest',
+			'projections.maturityAmount' => 'Maturity Amount',
+			'projections.totalReturnMaturity' => 'Total Return (Maturity)',
+			'projections.lockedPrincipal' => 'Locked Principal',
+			'projections.payoutTitle' => ({required Object frequency}) => '${frequency} Payout',
+			'projections.lifetimeInterestEarned' => 'Lifetime Interest Earned',
+			'projections.lifetimeInterestDescription' => 'Over the full term, before returning the principal.',
 			_ => null,
 		};
 	}

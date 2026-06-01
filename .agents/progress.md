@@ -49,3 +49,8 @@
 - Bumped app version to 1.0.4+5 and updated release pipeline documentation for keystore decoding.
 - Standardized primitive formatting using pure Dart extensions (`toRupeeFormat()`, `toPhoneFormat()`, `toAadhaarFormat()`, `toPanFormat()`) across the UI layer, aligning with the project's declarative conventions and keeping widgets dumb.
 - Updated the accessibility theme toggle across all main screens to use the universal standard `Icons.contrast` from the Material library, replacing ambiguous iconography and implementing a clear selected background state.
+- Extracted and centralized duplicated `AppBar` across main navigation screens into `ShellAppBar`, which accepts a dynamic list of custom actions (`actions`) rather than hardcoded booleans, enabling dynamic trailing widgets alongside the persistent `AccessibleThemeToggle`.
+- Localized raw strings in projection grids (`WealthAccumulationGrid` and `IncomeGenerationGrid`) using `slang` and the `.i18n.yaml` framework.
+- Refactored large form widgets (`_OneTimeDepositForm`, `_RecurringDepositForm`, `_CustomerForm`) by extracting complex state initializations, projection calculations, and save logic into pure `flutter_hooks` (`useOneTimeDepositForm`, `useRecurringDepositForm`, `useCustomerForm`), adhering to DRY principles and decoupling business/state logic from declarative UI layouts.
+- Abstracted `NomineesInputSection` logic into a reusable `useNomineeFormState` hook.
+- Extracted large grid components (`WealthAccumulationGrid`, `IncomeGenerationGrid`) from `detail_components.dart` into their own dedicated widget files.
