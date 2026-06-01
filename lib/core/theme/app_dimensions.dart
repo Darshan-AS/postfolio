@@ -56,6 +56,10 @@ class AppDimensions {
   static const double iconXl = 48.0;
   // Badges
   static const double badgeSizeSm = 8.0;
+
+  // Opacities
+  static const double opacityDisabled = 0.5;
+  static const double opacityMuted = 0.7;
 }
 
 class AppSpacings {

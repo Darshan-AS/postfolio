@@ -128,7 +128,7 @@
 - [x] Extract `shared_preferences` implementation into `lib/core/services/storage_service.dart` for simple UI state.
 - [x] Implement comprehensive form field validations across all create/update screens.
 - [x] **Routing UX:** Navigate to corresponding customer detail screen when clicking on a customer in the deposit detail view.
-- [x] **Customer Detail UX:** List all associated deposits (One-Time and Recurring) directly within the customer's detail view.
+- [x] **Customer Detail UX:** List all associated deposits (One-Time and Recurring) directly within the customer's detail view. (Added Collapsible History for closed deposits)
 - [x] **UI Cleanup - Formatting:** Display Aadhaar number in format "XXXX XXXX XXXX" across the app.
 - [x] Implement a predefined dropdown with a manual entry fallback for Nominee relationship fields across all forms.
 - [x] Expand `SchemeType` enum and models to support an exhaustive list of Term Deposit variants.

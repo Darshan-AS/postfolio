@@ -154,6 +154,9 @@ class Translations$common$en {
 	/// en: 'Search...'
 	String get search => 'Search...';
 
+	/// en: '${label} (${count})'
+	String countWithLabel({required Object label, required Object count}) => '${label} (${count})';
+
 	/// en: 'Add'
 	String get add => 'Add';
 
@@ -1007,6 +1010,7 @@ extension on Translations {
 			'format.currencySymbol' => '₹',
 			'format.bulletSeparator' => ' • ',
 			'common.search' => 'Search...',
+			'common.countWithLabel' => ({required Object label, required Object count}) => '${label} (${count})',
 			'common.add' => 'Add',
 			'common.close' => 'Close',
 			'common.reopen' => 'Reopen',

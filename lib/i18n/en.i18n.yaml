@@ -27,6 +27,7 @@ format:
 
 common:
   search: "Search..."
+  countWithLabel: "${label} (${count})"
   add: "Add"
   close: "Close"
   reopen: "Reopen"
