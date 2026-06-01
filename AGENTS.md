@@ -5,12 +5,12 @@ These guidelines apply to all code generated and modified in this workspace. Adh
 ## Architecture & State Management
 - **Riverpod**: Use Riverpod for state management and dependency injection. Prefer `Notifier` or `AsyncNotifier` (or `@riverpod` code generation if set up) over `StateNotifier`.
 - **Dependency Injection**: Use Riverpod providers to inject dependencies (e.g., Repositories, Services) into other providers or controllers. This ensures easily mockable and testable code.
-- **Feature-First Structure**: Organize code by feature (e.g., `lib/features/auth/`, `lib/features/post/`). Each feature should contain its own `data`, `domain`, and `presentation` layers.
+- **Feature-First Structure**: Organize code by feature (e.g., `lib/features/auth/`, `lib/features/post/`). Each feature should contain its own `data`, `domain`, and `presentation` layers. Features must be strictly isolated and CANNOT import files from another feature's `presentation` or `data` layers. Shared models or widgets must be extracted to `lib/core/`.
 
 ## Functional Programming & Purity
-- **Immutability**: Use immutable data structures exclusively. We use the **`freezed`** package for all data classes, state representations, and unions to ensure strict immutability, `copyWith` functionality, and safe JSON serialization. Never mutate state directly in place. **Always declare Freezed classes as `sealed class`** rather than `abstract class` to leverage Dart 3's exhaustive pattern matching and prevent external subclassing.
+- **Immutability**: Use immutable data structures exclusively. We use the **`freezed`** package for all data classes, state representations, and unions to ensure strict immutability, `copyWith` functionality, and safe JSON serialization. Never mutate state directly in place. **Always declare Freezed classes as `sealed class`** rather than `abstract class` to leverage Dart 3's exhaustive pattern matching and prevent external subclassing. Use native Dart 3 `switch` statements for pattern matching (Freezed's `.when()` and `.map()` methods are disabled via `build.yaml`).
 - **Modern Dart 3 Features**: Avoid heavyweight functional packages like `dartz`. Instead, use native Dart 3 **Records**, **Pattern Matching**, and **Sealed Classes** (via Freezed) for error handling and state unions.
-- **Validation**: Avoid over-engineered Value Objects for primitive types. Use extension methods or factory constructors on Freezed models for data validation.
+- **Validation**: Avoid over-engineered Value Objects for primitive types to reduce boilerplate. Use factory constructors on Freezed models for data validation to ensure primitives are validated at creation.
 - **Pure Functions**: Keep business logic in pure functions inside your Notifiers/Controllers. State should be replaced with newly computed objects rather than mutated.
 - **One-Way Data Flow**: 
   - UI reads state from Providers.
@@ -20,13 +20,13 @@ These guidelines apply to all code generated and modified in this workspace. Adh
 
 ## UI & Presentation Layer
 - **Official & Standard Widgets**: Prioritize using official Material 3 widgets (e.g., `SearchBar`, `SegmentedButton`, `FilterChip`) or widely-adopted community packages (e.g., `hugeicons`) over custom-built components. Only "invent" or build from scratch when official widgets cannot be themed or extended to meet critical UX requirements.
-- **Dumb Widgets**: Widgets should be completely "dumb". They are strictly responsible for displaying data and capturing user input. Never perform API calls, complex logic, or database operations directly inside a widget.
+- **Dumb Widgets**: Widgets should be completely "dumb". They are strictly responsible for displaying data and capturing user input. Never perform API calls, complex logic, or database operations directly inside a widget. However, widgets are allowed to contain *UI flow logic* (e.g., triggering navigation using `context.go()` inside a `ref.listen` on state changes).
 - **ConsumerWidget**: Prefer `ConsumerWidget` or `ConsumerStatefulWidget` (via Riverpod) over vanilla `StatefulWidget` unless handling ephemeral UI-only state (like an animation controller or a text field focus).
 - **Seamless Cross-Platform UI**: Ensure the UI is seamless across all supported platforms (iOS, Android, Web, Desktop). Use responsive design principles (e.g., `LayoutBuilder`, `MediaQuery`) and platform-aware styling where appropriate to ensure the app feels native and polished everywhere.
 
 ## Routing & Infrastructure
 - **Routing**: Use **`go_router`** with **`go_router_builder`** for type-safe, declarative routing. Prefer using `.go(context)` for navigating within the route hierarchy to maintain a consistent declarative state and avoid `ImperativeRouteMatch` exceptions (especially on system back button presses). Use `.push(context)` only when a truly imperative overlay is required or when waiting for a return value.
-- **Backend & Database**: Use **Firebase (Firestore)** as the Backend-as-a-Service. Rely on Firestore's native offline-persistence instead of maintaining a separate local database (like Isar/Drift). All data repositories should interact directly with Firestore.
+- **Backend & Database**: Use **Firebase (Firestore)** as the Backend-as-a-Service. Rely on Firestore's native offline-persistence instead of maintaining a separate local database (like Isar/Drift). All data repositories should interact directly with Firestore. The `data` layer (repositories) must convert Firestore DTOs into pure Domain Entities before returning them. `cloud_firestore` imports are strictly banned from the `domain` and `presentation` layers to prevent tight coupling.
 
 ## Build and Test
 {Commands to install, build, test—agents will attempt to run these}

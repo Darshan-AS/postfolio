@@ -172,7 +172,10 @@ OneTimeDepositRepository oneTimeDepositRepository(Ref ref) {
   }
 
   final authState = ref.watch(authControllerProvider);
-  final userId = authState.mapOrNull(authenticated: (state) => state.user.id);
+  final userId = switch (authState) {
+    AuthStateAuthenticated state => state.user.id,
+    _ => null,
+  };
 
   if (userId == null) {
     throw StateError(
