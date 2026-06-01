@@ -105,7 +105,14 @@ class EntityDetailScaffold extends StatelessWidget {
 
   Widget _buildBody(ThemeData theme) {
     return ListView(
-      padding: const EdgeInsets.all(AppDimensions.paddingLg),
+      padding: EdgeInsets.fromLTRB(
+        AppDimensions.paddingLg,
+        AppDimensions.paddingLg,
+        AppDimensions.paddingLg,
+        floatingActionButton != null 
+            ? AppDimensions.listBottomPaddingFAB 
+            : AppDimensions.paddingLg,
+      ),
       children: [header, AppSpacings.gapXxl, ...body]
           .animate(interval: AppAnimations.stagger)
           .fade(
