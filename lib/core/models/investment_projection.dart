@@ -31,26 +31,26 @@ sealed class InvestmentProjection with _$InvestmentProjection {
 
   // Shared Getters
   @override
-  double get totalInvested => map(
-    wealthAccumulation: (p) => p.totalInvested,
-    incomeGeneration: (p) => p.totalInvested,
-  );
+  double get totalInvested => switch (this) {
+    WealthAccumulation p => p.totalInvested,
+    IncomeGeneration p => p.totalInvested,
+  };
 
   @override
-  double get maturityAmount => map(
-    wealthAccumulation: (p) => p.maturityAmount,
-    incomeGeneration: (p) => p.maturityAmount,
-  );
+  double get maturityAmount => switch (this) {
+    WealthAccumulation p => p.maturityAmount,
+    IncomeGeneration p => p.maturityAmount,
+  };
 
   @override
-  double get totalInterestEarned => map(
-    wealthAccumulation: (p) => p.totalInterestEarned,
-    incomeGeneration: (p) => p.totalInterestEarned,
-  );
+  double get totalInterestEarned => switch (this) {
+    WealthAccumulation p => p.totalInterestEarned,
+    IncomeGeneration p => p.totalInterestEarned,
+  };
 
   @override
-  DateTime get maturityDate => map(
-    wealthAccumulation: (p) => p.maturityDate,
-    incomeGeneration: (p) => p.maturityDate,
-  );
+  DateTime get maturityDate => switch (this) {
+    WealthAccumulation p => p.maturityDate,
+    IncomeGeneration p => p.maturityDate,
+  };
 }

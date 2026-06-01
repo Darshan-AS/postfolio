@@ -57,12 +57,12 @@ class InvestmentProjectionCard extends StatelessWidget {
                 ),
                 prefix: '+ ',
               ),
-              ...proj.map(
-                wealthAccumulation: (w) =>
+              ...switch (proj) {
+                WealthAccumulation w =>
                     _buildWealthAccumulationDetails(context, w),
-                incomeGeneration: (i) =>
+                IncomeGeneration i =>
                     _buildIncomeGenerationDetails(context, i),
-              ),
+              },
               AppSpacings.gapSm,
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -77,11 +77,11 @@ class InvestmentProjectionCard extends StatelessWidget {
                   ),
                 ],
               ),
-              ...proj.map(
-                wealthAccumulation: (w) =>
+              ...switch (proj) {
+                WealthAccumulation w =>
                     _buildWealthAccumulationNote(context, w),
-                incomeGeneration: (i) => _buildIncomeGenerationNote(context, i),
-              ),
+                IncomeGeneration i => _buildIncomeGenerationNote(context, i),
+              },
             ],
           ),
         ),
