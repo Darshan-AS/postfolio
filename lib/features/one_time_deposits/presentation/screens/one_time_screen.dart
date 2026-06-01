@@ -9,12 +9,9 @@ import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_ti
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
-import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
-import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
 import 'package:postfolio/core/widgets/feedback/app_sort_bottom_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_filter_bottom_sheet.dart';
@@ -23,7 +20,6 @@ import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
-import 'package:postfolio/core/models/base_deposit.dart';
 
 class OneTimeDepositsScreen extends HookConsumerWidget {
   const OneTimeDepositsScreen({super.key});
@@ -217,80 +213,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
             const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
           final deposit = deposits[index];
-          return Consumer(
-            builder: (context, ref, child) {
-              final customerAsync = ref.watch(
-                customerByIdProvider(deposit.customerId),
-              );
-              final customerName =
-                  customerAsync.value?.name ??
-                  (deposit.accountNo ?? t.common.notProvided);
-
-              return OneTimeDepositCard(
-                title: customerName,
-                subtitle: deposit.accountNo ?? t.common.notProvided,
-                principalAmount: deposit.principalAmount,
-                status: deposit.status,
-                urgency: deposit.maturityUrgency,
-                relativeTimeText: deposit.maturityRelativeTime,
-                maturityDate: deposit.maturityDate,
-                onTap: () =>
-                    OneTimeDepositDetailRoute(deposit.id).push(context),
-                onEdit: () => OneTimeDepositEditRoute(deposit.id).push(context),
-                onDelete: () async {
-                  final confirmed = await AppDialogs.confirmDelete(
-                    context,
-                    title: t.oneTimeDeposits.deleteDeposit,
-                    content: t.oneTimeDeposits.deleteDepositConfirmation,
-                  );
-                  if (confirmed == true) {
-                    final result = await ref
-                        .read(oneTimeDepositsControllerProvider.notifier)
-                        .deleteOneTimeDeposit(deposit.id);
-
-                    if (result is Failure && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            t.oneTimeDeposits.failedToDeleteDeposit(
-                              error: (result as Failure).error.toString(),
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-                  }
-                },
-                onToggleStatus: () async {
-                  final isActive = deposit.status == DepositStatus.active;
-                  final confirmed = await AppDialogs.confirmAction(
-                    context,
-                    title: isActive ? t.common.close : t.common.reopen,
-                    content: isActive
-                        ? t.oneTimeDeposits.closeDepositConfirmation
-                        : t.oneTimeDeposits.reopenDepositConfirmation,
-                    confirmText: isActive ? t.common.close : t.common.reopen,
-                  );
-                  if (confirmed == true && context.mounted) {
-                    final newStatus = isActive
-                        ? DepositStatus.closed
-                        : DepositStatus.active;
-                    final result = await ref
-                        .read(oneTimeDepositsControllerProvider.notifier)
-                        .toggleDepositStatus(deposit.id, newStatus);
-
-                    if (result is Failure && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text((result as Failure).error.toString()),
-                        ),
-                      );
-                    }
-                  }
-                },
-              );
-            },
-          );
+          return OneTimeDepositCard(deposit: deposit);
         },
       ),
     );
@@ -307,20 +230,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
         separatorBuilder: (context, index) =>
             const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
-          final dummy = OneTimeDeposit.dummy;
-          return OneTimeDepositCard(
-            title: dummy.accountNo ?? t.common.notProvided,
-            subtitle: dummy.accountNo ?? t.common.notProvided,
-            principalAmount: dummy.principalAmount,
-            status: dummy.status,
-            urgency: MaturityUrgency.normal,
-            relativeTimeText: null,
-            maturityDate: dummy.maturityDate,
-            onTap: () {},
-            onEdit: () {},
-            onDelete: () {},
-            onToggleStatus: null,
-          );
+          return OneTimeDepositCard.skeleton();
         },
       ),
     );

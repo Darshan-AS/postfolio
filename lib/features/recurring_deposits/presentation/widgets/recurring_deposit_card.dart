@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:postfolio/core/enums/deposit_status.dart';
@@ -8,34 +9,40 @@ import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
+import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
+import 'package:postfolio/core/routing/app_router.dart';
+import 'package:postfolio/core/models/base_deposit.dart';
 
+import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
+import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-class RecurringDepositCard extends StatelessWidget {
+class _RecurringDepositCardView extends StatelessWidget {
   final String title;
   final String subtitle;
   final double installmentAmount;
   final DepositStatus status;
   final MaturityUrgency urgency;
-  final String? relativeTimeText;
-  final DateTime? maturityDate;
-  final VoidCallback onTap;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final String relativeTimeText;
+  final DateTime maturityDate;
+  final VoidCallback? onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
   final VoidCallback? onToggleStatus;
 
-  const RecurringDepositCard({
-    super.key,
+  const _RecurringDepositCardView({
     required this.title,
     required this.subtitle,
     required this.installmentAmount,
     required this.status,
-    this.urgency = MaturityUrgency.normal,
-    this.relativeTimeText,
-    this.maturityDate,
-    required this.onTap,
-    required this.onEdit,
-    required this.onDelete,
+    required this.urgency,
+    required this.relativeTimeText,
+    required this.maturityDate,
+    this.onTap,
+    this.onEdit,
+    this.onDelete,
     this.onToggleStatus,
   });
 
@@ -73,9 +80,8 @@ class RecurringDepositCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-            if (relativeTimeText != null &&
-                (urgency == MaturityUrgency.maturingSoon ||
-                    urgency == MaturityUrgency.matured)) ...[
+            if (urgency == MaturityUrgency.maturingSoon ||
+                urgency == MaturityUrgency.matured) ...[
               if (subtitle.isNotEmpty) AppSpacings.gapXs,
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -89,7 +95,7 @@ class RecurringDepositCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    relativeTimeText!,
+                    relativeTimeText,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: urgency == MaturityUrgency.matured
                           ? Theme.of(context).colorScheme.error
@@ -118,7 +124,7 @@ class RecurringDepositCard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            if (maturityDate != null) ...[
+            ...[
               AppSpacings.gapXs,
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -130,7 +136,7 @@ class RecurringDepositCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    maturityDate!.toAppFormat(),
+                    maturityDate.toAppFormat(),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -167,9 +173,114 @@ class RecurringDepositCard extends StatelessWidget {
               ),
               onTap: onToggleStatus!,
             ),
-        EntityAction.edit(onTap: onEdit),
-        EntityAction.delete(onTap: onDelete),
+        if (onEdit != null) EntityAction.edit(onTap: onEdit!),
+        if (onDelete != null) EntityAction.delete(onTap: onDelete!),
       ],
+    );
+  }
+}
+
+class RecurringDepositCard extends ConsumerWidget {
+  final RecurringDeposit deposit;
+  final String? overrideTitle;
+  final String? overrideSubtitle;
+
+  const RecurringDepositCard({
+    super.key,
+    required this.deposit,
+    this.overrideTitle,
+    this.overrideSubtitle,
+  });
+
+  static Widget skeleton() {
+    final dummy = RecurringDeposit.dummy;
+    return _RecurringDepositCardView(
+      title: dummy.accountNo ?? 'Loading...',
+      subtitle: dummy.accountNo ?? 'Loading...',
+      installmentAmount: dummy.installmentAmount,
+      status: dummy.status,
+      urgency: MaturityUrgency.normal,
+      relativeTimeText: '',
+      maturityDate: dummy.maturityDate,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    String title = overrideTitle ?? '';
+    if (title.isEmpty) {
+      final customerAsync = ref.watch(customerByIdProvider(deposit.customerId));
+      title =
+          customerAsync.value?.name ??
+          (deposit.accountNo ?? t.common.notProvided);
+    }
+
+    String subtitle = overrideSubtitle ?? '';
+    if (overrideSubtitle == null) {
+      subtitle = (deposit.serialNo?.isNotEmpty ?? false)
+          ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
+          : (deposit.accountNo ?? t.common.notProvided);
+    }
+
+    return _RecurringDepositCardView(
+      title: title,
+      subtitle: subtitle,
+      installmentAmount: deposit.installmentAmount,
+      status: deposit.status,
+      urgency: deposit.maturityUrgency,
+      relativeTimeText: deposit.maturityRelativeTime,
+      maturityDate: deposit.maturityDate,
+      onTap: () => RecurringDepositDetailRoute(deposit.id).push(context),
+      onEdit: () => RecurringDepositEditRoute(deposit.id).push(context),
+      onDelete: () async {
+        final confirmed = await AppDialogs.confirmDelete(
+          context,
+          title: t.recurringDeposits.deleteDeposit,
+          content: t.recurringDeposits.deleteDepositConfirmation,
+        );
+        if (confirmed == true && context.mounted) {
+          final result = await ref
+              .read(recurringDepositsControllerProvider.notifier)
+              .deleteRecurringDeposit(deposit.id);
+
+          if (result is Failure && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  t.recurringDeposits.failedToDeleteDeposit(
+                    error: (result as Failure).error.toString(),
+                  ),
+                ),
+              ),
+            );
+          }
+        }
+      },
+      onToggleStatus: () async {
+        final isActive = deposit.status == DepositStatus.active;
+        final confirmed = await AppDialogs.confirmAction(
+          context,
+          title: isActive ? t.common.close : t.common.reopen,
+          content: isActive
+              ? t.recurringDeposits.closeDepositConfirmation
+              : t.recurringDeposits.reopenDepositConfirmation,
+          confirmText: isActive ? t.common.close : t.common.reopen,
+        );
+        if (confirmed == true && context.mounted) {
+          final newStatus = isActive
+              ? DepositStatus.closed
+              : DepositStatus.active;
+          final result = await ref
+              .read(recurringDepositsControllerProvider.notifier)
+              .toggleDepositStatus(deposit.id, newStatus);
+
+          if (result is Failure && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text((result as Failure).error.toString())),
+            );
+          }
+        }
+      },
     );
   }
 }

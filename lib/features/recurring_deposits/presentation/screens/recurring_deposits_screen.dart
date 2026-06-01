@@ -9,12 +9,9 @@ import 'package:postfolio/features/recurring_deposits/presentation/widgets/recur
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
-import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
-import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
 import 'package:postfolio/core/widgets/feedback/app_sort_bottom_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_filter_bottom_sheet.dart';
@@ -22,7 +19,6 @@ import 'package:postfolio/core/widgets/feedback/app_filter_section.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
-import 'package:postfolio/core/models/base_deposit.dart';
 
 class RecurringDepositsScreen extends HookConsumerWidget {
   const RecurringDepositsScreen({super.key});
@@ -206,83 +202,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
           final deposit = deposits[index];
-          return Consumer(
-            builder: (context, ref, child) {
-              final customerAsync = ref.watch(
-                customerByIdProvider(deposit.customerId),
-              );
-              final customerName =
-                  customerAsync.value?.name ??
-                  (deposit.accountNo ?? t.common.notProvided);
-
-              return RecurringDepositCard(
-                title: customerName,
-                subtitle: (deposit.serialNo?.isNotEmpty ?? false)
-                    ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
-                    : (deposit.accountNo ?? t.common.notProvided),
-                installmentAmount: deposit.installmentAmount,
-                status: deposit.status,
-                urgency: deposit.maturityUrgency,
-                relativeTimeText: deposit.maturityRelativeTime,
-                maturityDate: deposit.maturityDate,
-                onTap: () =>
-                    RecurringDepositDetailRoute(deposit.id).push(context),
-                onEdit: () =>
-                    RecurringDepositEditRoute(deposit.id).push(context),
-                onDelete: () async {
-                  final confirmed = await AppDialogs.confirmDelete(
-                    context,
-                    title: t.recurringDeposits.deleteDeposit,
-                    content: t.recurringDeposits.deleteDepositConfirmation,
-                  );
-                  if (confirmed == true) {
-                    final result = await ref
-                        .read(recurringDepositsControllerProvider.notifier)
-                        .deleteRecurringDeposit(deposit.id);
-
-                    if (result is Failure && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            t.recurringDeposits.failedToDeleteDeposit(
-                              error: (result as Failure).error.toString(),
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-                  }
-                },
-                onToggleStatus: () async {
-                  final isActive = deposit.status == DepositStatus.active;
-                  final confirmed = await AppDialogs.confirmAction(
-                    context,
-                    title: isActive ? t.common.close : t.common.reopen,
-                    content: isActive
-                        ? t.recurringDeposits.closeDepositConfirmation
-                        : t.recurringDeposits.reopenDepositConfirmation,
-                    confirmText: isActive ? t.common.close : t.common.reopen,
-                  );
-                  if (confirmed == true && context.mounted) {
-                    final newStatus = isActive
-                        ? DepositStatus.closed
-                        : DepositStatus.active;
-                    final result = await ref
-                        .read(recurringDepositsControllerProvider.notifier)
-                        .toggleDepositStatus(deposit.id, newStatus);
-
-                    if (result is Failure && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text((result as Failure).error.toString()),
-                        ),
-                      );
-                    }
-                  }
-                },
-              );
-            },
-          );
+          return RecurringDepositCard(deposit: deposit);
         },
       ),
     );
@@ -299,20 +219,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
         separatorBuilder: (context, index) =>
             const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
-          final dummy = RecurringDeposit.dummy;
-          return RecurringDepositCard(
-            title: dummy.accountNo ?? t.common.notProvided,
-            subtitle: dummy.accountNo ?? t.common.notProvided,
-            installmentAmount: dummy.installmentAmount,
-            status: dummy.status,
-            urgency: MaturityUrgency.normal,
-            relativeTimeText: null,
-            maturityDate: dummy.maturityDate,
-            onTap: () {},
-            onEdit: () {},
-            onDelete: () {},
-            onToggleStatus: null,
-          );
+          return RecurringDepositCard.skeleton();
         },
       ),
     );
