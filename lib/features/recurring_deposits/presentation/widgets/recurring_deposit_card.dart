@@ -4,8 +4,8 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/detail_components.dart';
-import 'package:postfolio/core/widgets/entity_list_tile.dart';
+import 'package:postfolio/core/widgets/layout/detail_components.dart';
+import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 

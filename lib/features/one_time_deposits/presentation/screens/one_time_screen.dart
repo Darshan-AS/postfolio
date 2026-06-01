@@ -7,18 +7,18 @@ import 'package:postfolio/features/one_time_deposits/presentation/controllers/on
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/app_search_bar.dart';
-import 'package:postfolio/core/widgets/error_state_view.dart';
-import 'package:postfolio/core/widgets/app_dialogs.dart';
+import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
+import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
+import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/core/widgets/shell_app_bar.dart';
+import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
-import 'package:postfolio/core/widgets/app_sort_bottom_sheet.dart';
-import 'package:postfolio/core/widgets/app_filter_bottom_sheet.dart';
-import 'package:postfolio/core/widgets/app_filter_section.dart';
+import 'package:postfolio/core/widgets/feedback/app_sort_bottom_sheet.dart';
+import 'package:postfolio/core/widgets/feedback/app_filter_bottom_sheet.dart';
+import 'package:postfolio/core/widgets/feedback/app_filter_section.dart';
 import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';

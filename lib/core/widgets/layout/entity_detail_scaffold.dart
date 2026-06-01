@@ -5,7 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/app_dialogs.dart';
+import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 
 class EntityDetailScaffold extends StatelessWidget {
   final String appBarTitle;

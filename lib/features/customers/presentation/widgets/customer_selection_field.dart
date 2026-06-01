@@ -7,8 +7,8 @@ import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
-import 'package:postfolio/core/widgets/error_state_view.dart';
-import 'package:postfolio/core/widgets/entity_list_tile.dart';
+import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
+import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 import 'package:postfolio/core/extensions/string_extension.dart';

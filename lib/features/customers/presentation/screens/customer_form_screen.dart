@@ -6,11 +6,11 @@ import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/nominees_input_section.dart';
+import 'package:postfolio/core/widgets/domain/nominees_input_section.dart';
 import 'package:postfolio/core/models/nominee.dart';
-import 'package:postfolio/core/widgets/async_entity_builder.dart';
-import 'package:postfolio/core/widgets/app_form_fields.dart';
-import 'package:postfolio/core/widgets/form_app_bar.dart';
+import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
+import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
+import 'package:postfolio/core/widgets/layout/form_app_bar.dart';
 
 import 'package:postfolio/features/customers/presentation/hooks/use_customer_form.dart';
 import 'package:postfolio/i18n/strings.g.dart';

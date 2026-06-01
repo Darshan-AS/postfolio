@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/detail_components.dart';
+import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
