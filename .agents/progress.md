@@ -25,6 +25,7 @@
 - Standardized `LoginScreen` to use theme dimensions and `flutter_animate` transitions, and added a Sign Out button to `DashboardScreen` and `MainShellScaffold` using Slang localized strings.
 - Refactored Form Screens (`RecurringDeposit`, `OneTimeDeposit`, `Customer`) to reduce `build` method length and complexity.
 - Introduced `FormSectionHeader` to standardize section headers and reduce repetitive styling code.
+- Replaced the custom `Material` layout in `DemoBanner` with the official Flutter `MaterialBanner` widget, dropping explicit colors to fix a visual crossfade lag issue during theme toggling.
 - Fixed convention violations where inline filtering was used instead of dedicated providers (e.g., `customerByIdProvider`).
 - Migrated `OneTimeDepositRepository` and `RecurringDepositRepository` to `cloud_firestore` with real-time stream sync, utilizing UUID generation for client-side offline support.
 - Fully implemented Demo Mode with a toggle on the login page allowing users to skip authentication and use fake repository data for demonstration purposes. Ensured UI strings use Slang `t` conventions. Users can exit demo mode by logging out from the dashboard.

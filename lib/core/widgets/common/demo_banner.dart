@@ -15,34 +15,15 @@ class DemoBanner extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    return Material(
-      color: Theme.of(context).colorScheme.tertiaryContainer,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingLg,
-            vertical: AppDimensions.paddingMd,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                color: Theme.of(context).colorScheme.onTertiaryContainer,
-              ),
-              AppSpacings.gapMd,
-              Expanded(
-                child: Text(
-                  t.common.demoModeActive,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onTertiaryContainer,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
+    return SafeArea(
+      bottom: false,
+      child: MaterialBanner(
+        leading: const Icon(Icons.info_outline),
+        content: Text(
+          t.common.demoModeActive,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: const [SizedBox.shrink()],
       ),
     );
   }
