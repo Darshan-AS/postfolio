@@ -80,7 +80,7 @@ as List<MaturityUrgency>,
 
 
 class _RDSearchCriteria implements RDSearchCriteria {
-  const _RDSearchCriteria({this.searchQuery = '', this.sortBy = RDSortOption.maturityAsc, final  List<DepositStatus> statusFilters = const [DepositStatus.active], final  List<MaturityUrgency> urgencyFilters = const []}): _statusFilters = statusFilters,_urgencyFilters = urgencyFilters;
+  const _RDSearchCriteria({this.searchQuery = '', this.sortBy = RDSortOption.serialNoDesc, final  List<DepositStatus> statusFilters = const [DepositStatus.active], final  List<MaturityUrgency> urgencyFilters = const []}): _statusFilters = statusFilters,_urgencyFilters = urgencyFilters;
   
 
 @override@JsonKey() final  String searchQuery;
