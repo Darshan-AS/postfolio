@@ -56,3 +56,4 @@
 - Abstracted `NomineesInputSection` logic into a reusable `useNomineeFormState` hook.
 - Extracted large grid components (`WealthAccumulationGrid`, `IncomeGenerationGrid`) from `detail_components.dart` into their own dedicated widget files.
 - Added `dynamic_color` package and implemented Material Monet dynamic theming support in `main.dart`.
+- Updated default sorting of Recurring Deposits to use Serial Number (Decreasing) based on user preference.

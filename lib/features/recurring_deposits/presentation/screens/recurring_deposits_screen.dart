@@ -56,7 +56,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             trailing: [
               IconButton(
                 icon: Badge(
-                  isLabelVisible: criteria.sortBy != RDSortOption.maturityAsc,
+                  isLabelVisible: criteria.sortBy != RDSortOption.serialNoDesc,
                   smallSize: AppDimensions.badgeSizeSm,
                   child: const HugeIcon(
                     icon: HugeIcons.strokeRoundedSorting01,

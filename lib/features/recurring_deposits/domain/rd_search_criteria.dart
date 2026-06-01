@@ -20,7 +20,7 @@ enum RDSortOption {
 sealed class RDSearchCriteria with _$RDSearchCriteria {
   const factory RDSearchCriteria({
     @Default('') String searchQuery,
-    @Default(RDSortOption.maturityAsc) RDSortOption sortBy,
+    @Default(RDSortOption.serialNoDesc) RDSortOption sortBy,
     @Default([DepositStatus.active]) List<DepositStatus> statusFilters,
     @Default([]) List<MaturityUrgency> urgencyFilters,
   }) = _RDSearchCriteria;
