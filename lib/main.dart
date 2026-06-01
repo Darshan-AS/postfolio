@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -95,19 +96,59 @@ class PostfolioApp extends ConsumerWidget {
         break;
     }
 
-    return MaterialApp.router(
-      title: t.appTitle,
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      themeMode: materialThemeMode,
-      routerConfig: goRouter,
-      locale: TranslationProvider.of(context).flutterLocale,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocaleUtils.supportedLocales,
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        ThemeData effectiveLightTheme = lightTheme;
+        ThemeData effectiveDarkTheme = darkTheme;
+
+        if (lightDynamic != null) {
+          ColorScheme dynamicScheme = lightDynamic.harmonized();
+          if (themeMode == AppThemeMode.accessibleSystem) {
+            dynamicScheme = dynamicScheme.copyWith(
+              error: const Color(0xFFD81B60),
+              errorContainer: const Color(0xFFF8BBD0),
+              onError: Colors.white,
+              onErrorContainer: const Color(0xFF880E4F),
+              tertiary: const Color(0xFFFF8F00),
+              tertiaryContainer: const Color(0xFFFFE082),
+              onTertiary: Colors.black,
+              onTertiaryContainer: const Color(0xFFE65100),
+            );
+          }
+          effectiveLightTheme = AppTheme.buildTheme(dynamicScheme);
+        }
+        if (darkDynamic != null) {
+          ColorScheme dynamicScheme = darkDynamic.harmonized();
+          if (themeMode == AppThemeMode.accessibleSystem) {
+            dynamicScheme = dynamicScheme.copyWith(
+              error: const Color(0xFFF48FB1),
+              errorContainer: const Color(0xFF880E4F),
+              onError: const Color(0xFF880E4F),
+              onErrorContainer: const Color(0xFFFCE4EC),
+              tertiary: const Color(0xFFFFCA28),
+              tertiaryContainer: const Color(0xFFF57C00),
+              onTertiary: const Color(0xFF4E342E),
+              onTertiaryContainer: const Color(0xFFFFF8E1),
+            );
+          }
+          effectiveDarkTheme = AppTheme.buildTheme(dynamicScheme);
+        }
+
+        return MaterialApp.router(
+          title: t.appTitle,
+          theme: effectiveLightTheme,
+          darkTheme: effectiveDarkTheme,
+          themeMode: materialThemeMode,
+          routerConfig: goRouter,
+          locale: TranslationProvider.of(context).flutterLocale,
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocaleUtils.supportedLocales,
+        );
+      },
     );
   }
 }
