@@ -39,7 +39,8 @@ class CustomersScreen extends HookConsumerWidget {
             trailing: [
               IconButton(
                 icon: Badge(
-                  isLabelVisible: criteria.sortBy != CustomerSortOption.nameAsc,
+                  isLabelVisible:
+                      criteria.sortBy != CustomerSortOption.nameAsc,
                   smallSize: AppDimensions.badgeSizeSm,
                   child: const HugeIcon(
                     icon: HugeIcons.strokeRoundedSorting01,

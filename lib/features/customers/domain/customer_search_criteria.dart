@@ -2,7 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'customer_search_criteria.freezed.dart';
 
-enum CustomerSortOption { nameAsc, nameDesc, newest, oldest }
+enum CustomerSortOption { nameAsc, nameDesc, createdAtAsc, createdAtDesc }
 
 @freezed
 sealed class CustomerSearchCriteria with _$CustomerSearchCriteria {

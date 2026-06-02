@@ -102,7 +102,7 @@ final class FilteredRecurringDepositsProvider
 }
 
 String _$filteredRecurringDepositsHash() =>
-    r'93985229e17eadade49342ab5835c02dd4d267f6';
+    r'44e49c9de04f7ea65f000491c99ac07ebe2c1b6b';
 
 @ProviderFor(RecurringDepositsController)
 final recurringDepositsControllerProvider =

@@ -99,19 +99,22 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
 
   // Sort
   switch (criteria.sortBy) {
-    case RDSortOption.newest:
+    case RDSortOption.startDateDesc:
       result.sort((a, b) => b.startDate.compareTo(a.startDate));
       break;
-    case RDSortOption.oldest:
+    case RDSortOption.startDateAsc:
       result.sort((a, b) => a.startDate.compareTo(b.startDate));
       break;
-    case RDSortOption.highestAmount:
+    case RDSortOption.amountDesc:
       result.sort((a, b) => b.installmentAmount.compareTo(a.installmentAmount));
       break;
-    case RDSortOption.maturityAsc:
+    case RDSortOption.amountAsc:
+      result.sort((a, b) => a.installmentAmount.compareTo(b.installmentAmount));
+      break;
+    case RDSortOption.maturityDateAsc:
       result.sort((a, b) => a.maturityDate.compareTo(b.maturityDate));
       break;
-    case RDSortOption.maturityDesc:
+    case RDSortOption.maturityDateDesc:
       result.sort((a, b) => b.maturityDate.compareTo(a.maturityDate));
       break;
     case RDSortOption.nameAsc:

@@ -81,7 +81,7 @@ as List<OneTimeSchemeType>,
 
 
 class _OTDSearchCriteria implements OTDSearchCriteria {
-  const _OTDSearchCriteria({this.searchQuery = '', this.sortBy = OTDSortOption.maturityAsc, final  List<DepositStatus> statusFilters = const [DepositStatus.active], final  List<MaturityUrgency> urgencyFilters = const [], final  List<OneTimeSchemeType> schemeFilters = const []}): _statusFilters = statusFilters,_urgencyFilters = urgencyFilters,_schemeFilters = schemeFilters;
+  const _OTDSearchCriteria({this.searchQuery = '', this.sortBy = OTDSortOption.maturityDateAsc, final  List<DepositStatus> statusFilters = const [DepositStatus.active], final  List<MaturityUrgency> urgencyFilters = const [], final  List<OneTimeSchemeType> schemeFilters = const []}): _statusFilters = statusFilters,_urgencyFilters = urgencyFilters,_schemeFilters = schemeFilters;
   
 
 @override@JsonKey() final  String searchQuery;

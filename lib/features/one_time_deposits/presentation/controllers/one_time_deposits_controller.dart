@@ -115,19 +115,22 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
 
   // Sort
   switch (criteria.sortBy) {
-    case OTDSortOption.newest:
+    case OTDSortOption.startDateDesc:
       result.sort((a, b) => b.startDate.compareTo(a.startDate));
       break;
-    case OTDSortOption.oldest:
+    case OTDSortOption.startDateAsc:
       result.sort((a, b) => a.startDate.compareTo(b.startDate));
       break;
-    case OTDSortOption.highestAmount:
+    case OTDSortOption.amountDesc:
       result.sort((a, b) => b.principalAmount.compareTo(a.principalAmount));
       break;
-    case OTDSortOption.maturityAsc:
+    case OTDSortOption.amountAsc:
+      result.sort((a, b) => a.principalAmount.compareTo(b.principalAmount));
+      break;
+    case OTDSortOption.maturityDateAsc:
       result.sort((a, b) => a.maturityDate.compareTo(b.maturityDate));
       break;
-    case OTDSortOption.maturityDesc:
+    case OTDSortOption.maturityDateDesc:
       result.sort((a, b) => b.maturityDate.compareTo(a.maturityDate));
       break;
     case OTDSortOption.nameAsc:

@@ -52,14 +52,14 @@ Future<UnmodifiableListView<Customer>> filteredCustomers(Ref ref) async {
         (a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()),
       );
       break;
-    case CustomerSortOption.newest:
+    case CustomerSortOption.createdAtDesc:
       result.sort((a, b) {
         final dateA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
         final dateB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
         return dateB.compareTo(dateA);
       });
       break;
-    case CustomerSortOption.oldest:
+    case CustomerSortOption.createdAtAsc:
       result.sort((a, b) {
         final dateA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
         final dateB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);

@@ -55,7 +55,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
             trailing: [
               IconButton(
                 icon: Badge(
-                  isLabelVisible: criteria.sortBy != OTDSortOption.maturityAsc,
+                  isLabelVisible: criteria.sortBy != OTDSortOption.maturityDateAsc,
                   smallSize: AppDimensions.badgeSizeSm,
                   child: const HugeIcon(
                     icon: HugeIcons.strokeRoundedSorting01,
