@@ -78,6 +78,9 @@ class RecurringDepositsScreen extends HookConsumerWidget {
                           .read(recurringListCriteriaProvider.notifier)
                           .updateSortDirection(dir);
                     },
+                    onReset: () => ref
+                        .read(recurringListCriteriaProvider.notifier)
+                        .clearSort(),
                   );
                 },
               ),

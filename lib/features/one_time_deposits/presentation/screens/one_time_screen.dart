@@ -81,6 +81,9 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                           .read(oneTimeListCriteriaProvider.notifier)
                           .updateSortDirection(dir);
                     },
+                    onReset: () => ref
+                        .read(oneTimeListCriteriaProvider.notifier)
+                        .clearSort(),
                   );
                 },
               ),

@@ -49,6 +49,11 @@ class RecurringListCriteria extends _$RecurringListCriteria {
     }
   }
 
+  void clearSort() => state = state.copyWith(
+        sortField: RDSortField.serialNo,
+        sortDirection: SortDirection.asc,
+      );
+
   void clearAll() => state = const RDSearchCriteria();
 
   void clearFilters() {

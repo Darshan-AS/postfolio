@@ -21,6 +21,10 @@ class CustomerListCriteria extends _$CustomerListCriteria {
       state = state.copyWith(sortField: field);
   void updateSortDirection(SortDirection direction) =>
       state = state.copyWith(sortDirection: direction);
+  void clearSort() => state = state.copyWith(
+        sortField: CustomerSortField.name,
+        sortDirection: SortDirection.asc,
+      );
   void clearAll() => state = const CustomerSearchCriteria();
 }
 

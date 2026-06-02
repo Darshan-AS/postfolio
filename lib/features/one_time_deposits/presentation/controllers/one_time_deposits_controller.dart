@@ -59,6 +59,11 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
     }
   }
 
+  void clearSort() => state = state.copyWith(
+        sortField: OTDSortField.maturityDate,
+        sortDirection: SortDirection.asc,
+      );
+
   void clearAll() => state = const OTDSearchCriteria();
 
   void clearFilters() {
