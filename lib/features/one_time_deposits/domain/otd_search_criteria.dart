@@ -6,20 +6,21 @@ import 'package:postfolio/core/enums/scheme_type.dart';
 part 'otd_search_criteria.freezed.dart';
 
 enum OTDSortOption {
-  newest,
-  oldest,
+  maturityDateAsc,
+  maturityDateDesc,
+  startDateAsc,
+  startDateDesc,
   nameAsc,
   nameDesc,
-  highestAmount,
-  maturityAsc,
-  maturityDesc,
+  amountAsc,
+  amountDesc,
 }
 
 @freezed
 sealed class OTDSearchCriteria with _$OTDSearchCriteria {
   const factory OTDSearchCriteria({
     @Default('') String searchQuery,
-    @Default(OTDSortOption.maturityAsc) OTDSortOption sortBy,
+    @Default(OTDSortOption.maturityDateAsc) OTDSortOption sortBy,
     @Default([DepositStatus.active]) List<DepositStatus> statusFilters,
     @Default([]) List<MaturityUrgency> urgencyFilters,
     @Default([]) List<OneTimeSchemeType> schemeFilters,

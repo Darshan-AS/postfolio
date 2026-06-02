@@ -1,20 +1,21 @@
 # Git & Commit Conventions
 
 ## 1. Commit Message Format
-All commits must follow the **Conventional Commits** format: `<type>(<scope>): <summary>`.
+All commits MUST follow this EXACT casing: `<Type>(<scope>): <Summary>`.
 
-### Types
+### Types (STRICT CAPITALIZATION)
 - `Feat`: New functionality.
 - `Fix`: Bug fixes.
-- `Refactor`: Structural changes without behavior change.
-- `Docs`: Updates to documentation, `.agents/` or README.
-- `UI`: Visual-only changes (colors, themes, dimensions).
-- `Chore`: Dependencies, build scripts, configuration.
+- `Refactor`: Structural changes.
+- `Docs`: Updates to documentation or `.agents/`.
+- `UI`: Visual-only changes.
+- `Chore`: Dependencies/Build.
 
 ### Summary Rules
-- **Sentence case**: Must start with a Capital letter (e.g., "Add feature" not "add feature").
-- **Imperative mood**: Use "Add" instead of "Added".
-- **No trailing periods**: Do not end the summary with a `.`.
+- **Sentence case**: Start with a Capital (e.g., "Add feature").
+- **Imperative**: Use "Add" not "Added".
+- **No trailing periods**.
+- **No lowercase types**: `feat(...)` is a violation; use `Feat(...)`.
 
 ## 2. Agent Behavior
 - **No Unsolicited Commits**: NEVER suggest, ask, or attempt to perform a git commit or push unless the user explicitly instructs you to do so. Assume the user has more edits to make until told otherwise.

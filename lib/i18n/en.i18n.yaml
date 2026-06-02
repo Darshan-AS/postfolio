@@ -58,13 +58,16 @@ common:
 sorting:
   title: "Sort By"
   options(map):
-    newest: "Newest First"
-    oldest: "Oldest First"
+    startDateDesc: "Newest First"
+    startDateAsc: "Oldest First"
+    createdAtDesc: "Newest First"
+    createdAtAsc: "Oldest First"
     nameAsc: "Name (A-Z)"
     nameDesc: "Name (Z-A)"
-    highestAmount: "Highest Amount"
-    maturityAsc: "Maturity (Sooner)"
-    maturityDesc: "Maturity (Later)"
+    amountDesc: "Highest Amount"
+    amountAsc: "Lowest Amount"
+    maturityDateAsc: "Maturity (Sooner)"
+    maturityDateDesc: "Maturity (Later)"
     serialNoAsc: "Serial No (Asc)"
     serialNoDesc: "Serial No (Desc)"
 
