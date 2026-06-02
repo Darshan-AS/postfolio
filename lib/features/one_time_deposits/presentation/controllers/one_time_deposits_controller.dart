@@ -2,6 +2,7 @@ import 'dart:collection';
 
 import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
+import 'package:postfolio/core/services/storage_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
@@ -20,51 +21,73 @@ part 'one_time_deposits_controller.g.dart';
 @riverpod
 class OneTimeListCriteria extends _$OneTimeListCriteria {
   @override
-  OTDSearchCriteria build() => const OTDSearchCriteria();
+  OTDSearchCriteria build() {
+    final storage = ref.watch(storageServiceProvider);
+    return OTDSearchCriteria(
+      sortField: storage.getOTDSortField(),
+      sortDirection: storage.getOTDSortDirection(),
+      statusFilters: storage.getOTDStatusFilters(),
+      urgencyFilters: storage.getOTDUrgencyFilters(),
+      schemeFilters: storage.getOTDSchemeFilters(),
+    );
+  }
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  void updateSortField(OTDSortField field) => state = state.copyWith(sortField: field);
-  void updateSortDirection(SortDirection direction) => state = state.copyWith(sortDirection: direction);
+  
+  void updateSortField(OTDSortField field) {
+    state = state.copyWith(sortField: field);
+    ref.read(storageServiceProvider).setOTDSortField(field);
+  }
+  
+  void updateSortDirection(SortDirection direction) {
+    state = state.copyWith(sortDirection: direction);
+    ref.read(storageServiceProvider).setOTDSortDirection(direction);
+  }
+  
   void toggleStatusFilter(DepositStatus status) {
-    if (state.statusFilters.contains(status)) {
-      state = state.copyWith(
-        statusFilters: state.statusFilters.where((s) => s != status).toList(),
-      );
-    } else {
-      state = state.copyWith(statusFilters: [...state.statusFilters, status]);
-    }
+    final newFilters = state.statusFilters.contains(status)
+        ? state.statusFilters.where((s) => s != status).toList()
+        : [...state.statusFilters, status];
+        
+    state = state.copyWith(statusFilters: newFilters);
+    ref.read(storageServiceProvider).setOTDStatusFilters(newFilters);
   }
 
   void toggleUrgencyFilter(MaturityUrgency urgency) {
-    if (state.urgencyFilters.contains(urgency)) {
-      state = state.copyWith(
-        urgencyFilters: state.urgencyFilters
-            .where((u) => u != urgency)
-            .toList(),
-      );
-    } else {
-      state = state.copyWith(
-        urgencyFilters: [...state.urgencyFilters, urgency],
-      );
-    }
+    final newFilters = state.urgencyFilters.contains(urgency)
+        ? state.urgencyFilters.where((u) => u != urgency).toList()
+        : [...state.urgencyFilters, urgency];
+        
+    state = state.copyWith(urgencyFilters: newFilters);
+    ref.read(storageServiceProvider).setOTDUrgencyFilters(newFilters);
   }
 
   void toggleSchemeFilter(OneTimeSchemeType type) {
-    if (state.schemeFilters.contains(type)) {
-      state = state.copyWith(
-        schemeFilters: state.schemeFilters.where((t) => t != type).toList(),
-      );
-    } else {
-      state = state.copyWith(schemeFilters: [...state.schemeFilters, type]);
-    }
+    final newFilters = state.schemeFilters.contains(type)
+        ? state.schemeFilters.where((t) => t != type).toList()
+        : [...state.schemeFilters, type];
+        
+    state = state.copyWith(schemeFilters: newFilters);
+    ref.read(storageServiceProvider).setOTDSchemeFilters(newFilters);
   }
 
-  void clearSort() => state = state.copyWith(
-        sortField: OTDSortField.maturityDate,
-        sortDirection: SortDirection.asc,
-      );
+  void clearSort() {
+    state = state.copyWith(
+      sortField: OTDSortField.maturityDate,
+      sortDirection: SortDirection.asc,
+    );
+    ref.read(storageServiceProvider).setOTDSortField(OTDSortField.maturityDate);
+    ref.read(storageServiceProvider).setOTDSortDirection(SortDirection.asc);
+  }
 
-  void clearAll() => state = const OTDSearchCriteria();
+  void clearAll() {
+    state = const OTDSearchCriteria();
+    ref.read(storageServiceProvider).setOTDSortField(OTDSortField.maturityDate);
+    ref.read(storageServiceProvider).setOTDSortDirection(SortDirection.asc);
+    ref.read(storageServiceProvider).setOTDStatusFilters([]);
+    ref.read(storageServiceProvider).setOTDUrgencyFilters([]);
+    ref.read(storageServiceProvider).setOTDSchemeFilters([]);
+  }
 
   void clearFilters() {
     state = state.copyWith(
@@ -72,6 +95,9 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
       urgencyFilters: const [],
       schemeFilters: const [],
     );
+    ref.read(storageServiceProvider).setOTDStatusFilters([DepositStatus.active]);
+    ref.read(storageServiceProvider).setOTDUrgencyFilters([]);
+    ref.read(storageServiceProvider).setOTDSchemeFilters([]);
   }
 }
 

@@ -50,25 +50,32 @@ class CustomersScreen extends HookConsumerWidget {
                   ),
                 ),
                 onPressed: () {
-                  AppSortBottomSheet.show<CustomerSortField>(
+                  AppSortBottomSheet.show(
                     context: context,
-                    title: t.sorting.title,
-                    fields: CustomerSortField.values,
-                    selectedField: criteria.sortField,
-                    selectedDirection: criteria.sortDirection,
-                    fieldLabelBuilder: (field) => field.label,
-                    directionLabelBuilder: (field, dir) => field.directionLabel(dir),
-                    onSelected: (field, dir) {
-                      ref
-                          .read(customerListCriteriaProvider.notifier)
-                          .updateSortField(field);
-                      ref
-                          .read(customerListCriteriaProvider.notifier)
-                          .updateSortDirection(dir);
-                    },
-                    onReset: () => ref
-                        .read(customerListCriteriaProvider.notifier)
-                        .clearSort(),
+                    builder: (context) => Consumer(
+                      builder: (context, ref, _) {
+                        final criteria = ref.watch(customerListCriteriaProvider);
+                        return AppSortBottomSheet<CustomerSortField>(
+                          title: t.sorting.title,
+                          fields: CustomerSortField.values,
+                          selectedField: criteria.sortField,
+                          selectedDirection: criteria.sortDirection,
+                          fieldLabelBuilder: (f) => f.label,
+                          directionLabelBuilder: (f, d) => f.directionLabel(d),
+                          onSelected: (field, direction) {
+                            ref
+                                .read(customerListCriteriaProvider.notifier)
+                                .updateSortField(field);
+                            ref
+                                .read(customerListCriteriaProvider.notifier)
+                                .updateSortDirection(direction);
+                          },
+                          onReset: () => ref
+                              .read(customerListCriteriaProvider.notifier)
+                              .clearSort(),
+                        );
+                      },
+                    ),
                   );
                 },
               ),

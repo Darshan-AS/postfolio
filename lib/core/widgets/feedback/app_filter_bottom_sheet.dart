@@ -56,7 +56,7 @@ class AppFilterBottomSheet extends StatelessWidget {
                 const Spacer(),
                 TextButton(
                   onPressed: onClearAll,
-                  child: Text(t.common.clearFilters),
+                  child: Text(t.common.clear),
                 ),
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
