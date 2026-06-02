@@ -231,11 +231,14 @@ class Translations$sorting$en {
 	/// en: 'Sort By'
 	String get title => 'Sort By';
 
+	/// en: 'Reset'
+	String get reset => 'Reset';
+
 	Map<String, String> get options => {
-		'startDateDesc': 'Newest First',
-		'startDateAsc': 'Oldest First',
-		'createdAtDesc': 'Newest First',
-		'createdAtAsc': 'Oldest First',
+		'startDateDesc': 'Newest',
+		'startDateAsc': 'Oldest',
+		'createdAtDesc': 'Newest',
+		'createdAtAsc': 'Oldest',
 		'nameAsc': 'Name (A-Z)',
 		'nameDesc': 'Name (Z-A)',
 		'amountDesc': 'Highest Amount',
@@ -1029,11 +1032,11 @@ class Translations$sorting$directions$date$en {
 
 	// Translations
 
-	/// en: 'Oldest First'
-	String get asc => 'Oldest First';
+	/// en: 'Oldest'
+	String get asc => 'Oldest';
 
-	/// en: 'Newest First'
-	String get desc => 'Newest First';
+	/// en: 'Newest'
+	String get desc => 'Newest';
 }
 
 // Path: sorting.directions.amount
@@ -1044,11 +1047,11 @@ class Translations$sorting$directions$amount$en {
 
 	// Translations
 
-	/// en: 'Lowest Amount'
-	String get asc => 'Lowest Amount';
+	/// en: 'Lowest'
+	String get asc => 'Lowest';
 
-	/// en: 'Highest Amount'
-	String get desc => 'Highest Amount';
+	/// en: 'Highest'
+	String get desc => 'Highest';
 }
 
 // Path: sorting.directions.name
@@ -1059,11 +1062,11 @@ class Translations$sorting$directions$name$en {
 
 	// Translations
 
-	/// en: 'Name (A-Z)'
-	String get asc => 'Name (A-Z)';
+	/// en: 'A to Z'
+	String get asc => 'A to Z';
 
-	/// en: 'Name (Z-A)'
-	String get desc => 'Name (Z-A)';
+	/// en: 'Z to A'
+	String get desc => 'Z to A';
 }
 
 // Path: sorting.directions.serialNo
@@ -1074,11 +1077,11 @@ class Translations$sorting$directions$serialNo$en {
 
 	// Translations
 
-	/// en: 'Serial No (Asc)'
-	String get asc => 'Serial No (Asc)';
+	/// en: 'Lowest'
+	String get asc => 'Lowest';
 
-	/// en: 'Serial No (Desc)'
-	String get desc => 'Serial No (Desc)';
+	/// en: 'Highest'
+	String get desc => 'Highest';
 }
 
 // Path: sorting.directions.maturity
@@ -1089,11 +1092,11 @@ class Translations$sorting$directions$maturity$en {
 
 	// Translations
 
-	/// en: 'Maturity (Sooner)'
-	String get asc => 'Maturity (Sooner)';
+	/// en: 'Sooner'
+	String get asc => 'Sooner';
 
-	/// en: 'Maturity (Later)'
-	String get desc => 'Maturity (Later)';
+	/// en: 'Later'
+	String get desc => 'Later';
 }
 
 /// The flat map containing all translations for locale <en>.
@@ -1152,10 +1155,11 @@ extension on Translations {
 			'common.noResults' => 'No results found',
 			'common.demoModeActive' => 'Demo Mode Active. Data is not saved to the cloud.',
 			'sorting.title' => 'Sort By',
-			'sorting.options.startDateDesc' => 'Newest First',
-			'sorting.options.startDateAsc' => 'Oldest First',
-			'sorting.options.createdAtDesc' => 'Newest First',
-			'sorting.options.createdAtAsc' => 'Oldest First',
+			'sorting.reset' => 'Reset',
+			'sorting.options.startDateDesc' => 'Newest',
+			'sorting.options.startDateAsc' => 'Oldest',
+			'sorting.options.createdAtDesc' => 'Newest',
+			'sorting.options.createdAtAsc' => 'Oldest',
 			'sorting.options.nameAsc' => 'Name (A-Z)',
 			'sorting.options.nameDesc' => 'Name (Z-A)',
 			'sorting.options.amountDesc' => 'Highest Amount',
@@ -1172,16 +1176,16 @@ extension on Translations {
 			'sorting.properties.serialNo' => 'Serial Number',
 			'sorting.directions.general.asc' => 'Ascending',
 			'sorting.directions.general.desc' => 'Descending',
-			'sorting.directions.date.asc' => 'Oldest First',
-			'sorting.directions.date.desc' => 'Newest First',
-			'sorting.directions.amount.asc' => 'Lowest Amount',
-			'sorting.directions.amount.desc' => 'Highest Amount',
-			'sorting.directions.name.asc' => 'Name (A-Z)',
-			'sorting.directions.name.desc' => 'Name (Z-A)',
-			'sorting.directions.serialNo.asc' => 'Serial No (Asc)',
-			'sorting.directions.serialNo.desc' => 'Serial No (Desc)',
-			'sorting.directions.maturity.asc' => 'Maturity (Sooner)',
-			'sorting.directions.maturity.desc' => 'Maturity (Later)',
+			'sorting.directions.date.asc' => 'Oldest',
+			'sorting.directions.date.desc' => 'Newest',
+			'sorting.directions.amount.asc' => 'Lowest',
+			'sorting.directions.amount.desc' => 'Highest',
+			'sorting.directions.name.asc' => 'A to Z',
+			'sorting.directions.name.desc' => 'Z to A',
+			'sorting.directions.serialNo.asc' => 'Lowest',
+			'sorting.directions.serialNo.desc' => 'Highest',
+			'sorting.directions.maturity.asc' => 'Sooner',
+			'sorting.directions.maturity.desc' => 'Later',
 			'filters.title' => 'Filters',
 			'filters.sections.status' => 'Status',
 			'filters.sections.urgency' => 'Urgency',

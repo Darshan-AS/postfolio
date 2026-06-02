@@ -62,8 +62,9 @@
 - Added `dynamic_color` package and implemented Material Monet dynamic theming support in `main.dart`.
 - Updated default sorting of Recurring Deposits to use Serial Number (Increasing) based on user preference.
 - Refactored sorting system to a type-safe Composite Model: decoupled `SortField` and `SortDirection` enums.
+- Updated `AppSortBottomSheet` to a "Dumb Widget" pattern, receiving typed properties and directions, and added a "Reset" button to restore defaults.
 - Moved direction mapping logic into domain enums, making `AppSortBottomSheet` a strictly generic UI component.
-- Standardized all feature search criteria and controllers to use the new architecture.
+- Standardized all feature search criteria and controllers to use the new architecture and added `clearSort` methods.
 - Hardened agent instructions in `AGENTS.md` and `git.md` with a "Pre-Commit Check" and explicit "STRICT CAPITALIZATION" warnings to ensure consistent commit formatting across sessions.
 - Conducted a comprehensive Flutter UI/UX audit resulting in ~85% Material 3 compliance validation.
 - Eliminated hardcoded generic colors (`Colors.green`, `Colors.white`, `Colors.transparent`) in migration and detail screens in favor of standard Material 3 semantic roles (`colorScheme.tertiary`, `colorScheme.error`).

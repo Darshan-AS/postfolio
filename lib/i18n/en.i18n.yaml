@@ -57,11 +57,12 @@ common:
 
 sorting:
   title: "Sort By"
+  reset: "Reset"
   options(map):
-    startDateDesc: "Newest First"
-    startDateAsc: "Oldest First"
-    createdAtDesc: "Newest First"
-    createdAtAsc: "Oldest First"
+    startDateDesc: "Newest"
+    startDateAsc: "Oldest"
+    createdAtDesc: "Newest"
+    createdAtAsc: "Oldest"
     nameAsc: "Name (A-Z)"
     nameDesc: "Name (Z-A)"
     amountDesc: "Highest Amount"
@@ -84,20 +85,20 @@ sorting:
       asc: "Ascending"
       desc: "Descending"
     date:
-      asc: "Oldest First"
-      desc: "Newest First"
+      asc: "Oldest"
+      desc: "Newest"
     amount:
-      asc: "Lowest Amount"
-      desc: "Highest Amount"
+      asc: "Lowest"
+      desc: "Highest"
     name:
-      asc: "Name (A-Z)"
-      desc: "Name (Z-A)"
+      asc: "A to Z"
+      desc: "Z to A"
     serialNo:
-      asc: "Serial No (Asc)"
-      desc: "Serial No (Desc)"
+      asc: "Lowest"
+      desc: "Highest"
     maturity:
-      asc: "Maturity (Sooner)"
-      desc: "Maturity (Later)"
+      asc: "Sooner"
+      desc: "Later"
 
 filters:
   title: "Filters"

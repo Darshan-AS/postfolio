@@ -4,6 +4,8 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
 
+import 'package:postfolio/i18n/strings.g.dart';
+
 class AppSortBottomSheet<T> extends HookWidget {
   final String title;
   final List<T> fields;
@@ -12,6 +14,7 @@ class AppSortBottomSheet<T> extends HookWidget {
   final String Function(T) fieldLabelBuilder;
   final String Function(T, SortDirection) directionLabelBuilder;
   final void Function(T, SortDirection) onSelected;
+  final VoidCallback? onReset;
 
   const AppSortBottomSheet({
     super.key,
@@ -22,6 +25,7 @@ class AppSortBottomSheet<T> extends HookWidget {
     required this.fieldLabelBuilder,
     required this.directionLabelBuilder,
     required this.onSelected,
+    this.onReset,
   });
 
   static Future<void> show<T>({
@@ -33,6 +37,7 @@ class AppSortBottomSheet<T> extends HookWidget {
     required String Function(T) fieldLabelBuilder,
     required String Function(T, SortDirection) directionLabelBuilder,
     required void Function(T, SortDirection) onSelected,
+    VoidCallback? onReset,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -50,6 +55,7 @@ class AppSortBottomSheet<T> extends HookWidget {
         fieldLabelBuilder: fieldLabelBuilder,
         directionLabelBuilder: directionLabelBuilder,
         onSelected: onSelected,
+        onReset: onReset,
       ),
     );
   }
@@ -118,6 +124,14 @@ class AppSortBottomSheet<T> extends HookWidget {
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const Spacer(),
+          if (onReset != null)
+            TextButton(
+              onPressed: () {
+                onReset!();
+                Navigator.pop(context);
+              },
+              child: Text(t.sorting.reset),
+            ),
           IconButton(
             onPressed: () => Navigator.pop(context),
             icon: const HugeIcon(
@@ -142,18 +156,10 @@ class AppSortBottomSheet<T> extends HookWidget {
           ButtonSegment(
             value: SortDirection.asc,
             label: Text(directionLabelBuilder(field, SortDirection.asc)),
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedArrowUp01,
-              size: AppDimensions.iconSm,
-            ),
           ),
           ButtonSegment(
             value: SortDirection.desc,
             label: Text(directionLabelBuilder(field, SortDirection.desc)),
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedArrowDown01,
-              size: AppDimensions.iconSm,
-            ),
           ),
         ],
         selected: {direction.value},

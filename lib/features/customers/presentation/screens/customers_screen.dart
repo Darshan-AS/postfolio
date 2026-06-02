@@ -66,6 +66,9 @@ class CustomersScreen extends HookConsumerWidget {
                           .read(customerListCriteriaProvider.notifier)
                           .updateSortDirection(dir);
                     },
+                    onReset: () => ref
+                        .read(customerListCriteriaProvider.notifier)
+                        .clearSort(),
                   );
                 },
               ),
