@@ -59,3 +59,12 @@
 - Added dynamic bottom padding to the `ListView` in `EntityDetailScaffold` to prevent the `FloatingActionButton` from overlapping with scrollable content when reaching the bottom of the list.
 - Added `dynamic_color` package and implemented Material Monet dynamic theming support in `main.dart`.
 - Updated default sorting of Recurring Deposits to use Serial Number (Decreasing) based on user preference.
+- Conducted a comprehensive Flutter UI/UX audit resulting in ~85% Material 3 compliance validation.
+- Eliminated hardcoded generic colors (`Colors.green`, `Colors.white`, `Colors.transparent`) in migration and detail screens in favor of standard Material 3 semantic roles (`colorScheme.tertiary`, `colorScheme.error`).
+- Registered official `SnackBarThemeData` (enforcing floating behavior globally), `ExpansionTileThemeData` (M3 standard colors), and `RadioThemeData` into the centralized `AppTheme`.
+- Replaced the legacy `PopupMenuButton` widget in `EntityListTile` with the official Material 3 `MenuAnchor` for proper menu alignment and modern interaction patterns.
+- Introduced the `animations` package and enabled `SharedAxisPageTransitionsBuilder` across Android, iOS, and macOS platforms to supply polished horizontal M3 page transitions.
+- Enforced `showDragHandle: true` on `CustomerSelectionSheet` to match other bottom sheets.
+- Updated `AlertDialog` instances in `app_dialogs.dart` to use the Material 3 `icon` property, enabling standard M3 center-aligned dialog styles.
+- Created `useScrollToCollapseFab` flutter hook to seamlessly implement the Material 3 standard behavior where `FloatingActionButton.extended` collapses into a standard icon-only FAB when the user scrolls down, and expands when they scroll up.
+- Applied the animated collapsing FAB behavior to all main list views (`CustomersScreen`, `OneTimeDepositsScreen`, `RecurringDepositsScreen`).

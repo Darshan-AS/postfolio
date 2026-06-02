@@ -139,7 +139,8 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
           AppSpacings.gapMd,
           Expanded(
             child: switch (depositsState) {
-              AsyncData(:final value) => _buildDataState(context, ref, value),
+              AsyncData(:final value) => _buildDataState(
+                  context, ref, value),
               AsyncError(:final error) => ErrorStateView(
                 message: error.toString(),
                 onRetry: () =>

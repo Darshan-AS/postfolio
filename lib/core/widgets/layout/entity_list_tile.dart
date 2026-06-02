@@ -145,46 +145,54 @@ class EntityListTile extends StatelessWidget {
                 onPressed: action.onTap,
               ),
             if (menuActions.isNotEmpty)
-              PopupMenuButton<EntityAction>(
-                padding: EdgeInsets.zero,
-                icon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedMoreVertical,
-                  size: AppDimensions.iconMd,
-                ),
-                iconSize: AppDimensions.iconMd,
-                tooltip: t.common.moreOptions,
-                style: IconButton.styleFrom(
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  minimumSize: const Size(
-                    AppDimensions.actionButtonSize,
-                    AppDimensions.actionButtonSize,
-                  ),
-                  maximumSize: const Size(
-                    AppDimensions.actionButtonSize,
-                    AppDimensions.actionButtonSize,
-                  ),
-                  padding: EdgeInsets.zero,
-                ),
-                onSelected: (action) => action.onTap(),
-                itemBuilder: (context) => menuActions.map((action) {
+              MenuAnchor(
+                builder: (context, controller, child) {
+                  return IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedMoreVertical,
+                      size: AppDimensions.iconMd,
+                    ),
+                    iconSize: AppDimensions.iconMd,
+                    tooltip: t.common.moreOptions,
+                    style: IconButton.styleFrom(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      minimumSize: const Size(
+                        AppDimensions.actionButtonSize,
+                        AppDimensions.actionButtonSize,
+                      ),
+                      maximumSize: const Size(
+                        AppDimensions.actionButtonSize,
+                        AppDimensions.actionButtonSize,
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
+                    onPressed: () {
+                      if (controller.isOpen) {
+                        controller.close();
+                      } else {
+                        controller.open();
+                      }
+                    },
+                  );
+                },
+                menuChildren: menuActions.map((action) {
                   final color = action.isDestructive
                       ? theme.colorScheme.error
                       : theme.colorScheme.onSurface;
 
-                  return PopupMenuItem(
-                    value: action,
-                    child: Row(
-                      children: [
-                        IconTheme(
-                          data: IconThemeData(
-                            color: color,
-                            size: AppDimensions.iconMd,
-                          ),
-                          child: action.icon,
-                        ),
-                        AppSpacings.gapSm,
-                        Text(action.label),
-                      ],
+                  return MenuItemButton(
+                    onPressed: action.onTap,
+                    leadingIcon: IconTheme(
+                      data: IconThemeData(
+                        color: color,
+                        size: AppDimensions.iconMd,
+                      ),
+                      child: action.icon,
+                    ),
+                    child: Text(
+                      action.label,
+                      style: TextStyle(color: color),
                     ),
                   );
                 }).toList(),

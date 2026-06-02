@@ -36,6 +36,7 @@ class CustomerSelectionField extends HookConsumerWidget {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
+        showDragHandle: true,
         builder: (context) {
           return const _CustomerSelectionSheet();
         },
