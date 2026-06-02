@@ -71,6 +71,34 @@ sorting:
     serialNoAsc: "Serial No (Asc)"
     serialNoDesc: "Serial No (Desc)"
 
+  properties(map):
+    name: "Customer Name"
+    amount: "Amount"
+    startDate: "Start Date"
+    createdAt: "Creation Date"
+    maturityDate: "Maturity Date"
+    serialNo: "Serial Number"
+
+  directions:
+    general:
+      asc: "Ascending"
+      desc: "Descending"
+    date:
+      asc: "Oldest First"
+      desc: "Newest First"
+    amount:
+      asc: "Lowest Amount"
+      desc: "Highest Amount"
+    name:
+      asc: "Name (A-Z)"
+      desc: "Name (Z-A)"
+    serialNo:
+      asc: "Serial No (Asc)"
+      desc: "Serial No (Desc)"
+    maturity:
+      asc: "Maturity (Sooner)"
+      desc: "Maturity (Later)"
+
 filters:
   title: "Filters"
   sections:

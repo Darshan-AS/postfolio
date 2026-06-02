@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.dart';
+import 'package:postfolio/core/enums/sort_direction.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
@@ -22,7 +23,8 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
   OTDSearchCriteria build() => const OTDSearchCriteria();
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  void updateSort(OTDSortOption sort) => state = state.copyWith(sortBy: sort);
+  void updateSortField(OTDSortField field) => state = state.copyWith(sortField: field);
+  void updateSortDirection(SortDirection direction) => state = state.copyWith(sortDirection: direction);
   void toggleStatusFilter(DepositStatus status) {
     if (state.statusFilters.contains(status)) {
       state = state.copyWith(
@@ -114,33 +116,32 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
   }
 
   // Sort
-  switch (criteria.sortBy) {
-    case OTDSortOption.startDateDesc:
-      result.sort((a, b) => b.startDate.compareTo(a.startDate));
+  final isAsc = criteria.sortDirection.isAscending;
+  switch (criteria.sortField) {
+    case OTDSortField.startDate:
+      result.sort((a, b) {
+        final comp = a.startDate.compareTo(b.startDate);
+        return isAsc ? comp : -comp;
+      });
       break;
-    case OTDSortOption.startDateAsc:
-      result.sort((a, b) => a.startDate.compareTo(b.startDate));
+    case OTDSortField.amount:
+      result.sort((a, b) {
+        final comp = a.principalAmount.compareTo(b.principalAmount);
+        return isAsc ? comp : -comp;
+      });
       break;
-    case OTDSortOption.amountDesc:
-      result.sort((a, b) => b.principalAmount.compareTo(a.principalAmount));
+    case OTDSortField.maturityDate:
+      result.sort((a, b) {
+        final comp = a.maturityDate.compareTo(b.maturityDate);
+        return isAsc ? comp : -comp;
+      });
       break;
-    case OTDSortOption.amountAsc:
-      result.sort((a, b) => a.principalAmount.compareTo(b.principalAmount));
-      break;
-    case OTDSortOption.maturityDateAsc:
-      result.sort((a, b) => a.maturityDate.compareTo(b.maturityDate));
-      break;
-    case OTDSortOption.maturityDateDesc:
-      result.sort((a, b) => b.maturityDate.compareTo(a.maturityDate));
-      break;
-    case OTDSortOption.nameAsc:
-    case OTDSortOption.nameDesc:
+    case OTDSortField.name:
       result.sort((a, b) {
         final nameA = customerMap[a.customerId]?.toLowerCase() ?? '';
         final nameB = customerMap[b.customerId]?.toLowerCase() ?? '';
-        return criteria.sortBy == OTDSortOption.nameAsc
-            ? nameA.compareTo(nameB)
-            : nameB.compareTo(nameA);
+        final comp = nameA.compareTo(nameB);
+        return isAsc ? comp : -comp;
       });
       break;
   }

@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CustomerSearchCriteria {
 
- String get searchQuery; CustomerSortOption get sortBy;
+ String get searchQuery; CustomerSortField get sortField; SortDirection get sortDirection;
 /// Create a copy of CustomerSearchCriteria
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $CustomerSearchCriteriaCopyWith<CustomerSearchCriteria> get copyWith => _$Custom
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomerSearchCriteria&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.sortBy, sortBy) || other.sortBy == sortBy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomerSearchCriteria&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.sortField, sortField) || other.sortField == sortField)&&(identical(other.sortDirection, sortDirection) || other.sortDirection == sortDirection));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,searchQuery,sortBy);
+int get hashCode => Object.hash(runtimeType,searchQuery,sortField,sortDirection);
 
 @override
 String toString() {
-  return 'CustomerSearchCriteria(searchQuery: $searchQuery, sortBy: $sortBy)';
+  return 'CustomerSearchCriteria(searchQuery: $searchQuery, sortField: $sortField, sortDirection: $sortDirection)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $CustomerSearchCriteriaCopyWith<$Res>  {
   factory $CustomerSearchCriteriaCopyWith(CustomerSearchCriteria value, $Res Function(CustomerSearchCriteria) _then) = _$CustomerSearchCriteriaCopyWithImpl;
 @useResult
 $Res call({
- String searchQuery, CustomerSortOption sortBy
+ String searchQuery, CustomerSortField sortField, SortDirection sortDirection
 });
 
 
@@ -62,11 +62,12 @@ class _$CustomerSearchCriteriaCopyWithImpl<$Res>
 
 /// Create a copy of CustomerSearchCriteria
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? searchQuery = null,Object? sortBy = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? searchQuery = null,Object? sortField = null,Object? sortDirection = null,}) {
   return _then(_self.copyWith(
 searchQuery: null == searchQuery ? _self.searchQuery : searchQuery // ignore: cast_nullable_to_non_nullable
-as String,sortBy: null == sortBy ? _self.sortBy : sortBy // ignore: cast_nullable_to_non_nullable
-as CustomerSortOption,
+as String,sortField: null == sortField ? _self.sortField : sortField // ignore: cast_nullable_to_non_nullable
+as CustomerSortField,sortDirection: null == sortDirection ? _self.sortDirection : sortDirection // ignore: cast_nullable_to_non_nullable
+as SortDirection,
   ));
 }
 
@@ -78,11 +79,12 @@ as CustomerSortOption,
 
 
 class _CustomerSearchCriteria implements CustomerSearchCriteria {
-  const _CustomerSearchCriteria({this.searchQuery = '', this.sortBy = CustomerSortOption.nameAsc});
+  const _CustomerSearchCriteria({this.searchQuery = '', this.sortField = CustomerSortField.name, this.sortDirection = SortDirection.asc});
   
 
 @override@JsonKey() final  String searchQuery;
-@override@JsonKey() final  CustomerSortOption sortBy;
+@override@JsonKey() final  CustomerSortField sortField;
+@override@JsonKey() final  SortDirection sortDirection;
 
 /// Create a copy of CustomerSearchCriteria
 /// with the given fields replaced by the non-null parameter values.
@@ -94,16 +96,16 @@ _$CustomerSearchCriteriaCopyWith<_CustomerSearchCriteria> get copyWith => __$Cus
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomerSearchCriteria&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.sortBy, sortBy) || other.sortBy == sortBy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomerSearchCriteria&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.sortField, sortField) || other.sortField == sortField)&&(identical(other.sortDirection, sortDirection) || other.sortDirection == sortDirection));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,searchQuery,sortBy);
+int get hashCode => Object.hash(runtimeType,searchQuery,sortField,sortDirection);
 
 @override
 String toString() {
-  return 'CustomerSearchCriteria(searchQuery: $searchQuery, sortBy: $sortBy)';
+  return 'CustomerSearchCriteria(searchQuery: $searchQuery, sortField: $sortField, sortDirection: $sortDirection)';
 }
 
 
@@ -114,7 +116,7 @@ abstract mixin class _$CustomerSearchCriteriaCopyWith<$Res> implements $Customer
   factory _$CustomerSearchCriteriaCopyWith(_CustomerSearchCriteria value, $Res Function(_CustomerSearchCriteria) _then) = __$CustomerSearchCriteriaCopyWithImpl;
 @override @useResult
 $Res call({
- String searchQuery, CustomerSortOption sortBy
+ String searchQuery, CustomerSortField sortField, SortDirection sortDirection
 });
 
 
@@ -131,11 +133,12 @@ class __$CustomerSearchCriteriaCopyWithImpl<$Res>
 
 /// Create a copy of CustomerSearchCriteria
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? searchQuery = null,Object? sortBy = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? searchQuery = null,Object? sortField = null,Object? sortDirection = null,}) {
   return _then(_CustomerSearchCriteria(
 searchQuery: null == searchQuery ? _self.searchQuery : searchQuery // ignore: cast_nullable_to_non_nullable
-as String,sortBy: null == sortBy ? _self.sortBy : sortBy // ignore: cast_nullable_to_non_nullable
-as CustomerSortOption,
+as String,sortField: null == sortField ? _self.sortField : sortField // ignore: cast_nullable_to_non_nullable
+as CustomerSortField,sortDirection: null == sortDirection ? _self.sortDirection : sortDirection // ignore: cast_nullable_to_non_nullable
+as SortDirection,
   ));
 }
 

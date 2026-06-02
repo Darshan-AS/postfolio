@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.dart';
+import 'package:postfolio/core/enums/sort_direction.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -22,7 +23,8 @@ class RecurringListCriteria extends _$RecurringListCriteria {
   RDSearchCriteria build() => const RDSearchCriteria();
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  void updateSort(RDSortOption sort) => state = state.copyWith(sortBy: sort);
+  void updateSortField(RDSortField field) => state = state.copyWith(sortField: field);
+  void updateSortDirection(SortDirection direction) => state = state.copyWith(sortDirection: direction);
   void toggleFilter(DepositStatus status) {
     if (state.statusFilters.contains(status)) {
       state = state.copyWith(
@@ -98,54 +100,47 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
   }
 
   // Sort
-  switch (criteria.sortBy) {
-    case RDSortOption.startDateDesc:
-      result.sort((a, b) => b.startDate.compareTo(a.startDate));
-      break;
-    case RDSortOption.startDateAsc:
-      result.sort((a, b) => a.startDate.compareTo(b.startDate));
-      break;
-    case RDSortOption.amountDesc:
-      result.sort((a, b) => b.installmentAmount.compareTo(a.installmentAmount));
-      break;
-    case RDSortOption.amountAsc:
-      result.sort((a, b) => a.installmentAmount.compareTo(b.installmentAmount));
-      break;
-    case RDSortOption.maturityDateAsc:
-      result.sort((a, b) => a.maturityDate.compareTo(b.maturityDate));
-      break;
-    case RDSortOption.maturityDateDesc:
-      result.sort((a, b) => b.maturityDate.compareTo(a.maturityDate));
-      break;
-    case RDSortOption.nameAsc:
-    case RDSortOption.nameDesc:
-      result.sort((a, b) {
-        final nameA = customerMap[a.customerId]?.toLowerCase() ?? '';
-        final nameB = customerMap[b.customerId]?.toLowerCase() ?? '';
-        return criteria.sortBy == RDSortOption.nameAsc
-            ? nameA.compareTo(nameB)
-            : nameB.compareTo(nameA);
-      });
-      break;
-    case RDSortOption.serialNoAsc:
-    case RDSortOption.serialNoDesc:
+  final isAsc = criteria.sortDirection.isAscending;
+  switch (criteria.sortField) {
+    case RDSortField.serialNo:
       result.sort((a, b) {
         final sA = a.serialNo ?? '';
         final sB = b.serialNo ?? '';
-
         final numA = int.tryParse(sA);
         final numB = int.tryParse(sB);
-
         int comparison;
         if (numA != null && numB != null) {
           comparison = numA.compareTo(numB);
         } else {
           comparison = sA.compareTo(sB);
         }
-
-        return criteria.sortBy == RDSortOption.serialNoAsc
-            ? comparison
-            : -comparison;
+        return isAsc ? comparison : -comparison;
+      });
+      break;
+    case RDSortField.startDate:
+      result.sort((a, b) {
+        final comp = a.startDate.compareTo(b.startDate);
+        return isAsc ? comp : -comp;
+      });
+      break;
+    case RDSortField.amount:
+      result.sort((a, b) {
+        final comp = a.installmentAmount.compareTo(b.installmentAmount);
+        return isAsc ? comp : -comp;
+      });
+      break;
+    case RDSortField.maturityDate:
+      result.sort((a, b) {
+        final comp = a.maturityDate.compareTo(b.maturityDate);
+        return isAsc ? comp : -comp;
+      });
+      break;
+    case RDSortField.name:
+      result.sort((a, b) {
+        final nameA = customerMap[a.customerId]?.toLowerCase() ?? '';
+        final nameB = customerMap[b.customerId]?.toLowerCase() ?? '';
+        final comp = nameA.compareTo(nameB);
+        return isAsc ? comp : -comp;
       });
       break;
   }

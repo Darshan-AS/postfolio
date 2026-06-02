@@ -20,6 +20,7 @@ import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/enums/sort_direction.dart';
 
 class OneTimeDepositsScreen extends HookConsumerWidget {
   const OneTimeDepositsScreen({super.key});
@@ -55,7 +56,8 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
             trailing: [
               IconButton(
                 icon: Badge(
-                  isLabelVisible: criteria.sortBy != OTDSortOption.maturityDateAsc,
+                  isLabelVisible: criteria.sortField != OTDSortField.maturityDate ||
+                      criteria.sortDirection != SortDirection.asc,
                   smallSize: AppDimensions.badgeSizeSm,
                   child: const HugeIcon(
                     icon: HugeIcons.strokeRoundedSorting01,
@@ -63,16 +65,22 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                   ),
                 ),
                 onPressed: () {
-                  AppSortBottomSheet.show<OTDSortOption>(
+                  AppSortBottomSheet.show<OTDSortField>(
                     context: context,
                     title: t.sorting.title,
-                    options: OTDSortOption.values,
-                    selectedOption: criteria.sortBy,
-                    labelBuilder: (option) =>
-                        t.sorting.options[option.name] ?? option.name,
-                    onSelected: (option) => ref
-                        .read(oneTimeListCriteriaProvider.notifier)
-                        .updateSort(option),
+                    fields: OTDSortField.values,
+                    selectedField: criteria.sortField,
+                    selectedDirection: criteria.sortDirection,
+                    fieldLabelBuilder: (field) => field.label,
+                    directionLabelBuilder: (field, dir) => field.directionLabel(dir),
+                    onSelected: (field, dir) {
+                      ref
+                          .read(oneTimeListCriteriaProvider.notifier)
+                          .updateSortField(field);
+                      ref
+                          .read(oneTimeListCriteriaProvider.notifier)
+                          .updateSortDirection(dir);
+                    },
                   );
                 },
               ),

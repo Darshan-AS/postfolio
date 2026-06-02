@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:postfolio/features/customers/domain/customer_search_criteria.dart';
+import 'package:postfolio/core/enums/sort_direction.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -16,8 +17,10 @@ class CustomerListCriteria extends _$CustomerListCriteria {
   CustomerSearchCriteria build() => const CustomerSearchCriteria();
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  void updateSort(CustomerSortOption sort) =>
-      state = state.copyWith(sortBy: sort);
+  void updateSortField(CustomerSortField field) =>
+      state = state.copyWith(sortField: field);
+  void updateSortDirection(SortDirection direction) =>
+      state = state.copyWith(sortDirection: direction);
   void clearAll() => state = const CustomerSearchCriteria();
 }
 
@@ -41,29 +44,20 @@ Future<UnmodifiableListView<Customer>> filteredCustomers(Ref ref) async {
   }
 
   // Sort
-  switch (criteria.sortBy) {
-    case CustomerSortOption.nameAsc:
-      result.sort(
-        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-      );
-      break;
-    case CustomerSortOption.nameDesc:
-      result.sort(
-        (a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()),
-      );
-      break;
-    case CustomerSortOption.createdAtDesc:
+  final isAsc = criteria.sortDirection.isAscending;
+  switch (criteria.sortField) {
+    case CustomerSortField.name:
       result.sort((a, b) {
-        final dateA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final dateB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        return dateB.compareTo(dateA);
+        final comp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        return isAsc ? comp : -comp;
       });
       break;
-    case CustomerSortOption.createdAtAsc:
+    case CustomerSortField.createdAt:
       result.sort((a, b) {
         final dateA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
         final dateB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        return dateA.compareTo(dateB);
+        final comp = dateA.compareTo(dateB);
+        return isAsc ? comp : -comp;
       });
       break;
   }
