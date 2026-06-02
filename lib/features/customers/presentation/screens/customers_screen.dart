@@ -15,6 +15,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import 'package:postfolio/features/customers/domain/customer_search_criteria.dart';
 import 'package:postfolio/core/widgets/feedback/app_sort_bottom_sheet.dart';
+import 'package:postfolio/core/enums/sort_direction.dart';
 
 class CustomersScreen extends HookConsumerWidget {
   const CustomersScreen({super.key});
@@ -40,7 +41,8 @@ class CustomersScreen extends HookConsumerWidget {
               IconButton(
                 icon: Badge(
                   isLabelVisible:
-                      criteria.sortBy != CustomerSortOption.nameAsc,
+                      criteria.sortField != CustomerSortField.name ||
+                      criteria.sortDirection != SortDirection.asc,
                   smallSize: AppDimensions.badgeSizeSm,
                   child: const HugeIcon(
                     icon: HugeIcons.strokeRoundedSorting01,
@@ -48,16 +50,22 @@ class CustomersScreen extends HookConsumerWidget {
                   ),
                 ),
                 onPressed: () {
-                  AppSortBottomSheet.show<CustomerSortOption>(
+                  AppSortBottomSheet.show<CustomerSortField>(
                     context: context,
                     title: t.sorting.title,
-                    options: CustomerSortOption.values,
-                    selectedOption: criteria.sortBy,
-                    labelBuilder: (option) =>
-                        t.sorting.options[option.name] ?? option.name,
-                    onSelected: (option) => ref
-                        .read(customerListCriteriaProvider.notifier)
-                        .updateSort(option),
+                    fields: CustomerSortField.values,
+                    selectedField: criteria.sortField,
+                    selectedDirection: criteria.sortDirection,
+                    fieldLabelBuilder: (field) => field.label,
+                    directionLabelBuilder: (field, dir) => field.directionLabel(dir),
+                    onSelected: (field, dir) {
+                      ref
+                          .read(customerListCriteriaProvider.notifier)
+                          .updateSortField(field);
+                      ref
+                          .read(customerListCriteriaProvider.notifier)
+                          .updateSortDirection(dir);
+                    },
                   );
                 },
               ),

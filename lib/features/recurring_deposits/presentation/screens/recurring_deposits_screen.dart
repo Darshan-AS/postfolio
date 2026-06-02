@@ -19,6 +19,7 @@ import 'package:postfolio/core/widgets/feedback/app_filter_section.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
+import 'package:postfolio/core/enums/sort_direction.dart';
 
 class RecurringDepositsScreen extends HookConsumerWidget {
   const RecurringDepositsScreen({super.key});
@@ -52,7 +53,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             trailing: [
               IconButton(
                 icon: Badge(
-                  isLabelVisible: criteria.sortBy != RDSortOption.serialNoAsc,
+                  isLabelVisible: criteria.sortField != RDSortField.serialNo ||
+                      criteria.sortDirection != SortDirection.asc,
                   smallSize: AppDimensions.badgeSizeSm,
                   child: const HugeIcon(
                     icon: HugeIcons.strokeRoundedSorting01,
@@ -60,16 +62,22 @@ class RecurringDepositsScreen extends HookConsumerWidget {
                   ),
                 ),
                 onPressed: () {
-                  AppSortBottomSheet.show<RDSortOption>(
+                  AppSortBottomSheet.show<RDSortField>(
                     context: context,
                     title: t.sorting.title,
-                    options: RDSortOption.values,
-                    selectedOption: criteria.sortBy,
-                    labelBuilder: (option) =>
-                        t.sorting.options[option.name] ?? option.name,
-                    onSelected: (option) => ref
-                        .read(recurringListCriteriaProvider.notifier)
-                        .updateSort(option),
+                    fields: RDSortField.values,
+                    selectedField: criteria.sortField,
+                    selectedDirection: criteria.sortDirection,
+                    fieldLabelBuilder: (field) => field.label,
+                    directionLabelBuilder: (field, dir) => field.directionLabel(dir),
+                    onSelected: (field, dir) {
+                      ref
+                          .read(recurringListCriteriaProvider.notifier)
+                          .updateSortField(field);
+                      ref
+                          .read(recurringListCriteriaProvider.notifier)
+                          .updateSortDirection(dir);
+                    },
                   );
                 },
               ),

@@ -245,6 +245,15 @@ class Translations$sorting$en {
 		'serialNoAsc': 'Serial No (Asc)',
 		'serialNoDesc': 'Serial No (Desc)',
 	};
+	Map<String, String> get properties => {
+		'name': 'Customer Name',
+		'amount': 'Amount',
+		'startDate': 'Start Date',
+		'createdAt': 'Creation Date',
+		'maturityDate': 'Maturity Date',
+		'serialNo': 'Serial Number',
+	};
+	late final Translations$sorting$directions$en directions = Translations$sorting$directions$en.internal(_root);
 }
 
 // Path: filters
@@ -706,6 +715,21 @@ class Translations$common$duration$en {
 	);
 }
 
+// Path: sorting.directions
+class Translations$sorting$directions$en {
+	Translations$sorting$directions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final Translations$sorting$directions$general$en general = Translations$sorting$directions$general$en.internal(_root);
+	late final Translations$sorting$directions$date$en date = Translations$sorting$directions$date$en.internal(_root);
+	late final Translations$sorting$directions$amount$en amount = Translations$sorting$directions$amount$en.internal(_root);
+	late final Translations$sorting$directions$name$en name = Translations$sorting$directions$name$en.internal(_root);
+	late final Translations$sorting$directions$serialNo$en serialNo = Translations$sorting$directions$serialNo$en.internal(_root);
+	late final Translations$sorting$directions$maturity$en maturity = Translations$sorting$directions$maturity$en.internal(_root);
+}
+
 // Path: filters.sections
 class Translations$filters$sections$en {
 	Translations$filters$sections$en.internal(this._root);
@@ -982,6 +1006,96 @@ class Translations$enums$maturityRelativeTime$en {
 	String maturedAgo({required Object days}) => 'Matured ${days} d ago';
 }
 
+// Path: sorting.directions.general
+class Translations$sorting$directions$general$en {
+	Translations$sorting$directions$general$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Ascending'
+	String get asc => 'Ascending';
+
+	/// en: 'Descending'
+	String get desc => 'Descending';
+}
+
+// Path: sorting.directions.date
+class Translations$sorting$directions$date$en {
+	Translations$sorting$directions$date$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Oldest First'
+	String get asc => 'Oldest First';
+
+	/// en: 'Newest First'
+	String get desc => 'Newest First';
+}
+
+// Path: sorting.directions.amount
+class Translations$sorting$directions$amount$en {
+	Translations$sorting$directions$amount$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Lowest Amount'
+	String get asc => 'Lowest Amount';
+
+	/// en: 'Highest Amount'
+	String get desc => 'Highest Amount';
+}
+
+// Path: sorting.directions.name
+class Translations$sorting$directions$name$en {
+	Translations$sorting$directions$name$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Name (A-Z)'
+	String get asc => 'Name (A-Z)';
+
+	/// en: 'Name (Z-A)'
+	String get desc => 'Name (Z-A)';
+}
+
+// Path: sorting.directions.serialNo
+class Translations$sorting$directions$serialNo$en {
+	Translations$sorting$directions$serialNo$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Serial No (Asc)'
+	String get asc => 'Serial No (Asc)';
+
+	/// en: 'Serial No (Desc)'
+	String get desc => 'Serial No (Desc)';
+}
+
+// Path: sorting.directions.maturity
+class Translations$sorting$directions$maturity$en {
+	Translations$sorting$directions$maturity$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Maturity (Sooner)'
+	String get asc => 'Maturity (Sooner)';
+
+	/// en: 'Maturity (Later)'
+	String get desc => 'Maturity (Later)';
+}
+
 /// The flat map containing all translations for locale <en>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -1050,6 +1164,24 @@ extension on Translations {
 			'sorting.options.maturityDateDesc' => 'Maturity (Later)',
 			'sorting.options.serialNoAsc' => 'Serial No (Asc)',
 			'sorting.options.serialNoDesc' => 'Serial No (Desc)',
+			'sorting.properties.name' => 'Customer Name',
+			'sorting.properties.amount' => 'Amount',
+			'sorting.properties.startDate' => 'Start Date',
+			'sorting.properties.createdAt' => 'Creation Date',
+			'sorting.properties.maturityDate' => 'Maturity Date',
+			'sorting.properties.serialNo' => 'Serial Number',
+			'sorting.directions.general.asc' => 'Ascending',
+			'sorting.directions.general.desc' => 'Descending',
+			'sorting.directions.date.asc' => 'Oldest First',
+			'sorting.directions.date.desc' => 'Newest First',
+			'sorting.directions.amount.asc' => 'Lowest Amount',
+			'sorting.directions.amount.desc' => 'Highest Amount',
+			'sorting.directions.name.asc' => 'Name (A-Z)',
+			'sorting.directions.name.desc' => 'Name (Z-A)',
+			'sorting.directions.serialNo.asc' => 'Serial No (Asc)',
+			'sorting.directions.serialNo.desc' => 'Serial No (Desc)',
+			'sorting.directions.maturity.asc' => 'Maturity (Sooner)',
+			'sorting.directions.maturity.desc' => 'Maturity (Later)',
 			'filters.title' => 'Filters',
 			'filters.sections.status' => 'Status',
 			'filters.sections.urgency' => 'Urgency',
