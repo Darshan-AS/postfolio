@@ -1,107 +1,21 @@
-# Postfolio Conventions & Architecture
+# Postfolio Technical Conventions
 
-This document tracks the architectural decisions, structural rules, and conventions for the `postfolio` app.
+This document tracks the architectural decisions, structural rules, and conventions for the `postfolio` app. 
 
-## 1. Architecture & State Management
-- **State Management**: Riverpod (AsyncNotifier / Notifier via riverpod_generator).
-- **Dependency Injection**: Handled entirely via Riverpod providers.
-- **Folder Structure**: Feature-first with inner Layered Architecture (`data/`, `domain/`, `presentation/`).
-- **Routing**: `go_router` combined with `go_router_builder` for type-safe routing.
-  - **Declarative Navigation**: Always prefer `.go(context)` over `.push(context)` for navigating to routes that are defined within the route hierarchy (e.g., going from a list to a detail page). This ensures `go_router` maintains a correct declarative state and prevents "ImperativeRouteMatch" exceptions when using the system back button.
-  - **Nested Scaffolds & MediaQuery**: When using a shell architecture (like `StatefulShellRoute`), let the outer `Scaffold` handle keyboard resizing (default behavior). If you need to modify the `MediaQuery` for inner pages (e.g., `MediaQuery.removePadding`), **always use a `Builder`** to obtain a context from *inside* the Scaffold's body. Passing the outer context bypasses the Scaffold's inset consumption and forces raw keyboard insets into the inner pages, causing severe "double-resizing" layout bugs.
-  - **Imperative Navigation**: Use `.push(context)` sparingly, primarily for routes that are not part of the main URI hierarchy or when you specifically need to `await` a result from the pushed route.
-- **Directory Structure Adjustments**: 
-  - Keep the `lib/core/` folder. Do **NOT** bring everything inside it directly into `lib/`.
-  - The only folders that should live directly alongside `features/` in `lib/` are: `core/`, `i18n/`, and `main.dart`.
-  - Reorganize the `lib/core/` directory to match the following separation of concerns:
-    - `lib/core/services/` for infrastructure code (e.g., `storage_service.dart`).
-    - `lib/core/extensions/` to centralize Dart extension methods.
-    - `lib/core/widgets/` to clearly denote globally reusable UI components, heavily categorized into horizontal domains (`layout`, `forms`, `domain`, `feedback`, `common`).
+## 1. Modular Rule Library
+Detailed technical conventions are separated into focused modules for easier reference:
+- [**Git & Commits**](rules/git.md): Commit message formats, types, and agent behavior rules.
+- [**Architecture & Infrastructure**](rules/architecture.md): Riverpod, Firebase, Routing, and local storage rules.
+- [**UI & Presentation**](rules/ui.md): Theming, widgets, formatting, and responsive layout rules.
+- [**Logic & Purity**](rules/logic.md): Freezed models, Records, pattern matching, and functional patterns.
 
-## 2. Functional Programming & Purity
-- **Immutability**: Freezed for all domain models. Never mutate state.
-- **Sealed Classes**: Always use `sealed class` for Freezed models to enable exhaustive pattern matching.
-- **Modern Dart 3 Features**: Use native Records, Pattern matching, and Sealed classes for error handling and state unions instead of third-party packages (e.g., `dartz`).
-- **Domain Validation**: Use extension methods or Smart Factory constructors (`Model.create()`) on Freezed models to return `Result<Model, String>` types to leverage exhaustive pattern matching. Avoid primitive Value Objects.
-- **Error Handling**: Controllers must return typed `Result<SuccessType, ErrorType>` records/sealed classes instead of throwing exceptions.
-- **Controller Result Matching**: For controller mutation operations (`save`, `delete`), match the result using `switch` on the `Result`. If `Success`, explicitly trigger `ref.invalidateSelf()` and return `Success`. Never manually update the local `state` cache to avoid bugs. Let `build()` fetch the single source of truth from the repository.
-- **Hook-based Logic Extraction**: For complex screens (especially forms), extract state, validation, and submission logic into custom `flutter_hooks` (e.g., `useOneTimeDepositForm`). This keeps the UI layer purely declarative and makes business logic reusable and easier to test.
-
-## 3. Core Infrastructure & Services
-- **Repository Authentication Guards**: All repositories must check for authentication before performing operations. Throw a `StateError('User not authenticated')` if the user is not found. This ensures a consistent error state that controllers can handle.
-- **Data Sanitization**: When using user input for Firestore Document IDs (e.g., account numbers), always sanitize the input (e.g., replacing slashes) to prevent path errors.
-- **Service Wrappers**: Infrastructure code interacting with native device capabilities or external SDKs (e.g., SharedPreferences, Firebase) should be encapsulated in a dedicated Service class inside `lib/core/services/`.
-- **Dependency Injection for Services**: Never use static singletons (e.g., `AuthService.instance` or `FirebaseFirestore.instance`). All services and external instances must be provided via Riverpod (`Provider`) to ensure mockability during testing.
-- **Local Storage**: Extract `shared_preferences` into `lib/core/services/storage_service.dart` strictly for non-sensitive UI state (e.g., Theme mode, onboarding completion flags). Reject `flutter_secure_storage` and `hive_ce`. Rely entirely on Firestore's native offline-persistence for database caching.
-- **Networking**: Reject `dio` and `internet_connection_checker_plus`. Firebase SDKs handle their own optimized network requests and offline caching under the hood. There is no need for a REST API client.
-- **Firebase Integration**: Keep Firebase integrations strictly limited to `firebase_core`, `firebase_auth`, and `cloud_firestore` for the foundational build. Reject `firebase_database` and `firebase_storage`. `firebase_crashlytics` and `firebase_analytics` should be added later during the "Enhancements & Refinements" phase. All Firebase instances MUST be provided via Riverpod.
-- **Client-Side ID Generation**: When dealing with entity creation in Firestore, generate unique identifiers (UUIDs) on the client side *before* pushing to the database. This guarantees type-safety and enables robust offline support.
-- **Offline-First Firebase Operations**: When creating, updating, or deleting Firestore documents in repositories intended for real-time UI streams, avoid `await`ing the `.set()`, `.update()`, or `.delete()` calls if an immediate UI response is desired. This prevents infinite hanging when offline or lacking permissions, and correctly relies on Firestore's background syncing.
-- **Device Interactions**: Reject `image_picker`, `file_picker`, and `permission_handler` to prevent unnecessary bloat. Reject the static singleton "Service Wrapper" pattern (e.g., `ShareService.instance`). Adopt `share_plus` in the future for sharing CRM data via a Riverpod-injected `IntentService`.
-
-## 4. UI & Presentation Layer
-- **Standardized Formatting**: Use centralized Dart extensions in `lib/core/extensions/` for all formatting needs. 
-  - `DateTime`: Use `.toAppFormat()`, `.toCompactFormat()`, or `.toDateTimeFormat()`.
-  - `double`: Use `.toRupeeFormat()` for currency.
-  - `String`: Use `.toPhoneFormat()`, `.toAadhaarFormat()`, or `.toPanFormat()`.
-- **Responsive Architecture**: Use the official `flutter_adaptive_scaffold` for structural adaptive layouts (Bottom Navigation Bar on Mobile vs Navigation Rail on Tablet/Desktop), wrapped inside a `go_router` `StatefulShellRoute`. 
-- **Large Screen Overlays**: Modal `BottomSheet` invocations on Mobile must dynamically convert to centered `AlertDialog`s or sliding side-panels on Tablet/Desktop.
-- **Large Screen Flows**: Use Master-Detail patterns for list views on Desktop (List fixed on the left, details rendered dynamically on the right).
-- **Dumb Widgets**: Widgets are purely for displaying data and capturing input. 
-- **Ephemeral UI State**: Use `HookConsumerWidget` (via `hooks_riverpod` and `flutter_hooks`) exclusively for managing purely local, ephemeral UI state (e.g., `useTextEditingController`, `useState`). `StatefulWidget` and `ConsumerStatefulWidget` are prohibited.
-- **Localization & Magic Strings**: DO NOT hardcode user-facing text, symbols (like `₹`), or separators (like ` • `) directly in the UI. Always use **Slang** (with nested YAML configurations). Extract all "magic strings" into `i18n/`. Avoid raw `Text('...')` strings.
-- **Theme, Dimensions & Magic Numbers**: DO NOT hardcode "magic numbers" for breakpoints (e.g., `600`), custom paddings, constraints, or colors anywhere in the UI codebase. Consolidate all styling into a granular file structure inside `lib/core/theme/` (e.g., `AppDimensions`). Use Flutter's `ThemeExtension` API to attach custom design tokens directly to the `ThemeData`. Access them safely via `Theme.of(context).extension<AppDesignTokens>()` and `Theme.of(context).colorScheme`.
-- **ScreenUtil**: Reject `flutter_screenutil` (`.w`, `.h`, `.sp`) as it breaks responsive layouts on Web and Desktop. Strip all such dimensions during widget migrations.
-- **UI Utilities**: Adopt `skeletonizer` for handling loading states, `flutter_animate` for declarative animations, and `hugeicons` for a cohesive premium icon library (migrating away from Material/Cupertino/FontAwesome). Adopt `cached_network_image` and `flutter_svg` for media handling.
-- **App Launch / Splash**: Adopt `flutter_native_splash` utilizing the Hybrid Splash pattern (`preserve()` and `remove()`) to prevent white screen flashes.
-- **Official Widget Priority**: Always prefer official Flutter Material 3 widgets and standard Material patterns. 
-  - Use `MenuAnchor` for dropdown menus instead of `PopupMenuButton`.
-  - Use `SearchBar` for search inputs.
-  - Use `SegmentedButton` for toggle-like selections.
-- **Shared UI Components**: Identify shared UI components early and centralize them in `lib/core/widgets/`. 
-  - Use `ShellAppBar` for consistent app bars with built-in theme toggling and dynamic actions.
-  - Foundational widgets (e.g., `AppButton`, `AppCard`, `AppTextField`) belong in appropriate sub-folders (`forms`, `layout`, `common`). 
-  - Domain-specific UI scaffolding (e.g., `EntityDetailScaffold`, `CustomerCard`) belong in `features/` and should utilize the generic widgets internally.
-
-## 5. Anti-Patterns to Avoid
+## 2. Global Anti-Patterns
 1. **Committing Erroring States**: Never commit code that does not compile or pass the analyzer (`dart analyze`). Always format, build, and analyze before committing.
-2. **List Controller Mutation Spoilage**: DO NOT manually set `state = const AsyncValue.loading()` inside mutation methods (like `save()` or `delete()`) within a list controller. This wipes out the data and causes massive UI rebuild bugs (e.g., destroying form state). Handle form submission loading states locally via `useState` in a `HookConsumerWidget`, OR use a separate mutation controller.
-3. **Inline Filtering in UI**: Avoid doing complex filtering like `customers.where((c) => c.id == id)` inside `build()`. Create a separate provider or selector (e.g., `customerProvider(id)`) to keep the UI clean.
-4. **Riverpod for Form Input State**: Do NOT use Riverpod `Notifiers` to track individual keystrokes or granular text field states. This causes cursor jumping bugs and excessive boilerplate. Text input is *ephemeral UI state*. Use `flutter_hooks` (`useTextEditingController`, `useState`) to manage live form inputs, and only pass structured data to Riverpod controllers on submission. 
-5. **Anti-pattern: Riverpod `family` for Keystrokes**: Do NOT pass highly volatile variables (like strings from text controllers) into a Riverpod `@riverpod` family provider. This causes Riverpod to instantiate and destroy a new provider in memory for every single letter typed. To derive live UI state from keystrokes (like math projections), use `useMemoized` alongside pure domain functions. If the pure function requires global dependencies (like tax rates), fetch the dependency via `ref.watch` in the widget and pass it into the `useMemoized` block.
+2. **List Controller Mutation Spoilage**: DO NOT manually set `state = loading` inside mutation methods (like `save()` or `delete()`) within a list controller. This wipes out data and causes UI rebuild bugs.
+3. **Riverpod for Form Input**: Do NOT use Riverpod Notifiers to track individual keystrokes. Use `flutter_hooks` (`useTextEditingController`, `useState`) for live form inputs, and only pass structured data to Riverpod on submission.
 
-## 6. Git & Commit Conventions
-- **Conventional Commits**: All commits must follow the `<type>(<scope>): <summary>` format.
-- **Workflow Integrity**: All relevant `.md` files in `.agents/` (progress, tasks, session logs) MUST be updated **before** a commit is made, especially when a commit is explicitly requested or suggested. This ensures that every commit reflects the accurately documented state of the project.
-- **Prefixes**: 
-  - `Feat`: New functionality.
-  - `Fix`: Bug fixes.
-  - `Refactor`: Structural changes without behavior change.
-  - `Docs`: Updates to documentation, `.agents/` or README.
-  - `UI`: Visual-only changes (colors, themes, dimensions).
-  - `Chore`: Dependencies, build scripts, configuration.
-- **Rules**:
-  - Summaries must start with a capital letter.
-  - No trailing periods.
-  - Use imperative mood ("Add" instead of "Added").
-  - Scope should represent the feature (e.g., `customers`, `deposits`, `core`).
-
-## 7. Release Process
-- **Prerequisites**: Before creating a release tag, you MUST complete the following:
-  1. **Determine Version Bump**: The AI agent must automatically analyze the recent session logs and commits to recommend a Semantic Versioning bump (Major, Minor, or Patch) based strictly on [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and increment the build number. The agent MUST confirm this version number with the user before proceeding.
-  2. **Update `pubspec.yaml`**: Update the `version:` key with the confirmed version.
-  3. **Update `CHANGELOG.md`**: Add a new `## [Version]` heading and date. Follow the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format exactly (categorizing by `### Added`, `### Changed`, `### Fixed`). Also, ensure the git compare links at the bottom of the file are updated for the new version. The GitHub Actions pipeline relies entirely on this changelog block for its Release Notes.
-- **Tag-Driven CD**: Releases are fully automated via GitHub Actions (`release.yml`). Once the prerequisites are committed, create a lightweight git tag matching the version (e.g., `git tag v1.1.1`) and push it to origin (`git push origin v1.1.1`). This action triggers the unified Mobile (APK distribution) and Web (Firebase Hosting) deployment pipeline ensuring strict parity.
-
-## 8. UI Guidelines & Gotchas
-### Avoid ListTile Trailing Height Crashes
-- `ListTile` strictly enforces a maximum height constraint of `56.0` on its `trailing` and `leading` widgets (in Material 3).
-- Attempting to bypass this using unbound constraints (like `OverflowBox(maxHeight: double.infinity)`) inside the trailing slot can cause layout crashes (e.g., "RenderBox was not laid out") because `ListTile` internally uses intrinsic dimension measurements which fail when unbounded.
-- **Industry Standard Solution**: Do not hack `ListTile`. If a list item has a complex or exceptionally tall right-side trailing column (like a large amount + date + status badge), build a custom list item using `InkWell` + `Padding` + `Row`. 
-- By replacing `ListTile` with a standard `Row`, the row naturally sizes its height based on the tallest child (bypassing the strict 56.0 limit), and you can use `Flexible` on the trailing data if it needs to scale down horizontally (e.g., via `FittedBox`) when horizontal space is tight.
-
-### Row Layout & Flex Distribution
-- When using multiple `flex: 1` children (`Expanded` and `Flexible`) in a `Row`, Flutter divides the available space equally among them.
-- If a `Flexible` child does not use all its allocated space, the unused space is NOT given back to the `Expanded` child!
-- Because `Row` defaults to `MainAxisAlignment.start`, this unused space ends up at the absolute end of the `Row`, causing unexpected empty margins on the right side.
-- **Solution**: To make a title take all available space and a trailing widget take only its intrinsic width, ONLY use `Expanded` on the title. Do not wrap the trailing widget in `Flexible` unless you explicitly want to limit its maximum width to an equal share of the screen.
+## 3. Release Process
+Releases are tag-driven and automated via GitHub Actions.
+- **Prerequisites**: Update `pubspec.yaml` (version bump) and `CHANGELOG.md` (Keep a Changelog format).
+- **Tooling**: Use the **`release-manager`** skill for versioning calculations and changelog updates.
+- **Deployment**: Create a git tag matching the version (e.g., `v1.1.1`) and push to origin to trigger the deployment pipeline.

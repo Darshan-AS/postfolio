@@ -1,60 +1,33 @@
 # Postfolio Project Guidelines
 
-These guidelines apply to all code generated and modified in this workspace. Adhere to these architectural and design choices at all times.
+These guidelines define how AI agents must behave and interact with this repository. Adhere to these behavioral and architectural choices at all times.
 
-## Architecture & State Management
-- **Riverpod**: Use Riverpod for state management and dependency injection. Prefer `Notifier` or `AsyncNotifier` (or `@riverpod` code generation if set up) over `StateNotifier`.
-- **Dependency Injection**: Use Riverpod providers to inject dependencies (e.g., Repositories, Services) into other providers or controllers. This ensures easily mockable and testable code.
-- **Feature-First Structure**: Organize code by feature (e.g., `lib/features/auth/`, `lib/features/post/`). Each feature should contain its own `data`, `domain`, and `presentation` layers. Features must be strictly isolated and CANNOT import files from another feature's `presentation` or `data` layers. Shared models or widgets must be extracted to `lib/core/`.
-
-## Functional Programming & Purity
-- **Immutability**: Use immutable data structures exclusively. We use the **`freezed`** package for all data classes, state representations, and unions to ensure strict immutability, `copyWith` functionality, and safe JSON serialization. Never mutate state directly in place. **Always declare Freezed classes as `sealed class`** rather than `abstract class` to leverage Dart 3's exhaustive pattern matching and prevent external subclassing. Use native Dart 3 `switch` statements for pattern matching (Freezed's `.when()` and `.map()` methods are disabled via `build.yaml`).
-- **Modern Dart 3 Features**: Avoid heavyweight functional packages like `dartz`. Instead, use native Dart 3 **Records**, **Pattern Matching**, and **Sealed Classes** (via Freezed) for error handling and state unions.
-- **Validation**: Avoid over-engineered Value Objects for primitive types to reduce boilerplate. Use factory constructors on Freezed models for data validation to ensure primitives are validated at creation.
-- **Pure Functions**: Keep business logic in pure functions inside your Notifiers/Controllers. State should be replaced with newly computed objects rather than mutated.
-- **One-Way Data Flow**: 
-  - UI reads state from Providers.
-  - UI dispatches intents/events to the Notifier.
-  - Notifier computes the new immutable state and updates the Provider.
-  - UI rebuilds via `ref.watch`.
-
-## UI & Presentation Layer
-- **Official & Standard Widgets**: Prioritize using official Material 3 widgets (e.g., `SearchBar`, `SegmentedButton`, `FilterChip`) or widely-adopted community packages (e.g., `hugeicons`) over custom-built components. Only "invent" or build from scratch when official widgets cannot be themed or extended to meet critical UX requirements.
-- **Dumb Widgets**: Widgets should be completely "dumb". They are strictly responsible for displaying data and capturing user input. Never perform API calls, complex logic, or database operations directly inside a widget. However, widgets are allowed to contain *UI flow logic* (e.g., triggering navigation using `context.go()` inside a `ref.listen` on state changes).
-- **ConsumerWidget**: Prefer `ConsumerWidget` or `ConsumerStatefulWidget` (via Riverpod) over vanilla `StatefulWidget` unless handling ephemeral UI-only state (like an animation controller or a text field focus).
-- **Seamless Cross-Platform UI**: Ensure the UI is seamless across all supported platforms (iOS, Android, Web, Desktop). Use responsive design principles (e.g., `LayoutBuilder`, `MediaQuery`) and platform-aware styling where appropriate to ensure the app feels native and polished everywhere.
-
-## Routing & Infrastructure
-- **Routing**: Use **`go_router`** with **`go_router_builder`** for type-safe, declarative routing. Prefer using `.go(context)` for navigating within the route hierarchy to maintain a consistent declarative state and avoid `ImperativeRouteMatch` exceptions (especially on system back button presses). Use `.push(context)` only when a truly imperative overlay is required or when waiting for a return value.
-- **Backend & Database**: Use **Firebase (Firestore)** as the Backend-as-a-Service. Rely on Firestore's native offline-persistence instead of maintaining a separate local database (like Isar/Drift). All data repositories should interact directly with Firestore. The `data` layer (repositories) must convert Firestore DTOs into pure Domain Entities before returning them. `cloud_firestore` imports are strictly banned from the `domain` and `presentation` layers to prevent tight coupling.
-
-## Build and Test
-{Commands to install, build, test—agents will attempt to run these}
-
-## Agent Memory & Handoff
+## 1. The Agent Handshake (Mandatory)
 All progress, tasks, and architectural conventions are stored in the `.agents/` folder. 
 **CRITICAL INSTRUCTION FOR ALL AI AGENTS:** 
 - DO NOT rely on the internal Copilot `/memories/repo/` system for core state.
 - The `.agents/` folder is the **single source of truth**.
-- When starting a new conversation or picking up this repository, you MUST immediately read the following files before making any changes:
-1. `.agents/progress.md` (To understand current state and immediate next steps)
-2. `.agents/tasks.md` (To understand the project roadmap)
-3. `.agents/conventions.md` (To understand strict coding rules & structural decisions)
-4. `docs/product_requirements.md` (To understand feature specs, domain knowledge, and financial logic)
-5. Read the latest session log in `.agents/session_logs/` for granular context of recent work.
+- When starting a new conversation, you MUST immediately read:
+  1. `.agents/progress.md` (Current state)
+  2. `.agents/tasks.md` (Roadmap)
+  3. `.agents/session_logs/` (Recent history)
 
-## Agent Workflow Rules
-- **Build Before Commit:** Ensure everything builds successfully before making a commit.
-- **Update Documentation Before Commit:** All relevant `.md` files in `.agents/` (progress, tasks, session logs) MUST be updated **before** a commit is made, especially when a commit is explicitly requested or suggested. This ensures that every commit reflects the accurately documented state of the project.
-- **Logical Commits:** Commits should only be made at logical stages, and only when the codebase is in a building/working state.
-- **Standardized Commit Messages:** Use Conventional Commits format: `<type>(<scope>): <summary>` (e.g., `Feat(auth): Add Firebase login`). 
-  - Types: `Feat`, `Fix`, `Refactor`, `Docs`, `Chore`, `UI`.
-  - Use imperative mood ("Add" not "Added").
-- **Maintain Markdown State:** You MUST actively look for and update `.md` files in `docs/` and `.agents/` as part of your workflow:
-  - **`progress.md`**: High-level summary of the **Current State** and **Next Steps**. Update this at the end of your session. It should reflect the global state of the project.
-  - **`.agents/session_logs/`**: Create a new log for **every session**. Name it `YYYY-MM-DD_session_N.md`. This log should contain granular details of changes made, decisions taken, and specific files touched.
-  - **`conventions.md`**: Update this file if a new architectural or design decision was taken during your session.
-  - **`tasks.md`**: Check off tasks as you complete them. If new tasks or next steps were discussed/recommended, append them to the appropriate phase. Always use checkboxes (`- [ ]` or `- [x]`) for task items, even for sub-tasks.
+## 2. Core Rule Library
+Detailed technical conventions are modularized. Read these files when working on relevant parts of the system:
+- **Git & Commits**: [`.agents/rules/git.md`](.agents/rules/git.md) (Format, behavior, workflow)
+- **Architecture**: [`.agents/rules/architecture.md`](.agents/rules/architecture.md) (Riverpod, Firebase, Routing)
+- **UI & Presentation**: [`.agents/rules/ui.md`](.agents/rules/ui.md) (Theming, widgets, formatting)
+- **Logic & Purity**: [`.agents/rules/logic.md`](.agents/rules/logic.md) (Immutability, Records, Patterns)
 
-## Conventions
-{Patterns that differ from common practices—include specific examples}
+## 3. Agent Workflow Rules
+- **Maintain Markdown State**: You MUST actively update `.md` files in `.agents/` (progress, tasks, session logs) as part of your workflow. Create a new session log for every session (`YYYY-MM-DD_session_N.md`).
+- **No Unsolicited Commits**: NEVER suggest or ask to commit code. The user will provide the command when ready.
+- **Dumb Widgets**: UI code must be strictly declarative. Logic belongs in Notifiers or Hooks.
+- **Releases**: Use the **`release-manager`** skill for all version bumping and changelog updates.
+
+## 4. Logical Workflow
+1. Read the "Handshake" files.
+2. Formulate a plan and update `tasks.md`.
+3. Execute changes using `replace_string_in_file`.
+4. Run `dart analyze` and tests.
+5. Update `session_log.md` and `progress.md` before finishing.
