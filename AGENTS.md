@@ -34,7 +34,9 @@ These guidelines apply to all code generated and modified in this workspace. Adh
 ## Agent Memory & Handoff
 All progress, tasks, and architectural conventions are stored in the `.agents/` folder. 
 **CRITICAL INSTRUCTION FOR ALL AI AGENTS:** 
-When starting a new conversation or picking up this repository, you MUST immediately read the following files before making any changes:
+- DO NOT rely on the internal Copilot `/memories/repo/` system for core state.
+- The `.agents/` folder is the **single source of truth**.
+- When starting a new conversation or picking up this repository, you MUST immediately read the following files before making any changes:
 1. `.agents/progress.md` (To understand current state and immediate next steps)
 2. `.agents/tasks.md` (To understand the project roadmap)
 3. `.agents/conventions.md` (To understand strict coding rules & structural decisions)
