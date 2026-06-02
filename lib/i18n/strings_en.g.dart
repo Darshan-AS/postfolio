@@ -189,6 +189,9 @@ class Translations$common$en {
 	/// en: 'Clear Filters'
 	String get clearFilters => 'Clear Filters';
 
+	/// en: 'Reset'
+	String get reset => 'Reset';
+
 	/// en: 'Details'
 	String get details => 'Details';
 
@@ -1144,6 +1147,7 @@ extension on Translations {
 			'common.cancel' => 'Cancel',
 			'common.clear' => 'Clear',
 			'common.clearFilters' => 'Clear Filters',
+			'common.reset' => 'Reset',
 			'common.details' => 'Details',
 			'common.depositDetails' => 'Deposit Details',
 			'common.error' => 'Error',

@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:postfolio/core/services/storage_service.dart';
 
 part 'theme_provider.g.dart';
 
@@ -8,16 +9,19 @@ enum AppThemeMode { system, light, dark, accessibleSystem }
 class ThemeModeNotifier extends _$ThemeModeNotifier {
   @override
   AppThemeMode build() {
-    return AppThemeMode.system;
+    return ref.watch(storageServiceProvider).getThemeMode();
   }
 
   void setThemeMode(AppThemeMode mode) {
     state = mode;
+    ref.read(storageServiceProvider).setThemeMode(mode);
   }
 
   void toggleAccessibleTheme() {
-    state = state == AppThemeMode.accessibleSystem
+    final newMode = state == AppThemeMode.accessibleSystem
         ? AppThemeMode.system
         : AppThemeMode.accessibleSystem;
+    state = newMode;
+    ref.read(storageServiceProvider).setThemeMode(newMode);
   }
 }

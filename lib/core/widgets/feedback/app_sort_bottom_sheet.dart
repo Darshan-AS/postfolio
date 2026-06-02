@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
 
 import 'package:postfolio/i18n/strings.g.dart';
 
-class AppSortBottomSheet<T> extends HookWidget {
+class AppSortBottomSheet<T> extends StatelessWidget {
   final String title;
   final List<T> fields;
   final T selectedField;
@@ -30,14 +29,7 @@ class AppSortBottomSheet<T> extends HookWidget {
 
   static Future<void> show<T>({
     required BuildContext context,
-    required String title,
-    required List<T> fields,
-    required T selectedField,
-    required SortDirection selectedDirection,
-    required String Function(T) fieldLabelBuilder,
-    required String Function(T, SortDirection) directionLabelBuilder,
-    required void Function(T, SortDirection) onSelected,
-    VoidCallback? onReset,
+    required WidgetBuilder builder,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -47,24 +39,12 @@ class AppSortBottomSheet<T> extends HookWidget {
           top: Radius.circular(AppDimensions.radiusXl),
         ),
       ),
-      builder: (context) => AppSortBottomSheet<T>(
-        title: title,
-        fields: fields,
-        selectedField: selectedField,
-        selectedDirection: selectedDirection,
-        fieldLabelBuilder: fieldLabelBuilder,
-        directionLabelBuilder: directionLabelBuilder,
-        onSelected: onSelected,
-        onReset: onReset,
-      ),
+      builder: builder,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentField = useState(selectedField);
-    final currentDirection = useState(selectedDirection);
-
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -77,7 +57,7 @@ class AppSortBottomSheet<T> extends HookWidget {
               itemCount: fields.length,
               itemBuilder: (context, index) {
                 final field = fields[index];
-                final isSelected = currentField.value == field;
+                final isSelected = selectedField == field;
 
                 return ListTile(
                   title: Text(
@@ -97,15 +77,14 @@ class AppSortBottomSheet<T> extends HookWidget {
                       )
                       : null,
                   onTap: () {
-                    currentField.value = field;
-                    onSelected(field, currentDirection.value);
+                    onSelected(field, selectedDirection);
                   },
                 );
               },
             ),
           ),
           const Divider(),
-          _buildDirectionToggle(context, currentField.value, currentDirection),
+          _buildDirectionToggle(context, selectedField, selectedDirection),
           AppSpacings.gapLg,
         ],
       ),
@@ -126,11 +105,8 @@ class AppSortBottomSheet<T> extends HookWidget {
           const Spacer(),
           if (onReset != null)
             TextButton(
-              onPressed: () {
-                onReset!();
-                Navigator.pop(context);
-              },
-              child: Text(t.sorting.reset),
+              onPressed: onReset!,
+              child: Text(t.common.clear),
             ),
           IconButton(
             onPressed: () => Navigator.pop(context),
@@ -147,7 +123,7 @@ class AppSortBottomSheet<T> extends HookWidget {
   Widget _buildDirectionToggle(
     BuildContext context,
     T field,
-    ValueNotifier<SortDirection> direction,
+    SortDirection direction,
   ) {
     return Padding(
       padding: const EdgeInsets.all(AppDimensions.paddingLg),
@@ -162,10 +138,9 @@ class AppSortBottomSheet<T> extends HookWidget {
             label: Text(directionLabelBuilder(field, SortDirection.desc)),
           ),
         ],
-        selected: {direction.value},
+        selected: {direction},
         onSelectionChanged: (selection) {
           final isDesc = selection.first;
-          direction.value = isDesc;
           onSelected(field, isDesc);
         },
       ),

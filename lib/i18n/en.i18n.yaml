@@ -44,6 +44,7 @@ common:
   cancel: "Cancel"
   clear: "Clear"
   clearFilters: "Clear Filters"
+  reset: "Reset"
   details: "Details"
   depositDetails: "Deposit Details"
   error: "Error"

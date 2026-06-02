@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/services/storage_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
@@ -20,47 +21,70 @@ part 'recurring_deposits_controller.g.dart';
 @riverpod
 class RecurringListCriteria extends _$RecurringListCriteria {
   @override
-  RDSearchCriteria build() => const RDSearchCriteria();
+  RDSearchCriteria build() {
+    final storage = ref.watch(storageServiceProvider);
+    return RDSearchCriteria(
+      sortField: storage.getRDSortField(),
+      sortDirection: storage.getRDSortDirection(),
+      statusFilters: storage.getRDStatusFilters(),
+      urgencyFilters: storage.getRDUrgencyFilters(),
+    );
+  }
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  void updateSortField(RDSortField field) => state = state.copyWith(sortField: field);
-  void updateSortDirection(SortDirection direction) => state = state.copyWith(sortDirection: direction);
+  
+  void updateSortField(RDSortField field) {
+    state = state.copyWith(sortField: field);
+    ref.read(storageServiceProvider).setRDSortField(field);
+  }
+  
+  void updateSortDirection(SortDirection direction) {
+    state = state.copyWith(sortDirection: direction);
+    ref.read(storageServiceProvider).setRDSortDirection(direction);
+  }
+  
   void toggleFilter(DepositStatus status) {
-    if (state.statusFilters.contains(status)) {
-      state = state.copyWith(
-        statusFilters: state.statusFilters.where((s) => s != status).toList(),
-      );
-    } else {
-      state = state.copyWith(statusFilters: [...state.statusFilters, status]);
-    }
+    final newFilters = state.statusFilters.contains(status)
+        ? state.statusFilters.where((s) => s != status).toList()
+        : [...state.statusFilters, status];
+        
+    state = state.copyWith(statusFilters: newFilters);
+    ref.read(storageServiceProvider).setRDStatusFilters(newFilters);
   }
 
   void toggleUrgencyFilter(MaturityUrgency urgency) {
-    if (state.urgencyFilters.contains(urgency)) {
-      state = state.copyWith(
-        urgencyFilters: state.urgencyFilters
-            .where((u) => u != urgency)
-            .toList(),
-      );
-    } else {
-      state = state.copyWith(
-        urgencyFilters: [...state.urgencyFilters, urgency],
-      );
-    }
+    final newFilters = state.urgencyFilters.contains(urgency)
+        ? state.urgencyFilters.where((u) => u != urgency).toList()
+        : [...state.urgencyFilters, urgency];
+        
+    state = state.copyWith(urgencyFilters: newFilters);
+    ref.read(storageServiceProvider).setRDUrgencyFilters(newFilters);
   }
 
-  void clearSort() => state = state.copyWith(
-        sortField: RDSortField.serialNo,
-        sortDirection: SortDirection.asc,
-      );
+  void clearSort() {
+    state = state.copyWith(
+      sortField: RDSortField.serialNo,
+      sortDirection: SortDirection.asc,
+    );
+    ref.read(storageServiceProvider).setRDSortField(RDSortField.serialNo);
+    ref.read(storageServiceProvider).setRDSortDirection(SortDirection.asc);
+  }
 
-  void clearAll() => state = const RDSearchCriteria();
+  void clearAll() {
+    state = const RDSearchCriteria();
+    ref.read(storageServiceProvider).setRDSortField(RDSortField.startDate);
+    ref.read(storageServiceProvider).setRDSortDirection(SortDirection.desc);
+    ref.read(storageServiceProvider).setRDStatusFilters([]);
+    ref.read(storageServiceProvider).setRDUrgencyFilters([]);
+  }
 
   void clearFilters() {
     state = state.copyWith(
       statusFilters: const [DepositStatus.active],
       urgencyFilters: const [],
     );
+    ref.read(storageServiceProvider).setRDStatusFilters([DepositStatus.active]);
+    ref.read(storageServiceProvider).setRDUrgencyFilters([]);
   }
 }
 

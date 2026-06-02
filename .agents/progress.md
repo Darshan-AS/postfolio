@@ -75,3 +75,5 @@
 - Updated `AlertDialog` instances in `app_dialogs.dart` to use the Material 3 `icon` property, enabling standard M3 center-aligned dialog styles.
 - Standardized `FloatingActionButton.extended` across main list views (`CustomersScreen`, `OneTimeDepositsScreen`, `RecurringDepositsScreen`) to remain in a static extended state for consistent visibility.
 - Established an agnostic AI agent customization framework in `.agents/`, including a dedicated `release-manager` skill and agent persona to automate versioning and pre-release validation.
+- Integrated `SharedPreferences` within a custom `StorageService` to persist implicit user preferences (Themes, List Sorting, List Filters).
+- Standardized UI bottom sheets (`AppSortBottomSheet`, `AppFilterBottomSheet`), standardizing their "Clear" actions to prevent abrupt closures and migrating the Sort sheet from `flutter_hooks` to a purely reactive Riverpod `Consumer` pattern.

@@ -65,25 +65,32 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                   ),
                 ),
                 onPressed: () {
-                  AppSortBottomSheet.show<OTDSortField>(
+                  AppSortBottomSheet.show(
                     context: context,
-                    title: t.sorting.title,
-                    fields: OTDSortField.values,
-                    selectedField: criteria.sortField,
-                    selectedDirection: criteria.sortDirection,
-                    fieldLabelBuilder: (field) => field.label,
-                    directionLabelBuilder: (field, dir) => field.directionLabel(dir),
-                    onSelected: (field, dir) {
-                      ref
-                          .read(oneTimeListCriteriaProvider.notifier)
-                          .updateSortField(field);
-                      ref
-                          .read(oneTimeListCriteriaProvider.notifier)
-                          .updateSortDirection(dir);
-                    },
-                    onReset: () => ref
-                        .read(oneTimeListCriteriaProvider.notifier)
-                        .clearSort(),
+                    builder: (context) => Consumer(
+                      builder: (context, ref, _) {
+                        final criteria = ref.watch(oneTimeListCriteriaProvider);
+                        return AppSortBottomSheet<OTDSortField>(
+                          title: t.sorting.title,
+                          fields: OTDSortField.values,
+                          selectedField: criteria.sortField,
+                          selectedDirection: criteria.sortDirection,
+                          fieldLabelBuilder: (f) => f.label,
+                          directionLabelBuilder: (f, d) => f.directionLabel(d),
+                          onSelected: (field, direction) {
+                            ref
+                                .read(oneTimeListCriteriaProvider.notifier)
+                                .updateSortField(field);
+                            ref
+                                .read(oneTimeListCriteriaProvider.notifier)
+                                .updateSortDirection(direction);
+                          },
+                          onReset: () => ref
+                              .read(oneTimeListCriteriaProvider.notifier)
+                              .clearSort(),
+                        );
+                      },
+                    ),
                   );
                 },
               ),

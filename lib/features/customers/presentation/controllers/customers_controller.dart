@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:postfolio/features/customers/domain/customer_search_criteria.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
 import 'package:postfolio/core/models/nominee.dart';
+import 'package:postfolio/core/services/storage_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
@@ -14,18 +15,40 @@ part 'customers_controller.g.dart';
 @riverpod
 class CustomerListCriteria extends _$CustomerListCriteria {
   @override
-  CustomerSearchCriteria build() => const CustomerSearchCriteria();
+  CustomerSearchCriteria build() {
+    final storage = ref.watch(storageServiceProvider);
+    return CustomerSearchCriteria(
+      sortField: storage.getCustomerSortField(),
+      sortDirection: storage.getCustomerSortDirection(),
+    );
+  }
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  void updateSortField(CustomerSortField field) =>
-      state = state.copyWith(sortField: field);
-  void updateSortDirection(SortDirection direction) =>
-      state = state.copyWith(sortDirection: direction);
-  void clearSort() => state = state.copyWith(
-        sortField: CustomerSortField.name,
-        sortDirection: SortDirection.asc,
-      );
-  void clearAll() => state = const CustomerSearchCriteria();
+  
+  void updateSortField(CustomerSortField field) {
+    state = state.copyWith(sortField: field);
+    ref.read(storageServiceProvider).setCustomerSortField(field);
+  }
+  
+  void updateSortDirection(SortDirection direction) {
+    state = state.copyWith(sortDirection: direction);
+    ref.read(storageServiceProvider).setCustomerSortDirection(direction);
+  }
+  
+  void clearSort() {
+    state = state.copyWith(
+      sortField: CustomerSortField.name,
+      sortDirection: SortDirection.asc,
+    );
+    ref.read(storageServiceProvider).setCustomerSortField(CustomerSortField.name);
+    ref.read(storageServiceProvider).setCustomerSortDirection(SortDirection.asc);
+  }
+  
+  void clearAll() {
+    state = const CustomerSearchCriteria();
+    ref.read(storageServiceProvider).setCustomerSortField(CustomerSortField.name);
+    ref.read(storageServiceProvider).setCustomerSortDirection(SortDirection.asc);
+  }
 }
 
 @riverpod

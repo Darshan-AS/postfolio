@@ -62,25 +62,32 @@ class RecurringDepositsScreen extends HookConsumerWidget {
                   ),
                 ),
                 onPressed: () {
-                  AppSortBottomSheet.show<RDSortField>(
+                  AppSortBottomSheet.show(
                     context: context,
-                    title: t.sorting.title,
-                    fields: RDSortField.values,
-                    selectedField: criteria.sortField,
-                    selectedDirection: criteria.sortDirection,
-                    fieldLabelBuilder: (field) => field.label,
-                    directionLabelBuilder: (field, dir) => field.directionLabel(dir),
-                    onSelected: (field, dir) {
-                      ref
-                          .read(recurringListCriteriaProvider.notifier)
-                          .updateSortField(field);
-                      ref
-                          .read(recurringListCriteriaProvider.notifier)
-                          .updateSortDirection(dir);
-                    },
-                    onReset: () => ref
-                        .read(recurringListCriteriaProvider.notifier)
-                        .clearSort(),
+                    builder: (context) => Consumer(
+                      builder: (context, ref, _) {
+                        final criteria = ref.watch(recurringListCriteriaProvider);
+                        return AppSortBottomSheet<RDSortField>(
+                          title: t.sorting.title,
+                          fields: RDSortField.values,
+                          selectedField: criteria.sortField,
+                          selectedDirection: criteria.sortDirection,
+                          fieldLabelBuilder: (f) => f.label,
+                          directionLabelBuilder: (f, d) => f.directionLabel(d),
+                          onSelected: (field, direction) {
+                            ref
+                                .read(recurringListCriteriaProvider.notifier)
+                                .updateSortField(field);
+                            ref
+                                .read(recurringListCriteriaProvider.notifier)
+                                .updateSortDirection(direction);
+                          },
+                          onReset: () => ref
+                              .read(recurringListCriteriaProvider.notifier)
+                              .clearSort(),
+                        );
+                      },
+                    ),
                   );
                 },
               ),

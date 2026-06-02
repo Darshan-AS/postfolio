@@ -42,7 +42,7 @@ final class CustomerListCriteriaProvider
 }
 
 String _$customerListCriteriaHash() =>
-    r'7a4a607f06b86b5a57d3780065ab25b2a55677ca';
+    r'750b7a0572ee7496c0ca4ef6dac5d4d49b090e54';
 
 abstract class _$CustomerListCriteria
     extends $Notifier<CustomerSearchCriteria> {
@@ -103,7 +103,7 @@ final class FilteredCustomersProvider
   }
 }
 
-String _$filteredCustomersHash() => r'd75f9727178bbf546858f83d2666f0c35e11c805';
+String _$filteredCustomersHash() => r'57bcb1cda264ce65eaf47d51fe5f78067cd48300';
 
 @ProviderFor(CustomersController)
 final customersControllerProvider = CustomersControllerProvider._();
