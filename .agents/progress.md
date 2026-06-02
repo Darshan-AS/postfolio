@@ -48,6 +48,8 @@
 - Fixed a startup crash/debugger pause occurring on unauthenticated launch by ensuring repositories handle the unauthenticated state gracefully during route resolution.
 - Resolved Google Sign-In "Account reauth failed" on Android by registering the machine-specific SHA-1 fingerprint and updating the project configuration via FlutterFire CLI.
 - Configured Linux environment shell profile (`.zshrc`) with correct paths for Flutter and Dart global tools.
+- Refactored project guidelines and agent instructions into a modular, platform-agnostic system in `.agents/rules/`.
+- Enforced strict Conventional Commits formatting and behavioral boundaries to prevent unsolicited agent commit suggestions.
 - Bumped app version to 1.0.4+5 and updated release pipeline documentation for keystore decoding.
 - Standardized primitive formatting using pure Dart extensions (`toRupeeFormat()`, `toPhoneFormat()`, `toAadhaarFormat()`, `toPanFormat()`) across the UI layer, aligning with the project's declarative conventions and keeping widgets dumb.
 - Updated the accessibility theme toggle across all main screens to use the universal standard `Icons.contrast` from the Material library, replacing ambiguous iconography and implementing a clear selected background state.

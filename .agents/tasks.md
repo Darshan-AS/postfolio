@@ -32,7 +32,7 @@
 - [ ] **Minor Fixes**: Remove duplicate display of RD interest rate; replace `FilledButton` with `AppButton` (if deemed necessary).
 
 ## ⚙️ Architecture, Tooling & Security
-- [x] **Agent Customization**: Created agnostic `release-manager` skill and agent persona in `.agents/`.
+- [x] **Agent Customization**: Refactored guidelines into a modular rule system in `.agents/rules/` for improved agent compliance and platform-agnosticism.
 - [ ] **Linting**: Add `riverpod_lint` and `custom_lint` for static analysis.
 - [ ] **Firebase App Check**: Configure with Play Integrity/App Attest and local Debug Tokens.
 - [ ] **Firebase Remote Config**: Integrate for dynamic rates, version enforcement, and feature flags.
