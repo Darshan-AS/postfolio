@@ -79,3 +79,16 @@ This document tracks the architectural decisions, structural rules, and conventi
   2. **Update `pubspec.yaml`**: Update the `version:` key with the confirmed version.
   3. **Update `CHANGELOG.md`**: Add a new `## [Version]` heading and date. Follow the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format exactly (categorizing by `### Added`, `### Changed`, `### Fixed`). Also, ensure the git compare links at the bottom of the file are updated for the new version. The GitHub Actions pipeline relies entirely on this changelog block for its Release Notes.
 - **Tag-Driven CD**: Releases are fully automated via GitHub Actions (`release.yml`). Once the prerequisites are committed, create a lightweight git tag matching the version (e.g., `git tag v1.1.1`) and push it to origin (`git push origin v1.1.1`). This action triggers the unified Mobile (APK distribution) and Web (Firebase Hosting) deployment pipeline ensuring strict parity.
+
+## 8. UI Guidelines & Gotchas
+### Avoid ListTile Trailing Height Crashes
+- `ListTile` strictly enforces a maximum height constraint of `56.0` on its `trailing` and `leading` widgets (in Material 3).
+- Attempting to bypass this using unbound constraints (like `OverflowBox(maxHeight: double.infinity)`) inside the trailing slot can cause layout crashes (e.g., "RenderBox was not laid out") because `ListTile` internally uses intrinsic dimension measurements which fail when unbounded.
+- **Industry Standard Solution**: Do not hack `ListTile`. If a list item has a complex or exceptionally tall right-side trailing column (like a large amount + date + status badge), build a custom list item using `InkWell` + `Padding` + `Row`. 
+- By replacing `ListTile` with a standard `Row`, the row naturally sizes its height based on the tallest child (bypassing the strict 56.0 limit), and you can use `Flexible` on the trailing data if it needs to scale down horizontally (e.g., via `FittedBox`) when horizontal space is tight.
+
+### Row Layout & Flex Distribution
+- When using multiple `flex: 1` children (`Expanded` and `Flexible`) in a `Row`, Flutter divides the available space equally among them.
+- If a `Flexible` child does not use all its allocated space, the unused space is NOT given back to the `Expanded` child!
+- Because `Row` defaults to `MainAxisAlignment.start`, this unused space ends up at the absolute end of the `Row`, causing unexpected empty margins on the right side.
+- **Solution**: To make a title take all available space and a trailing widget take only its intrinsic width, ONLY use `Expanded` on the title. Do not wrap the trailing widget in `Flexible` unless you explicitly want to limit its maximum width to an equal share of the screen.
