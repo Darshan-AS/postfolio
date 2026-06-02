@@ -20,7 +20,7 @@
   - [ ] Update to an input widget/slider that strictly enforces the 100% rule.
   - [ ] Organize SB account number and associated nomination into a single cohesive UI section.
   - [ ] Ensure the relationship of each nominee is clearly displayed.
-- [ ] **Preferences**: Persist sort/filter selections and `maturityWarningDays` across sessions.
+- [x] **Preferences**: Persist sort/filter selections and `maturityWarningDays` across sessions.
 - [ ] **Visual Enhancements**:
   - [ ] Redesign leading visual elements in deposit list tiles (replace generic circular icons).
   - [ ] Apply distinct color coding for deposit types.

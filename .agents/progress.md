@@ -77,3 +77,6 @@
 - Established an agnostic AI agent customization framework in `.agents/`, including a dedicated `release-manager` skill and agent persona to automate versioning and pre-release validation.
 - Integrated `SharedPreferences` within a custom `StorageService` to persist implicit user preferences (Themes, List Sorting, List Filters).
 - Standardized UI bottom sheets (`AppSortBottomSheet`, `AppFilterBottomSheet`), standardizing their "Clear" actions to prevent abrupt closures and migrating the Sort sheet from `flutter_hooks` to a purely reactive Riverpod `Consumer` pattern.
+
+## Releases
+- **v1.4.0+13 (2026-06-03)**: Type-safe composite sorting, persisted user preferences, Material 3 UI/UX improvements, and release manager skill.

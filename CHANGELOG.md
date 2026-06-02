@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0+13] - 2026-06-03
+
+### Added
+- **Architecture**: Implemented type-safe composite sorting architecture.
+- **UI/UX**: Added "Reset" button to Sort BottomSheet.
+- **Preferences**: Persisted user preferences for sorting and themes.
+- **Agent Workflow**: Added release management framework and modular agent rule system.
+
+### Changed
+- **UI/UX**: Comprehensive Material 3 UI/UX improvements.
+- **Docs**: Consolidated markdown documentation and architecture guidelines.
+
 ## [1.3.2+12] - 2026-06-02
 
 ### Added
