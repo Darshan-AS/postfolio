@@ -25,8 +25,11 @@ This document tracks the architectural decisions, structural rules, and conventi
 - **Domain Validation**: Use extension methods or Smart Factory constructors (`Model.create()`) on Freezed models to return `Result<Model, String>` types to leverage exhaustive pattern matching. Avoid primitive Value Objects.
 - **Error Handling**: Controllers must return typed `Result<SuccessType, ErrorType>` records/sealed classes instead of throwing exceptions.
 - **Controller Result Matching**: For controller mutation operations (`save`, `delete`), match the result using `switch` on the `Result`. If `Success`, explicitly trigger `ref.invalidateSelf()` and return `Success`. Never manually update the local `state` cache to avoid bugs. Let `build()` fetch the single source of truth from the repository.
+- **Hook-based Logic Extraction**: For complex screens (especially forms), extract state, validation, and submission logic into custom `flutter_hooks` (e.g., `useOneTimeDepositForm`). This keeps the UI layer purely declarative and makes business logic reusable and easier to test.
 
 ## 3. Core Infrastructure & Services
+- **Repository Authentication Guards**: All repositories must check for authentication before performing operations. Throw a `StateError('User not authenticated')` if the user is not found. This ensures a consistent error state that controllers can handle.
+- **Data Sanitization**: When using user input for Firestore Document IDs (e.g., account numbers), always sanitize the input (e.g., replacing slashes) to prevent path errors.
 - **Service Wrappers**: Infrastructure code interacting with native device capabilities or external SDKs (e.g., SharedPreferences, Firebase) should be encapsulated in a dedicated Service class inside `lib/core/services/`.
 - **Dependency Injection for Services**: Never use static singletons (e.g., `AuthService.instance` or `FirebaseFirestore.instance`). All services and external instances must be provided via Riverpod (`Provider`) to ensure mockability during testing.
 - **Local Storage**: Extract `shared_preferences` into `lib/core/services/storage_service.dart` strictly for non-sensitive UI state (e.g., Theme mode, onboarding completion flags). Reject `flutter_secure_storage` and `hive_ce`. Rely entirely on Firestore's native offline-persistence for database caching.
@@ -36,7 +39,11 @@ This document tracks the architectural decisions, structural rules, and conventi
 - **Offline-First Firebase Operations**: When creating, updating, or deleting Firestore documents in repositories intended for real-time UI streams, avoid `await`ing the `.set()`, `.update()`, or `.delete()` calls if an immediate UI response is desired. This prevents infinite hanging when offline or lacking permissions, and correctly relies on Firestore's background syncing.
 - **Device Interactions**: Reject `image_picker`, `file_picker`, and `permission_handler` to prevent unnecessary bloat. Reject the static singleton "Service Wrapper" pattern (e.g., `ShareService.instance`). Adopt `share_plus` in the future for sharing CRM data via a Riverpod-injected `IntentService`.
 
-## 4. UI & Presentation Layer (After starting to use flutter_adaptive_scaffold. Ignore until then.)
+## 4. UI & Presentation Layer
+- **Standardized Formatting**: Use centralized Dart extensions in `lib/core/extensions/` for all formatting needs. 
+  - `DateTime`: Use `.toAppFormat()`, `.toCompactFormat()`, or `.toDateTimeFormat()`.
+  - `double`: Use `.toRupeeFormat()` for currency.
+  - `String`: Use `.toPhoneFormat()`, `.toAadhaarFormat()`, or `.toPanFormat()`.
 - **Responsive Architecture**: Use the official `flutter_adaptive_scaffold` for structural adaptive layouts (Bottom Navigation Bar on Mobile vs Navigation Rail on Tablet/Desktop), wrapped inside a `go_router` `StatefulShellRoute`. 
 - **Large Screen Overlays**: Modal `BottomSheet` invocations on Mobile must dynamically convert to centered `AlertDialog`s or sliding side-panels on Tablet/Desktop.
 - **Large Screen Flows**: Use Master-Detail patterns for list views on Desktop (List fixed on the left, details rendered dynamically on the right).
@@ -47,8 +54,14 @@ This document tracks the architectural decisions, structural rules, and conventi
 - **ScreenUtil**: Reject `flutter_screenutil` (`.w`, `.h`, `.sp`) as it breaks responsive layouts on Web and Desktop. Strip all such dimensions during widget migrations.
 - **UI Utilities**: Adopt `skeletonizer` for handling loading states, `flutter_animate` for declarative animations, and `hugeicons` for a cohesive premium icon library (migrating away from Material/Cupertino/FontAwesome). Adopt `cached_network_image` and `flutter_svg` for media handling.
 - **App Launch / Splash**: Adopt `flutter_native_splash` utilizing the Hybrid Splash pattern (`preserve()` and `remove()`) to prevent white screen flashes.
-- **Official Widget Priority**: Always prefer official Flutter Material 3 widgets and standard Material patterns. For example, use the official `SearchBar` widget even if it requires significant theme overrides, rather than building a custom bar from raw `TextField`s. This ensures the app benefits from native accessibility, focus management, and future framework improvements.
-- **Code Reuse**: Identify shared UI components early and centralize them in `lib/core/widgets/`. Generic foundational widgets (e.g., `AppButton`, `AppCard`, `AppTextField`) belong in appropriate sub-folders (`forms`, `layout`, `common`). Domain-specific UI scaffolding (e.g., `EntityDetailScaffold`, `FormAppBar`, `CustomerCard`) belong in `features/` and should utilize the generic widgets internally.
+- **Official Widget Priority**: Always prefer official Flutter Material 3 widgets and standard Material patterns. 
+  - Use `MenuAnchor` for dropdown menus instead of `PopupMenuButton`.
+  - Use `SearchBar` for search inputs.
+  - Use `SegmentedButton` for toggle-like selections.
+- **Shared UI Components**: Identify shared UI components early and centralize them in `lib/core/widgets/`. 
+  - Use `ShellAppBar` for consistent app bars with built-in theme toggling and dynamic actions.
+  - Foundational widgets (e.g., `AppButton`, `AppCard`, `AppTextField`) belong in appropriate sub-folders (`forms`, `layout`, `common`). 
+  - Domain-specific UI scaffolding (e.g., `EntityDetailScaffold`, `CustomerCard`) belong in `features/` and should utilize the generic widgets internally.
 
 ## 5. Anti-Patterns to Avoid
 1. **Committing Erroring States**: Never commit code that does not compile or pass the analyzer (`dart analyze`). Always format, build, and analyze before committing.
