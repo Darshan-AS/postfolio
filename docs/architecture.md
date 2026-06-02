@@ -6,6 +6,10 @@ This document provides a high-level overview of the application's Data -> Domain
 
 The app is divided primarily into two main folders inside `lib/`:
 1.  **`core/`**: Contains shared utilities, foundational widgets, infrastructure services, and routing.
+    - `core/services/`: Infrastructure wrappers (Storage, Auth, etc.).
+    - `core/extensions/`: Centralized Dart extensions for formatting and logic.
+    - `core/theme/`: Material 3 theme configurations and Design Tokens.
+    - `core/widgets/`: Globally reusable UI components (Layout, Forms, etc.).
 2.  **`features/`**: Contains the actual business capabilities (e.g., `customers`, `deposits`, `auth`).
 
 Inside each feature folder, we strictly enforce a **Layered Architecture**:
@@ -35,8 +39,26 @@ The application strictly adheres to a **Unidirectional Data Flow** powered by Ri
 
 ### 3. Data Layer (Infrastructure & Persistence)
 *   **Repositories**: Repositories abstract the external data sources (Firestore). They are responsible for fetching data and mapping it to the pure Domain Entities.
-*   **DTOs (Data Transfer Objects)**: When fetching from Firestore, the data is deserialized into DTOs, which are then explicitly mapped to Domain Entities before crossing the boundary back into the Domain layer. This ensures the app is decoupled from the database schema.
-*   **Offline-First**: We rely on Firebase's native offline caching mechanism. Repositories perform standard `.get()` and `.set()` operations, trusting the Firebase SDK to handle network intermittency.
+*   **DTOs (Data Transfer Objects)**: When fetching from Firestore, the data is deserialized into DTOs (often using Freezed with `@JsonSerializable`), which are then explicitly mapped to Domain Entities before crossing the boundary back into the Domain layer. This ensures the app is decoupled from the database schema.
+*   **Offline-First**: We rely on Firebase's native offline caching mechanism. Repositories perform standard `.get()`, `.set()`, and `snapshots()` operations, trusting the Firebase SDK to handle network intermittency and background synchronization.
+
+---
+
+## Routing & Navigation
+
+We use **`go_router`** with **`go_router_builder`** for type-safe, declarative routing.
+
+*   **Declarative Navigation**: Prefer `.go(context)` for navigating to routes within the main hierarchy. This ensures the router maintains a consistent state.
+*   **Reactive Routing**: Route guards and redirects are controlled by Riverpod providers (e.g., `authProvider`) that are added to the router's `refreshListenable`.
+*   **Shell Routes**: `StatefulShellRoute` is used for persistent navigation (Bottom Bar / Navigation Rail) across different tabs.
+
+---
+
+## UI Architecture & Internationalization
+
+*   **Theme & Design Tokens**: Styling is centralized in `lib/core/theme/`. We use Flutter's `ThemeExtension` to attach custom design tokens (like `AppDimensions`) to the `ThemeData`. Hardcoding "magic numbers" for spacing or colors in widgets is prohibited.
+*   **Internationalization (i18n)**: We use **Slang** for type-safe translations. All user-facing strings must be extracted to `i18n/*.i18n.yaml` files.
+*   **Standardized Formatting**: Common formatting logic (Currency, Aadhaar, Dates) is centralized in `lib/core/extensions/` to keep widgets "dumb" and logic reusable.
 
 ---
 

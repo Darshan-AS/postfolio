@@ -66,5 +66,4 @@
 - Introduced the `animations` package and enabled `SharedAxisPageTransitionsBuilder` across Android, iOS, and macOS platforms to supply polished horizontal M3 page transitions.
 - Enforced `showDragHandle: true` on `CustomerSelectionSheet` to match other bottom sheets.
 - Updated `AlertDialog` instances in `app_dialogs.dart` to use the Material 3 `icon` property, enabling standard M3 center-aligned dialog styles.
-- Created `useScrollToCollapseFab` flutter hook to seamlessly implement the Material 3 standard behavior where `FloatingActionButton.extended` collapses into a standard icon-only FAB when the user scrolls down, and expands when they scroll up.
-- Applied the animated collapsing FAB behavior to all main list views (`CustomersScreen`, `OneTimeDepositsScreen`, `RecurringDepositsScreen`).
+- Standardized `FloatingActionButton.extended` across main list views (`CustomersScreen`, `OneTimeDepositsScreen`, `RecurringDepositsScreen`) to remain in a static extended state for consistent visibility.
