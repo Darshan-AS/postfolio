@@ -175,4 +175,39 @@ class AppWidgetThemes {
     showCheckmark: true,
     checkmarkColor: colorScheme.primary,
   );
+
+  static ExpansionTileThemeData expansionTileTheme(ColorScheme colorScheme) =>
+      ExpansionTileThemeData(
+        backgroundColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        collapsedBackgroundColor: Colors.transparent,
+        textColor: colorScheme.onSurface,
+        collapsedTextColor: colorScheme.onSurface,
+        iconColor: colorScheme.primary,
+        collapsedIconColor: colorScheme.onSurfaceVariant,
+        shape: const Border(),
+        collapsedShape: const Border(),
+      );
+
+  static SnackBarThemeData snackBarTheme(ColorScheme colorScheme) =>
+      SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: colorScheme.inverseSurface,
+        contentTextStyle: TextStyle(color: colorScheme.onInverseSurface),
+        actionTextColor: colorScheme.inversePrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        ),
+      );
+
+  static RadioThemeData radioTheme(ColorScheme colorScheme) => RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return colorScheme.primary;
+          }
+          if (states.contains(WidgetState.disabled)) {
+            return colorScheme.onSurface.withValues(alpha: 0.38);
+          }
+          return colorScheme.onSurfaceVariant;
+        }),
+      );
 }

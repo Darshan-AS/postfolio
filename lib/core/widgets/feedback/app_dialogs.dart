@@ -13,6 +13,7 @@ class AppDialogs {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        icon: Icon(Icons.warning, color: theme.colorScheme.error),
         title: Text(title),
         content: Text(content),
         actions: [
@@ -40,12 +41,14 @@ class AppDialogs {
     String? confirmText,
     Color? confirmBackgroundColor,
     Color? confirmForegroundColor,
+    IconData? icon,
   }) {
     final theme = Theme.of(context);
 
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        icon: icon != null ? Icon(icon, color: theme.colorScheme.primary) : null,
         title: Text(title),
         content: Text(content),
         actions: [
@@ -74,9 +77,12 @@ class AppDialogs {
     required String title,
     required String message,
   }) {
+    final theme = Theme.of(context);
+    
     return showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
+        icon: Icon(Icons.error_outline, color: theme.colorScheme.error),
         title: Text(title),
         content: Text(message),
         actions: [

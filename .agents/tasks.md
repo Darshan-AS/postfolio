@@ -25,6 +25,7 @@
 - [x] Centralize hardcoded colors into `lib/core/theme/`.
 - [x] Migrate to fully dynamic Material 3 Theming (ColorScheme, TextTheme, Dark Mode support).
 - [x] Integrate Material Monet dynamic theming via `dynamic_color`.
+- [x] Conduct a comprehensive Material 3 UI/UX audit, replace legacy widgets (like PopupMenuButton), standardizing widget themes, and configure SharedAxisPageTransitions.
 
 - [x] Remove direct static AppTheme usages and hardcoded TextStyles from UI layers, relying strictly on Theme.of(context).
 - [x] Standardize AppBar styling by removing hardcoded typography from UI screens and centralizing it in `AppWidgetThemes`.

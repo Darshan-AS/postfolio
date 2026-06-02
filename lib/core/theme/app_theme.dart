@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:animations/animations.dart';
 import 'package:postfolio/core/theme/app_widget_themes.dart';
 
 class AppTheme {
@@ -11,6 +12,19 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: SharedAxisPageTransitionsBuilder(
+            transitionType: SharedAxisTransitionType.horizontal,
+          ),
+          TargetPlatform.iOS: SharedAxisPageTransitionsBuilder(
+            transitionType: SharedAxisTransitionType.horizontal,
+          ),
+          TargetPlatform.macOS: SharedAxisPageTransitionsBuilder(
+            transitionType: SharedAxisTransitionType.horizontal,
+          ),
+        },
+      ),
       appBarTheme: AppWidgetThemes.appBarTheme(colorScheme),
       dividerTheme: AppWidgetThemes.dividerTheme(colorScheme),
       floatingActionButtonTheme: AppWidgetThemes.floatingActionButtonTheme(
@@ -24,6 +38,9 @@ class AppTheme {
       iconButtonTheme: AppWidgetThemes.iconButtonTheme(colorScheme),
       searchBarTheme: AppWidgetThemes.searchBarTheme(colorScheme),
       chipTheme: AppWidgetThemes.chipTheme(colorScheme),
+      expansionTileTheme: AppWidgetThemes.expansionTileTheme(colorScheme),
+      snackBarTheme: AppWidgetThemes.snackBarTheme(colorScheme),
+      radioTheme: AppWidgetThemes.radioTheme(colorScheme),
     );
   }
 

@@ -389,13 +389,11 @@ class _DepositCategorySection<T> extends StatelessWidget {
                 )
                 .values,
             if (closedDeposits.isNotEmpty)
-              Theme(
-                data: theme.copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  shape: const Border(),
-                  collapsedShape: const Border(),
-                  collapsedIconColor: colorScheme.onSurfaceVariant,
-                  iconColor: colorScheme.primary,
+              ExpansionTile(
+                shape: const Border(),
+                collapsedShape: const Border(),
+                collapsedIconColor: colorScheme.onSurfaceVariant,
+                iconColor: colorScheme.primary,
                   title: Text(
                     t.common.countWithLabel(
                       label: DepositStatus.closed.displayName,
@@ -426,7 +424,6 @@ class _DepositCategorySection<T> extends StatelessWidget {
                       )
                       .values
                       .toList(),
-                ),
               ),
           ],
         ),

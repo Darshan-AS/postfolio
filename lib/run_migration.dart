@@ -753,14 +753,14 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                 ),
                 decoration: BoxDecoration(
                   color: useFirebaseEmulator
-                      ? Colors.green.withValues(alpha: 0.1)
+                      ? Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1)
                       : Theme.of(
                           context,
                         ).colorScheme.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   border: Border.all(
                     color: useFirebaseEmulator
-                        ? Colors.green
+                        ? Theme.of(context).colorScheme.tertiary
                         : Theme.of(context).colorScheme.error,
                   ),
                 ),
@@ -770,7 +770,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                     Icon(
                       useFirebaseEmulator ? Icons.bug_report : Icons.warning,
                       color: useFirebaseEmulator
-                          ? Colors.green
+                          ? Theme.of(context).colorScheme.tertiary
                           : Theme.of(context).colorScheme.error,
                       size: 16,
                     ),
@@ -779,7 +779,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                       useFirebaseEmulator ? "EMULATOR MODE" : "PRODUCTION MODE",
                       style: TextStyle(
                         color: useFirebaseEmulator
-                            ? Colors.green
+                            ? Theme.of(context).colorScheme.tertiary
                             : Theme.of(context).colorScheme.error,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -843,8 +843,8 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                         ? null
                         : () => _runMigration(maxCustomers: null),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.tertiary,
+                      foregroundColor: Theme.of(context).colorScheme.onTertiary,
                     ),
                     child: Text(t.migration.migrateAll),
                   ),
