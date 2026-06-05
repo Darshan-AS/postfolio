@@ -519,6 +519,9 @@ class Translations$nominees$en {
 	/// en: 'Nominees'
 	String get title => 'Nominees';
 
+	/// en: 'Nominee'
+	String get singularTitle => 'Nominee';
+
 	/// en: 'Add Nominee'
 	String get addNominee => 'Add Nominee';
 
@@ -1308,6 +1311,7 @@ extension on Translations {
 			'recurringDeposits.fields.startDate' => 'Start Date',
 			'recurringDeposits.fields.maturityDate' => 'Maturity Date',
 			'nominees.title' => 'Nominees',
+			'nominees.singularTitle' => 'Nominee',
 			'nominees.addNominee' => 'Add Nominee',
 			'nominees.editNominee' => 'Edit Nominee',
 			'nominees.deleteNominee' => 'Delete Nominee',

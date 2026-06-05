@@ -22,7 +22,7 @@ class InvestmentProjectionCard extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      margin: EdgeInsets.zero,
+      margin: const EdgeInsets.only(top: AppDimensions.paddingXl),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         side: BorderSide(color: theme.colorScheme.outlineVariant),

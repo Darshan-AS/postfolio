@@ -246,6 +246,7 @@ recurringDeposits:
 
 nominees:
   title: "Nominees"
+  singularTitle: "Nominee"
   addNominee: "Add Nominee"
   editNominee: "Edit Nominee"
   deleteNominee: "Delete Nominee"

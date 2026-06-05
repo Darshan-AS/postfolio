@@ -69,8 +69,29 @@ class AppWidgetThemes {
   static FilledButtonThemeData filledButtonTheme(ColorScheme colorScheme) =>
       FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      );
+
+  static OutlinedButtonThemeData outlinedButtonTheme(ColorScheme colorScheme) =>
+      OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.outlineVariant),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      );
+
+  static TextButtonThemeData textButtonTheme(ColorScheme colorScheme) =>
+      TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: colorScheme.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           ),

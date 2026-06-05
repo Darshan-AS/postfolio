@@ -215,7 +215,6 @@ List<Widget> _buildSavingsBank({
       validator: (val) => Customer.validateSavingsAccount(val, nominees.value),
       textInputAction: TextInputAction.next,
     ),
-    AppSpacings.gapMd,
     NomineesInputSection(
       nominees: nominees.value,
       onChanged: (newNominees) {
