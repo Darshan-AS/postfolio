@@ -41,31 +41,13 @@ class NomineesInputSection extends HookWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              t.nominees.title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            FilledButton.tonalIcon(
-              onPressed: _addNominee,
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedAdd01,
-                size: AppDimensions.iconMd,
-              ),
-              label: Text(t.nominees.addNominee),
-            ),
-          ],
+        FormSectionHeader(
+          title: t.nominees.title,
         ),
-        AppSpacings.gapSm,
         if (nominees.isEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: AppDimensions.paddingMd,
+            padding: const EdgeInsets.only(
+              bottom: AppDimensions.paddingMd,
             ),
             child: Text(
               t.nominees.noNominees,
@@ -92,6 +74,17 @@ class NomineesInputSection extends HookWidget {
               );
             },
           ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: FilledButton.tonalIcon(
+            onPressed: _addNominee,
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedAdd01,
+              size: AppDimensions.iconSm,
+            ),
+            label: Text(t.nominees.addNominee),
+          ),
+        ),
       ],
     );
   }
@@ -173,7 +166,7 @@ Widget _buildNomineeHeader(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
       Text(
-        '${t.nominees.title} ${index + 1}',
+        '${t.nominees.singularTitle} ${index + 1}',
         style: Theme.of(context).textTheme.titleSmall,
       ),
       IconButton(

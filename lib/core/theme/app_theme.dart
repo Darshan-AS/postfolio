@@ -33,6 +33,8 @@ class AppTheme {
       cardTheme: AppWidgetThemes.cardTheme(colorScheme),
       elevatedButtonTheme: AppWidgetThemes.elevatedButtonTheme(colorScheme),
       filledButtonTheme: AppWidgetThemes.filledButtonTheme(colorScheme),
+      outlinedButtonTheme: AppWidgetThemes.outlinedButtonTheme(colorScheme),
+      textButtonTheme: AppWidgetThemes.textButtonTheme(colorScheme),
       segmentedButtonTheme: AppWidgetThemes.segmentedButtonTheme(colorScheme),
       inputDecorationTheme: AppWidgetThemes.inputDecorationTheme(colorScheme),
       iconButtonTheme: AppWidgetThemes.iconButtonTheme(colorScheme),

@@ -277,7 +277,6 @@ List<Widget> _buildInvestmentDetails(
         selectedTermMonths.value = months;
       },
     ),
-    AppSpacings.gapXl,
     InvestmentProjectionCard(projection: projection),
   ];
 }
