@@ -6,7 +6,7 @@
 - [ ] **Denormalize Customer Data**: Add `customerName` to Deposits to avoid N+1 queries.
 - [ ] **Pagination**: Implement Server-Side Pagination & Infinite Scrolling UI (`limit()`, `startAfterDocument()`).
 - [ ] **Search/Sort Refactor**: Move Filtering/Sorting to Server-Side (Firestore `orderBy` and Prefix Search).
-- [ ] **Web Support**: Enable Firestore Web Offline Persistence.
+- [x] **Web Support**: Enable Firestore Web Offline Persistence.
 
 ## 🧮 Domain Math & Business Logic
 - [ ] **Commissions**: Auto-calculate Gross Commission, deduct 2% TDS, and derive Net Payout.
@@ -29,6 +29,7 @@
   - [ ] Implement dark theme support.
 - [ ] **Media**: Implement image capture and display for customer profiles.
 - [ ] **Routing UX**: Re-evaluate context-aware "back" navigation (e.g., Detail -> List vs Detail -> Home).
+- [ ] **Predictive Back Gesture**: Add predictive back gestures. The last trial had issues between customer detail page to customer list page.
 - [ ] **Minor Fixes**: Remove duplicate display of RD interest rate; replace `FilledButton` with `AppButton` (if deemed necessary).
 
 ## ⚙️ Architecture, Tooling & Security
