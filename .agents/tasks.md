@@ -24,7 +24,7 @@
 - [ ] **Visual Enhancements**:
   - [ ] Redesign leading visual elements in deposit list tiles (replace generic circular icons).
   - [ ] Apply distinct color coding for deposit types.
-  - [ ] Enhance visual prominence of scheme type in detail views.
+  - [x] Enhance visual prominence of scheme type in detail views and forms (Migrated Dropdowns to Segmented Buttons).
   - [ ] Add relative time display (`timeago`).
   - [ ] Implement dark theme support.
 - [ ] **Media**: Implement image capture and display for customer profiles.

@@ -182,26 +182,36 @@ List<Widget> _buildInvestmentDetails(
 }) {
   return [
     FormSectionHeader(title: t.recurringDeposits.sections.investmentDetails),
-    AppDropdownField<RecurringSchemeType>(
+    AppSegmentedButtonField<RecurringSchemeType>(
       value: selectedScheme.value,
       labelText: t.recurringDeposits.fields.schemeType,
-      items: RecurringSchemeType.values
+      segments: RecurringSchemeType.values
           .map(
-            (scheme) => DropdownMenuItem(
+            (scheme) => ButtonSegment(
               value: scheme,
-              child: Text(scheme.displayName),
+              label: Text(scheme.shortName),
             ),
           )
           .toList(),
       onChanged: (scheme) {
-        if (scheme != null) {
-          selectedScheme.value = scheme;
-          selectedTermYears.value = scheme.defaultTenureYears;
-        }
+        selectedScheme.value = scheme;
+        selectedTermYears.value = scheme.defaultTenureYears;
       },
       prefixIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedLayers01,
         size: AppDimensions.iconMd,
+      ),
+    ),
+    Padding(
+      padding: const EdgeInsets.only(
+        top: AppDimensions.paddingXs,
+        left: AppDimensions.paddingSm,
+      ),
+      child: Text(
+        selectedScheme.value.displayName,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+            ),
       ),
     ),
     AppSpacings.gapLg,

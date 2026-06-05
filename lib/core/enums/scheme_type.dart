@@ -19,7 +19,11 @@ enum TenureInputType { singleFixed, fixedOptions, derived }
 
 @JsonEnum()
 enum RecurringSchemeType {
-  recurringDeposit;
+  recurringDeposit(shortName: 'RD');
+
+  final String shortName;
+
+  const RecurringSchemeType({required this.shortName});
 
   String get displayName => t.enums.recurringSchemeType[name] ?? name;
 }
