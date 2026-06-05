@@ -2,6 +2,7 @@
 
 ## Current State
 - Set up core architecture with Riverpod, Freezed, and standard thematic elements.
+- Enabled Firestore Offline Persistence for the Web platform to support cache reading and reduce billable quota hits.
 - Integrated Firebase Auth and Google Sign-In into the core domain layer (`AppUser`, `AuthState`).
 - Configured GoRouter with reactive routing, enforcing redirect rules using an auth-based listenable.
 - Built a functional `AuthRepository` and `AuthController` employing native Dart 3 features for exception handling.
