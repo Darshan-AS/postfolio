@@ -63,45 +63,37 @@ class _OneTimeDepositForm extends HookConsumerWidget {
       initialCustomerId: initialCustomerId,
     );
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        state.handleBack();
-      },
-      child: Scaffold(
-        appBar: FormAppBar(
-          title: state.isUpdating
-              ? t.oneTimeDeposits.editDeposit
-              : t.oneTimeDeposits.newDeposit,
-          isSaving: state.isSaving.value,
-          onSave: state.save,
-          onBack: state.handleBack,
-        ),
-        body: Form(
-          key: state.formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(AppDimensions.paddingLg),
-            children: [
-              ..._buildAccountInformation(
-                selectedCustomerId: state.selectedCustomerId,
-                accountNoController: state.accountNoController,
-                selectedStatus: state.selectedStatus,
-              ),
-              ..._buildInvestmentDetails(
-                context,
-                selectedScheme: state.selectedScheme,
-                selectedTermYears: state.selectedTermYears,
-                selectedTermMonths: state.selectedTermMonths,
-                principalAmountController: state.principalAmountController,
-                interestRateController: state.interestRateController,
-                startDate: state.startDate,
-                startDateController: state.startDateController,
-                projection: state.projection,
-              ),
-              ..._buildNomineesSection(nominees: state.nominees),
-            ],
-          ),
+    return Scaffold(
+      appBar: FormAppBar(
+        title: state.isUpdating
+            ? t.oneTimeDeposits.editDeposit
+            : t.oneTimeDeposits.newDeposit,
+        isSaving: state.isSaving.value,
+        onSave: state.save,
+      ),
+      body: Form(
+        key: state.formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(AppDimensions.paddingLg),
+          children: [
+            ..._buildAccountInformation(
+              selectedCustomerId: state.selectedCustomerId,
+              accountNoController: state.accountNoController,
+              selectedStatus: state.selectedStatus,
+            ),
+            ..._buildInvestmentDetails(
+              context,
+              selectedScheme: state.selectedScheme,
+              selectedTermYears: state.selectedTermYears,
+              selectedTermMonths: state.selectedTermMonths,
+              principalAmountController: state.principalAmountController,
+              interestRateController: state.interestRateController,
+              startDate: state.startDate,
+              startDateController: state.startDateController,
+              projection: state.projection,
+            ),
+            ..._buildNomineesSection(nominees: state.nominees),
+          ],
         ),
       ),
     );
@@ -175,10 +167,8 @@ List<Widget> _buildInvestmentDetails(
       labelText: t.oneTimeDeposits.fields.schemeType,
       segments: OneTimeSchemeType.values
           .map(
-            (scheme) => ButtonSegment(
-              value: scheme,
-              label: Text(scheme.shortName),
-            ),
+            (scheme) =>
+                ButtonSegment(value: scheme, label: Text(scheme.shortName)),
           )
           .toList(),
       onChanged: (scheme) {
@@ -198,8 +188,8 @@ List<Widget> _buildInvestmentDetails(
       child: Text(
         selectedScheme.value.displayName,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
     ),
     AppSpacings.gapLg,

@@ -394,36 +394,36 @@ class _DepositCategorySection<T> extends StatelessWidget {
                 collapsedShape: const Border(),
                 collapsedIconColor: colorScheme.onSurfaceVariant,
                 iconColor: colorScheme.primary,
-                  title: Text(
-                    t.common.countWithLabel(
-                      label: DepositStatus.closed.displayName,
-                      count: closedDeposits.length,
-                    ),
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                title: Text(
+                  t.common.countWithLabel(
+                    label: DepositStatus.closed.displayName,
+                    count: closedDeposits.length,
                   ),
-                  children: closedDeposits
-                      .asMap()
-                      .map(
-                        (index, deposit) => MapEntry(
-                          index,
-                          Column(
-                            children: [
-                              Opacity(
-                                opacity: AppDimensions.opacityMuted,
-                                child: itemBuilder(deposit),
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                children: closedDeposits
+                    .asMap()
+                    .map(
+                      (index, deposit) => MapEntry(
+                        index,
+                        Column(
+                          children: [
+                            Opacity(
+                              opacity: AppDimensions.opacityMuted,
+                              child: itemBuilder(deposit),
+                            ),
+                            if (index < closedDeposits.length - 1)
+                              const Divider(
+                                height: AppDimensions.dividerHeight,
                               ),
-                              if (index < closedDeposits.length - 1)
-                                const Divider(
-                                  height: AppDimensions.dividerHeight,
-                                ),
-                            ],
-                          ),
+                          ],
                         ),
-                      )
-                      .values
-                      .toList(),
+                      ),
+                    )
+                    .values
+                    .toList(),
               ),
           ],
         ),

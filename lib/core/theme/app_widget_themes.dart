@@ -199,7 +199,9 @@ class AppWidgetThemes {
 
   static ExpansionTileThemeData expansionTileTheme(ColorScheme colorScheme) =>
       ExpansionTileThemeData(
-        backgroundColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        backgroundColor: colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.3,
+        ),
         collapsedBackgroundColor: Colors.transparent,
         textColor: colorScheme.onSurface,
         collapsedTextColor: colorScheme.onSurface,
@@ -221,14 +223,14 @@ class AppWidgetThemes {
       );
 
   static RadioThemeData radioTheme(ColorScheme colorScheme) => RadioThemeData(
-        fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return colorScheme.primary;
-          }
-          if (states.contains(WidgetState.disabled)) {
-            return colorScheme.onSurface.withValues(alpha: 0.38);
-          }
-          return colorScheme.onSurfaceVariant;
-        }),
-      );
+    fillColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
+        return colorScheme.primary;
+      }
+      if (states.contains(WidgetState.disabled)) {
+        return colorScheme.onSurface.withValues(alpha: 0.38);
+      }
+      return colorScheme.onSurfaceVariant;
+    }),
+  );
 }

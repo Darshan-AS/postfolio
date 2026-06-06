@@ -4,20 +4,22 @@ import 'package:postfolio/i18n/strings.g.dart';
 
 part 'customer_search_criteria.freezed.dart';
 
-enum CustomerSortField { 
-  name, 
+enum CustomerSortField {
+  name,
   createdAt;
 
   String get label => (t.sorting.properties[this.name] ?? name) as String;
 
   String directionLabel(SortDirection direction) {
     return switch (this) {
-      CustomerSortField.name => direction.isAscending 
-          ? t.sorting.directions.name.asc 
-          : t.sorting.directions.name.desc,
-      CustomerSortField.createdAt => direction.isAscending 
-          ? t.sorting.directions.date.asc 
-          : t.sorting.directions.date.desc,
+      CustomerSortField.name =>
+        direction.isAscending
+            ? t.sorting.directions.name.asc
+            : t.sorting.directions.name.desc,
+      CustomerSortField.createdAt =>
+        direction.isAscending
+            ? t.sorting.directions.date.asc
+            : t.sorting.directions.date.desc,
     };
   }
 }

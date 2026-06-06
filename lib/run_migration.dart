@@ -753,7 +753,9 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                 ),
                 decoration: BoxDecoration(
                   color: useFirebaseEmulator
-                      ? Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1)
+                      ? Theme.of(
+                          context,
+                        ).colorScheme.tertiary.withValues(alpha: 0.1)
                       : Theme.of(
                           context,
                         ).colorScheme.error.withValues(alpha: 0.1),

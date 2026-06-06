@@ -32,22 +32,22 @@ class RecurringListCriteria extends _$RecurringListCriteria {
   }
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  
+
   void updateSortField(RDSortField field) {
     state = state.copyWith(sortField: field);
     ref.read(storageServiceProvider).setRDSortField(field);
   }
-  
+
   void updateSortDirection(SortDirection direction) {
     state = state.copyWith(sortDirection: direction);
     ref.read(storageServiceProvider).setRDSortDirection(direction);
   }
-  
+
   void toggleFilter(DepositStatus status) {
     final newFilters = state.statusFilters.contains(status)
         ? state.statusFilters.where((s) => s != status).toList()
         : [...state.statusFilters, status];
-        
+
     state = state.copyWith(statusFilters: newFilters);
     ref.read(storageServiceProvider).setRDStatusFilters(newFilters);
   }
@@ -56,7 +56,7 @@ class RecurringListCriteria extends _$RecurringListCriteria {
     final newFilters = state.urgencyFilters.contains(urgency)
         ? state.urgencyFilters.where((u) => u != urgency).toList()
         : [...state.urgencyFilters, urgency];
-        
+
     state = state.copyWith(urgencyFilters: newFilters);
     ref.read(storageServiceProvider).setRDUrgencyFilters(newFilters);
   }

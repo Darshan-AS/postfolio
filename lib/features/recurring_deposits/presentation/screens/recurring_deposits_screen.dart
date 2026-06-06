@@ -53,7 +53,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             trailing: [
               IconButton(
                 icon: Badge(
-                  isLabelVisible: criteria.sortField != RDSortField.serialNo ||
+                  isLabelVisible:
+                      criteria.sortField != RDSortField.serialNo ||
                       criteria.sortDirection != SortDirection.asc,
                   smallSize: AppDimensions.badgeSizeSm,
                   child: const HugeIcon(
@@ -66,7 +67,9 @@ class RecurringDepositsScreen extends HookConsumerWidget {
                     context: context,
                     builder: (context) => Consumer(
                       builder: (context, ref, _) {
-                        final criteria = ref.watch(recurringListCriteriaProvider);
+                        final criteria = ref.watch(
+                          recurringListCriteriaProvider,
+                        );
                         return AppSortBottomSheet<RDSortField>(
                           title: t.sorting.title,
                           fields: RDSortField.values,
@@ -147,8 +150,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
           AppSpacings.gapMd,
           Expanded(
             child: switch (depositsState) {
-              AsyncData(:final value) => _buildDataState(
-                  context, ref, value),
+              AsyncData(:final value) => _buildDataState(context, ref, value),
               AsyncError(:final error) => ErrorStateView(
                 message: error.toString(),
                 onRetry: () =>

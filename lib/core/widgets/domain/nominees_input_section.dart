@@ -41,14 +41,10 @@ class NomineesInputSection extends HookWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FormSectionHeader(
-          title: t.nominees.title,
-        ),
+        FormSectionHeader(title: t.nominees.title),
         if (nominees.isEmpty)
           Padding(
-            padding: const EdgeInsets.only(
-              bottom: AppDimensions.paddingMd,
-            ),
+            padding: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
             child: Text(
               t.nominees.noNominees,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(

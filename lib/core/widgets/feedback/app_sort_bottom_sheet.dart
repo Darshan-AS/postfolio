@@ -71,10 +71,10 @@ class AppSortBottomSheet<T> extends StatelessWidget {
                   ),
                   trailing: isSelected
                       ? HugeIcon(
-                        icon: HugeIcons.strokeRoundedCheckmarkCircle01,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: AppDimensions.iconSm,
-                      )
+                          icon: HugeIcons.strokeRoundedCheckmarkCircle01,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: AppDimensions.iconSm,
+                        )
                       : null,
                   onTap: () {
                     onSelected(field, selectedDirection);
@@ -104,10 +104,7 @@ class AppSortBottomSheet<T> extends StatelessWidget {
           ),
           const Spacer(),
           if (onReset != null)
-            TextButton(
-              onPressed: onReset!,
-              child: Text(t.common.clear),
-            ),
+            TextButton(onPressed: onReset!, child: Text(t.common.clear)),
           IconButton(
             onPressed: () => Navigator.pop(context),
             icon: const HugeIcon(

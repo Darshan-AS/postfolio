@@ -54,7 +54,9 @@ class CustomersScreen extends HookConsumerWidget {
                     context: context,
                     builder: (context) => Consumer(
                       builder: (context, ref, _) {
-                        final criteria = ref.watch(customerListCriteriaProvider);
+                        final criteria = ref.watch(
+                          customerListCriteriaProvider,
+                        );
                         return AppSortBottomSheet<CustomerSortField>(
                           title: t.sorting.title,
                           fields: CustomerSortField.values,
@@ -84,8 +86,7 @@ class CustomersScreen extends HookConsumerWidget {
           AppSpacings.gapMd,
           Expanded(
             child: switch (customersState) {
-              AsyncData(:final value) => _buildDataState(
-                  context, ref, value),
+              AsyncData(:final value) => _buildDataState(context, ref, value),
               AsyncError(:final error) => ErrorStateView(
                 message: error.toString(),
                 onRetry: () => ref.invalidate(customersControllerProvider),

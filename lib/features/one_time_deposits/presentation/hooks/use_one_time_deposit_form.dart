@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/models/nominee.dart';
-import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
@@ -29,7 +29,6 @@ class OneTimeDepositFormState {
   final ValueNotifier<bool> isSaving;
   final InvestmentProjection projection;
   final VoidCallback save;
-  final VoidCallback handleBack;
   final bool isUpdating;
 
   OneTimeDepositFormState({
@@ -48,7 +47,6 @@ class OneTimeDepositFormState {
     required this.isSaving,
     required this.projection,
     required this.save,
-    required this.handleBack,
     required this.isUpdating,
   });
 }
@@ -145,16 +143,6 @@ OneTimeDepositFormState useOneTimeDepositForm({
     return null;
   }, [selectedScheme.value, currentInterest]);
 
-  void handleBack() {
-    if (isUpdating) {
-      OneTimeDepositDetailRoute(deposit.id).go(context);
-    } else if (initialCustomerId != null) {
-      CustomerDetailRoute(initialCustomerId).go(context);
-    } else {
-      const OneTimeDepositsRoute().go(context);
-    }
-  }
-
   Future<void> save() async {
     if (formKey.currentState!.validate()) {
       if (selectedCustomerId.value == null) {
@@ -189,7 +177,7 @@ OneTimeDepositFormState useOneTimeDepositForm({
 
       switch (result) {
         case Success():
-          handleBack();
+          context.pop();
         case Failure(error: final err):
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -218,7 +206,6 @@ OneTimeDepositFormState useOneTimeDepositForm({
     isSaving: isSaving,
     projection: projection,
     save: save,
-    handleBack: handleBack,
     isUpdating: isUpdating,
   );
 }

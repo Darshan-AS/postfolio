@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/models/nominee.dart';
-import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
@@ -26,7 +26,6 @@ class CustomerFormState {
   final bool isUpdating;
   final Future<void> Function(BuildContext context) selectDate;
   final Future<void> Function(BuildContext context) save;
-  final void Function(BuildContext context) handleBack;
 
   CustomerFormState({
     required this.formKey,
@@ -44,7 +43,6 @@ class CustomerFormState {
     required this.isUpdating,
     required this.selectDate,
     required this.save,
-    required this.handleBack,
   });
 }
 
@@ -95,14 +93,6 @@ CustomerFormState useCustomerForm({
     }
   }
 
-  void handleBack(BuildContext context) {
-    if (isUpdating) {
-      CustomerDetailRoute(customer.id).go(context);
-    } else {
-      const CustomersRoute().go(context);
-    }
-  }
-
   Future<void> save(BuildContext context) async {
     if (formKey.currentState!.validate()) {
       isSaving.value = true;
@@ -127,7 +117,7 @@ CustomerFormState useCustomerForm({
 
       switch (result) {
         case Success():
-          handleBack(context);
+          context.pop();
         case Failure(error: final err):
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -156,6 +146,5 @@ CustomerFormState useCustomerForm({
     isUpdating: isUpdating,
     selectDate: selectDate,
     save: save,
-    handleBack: handleBack,
   );
 }
