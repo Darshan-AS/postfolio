@@ -1,6 +1,7 @@
 # Project Progress
 
 ## Current State
+- Fixed an issue where the sort and filter badges incorrectly displayed on fresh logins by aligning `StorageService` default values with domain models.
 - Set up core architecture with Riverpod, Freezed, and standard thematic elements.
 - Enabled Firestore Offline Persistence for the Web platform to support cache reading and reduce billable quota hits.
 - Integrated Firebase Auth and Google Sign-In into the core domain layer (`AppUser`, `AuthState`).

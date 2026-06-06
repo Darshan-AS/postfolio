@@ -23,12 +23,13 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
   @override
   OTDSearchCriteria build() {
     final storage = ref.watch(storageServiceProvider);
-    return OTDSearchCriteria(
-      sortField: storage.getOTDSortField(),
-      sortDirection: storage.getOTDSortDirection(),
-      statusFilters: storage.getOTDStatusFilters(),
-      urgencyFilters: storage.getOTDUrgencyFilters(),
-      schemeFilters: storage.getOTDSchemeFilters(),
+    const defaults = OTDSearchCriteria();
+    return defaults.copyWith(
+      sortField: storage.getOTDSortField() ?? defaults.sortField,
+      sortDirection: storage.getOTDSortDirection() ?? defaults.sortDirection,
+      statusFilters: storage.getOTDStatusFilters() ?? defaults.statusFilters,
+      urgencyFilters: storage.getOTDUrgencyFilters() ?? defaults.urgencyFilters,
+      schemeFilters: storage.getOTDSchemeFilters() ?? defaults.schemeFilters,
     );
   }
 
