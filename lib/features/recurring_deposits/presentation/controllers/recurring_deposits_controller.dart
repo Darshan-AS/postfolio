@@ -23,11 +23,12 @@ class RecurringListCriteria extends _$RecurringListCriteria {
   @override
   RDSearchCriteria build() {
     final storage = ref.watch(storageServiceProvider);
-    return RDSearchCriteria(
-      sortField: storage.getRDSortField(),
-      sortDirection: storage.getRDSortDirection(),
-      statusFilters: storage.getRDStatusFilters(),
-      urgencyFilters: storage.getRDUrgencyFilters(),
+    const defaults = RDSearchCriteria();
+    return defaults.copyWith(
+      sortField: storage.getRDSortField() ?? defaults.sortField,
+      sortDirection: storage.getRDSortDirection() ?? defaults.sortDirection,
+      statusFilters: storage.getRDStatusFilters() ?? defaults.statusFilters,
+      urgencyFilters: storage.getRDUrgencyFilters() ?? defaults.urgencyFilters,
     );
   }
 

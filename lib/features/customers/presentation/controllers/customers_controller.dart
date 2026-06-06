@@ -17,9 +17,10 @@ class CustomerListCriteria extends _$CustomerListCriteria {
   @override
   CustomerSearchCriteria build() {
     final storage = ref.watch(storageServiceProvider);
-    return CustomerSearchCriteria(
-      sortField: storage.getCustomerSortField(),
-      sortDirection: storage.getCustomerSortDirection(),
+    const defaults = CustomerSearchCriteria();
+    return defaults.copyWith(
+      sortField: storage.getCustomerSortField() ?? defaults.sortField,
+      sortDirection: storage.getCustomerSortDirection() ?? defaults.sortDirection,
     );
   }
 
