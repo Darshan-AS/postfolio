@@ -17,21 +17,26 @@ enum RDSortField {
 
   String directionLabel(SortDirection direction) {
     return switch (this) {
-      RDSortField.serialNo => direction.isAscending 
-          ? t.sorting.directions.serialNo.asc 
-          : t.sorting.directions.serialNo.desc,
-      RDSortField.maturityDate => direction.isAscending 
-          ? t.sorting.directions.maturity.asc 
-          : t.sorting.directions.maturity.desc,
-      RDSortField.startDate => direction.isAscending 
-          ? t.sorting.directions.date.asc 
-          : t.sorting.directions.date.desc,
-      RDSortField.name => direction.isAscending 
-          ? t.sorting.directions.name.asc 
-          : t.sorting.directions.name.desc,
-      RDSortField.amount => direction.isAscending 
-          ? t.sorting.directions.amount.asc 
-          : t.sorting.directions.amount.desc,
+      RDSortField.serialNo =>
+        direction.isAscending
+            ? t.sorting.directions.serialNo.asc
+            : t.sorting.directions.serialNo.desc,
+      RDSortField.maturityDate =>
+        direction.isAscending
+            ? t.sorting.directions.maturity.asc
+            : t.sorting.directions.maturity.desc,
+      RDSortField.startDate =>
+        direction.isAscending
+            ? t.sorting.directions.date.asc
+            : t.sorting.directions.date.desc,
+      RDSortField.name =>
+        direction.isAscending
+            ? t.sorting.directions.name.asc
+            : t.sorting.directions.name.desc,
+      RDSortField.amount =>
+        direction.isAscending
+            ? t.sorting.directions.amount.asc
+            : t.sorting.directions.amount.desc,
     };
   }
 }

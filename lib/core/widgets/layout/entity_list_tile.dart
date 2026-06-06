@@ -190,10 +190,7 @@ class EntityListTile extends StatelessWidget {
                       ),
                       child: action.icon,
                     ),
-                    child: Text(
-                      action.label,
-                      style: TextStyle(color: color),
-                    ),
+                    child: Text(action.label, style: TextStyle(color: color)),
                   );
                 }).toList(),
               ),

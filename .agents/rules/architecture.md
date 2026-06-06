@@ -6,8 +6,14 @@
 - **Feature-First Structure**: `lib/features/<feature>/` with `data`, `domain`, and `presentation` layers. Layers must be isolated.
 
 ## 2. Routing (go_router)
-- **Declarative Navigation**: Prefer `.go(context)` for routes in the URI hierarchy.
-- **Imperative Navigation**: Use `.push(context)` only for overlays or when awaiting a result.
+- **Navigation Policy (`go` vs `push`)**: 
+  - **`go()` (Declarative/Logical Navigation)**: Replaces the current navigation stack to match the exact route hierarchy defined in the router configuration. 
+    - **Use for**: Primary navigation (Tabs, Shell routes, Auth redirects), Deep Linking, and horizontal structural movement.
+    - **Why**: Perfect for Web Deep Linking and predictable state. Required for Bottom Navigation.
+  - **`push()` (Imperative/Temporal Navigation)**: Adds the new route strictly on top of whatever the current stack is.
+    - **Use for**: Master-Detail Flow (List -> Item), Forms, Data Entry, and vertical hierarchical movement.
+    - **Why**: Perfect for Mobile UX. The hardware back button or swipe-to-go-back gesture (Predictive Back on Android) will take the user exactly back to where they were.
+- **Deep Links**: Do not pass complex objects via `extra`. Pass primitive IDs in the URL to ensure Web Deep Links don't break on page refresh.
 - **Keyboard Handling**: Let the outer `Scaffold` handle resizing. Use a `Builder` inside the body if `MediaQuery` modification is needed.
 
 ## 3. Backend (Firebase)

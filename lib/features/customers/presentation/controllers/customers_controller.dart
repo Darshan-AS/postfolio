@@ -24,30 +24,38 @@ class CustomerListCriteria extends _$CustomerListCriteria {
   }
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  
+
   void updateSortField(CustomerSortField field) {
     state = state.copyWith(sortField: field);
     ref.read(storageServiceProvider).setCustomerSortField(field);
   }
-  
+
   void updateSortDirection(SortDirection direction) {
     state = state.copyWith(sortDirection: direction);
     ref.read(storageServiceProvider).setCustomerSortDirection(direction);
   }
-  
+
   void clearSort() {
     state = state.copyWith(
       sortField: CustomerSortField.name,
       sortDirection: SortDirection.asc,
     );
-    ref.read(storageServiceProvider).setCustomerSortField(CustomerSortField.name);
-    ref.read(storageServiceProvider).setCustomerSortDirection(SortDirection.asc);
+    ref
+        .read(storageServiceProvider)
+        .setCustomerSortField(CustomerSortField.name);
+    ref
+        .read(storageServiceProvider)
+        .setCustomerSortDirection(SortDirection.asc);
   }
-  
+
   void clearAll() {
     state = const CustomerSearchCriteria();
-    ref.read(storageServiceProvider).setCustomerSortField(CustomerSortField.name);
-    ref.read(storageServiceProvider).setCustomerSortDirection(SortDirection.asc);
+    ref
+        .read(storageServiceProvider)
+        .setCustomerSortField(CustomerSortField.name);
+    ref
+        .read(storageServiceProvider)
+        .setCustomerSortDirection(SortDirection.asc);
   }
 }
 

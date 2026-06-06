@@ -33,22 +33,22 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
   }
 
   void updateSearch(String query) => state = state.copyWith(searchQuery: query);
-  
+
   void updateSortField(OTDSortField field) {
     state = state.copyWith(sortField: field);
     ref.read(storageServiceProvider).setOTDSortField(field);
   }
-  
+
   void updateSortDirection(SortDirection direction) {
     state = state.copyWith(sortDirection: direction);
     ref.read(storageServiceProvider).setOTDSortDirection(direction);
   }
-  
+
   void toggleStatusFilter(DepositStatus status) {
     final newFilters = state.statusFilters.contains(status)
         ? state.statusFilters.where((s) => s != status).toList()
         : [...state.statusFilters, status];
-        
+
     state = state.copyWith(statusFilters: newFilters);
     ref.read(storageServiceProvider).setOTDStatusFilters(newFilters);
   }
@@ -57,7 +57,7 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
     final newFilters = state.urgencyFilters.contains(urgency)
         ? state.urgencyFilters.where((u) => u != urgency).toList()
         : [...state.urgencyFilters, urgency];
-        
+
     state = state.copyWith(urgencyFilters: newFilters);
     ref.read(storageServiceProvider).setOTDUrgencyFilters(newFilters);
   }
@@ -66,7 +66,7 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
     final newFilters = state.schemeFilters.contains(type)
         ? state.schemeFilters.where((t) => t != type).toList()
         : [...state.schemeFilters, type];
-        
+
     state = state.copyWith(schemeFilters: newFilters);
     ref.read(storageServiceProvider).setOTDSchemeFilters(newFilters);
   }
@@ -95,7 +95,9 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
       urgencyFilters: const [],
       schemeFilters: const [],
     );
-    ref.read(storageServiceProvider).setOTDStatusFilters([DepositStatus.active]);
+    ref.read(storageServiceProvider).setOTDStatusFilters([
+      DepositStatus.active,
+    ]);
     ref.read(storageServiceProvider).setOTDUrgencyFilters([]);
     ref.read(storageServiceProvider).setOTDSchemeFilters([]);
   }

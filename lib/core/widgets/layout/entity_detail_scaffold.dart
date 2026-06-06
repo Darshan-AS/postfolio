@@ -109,8 +109,8 @@ class EntityDetailScaffold extends StatelessWidget {
         AppDimensions.paddingLg,
         AppDimensions.paddingLg,
         AppDimensions.paddingLg,
-        floatingActionButton != null 
-            ? AppDimensions.listBottomPaddingFAB 
+        floatingActionButton != null
+            ? AppDimensions.listBottomPaddingFAB
             : AppDimensions.paddingLg,
       ),
       children: [header, AppSpacings.gapXxl, ...body]

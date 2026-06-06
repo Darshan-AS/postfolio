@@ -48,7 +48,9 @@ class AppDialogs {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: icon != null ? Icon(icon, color: theme.colorScheme.primary) : null,
+        icon: icon != null
+            ? Icon(icon, color: theme.colorScheme.primary)
+            : null,
         title: Text(title),
         content: Text(content),
         actions: [
@@ -78,7 +80,7 @@ class AppDialogs {
     required String message,
   }) {
     final theme = Theme.of(context);
-    
+
     return showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(

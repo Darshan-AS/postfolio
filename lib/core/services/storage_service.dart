@@ -28,16 +28,16 @@ class StorageService {
 
   static const _demoModeKey = 'demo_mode_enabled';
   static const _themeModeKey = 'theme_mode';
-  
+
   static const _customerSortFieldKey = 'customer_sort_field';
   static const _customerSortDirectionKey = 'customer_sort_direction';
-  
+
   static const _otdSortFieldKey = 'otd_sort_field';
   static const _otdSortDirectionKey = 'otd_sort_direction';
   static const _otdStatusFiltersKey = 'otd_status_filters';
   static const _otdUrgencyFiltersKey = 'otd_urgency_filters';
   static const _otdSchemeFiltersKey = 'otd_scheme_filters';
-  
+
   static const _rdSortFieldKey = 'rd_sort_field';
   static const _rdSortDirectionKey = 'rd_sort_direction';
   static const _rdStatusFiltersKey = 'rd_status_filters';
@@ -59,7 +59,8 @@ class StorageService {
     return AppThemeMode.system;
   }
 
-  Future<void> setThemeMode(AppThemeMode mode) => _prefs.setString(_themeModeKey, mode.name);
+  Future<void> setThemeMode(AppThemeMode mode) =>
+      _prefs.setString(_themeModeKey, mode.name);
 
   // Customers Criteria
   CustomerSortField getCustomerSortField() {
@@ -73,7 +74,8 @@ class StorageService {
     return CustomerSortField.name;
   }
 
-  Future<void> setCustomerSortField(CustomerSortField field) => _prefs.setString(_customerSortFieldKey, field.name);
+  Future<void> setCustomerSortField(CustomerSortField field) =>
+      _prefs.setString(_customerSortFieldKey, field.name);
 
   SortDirection getCustomerSortDirection() {
     final dirString = _prefs.getString(_customerSortDirectionKey);
@@ -86,7 +88,8 @@ class StorageService {
     return SortDirection.asc;
   }
 
-  Future<void> setCustomerSortDirection(SortDirection direction) => _prefs.setString(_customerSortDirectionKey, direction.name);
+  Future<void> setCustomerSortDirection(SortDirection direction) =>
+      _prefs.setString(_customerSortDirectionKey, direction.name);
 
   // One-Time Deposits Criteria
   OTDSortField getOTDSortField() {
@@ -100,7 +103,8 @@ class StorageService {
     return OTDSortField.startDate;
   }
 
-  Future<void> setOTDSortField(OTDSortField field) => _prefs.setString(_otdSortFieldKey, field.name);
+  Future<void> setOTDSortField(OTDSortField field) =>
+      _prefs.setString(_otdSortFieldKey, field.name);
 
   SortDirection getOTDSortDirection() {
     final dirString = _prefs.getString(_otdSortDirectionKey);
@@ -113,37 +117,65 @@ class StorageService {
     return SortDirection.desc;
   }
 
-  Future<void> setOTDSortDirection(SortDirection direction) => _prefs.setString(_otdSortDirectionKey, direction.name);
+  Future<void> setOTDSortDirection(SortDirection direction) =>
+      _prefs.setString(_otdSortDirectionKey, direction.name);
 
   List<DepositStatus> getOTDStatusFilters() {
     final strings = _prefs.getStringList(_otdStatusFiltersKey);
     if (strings != null) {
-      return strings.map((s) => DepositStatus.values.firstWhere((e) => e.name == s, orElse: () => DepositStatus.active)).toList();
+      return strings
+          .map(
+            (s) => DepositStatus.values.firstWhere(
+              (e) => e.name == s,
+              orElse: () => DepositStatus.active,
+            ),
+          )
+          .toList();
     }
     return [];
   }
 
-  Future<void> setOTDStatusFilters(List<DepositStatus> filters) => _prefs.setStringList(_otdStatusFiltersKey, filters.map((e) => e.name).toList());
+  Future<void> setOTDStatusFilters(List<DepositStatus> filters) => _prefs
+      .setStringList(_otdStatusFiltersKey, filters.map((e) => e.name).toList());
 
   List<MaturityUrgency> getOTDUrgencyFilters() {
     final strings = _prefs.getStringList(_otdUrgencyFiltersKey);
     if (strings != null) {
-      return strings.map((s) => MaturityUrgency.values.firstWhere((e) => e.name == s, orElse: () => MaturityUrgency.normal)).toList();
+      return strings
+          .map(
+            (s) => MaturityUrgency.values.firstWhere(
+              (e) => e.name == s,
+              orElse: () => MaturityUrgency.normal,
+            ),
+          )
+          .toList();
     }
     return [];
   }
 
-  Future<void> setOTDUrgencyFilters(List<MaturityUrgency> filters) => _prefs.setStringList(_otdUrgencyFiltersKey, filters.map((e) => e.name).toList());
+  Future<void> setOTDUrgencyFilters(List<MaturityUrgency> filters) =>
+      _prefs.setStringList(
+        _otdUrgencyFiltersKey,
+        filters.map((e) => e.name).toList(),
+      );
 
   List<OneTimeSchemeType> getOTDSchemeFilters() {
     final strings = _prefs.getStringList(_otdSchemeFiltersKey);
     if (strings != null) {
-      return strings.map((s) => OneTimeSchemeType.values.firstWhere((e) => e.name == s, orElse: () => OneTimeSchemeType.timeDeposit)).toList();
+      return strings
+          .map(
+            (s) => OneTimeSchemeType.values.firstWhere(
+              (e) => e.name == s,
+              orElse: () => OneTimeSchemeType.timeDeposit,
+            ),
+          )
+          .toList();
     }
     return [];
   }
 
-  Future<void> setOTDSchemeFilters(List<OneTimeSchemeType> filters) => _prefs.setStringList(_otdSchemeFiltersKey, filters.map((e) => e.name).toList());
+  Future<void> setOTDSchemeFilters(List<OneTimeSchemeType> filters) => _prefs
+      .setStringList(_otdSchemeFiltersKey, filters.map((e) => e.name).toList());
 
   // Recurring Deposits Criteria
   RDSortField getRDSortField() {
@@ -157,7 +189,8 @@ class StorageService {
     return RDSortField.startDate;
   }
 
-  Future<void> setRDSortField(RDSortField field) => _prefs.setString(_rdSortFieldKey, field.name);
+  Future<void> setRDSortField(RDSortField field) =>
+      _prefs.setString(_rdSortFieldKey, field.name);
 
   SortDirection getRDSortDirection() {
     final dirString = _prefs.getString(_rdSortDirectionKey);
@@ -170,25 +203,42 @@ class StorageService {
     return SortDirection.desc;
   }
 
-  Future<void> setRDSortDirection(SortDirection direction) => _prefs.setString(_rdSortDirectionKey, direction.name);
+  Future<void> setRDSortDirection(SortDirection direction) =>
+      _prefs.setString(_rdSortDirectionKey, direction.name);
 
   List<DepositStatus> getRDStatusFilters() {
     final strings = _prefs.getStringList(_rdStatusFiltersKey);
     if (strings != null) {
-      return strings.map((s) => DepositStatus.values.firstWhere((e) => e.name == s, orElse: () => DepositStatus.active)).toList();
+      return strings
+          .map(
+            (s) => DepositStatus.values.firstWhere(
+              (e) => e.name == s,
+              orElse: () => DepositStatus.active,
+            ),
+          )
+          .toList();
     }
     return [];
   }
 
-  Future<void> setRDStatusFilters(List<DepositStatus> filters) => _prefs.setStringList(_rdStatusFiltersKey, filters.map((e) => e.name).toList());
+  Future<void> setRDStatusFilters(List<DepositStatus> filters) => _prefs
+      .setStringList(_rdStatusFiltersKey, filters.map((e) => e.name).toList());
 
   List<MaturityUrgency> getRDUrgencyFilters() {
     final strings = _prefs.getStringList(_rdUrgencyFiltersKey);
     if (strings != null) {
-      return strings.map((s) => MaturityUrgency.values.firstWhere((e) => e.name == s, orElse: () => MaturityUrgency.normal)).toList();
+      return strings
+          .map(
+            (s) => MaturityUrgency.values.firstWhere(
+              (e) => e.name == s,
+              orElse: () => MaturityUrgency.normal,
+            ),
+          )
+          .toList();
     }
     return [];
   }
 
-  Future<void> setRDUrgencyFilters(List<MaturityUrgency> filters) => _prefs.setStringList(_rdUrgencyFiltersKey, filters.map((e) => e.name).toList());
+  Future<void> setRDUrgencyFilters(List<MaturityUrgency> filters) => _prefs
+      .setStringList(_rdUrgencyFiltersKey, filters.map((e) => e.name).toList());
 }

@@ -42,48 +42,40 @@ class _CustomerForm extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = useCustomerForm(ref: ref, customer: existingCustomer);
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        state.handleBack(context);
-      },
-      child: Scaffold(
-        appBar: FormAppBar(
-          title: state.isUpdating
-              ? t.customers.editCustomer
-              : t.customers.newCustomer,
-          isSaving: state.isSaving.value,
-          onSave: () => state.save(context),
-          onBack: () => state.handleBack(context),
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppDimensions.paddingLg),
-          child: Form(
-            key: state.formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ..._buildPersonalInfo(
-                  nameController: state.nameController,
-                  phoneController: state.phoneController,
-                  emailController: state.emailController,
-                  dateOfBirthController: state.dateOfBirthController,
-                  addressController: state.addressController,
-                  onSelectDate: () => state.selectDate(context),
-                ),
-                ..._buildIdentityDocuments(
-                  cifNumberController: state.cifNumberController,
-                  aadhaarNumberController: state.aadhaarNumberController,
-                  panNumberController: state.panNumberController,
-                ),
-                ..._buildSavingsBank(
-                  savingsAccountNumberController:
-                      state.savingsAccountNumberController,
-                  nominees: state.nominees,
-                ),
-              ],
-            ),
+    return Scaffold(
+      appBar: FormAppBar(
+        title: state.isUpdating
+            ? t.customers.editCustomer
+            : t.customers.newCustomer,
+        isSaving: state.isSaving.value,
+        onSave: () => state.save(context),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
+        child: Form(
+          key: state.formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ..._buildPersonalInfo(
+                nameController: state.nameController,
+                phoneController: state.phoneController,
+                emailController: state.emailController,
+                dateOfBirthController: state.dateOfBirthController,
+                addressController: state.addressController,
+                onSelectDate: () => state.selectDate(context),
+              ),
+              ..._buildIdentityDocuments(
+                cifNumberController: state.cifNumberController,
+                aadhaarNumberController: state.aadhaarNumberController,
+                panNumberController: state.panNumberController,
+              ),
+              ..._buildSavingsBank(
+                savingsAccountNumberController:
+                    state.savingsAccountNumberController,
+                nominees: state.nominees,
+              ),
+            ],
           ),
         ),
       ),

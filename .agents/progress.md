@@ -28,6 +28,7 @@
 - Refactored Form Screens (`RecurringDeposit`, `OneTimeDeposit`, `Customer`) to reduce `build` method length and complexity.
 - Introduced `FormSectionHeader` to standardize section headers and reduce repetitive styling code.
 - Replaced the custom `Material` layout in `DemoBanner` with the official Flutter `MaterialBanner` widget, dropping explicit colors to fix a visual crossfade lag issue during theme toggling.
+- Refactored all Form routing to utilize temporal push/pop navigation in accordance with the official GoRouter guidelines, removing manual `PopScope` blocking to correctly support predictive back gestures.
 - Fixed convention violations where inline filtering was used instead of dedicated providers (e.g., `customerByIdProvider`).
 - Migrated `OneTimeDepositRepository` and `RecurringDepositRepository` to `cloud_firestore` with real-time stream sync, utilizing UUID generation for client-side offline support.
 - Fully implemented Demo Mode with a toggle on the login page allowing users to skip authentication and use fake repository data for demonstration purposes. Ensured UI strings use Slang `t` conventions. Users can exit demo mode by logging out from the dashboard.

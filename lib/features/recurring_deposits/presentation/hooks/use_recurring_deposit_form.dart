@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/models/nominee.dart';
-import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
@@ -30,7 +30,6 @@ class RecurringDepositFormState {
   final ValueNotifier<bool> isSaving;
   final InvestmentProjection projection;
   final VoidCallback save;
-  final VoidCallback handleBack;
   final bool isUpdating;
 
   RecurringDepositFormState({
@@ -50,7 +49,6 @@ class RecurringDepositFormState {
     required this.isSaving,
     required this.projection,
     required this.save,
-    required this.handleBack,
     required this.isUpdating,
   });
 }
@@ -128,16 +126,6 @@ RecurringDepositFormState useRecurringDepositForm({
     ],
   );
 
-  void handleBack() {
-    if (isUpdating) {
-      RecurringDepositDetailRoute(deposit.id).go(context);
-    } else if (initialCustomerId != null) {
-      CustomerDetailRoute(initialCustomerId).go(context);
-    } else {
-      const RecurringDepositsRoute().go(context);
-    }
-  }
-
   Future<void> save() async {
     if (formKey.currentState!.validate()) {
       if (selectedCustomerId.value == null) {
@@ -173,7 +161,7 @@ RecurringDepositFormState useRecurringDepositForm({
 
       switch (result) {
         case Success():
-          handleBack();
+          context.pop();
         case Failure(error: final err):
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -203,7 +191,6 @@ RecurringDepositFormState useRecurringDepositForm({
     isSaving: isSaving,
     projection: projection,
     save: save,
-    handleBack: handleBack,
     isUpdating: isUpdating,
   );
 }

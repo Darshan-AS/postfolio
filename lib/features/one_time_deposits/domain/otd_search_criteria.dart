@@ -17,18 +17,22 @@ enum OTDSortField {
 
   String directionLabel(SortDirection direction) {
     return switch (this) {
-      OTDSortField.maturityDate => direction.isAscending 
-          ? t.sorting.directions.maturity.asc 
-          : t.sorting.directions.maturity.desc,
-      OTDSortField.startDate => direction.isAscending 
-          ? t.sorting.directions.date.asc 
-          : t.sorting.directions.date.desc,
-      OTDSortField.name => direction.isAscending 
-          ? t.sorting.directions.name.asc 
-          : t.sorting.directions.name.desc,
-      OTDSortField.amount => direction.isAscending 
-          ? t.sorting.directions.amount.asc 
-          : t.sorting.directions.amount.desc,
+      OTDSortField.maturityDate =>
+        direction.isAscending
+            ? t.sorting.directions.maturity.asc
+            : t.sorting.directions.maturity.desc,
+      OTDSortField.startDate =>
+        direction.isAscending
+            ? t.sorting.directions.date.asc
+            : t.sorting.directions.date.desc,
+      OTDSortField.name =>
+        direction.isAscending
+            ? t.sorting.directions.name.asc
+            : t.sorting.directions.name.desc,
+      OTDSortField.amount =>
+        direction.isAscending
+            ? t.sorting.directions.amount.asc
+            : t.sorting.directions.amount.desc,
     };
   }
 }

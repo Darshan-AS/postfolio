@@ -28,7 +28,7 @@
   - [ ] Add relative time display (`timeago`).
   - [ ] Implement dark theme support.
 - [ ] **Media**: Implement image capture and display for customer profiles.
-- [ ] **Routing UX**: Re-evaluate context-aware "back" navigation (e.g., Detail -> List vs Detail -> Home).
+- [x] **Routing UX**: Re-evaluate context-aware "back" navigation (e.g., Detail -> List vs Detail -> Home).
 - [ ] **Predictive Back Gesture**: Add predictive back gestures. The last trial had issues between customer detail page to customer list page.
 - [ ] **Minor Fixes**: Remove duplicate display of RD interest rate; replace `FilledButton` with `AppButton` (if deemed necessary).
 

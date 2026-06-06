@@ -56,7 +56,8 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
             trailing: [
               IconButton(
                 icon: Badge(
-                  isLabelVisible: criteria.sortField != OTDSortField.maturityDate ||
+                  isLabelVisible:
+                      criteria.sortField != OTDSortField.maturityDate ||
                       criteria.sortDirection != SortDirection.asc,
                   smallSize: AppDimensions.badgeSizeSm,
                   child: const HugeIcon(
@@ -157,8 +158,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
           AppSpacings.gapMd,
           Expanded(
             child: switch (depositsState) {
-              AsyncData(:final value) => _buildDataState(
-                  context, ref, value),
+              AsyncData(:final value) => _buildDataState(context, ref, value),
               AsyncError(:final error) => ErrorStateView(
                 message: error.toString(),
                 onRetry: () =>

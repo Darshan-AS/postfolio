@@ -54,10 +54,7 @@ class AppFilterBottomSheet extends StatelessWidget {
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
-                TextButton(
-                  onPressed: onClearAll,
-                  child: Text(t.common.clear),
-                ),
+                TextButton(onPressed: onClearAll, child: Text(t.common.clear)),
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const HugeIcon(
