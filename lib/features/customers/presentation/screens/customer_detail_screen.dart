@@ -16,6 +16,8 @@ import 'package:postfolio/features/one_time_deposits/presentation/controllers/on
 import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
+import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 
@@ -272,17 +274,13 @@ class _CustomerDepositsSection extends ConsumerWidget {
             .toList() ??
         [];
 
-    int compareMaturityDate(DateTime a, DateTime b) {
-      return a.compareTo(b); // ascending
-    }
-
     final activeOneTime =
         oneTimeDeposits.where((d) => d.status == DepositStatus.active).toList()
-          ..sort((a, b) => compareMaturityDate(a.maturityDate, b.maturityDate));
+          ..sort(OneTimeDeposit.defaultCompare);
 
     final closedOneTime =
         oneTimeDeposits.where((d) => d.status == DepositStatus.closed).toList()
-          ..sort((a, b) => compareMaturityDate(a.maturityDate, b.maturityDate));
+          ..sort(OneTimeDeposit.defaultCompare);
 
     final recurringDeposits =
         recurringDepositsAsync.value
@@ -290,23 +288,17 @@ class _CustomerDepositsSection extends ConsumerWidget {
             .toList() ??
         [];
 
-    int compareSerial(String? a, String? b) {
-      final aNum = int.tryParse(a ?? '0') ?? 0;
-      final bNum = int.tryParse(b ?? '0') ?? 0;
-      return bNum.compareTo(aNum); // descending
-    }
-
     final activeRecurring =
         recurringDeposits
             .where((d) => d.status == DepositStatus.active)
             .toList()
-          ..sort((a, b) => compareSerial(a.serialNo, b.serialNo));
+          ..sort(RecurringDeposit.defaultCompare);
 
     final closedRecurring =
         recurringDeposits
             .where((d) => d.status == DepositStatus.closed)
             .toList()
-          ..sort((a, b) => compareSerial(a.serialNo, b.serialNo));
+          ..sort(RecurringDeposit.defaultCompare);
 
     if (oneTimeDeposits.isEmpty && recurringDeposits.isEmpty) {
       return const SizedBox.shrink();

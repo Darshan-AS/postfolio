@@ -49,6 +49,18 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   @override
   DateTime get maturityDate => projection.maturityDate;
 
+  /// Default sorting logic for Recurring Deposits (ascending by serial no).
+  static int defaultCompare(RecurringDeposit a, RecurringDeposit b) {
+    final sA = a.serialNo ?? '';
+    final sB = b.serialNo ?? '';
+    final numA = int.tryParse(sA);
+    final numB = int.tryParse(sB);
+    if (numA != null && numB != null) {
+      return numA.compareTo(numB);
+    }
+    return sA.compareTo(sB);
+  }
+
   factory RecurringDeposit.fromJson(Map<String, dynamic> json) =>
       _$RecurringDepositFromJson(json);
 

@@ -166,7 +166,7 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
       break;
     case OTDSortField.maturityDate:
       result.sort((a, b) {
-        final comp = a.maturityDate.compareTo(b.maturityDate);
+        final comp = OneTimeDeposit.defaultCompare(a, b);
         return isAsc ? comp : -comp;
       });
       break;

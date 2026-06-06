@@ -66,7 +66,9 @@ class StorageService {
   CustomerSortField? getCustomerSortField() {
     final fieldString = _prefs.getString(_customerSortFieldKey);
     if (fieldString == null) return null;
-    return CustomerSortField.values.where((e) => e.name == fieldString).firstOrNull;
+    return CustomerSortField.values
+        .where((e) => e.name == fieldString)
+        .firstOrNull;
   }
 
   Future<void> setCustomerSortField(CustomerSortField field) =>
@@ -116,7 +118,9 @@ class StorageService {
     final strings = _prefs.getStringList(_otdUrgencyFiltersKey);
     if (strings == null) return null;
     return strings
-        .map((s) => MaturityUrgency.values.where((e) => e.name == s).firstOrNull)
+        .map(
+          (s) => MaturityUrgency.values.where((e) => e.name == s).firstOrNull,
+        )
         .nonNulls
         .toList();
   }
@@ -131,7 +135,9 @@ class StorageService {
     final strings = _prefs.getStringList(_otdSchemeFiltersKey);
     if (strings == null) return null;
     return strings
-        .map((s) => OneTimeSchemeType.values.where((e) => e.name == s).firstOrNull)
+        .map(
+          (s) => OneTimeSchemeType.values.where((e) => e.name == s).firstOrNull,
+        )
         .nonNulls
         .toList();
   }
@@ -174,7 +180,9 @@ class StorageService {
     final strings = _prefs.getStringList(_rdUrgencyFiltersKey);
     if (strings == null) return null;
     return strings
-        .map((s) => MaturityUrgency.values.where((e) => e.name == s).firstOrNull)
+        .map(
+          (s) => MaturityUrgency.values.where((e) => e.name == s).firstOrNull,
+        )
         .nonNulls
         .toList();
   }

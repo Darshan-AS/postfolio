@@ -9,6 +9,7 @@
 - [x] **Web Support**: Enable Firestore Web Offline Persistence.
 
 ## 🧮 Domain Math & Business Logic
+- [ ] **KVP Term DB Sync**: Decide whether to sync the dynamically calculated KVP term to the database (`termYears`/`termMonths`) or skip storing it entirely and rely purely on the dynamic calculation.
 - [ ] **Commissions**: Auto-calculate Gross Commission, deduct 2% TDS, and derive Net Payout.
 - [ ] **Penalties & Rebates**: Calculate RD Late Fees and Advance Deposit Rebates.
 - [ ] **Premature Closure (RD)**: Prompt user for penalty interest rate and show the premature withdrawal amount.
