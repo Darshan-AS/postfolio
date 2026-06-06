@@ -20,7 +20,8 @@ class CustomerListCriteria extends _$CustomerListCriteria {
     const defaults = CustomerSearchCriteria();
     return defaults.copyWith(
       sortField: storage.getCustomerSortField() ?? defaults.sortField,
-      sortDirection: storage.getCustomerSortDirection() ?? defaults.sortDirection,
+      sortDirection:
+          storage.getCustomerSortDirection() ?? defaults.sortDirection,
     );
   }
 

@@ -49,6 +49,11 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
   @override
   DateTime get maturityDate => projection.maturityDate;
 
+  /// Default sorting logic for One Time Deposits (ascending by maturity date).
+  static int defaultCompare(OneTimeDeposit a, OneTimeDeposit b) {
+    return a.maturityDate.compareTo(b.maturityDate);
+  }
+
   factory OneTimeDeposit.fromJson(Map<String, dynamic> json) =>
       _$OneTimeDepositFromJson(json);
 
