@@ -42,7 +42,7 @@ final class CustomerListCriteriaProvider
 }
 
 String _$customerListCriteriaHash() =>
-    r'750b7a0572ee7496c0ca4ef6dac5d4d49b090e54';
+    r'ae579b9bbcef3736b55c6396db9a616181580955';
 
 abstract class _$CustomerListCriteria
     extends $Notifier<CustomerSearchCriteria> {

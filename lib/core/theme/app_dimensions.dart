@@ -4,6 +4,11 @@ class AppDimensions {
   // Breakpoints
   static const double breakpointTablet = 600.0;
 
+  // Components
+  static const double chartHeight = 250.0;
+  static const double chartBarWidth = 20.0;
+  static const double chartYAxisReservedSize = 40.0;
+
   // Padding & Margins
   static const double paddingNone = 0.0;
   static const double paddingXs = 4.0;
