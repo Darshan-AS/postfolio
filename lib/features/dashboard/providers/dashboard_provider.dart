@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:intl/intl.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
@@ -8,6 +9,7 @@ import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_mod
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'dashboard_provider.freezed.dart';
@@ -87,11 +89,21 @@ DashboardMetrics dashboardMetricsData(Ref ref) {
 @freezed
 sealed class ChartDataPoint with _$ChartDataPoint {
   const factory ChartDataPoint({
-    required int year,
+    required int id,
     required String label,
     required double amount,
     required int count,
   }) = _ChartDataPoint;
+}
+
+@riverpod
+class DashboardChartSelectedYear extends _$DashboardChartSelectedYear {
+  @override
+  int? build() => null;
+
+  void setYear(int? year) {
+    state = year;
+  }
 }
 
 @riverpod
@@ -108,34 +120,78 @@ class DashboardChartFilter extends _$DashboardChartFilter {
 List<ChartDataPoint> dashboardChartSeries(Ref ref) {
   final otds = ref.watch(oneTimeDepositsControllerProvider).value ?? <OneTimeDeposit>[];
   final filter = ref.watch(dashboardChartFilterProvider);
+  final selectedYear = ref.watch(dashboardChartSelectedYearProvider);
 
   final filteredOtds = filter == null
       ? otds
       : otds.where((d) => d.schemeType == filter).toList();
 
-  final Map<int, double> amountByYear = {};
-  final Map<int, int> countByYear = {};
-  final Map<int, String> labelByYear = {};
+  if (selectedYear == null) {
+    final Map<int, double> amountByYear = {};
+    final Map<int, int> countByYear = {};
+    final Map<int, String> labelByYear = {};
 
-  for (final otd in filteredOtds) {
-    final year = otd.startDate.financialYearStart;
-    amountByYear[year] = (amountByYear[year] ?? 0) + otd.principalAmount;
-    countByYear[year] = (countByYear[year] ?? 0) + 1;
-    labelByYear[year] = otd.startDate.financialYearLabel;
-  }
+    for (final otd in filteredOtds) {
+      final year = otd.startDate.financialYearStart;
+      amountByYear[year] = (amountByYear[year] ?? 0) + otd.principalAmount;
+      countByYear[year] = (countByYear[year] ?? 0) + 1;
+      labelByYear[year] = otd.startDate.financialYearLabel;
+    }
 
-  final List<ChartDataPoint> data = [];
-  final sortedYears = amountByYear.keys.toList()..sort();
-  for (final year in sortedYears) {
-    data.add(
-      ChartDataPoint(
-        year: year,
-        label: labelByYear[year]!,
-        amount: amountByYear[year]!,
-        count: countByYear[year]!,
-      ),
+    final List<ChartDataPoint> data = [];
+    final sortedYears = amountByYear.keys.toList()..sort();
+    for (final year in sortedYears) {
+      data.add(
+        ChartDataPoint(
+          id: year,
+          label: labelByYear[year]!,
+          amount: amountByYear[year]!,
+          count: countByYear[year]!,
+        ),
+      );
+    }
+
+    return data;
+  } else {
+    final List<ChartDataPoint> data = [];
+    final locale = LocaleSettings.currentLocale.languageTag;
+    final formatter = DateFormat.MMM(locale);
+    
+    // Generate the 12 months for the selected financial year starting from April
+    final List<DateTime> fyMonths = List.generate(
+      12,
+      (index) => DateTime(selectedYear, 4 + index),
     );
-  }
 
-  return data;
+    final Map<int, double> amountByMonthYear = {};
+    final Map<int, int> countByMonthYear = {};
+
+    for (final date in fyMonths) {
+      final key = date.year * 100 + date.month;
+      amountByMonthYear[key] = 0.0;
+      countByMonthYear[key] = 0;
+    }
+
+    final yearOtds = filteredOtds.where((d) => d.startDate.financialYearStart == selectedYear);
+    
+    for (final otd in yearOtds) {
+      final key = otd.startDate.year * 100 + otd.startDate.month;
+      amountByMonthYear[key] = (amountByMonthYear[key] ?? 0) + otd.principalAmount;
+      countByMonthYear[key] = (countByMonthYear[key] ?? 0) + 1;
+    }
+
+    for (final date in fyMonths) {
+      final key = date.year * 100 + date.month;
+      data.add(
+        ChartDataPoint(
+          id: key,
+          label: formatter.format(date),
+          amount: amountByMonthYear[key]!,
+          count: countByMonthYear[key]!,
+        ),
+      );
+    }
+
+    return data;
+  }
 }

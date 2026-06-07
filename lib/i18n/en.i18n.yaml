@@ -173,6 +173,8 @@ dashboard:
   overview: "Overview"
   activeOtdsByScheme: "Active OTDs by Scheme"
   depositsOverTime: "Deposits Over Time"
+  depositsForFY: "Deposits for FY ${start}-${end}"
+  backToYears: "Back to Years"
   byAmount: "By Amount"
   byCount: "By Count"
   all: "All"

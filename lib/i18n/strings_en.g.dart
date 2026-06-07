@@ -411,6 +411,12 @@ class Translations$dashboard$en {
 	/// en: 'Deposits Over Time'
 	String get depositsOverTime => 'Deposits Over Time';
 
+	/// en: 'Deposits for FY ${start}-${end}'
+	String depositsForFY({required Object start, required Object end}) => 'Deposits for FY ${start}-${end}';
+
+	/// en: 'Back to Years'
+	String get backToYears => 'Back to Years';
+
 	/// en: 'By Amount'
 	String get byAmount => 'By Amount';
 
@@ -1299,6 +1305,8 @@ extension on Translations {
 			'dashboard.overview' => 'Overview',
 			'dashboard.activeOtdsByScheme' => 'Active OTDs by Scheme',
 			'dashboard.depositsOverTime' => 'Deposits Over Time',
+			'dashboard.depositsForFY' => ({required Object start, required Object end}) => 'Deposits for FY ${start}-${end}',
+			'dashboard.backToYears' => 'Back to Years',
 			'dashboard.byAmount' => 'By Amount',
 			'dashboard.byCount' => 'By Count',
 			'dashboard.all' => 'All',

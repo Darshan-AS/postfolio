@@ -24,6 +24,14 @@ class DashboardChartSection extends HookConsumerWidget {
 
     final chartData = ref.watch(dashboardChartSeriesProvider);
     final currentFilter = ref.watch(dashboardChartFilterProvider);
+    final selectedYear = ref.watch(dashboardChartSelectedYearProvider);
+
+    String title = t.dashboard.depositsOverTime;
+    if (selectedYear != null) {
+      final startStr = selectedYear.toString().substring(2);
+      final endStr = (selectedYear + 1).toString().substring(2);
+      title = t.dashboard.depositsForFY(start: startStr, end: endStr);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,12 +39,39 @@ class DashboardChartSection extends HookConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              t.dashboard.depositsOverTime,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      title,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (selectedYear != null) ...[
+                    const SizedBox(width: AppDimensions.paddingSm),
+                    TextButton.icon(
+                      onPressed: () {
+                        ref.read(dashboardChartSelectedYearProvider.notifier).setYear(null);
+                      },
+                      icon: const Icon(Icons.close, size: 16),
+                      label: Text(t.dashboard.backToYears),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
+            const SizedBox(width: AppDimensions.paddingSm),
             SegmentedButton<ChartAggregation>(
               segments: [
                 ButtonSegment(
@@ -124,7 +159,7 @@ class DashboardChartSection extends HookConsumerWidget {
                   height: 250,
                   child: chartData.isEmpty
                       ? Center(child: Text(t.dashboard.noDataForFilter))
-                      : _buildBarChart(context, chartData, aggregation),
+                      : _buildBarChart(context, ref, chartData, aggregation, selectedYear),
                 ),
               ],
             ),
@@ -136,8 +171,10 @@ class DashboardChartSection extends HookConsumerWidget {
 
   Widget _buildBarChart(
     BuildContext context,
+    WidgetRef ref,
     List<ChartDataPoint> data,
     ChartAggregation aggregation,
+    int? selectedYear,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -161,6 +198,17 @@ class DashboardChartSection extends HookConsumerWidget {
           maxY: maxY,
           barTouchData: BarTouchData(
             enabled: true,
+            touchCallback: (FlTouchEvent event, barTouchResponse) {
+              if (selectedYear == null &&
+                  event is FlTapUpEvent &&
+                  barTouchResponse?.spot != null) {
+                final index = barTouchResponse!.spot!.touchedBarGroupIndex;
+                if (index >= 0 && index < data.length) {
+                  final yearId = data[index].id;
+                  ref.read(dashboardChartSelectedYearProvider.notifier).setYear(yearId);
+                }
+              }
+            },
             touchTooltipData: BarTouchTooltipData(
               getTooltipColor: (group) => colorScheme.onSurface,
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
