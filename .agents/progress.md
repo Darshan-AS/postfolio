@@ -83,6 +83,5 @@
 - Standardized UI bottom sheets (`AppSortBottomSheet`, `AppFilterBottomSheet`), standardizing their "Clear" actions to prevent abrupt closures and migrating the Sort sheet from `flutter_hooks` to a purely reactive Riverpod `Consumer` pattern.
 
 ## Releases
+- **v1.5.0+14 (2026-06-07)**: Built analytics dashboard with interactive charts and Financial Year mappings. Enabled Firestore Web offline persistence. Standardized SchemeType UI to Segmented Buttons and restored predictive back gestures on forms.
 - **v1.4.0+13 (2026-06-03)**: Type-safe composite sorting, persisted user preferences, Material 3 UI/UX improvements, and release manager skill.
-- **Dashboard Feature**: Implemented a comprehensive, analytics-driven dashboard using `fl_chart`. Added real-time aggregation providers computing active/total Customer, RD, and OTD counts. Integrated a dynamic bar chart with filtering by Scheme Type and toggling between deposit counts and monetary amounts, fully localized with Indian currency formats.
-- **Financial Year Graph**: Updated the dashboard "Deposits Over Time" graph to group dates by Financial Year (starting April) and display custom labels in the format "FY YY-YY" (e.g. FY 23-24).
