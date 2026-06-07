@@ -7,6 +7,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/features/dashboard/providers/dashboard_provider.dart';
 
@@ -231,10 +232,7 @@ class DashboardChartSection extends HookConsumerWidget {
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final dp = data[groupIndex];
                 final valueStr = aggregation == ChartAggregation.amount
-                    ? NumberFormat.compactCurrency(
-                        locale: AppConstants.defaultLocale,
-                        symbol: t.format.currencySymbol,
-                      ).format(dp.amount)
+                    ? dp.amount.toRupeeFormat()
                     : t.common.countWithLabel(
                         label: '${dp.count}',
                         count: dp.count,
