@@ -1,6 +1,8 @@
 # Project Progress
 
 ## Current State
+**Released v1.5.1+15**: Added multiline notes to customer profiles, robust currency formatting with numeric word translation, and full amount dashboard chart tooltips.
+
 - Added a multiline "Notes" text feature to the Customer model to serve as a scratch space for unstructured metadata. Integrated it into the Customer Form and displayed it on the Customer Details screen.
 - Refactored currency formatting in deposit forms by centralizing `CurrencyTextInputFormatter` inside hooks, eliminating `replaceAll` hacky string manipulations, fixing numerical precision bugs, and stripping redundant prefix symbols for a cleaner UI.
 - Fixed an issue where the sort and filter badges incorrectly displayed on fresh logins by aligning `StorageService` default values with domain models.
