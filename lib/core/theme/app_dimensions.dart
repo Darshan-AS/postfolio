@@ -8,6 +8,9 @@ class AppDimensions {
   static const double chartHeight = 250.0;
   static const double chartBarWidth = 20.0;
   static const double chartYAxisReservedSize = 40.0;
+  static const double chartXAxisReservedSize = 32.0;
+  static const double chartXAxisSlantedExtraSpace = 24.0;
+  static const double chartTooltipReservedHeight = 38.0;
 
   // Padding & Margins
   static const double paddingNone = 0.0;
