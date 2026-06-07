@@ -48,6 +48,7 @@
 - Updated project documentation (`README.md`) with comprehensive emulator setup, multi-machine Google Sign-In instructions, and environment cleanup steps.
 - Standardized repository authentication guards to use `StateError` and improved error handling across data layers.
 - Fixed a Demo Mode data inconsistency where `FakeDataSource` was assigning random `DepositStatus` values irrespective of chronological maturity dates, preventing accurate date-based sorting. Mock deposits are now constrained to prevent future dates from erroneously appearing as "matured" or "overdue".
+- Updated the dashboard chart tooltip to display full monetary amounts instead of compact numbers for better precision when inspecting data points.
 - Implemented month-level drill-down functionality in the Dashboard's Financial Year chart, allowing users to tap on a year to view deposits distributed across its 12 months (April to March) with a dedicated clear button to return to the yearly view.
 - Fixed a startup crash/debugger pause occurring on unauthenticated launch by ensuring repositories handle the unauthenticated state gracefully during route resolution.
 - Resolved Google Sign-In "Account reauth failed" on Android by registering the machine-specific SHA-1 fingerprint and updating the project configuration via FlutterFire CLI.
