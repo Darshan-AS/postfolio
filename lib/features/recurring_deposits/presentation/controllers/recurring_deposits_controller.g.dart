@@ -42,7 +42,7 @@ final class RecurringListCriteriaProvider
 }
 
 String _$recurringListCriteriaHash() =>
-    r'4942b8e1376aab2231447f4c9607532da1e88d32';
+    r'cfc28149e8f9998110c2f41d8ca7ff977563bbb9';
 
 abstract class _$RecurringListCriteria extends $Notifier<RDSearchCriteria> {
   RDSearchCriteria build();
@@ -102,7 +102,7 @@ final class FilteredRecurringDepositsProvider
 }
 
 String _$filteredRecurringDepositsHash() =>
-    r'72aa8a18071fa02c8b7f0584362f45bb8eec889d';
+    r'1eb563d79f1df4968bd5f34d393af372b32362aa';
 
 @ProviderFor(RecurringDepositsController)
 final recurringDepositsControllerProvider =

@@ -83,3 +83,4 @@
 
 ## Releases
 - **v1.4.0+13 (2026-06-03)**: Type-safe composite sorting, persisted user preferences, Material 3 UI/UX improvements, and release manager skill.
+- **Dashboard Feature**: Implemented a comprehensive, analytics-driven dashboard using `fl_chart`. Added real-time aggregation providers computing active/total Customer, RD, and OTD counts. Integrated a dynamic bar chart with filtering by Scheme Type and toggling between deposit counts and monetary amounts, fully localized with Indian currency formats.

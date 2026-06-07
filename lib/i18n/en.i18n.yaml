@@ -23,6 +23,8 @@ format:
   dateCompact: "dd/MM/yyyy"
   dateTime: "dd MMM yyyy, hh:mm a"
   currencySymbol: "₹"
+  countSymbol: "#"
+  fractionSeparator: " / "
   bulletSeparator: " • "
 
 common:
@@ -168,6 +170,17 @@ customers:
   customRelationship: "Custom Relationship"
 
 dashboard:
+  overview: "Overview"
+  activeOtdsByScheme: "Active OTDs by Scheme"
+  depositsOverTime: "Deposits Over Time"
+  byAmount: "By Amount"
+  byCount: "By Count"
+  all: "All"
+  noDataForFilter: "No data for selected filter"
+  metrics:
+    customers: "Customers"
+    rds: "RDs"
+    otds: "OTDs"
   charts: "Dashboard Charts Go Here"
 
 oneTimeDeposits:

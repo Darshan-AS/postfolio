@@ -16,6 +16,10 @@
 - [ ] **Premature Closure (General)**: Implement early withdrawal calculation logic for all applicable schemes.
 - [ ] **Data Integrity**: Implement `isDeleted` flag (Soft Deletes) to prevent orphaned records for Customers and Deposits.
 
+## 📊 Dashboard & Analytics
+- [x] **Core Dashboard**: Implemented dashboard with aggregated metrics, active/total breakdowns, and interactive `fl_chart` data visualizations.
+- [ ] *Reserved for future dashboard widgets and analytics (e.g. commission estimates, maturing soon lists).*
+
 ## 🎨 UI/UX Polish & Features
 - [ ] **Nominee UI Overhaul**:
   - [ ] Update to an input widget/slider that strictly enforces the 100% rule.

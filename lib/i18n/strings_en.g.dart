@@ -139,6 +139,12 @@ class Translations$format$en {
 	/// en: '₹'
 	String get currencySymbol => '₹';
 
+	/// en: '#'
+	String get countSymbol => '#';
+
+	/// en: ' / '
+	String get fractionSeparator => ' / ';
+
 	/// en: ' • '
 	String get bulletSeparator => ' • ';
 }
@@ -395,6 +401,29 @@ class Translations$dashboard$en {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+
+	/// en: 'Overview'
+	String get overview => 'Overview';
+
+	/// en: 'Active OTDs by Scheme'
+	String get activeOtdsByScheme => 'Active OTDs by Scheme';
+
+	/// en: 'Deposits Over Time'
+	String get depositsOverTime => 'Deposits Over Time';
+
+	/// en: 'By Amount'
+	String get byAmount => 'By Amount';
+
+	/// en: 'By Count'
+	String get byCount => 'By Count';
+
+	/// en: 'All'
+	String get all => 'All';
+
+	/// en: 'No data for selected filter'
+	String get noDataForFilter => 'No data for selected filter';
+
+	late final Translations$dashboard$metrics$en metrics = Translations$dashboard$metrics$en.internal(_root);
 
 	/// en: 'Dashboard Charts Go Here'
 	String get charts => 'Dashboard Charts Go Here';
@@ -853,6 +882,24 @@ class Translations$customers$fields$en {
 	String get percentage => 'Percentage (%)';
 }
 
+// Path: dashboard.metrics
+class Translations$dashboard$metrics$en {
+	Translations$dashboard$metrics$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Customers'
+	String get customers => 'Customers';
+
+	/// en: 'RDs'
+	String get rds => 'RDs';
+
+	/// en: 'OTDs'
+	String get otds => 'OTDs';
+}
+
 // Path: oneTimeDeposits.sections
 class Translations$oneTimeDeposits$sections$en {
 	Translations$oneTimeDeposits$sections$en.internal(this._root);
@@ -1134,6 +1181,8 @@ extension on Translations {
 			'format.dateCompact' => 'dd/MM/yyyy',
 			'format.dateTime' => 'dd MMM yyyy, hh:mm a',
 			'format.currencySymbol' => '₹',
+			'format.countSymbol' => '#',
+			'format.fractionSeparator' => ' / ',
 			'format.bulletSeparator' => ' • ',
 			'common.search' => 'Search...',
 			'common.countWithLabel' => ({required Object label, required Object count}) => '${label} (${count})',
@@ -1247,6 +1296,16 @@ extension on Translations {
 			'customers.fields.relationship' => 'Relationship',
 			'customers.fields.percentage' => 'Percentage (%)',
 			'customers.customRelationship' => 'Custom Relationship',
+			'dashboard.overview' => 'Overview',
+			'dashboard.activeOtdsByScheme' => 'Active OTDs by Scheme',
+			'dashboard.depositsOverTime' => 'Deposits Over Time',
+			'dashboard.byAmount' => 'By Amount',
+			'dashboard.byCount' => 'By Count',
+			'dashboard.all' => 'All',
+			'dashboard.noDataForFilter' => 'No data for selected filter',
+			'dashboard.metrics.customers' => 'Customers',
+			'dashboard.metrics.rds' => 'RDs',
+			'dashboard.metrics.otds' => 'OTDs',
 			'dashboard.charts' => 'Dashboard Charts Go Here',
 			'oneTimeDeposits.title' => 'One-Time Deposits',
 			'oneTimeDeposits.newDeposit' => 'New Deposit',
