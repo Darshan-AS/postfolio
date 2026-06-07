@@ -131,6 +131,7 @@ class CustomersController extends _$CustomersController {
     String? panNumber,
     String? savingsAccountNumber,
     List<Nominee>? savingsNominees,
+    String? notes,
   }) async {
     final customerId = id ?? const Uuid().v4();
 
@@ -146,6 +147,7 @@ class CustomersController extends _$CustomersController {
       panNumber: panNumber,
       savingsAccountNumber: savingsAccountNumber,
       savingsNominees: savingsNominees,
+      notes: notes,
     );
 
     final Customer customer;
