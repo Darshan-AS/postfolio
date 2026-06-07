@@ -92,6 +92,7 @@ class _RecurringDepositForm extends HookConsumerWidget {
               startDate: state.startDate,
               startDateController: state.startDateController,
               projection: state.projection,
+              state: state,
             ),
             ..._buildNomineesSection(nominees: state.nominees),
           ],
@@ -171,6 +172,7 @@ List<Widget> _buildInvestmentDetails(
   required ValueNotifier<DateTime> startDate,
   required TextEditingController startDateController,
   required InvestmentProjection projection,
+  required RecurringDepositFormState state,
 }) {
   return [
     FormSectionHeader(title: t.recurringDeposits.sections.investmentDetails),
@@ -205,20 +207,47 @@ List<Widget> _buildInvestmentDetails(
       ),
     ),
     AppSpacings.gapLg,
-    AppTextField(
-      controller: installmentAmountController,
-      labelText: t.recurringDeposits.fields.installmentAmount,
-      prefixIcon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedCoins01,
-        size: AppDimensions.iconMd,
-      ),
-      isRequired: true,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      validator: (val) => RecurringDeposit.validateAmount(
-        double.tryParse(val ?? ''),
-        t.recurringDeposits.fields.installmentAmount,
-      ),
-      textInputAction: TextInputAction.next,
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppTextField(
+          controller: installmentAmountController,
+          labelText: t.recurringDeposits.fields.installmentAmount,
+          prefixIcon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedCoins01,
+            size: AppDimensions.iconMd,
+          ),
+          isRequired: true,
+          keyboardType: TextInputType.number,
+          inputFormatters: [state.amountFormatter],
+          validator: (val) {
+            if (val == null || val.trim().isEmpty) {
+              return t.errors.requiredField(
+                field: t.recurringDeposits.fields.installmentAmount,
+              );
+            }
+            return RecurringDeposit.validateAmount(
+              state.amountFormatter.getUnformattedValue().toDouble(),
+              t.recurringDeposits.fields.installmentAmount,
+            );
+          },
+          textInputAction: TextInputAction.next,
+        ),
+        if (state.amountInWords.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(
+              top: AppDimensions.paddingXs,
+              left: AppDimensions.paddingMd,
+            ),
+            child: Text(
+              t.common.amountInWords(amount: state.amountInWords),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+      ],
     ),
     AppSpacings.gapLg,
     AppTextField(

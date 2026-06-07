@@ -1,6 +1,7 @@
 # Project Progress
 
 ## Current State
+- Refactored currency formatting in deposit forms by centralizing `CurrencyTextInputFormatter` inside hooks, eliminating `replaceAll` hacky string manipulations, fixing numerical precision bugs, and stripping redundant prefix symbols for a cleaner UI.
 - Fixed an issue where the sort and filter badges incorrectly displayed on fresh logins by aligning `StorageService` default values with domain models.
 - Set up core architecture with Riverpod, Freezed, and standard thematic elements.
 - Enabled Firestore Offline Persistence for the Web platform to support cache reading and reduce billable quota hits.

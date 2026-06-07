@@ -91,6 +91,7 @@ class _OneTimeDepositForm extends HookConsumerWidget {
               startDate: state.startDate,
               startDateController: state.startDateController,
               projection: state.projection,
+              state: state,
             ),
             ..._buildNomineesSection(nominees: state.nominees),
           ],
@@ -159,6 +160,7 @@ List<Widget> _buildInvestmentDetails(
   required ValueNotifier<DateTime> startDate,
   required TextEditingController startDateController,
   required InvestmentProjection projection,
+  required OneTimeDepositFormState state,
 }) {
   return [
     FormSectionHeader(title: t.oneTimeDeposits.sections.investmentDetails),
@@ -193,20 +195,47 @@ List<Widget> _buildInvestmentDetails(
       ),
     ),
     AppSpacings.gapLg,
-    AppTextField(
-      controller: principalAmountController,
-      labelText: t.oneTimeDeposits.fields.principalAmount,
-      prefixIcon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedCoins01,
-        size: AppDimensions.iconMd,
-      ),
-      isRequired: true,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      validator: (val) => OneTimeDeposit.validateAmount(
-        double.tryParse(val ?? ''),
-        t.oneTimeDeposits.fields.principalAmount,
-      ),
-      textInputAction: TextInputAction.next,
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppTextField(
+          controller: principalAmountController,
+          labelText: t.oneTimeDeposits.fields.principalAmount,
+          prefixIcon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedCoins01,
+            size: AppDimensions.iconMd,
+          ),
+          isRequired: true,
+          keyboardType: TextInputType.number,
+          inputFormatters: [state.amountFormatter],
+          validator: (val) {
+            if (val == null || val.trim().isEmpty) {
+              return t.errors.requiredField(
+                field: t.oneTimeDeposits.fields.principalAmount,
+              );
+            }
+            return OneTimeDeposit.validateAmount(
+              state.amountFormatter.getUnformattedValue().toDouble(),
+              t.oneTimeDeposits.fields.principalAmount,
+            );
+          },
+          textInputAction: TextInputAction.next,
+        ),
+        if (state.amountInWords.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(
+              top: AppDimensions.paddingXs,
+              left: AppDimensions.paddingMd,
+            ),
+            child: Text(
+              t.common.amountInWords(amount: state.amountInWords),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+      ],
     ),
     AppSpacings.gapLg,
     AppTextField(

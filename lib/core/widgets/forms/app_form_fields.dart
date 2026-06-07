@@ -9,6 +9,7 @@ class AppTextField extends StatelessWidget {
   final String labelText;
   final String? hintText;
   final Widget? prefixIcon;
+  final String? prefixText;
   final bool isRequired;
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
@@ -27,6 +28,7 @@ class AppTextField extends StatelessWidget {
     required this.labelText,
     this.hintText,
     this.prefixIcon,
+    this.prefixText,
     this.isRequired = false,
     this.validator,
     this.keyboardType,
@@ -49,6 +51,7 @@ class AppTextField extends StatelessWidget {
         labelText: labelText,
         hintText: hintText,
         prefixIcon: prefixIcon,
+        prefixText: prefixText,
         isRequired: isRequired,
       ).copyWith(suffixIcon: suffixIcon),
       validator: validator,

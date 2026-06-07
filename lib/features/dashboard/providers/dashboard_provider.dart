@@ -31,9 +31,13 @@ sealed class DashboardMetrics with _$DashboardMetrics {
 
 @riverpod
 DashboardMetrics dashboardMetricsData(Ref ref) {
-  final customers = ref.watch(customersControllerProvider).value ?? <Customer>[];
-  final otds = ref.watch(oneTimeDepositsControllerProvider).value ?? <OneTimeDeposit>[];
-  final rds = ref.watch(recurringDepositsControllerProvider).value ?? <RecurringDeposit>[];
+  final customers =
+      ref.watch(customersControllerProvider).value ?? <Customer>[];
+  final otds =
+      ref.watch(oneTimeDepositsControllerProvider).value ?? <OneTimeDeposit>[];
+  final rds =
+      ref.watch(recurringDepositsControllerProvider).value ??
+      <RecurringDeposit>[];
 
   // Active OTDs and RDs
   final activeOtds = otds
@@ -118,7 +122,8 @@ class DashboardChartFilter extends _$DashboardChartFilter {
 
 @riverpod
 List<ChartDataPoint> dashboardChartSeries(Ref ref) {
-  final otds = ref.watch(oneTimeDepositsControllerProvider).value ?? <OneTimeDeposit>[];
+  final otds =
+      ref.watch(oneTimeDepositsControllerProvider).value ?? <OneTimeDeposit>[];
   final filter = ref.watch(dashboardChartFilterProvider);
   final selectedYear = ref.watch(dashboardChartSelectedYearProvider);
 
@@ -156,7 +161,7 @@ List<ChartDataPoint> dashboardChartSeries(Ref ref) {
     final List<ChartDataPoint> data = [];
     final locale = LocaleSettings.currentLocale.languageTag;
     final formatter = DateFormat('MMM yy', locale);
-    
+
     // Generate the 12 months for the selected financial year starting from April
     final List<DateTime> fyMonths = List.generate(
       12,
@@ -172,11 +177,14 @@ List<ChartDataPoint> dashboardChartSeries(Ref ref) {
       countByMonthYear[key] = 0;
     }
 
-    final yearOtds = filteredOtds.where((d) => d.startDate.financialYearStart == selectedYear);
-    
+    final yearOtds = filteredOtds.where(
+      (d) => d.startDate.financialYearStart == selectedYear,
+    );
+
     for (final otd in yearOtds) {
       final key = otd.startDate.year * 100 + otd.startDate.month;
-      amountByMonthYear[key] = (amountByMonthYear[key] ?? 0) + otd.principalAmount;
+      amountByMonthYear[key] =
+          (amountByMonthYear[key] ?? 0) + otd.principalAmount;
       countByMonthYear[key] = (countByMonthYear[key] ?? 0) + 1;
     }
 

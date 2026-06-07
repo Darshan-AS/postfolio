@@ -64,6 +64,8 @@ dependencies:
   dynamic_color: ^1.8.1
   animations: ^2.2.0
   fl_chart: ^1.2.0
+  currency_text_input_formatter: ^2.3.0
+  number_to_indian_words: ^1.0.1
 
 dev_dependencies:
   flutter_test:

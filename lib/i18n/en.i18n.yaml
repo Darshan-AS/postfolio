@@ -28,6 +28,7 @@ format:
   bulletSeparator: " • "
 
 common:
+  amountInWords: "${amount} only"
   search: "Search..."
   countWithLabel: "${label} (${count})"
   add: "Add"
