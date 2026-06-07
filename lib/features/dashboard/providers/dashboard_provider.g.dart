@@ -54,7 +54,61 @@ final class DashboardMetricsDataProvider
 }
 
 String _$dashboardMetricsDataHash() =>
-    r'9a85f15d91df3d161f28de7b3b7ba1b1bfc62e33';
+    r'b814b081acda0b09f0f2be3a068d3c906d15a7ff';
+
+@ProviderFor(DashboardChartSelectedYear)
+final dashboardChartSelectedYearProvider =
+    DashboardChartSelectedYearProvider._();
+
+final class DashboardChartSelectedYearProvider
+    extends $NotifierProvider<DashboardChartSelectedYear, int?> {
+  DashboardChartSelectedYearProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'dashboardChartSelectedYearProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$dashboardChartSelectedYearHash();
+
+  @$internal
+  @override
+  DashboardChartSelectedYear create() => DashboardChartSelectedYear();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int?>(value),
+    );
+  }
+}
+
+String _$dashboardChartSelectedYearHash() =>
+    r'252462e68c01b9578401be8a137b81da3e30761d';
+
+abstract class _$DashboardChartSelectedYear extends $Notifier<int?> {
+  int? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<int?, int?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int?, int?>,
+              int?,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
 
 @ProviderFor(DashboardChartFilter)
 final dashboardChartFilterProvider = DashboardChartFilterProvider._();
@@ -155,4 +209,4 @@ final class DashboardChartSeriesProvider
 }
 
 String _$dashboardChartSeriesHash() =>
-    r'c25ba1683ce2bac1d4f1af7dc6018e6b5f7f337b';
+    r'c4fa9cdf850de4d97b65afe07b140b62b1af2853';

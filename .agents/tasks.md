@@ -19,6 +19,7 @@
 ## 📊 Dashboard & Analytics
 - [x] **Core Dashboard**: Implemented dashboard with aggregated metrics, active/total breakdowns, and interactive `fl_chart` data visualizations.
 - [x] **Financial Year Charting**: Switched the "Deposits Over Time" graph to map and display using the Indian Financial Year (e.g. "FY 23-24") starting in April.
+- [x] **Chart Drill-Down**: Added month-level drill-down interaction to the Financial Year chart with a 'Back to Years' UI.
 - [ ] *Reserved for future dashboard widgets and analytics (e.g. commission estimates, maturing soon lists).*
 
 ## 🎨 UI/UX Polish & Features
