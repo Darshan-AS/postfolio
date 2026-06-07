@@ -155,7 +155,7 @@ List<ChartDataPoint> dashboardChartSeries(Ref ref) {
   } else {
     final List<ChartDataPoint> data = [];
     final locale = LocaleSettings.currentLocale.languageTag;
-    final formatter = DateFormat.MMM(locale);
+    final formatter = DateFormat('MMM yy', locale);
     
     // Generate the 12 months for the selected financial year starting from April
     final List<DateTime> fyMonths = List.generate(

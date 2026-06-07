@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -45,10 +47,9 @@ class DashboardChartSection extends HookConsumerWidget {
                   Flexible(
                     child: Text(
                       title,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -56,15 +57,23 @@ class DashboardChartSection extends HookConsumerWidget {
                     const SizedBox(width: AppDimensions.paddingSm),
                     TextButton.icon(
                       onPressed: () {
-                        ref.read(dashboardChartSelectedYearProvider.notifier).setYear(null);
+                        ref
+                            .read(dashboardChartSelectedYearProvider.notifier)
+                            .setYear(null);
                       },
                       icon: const Icon(Icons.close, size: 16),
                       label: Text(t.dashboard.backToYears),
                       style: TextButton.styleFrom(
                         visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.paddingMd,
+                          vertical: AppDimensions.paddingXs,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusMax,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -156,10 +165,16 @@ class DashboardChartSection extends HookConsumerWidget {
 
                 // Chart Body
                 SizedBox(
-                  height: 250,
+                  height: AppDimensions.chartHeight,
                   child: chartData.isEmpty
                       ? Center(child: Text(t.dashboard.noDataForFilter))
-                      : _buildBarChart(context, ref, chartData, aggregation, selectedYear),
+                      : _buildBarChart(
+                          context,
+                          ref,
+                          chartData,
+                          aggregation,
+                          selectedYear,
+                        ),
                 ),
               ],
             ),
@@ -186,8 +201,6 @@ class DashboardChartSection extends HookConsumerWidget {
       if (value > maxY) maxY = value;
     }
 
-    // Add some padding to top
-    maxY = maxY * 1.2;
     if (maxY == 0) maxY = 10; // default scale if all 0
 
     return ClipRect(
@@ -205,11 +218,15 @@ class DashboardChartSection extends HookConsumerWidget {
                 final index = barTouchResponse!.spot!.touchedBarGroupIndex;
                 if (index >= 0 && index < data.length) {
                   final yearId = data[index].id;
-                  ref.read(dashboardChartSelectedYearProvider.notifier).setYear(yearId);
+                  ref
+                      .read(dashboardChartSelectedYearProvider.notifier)
+                      .setYear(yearId);
                 }
               }
             },
             touchTooltipData: BarTouchTooltipData(
+              fitInsideHorizontally: true,
+              fitInsideVertically: true,
               getTooltipColor: (group) => colorScheme.onSurface,
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final dp = data[groupIndex];
@@ -237,13 +254,23 @@ class DashboardChartSection extends HookConsumerWidget {
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
+                reservedSize:
+                    AppDimensions.chartXAxisReservedSize +
+                    AppDimensions.chartXAxisSlantedExtraSpace,
                 getTitlesWidget: (double value, TitleMeta meta) {
                   if (value.toInt() >= 0 && value.toInt() < data.length) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
+                    return SideTitleWidget(
+                      meta: meta,
+                      space: AppDimensions.paddingSm,
+                      angle: -math.pi / 4,
+                      fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
                       child: Text(
                         data[value.toInt()].label,
-                        style: Theme.of(context).textTheme.labelSmall,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontSize: AppDimensions.fontXs,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.visible,
                       ),
                     );
                   }
@@ -285,8 +312,14 @@ class DashboardChartSection extends HookConsumerWidget {
                 },
               ),
             ),
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
+            topTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: AppDimensions.chartTooltipReservedHeight,
+                getTitlesWidget: (double value, TitleMeta meta) {
+                  return const SizedBox.shrink();
+                },
+              ),
             ),
             rightTitles: const AxisTitles(
               sideTitles: SideTitles(showTitles: false),
