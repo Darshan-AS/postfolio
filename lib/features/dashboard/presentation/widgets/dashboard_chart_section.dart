@@ -175,7 +175,7 @@ class DashboardChartSection extends HookConsumerWidget {
                         count: dp.count,
                       );
                 return BarTooltipItem(
-                  '${dp.year}\n$valueStr',
+                  '${dp.label}\n$valueStr',
                   TextStyle(
                     color: colorScheme.surface,
                     fontWeight: FontWeight.bold,
@@ -194,7 +194,7 @@ class DashboardChartSection extends HookConsumerWidget {
                     return Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
-                        data[value.toInt()].year.toString(),
+                        data[value.toInt()].label,
                         style: Theme.of(context).textTheme.labelSmall,
                       ),
                     );

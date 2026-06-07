@@ -175,7 +175,7 @@ as Map<OneTimeSchemeType, int>,
 /// @nodoc
 mixin _$ChartDataPoint {
 
- int get year; double get amount; int get count;
+ int get year; String get label; double get amount; int get count;
 /// Create a copy of ChartDataPoint
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -186,16 +186,16 @@ $ChartDataPointCopyWith<ChartDataPoint> get copyWith => _$ChartDataPointCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartDataPoint&&(identical(other.year, year) || other.year == year)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.count, count) || other.count == count));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartDataPoint&&(identical(other.year, year) || other.year == year)&&(identical(other.label, label) || other.label == label)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.count, count) || other.count == count));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,year,amount,count);
+int get hashCode => Object.hash(runtimeType,year,label,amount,count);
 
 @override
 String toString() {
-  return 'ChartDataPoint(year: $year, amount: $amount, count: $count)';
+  return 'ChartDataPoint(year: $year, label: $label, amount: $amount, count: $count)';
 }
 
 
@@ -206,7 +206,7 @@ abstract mixin class $ChartDataPointCopyWith<$Res>  {
   factory $ChartDataPointCopyWith(ChartDataPoint value, $Res Function(ChartDataPoint) _then) = _$ChartDataPointCopyWithImpl;
 @useResult
 $Res call({
- int year, double amount, int count
+ int year, String label, double amount, int count
 });
 
 
@@ -223,10 +223,11 @@ class _$ChartDataPointCopyWithImpl<$Res>
 
 /// Create a copy of ChartDataPoint
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? year = null,Object? amount = null,Object? count = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? year = null,Object? label = null,Object? amount = null,Object? count = null,}) {
   return _then(_self.copyWith(
 year: null == year ? _self.year : year // ignore: cast_nullable_to_non_nullable
-as int,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
+as int,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
 as double,count: null == count ? _self.count : count // ignore: cast_nullable_to_non_nullable
 as int,
   ));
@@ -240,10 +241,11 @@ as int,
 
 
 class _ChartDataPoint implements ChartDataPoint {
-  const _ChartDataPoint({required this.year, required this.amount, required this.count});
+  const _ChartDataPoint({required this.year, required this.label, required this.amount, required this.count});
   
 
 @override final  int year;
+@override final  String label;
 @override final  double amount;
 @override final  int count;
 
@@ -257,16 +259,16 @@ _$ChartDataPointCopyWith<_ChartDataPoint> get copyWith => __$ChartDataPointCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartDataPoint&&(identical(other.year, year) || other.year == year)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.count, count) || other.count == count));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartDataPoint&&(identical(other.year, year) || other.year == year)&&(identical(other.label, label) || other.label == label)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.count, count) || other.count == count));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,year,amount,count);
+int get hashCode => Object.hash(runtimeType,year,label,amount,count);
 
 @override
 String toString() {
-  return 'ChartDataPoint(year: $year, amount: $amount, count: $count)';
+  return 'ChartDataPoint(year: $year, label: $label, amount: $amount, count: $count)';
 }
 
 
@@ -277,7 +279,7 @@ abstract mixin class _$ChartDataPointCopyWith<$Res> implements $ChartDataPointCo
   factory _$ChartDataPointCopyWith(_ChartDataPoint value, $Res Function(_ChartDataPoint) _then) = __$ChartDataPointCopyWithImpl;
 @override @useResult
 $Res call({
- int year, double amount, int count
+ int year, String label, double amount, int count
 });
 
 
@@ -294,10 +296,11 @@ class __$ChartDataPointCopyWithImpl<$Res>
 
 /// Create a copy of ChartDataPoint
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? year = null,Object? amount = null,Object? count = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? year = null,Object? label = null,Object? amount = null,Object? count = null,}) {
   return _then(_ChartDataPoint(
 year: null == year ? _self.year : year // ignore: cast_nullable_to_non_nullable
-as int,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
+as int,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
 as double,count: null == count ? _self.count : count // ignore: cast_nullable_to_non_nullable
 as int,
   ));
