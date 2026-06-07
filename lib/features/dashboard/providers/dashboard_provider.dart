@@ -1,8 +1,12 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
+import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
+import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
+import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -25,9 +29,9 @@ sealed class DashboardMetrics with _$DashboardMetrics {
 
 @riverpod
 DashboardMetrics dashboardMetricsData(Ref ref) {
-  final customers = ref.watch(customersControllerProvider).value ?? [];
-  final otds = ref.watch(oneTimeDepositsControllerProvider).value ?? [];
-  final rds = ref.watch(recurringDepositsControllerProvider).value ?? [];
+  final customers = ref.watch(customersControllerProvider).value ?? <Customer>[];
+  final otds = ref.watch(oneTimeDepositsControllerProvider).value ?? <OneTimeDeposit>[];
+  final rds = ref.watch(recurringDepositsControllerProvider).value ?? <RecurringDeposit>[];
 
   // Active OTDs and RDs
   final activeOtds = otds
@@ -84,6 +88,7 @@ DashboardMetrics dashboardMetricsData(Ref ref) {
 sealed class ChartDataPoint with _$ChartDataPoint {
   const factory ChartDataPoint({
     required int year,
+    required String label,
     required double amount,
     required int count,
   }) = _ChartDataPoint;
@@ -101,7 +106,7 @@ class DashboardChartFilter extends _$DashboardChartFilter {
 
 @riverpod
 List<ChartDataPoint> dashboardChartSeries(Ref ref) {
-  final otds = ref.watch(oneTimeDepositsControllerProvider).value ?? [];
+  final otds = ref.watch(oneTimeDepositsControllerProvider).value ?? <OneTimeDeposit>[];
   final filter = ref.watch(dashboardChartFilterProvider);
 
   final filteredOtds = filter == null
@@ -110,11 +115,13 @@ List<ChartDataPoint> dashboardChartSeries(Ref ref) {
 
   final Map<int, double> amountByYear = {};
   final Map<int, int> countByYear = {};
+  final Map<int, String> labelByYear = {};
 
   for (final otd in filteredOtds) {
-    final year = otd.startDate.year;
+    final year = otd.startDate.financialYearStart;
     amountByYear[year] = (amountByYear[year] ?? 0) + otd.principalAmount;
     countByYear[year] = (countByYear[year] ?? 0) + 1;
+    labelByYear[year] = otd.startDate.financialYearLabel;
   }
 
   final List<ChartDataPoint> data = [];
@@ -123,6 +130,7 @@ List<ChartDataPoint> dashboardChartSeries(Ref ref) {
     data.add(
       ChartDataPoint(
         year: year,
+        label: labelByYear[year]!,
         amount: amountByYear[year]!,
         count: countByYear[year]!,
       ),
