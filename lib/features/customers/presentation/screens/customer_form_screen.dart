@@ -75,6 +75,9 @@ class _CustomerForm extends HookConsumerWidget {
                     state.savingsAccountNumberController,
                 nominees: state.nominees,
               ),
+              ..._buildNotes(
+                notesController: state.notesController,
+              ),
             ],
           ),
         ),
@@ -212,6 +215,27 @@ List<Widget> _buildSavingsBank({
       onChanged: (newNominees) {
         nominees.value = newNominees;
       },
+    ),
+    AppSpacings.gapXxl,
+  ];
+}
+
+List<Widget> _buildNotes({
+  required TextEditingController notesController,
+}) {
+  return [
+    FormSectionHeader(title: t.customers.fields.notes),
+    AppTextField(
+      controller: notesController,
+      labelText: t.customers.fields.notes,
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedNote01,
+        size: AppDimensions.iconMd,
+      ),
+      keyboardType: TextInputType.multiline,
+      textInputAction: TextInputAction.newline,
+      minLines: 3,
+      maxLines: null,
     ),
     AppSpacings.gapXxl,
   ];

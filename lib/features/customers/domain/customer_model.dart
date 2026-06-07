@@ -24,6 +24,7 @@ sealed class Customer with _$Customer {
     String? aadhaarNumber,
     String? panNumber,
     SavingsAccount? savingsAccount,
+    String? notes,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? createdAt,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? updatedAt,
     @JsonKey(includeIfNull: false) String? migrationSource,
@@ -132,6 +133,7 @@ sealed class Customer with _$Customer {
     String? panNumber,
     String? savingsAccountNumber,
     List<Nominee>? savingsNominees,
+    String? notes,
   }) {
     // Pure helper to sanitize optional strings
     String? clean(String? s) => s?.trim().isEmpty == true ? null : s?.trim();
@@ -180,6 +182,7 @@ sealed class Customer with _$Customer {
         aadhaarNumber: clean(aadhaarNumber),
         panNumber: clean(panNumber),
         savingsAccount: savingsAccount,
+        notes: clean(notes),
       ),
     );
   }

@@ -21,6 +21,7 @@ class CustomerFormState {
   final TextEditingController panNumberController;
   final TextEditingController savingsAccountNumberController;
   final TextEditingController dateOfBirthController;
+  final TextEditingController notesController;
   final ValueNotifier<List<Nominee>> nominees;
   final ValueNotifier<bool> isSaving;
   final bool isUpdating;
@@ -38,6 +39,7 @@ class CustomerFormState {
     required this.panNumberController,
     required this.savingsAccountNumberController,
     required this.dateOfBirthController,
+    required this.notesController,
     required this.nominees,
     required this.isSaving,
     required this.isUpdating,
@@ -69,6 +71,7 @@ CustomerFormState useCustomerForm({
   final savingsAccountNumberController = useTextEditingController(
     text: customer?.savingsAccount?.accountNumber,
   );
+  final notesController = useTextEditingController(text: customer?.notes);
 
   final nominees = useState<List<Nominee>>(
     List.of(customer?.savingsAccount?.nominees ?? []),
@@ -110,6 +113,7 @@ CustomerFormState useCustomerForm({
             panNumber: panNumberController.text,
             savingsAccountNumber: savingsAccountNumberController.text,
             savingsNominees: nominees.value,
+            notes: notesController.text,
           );
 
       if (!context.mounted) return;
@@ -141,6 +145,7 @@ CustomerFormState useCustomerForm({
     panNumberController: panNumberController,
     savingsAccountNumberController: savingsAccountNumberController,
     dateOfBirthController: dateOfBirthController,
+    notesController: notesController,
     nominees: nominees,
     isSaving: isSaving,
     isUpdating: isUpdating,

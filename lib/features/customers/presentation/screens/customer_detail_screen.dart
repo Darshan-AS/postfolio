@@ -172,6 +172,8 @@ class CustomerDetailScreen extends ConsumerWidget {
               ),
               AppSpacings.gapLg,
             ],
+            _buildNotes(customer),
+            AppSpacings.gapLg,
             _CustomerDepositsSection(customerId: customerId),
           ],
         );
@@ -202,6 +204,40 @@ Widget _buildPersonalInfo(Customer customer) {
         value: customer.dateOfBirth?.toAppFormat() ?? t.common.notProvided,
       ),
     ],
+  );
+}
+
+Widget _buildNotes(Customer customer) {
+  return Builder(
+    builder: (context) {
+      return DetailSection(
+        title: t.customers.fields.notes,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingLg,
+              vertical: AppDimensions.paddingMd,
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: Text(
+                (customer.notes != null && customer.notes!.isNotEmpty) 
+                    ? customer.notes! 
+                    : t.common.notProvided,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: (customer.notes != null && customer.notes!.isNotEmpty)
+                      ? Theme.of(context).colorScheme.onSurface
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontStyle: (customer.notes != null && customer.notes!.isNotEmpty)
+                      ? FontStyle.normal
+                      : FontStyle.italic,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
   );
 }
 

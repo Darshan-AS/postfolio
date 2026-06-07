@@ -18,6 +18,7 @@ class AppTextField extends StatelessWidget {
   final bool enabled;
   final VoidCallback? onTap;
   final int? maxLines;
+  final int? minLines;
   final Widget? suffixIcon;
   final void Function(String)? onChanged;
   final List<TextInputFormatter>? inputFormatters;
@@ -37,6 +38,7 @@ class AppTextField extends StatelessWidget {
     this.enabled = true,
     this.onTap,
     this.maxLines = 1,
+    this.minLines,
     this.suffixIcon,
     this.onChanged,
     this.inputFormatters,
@@ -61,6 +63,7 @@ class AppTextField extends StatelessWidget {
       enabled: enabled,
       onTap: onTap,
       maxLines: maxLines,
+      minLines: minLines,
       onChanged: onChanged,
       inputFormatters: inputFormatters,
     );

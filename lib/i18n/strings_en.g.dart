@@ -889,6 +889,9 @@ class Translations$customers$fields$en {
 
 	/// en: 'Percentage (%)'
 	String get percentage => 'Percentage (%)';
+
+	/// en: 'Notes'
+	String get notes => 'Notes';
 }
 
 // Path: dashboard.metrics
@@ -1305,6 +1308,7 @@ extension on Translations {
 			'customers.fields.nomineeName' => 'Nominee Name',
 			'customers.fields.relationship' => 'Relationship',
 			'customers.fields.percentage' => 'Percentage (%)',
+			'customers.fields.notes' => 'Notes',
 			'customers.customRelationship' => 'Custom Relationship',
 			'dashboard.overview' => 'Overview',
 			'dashboard.activeOtdsByScheme' => 'Active OTDs by Scheme',
