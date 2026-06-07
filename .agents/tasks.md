@@ -32,6 +32,7 @@
   - [ ] Redesign leading visual elements in deposit list tiles (replace generic circular icons).
   - [ ] Apply distinct color coding for deposit types.
   - [x] Enhance visual prominence of scheme type in detail views and forms (Migrated Dropdowns to Segmented Buttons).
+  - [x] Form inputs correctly format currency strings and auto-display localized amount in words.
   - [ ] Add relative time display (`timeago`).
   - [ ] Implement dark theme support.
 - [ ] **Media**: Implement image capture and display for customer profiles.

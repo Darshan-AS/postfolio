@@ -8,6 +8,7 @@ class AppInputDecoration {
     String? hintText,
     String? errorText,
     Widget? prefixIcon,
+    String? prefixText,
     bool isRequired = false,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -53,6 +54,10 @@ class AppInputDecoration {
       hintText: hintText,
       errorText: errorText,
       prefixIcon: finalPrefixIcon,
+      prefixText: prefixText,
+      prefixStyle: Theme.of(
+        context,
+      ).textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
     );
   }
 }

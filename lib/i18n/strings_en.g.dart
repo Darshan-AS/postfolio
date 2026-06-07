@@ -157,6 +157,9 @@ class Translations$common$en {
 
 	// Translations
 
+	/// en: '${amount} only'
+	String amountInWords({required Object amount}) => '${amount} only';
+
 	/// en: 'Search...'
 	String get search => 'Search...';
 
@@ -1190,6 +1193,7 @@ extension on Translations {
 			'format.countSymbol' => '#',
 			'format.fractionSeparator' => ' / ',
 			'format.bulletSeparator' => ' • ',
+			'common.amountInWords' => ({required Object amount}) => '${amount} only',
 			'common.search' => 'Search...',
 			'common.countWithLabel' => ({required Object label, required Object count}) => '${label} (${count})',
 			'common.add' => 'Add',

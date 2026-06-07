@@ -11,7 +11,10 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:number_to_indian_words/number_to_indian_words.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
+import 'package:postfolio/core/constants/app_constants.dart';
 
 class OneTimeDepositFormState {
   final GlobalKey<FormState> formKey;
@@ -28,6 +31,8 @@ class OneTimeDepositFormState {
   final ValueNotifier<List<Nominee>> nominees;
   final ValueNotifier<bool> isSaving;
   final InvestmentProjection projection;
+  final String amountInWords;
+  final CurrencyTextInputFormatter amountFormatter;
   final VoidCallback save;
   final bool isUpdating;
 
@@ -46,6 +51,8 @@ class OneTimeDepositFormState {
     required this.nominees,
     required this.isSaving,
     required this.projection,
+    required this.amountInWords,
+    required this.amountFormatter,
     required this.save,
     required this.isUpdating,
   });
@@ -60,11 +67,21 @@ OneTimeDepositFormState useOneTimeDepositForm({
   final formKey = useMemoized(() => GlobalKey<FormState>());
   final isUpdating = deposit != null;
 
+  final amountFormatter = useMemoized(
+    () => CurrencyTextInputFormatter.currency(
+      locale: AppConstants.defaultLocale,
+      symbol: '',
+      decimalDigits: 0,
+    ),
+  );
+
   final accountNoController = useTextEditingController(
     text: deposit?.accountNo,
   );
   final principalAmountController = useTextEditingController(
-    text: deposit?.principalAmount.round().toString(),
+    text: deposit != null
+        ? amountFormatter.formatDouble(deposit.principalAmount)
+        : '',
   );
   final interestRateController = useTextEditingController(
     text: deposit?.interestRate.toString(),
@@ -99,8 +116,18 @@ OneTimeDepositFormState useOneTimeDepositForm({
   useListenable(principalAmountController);
   useListenable(interestRateController);
 
-  final currentPrincipal =
-      double.tryParse(principalAmountController.text.trim()) ?? 0.0;
+  final amountInWords = useMemoized(() {
+    if (principalAmountController.text.trim().isEmpty) return '';
+
+    final number = amountFormatter.getUnformattedValue().toInt();
+    if (number > 0) {
+      final words = NumToWords.convertNumberToIndianWords(number);
+      return words;
+    }
+    return '';
+  }, [principalAmountController.text]);
+
+  final currentPrincipal = amountFormatter.getUnformattedValue().toDouble();
   final currentInterest =
       double.tryParse(interestRateController.text.trim()) ?? 0.0;
 
@@ -158,7 +185,7 @@ OneTimeDepositFormState useOneTimeDepositForm({
           .saveOneTimeDeposit(
             id: deposit?.id,
             accountNo: accountNoController.text,
-            principalAmount: principalAmountController.text,
+            principalAmount: amountFormatter.getUnformattedValue().toString(),
             termYears: selectedTermYears.value,
             termMonths:
                 selectedScheme.value.tenureInputType == TenureInputType.derived
@@ -205,6 +232,8 @@ OneTimeDepositFormState useOneTimeDepositForm({
     nominees: nominees,
     isSaving: isSaving,
     projection: projection,
+    amountInWords: amountInWords,
+    amountFormatter: amountFormatter,
     save: save,
     isUpdating: isUpdating,
   );

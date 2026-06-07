@@ -209,4 +209,4 @@ final class DashboardChartSeriesProvider
 }
 
 String _$dashboardChartSeriesHash() =>
-    r'c4fa9cdf850de4d97b65afe07b140b62b1af2853';
+    r'841e16031789abd5881ee3b400f18ed62972ca44';
