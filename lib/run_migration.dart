@@ -143,13 +143,25 @@ Customer _parseCustomer(
   final rowUpdatedAt = _parseDateOrNull(headers.getString(row, 'Updated On'));
 
   SavingsAccount? savingsAccount;
-  if (sbAccountNumber.isNotEmpty ||
-      sbNomineeName.isNotEmpty ||
-      sbNomineeRel.isNotEmpty) {
+  String? migrationNotes;
+
+  if (sbAccountNumber.isNotEmpty) {
     savingsAccount = SavingsAccount(
       accountNumber: sbAccountNumber,
       nominees: _parseNominees(sbNomineeName, sbNomineeRel),
     );
+  } else if (sbNomineeName.isNotEmpty || sbNomineeRel.isNotEmpty) {
+    final nominees = _parseNominees(sbNomineeName, sbNomineeRel);
+    if (nominees.isNotEmpty) {
+      final nomineeDetails = nominees.map((n) {
+        final nName = n.name;
+        final nRelation = n.customRelationship ?? n.relationship.name;
+        final nPct = n.percentage;
+        return "$nName ($nRelation - $nPct%)";
+      }).join(', ');
+      
+      migrationNotes = "Legacy Nominees: $nomineeDetails";
+    }
   }
 
   return Customer(
@@ -162,6 +174,7 @@ Customer _parseCustomer(
     aadhaarNumber: aadhaarNumber,
     panNumber: panNumber,
     savingsAccount: savingsAccount,
+    notes: migrationNotes,
     createdAt: rowCreatedAt ?? earliestDepositDate,
     updatedAt: rowUpdatedAt ?? earliestDepositDate,
     migrationSource: 'legacy_csv_v1_${DateTime.now().toIso8601String()}',
@@ -236,6 +249,7 @@ class MigrationStats {
   final int skippedMissingCustomer;
   final int skippedDuplicate;
   final int emptyAccountMigrated;
+  final int invalidNomineesMigrated;
   final int errorCount;
   final List<String> diffLog;
 
@@ -246,6 +260,7 @@ class MigrationStats {
     this.skippedMissingCustomer = 0,
     this.skippedDuplicate = 0,
     this.emptyAccountMigrated = 0,
+    this.invalidNomineesMigrated = 0,
     this.errorCount = 0,
     this.diffLog = const [],
   });
@@ -275,6 +290,11 @@ class MigrationStats {
         errors: errorCount,
       );
     }
+    
+    if (invalidNomineesMigrated > 0) {
+      summary += "\nInvalid Nominees Migrated to Notes: $invalidNomineesMigrated";
+    }
+    
     return "$summary$diffText";
   }
 }
@@ -532,6 +552,100 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
     }
   }
 
+  Future<void> _migrateInvalidNominees() async {
+    final uid = _uidController.text.trim();
+    if (uid.isEmpty) {
+      setState(() => status = "Error: Please enter a target UID or Sign In.");
+      return;
+    }
+
+    if (!await _confirmProductionAction(
+      "Confirm Nominee Migration",
+      "You are in PRODUCTION mode. This will migrate invalid nominees to notes for UID: $uid. Proceed?",
+    )) {
+      return;
+    }
+
+    setState(() {
+      _isMigrating = true;
+      status = "Scanning customers for invalid nominees...";
+      statsDisplay = "";
+    });
+
+    final firestore = FirebaseFirestore.instance;
+    try {
+      final customersRef = firestore
+          .collection(FirestoreCollections.users)
+          .doc(uid)
+          .collection(FirestoreCollections.customers);
+
+      final snapshot = await customersRef.get();
+      var batch = firestore.batch();
+      int migratedCount = 0;
+      int processedCount = snapshot.docs.length;
+      final List<String> diffLog = [];
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final savingsAccount = data['savingsAccount'] as Map<String, dynamic>?;
+        if (savingsAccount != null) {
+          final accountNo = savingsAccount['accountNumber'] as String?;
+          final nominees = savingsAccount['nominees'] as List<dynamic>?;
+
+          if ((accountNo == null || accountNo.trim().isEmpty) && nominees != null && nominees.isNotEmpty) {
+            // Found invalid nominee!
+            final nomineeDetails = nominees.map((n) {
+              final name = n['name'] ?? '';
+              final relation = n['customRelationship'] ?? n['relationship'] ?? '';
+              final pct = n['percentage'] ?? 100;
+              return "$name ($relation - $pct%)";
+            }).join(', ');
+            
+            final noteText = "Legacy Nominees: $nomineeDetails";
+            
+            final existingNotes = data['notes'] as String?;
+            final newNotes = existingNotes != null && existingNotes.isNotEmpty 
+                ? "$existingNotes\n$noteText" 
+                : noteText;
+                
+            Map<String, dynamic> updateData = {
+               'notes': newNotes,
+               'updatedAt': FieldValue.serverTimestamp(),
+               'savingsAccount': FieldValue.delete(),
+            };
+            
+            final customerName = data['name'] as String? ?? 'Unknown Name';
+            
+            batch.update(doc.reference, updateData);
+            migratedCount++;
+            diffLog.add("Customer ID: ${doc.id} ($customerName) - Added to notes: $noteText");
+            
+            if (migratedCount % AppConstants.firestoreBatchLimit == 0) {
+               await batch.commit();
+               batch = firestore.batch();
+            }
+          }
+        }
+      }
+      
+      if (migratedCount > 0 && migratedCount % AppConstants.firestoreBatchLimit != 0) {
+        await batch.commit();
+      }
+      
+      setState(() {
+         status = "Nominee Migration Complete! 🎉";
+         statsDisplay = "Processed: $processedCount\nMigrated: $migratedCount\n${diffLog.isNotEmpty ? '\nDetails:\n${diffLog.join('\n')}' : ''}";
+         _isMigrating = false;
+      });
+
+    } catch (e, stack) {
+       setState(() {
+          status = "Error: $e\n$stack";
+          _isMigrating = false;
+        });
+    }
+  }
+
   Future<MigrationStats> _migrateCustomers(
     FirebaseFirestore firestore,
     String uid,
@@ -554,6 +668,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
     int duplicateCount = 0;
     int processedCount = 0;
     int errorCount = 0;
+    int invalidNomineesMigrated = 0;
     final List<String> diffLog = [];
 
     for (int i = 1; i < rows.length; i++) {
@@ -590,6 +705,11 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
             data,
           );
 
+          if (customer.notes?.startsWith("Legacy Nominees:") == true) {
+             diffLog.add("Customer ID: ${customer.id} (${customer.name}) - Legacy Nominees migrated to notes: ${customer.notes}");
+             invalidNomineesMigrated++;
+          }
+
           _customerCache[id] = customer.id;
           migratedCount++;
 
@@ -618,6 +738,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
       processed: processedCount,
       migrated: migratedCount,
       skippedDuplicate: duplicateCount,
+      invalidNomineesMigrated: invalidNomineesMigrated,
       errorCount: errorCount,
       diffLog: diffLog,
     );
@@ -849,6 +970,14 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                       foregroundColor: Theme.of(context).colorScheme.onTertiary,
                     ),
                     child: Text(t.migration.migrateAll),
+                  ),
+                  ElevatedButton(
+                    onPressed: _isMigrating ? null : _migrateInvalidNominees,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                    ),
+                    child: const Text("Migrate Invalid Nominees"),
                   ),
                   ElevatedButton(
                     onPressed: _isMigrating ? null : _deleteAllData,
