@@ -54,7 +54,10 @@ class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
   Stream<Result<List<OneTimeDeposit>, String>> watchOneTimeDeposits() {
     return _deposits.snapshots().map((snapshot) {
       try {
-        final deposits = snapshot.docs.map((doc) => doc.data()).toList();
+        final deposits = snapshot.docs
+            .map((doc) => doc.data())
+            .where((d) => !d.isDeleted)
+            .toList();
         return Success(deposits);
       } catch (e) {
         return Failure(e.toString());
@@ -90,7 +93,10 @@ class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
   @override
   Future<Result<void, String>> deleteOneTimeDeposit(String id) async {
     try {
-      _deposits.doc(id).delete();
+      await _deposits.doc(id).update({
+        'isDeleted': true,
+        FirestoreKeys.updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());

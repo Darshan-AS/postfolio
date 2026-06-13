@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RecurringDeposit {
 
- String get id; String? get serialNo; String? get accountNo; double get installmentAmount; int get termYears; int get termMonths; double get interestRate; String get customerId; RecurringSchemeType get schemeType; DateTime get startDate; List<Nominee> get nominees; DepositStatus get status;@TimestampConverter()@JsonKey(includeIfNull: false) DateTime? get createdAt;@TimestampConverter()@JsonKey(includeIfNull: false) DateTime? get updatedAt;@JsonKey(includeIfNull: false) String? get migrationSource;
+ String get id; String? get serialNo; String? get accountNo; double get installmentAmount; int get termYears; int get termMonths; double get interestRate; String get customerId; RecurringSchemeType get schemeType; DateTime get startDate; List<Nominee> get nominees; DepositStatus get status;@TimestampConverter()@JsonKey(includeIfNull: false) DateTime? get createdAt;@TimestampConverter()@JsonKey(includeIfNull: false) DateTime? get updatedAt;@JsonKey(includeIfNull: false) String? get migrationSource; bool get isDeleted;
 /// Create a copy of RecurringDeposit
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $RecurringDepositCopyWith<RecurringDeposit> get copyWith => _$RecurringDepositCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringDeposit&&(identical(other.id, id) || other.id == id)&&(identical(other.serialNo, serialNo) || other.serialNo == serialNo)&&(identical(other.accountNo, accountNo) || other.accountNo == accountNo)&&(identical(other.installmentAmount, installmentAmount) || other.installmentAmount == installmentAmount)&&(identical(other.termYears, termYears) || other.termYears == termYears)&&(identical(other.termMonths, termMonths) || other.termMonths == termMonths)&&(identical(other.interestRate, interestRate) || other.interestRate == interestRate)&&(identical(other.customerId, customerId) || other.customerId == customerId)&&(identical(other.schemeType, schemeType) || other.schemeType == schemeType)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&const DeepCollectionEquality().equals(other.nominees, nominees)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.migrationSource, migrationSource) || other.migrationSource == migrationSource));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringDeposit&&(identical(other.id, id) || other.id == id)&&(identical(other.serialNo, serialNo) || other.serialNo == serialNo)&&(identical(other.accountNo, accountNo) || other.accountNo == accountNo)&&(identical(other.installmentAmount, installmentAmount) || other.installmentAmount == installmentAmount)&&(identical(other.termYears, termYears) || other.termYears == termYears)&&(identical(other.termMonths, termMonths) || other.termMonths == termMonths)&&(identical(other.interestRate, interestRate) || other.interestRate == interestRate)&&(identical(other.customerId, customerId) || other.customerId == customerId)&&(identical(other.schemeType, schemeType) || other.schemeType == schemeType)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&const DeepCollectionEquality().equals(other.nominees, nominees)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.migrationSource, migrationSource) || other.migrationSource == migrationSource)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,serialNo,accountNo,installmentAmount,termYears,termMonths,interestRate,customerId,schemeType,startDate,const DeepCollectionEquality().hash(nominees),status,createdAt,updatedAt,migrationSource);
+int get hashCode => Object.hash(runtimeType,id,serialNo,accountNo,installmentAmount,termYears,termMonths,interestRate,customerId,schemeType,startDate,const DeepCollectionEquality().hash(nominees),status,createdAt,updatedAt,migrationSource,isDeleted);
 
 @override
 String toString() {
-  return 'RecurringDeposit(id: $id, serialNo: $serialNo, accountNo: $accountNo, installmentAmount: $installmentAmount, termYears: $termYears, termMonths: $termMonths, interestRate: $interestRate, customerId: $customerId, schemeType: $schemeType, startDate: $startDate, nominees: $nominees, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, migrationSource: $migrationSource)';
+  return 'RecurringDeposit(id: $id, serialNo: $serialNo, accountNo: $accountNo, installmentAmount: $installmentAmount, termYears: $termYears, termMonths: $termMonths, interestRate: $interestRate, customerId: $customerId, schemeType: $schemeType, startDate: $startDate, nominees: $nominees, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, migrationSource: $migrationSource, isDeleted: $isDeleted)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $RecurringDepositCopyWith<$Res>  {
   factory $RecurringDepositCopyWith(RecurringDeposit value, $Res Function(RecurringDeposit) _then) = _$RecurringDepositCopyWithImpl;
 @useResult
 $Res call({
- String id, String? serialNo, String? accountNo, double installmentAmount, int termYears, int termMonths, double interestRate, String customerId, RecurringSchemeType schemeType, DateTime startDate, List<Nominee> nominees, DepositStatus status,@TimestampConverter()@JsonKey(includeIfNull: false) DateTime? createdAt,@TimestampConverter()@JsonKey(includeIfNull: false) DateTime? updatedAt,@JsonKey(includeIfNull: false) String? migrationSource
+ String id, String? serialNo, String? accountNo, double installmentAmount, int termYears, int termMonths, double interestRate, String customerId, RecurringSchemeType schemeType, DateTime startDate, List<Nominee> nominees, DepositStatus status,@TimestampConverter()@JsonKey(includeIfNull: false) DateTime? createdAt,@TimestampConverter()@JsonKey(includeIfNull: false) DateTime? updatedAt,@JsonKey(includeIfNull: false) String? migrationSource, bool isDeleted
 });
 
 
@@ -65,7 +65,7 @@ class _$RecurringDepositCopyWithImpl<$Res>
 
 /// Create a copy of RecurringDeposit
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? serialNo = freezed,Object? accountNo = freezed,Object? installmentAmount = null,Object? termYears = null,Object? termMonths = null,Object? interestRate = null,Object? customerId = null,Object? schemeType = null,Object? startDate = null,Object? nominees = null,Object? status = null,Object? createdAt = freezed,Object? updatedAt = freezed,Object? migrationSource = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? serialNo = freezed,Object? accountNo = freezed,Object? installmentAmount = null,Object? termYears = null,Object? termMonths = null,Object? interestRate = null,Object? customerId = null,Object? schemeType = null,Object? startDate = null,Object? nominees = null,Object? status = null,Object? createdAt = freezed,Object? updatedAt = freezed,Object? migrationSource = freezed,Object? isDeleted = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,serialNo: freezed == serialNo ? _self.serialNo : serialNo // ignore: cast_nullable_to_non_nullable
@@ -82,7 +82,8 @@ as List<Nominee>,status: null == status ? _self.status : status // ignore: cast_
 as DepositStatus,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,migrationSource: freezed == migrationSource ? _self.migrationSource : migrationSource // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isDeleted: null == isDeleted ? _self.isDeleted : isDeleted // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -94,7 +95,7 @@ as String?,
 @JsonSerializable()
 
 class _RecurringDeposit extends RecurringDeposit {
-  const _RecurringDeposit({required this.id, this.serialNo, this.accountNo, required this.installmentAmount, required this.termYears, required this.termMonths, required this.interestRate, required this.customerId, required this.schemeType, required this.startDate, final  List<Nominee> nominees = const [], this.status = DepositStatus.active, @TimestampConverter()@JsonKey(includeIfNull: false) this.createdAt, @TimestampConverter()@JsonKey(includeIfNull: false) this.updatedAt, @JsonKey(includeIfNull: false) this.migrationSource}): _nominees = nominees,super._();
+  const _RecurringDeposit({required this.id, this.serialNo, this.accountNo, required this.installmentAmount, required this.termYears, required this.termMonths, required this.interestRate, required this.customerId, required this.schemeType, required this.startDate, final  List<Nominee> nominees = const [], this.status = DepositStatus.active, @TimestampConverter()@JsonKey(includeIfNull: false) this.createdAt, @TimestampConverter()@JsonKey(includeIfNull: false) this.updatedAt, @JsonKey(includeIfNull: false) this.migrationSource, this.isDeleted = false}): _nominees = nominees,super._();
   factory _RecurringDeposit.fromJson(Map<String, dynamic> json) => _$RecurringDepositFromJson(json);
 
 @override final  String id;
@@ -118,6 +119,7 @@ class _RecurringDeposit extends RecurringDeposit {
 @override@TimestampConverter()@JsonKey(includeIfNull: false) final  DateTime? createdAt;
 @override@TimestampConverter()@JsonKey(includeIfNull: false) final  DateTime? updatedAt;
 @override@JsonKey(includeIfNull: false) final  String? migrationSource;
+@override@JsonKey() final  bool isDeleted;
 
 /// Create a copy of RecurringDeposit
 /// with the given fields replaced by the non-null parameter values.
@@ -132,16 +134,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringDeposit&&(identical(other.id, id) || other.id == id)&&(identical(other.serialNo, serialNo) || other.serialNo == serialNo)&&(identical(other.accountNo, accountNo) || other.accountNo == accountNo)&&(identical(other.installmentAmount, installmentAmount) || other.installmentAmount == installmentAmount)&&(identical(other.termYears, termYears) || other.termYears == termYears)&&(identical(other.termMonths, termMonths) || other.termMonths == termMonths)&&(identical(other.interestRate, interestRate) || other.interestRate == interestRate)&&(identical(other.customerId, customerId) || other.customerId == customerId)&&(identical(other.schemeType, schemeType) || other.schemeType == schemeType)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&const DeepCollectionEquality().equals(other._nominees, _nominees)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.migrationSource, migrationSource) || other.migrationSource == migrationSource));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringDeposit&&(identical(other.id, id) || other.id == id)&&(identical(other.serialNo, serialNo) || other.serialNo == serialNo)&&(identical(other.accountNo, accountNo) || other.accountNo == accountNo)&&(identical(other.installmentAmount, installmentAmount) || other.installmentAmount == installmentAmount)&&(identical(other.termYears, termYears) || other.termYears == termYears)&&(identical(other.termMonths, termMonths) || other.termMonths == termMonths)&&(identical(other.interestRate, interestRate) || other.interestRate == interestRate)&&(identical(other.customerId, customerId) || other.customerId == customerId)&&(identical(other.schemeType, schemeType) || other.schemeType == schemeType)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&const DeepCollectionEquality().equals(other._nominees, _nominees)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.migrationSource, migrationSource) || other.migrationSource == migrationSource)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,serialNo,accountNo,installmentAmount,termYears,termMonths,interestRate,customerId,schemeType,startDate,const DeepCollectionEquality().hash(_nominees),status,createdAt,updatedAt,migrationSource);
+int get hashCode => Object.hash(runtimeType,id,serialNo,accountNo,installmentAmount,termYears,termMonths,interestRate,customerId,schemeType,startDate,const DeepCollectionEquality().hash(_nominees),status,createdAt,updatedAt,migrationSource,isDeleted);
 
 @override
 String toString() {
-  return 'RecurringDeposit(id: $id, serialNo: $serialNo, accountNo: $accountNo, installmentAmount: $installmentAmount, termYears: $termYears, termMonths: $termMonths, interestRate: $interestRate, customerId: $customerId, schemeType: $schemeType, startDate: $startDate, nominees: $nominees, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, migrationSource: $migrationSource)';
+  return 'RecurringDeposit(id: $id, serialNo: $serialNo, accountNo: $accountNo, installmentAmount: $installmentAmount, termYears: $termYears, termMonths: $termMonths, interestRate: $interestRate, customerId: $customerId, schemeType: $schemeType, startDate: $startDate, nominees: $nominees, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, migrationSource: $migrationSource, isDeleted: $isDeleted)';
 }
 
 
@@ -152,7 +154,7 @@ abstract mixin class _$RecurringDepositCopyWith<$Res> implements $RecurringDepos
   factory _$RecurringDepositCopyWith(_RecurringDeposit value, $Res Function(_RecurringDeposit) _then) = __$RecurringDepositCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? serialNo, String? accountNo, double installmentAmount, int termYears, int termMonths, double interestRate, String customerId, RecurringSchemeType schemeType, DateTime startDate, List<Nominee> nominees, DepositStatus status,@TimestampConverter()@JsonKey(includeIfNull: false) DateTime? createdAt,@TimestampConverter()@JsonKey(includeIfNull: false) DateTime? updatedAt,@JsonKey(includeIfNull: false) String? migrationSource
+ String id, String? serialNo, String? accountNo, double installmentAmount, int termYears, int termMonths, double interestRate, String customerId, RecurringSchemeType schemeType, DateTime startDate, List<Nominee> nominees, DepositStatus status,@TimestampConverter()@JsonKey(includeIfNull: false) DateTime? createdAt,@TimestampConverter()@JsonKey(includeIfNull: false) DateTime? updatedAt,@JsonKey(includeIfNull: false) String? migrationSource, bool isDeleted
 });
 
 
@@ -169,7 +171,7 @@ class __$RecurringDepositCopyWithImpl<$Res>
 
 /// Create a copy of RecurringDeposit
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? serialNo = freezed,Object? accountNo = freezed,Object? installmentAmount = null,Object? termYears = null,Object? termMonths = null,Object? interestRate = null,Object? customerId = null,Object? schemeType = null,Object? startDate = null,Object? nominees = null,Object? status = null,Object? createdAt = freezed,Object? updatedAt = freezed,Object? migrationSource = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? serialNo = freezed,Object? accountNo = freezed,Object? installmentAmount = null,Object? termYears = null,Object? termMonths = null,Object? interestRate = null,Object? customerId = null,Object? schemeType = null,Object? startDate = null,Object? nominees = null,Object? status = null,Object? createdAt = freezed,Object? updatedAt = freezed,Object? migrationSource = freezed,Object? isDeleted = null,}) {
   return _then(_RecurringDeposit(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,serialNo: freezed == serialNo ? _self.serialNo : serialNo // ignore: cast_nullable_to_non_nullable
@@ -186,7 +188,8 @@ as List<Nominee>,status: null == status ? _self.status : status // ignore: cast_
 as DepositStatus,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,migrationSource: freezed == migrationSource ? _self.migrationSource : migrationSource // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isDeleted: null == isDeleted ? _self.isDeleted : isDeleted // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

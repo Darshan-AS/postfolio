@@ -53,7 +53,10 @@ class FirestoreCustomerRepository implements CustomerRepository {
   Stream<Result<List<Customer>, String>> watchCustomers() {
     return _customers.snapshots().map((snapshot) {
       try {
-        final customers = snapshot.docs.map((doc) => doc.data()).toList();
+        final customers = snapshot.docs
+            .map((doc) => doc.data())
+            .where((c) => !c.isDeleted)
+            .toList();
         return Success(customers);
       } catch (e) {
         return Failure(e.toString());
@@ -65,10 +68,11 @@ class FirestoreCustomerRepository implements CustomerRepository {
   Stream<Result<Customer, String>> watchCustomerById(String id) {
     return _customers.doc(id).snapshots().map((snapshot) {
       try {
-        if (!snapshot.exists) {
+        final data = snapshot.data();
+        if (!snapshot.exists || data == null || data.isDeleted) {
           return const Failure('Customer not found');
         }
-        return Success(snapshot.data()!);
+        return Success(data);
       } catch (e) {
         return Failure(e.toString());
       }
@@ -103,7 +107,10 @@ class FirestoreCustomerRepository implements CustomerRepository {
   @override
   Future<Result<void, String>> deleteCustomer(String id) async {
     try {
-      _customers.doc(id).delete();
+      await _customers.doc(id).update({
+        'isDeleted': true,
+        FirestoreKeys.updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());

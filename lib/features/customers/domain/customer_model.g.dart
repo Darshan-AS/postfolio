@@ -25,6 +25,7 @@ _Customer _$CustomerFromJson(Map<String, dynamic> json) => _Customer(
   createdAt: const TimestampConverter().fromJson(json['createdAt']),
   updatedAt: const TimestampConverter().fromJson(json['updatedAt']),
   migrationSource: json['migrationSource'] as String?,
+  isDeleted: json['isDeleted'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$CustomerToJson(_Customer instance) => <String, dynamic>{
@@ -42,4 +43,5 @@ Map<String, dynamic> _$CustomerToJson(_Customer instance) => <String, dynamic>{
   'createdAt': ?const TimestampConverter().toJson(instance.createdAt),
   'updatedAt': ?const TimestampConverter().toJson(instance.updatedAt),
   'migrationSource': ?instance.migrationSource,
+  'isDeleted': instance.isDeleted,
 };

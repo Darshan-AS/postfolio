@@ -2,11 +2,13 @@
 
 *Note: For a summarized history of past work, see `.agents/historical_summary.md` and `.agents/progress.md`. For the raw chronological task history, see `.agents/historical_tasks_archive.md`.*
 
-## 🚀 Next Up (High Priority: Firestore Quota Fixes)
+## 🚀 Next Up (High Priority: Firestore Optimization via Offline-First Isar)
 - [x] **Migration Script (Nominees)**: Write a script to find customers who have nominees but lack an SB Account number, migrate those nominee details to the "Notes" field, and delete the nominee value.
-- [ ] **Denormalize Customer Data**: Add `customerName` to Deposits to avoid N+1 queries.
-- [ ] **Pagination**: Implement Server-Side Pagination & Infinite Scrolling UI (`limit()`, `startAfterDocument()`).
-- [ ] **Search/Sort Refactor**: Move Filtering/Sorting to Server-Side (Firestore `orderBy` and Prefix Search).
+- [ ] **Dependencies**: Add `isar`, `isar_flutter_libs`, `path_provider`, and `build_runner`.
+- [x] **Model Updates**: Add `@collection`, `isarId`, and `isDeleted` flag to `Customer`, `RecurringDeposit`, and `OneTimeDeposit` models.
+- [ ] **SyncService Engine**: Build a background delta-sync service using `updatedAt > last_sync_time`.
+- [ ] **Repository Refactoring**: Switch UI reads to Isar streams and handle dual-writes (Isar + Firestore).
+- [x] **Soft Deletes**: Replace true database deletes with updates to `isDeleted: true` to enable accurate delta-syncing.
 - [x] **Web Support**: Enable Firestore Web Offline Persistence.
 
 ## 🧮 Domain Math & Business Logic

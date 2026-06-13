@@ -31,6 +31,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? createdAt,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? updatedAt,
     @JsonKey(includeIfNull: false) String? migrationSource,
+    @Default(false) bool isDeleted,
   }) = _OneTimeDeposit;
 
   @override

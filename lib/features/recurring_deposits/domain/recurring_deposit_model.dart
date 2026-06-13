@@ -32,6 +32,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? createdAt,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? updatedAt,
     @JsonKey(includeIfNull: false) String? migrationSource,
+    @Default(false) bool isDeleted,
   }) = _RecurringDeposit;
 
   @override

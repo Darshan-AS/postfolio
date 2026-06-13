@@ -28,6 +28,7 @@ sealed class Customer with _$Customer {
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? createdAt,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? updatedAt,
     @JsonKey(includeIfNull: false) String? migrationSource,
+    @Default(false) bool isDeleted,
   }) = _Customer;
 
   factory Customer.fromJson(Map<String, dynamic> json) =>

@@ -29,6 +29,7 @@ _RecurringDeposit _$RecurringDepositFromJson(Map<String, dynamic> json) =>
       createdAt: const TimestampConverter().fromJson(json['createdAt']),
       updatedAt: const TimestampConverter().fromJson(json['updatedAt']),
       migrationSource: json['migrationSource'] as String?,
+      isDeleted: json['isDeleted'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$RecurringDepositToJson(_RecurringDeposit instance) =>
@@ -48,6 +49,7 @@ Map<String, dynamic> _$RecurringDepositToJson(_RecurringDeposit instance) =>
       'createdAt': ?const TimestampConverter().toJson(instance.createdAt),
       'updatedAt': ?const TimestampConverter().toJson(instance.updatedAt),
       'migrationSource': ?instance.migrationSource,
+      'isDeleted': instance.isDeleted,
     };
 
 const _$RecurringSchemeTypeEnumMap = {
