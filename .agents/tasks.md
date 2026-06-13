@@ -3,6 +3,7 @@
 *Note: For a summarized history of past work, see `.agents/historical_summary.md` and `.agents/progress.md`. For the raw chronological task history, see `.agents/historical_tasks_archive.md`.*
 
 ## 🚀 Next Up (High Priority: Firestore Quota Fixes)
+- [x] **Migration Script (Nominees)**: Write a script to find customers who have nominees but lack an SB Account number, migrate those nominee details to the "Notes" field, and delete the nominee value.
 - [ ] **Denormalize Customer Data**: Add `customerName` to Deposits to avoid N+1 queries.
 - [ ] **Pagination**: Implement Server-Side Pagination & Infinite Scrolling UI (`limit()`, `startAfterDocument()`).
 - [ ] **Search/Sort Refactor**: Move Filtering/Sorting to Server-Side (Firestore `orderBy` and Prefix Search).
