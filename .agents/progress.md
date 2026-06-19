@@ -1,11 +1,10 @@
 # Project Progress
 
 ## Current State
-**Released v1.5.1+15**: Added multiline notes to customer profiles, robust currency formatting with numeric word translation, full amount dashboard chart tooltips, and a migration script for invalid nominees.
+**Preparing for Release (v1.5.1+15)**: Initiated Play Store publication workflow. Formulated a 4-phase plan covering branding, security, store assets, and final validation.
 
-- Implemented `_migrateInvalidNominees` in the migration script to find customers with nominees but lacking an SB Account number, append their legacy nominee details to the "Notes" field, and delete the invalid `savingsAccount` entry from Firestore.
-- Added logic directly into the raw CSV parsing script (`_parseCustomer`) so new migrations automatically map invalid nominees into the "Notes" field.
-- Updated `MigrationStats` and CSV logging logic to track and print how many invalid nominees were migrated to notes during raw CSV imports, appending detailed logs identifying the customer IDs and names for transparency.
+- Defined publication checklist in `tasks.md`.
+- Migrated Application ID from `com.example.postfolio` to `dev.darshanas.postfolio` across Android, iOS, macOS, and Linux.
 - Added a multiline "Notes" text feature to the Customer model to serve as a scratch space for unstructured metadata. Integrated it into the Customer Form and displayed it on the Customer Details screen.
 - Refactored currency formatting in deposit forms by centralizing `CurrencyTextInputFormatter` inside hooks, eliminating `replaceAll` hacky string manipulations, fixing numerical precision bugs, and stripping redundant prefix symbols for a cleaner UI.
 - Fixed an issue where the sort and filter badges incorrectly displayed on fresh logins by aligning `StorageService` default values with domain models.
