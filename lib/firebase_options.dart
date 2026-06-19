@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCQrhiPSNFfjdl1htRoLSgHa1wv7yB_YEM',
-    appId: '1:143378829514:android:92a750e6c503288d20a433',
+    appId: '1:143378829514:android:41d9df0d03361b6d20a433',
     messagingSenderId: '143378829514',
     projectId: 'postfolio-app',
     storageBucket: 'postfolio-app.firebasestorage.app',
@@ -60,28 +60,24 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBpaZ-4u82XcmYsvALV8Ef1su4YX-PC4mk',
-    appId: '1:143378829514:ios:73e9955c243c868720a433',
+    appId: '1:143378829514:ios:ede1817061a7a10320a433',
     messagingSenderId: '143378829514',
     projectId: 'postfolio-app',
     storageBucket: 'postfolio-app.firebasestorage.app',
-    androidClientId:
-        '143378829514-g9dcitgo5kd8r3kg68u4spgqc1l8h9uv.apps.googleusercontent.com',
-    iosClientId:
-        '143378829514-b34i8adeg7121vehtd5jtr1mr63r912n.apps.googleusercontent.com',
-    iosBundleId: 'com.example.postfolio',
+    androidClientId: '143378829514-g9dcitgo5kd8r3kg68u4spgqc1l8h9uv.apps.googleusercontent.com',
+    iosClientId: '143378829514-8no69brlamqrr9omemjjjv6k1b9jrtk1.apps.googleusercontent.com',
+    iosBundleId: 'dev.darshanas.postfolio',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyBpaZ-4u82XcmYsvALV8Ef1su4YX-PC4mk',
-    appId: '1:143378829514:ios:73e9955c243c868720a433',
+    appId: '1:143378829514:ios:ede1817061a7a10320a433',
     messagingSenderId: '143378829514',
     projectId: 'postfolio-app',
     storageBucket: 'postfolio-app.firebasestorage.app',
-    androidClientId:
-        '143378829514-g9dcitgo5kd8r3kg68u4spgqc1l8h9uv.apps.googleusercontent.com',
-    iosClientId:
-        '143378829514-b34i8adeg7121vehtd5jtr1mr63r912n.apps.googleusercontent.com',
-    iosBundleId: 'com.example.postfolio',
+    androidClientId: '143378829514-g9dcitgo5kd8r3kg68u4spgqc1l8h9uv.apps.googleusercontent.com',
+    iosClientId: '143378829514-8no69brlamqrr9omemjjjv6k1b9jrtk1.apps.googleusercontent.com',
+    iosBundleId: 'dev.darshanas.postfolio',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -93,4 +89,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'postfolio-app.firebasestorage.app',
     measurementId: 'G-NG5X5NGZMG',
   );
+
 }

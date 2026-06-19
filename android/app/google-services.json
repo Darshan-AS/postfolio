@@ -22,6 +22,50 @@
           }
         },
         {
+          "client_id": "143378829514-pilh3nogudrul735ocpjbtd10rlf31n8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.postfolio",
+            "certificate_hash": "77afbdddd72d793bec14351af932be37d4f94011"
+          }
+        },
+        {
+          "client_id": "143378829514-84as322oeajpt990vu2fil56lvs4l9b7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQrhiPSNFfjdl1htRoLSgHa1wv7yB_YEM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "143378829514-84as322oeajpt990vu2fil56lvs4l9b7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "143378829514-b34i8adeg7121vehtd5jtr1mr63r912n.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.postfolio"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:143378829514:android:41d9df0d03361b6d20a433",
+        "android_client_info": {
+          "package_name": "dev.darshanas.postfolio"
+        }
+      },
+      "oauth_client": [
+        {
           "client_id": "143378829514-84as322oeajpt990vu2fil56lvs4l9b7.apps.googleusercontent.com",
           "client_type": 3
         }

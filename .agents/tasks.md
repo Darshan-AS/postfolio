@@ -9,6 +9,16 @@
 - [ ] **Search/Sort Refactor**: Move Filtering/Sorting to Server-Side (Firestore `orderBy` and Prefix Search).
 - [x] **Web Support**: Enable Firestore Web Offline Persistence.
 
+## 📦 Release & Publication (Play Store)
+- [x] **Change Application ID**: Update `applicationId` in `android/app/build.gradle.kts` (e.g., to `dev.darshanas.postfolio`).
+- [ ] **Update App Icons**: Replace default icons with branded adaptive icons (using `flutter_launcher_icons`).
+- [ ] **Native Splash Screen**: Implement using `flutter_native_splash`.
+- [ ] **Production Keystore**: Generate release JKS and configure `key.properties`.
+- [ ] **Firebase Production**: Configure production project, update `google-services.json`, and enable **App Check**.
+- [ ] **Store Assets**: Prepare screenshots, feature graphic, and metadata.
+- [ ] **Privacy Policy**: Host and link the privacy policy.
+- [ ] **AAB Build**: Run `flutter build appbundle` for release.
+
 ## 🧮 Domain Math & Business Logic
 - [ ] **KVP Term DB Sync**: Decide whether to sync the dynamically calculated KVP term to the database (`termYears`/`termMonths`) or skip storing it entirely and rely purely on the dynamic calculation.
 - [ ] **Commissions**: Auto-calculate Gross Commission, deduct 2% TDS, and derive Net Payout.
@@ -24,6 +34,7 @@
 - [ ] *Reserved for future dashboard widgets and analytics (e.g. commission estimates, maturing soon lists).*
 
 ## 🎨 UI/UX Polish & Features
+- [ ] **Design Inspiration**: Refer to [flutterpro.design](https://flutterpro.design) for small details and micro-interactions that build "taste" in Flutter.
 - [ ] **Nominee UI Overhaul**:
   - [ ] Update to an input widget/slider that strictly enforces the 100% rule.
   - [ ] Organize SB account number and associated nomination into a single cohesive UI section.
