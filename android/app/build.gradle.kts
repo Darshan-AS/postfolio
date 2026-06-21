@@ -1,4 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
@@ -28,6 +30,31 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    signingConfigs {
+        val keystorePropertiesFile = rootProject.file("key.properties")
+        val keystoreProperties = Properties()
+        if (keystorePropertiesFile.exists()) {
+            keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+        }
+
+        val keystoreFile = file("debug.keystore")
+        if (keystoreFile.exists()) {
+            create("injected_debug") {
+                storeFile = keystoreFile
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String?
+            keyPassword = keystoreProperties["keyPassword"] as String?
+            storeFile = (keystoreProperties["storeFile"] as String?)?.let { file(it) }
+            storePassword = keystoreProperties["storePassword"] as String?
+        }
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "dev.darshanas.postfolio"
@@ -39,25 +66,9 @@ android {
         versionName = flutter.versionName
     }
 
-    signingConfigs {
-        val keystoreFile = file("debug.keystore")
-        if (keystoreFile.exists()) {
-            create("injected_debug") {
-                storeFile = keystoreFile
-                storePassword = "android"
-                keyAlias = "androiddebugkey"
-                keyPassword = "android"
-            }
-        }
-    }
-
     buildTypes {
         release {
-            signingConfig = if (file("debug.keystore").exists()) {
-                signingConfigs.getByName("injected_debug")
-            } else {
-                signingConfigs.getByName("debug") // Local fallback
-            }
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

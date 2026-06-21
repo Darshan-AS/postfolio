@@ -10,7 +10,8 @@ All progress, tasks, and architectural conventions are stored in the `.agents/` 
 - When starting a new conversation, you MUST immediately read:
   1. `.agents/progress.md` (Current state)
   2. `.agents/tasks.md` (Roadmap)
-  3. `.agents/session_logs/` (Recent history)
+  3. `docs/setup_guide.md` (Dev/Release setup & recovery)
+  4. `.agents/session_logs/` (Recent history)
 
 ## 2. Core Rule Library
 Detailed technical conventions are modularized. Read these files when working on relevant parts of the system:

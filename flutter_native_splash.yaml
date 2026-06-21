@@ -1,0 +1,9 @@
+flutter_native_splash:
+  color: "#ffffff" # Replace with your brand primary color
+  image: assets/branding/splash_logo.png
+  
+  android_12:
+    image: assets/branding/splash_logo.png
+    color: "#ffffff" # Replace with your brand primary color
+    
+  web: false

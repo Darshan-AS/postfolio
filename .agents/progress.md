@@ -3,6 +3,10 @@
 ## Current State
 **Preparing for Release (v1.5.1+15)**: Initiated Play Store publication workflow. Formulated a 4-phase plan covering branding, security, store assets, and final validation.
 
+- Initiated **Phase 2: App Icons & Branding** by adding `flutter_launcher_icons` and `flutter_native_splash` dependencies and creating their respective configuration files. Created `assets/branding/` directory for assets.
+- Fixed Kotlin DSL syntax errors in `android/app/build.gradle.kts` and corrected the keystore path in `android/key.properties`.
+- Generated placeholder files for Play Store publication, including `android/key.properties`, `docs/store_assets/README.md`, and `docs/legal/privacy_policy.md`.
+- Configured Android app signing in `build.gradle.kts` to use the release keystore properties.
 - Defined publication checklist in `tasks.md`.
 - Migrated Application ID from `com.example.postfolio` to `dev.darshanas.postfolio` across Android, iOS, macOS, and Linux.
 - Added a multiline "Notes" text feature to the Customer model to serve as a scratch space for unstructured metadata. Integrated it into the Customer Form and displayed it on the Customer Details screen.

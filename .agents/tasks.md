@@ -11,12 +11,12 @@
 
 ## 📦 Release & Publication (Play Store)
 - [x] **Change Application ID**: Update `applicationId` in `android/app/build.gradle.kts` (e.g., to `dev.darshanas.postfolio`).
-- [ ] **Update App Icons**: Replace default icons with branded adaptive icons (using `flutter_launcher_icons`).
-- [ ] **Native Splash Screen**: Implement using `flutter_native_splash`.
-- [ ] **Production Keystore**: Generate release JKS and configure `key.properties`.
-- [ ] **Firebase Production**: Configure production project, update `google-services.json`, and enable **App Check**.
-- [ ] **Store Assets**: Prepare screenshots, feature graphic, and metadata.
-- [ ] **Privacy Policy**: Host and link the privacy policy.
+- [ ] **Update App Icons**: Replace default icons with branded adaptive icons (using `flutter_launcher_icons`). (Dependencies added, config files created)
+- [ ] **Native Splash Screen**: Implement using `flutter_native_splash`. (Dependencies added, config files created)
+- [x] **Production Keystore**: Generate release JKS and configure `key.properties`. (Placeholder `key.properties` created and `build.gradle` updated)
+- [ ] **Firebase Production**: Configure production project, update `google-services.json`, and enable **App Check** (Security Hardening).
+- [x] **Store Assets**: Prepare screenshots, feature graphic, and metadata. (Placeholder directory and checklist created)
+- [x] **Privacy Policy**: Host and link the privacy policy. (Placeholder created)
 - [ ] **AAB Build**: Run `flutter build appbundle` for release.
 
 ## 🧮 Domain Math & Business Logic
