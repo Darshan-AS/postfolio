@@ -11,13 +11,13 @@
 
 ## 📦 Release & Publication (Play Store)
 - [x] **Change Application ID**: Update `applicationId` in `android/app/build.gradle.kts` (e.g., to `dev.darshanas.postfolio`).
-- [ ] **Update App Icons**: Replace default icons with branded adaptive icons (using `flutter_launcher_icons`). (Dependencies added, config files created)
-- [ ] **Native Splash Screen**: Implement using `flutter_native_splash`. (Dependencies added, config files created)
+- [ ] **Update App Icons**: Replace default icons with branded adaptive icons (using `flutter_launcher_icons`). (Skipped for initial internal testing)
+- [ ] **Native Splash Screen**: Implement using `flutter_native_splash`. (Skipped for initial internal testing)
 - [x] **Production Keystore**: Generate release JKS and configure `key.properties`. (Placeholder `key.properties` created and `build.gradle` updated)
 - [ ] **Firebase Production**: Configure production project, update `google-services.json`, and enable **App Check** (Security Hardening).
 - [x] **Store Assets**: Prepare screenshots, feature graphic, and metadata. (Placeholder directory and checklist created)
 - [x] **Privacy Policy**: Host and link the privacy policy. (Placeholder created)
-- [ ] **AAB Build**: Run `flutter build appbundle` for release.
+- [x] **AAB Build**: Run `flutter build appbundle` for release. (v1.5.1+15 built and successfully deployed to Internal Testing)
 
 ## 🧮 Domain Math & Business Logic
 - [ ] **KVP Term DB Sync**: Decide whether to sync the dynamically calculated KVP term to the database (`termYears`/`termMonths`) or skip storing it entirely and rely purely on the dynamic calculation.

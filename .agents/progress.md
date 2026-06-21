@@ -3,7 +3,8 @@
 ## Current State
 **Preparing for Release (v1.5.1+15)**: Initiated Play Store publication workflow. Formulated a 4-phase plan covering branding, security, store assets, and final validation.
 
-- Initiated **Phase 2: App Icons & Branding** by adding `flutter_launcher_icons` and `flutter_native_splash` dependencies and creating their respective configuration files. Created `assets/branding/` directory for assets.
+- Successfully built the release Android App Bundle (`.aab`) for v1.5.1+15.
+- Initiated **Phase 2: App Icons & Branding** (Currently skipped for internal testing).
 - Fixed Kotlin DSL syntax errors in `android/app/build.gradle.kts` and corrected the keystore path in `android/key.properties`.
 - Generated placeholder files for Play Store publication, including `android/key.properties`, `docs/store_assets/README.md`, and `docs/legal/privacy_policy.md`.
 - Configured Android app signing in `build.gradle.kts` to use the release keystore properties.
