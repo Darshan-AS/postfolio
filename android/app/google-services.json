@@ -47,10 +47,10 @@
               "client_type": 3
             },
             {
-              "client_id": "143378829514-b34i8adeg7121vehtd5jtr1mr63r912n.apps.googleusercontent.com",
+              "client_id": "143378829514-8no69brlamqrr9omemjjjv6k1b9jrtk1.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.postfolio"
+                "bundle_id": "dev.darshanas.postfolio"
               }
             }
           ]
@@ -65,6 +65,30 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "143378829514-fg4smt5aloun9occ1k5ne5u9ur4qjd7j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.darshanas.postfolio",
+            "certificate_hash": "77afbdddd72d793bec14351af932be37d4f94011"
+          }
+        },
+        {
+          "client_id": "143378829514-r6nf9dhej84eokhmqpie6ffiq4addgq2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.darshanas.postfolio",
+            "certificate_hash": "e28b4577a9b6b346f3fa0fbb70ff07de96c3f0b9"
+          }
+        },
+        {
+          "client_id": "143378829514-s6ngmrrou636t2edouc8tk928m1fka7t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.darshanas.postfolio",
+            "certificate_hash": "268297f9f09c2b6a0845c92e33b7227e50a9e390"
+          }
+        },
         {
           "client_id": "143378829514-84as322oeajpt990vu2fil56lvs4l9b7.apps.googleusercontent.com",
           "client_type": 3
@@ -83,10 +107,10 @@
               "client_type": 3
             },
             {
-              "client_id": "143378829514-b34i8adeg7121vehtd5jtr1mr63r912n.apps.googleusercontent.com",
+              "client_id": "143378829514-8no69brlamqrr9omemjjjv6k1b9jrtk1.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.postfolio"
+                "bundle_id": "dev.darshanas.postfolio"
               }
             }
           ]
