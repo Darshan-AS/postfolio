@@ -56,3 +56,12 @@ data/*
 
 # Firebase
 .firebase/
+
+# Android signing
+/android/key.properties
+*.jks
+*.keystore
+!/android/app/debug.keystore
+
+# Store Assets & Legal
+/docs/store_assets/screenshots/
