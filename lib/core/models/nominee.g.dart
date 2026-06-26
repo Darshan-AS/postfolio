@@ -9,14 +9,14 @@ part of 'nominee.dart';
 _Nominee _$NomineeFromJson(Map<String, dynamic> json) => _Nominee(
   name: json['name'] as String,
   relationship: $enumDecode(_$NomineeRelationshipEnumMap, json['relationship']),
-  customRelationship: json['customRelationship'] as String?,
+  customRelationship: json['custom_relationship'] as String?,
   percentage: (json['percentage'] as num).toDouble(),
 );
 
 Map<String, dynamic> _$NomineeToJson(_Nominee instance) => <String, dynamic>{
   'name': instance.name,
   'relationship': _$NomineeRelationshipEnumMap[instance.relationship]!,
-  'customRelationship': instance.customRelationship,
+  'custom_relationship': instance.customRelationship,
   'percentage': instance.percentage,
 };
 

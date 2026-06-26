@@ -9,14 +9,14 @@ part of 'one_time_deposit_model.dart';
 _OneTimeDeposit _$OneTimeDepositFromJson(Map<String, dynamic> json) =>
     _OneTimeDeposit(
       id: json['id'] as String,
-      accountNo: json['accountNo'] as String?,
-      principalAmount: (json['principalAmount'] as num).toDouble(),
-      termYears: (json['termYears'] as num).toInt(),
-      termMonths: (json['termMonths'] as num).toInt(),
-      interestRate: (json['interestRate'] as num).toDouble(),
-      customerId: json['customerId'] as String,
-      schemeType: $enumDecode(_$OneTimeSchemeTypeEnumMap, json['schemeType']),
-      startDate: DateTime.parse(json['startDate'] as String),
+      accountNo: json['account_no'] as String?,
+      principalAmount: (json['principal_amount'] as num).toDouble(),
+      termYears: (json['term_years'] as num).toInt(),
+      termMonths: (json['term_months'] as num).toInt(),
+      interestRate: (json['interest_rate'] as num).toDouble(),
+      customerId: json['customer_id'] as String,
+      schemeType: $enumDecode(_$OneTimeSchemeTypeEnumMap, json['scheme_type']),
+      startDate: DateTime.parse(json['start_date'] as String),
       nominees:
           (json['nominees'] as List<dynamic>?)
               ?.map((e) => Nominee.fromJson(e as Map<String, dynamic>))
@@ -25,27 +25,27 @@ _OneTimeDeposit _$OneTimeDepositFromJson(Map<String, dynamic> json) =>
       status:
           $enumDecodeNullable(_$DepositStatusEnumMap, json['status']) ??
           DepositStatus.active,
-      createdAt: const TimestampConverter().fromJson(json['createdAt']),
-      updatedAt: const TimestampConverter().fromJson(json['updatedAt']),
-      migrationSource: json['migrationSource'] as String?,
+      createdAt: const TimestampConverter().fromJson(json['created_at']),
+      updatedAt: const TimestampConverter().fromJson(json['updated_at']),
+      migrationSource: json['migration_source'] as String?,
     );
 
 Map<String, dynamic> _$OneTimeDepositToJson(_OneTimeDeposit instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'accountNo': instance.accountNo,
-      'principalAmount': instance.principalAmount,
-      'termYears': instance.termYears,
-      'termMonths': instance.termMonths,
-      'interestRate': instance.interestRate,
-      'customerId': instance.customerId,
-      'schemeType': _$OneTimeSchemeTypeEnumMap[instance.schemeType]!,
-      'startDate': instance.startDate.toIso8601String(),
+      'account_no': instance.accountNo,
+      'principal_amount': instance.principalAmount,
+      'term_years': instance.termYears,
+      'term_months': instance.termMonths,
+      'interest_rate': instance.interestRate,
+      'customer_id': instance.customerId,
+      'scheme_type': _$OneTimeSchemeTypeEnumMap[instance.schemeType]!,
+      'start_date': instance.startDate.toIso8601String(),
       'nominees': instance.nominees.map((e) => e.toJson()).toList(),
       'status': _$DepositStatusEnumMap[instance.status]!,
-      'createdAt': ?const TimestampConverter().toJson(instance.createdAt),
-      'updatedAt': ?const TimestampConverter().toJson(instance.updatedAt),
-      'migrationSource': ?instance.migrationSource,
+      'created_at': ?const TimestampConverter().toJson(instance.createdAt),
+      'updated_at': ?const TimestampConverter().toJson(instance.updatedAt),
+      'migration_source': ?instance.migrationSource,
     };
 
 const _$OneTimeSchemeTypeEnumMap = {
