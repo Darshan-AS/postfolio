@@ -31,7 +31,7 @@ void main() async {
   // Initialize Supabase
   await Supabase.initialize(
     url: Env.supabaseUrl,
-    anonKey: Env.supabaseAnonKey,
+    publishableKey: Env.supabasePublishableKey,
   );
 
   // Enable Firestore cache specifically for Web

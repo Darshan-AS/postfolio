@@ -8,8 +8,8 @@ abstract class Env {
   @EnviedField(varName: 'SUPABASE_URL')
   static const String supabaseUrl = _Env.supabaseUrl;
 
-  @EnviedField(varName: 'SUPABASE_ANON_KEY')
-  static const String supabaseAnonKey = _Env.supabaseAnonKey;
+  @EnviedField(varName: 'SUPABASE_PUBLISHABLE_KEY')
+  static const String supabasePublishableKey = _Env.supabasePublishableKey;
 
   @EnviedField(varName: 'USE_SUPABASE', defaultValue: false)
   static const bool useSupabase = _Env.useSupabase;
