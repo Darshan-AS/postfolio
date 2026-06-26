@@ -16,6 +16,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:postfolio/core/services/storage_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:postfolio/core/env/env.dart';
 
 const bool useFirebaseEmulator = bool.fromEnvironment(
   'USE_EMULATOR',
@@ -25,6 +27,12 @@ const bool useFirebaseEmulator = bool.fromEnvironment(
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: Env.supabaseUrl,
+    anonKey: Env.supabaseAnonKey,
+  );
 
   // Enable Firestore cache specifically for Web
   if (kIsWeb) {

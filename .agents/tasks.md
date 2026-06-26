@@ -2,12 +2,13 @@
 
 *Note: For a summarized history of past work, see `.agents/historical_summary.md` and `.agents/progress.md`. For the raw chronological task history, see `.agents/historical_tasks_archive.md`.*
 
-## 🚀 Next Up (High Priority: Firestore Quota Fixes)
-- [x] **Migration Script (Nominees)**: Write a script to find customers who have nominees but lack an SB Account number, migrate those nominee details to the "Notes" field, and delete the nominee value.
-- [ ] **Denormalize Customer Data**: Add `customerName` to Deposits to avoid N+1 queries.
-- [ ] **Pagination**: Implement Server-Side Pagination & Infinite Scrolling UI (`limit()`, `startAfterDocument()`).
-- [ ] **Search/Sort Refactor**: Move Filtering/Sorting to Server-Side (Firestore `orderBy` and Prefix Search).
-- [x] **Web Support**: Enable Firestore Web Offline Persistence.
+## 🚀 Next Up (Supabase Migration - Phase 2)
+- [ ] **Environments**: Add `GOOGLE_WEB_CLIENT_ID` and `GOOGLE_IOS_CLIENT_ID` to `.env`.
+- [ ] **Freezed Snake Case**: Update all Freezed models with `@JsonSerializable(fieldRename: FieldRename.snake)`.
+- [ ] **Date Conversion**: Update `@TimestampConverter()` to support both Firebase and Supabase.
+- [ ] **Interfaces**: Define abstract interfaces for all repositories.
+- [ ] **Parallel Repositories**: Create `Supabase*Repository` implementations alongside `Firebase*Repository`.
+- [ ] **Riverpod Toggle**: Implement provider overrides based on `Env.useSupabase`.
 
 ## 📦 Release & Publication (Play Store)
 - [x] **Change Application ID**: Update `applicationId` in `android/app/build.gradle.kts` (e.g., to `dev.darshanas.postfolio`).
@@ -100,3 +101,11 @@
 - [x] Standardized layouts, paddings, icon libraries (`hugeicons`), and animations (`flutter_animate`, `skeletonizer`).
 - [x] Centralized Slang localizations (`.i18n.yaml`).
 - [x] Added persistent unified Search/Filter/Sort UI across all listing screens.
+
+### Supabase Migration (Phase 1)
+- [x] **CLI Init**: Initialized Supabase project using `supabase init`.
+- [x] **Docker**: Started local Supabase emulators (`supabase start`).
+- [x] **Schema**: Defined initial Postgres schema with RLS policies in `supabase/migrations/`.
+- [x] **Dependency**: Added `supabase_flutter` and `envied` to `pubspec.yaml`.
+- [x] **Env Config**: Set up type-safe environment management with `Env` class and `.env`.
+- [x] **Web Fixes**: Added Passkeys Web SDK to `web/index.html`.

@@ -28,24 +28,29 @@ Runs the app connected to your live Firebase project.
 flutter run
 ```
 
-### 2. Emulator Mode (Local Development)
-Runs the app connected to the local Firebase Emulator Suite. This is recommended for development to avoid costs and data pollution.
+### 2. Emulator Mode (Local Development - Supabase)
+Postfolio is currently migrating to Supabase. During this transition, we use local Supabase emulators for development.
 
 **Step A: Start the Emulators**
-In a separate terminal, start the Firestore and Authentication emulators. It is recommended to specify your project ID to ensure the emulator uses the correct configuration:
+Ensure Docker is running, then start the Supabase emulators:
 ```bash
-firebase emulators:start --project=postfolio-app
+npx supabase start
 ```
 
-> **Tip**: You can access the **Emulator UI** at `http://localhost:4000` to manage local users and view Firestore data.
+> **Tip**: You can access the **Supabase Studio** (Database UI) at `http://localhost:54323`.
 
-**Step B: Run the App**
-Run the app with the `USE_EMULATOR` flag:
+**Step B: Configure Environment**
+Copy `.env.example` to `.env` and ensure the local credentials (from `npx supabase status`) are correct.
+
+**Step C: Run the App**
+Run the app normally:
 ```bash
-flutter run --dart-define=USE_EMULATOR=true
+flutter run
 ```
 
-> **Note**: You can also use the **"Postfolio (Firebase Emulator)"** launch configuration in VS Code.
+### 3. Legacy Emulator Mode (Firebase)
+*Note: This will be deprecated once the migration is complete.*
+... (rest of the firebase section)
 
 ### 3. Cleanup & Stopping
 To completely stop the emulators and any running Flutter instances (especially helpful if ports are stuck), you can use:
