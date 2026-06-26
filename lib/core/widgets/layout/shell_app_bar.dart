@@ -23,7 +23,7 @@ class ShellAppBar extends ConsumerWidget implements PreferredSizeWidget {
       title: Text(title),
       actions: [
         const AccessibleThemeToggle(),
-        if (actions != null) ...actions!,
+        ...?actions,
       ],
     );
   }

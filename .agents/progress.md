@@ -1,8 +1,14 @@
 # Project Progress
 
 ## Current State
-**Releasing v1.6.0+16**: Bumped version and updated changelog. Prepared for production release following Application ID migration and nominee data fixes. Verified codebase health via `flutter analyze` and `flutter test`.
+**Supabase Migration - Phase 1 Complete**: Successfully initialized Supabase locally, configured the Postgres schema with RLS, and integrated environment management with `envied`. The app now initializes Supabase alongside Firebase.
 
+- **Phase 1 Complete**:
+    - Initialized Supabase CLI and started local emulators.
+    - Defined and applied initial Postgres schema (`agent_profiles`, `customers`, `deposits`, etc.) with RLS policies.
+    - Added `supabase_flutter` and `envied` dependencies.
+    - Configured environment variable management with `Env` class and `.env` file.
+    - Updated documentation (`README.md`, `tasks.md`) for the new backend stack.
 - Bumped app version to **v1.6.0+16** and updated `CHANGELOG.md`.
 - Successfully validated codebase with `flutter analyze` and `flutter test` (100% pass).
 - Migrated Application ID from `com.example.postfolio` to `dev.darshanas.postfolio` across Android, iOS, macOS, and Linux.
