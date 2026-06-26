@@ -1,4 +1,13 @@
--- Initial Schema for Postfolio Migration
+-- Initial Schema for Postfolio Migration (Refined)
+
+-- 0. Helper function for updated_at triggers
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 -- 1. Create agent_profiles table
 CREATE TABLE IF NOT EXISTS public.agent_profiles (
@@ -11,11 +20,16 @@ CREATE TABLE IF NOT EXISTS public.agent_profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TRIGGER trigger_agent_profiles_updated_at
+    BEFORE UPDATE ON public.agent_profiles
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
 -- 2. Create user_roles table
 CREATE TABLE IF NOT EXISTS public.user_roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     role TEXT CHECK (role IN ('admin', 'agent')) DEFAULT 'agent',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(user_id, role)
 );
 
@@ -36,19 +50,39 @@ CREATE TABLE IF NOT EXISTS public.customers (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 4. Create savings_accounts table (Normalized)
-CREATE TABLE IF NOT EXISTS public.savings_accounts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE UNIQUE NOT NULL,
-    account_number TEXT NOT NULL,
-    linked_date DATE
-);
+CREATE TRIGGER trigger_customers_updated_at
+    BEFORE UPDATE ON public.customers
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
--- 5. Create recurring_deposits table
-CREATE TABLE IF NOT EXISTS public.recurring_deposits (
+-- 4. Create account_identities table (Option B - Base table for polymorphic relationships)
+CREATE TABLE IF NOT EXISTS public.account_identities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE NOT NULL,
     agent_id UUID REFERENCES public.agent_profiles(id) ON DELETE CASCADE NOT NULL,
+    account_type TEXT NOT NULL, -- 'RD', 'OTD', 'SB', 'INSURANCE', etc.
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TRIGGER trigger_account_identities_updated_at
+    BEFORE UPDATE ON public.account_identities
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- 5. Create savings_accounts table (Normalized)
+CREATE TABLE IF NOT EXISTS public.savings_accounts (
+    id UUID PRIMARY KEY REFERENCES public.account_identities(id) ON DELETE CASCADE,
+    account_number TEXT NOT NULL,
+    linked_date DATE,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TRIGGER trigger_savings_accounts_updated_at
+    BEFORE UPDATE ON public.savings_accounts
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- 6. Create recurring_deposits table
+CREATE TABLE IF NOT EXISTS public.recurring_deposits (
+    id UUID PRIMARY KEY REFERENCES public.account_identities(id) ON DELETE CASCADE,
     status TEXT NOT NULL,
     scheme_type TEXT NOT NULL,
     account_number TEXT NOT NULL,
@@ -58,15 +92,16 @@ CREATE TABLE IF NOT EXISTS public.recurring_deposits (
     term_years INTEGER NOT NULL,
     term_months INTEGER NOT NULL,
     start_date DATE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 6. Create one_time_deposits table
+CREATE TRIGGER trigger_recurring_deposits_updated_at
+    BEFORE UPDATE ON public.recurring_deposits
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- 7. Create one_time_deposits table
 CREATE TABLE IF NOT EXISTS public.one_time_deposits (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE NOT NULL,
-    agent_id UUID REFERENCES public.agent_profiles(id) ON DELETE CASCADE NOT NULL,
+    id UUID PRIMARY KEY REFERENCES public.account_identities(id) ON DELETE CASCADE,
     status TEXT NOT NULL,
     scheme_type TEXT NOT NULL,
     account_number TEXT NOT NULL,
@@ -75,38 +110,48 @@ CREATE TABLE IF NOT EXISTS public.one_time_deposits (
     term_years INTEGER NOT NULL,
     term_months INTEGER NOT NULL,
     start_date DATE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TRIGGER trigger_one_time_deposits_updated_at
+    BEFORE UPDATE ON public.one_time_deposits
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- 8. Create nominees table (Polymorphic - Points to base account_identities)
+CREATE TABLE IF NOT EXISTS public.nominees (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    account_id UUID REFERENCES public.account_identities(id) ON DELETE CASCADE NOT NULL,
+    name TEXT NOT NULL,
+    relationship TEXT NOT NULL,
+    share_percentage NUMERIC NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 7. Create nominees table (Normalized)
-CREATE TABLE IF NOT EXISTS public.nominees (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    recurring_deposit_id UUID REFERENCES public.recurring_deposits(id) ON DELETE CASCADE,
-    one_time_deposit_id UUID REFERENCES public.one_time_deposits(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    relationship TEXT NOT NULL,
-    share_percentage NUMERIC NOT NULL,
-    CONSTRAINT one_deposit_only CHECK (
-        (recurring_deposit_id IS NOT NULL AND one_time_deposit_id IS NULL) OR
-        (recurring_deposit_id IS NULL AND one_time_deposit_id IS NOT NULL)
-    )
-);
+CREATE TRIGGER trigger_nominees_updated_at
+    BEFORE UPDATE ON public.nominees
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
--- 8. Create rd_transactions table
+-- 9. Create rd_transactions table (RD Only)
 CREATE TABLE IF NOT EXISTS public.rd_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     rd_id UUID REFERENCES public.recurring_deposits(id) ON DELETE CASCADE NOT NULL,
     agent_id UUID REFERENCES public.agent_profiles(id) ON DELETE CASCADE NOT NULL,
     paid_date DATE NOT NULL,
     amount NUMERIC NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE TRIGGER trigger_rd_transactions_updated_at
+    BEFORE UPDATE ON public.rd_transactions
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- Enable RLS on all tables
 ALTER TABLE public.agent_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.account_identities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.savings_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.recurring_deposits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.one_time_deposits ENABLE ROW LEVEL SECURITY;
@@ -146,31 +191,54 @@ CREATE POLICY "Agents can update own customers" ON public.customers
 CREATE POLICY "Agents can delete own customers" ON public.customers
     FOR DELETE USING (agent_id = auth.uid());
 
--- Savings Accounts: Linked to customers
+-- Account Identities: Agents can see own accounts, admins can see all
+CREATE POLICY "Agents can see own account identities" ON public.account_identities
+    FOR SELECT USING (agent_id = auth.uid() OR public.is_admin());
+
+CREATE POLICY "Agents can insert own account identities" ON public.account_identities
+    FOR INSERT WITH CHECK (agent_id = auth.uid());
+
+CREATE POLICY "Agents can update own account identities" ON public.account_identities
+    FOR UPDATE USING (agent_id = auth.uid());
+
+CREATE POLICY "Agents can delete own account identities" ON public.account_identities
+    FOR DELETE USING (agent_id = auth.uid());
+
+-- Savings Accounts: Linked to account_identities
 CREATE POLICY "Agents can see own savings accounts" ON public.savings_accounts
     FOR SELECT USING (
         EXISTS (
-            SELECT 1 FROM public.customers
-            WHERE id = savings_accounts.customer_id AND (agent_id = auth.uid() OR public.is_admin())
+            SELECT 1 FROM public.account_identities
+            WHERE id = savings_accounts.id AND (agent_id = auth.uid() OR public.is_admin())
         )
     );
 
--- Deposits: Agents can see own deposits, admins can see all
+-- Deposits: Linked to account_identities
 CREATE POLICY "Agents can see own recurring deposits" ON public.recurring_deposits
-    FOR SELECT USING (agent_id = auth.uid() OR public.is_admin());
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = recurring_deposits.id AND (agent_id = auth.uid() OR public.is_admin())
+        )
+    );
 
 CREATE POLICY "Agents can see own one time deposits" ON public.one_time_deposits
-    FOR SELECT USING (agent_id = auth.uid() OR public.is_admin());
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = one_time_deposits.id AND (agent_id = auth.uid() OR public.is_admin())
+        )
+    );
 
--- Nominees: Linked to deposits
+-- Nominees: Linked to account_identities
 CREATE POLICY "Agents can see own nominees" ON public.nominees
     FOR SELECT USING (
         EXISTS (
-            SELECT 1 FROM public.recurring_deposits
-            WHERE id = nominees.recurring_deposit_id AND (agent_id = auth.uid() OR public.is_admin())
-        ) OR
-        EXISTS (
-            SELECT 1 FROM public.one_time_deposits
-            WHERE id = nominees.one_time_deposit_id AND (agent_id = auth.uid() OR public.is_admin())
+            SELECT 1 FROM public.account_identities
+            WHERE id = nominees.account_id AND (agent_id = auth.uid() OR public.is_admin())
         )
     );
+
+-- RD Transactions: Linked to recurring_deposits
+CREATE POLICY "Agents can see own rd transactions" ON public.rd_transactions
+    FOR SELECT USING (agent_id = auth.uid() OR public.is_admin());

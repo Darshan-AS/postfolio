@@ -8,6 +8,7 @@
     - Defined and applied initial Postgres schema (`agent_profiles`, `customers`, `deposits`, etc.) with RLS policies.
     - Added `supabase_flutter` and `envied` dependencies.
     - Configured environment variable management with `Env` class and `.env` file.
+    - Created `supabase/seed.sql` for local testing.
     - Updated documentation (`README.md`, `tasks.md`) for the new backend stack.
 - Bumped app version to **v1.6.0+16** and updated `CHANGELOG.md`.
 - Successfully validated codebase with `flutter analyze` and `flutter test` (100% pass).
