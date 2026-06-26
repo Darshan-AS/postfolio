@@ -4,6 +4,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:postfolio/features/auth/domain/app_user.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
+import 'package:postfolio/core/env/env.dart';
+import 'package:postfolio/core/providers/supabase_provider.dart';
+import 'package:postfolio/features/auth/data/supabase_auth_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'auth_repository.g.dart';
@@ -21,6 +24,13 @@ GoogleSignIn googleSignIn(Ref ref) {
 
 @riverpod
 AuthRepository authRepository(Ref ref) {
+  if (Env.useSupabase) {
+    return SupabaseAuthRepository(
+      supabaseClient: ref.watch(supabaseClientProvider),
+      googleSignIn: ref.watch(googleSignInProvider),
+    );
+  }
+
   return FirebaseAuthRepository(
     firebaseAuth: ref.watch(firebaseAuthProvider),
     googleSignIn: ref.watch(googleSignInProvider),
