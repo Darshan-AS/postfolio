@@ -40,11 +40,8 @@ class SupabaseAuthRepository implements AuthRepository {
       );
 
       final googleUser = await _googleSignIn.authenticate();
-      if (googleUser == null) {
-        return const Failure('Sign in aborted by user');
-      }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
       final idToken = googleAuth.idToken;
 
       if (idToken == null) {
