@@ -8,6 +8,9 @@ import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
+import 'package:postfolio/core/env/env.dart';
+import 'package:postfolio/core/providers/supabase_provider.dart';
+import 'package:postfolio/features/customers/data/supabase_customer_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'customer_repository.g.dart';
@@ -199,6 +202,10 @@ CustomerRepository customerRepository(Ref ref) {
     final repo = FakeCustomerRepository();
     ref.onDispose(repo.dispose);
     return repo;
+  }
+
+  if (Env.useSupabase) {
+    return SupabaseCustomerRepository(ref.watch(supabaseClientProvider));
   }
 
   final authState = ref.watch(authControllerProvider);

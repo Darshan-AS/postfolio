@@ -10,6 +10,9 @@ import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
+import 'package:postfolio/core/env/env.dart';
+import 'package:postfolio/core/providers/supabase_provider.dart';
+import 'package:postfolio/features/one_time_deposits/data/supabase_one_time_deposit_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'one_time_deposit_repository.g.dart';
@@ -169,6 +172,10 @@ OneTimeDepositRepository oneTimeDepositRepository(Ref ref) {
     final repo = FakeOneTimeDepositRepository();
     ref.onDispose(repo.dispose);
     return repo;
+  }
+
+  if (Env.useSupabase) {
+    return SupabaseOneTimeDepositRepository(ref.watch(supabaseClientProvider));
   }
 
   final authState = ref.watch(authControllerProvider);

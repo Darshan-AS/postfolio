@@ -7,8 +7,8 @@
 - [x] **Freezed Snake Case**: Update all Freezed models with `@JsonSerializable(fieldRename: FieldRename.snake)`.
 - [x] **Date Conversion**: Update `@TimestampConverter()` to support both Firebase and Supabase.
 - [x] **Interfaces**: Define abstract interfaces for all repositories.
-- [ ] **Parallel Repositories**: Create `Supabase*Repository` implementations alongside `Firebase*Repository`.
-- [ ] **Riverpod Toggle**: Implement provider overrides based on `Env.useSupabase`.
+- [x] **Parallel Repositories**: Create `Supabase*Repository` implementations alongside `Firebase*Repository`.
+- [x] **Riverpod Toggle**: Implement provider overrides based on `Env.useSupabase`.
 
 ## 📦 Release & Publication (Play Store)
 - [x] **Change Application ID**: Update `applicationId` in `android/app/build.gradle.kts` (e.g., to `dev.darshanas.postfolio`).

@@ -10,6 +10,9 @@ import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
+import 'package:postfolio/core/env/env.dart';
+import 'package:postfolio/core/providers/supabase_provider.dart';
+import 'package:postfolio/features/recurring_deposits/data/supabase_recurring_deposit_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'recurring_deposit_repository.g.dart';
@@ -170,6 +173,10 @@ RecurringDepositRepository recurringDepositRepository(Ref ref) {
     final repo = FakeRecurringDepositRepository();
     ref.onDispose(repo.dispose);
     return repo;
+  }
+
+  if (Env.useSupabase) {
+    return SupabaseRecurringDepositRepository(ref.watch(supabaseClientProvider));
   }
 
   final authState = ref.watch(authControllerProvider);
