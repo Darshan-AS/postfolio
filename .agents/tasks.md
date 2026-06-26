@@ -109,3 +109,4 @@
 - [x] **Dependency**: Added `supabase_flutter` and `envied` to `pubspec.yaml`.
 - [x] **Env Config**: Set up type-safe environment management with `Env` class and `.env`.
 - [x] **Web Fixes**: Added Passkeys Web SDK to `web/index.html`.
+- [x] **Seed**: Created `supabase/seed.sql` for local testing.

@@ -34,15 +34,23 @@ We will initially deploy flat tables that mirror our Firestore documents. Then, 
 *   **Complex Types (Immediate Normalization):** Instead of trapping `savingsAccount` and `nominees` in `JSONB` columns, we will strictly normalize them into separate relational tables from Day 1. **Why:** Trapping data in `JSONB` defeats the purpose of moving to Postgres, making it incredibly difficult to query or index specific nominees later. Since we are writing a data translation script anyway, it is trivial to extract these into dedicated tables during migration.
 
 ### Core Tables
+
 *   **`agent_profiles` (New)**
     *   `id` (UUID, Primary Key, Foreign Key to `auth.users`) - 1:1 relationship with Supabase Auth.
     *   `legacy_firebase_uid` (Text, Unique, Nullable) - Temporary mapping column.
     *   `name`, `email`, `agency_code` (Text)
     *   `created_at`, `updated_at` (Timestamp with Time Zone)
 
+*   **`account_identities` (New - Option B)**
+    *   `id` (UUID, Primary Key)
+    *   `customer_id` (UUID, Foreign Key to `customers`)
+    *   `agent_id` (UUID, Foreign Key to `agent_profiles`)
+    *   `account_type` (Text) - e.g., 'RD', 'OTD', 'SB', 'INSURANCE'
+    *   `created_at`, `updated_at` (Timestamp with Time Zone)
+    *   *Purpose*: This is the base table for all financial products. It allows polymorphic relationships (like Nominees) to point to a single ID regardless of the specific product type.
+
 *   **`savings_accounts` (Normalized)**
-    *   `id` (UUID, PK)
-    *   `customer_id` (UUID, FK to `customers`, ON DELETE CASCADE, Unique)
+    *   `id` (UUID, PK, Foreign Key to `account_identities`)
     *   `account_number` (Text)
     *   `linked_date` (Date)
 
@@ -54,10 +62,8 @@ We will initially deploy flat tables that mirror our Firestore documents. Then, 
     *   `created_at`, `updated_at` (Timestamp with Time Zone)
     *   `notes` (Text)
 
-*   **`recurring_deposits` & `one_time_deposits`**
-    *   `id` (UUID, PK)
-    *   `customer_id` (UUID, FK to `customers`, ON DELETE CASCADE)
-    *   `agent_id` (UUID, FK to `agent_profiles`)
+*   **`recurring_deposits` & `one_time_deposits` (Separate Tables)**
+    *   `id` (UUID, PK, Foreign Key to `account_identities`)
     *   `status` (Text -> Migrated to ENUM later)
     *   `scheme_type` (Text -> Migrated to ENUM later)
     *   `account_number`, `serial_no` (Text)
@@ -65,13 +71,13 @@ We will initially deploy flat tables that mirror our Firestore documents. Then, 
     *   `term_years`, `term_months` (Integer)
     *   `start_date` (Date)
 
-*   **`nominees` (Normalized)**
+*   **`nominees` (Polymorphic)**
     *   `id` (UUID, PK)
-    *   `deposit_id` (UUID, FK to `recurring_deposits` or `one_time_deposits`, ON DELETE CASCADE)
+    *   `account_id` (UUID, Foreign Key to `account_identities`, ON DELETE CASCADE)
     *   `name`, `relationship` (Text)
     *   `share_percentage` (Numeric)
   
-*   **`rd_transactions` (New Feature Prep)**
+*   **`rd_transactions` (RD Only)**
     *   `id` (UUID, PK)
     *   `rd_id` (UUID, FK to `recurring_deposits`, ON DELETE CASCADE)
     *   `paid_date` (Date)
@@ -89,6 +95,11 @@ Every operational table (`customers`, `deposits`) contains an `agent_id` column.
 2.  Our RLS policies on tables like `customers` will be written as: 
     `(auth.uid() = agent_id) OR (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin'))`.
 3.  This ensures security is enforced at the database level while keeping the schema completely open for future hierarchical access and the Agent Profiles feature.
+
+### Automatic `updated_at` Triggers
+All tables include an `updated_at` column. To ensure this is consistently updated without manual application-layer intervention, we will implement:
+1.  A global PL/pgSQL function `handle_updated_at()`.
+2.  Triggers on every table that invoke this function `BEFORE UPDATE`.
 
 ---
 
