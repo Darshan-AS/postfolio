@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0+16] - 2026-06-26
+
+### Added
+- **Migration**: Implemented automatic migration of invalid legacy nominees to customer notes to ensure data integrity.
+- **Documentation**: Added comprehensive Supabase migration plan.
+
+### Changed
+- **Release**: Migrated Application ID to `dev.darshanas.postfolio` across all platforms.
+- **Infrastructure**: Configured production signing and branding assets.
+- **Firebase**: Updated Firebase configuration to match the new Application ID.
+
 ## [1.5.1+15] - 2026-06-07
 
 ### Added

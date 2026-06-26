@@ -1,9 +1,14 @@
 # Project Progress
 
 ## Current State
-**Preparing for Release (v1.5.1+15)**: Initiated Play Store publication workflow. Formulated a 4-phase plan covering branding, security, store assets, and final validation.
+**Releasing v1.6.0+16**: Bumped version and updated changelog. Prepared for production release following Application ID migration and nominee data fixes. Verified codebase health via `flutter analyze` and `flutter test`.
 
-- Successfully built the release Android App Bundle (`.aab`) for v1.5.1+15.
+- Bumped app version to **v1.6.0+16** and updated `CHANGELOG.md`.
+- Successfully validated codebase with `flutter analyze` and `flutter test` (100% pass).
+- Migrated Application ID from `com.example.postfolio` to `dev.darshanas.postfolio` across Android, iOS, macOS, and Linux.
+- Added a multiline "Notes" text feature to the Customer model to serve as a scratch space for unstructured metadata. Integrated it into the Customer Form and displayed it on the Customer Details screen.
+- Implemented automatic migration of invalid legacy nominees to customer notes in the migration tool.
+- Successfully built the release Android App Bundle (`.aab`) for v1.5.1+15. (Previous milestone)
 - Initiated **Phase 2: App Icons & Branding** (Currently skipped for internal testing).
 - Fixed Kotlin DSL syntax errors in `android/app/build.gradle.kts` and corrected the keystore path in `android/key.properties`.
 - Generated placeholder files for Play Store publication, including `android/key.properties`, `docs/store_assets/README.md`, and `docs/legal/privacy_policy.md`.
@@ -95,5 +100,7 @@
 - Standardized UI bottom sheets (`AppSortBottomSheet`, `AppFilterBottomSheet`), standardizing their "Clear" actions to prevent abrupt closures and migrating the Sort sheet from `flutter_hooks` to a purely reactive Riverpod `Consumer` pattern.
 
 ## Releases
+- **v1.6.0+16 (2026-06-26)**: Application ID migration, nominee migration fix, and Supabase roadmap.
+- **v1.5.1+15 (2026-06-07)**: Added multiline notes field to customer profiles. Formatted currency strings with numeric word translation. Show full amount in dashboard chart tooltips.
 - **v1.5.0+14 (2026-06-07)**: Built analytics dashboard with interactive charts and Financial Year mappings. Enabled Firestore Web offline persistence. Standardized SchemeType UI to Segmented Buttons and restored predictive back gestures on forms.
 - **v1.4.0+13 (2026-06-03)**: Type-safe composite sorting, persisted user preferences, Material 3 UI/UX improvements, and release manager skill.
