@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:postfolio/core/env/env.dart';
 
 class TimestampConverter implements JsonConverter<DateTime?, Object?> {
   const TimestampConverter();
@@ -23,11 +24,12 @@ class TimestampConverter implements JsonConverter<DateTime?, Object?> {
   @override
   Object? toJson(DateTime? date) {
     if (date == null) return null;
-    // We don't convert back to Timestamp here because FieldValue.serverTimestamp()
-    // is usually passed directly in the repository payload, or we let Firestore
-    // handle DateTime serialization if using withConverter.
-    // Returning the DateTime is fine if using Firestore withConverter which handles DateTime.
-    // If we're passing maps manually, returning Timestamp is better.
+    
+    // Return ISO-8601 string for Supabase, Timestamp for Firebase
+    if (Env.useSupabase) {
+      return date.toIso8601String();
+    }
+    
     return Timestamp.fromDate(date);
   }
 }

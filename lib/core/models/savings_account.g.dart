@@ -8,7 +8,7 @@ part of 'savings_account.dart';
 
 _SavingsAccount _$SavingsAccountFromJson(Map<String, dynamic> json) =>
     _SavingsAccount(
-      accountNumber: json['accountNumber'] as String,
+      accountNumber: json['account_number'] as String,
       nominees:
           (json['nominees'] as List<dynamic>?)
               ?.map((e) => Nominee.fromJson(e as Map<String, dynamic>))
@@ -18,6 +18,6 @@ _SavingsAccount _$SavingsAccountFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$SavingsAccountToJson(_SavingsAccount instance) =>
     <String, dynamic>{
-      'accountNumber': instance.accountNumber,
+      'account_number': instance.accountNumber,
       'nominees': instance.nominees.map((e) => e.toJson()).toList(),
     };
