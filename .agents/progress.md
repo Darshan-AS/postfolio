@@ -111,3 +111,4 @@
 - **v1.5.1+15 (2026-06-07)**: Added multiline notes field to customer profiles. Formatted currency strings with numeric word translation. Show full amount in dashboard chart tooltips.
 - **v1.5.0+14 (2026-06-07)**: Built analytics dashboard with interactive charts and Financial Year mappings. Enabled Firestore Web offline persistence. Standardized SchemeType UI to Segmented Buttons and restored predictive back gestures on forms.
 - **v1.4.0+13 (2026-06-03)**: Type-safe composite sorting, persisted user preferences, Material 3 UI/UX improvements, and release manager skill.
+- Started Phase 2 of Supabase Migration (Lift & Shift): Enforced snake_case serialization, updated TimestampConverter for dual-db support, and created abstract interfaces for all repositories.

@@ -3,10 +3,10 @@
 *Note: For a summarized history of past work, see `.agents/historical_summary.md` and `.agents/progress.md`. For the raw chronological task history, see `.agents/historical_tasks_archive.md`.*
 
 ## 🚀 Next Up (Supabase Migration - Phase 2)
-- [ ] **Environments**: Add `GOOGLE_WEB_CLIENT_ID` and `GOOGLE_IOS_CLIENT_ID` to `.env`.
-- [ ] **Freezed Snake Case**: Update all Freezed models with `@JsonSerializable(fieldRename: FieldRename.snake)`.
-- [ ] **Date Conversion**: Update `@TimestampConverter()` to support both Firebase and Supabase.
-- [ ] **Interfaces**: Define abstract interfaces for all repositories.
+- [x] **Environments**: Add `GOOGLE_WEB_CLIENT_ID` and `GOOGLE_IOS_CLIENT_ID` to `.env`.
+- [x] **Freezed Snake Case**: Update all Freezed models with `@JsonSerializable(fieldRename: FieldRename.snake)`.
+- [x] **Date Conversion**: Update `@TimestampConverter()` to support both Firebase and Supabase.
+- [x] **Interfaces**: Define abstract interfaces for all repositories.
 - [ ] **Parallel Repositories**: Create `Supabase*Repository` implementations alongside `Firebase*Repository`.
 - [ ] **Riverpod Toggle**: Implement provider overrides based on `Env.useSupabase`.
 

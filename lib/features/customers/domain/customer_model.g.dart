@@ -12,19 +12,21 @@ _Customer _$CustomerFromJson(Map<String, dynamic> json) => _Customer(
   email: json['email'] as String?,
   phone: json['phone'] as String?,
   address: json['address'] as String?,
-  cifNumber: json['cifNumber'] as String?,
-  dateOfBirth: json['dateOfBirth'] == null
+  cifNumber: json['cif_number'] as String?,
+  dateOfBirth: json['date_of_birth'] == null
       ? null
-      : DateTime.parse(json['dateOfBirth'] as String),
-  aadhaarNumber: json['aadhaarNumber'] as String?,
-  panNumber: json['panNumber'] as String?,
-  savingsAccount: json['savingsAccount'] == null
+      : DateTime.parse(json['date_of_birth'] as String),
+  aadhaarNumber: json['aadhaar_number'] as String?,
+  panNumber: json['pan_number'] as String?,
+  savingsAccount: json['savings_account'] == null
       ? null
-      : SavingsAccount.fromJson(json['savingsAccount'] as Map<String, dynamic>),
+      : SavingsAccount.fromJson(
+          json['savings_account'] as Map<String, dynamic>,
+        ),
   notes: json['notes'] as String?,
-  createdAt: const TimestampConverter().fromJson(json['createdAt']),
-  updatedAt: const TimestampConverter().fromJson(json['updatedAt']),
-  migrationSource: json['migrationSource'] as String?,
+  createdAt: const TimestampConverter().fromJson(json['created_at']),
+  updatedAt: const TimestampConverter().fromJson(json['updated_at']),
+  migrationSource: json['migration_source'] as String?,
 );
 
 Map<String, dynamic> _$CustomerToJson(_Customer instance) => <String, dynamic>{
@@ -33,13 +35,13 @@ Map<String, dynamic> _$CustomerToJson(_Customer instance) => <String, dynamic>{
   'email': instance.email,
   'phone': instance.phone,
   'address': instance.address,
-  'cifNumber': instance.cifNumber,
-  'dateOfBirth': instance.dateOfBirth?.toIso8601String(),
-  'aadhaarNumber': instance.aadhaarNumber,
-  'panNumber': instance.panNumber,
-  'savingsAccount': instance.savingsAccount?.toJson(),
+  'cif_number': instance.cifNumber,
+  'date_of_birth': instance.dateOfBirth?.toIso8601String(),
+  'aadhaar_number': instance.aadhaarNumber,
+  'pan_number': instance.panNumber,
+  'savings_account': instance.savingsAccount?.toJson(),
   'notes': instance.notes,
-  'createdAt': ?const TimestampConverter().toJson(instance.createdAt),
-  'updatedAt': ?const TimestampConverter().toJson(instance.updatedAt),
-  'migrationSource': ?instance.migrationSource,
+  'created_at': ?const TimestampConverter().toJson(instance.createdAt),
+  'updated_at': ?const TimestampConverter().toJson(instance.updatedAt),
+  'migration_source': ?instance.migrationSource,
 };

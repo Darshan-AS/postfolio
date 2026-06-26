@@ -21,22 +21,29 @@ GoogleSignIn googleSignIn(Ref ref) {
 
 @riverpod
 AuthRepository authRepository(Ref ref) {
-  return AuthRepository(
+  return FirebaseAuthRepository(
     firebaseAuth: ref.watch(firebaseAuthProvider),
     googleSignIn: ref.watch(googleSignInProvider),
   );
 }
 
-class AuthRepository {
+abstract class AuthRepository {
+  Stream<AppUser?> get authStateChanges;
+  Future<Result<AppUser, String>> signInWithGoogle();
+  Future<Result<void, String>> signOut();
+}
+
+class FirebaseAuthRepository implements AuthRepository {
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
 
-  AuthRepository({
+  FirebaseAuthRepository({
     required FirebaseAuth firebaseAuth,
     required GoogleSignIn googleSignIn,
   }) : _firebaseAuth = firebaseAuth,
        _googleSignIn = googleSignIn;
 
+  @override
   Stream<AppUser?> get authStateChanges {
     return _firebaseAuth.authStateChanges().map((User? user) {
       if (user == null) return null;
@@ -49,6 +56,7 @@ class AuthRepository {
     });
   }
 
+  @override
   Future<Result<AppUser, String>> signInWithGoogle() async {
     try {
       UserCredential userCredential;
@@ -105,6 +113,7 @@ class AuthRepository {
     }
   }
 
+  @override
   Future<Result<void, String>> signOut() async {
     try {
       if (!kIsWeb) {

@@ -65,3 +65,7 @@ data/*
 
 # Store Assets & Legal
 /docs/store_assets/screenshots/
+
+# Environment Variables
+.env
+.env.*
