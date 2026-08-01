@@ -119,7 +119,8 @@ OneTimeDepositFormState useOneTimeDepositForm({
   final amountInWords = useMemoized(() {
     if (principalAmountController.text.trim().isEmpty) return '';
 
-    final number = amountFormatter.getUnformattedValue().toInt();
+    final cleaned = principalAmountController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+    final number = int.tryParse(cleaned) ?? amountFormatter.getUnformattedValue().toInt();
     if (number > 0) {
       final words = NumToWords.convertNumberToIndianWords(number);
       return words;
@@ -127,7 +128,9 @@ OneTimeDepositFormState useOneTimeDepositForm({
     return '';
   }, [principalAmountController.text]);
 
-  final currentPrincipal = amountFormatter.getUnformattedValue().toDouble();
+  final cleanedPrincipalStr = principalAmountController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+  final currentPrincipal = double.tryParse(cleanedPrincipalStr) ??
+      amountFormatter.getUnformattedValue().toDouble();
   final currentInterest =
       double.tryParse(interestRateController.text.trim()) ?? 0.0;
 
@@ -179,13 +182,18 @@ OneTimeDepositFormState useOneTimeDepositForm({
         return;
       }
 
+      final cleanedAmountStr = principalAmountController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+      final principalAmountVal = cleanedAmountStr.isNotEmpty
+          ? cleanedAmountStr
+          : amountFormatter.getUnformattedValue().toString();
+
       isSaving.value = true;
       final result = await ref
           .read(oneTimeDepositsControllerProvider.notifier)
           .saveOneTimeDeposit(
             id: deposit?.id,
             accountNo: accountNoController.text,
-            principalAmount: amountFormatter.getUnformattedValue().toString(),
+            principalAmount: principalAmountVal,
             termYears: selectedTermYears.value,
             termMonths:
                 selectedScheme.value.tenureInputType == TenureInputType.derived

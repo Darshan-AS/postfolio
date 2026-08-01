@@ -122,7 +122,8 @@ RecurringDepositFormState useRecurringDepositForm({
   final amountInWords = useMemoized(() {
     if (installmentAmountController.text.trim().isEmpty) return '';
 
-    final number = amountFormatter.getUnformattedValue().toInt();
+    final cleaned = installmentAmountController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+    final number = int.tryParse(cleaned) ?? amountFormatter.getUnformattedValue().toInt();
     if (number > 0) {
       final words = NumToWords.convertNumberToIndianWords(number);
       return words;
@@ -130,7 +131,9 @@ RecurringDepositFormState useRecurringDepositForm({
     return '';
   }, [installmentAmountController.text]);
 
-  final currentInstallment = amountFormatter.getUnformattedValue().toDouble();
+  final cleanedInstallmentStr = installmentAmountController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+  final currentInstallment = double.tryParse(cleanedInstallmentStr) ??
+      amountFormatter.getUnformattedValue().toDouble();
   final currentInterest =
       double.tryParse(interestRateController.text.trim()) ?? 0.0;
 
@@ -162,6 +165,11 @@ RecurringDepositFormState useRecurringDepositForm({
         return;
       }
 
+      final cleanedAmountStr = installmentAmountController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+      final installmentAmountVal = cleanedAmountStr.isNotEmpty
+          ? cleanedAmountStr
+          : amountFormatter.getUnformattedValue().toString();
+
       isSaving.value = true;
       final result = await ref
           .read(recurringDepositsControllerProvider.notifier)
@@ -169,7 +177,7 @@ RecurringDepositFormState useRecurringDepositForm({
             id: deposit?.id,
             serialNo: serialNoController.text,
             accountNo: accountNoController.text,
-            installmentAmount: amountFormatter.getUnformattedValue().toString(),
+            installmentAmount: installmentAmountVal,
             termYears: selectedTermYears.value,
             termMonths:
                 selectedScheme.value.tenureInputType == TenureInputType.derived

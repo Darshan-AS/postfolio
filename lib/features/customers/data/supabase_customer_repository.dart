@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
+import 'package:postfolio/core/models/savings_account.dart';
+import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/core/utils/result.dart';
 
@@ -16,19 +18,37 @@ class SupabaseCustomerRepository implements CustomerRepository {
 
   @override
   Stream<Result<List<Customer>, String>> watchCustomers() {
-    // For phase 2, we will fetch customers and their SB accounts using joins
-    // Select syntax: *, account_identities(id, account_type, savings_accounts(*), nominees(*))
-    // We will do a basic fetch for now to get parity.
     return _supabaseClient
         .from('customers')
         .stream(primaryKey: ['id'])
         .eq('agent_id', _userId)
-        .map((data) {
+        .asyncMap((data) async {
           try {
+            if (data.isEmpty) return const Success<List<Customer>, String>([]);
+
+            final customerIds = data.map((json) => json['id'] as String).toList();
+
+            final sbAccountsData = await _supabaseClient
+                .from('account_identities')
+                .select('customer_id, savings_accounts(account_number), nominees(name, relationship, custom_relationship, percentage)')
+                .eq('account_type', 'SB')
+                .inFilter('customer_id', customerIds);
+
+            final Map<String, SavingsAccount> sbAccountMap = {};
+            for (final item in sbAccountsData) {
+              final custId = item['customer_id'] as String?;
+              final sbAccount = _parseSavingsAccount(item);
+              if (custId != null && sbAccount != null) {
+                sbAccountMap[custId] = sbAccount;
+              }
+            }
+
             final customers = data.map((json) {
-              // Basic parsing for now
-              return Customer.fromJson(json);
+              final customer = Customer.fromJson(json);
+              final sbAccount = sbAccountMap[customer.id];
+              return sbAccount != null ? customer.copyWith(savingsAccount: sbAccount) : customer;
             }).toList();
+
             return Success(customers);
           } catch (e) {
             return Failure(e.toString());
@@ -42,12 +62,28 @@ class SupabaseCustomerRepository implements CustomerRepository {
         .from('customers')
         .stream(primaryKey: ['id'])
         .eq('id', id)
-        .map((data) {
+        .asyncMap((data) async {
           try {
-            if (data.isEmpty) return const Failure('Customer not found');
-            final customerData = data.first;
-            if (customerData['agent_id'] != _userId) return const Failure('Unauthorized');
-            return Success(Customer.fromJson(customerData));
+            if (data.isEmpty) return const Failure<Customer, String>('Customer not found');
+            final customerData = Map<String, dynamic>.from(data.first);
+            if (customerData['agent_id'] != _userId) {
+              return const Failure<Customer, String>('Unauthorized');
+            }
+
+            final customerId = customerData['id'] as String;
+
+            final sbAccountData = await _supabaseClient
+                .from('account_identities')
+                .select('savings_accounts(account_number), nominees(name, relationship, custom_relationship, percentage)')
+                .eq('customer_id', customerId)
+                .eq('account_type', 'SB')
+                .maybeSingle();
+
+            final sbAccount = _parseSavingsAccount(sbAccountData);
+            final customer = Customer.fromJson(customerData);
+            return Success(
+              sbAccount != null ? customer.copyWith(savingsAccount: sbAccount) : customer,
+            );
           } catch (e) {
             return Failure(e.toString());
           }
@@ -57,46 +93,16 @@ class SupabaseCustomerRepository implements CustomerRepository {
   @override
   Future<Result<void, String>> createCustomer(Customer customer) async {
     try {
-      final data = customer.toJson();
-      data['agent_id'] = _userId;
-      
-      // Remove complex types and non-existent columns before inserting into customers
-      data.remove('savings_account');
-      data.remove('migration_source');
+      final data = customer.toJson()
+        ..['agent_id'] = _userId
+        ..remove('savings_account')
+        ..remove('migration_source');
 
       await _supabaseClient.from('customers').insert(data);
-      
-      // Handle Savings Account Normalization
-      if (customer.savingsAccount != null) {
-        final accountData = {
-          'customer_id': customer.id,
-          'agent_id': _userId,
-          'account_type': 'SB',
-        };
-        
-        final accountIdResult = await _supabaseClient
-            .from('account_identities')
-            .insert(accountData)
-            .select('id')
-            .single();
-            
-        final accountId = accountIdResult['id'];
-        
-        await _supabaseClient.from('savings_accounts').insert({
-          'id': accountId,
-          'account_number': customer.savingsAccount!.accountNumber,
-        });
-        
-        if (customer.savingsAccount!.nominees.isNotEmpty) {
-          final nomineesData = customer.savingsAccount!.nominees.map((n) => {
-            'account_id': accountId,
-            'name': n.name,
-            'relationship': n.relationship.name, // Convert enum to string
-            'share_percentage': n.percentage,
-          }).toList();
-          
-          await _supabaseClient.from('nominees').insert(nomineesData);
-        }
+
+      if (customer.savingsAccount != null &&
+          customer.savingsAccount!.accountNumber.trim().isNotEmpty) {
+        await _saveSavingsAccountAndNominees(customer.id, customer.savingsAccount!);
       }
 
       return const Success(null);
@@ -108,19 +114,20 @@ class SupabaseCustomerRepository implements CustomerRepository {
   @override
   Future<Result<void, String>> updateCustomer(Customer customer) async {
     try {
-      final data = customer.toJson();
-      data['agent_id'] = _userId;
-      
-      data.remove('savings_account');
-      data.remove('migration_source');
-      
-      await _supabaseClient
-          .from('customers')
-          .update(data)
-          .eq('id', customer.id);
-          
-      // Note: Updating related tables (savings_accounts, nominees) is complex
-      // For V1 of migration, we just handle the customer table.
+      final data = customer.toJson()
+        ..['agent_id'] = _userId
+        ..remove('savings_account')
+        ..remove('migration_source');
+
+      await _supabaseClient.from('customers').update(data).eq('id', customer.id);
+
+      final sbAccount = customer.savingsAccount;
+      if (sbAccount != null && sbAccount.accountNumber.trim().isNotEmpty) {
+        await _saveSavingsAccountAndNominees(customer.id, sbAccount);
+      } else {
+        await _deleteSavingsAccount(customer.id);
+      }
+
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
@@ -135,5 +142,84 @@ class SupabaseCustomerRepository implements CustomerRepository {
     } catch (e) {
       return Failure(e.toString());
     }
+  }
+
+  // Helper Methods
+
+  SavingsAccount? _parseSavingsAccount(Map<String, dynamic>? data) {
+    if (data == null) return null;
+    final saRaw = data['savings_accounts'];
+    final Map<String, dynamic>? saData;
+    if (saRaw is Map) {
+      saData = Map<String, dynamic>.from(saRaw);
+    } else if (saRaw is List && saRaw.isNotEmpty) {
+      saData = Map<String, dynamic>.from(saRaw.first as Map);
+    } else {
+      saData = null;
+    }
+
+    final accNum = saData?['account_number'] as String?;
+    if (accNum == null || accNum.trim().isEmpty) return null;
+
+    final rawNominees = (data['nominees'] as List<dynamic>?) ?? [];
+    final nominees = rawNominees
+        .map((n) => Nominee.fromJson(Map<String, dynamic>.from(n as Map)))
+        .toList();
+
+    return SavingsAccount(accountNumber: accNum.trim(), nominees: nominees);
+  }
+
+  Future<void> _saveSavingsAccountAndNominees(String customerId, SavingsAccount account) async {
+    final accountNumber = account.accountNumber.trim();
+    final existing = await _supabaseClient
+        .from('account_identities')
+        .select('id')
+        .eq('customer_id', customerId)
+        .eq('account_type', 'SB')
+        .maybeSingle();
+
+    final String accountId;
+    if (existing != null) {
+      accountId = existing['id'] as String;
+      await _supabaseClient
+          .from('savings_accounts')
+          .upsert({'id': accountId, 'account_number': accountNumber});
+
+      await _supabaseClient
+          .from('nominees')
+          .delete()
+          .eq('account_id', accountId);
+    } else {
+      final accountIdentity = await _supabaseClient
+          .from('account_identities')
+          .insert({
+            'customer_id': customerId,
+            'agent_id': _userId,
+            'account_type': 'SB',
+          })
+          .select('id')
+          .single();
+      accountId = accountIdentity['id'] as String;
+
+      await _supabaseClient.from('savings_accounts').upsert({
+        'id': accountId,
+        'account_number': accountNumber,
+      });
+    }
+
+    if (account.nominees.isNotEmpty) {
+      final nomineesData = account.nominees
+          .map((n) => n.toJson()..['account_id'] = accountId)
+          .toList();
+      await _supabaseClient.from('nominees').insert(nomineesData);
+    }
+  }
+
+  Future<void> _deleteSavingsAccount(String customerId) async {
+    await _supabaseClient
+        .from('account_identities')
+        .delete()
+        .eq('customer_id', customerId)
+        .eq('account_type', 'SB');
   }
 }

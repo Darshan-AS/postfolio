@@ -1,12 +1,16 @@
 # Project Progress
 
 ## Current State
-**Supabase Migration - Phase 1 Complete**: Successfully initialized Supabase locally, configured the Postgres schema with RLS, and integrated environment management with `envied`. The app now initializes Supabase alongside Firebase.
+**Supabase Migration - Customer Persistence Hardened**: Successfully verified and enhanced `SupabaseCustomerRepository` for saving customer savings account details and nominees.
 
 - **Phase 1 Complete**:
     - Initialized Supabase CLI and started local emulators.
     - Defined and applied initial Postgres schema (`agent_profiles`, `customers`, `deposits`, etc.) with RLS policies.
     - Added `supabase_flutter` and `envied` dependencies.
+    - Fixed schema column alignment (`percentage` instead of `share_percentage` for `nominees`).
+    - Enhanced `SupabaseCustomerRepository` saving logic (`upsert` for `savings_accounts`, robust PostgREST parsing) and verified via integration tests against local Supabase instance.
+    - Fixed deposit amount editing persistence across `SupabaseRecurringDepositRepository` and `SupabaseOneTimeDepositRepository` by cleaning immutable payload fields (`id`, `created_at`, `updated_at`) and robustly extracting raw numeric input from formatted currency text fields in forms.
+    - Validated zero issues with `flutter analyze` and `flutter test`.
     - Configured environment variable management with `Env` class and `.env` file.
     - Created `supabase/seed.sql` for local testing.
     - Updated documentation (`README.md`, `tasks.md`) for the new backend stack.
@@ -113,3 +117,15 @@
 - **v1.4.0+13 (2026-06-03)**: Type-safe composite sorting, persisted user preferences, Material 3 UI/UX improvements, and release manager skill.
 - Started Phase 2 of Supabase Migration (Lift & Shift): Enforced snake_case serialization, updated TimestampConverter for dual-db support, and created abstract interfaces for all repositories.
 - Created parallel Supabase repositories (Auth, Customer, OTD, RD) and implemented Riverpod toggles based on Env.useSupabase.
+- Fixed Google Sign-In assertion failure on Supabase Web by routing web authentication through `supabaseClient.auth.signInWithOAuth(OAuthProvider.google)` and bypassing the legacy `google_sign_in` flow on web.
+- Configured local Supabase emulator to support Google Sign-In by adding the `[auth.external.google]` block in `config.toml`.
+- Updated `.vscode/launch.json` to bind Flutter Web to `localhost:3000` to match Supabase's `site_url`.
+- Explicitly set `redirectTo: http://127.0.0.1:3000` inside `supabaseClient.auth.signInWithOAuth()` to ensure Supabase Auth redirects back to the correct host/port on Flutter Web.
+- Configured Supabase Google OAuth to automatically determine `redirectTo` based on the `USE_EMULATOR` flag.
+- Added `--dart-define=USE_EMULATOR=true` to the `Postfolio (Chrome)` launch configuration to ensure Supabase knows when to override `redirectTo` for local development.
+- Configured Flutter Web to use Path URL Strategy instead of Hash Routing by invoking `usePathUrlStrategy()` in `main.dart`, allowing OAuth providers to correctly pass `?code=` back to the app without causing route parse failures or white screens.
+- Updated `GoRouter` redirect logic to preserve query parameters (`?code=...`) when redirecting unauthenticated users to `/login`, preventing Flutter from stripping Supabase's OAuth callback payload.
+- Resolved `flutter pub get` duplicate key error in `pubspec.yaml` caused by malformed automated edits and successfully added `flutter_web_plugins` dependency to enable `usePathUrlStrategy()`.
+- Fixed column naming mismatches (`account_number` -> `account_no`) and added missing `customer_id` columns on `recurring_deposits` and `one_time_deposits` in `supabase/migrations/20260626000000_initial_schema.sql` to match Dart model serialization.
+- Added nominee creation and update handling in `SupabaseRecurringDepositRepository` and `SupabaseOneTimeDepositRepository`.
+- Re-applied migrations with `npx supabase db reset`.

@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/core/utils/result.dart';
 
@@ -19,9 +20,34 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
     return _supabaseClient
         .from('recurring_deposits')
         .stream(primaryKey: ['id'])
-        .map((data) {
+        .asyncMap((data) async {
           try {
-            final deposits = data.map((json) => RecurringDeposit.fromJson(json)).toList();
+            if (data.isEmpty) return const Success<List<RecurringDeposit>, String>([]);
+
+            final accountIds = data.map((json) => json['id'] as String).toList();
+            final nomineesData = await _supabaseClient
+                .from('nominees')
+                .select('account_id, name, relationship, custom_relationship, percentage')
+                .inFilter('account_id', accountIds);
+
+            final Map<String, List<Nominee>> nomineesMap = {};
+            for (final item in nomineesData) {
+              final accId = item['account_id'] as String?;
+              if (accId != null) {
+                final nominee = Nominee.fromJson(Map<String, dynamic>.from(item as Map));
+                nomineesMap.putIfAbsent(accId, () => []).add(nominee);
+              }
+            }
+
+            final deposits = data.map((json) {
+              final depositMap = Map<String, dynamic>.from(json);
+              final accId = depositMap['id'] as String;
+              if (nomineesMap.containsKey(accId)) {
+                depositMap['nominees'] = nomineesMap[accId]!.map((n) => n.toJson()).toList();
+              }
+              return RecurringDeposit.fromJson(depositMap);
+            }).toList();
+
             return Success(deposits);
           } catch (e) {
             return Failure(e.toString());
@@ -49,6 +75,11 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
       await _supabaseClient.from('account_identities').insert(accountData);
       await _supabaseClient.from('recurring_deposits').insert(data);
       
+      if (deposit.nominees.isNotEmpty) {
+        final nomineesData = deposit.nominees.map((n) => n.toJson()..['account_id'] = deposit.id).toList();
+        await _supabaseClient.from('nominees').insert(nomineesData);
+      }
+
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
@@ -59,6 +90,9 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   Future<Result<void, String>> updateRecurringDeposit(RecurringDeposit deposit) async {
     try {
       final data = deposit.toJson();
+      data.remove('id');
+      data.remove('created_at');
+      data.remove('updated_at');
       data.remove('nominees');
       data.remove('migration_source');
       
@@ -67,6 +101,12 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
           .update(data)
           .eq('id', deposit.id);
           
+      await _supabaseClient.from('nominees').delete().eq('account_id', deposit.id);
+      if (deposit.nominees.isNotEmpty) {
+        final nomineesData = deposit.nominees.map((n) => n.toJson()..['account_id'] = deposit.id).toList();
+        await _supabaseClient.from('nominees').insert(nomineesData);
+      }
+
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
