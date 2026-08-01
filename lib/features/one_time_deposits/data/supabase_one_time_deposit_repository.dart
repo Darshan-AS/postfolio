@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
+import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
 import 'package:postfolio/core/utils/result.dart';
 
@@ -19,13 +20,34 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
     return _supabaseClient
         .from('one_time_deposits')
         .stream(primaryKey: ['id'])
-        // Assuming we join account_identities to get agent_id for filtering, 
-        // but for parity, if flat schema is used initially, it should work.
-        // If agent_id is on account_identities, we might need a view or do RLS.
-        // Assuming RLS handles user isolation or we will do the join later.
-        .map((data) {
+        .asyncMap((data) async {
           try {
-            final deposits = data.map((json) => OneTimeDeposit.fromJson(json)).toList();
+            if (data.isEmpty) return const Success<List<OneTimeDeposit>, String>([]);
+
+            final accountIds = data.map((json) => json['id'] as String).toList();
+            final nomineesData = await _supabaseClient
+                .from('nominees')
+                .select('account_id, name, relationship, custom_relationship, percentage')
+                .inFilter('account_id', accountIds);
+
+            final Map<String, List<Nominee>> nomineesMap = {};
+            for (final item in nomineesData) {
+              final accId = item['account_id'] as String?;
+              if (accId != null) {
+                final nominee = Nominee.fromJson(Map<String, dynamic>.from(item as Map));
+                nomineesMap.putIfAbsent(accId, () => []).add(nominee);
+              }
+            }
+
+            final deposits = data.map((json) {
+              final depositMap = Map<String, dynamic>.from(json);
+              final accId = depositMap['id'] as String;
+              if (nomineesMap.containsKey(accId)) {
+                depositMap['nominees'] = nomineesMap[accId]!.map((n) => n.toJson()).toList();
+              }
+              return OneTimeDeposit.fromJson(depositMap);
+            }).toList();
+
             return Success(deposits);
           } catch (e) {
             return Failure(e.toString());
@@ -38,24 +60,24 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
     try {
       final data = deposit.toJson();
       
-      // For V1 parity, assuming flat tables or proper joins will be added.
-      // Remove complex types that can't be inserted directly
       data.remove('nominees');
       data.remove('migration_source');
 
-      // Note: We need to insert into account_identities first
       final accountData = {
-        'id': deposit.id, // Enforce same ID
+        'id': deposit.id,
         'customer_id': deposit.customerId,
         'agent_id': _userId,
-        'account_type': 'OTD', // Or specific type
+        'account_type': 'OTD',
       };
       
       await _supabaseClient.from('account_identities').insert(accountData);
-
-      // Now insert into one_time_deposits
       await _supabaseClient.from('one_time_deposits').insert(data);
       
+      if (deposit.nominees.isNotEmpty) {
+        final nomineesData = deposit.nominees.map((n) => n.toJson()..['account_id'] = deposit.id).toList();
+        await _supabaseClient.from('nominees').insert(nomineesData);
+      }
+
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
@@ -66,6 +88,9 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
   Future<Result<void, String>> updateOneTimeDeposit(OneTimeDeposit deposit) async {
     try {
       final data = deposit.toJson();
+      data.remove('id');
+      data.remove('created_at');
+      data.remove('updated_at');
       data.remove('nominees');
       data.remove('migration_source');
       
@@ -74,6 +99,12 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
           .update(data)
           .eq('id', deposit.id);
           
+      await _supabaseClient.from('nominees').delete().eq('account_id', deposit.id);
+      if (deposit.nominees.isNotEmpty) {
+        final nomineesData = deposit.nominees.map((n) => n.toJson()..['account_id'] = deposit.id).toList();
+        await _supabaseClient.from('nominees').insert(nomineesData);
+      }
+
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());

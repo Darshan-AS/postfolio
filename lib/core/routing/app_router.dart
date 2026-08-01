@@ -52,6 +52,14 @@ GoRouter goRouter(Ref ref) {
       final isLoggingIn = state.matchedLocation == AppRoutes.login;
 
       if (!isAuth && !isLoggingIn) {
+        // If we are redirecting to login, ensure we preserve query parameters 
+        // (like ?code=... from OAuth providers) so Supabase can process them.
+        if (state.uri.queryParameters.isNotEmpty) {
+          return Uri(
+            path: AppRoutes.login,
+            queryParameters: state.uri.queryParameters,
+          ).toString();
+        }
         return AppRoutes.login;
       }
 

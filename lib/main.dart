@@ -19,12 +19,15 @@ import 'package:postfolio/core/services/storage_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postfolio/core/env/env.dart';
 
+import 'package:flutter_web_plugins/url_strategy.dart';
+
 const bool useFirebaseEmulator = bool.fromEnvironment(
   'USE_EMULATOR',
   defaultValue: false,
 );
 
 void main() async {
+  usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 

@@ -52,7 +52,11 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
-            "deviceId": "chrome"
+            "deviceId": "chrome",
+            "toolArgs": [
+                "--web-port=3000",
+                "--dart-define=USE_EMULATOR=true"
+            ]
         },
         {
             "name": "Postfolio (iOS Simulator)",

@@ -34,8 +34,34 @@ class SupabaseAuthRepository implements AuthRepository {
   @override
   Future<Result<AppUser, String>> signInWithGoogle() async {
     try {
+      if (kIsWeb) {
+        // Read USE_EMULATOR to determine if we are running locally
+        const bool useEmulator = bool.fromEnvironment(
+          'USE_EMULATOR',
+          defaultValue: false,
+        );
+        
+        // Only override redirectTo in local emulator, otherwise let Supabase use its configured site_url (Prod)
+        // We redirect directly to '/login' so GoRouter doesn't strip the '?code=' parameter in an intermediate redirect.
+        final String? redirectTo = useEmulator ? 'http://127.0.0.1:3000/login' : null;
+
+        final success = await _supabaseClient.auth.signInWithOAuth(
+          OAuthProvider.google,
+          redirectTo: redirectTo,
+        );
+        if (!success) {
+          return const Failure('Failed to initiate Google Sign In on Web.');
+        }
+        // The browser will redirect away. If we reach here on desktop/web,
+        // we can just wait for the auth stream to emit the user, so we don't
+        // prematurely return anything that might stop a loading indicator.
+        await Future.delayed(const Duration(hours: 1));
+        return const Failure('Redirecting...');
+      }
+
       // Ensure GoogleSignIn is initialized with the Web Client ID
       await _googleSignIn.initialize(
+        clientId: kIsWeb ? Env.googleWebClientId : null,
         serverClientId: Env.googleWebClientId,
       );
 

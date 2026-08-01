@@ -83,15 +83,17 @@ CREATE TRIGGER trigger_savings_accounts_updated_at
 -- 6. Create recurring_deposits table
 CREATE TABLE IF NOT EXISTS public.recurring_deposits (
     id UUID PRIMARY KEY REFERENCES public.account_identities(id) ON DELETE CASCADE,
+    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
     status TEXT NOT NULL,
     scheme_type TEXT NOT NULL,
-    account_number TEXT NOT NULL,
+    account_no TEXT,
     serial_no TEXT,
     installment_amount NUMERIC NOT NULL,
     interest_rate NUMERIC NOT NULL,
     term_years INTEGER NOT NULL,
     term_months INTEGER NOT NULL,
     start_date DATE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -102,14 +104,16 @@ CREATE TRIGGER trigger_recurring_deposits_updated_at
 -- 7. Create one_time_deposits table
 CREATE TABLE IF NOT EXISTS public.one_time_deposits (
     id UUID PRIMARY KEY REFERENCES public.account_identities(id) ON DELETE CASCADE,
+    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
     status TEXT NOT NULL,
     scheme_type TEXT NOT NULL,
-    account_number TEXT NOT NULL,
+    account_no TEXT,
     principal_amount NUMERIC NOT NULL,
     interest_rate NUMERIC NOT NULL,
     term_years INTEGER NOT NULL,
     term_months INTEGER NOT NULL,
     start_date DATE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -123,7 +127,8 @@ CREATE TABLE IF NOT EXISTS public.nominees (
     account_id UUID REFERENCES public.account_identities(id) ON DELETE CASCADE NOT NULL,
     name TEXT NOT NULL,
     relationship TEXT NOT NULL,
-    share_percentage NUMERIC NOT NULL,
+    custom_relationship TEXT,
+    percentage NUMERIC NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -175,8 +180,15 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE POLICY "Users can see own profile" ON public.agent_profiles
     FOR SELECT USING (auth.uid() = id OR public.is_admin());
 
+CREATE POLICY "Users can insert own profile" ON public.agent_profiles
+    FOR INSERT WITH CHECK (auth.uid() = id);
+
 CREATE POLICY "Users can update own profile" ON public.agent_profiles
     FOR UPDATE USING (auth.uid() = id);
+
+-- User Roles: Users can see own roles, admins can see all
+CREATE POLICY "Users can see own roles" ON public.user_roles
+    FOR SELECT USING (user_id = auth.uid() OR public.is_admin());
 
 -- Customers: Agents can see own customers, admins can see all
 CREATE POLICY "Agents can see own customers" ON public.customers
@@ -213,6 +225,30 @@ CREATE POLICY "Agents can see own savings accounts" ON public.savings_accounts
         )
     );
 
+CREATE POLICY "Agents can insert own savings accounts" ON public.savings_accounts
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = savings_accounts.id AND agent_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Agents can update own savings accounts" ON public.savings_accounts
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = savings_accounts.id AND agent_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Agents can delete own savings accounts" ON public.savings_accounts
+    FOR DELETE USING (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = savings_accounts.id AND agent_id = auth.uid()
+        )
+    );
+
 -- Deposits: Linked to account_identities
 CREATE POLICY "Agents can see own recurring deposits" ON public.recurring_deposits
     FOR SELECT USING (
@@ -222,11 +258,59 @@ CREATE POLICY "Agents can see own recurring deposits" ON public.recurring_deposi
         )
     );
 
+CREATE POLICY "Agents can insert own recurring deposits" ON public.recurring_deposits
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = recurring_deposits.id AND agent_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Agents can update own recurring deposits" ON public.recurring_deposits
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = recurring_deposits.id AND agent_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Agents can delete own recurring deposits" ON public.recurring_deposits
+    FOR DELETE USING (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = recurring_deposits.id AND agent_id = auth.uid()
+        )
+    );
+
 CREATE POLICY "Agents can see own one time deposits" ON public.one_time_deposits
     FOR SELECT USING (
         EXISTS (
             SELECT 1 FROM public.account_identities
             WHERE id = one_time_deposits.id AND (agent_id = auth.uid() OR public.is_admin())
+        )
+    );
+
+CREATE POLICY "Agents can insert own one time deposits" ON public.one_time_deposits
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = one_time_deposits.id AND agent_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Agents can update own one time deposits" ON public.one_time_deposits
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = one_time_deposits.id AND agent_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Agents can delete own one time deposits" ON public.one_time_deposits
+    FOR DELETE USING (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = one_time_deposits.id AND agent_id = auth.uid()
         )
     );
 
@@ -239,6 +323,79 @@ CREATE POLICY "Agents can see own nominees" ON public.nominees
         )
     );
 
+CREATE POLICY "Agents can insert own nominees" ON public.nominees
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = nominees.account_id AND agent_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Agents can update own nominees" ON public.nominees
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = nominees.account_id AND agent_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Agents can delete own nominees" ON public.nominees
+    FOR DELETE USING (
+        EXISTS (
+            SELECT 1 FROM public.account_identities
+            WHERE id = nominees.account_id AND agent_id = auth.uid()
+        )
+    );
+
 -- RD Transactions: Linked to recurring_deposits
 CREATE POLICY "Agents can see own rd transactions" ON public.rd_transactions
     FOR SELECT USING (agent_id = auth.uid() OR public.is_admin());
+
+CREATE POLICY "Agents can insert own rd transactions" ON public.rd_transactions
+    FOR INSERT WITH CHECK (agent_id = auth.uid());
+
+CREATE POLICY "Agents can update own rd transactions" ON public.rd_transactions
+    FOR UPDATE USING (agent_id = auth.uid());
+
+CREATE POLICY "Agents can delete own rd transactions" ON public.rd_transactions
+    FOR DELETE USING (agent_id = auth.uid());
+
+-- Function & Trigger to automatically create agent_profiles on signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.agent_profiles (id, email, name)
+    VALUES (
+        NEW.id,
+        NEW.email,
+        COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', NEW.email)
+    )
+    ON CONFLICT (id) DO UPDATE SET
+        email = EXCLUDED.email,
+        name = COALESCE(EXCLUDED.name, public.agent_profiles.name),
+        updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Table & Schema Grants for Supabase API roles
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
