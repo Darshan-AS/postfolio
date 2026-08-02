@@ -1,5 +1,73 @@
 -- Migration: 20260802000000_customer_views_and_rpcs.sql
 
+-- 0. Helper Functions (DRY Operations & Guards)
+
+-- Authentication Guard
+CREATE OR REPLACE FUNCTION public.assert_authenticated()
+RETURNS UUID AS $$
+DECLARE
+  v_agent_id UUID := auth.uid();
+BEGIN
+  IF v_agent_id IS NULL THEN
+    RAISE EXCEPTION 'Unauthenticated';
+  END IF;
+  RETURN v_agent_id;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
+
+-- Customer Ownership Guard
+CREATE OR REPLACE FUNCTION public.assert_customer_owner(p_customer_id UUID, p_agent_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  IF p_customer_id IS NOT NULL AND EXISTS (
+    SELECT 1 FROM public.customers WHERE id = p_customer_id AND agent_id <> p_agent_id
+  ) THEN
+    RAISE EXCEPTION 'Unauthorized: Customer does not belong to active agent';
+  END IF;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
+
+-- Nominee Aggregate Helper (Read)
+CREATE OR REPLACE FUNCTION public.get_account_nominees(p_account_id UUID)
+RETURNS JSONB AS $$
+  SELECT COALESCE(
+    (
+      SELECT jsonb_agg(
+        jsonb_build_object(
+          'name', n.name,
+          'relationship', n.relationship,
+          'custom_relationship', n.custom_relationship,
+          'percentage', n.percentage
+        )
+      )
+      FROM public.nominees n
+      WHERE n.account_id = p_account_id
+    ),
+    '[]'::jsonb
+  );
+$$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
+
+-- Nominee Replacement Helper (Write)
+CREATE OR REPLACE FUNCTION public.replace_account_nominees(
+  p_account_id UUID,
+  p_nominees JSONB
+) RETURNS VOID AS $$
+BEGIN
+  DELETE FROM public.nominees WHERE account_id = p_account_id;
+
+  IF p_nominees IS NOT NULL AND jsonb_array_length(p_nominees) > 0 THEN
+    INSERT INTO public.nominees (account_id, name, relationship, custom_relationship, percentage)
+    SELECT
+      p_account_id,
+      elem->>'name',
+      elem->>'relationship',
+      elem->>'custom_relationship',
+      (elem->>'percentage')::numeric
+    FROM jsonb_array_elements(p_nominees) AS elem;
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
 -- 1. Create customer_details_view for clean reads
 CREATE OR REPLACE VIEW public.customer_details_view WITH (security_invoker = true) AS
 SELECT 
@@ -21,21 +89,7 @@ FROM public.customers c
 LEFT JOIN LATERAL (
   SELECT jsonb_build_object(
     'account_number', sa.account_number,
-    'nominees', COALESCE(
-      (
-        SELECT jsonb_agg(
-          jsonb_build_object(
-            'name', n.name,
-            'relationship', n.relationship,
-            'custom_relationship', n.custom_relationship,
-            'percentage', n.percentage
-          )
-        )
-        FROM public.nominees n
-        WHERE n.account_id = ai.id
-      ),
-      '[]'::jsonb
-    )
+    'nominees', public.get_account_nominees(ai.id)
   ) AS savings_account
   FROM public.account_identities ai
   JOIN public.savings_accounts sa ON sa.id = ai.id
@@ -62,18 +116,11 @@ CREATE OR REPLACE FUNCTION public.save_customer_with_sb_account(
 DECLARE
   v_customer_id UUID;
   v_account_id UUID;
-  v_agent_id UUID := auth.uid();
+  v_agent_id UUID := public.assert_authenticated();
 BEGIN
-  IF v_agent_id IS NULL THEN
-    RAISE EXCEPTION 'Unauthenticated';
-  END IF;
+  PERFORM public.assert_customer_owner(p_id, v_agent_id);
 
   p_nominees := COALESCE(p_nominees, '[]'::jsonb);
-
-  -- Security Check: Ensure target customer belongs to the active agent if updating existing
-  IF p_id IS NOT NULL AND EXISTS (SELECT 1 FROM public.customers WHERE id = p_id AND agent_id <> v_agent_id) THEN
-    RAISE EXCEPTION 'Unauthorized: Customer does not belong to active agent';
-  END IF;
 
   -- 1. Insert or Update Customer
   INSERT INTO public.customers (
@@ -128,18 +175,7 @@ BEGIN
     VALUES (v_account_id, TRIM(p_sb_account_number))
     ON CONFLICT (id) DO UPDATE SET account_number = EXCLUDED.account_number;
 
-    DELETE FROM public.nominees WHERE account_id = v_account_id;
-
-    IF jsonb_array_length(p_nominees) > 0 THEN
-      INSERT INTO public.nominees (account_id, name, relationship, custom_relationship, percentage)
-      SELECT
-        v_account_id,
-        elem->>'name',
-        elem->>'relationship',
-        elem->>'custom_relationship',
-        (elem->>'percentage')::numeric
-      FROM jsonb_array_elements(p_nominees) AS elem;
-    END IF;
+    PERFORM public.replace_account_nominees(v_account_id, p_nominees);
   ELSE
     DELETE FROM public.account_identities WHERE customer_id = v_customer_id AND account_type = 'SB';
   END IF;

@@ -16,21 +16,7 @@ SELECT
   d.start_date,
   d.created_at,
   d.updated_at,
-  COALESCE(
-    (
-      SELECT jsonb_agg(
-        jsonb_build_object(
-          'name', n.name,
-          'relationship', n.relationship,
-          'custom_relationship', n.custom_relationship,
-          'percentage', n.percentage
-        )
-      )
-      FROM public.nominees n
-      WHERE n.account_id = d.id
-    ),
-    '[]'::jsonb
-  ) AS nominees
+  public.get_account_nominees(d.id) AS nominees
 FROM public.one_time_deposits d
 JOIN public.account_identities ai ON ai.id = d.id AND ai.account_type = 'OTD';
 
@@ -51,21 +37,7 @@ SELECT
   d.start_date,
   d.created_at,
   d.updated_at,
-  COALESCE(
-    (
-      SELECT jsonb_agg(
-        jsonb_build_object(
-          'name', n.name,
-          'relationship', n.relationship,
-          'custom_relationship', n.custom_relationship,
-          'percentage', n.percentage
-        )
-      )
-      FROM public.nominees n
-      WHERE n.account_id = d.id
-    ),
-    '[]'::jsonb
-  ) AS nominees
+  public.get_account_nominees(d.id) AS nominees
 FROM public.recurring_deposits d
 JOIN public.account_identities ai ON ai.id = d.id AND ai.account_type = 'RD';
 
@@ -84,18 +56,9 @@ CREATE OR REPLACE FUNCTION public.save_one_time_deposit(
   p_nominees JSONB DEFAULT '[]'::jsonb
 ) RETURNS UUID AS $$
 DECLARE
-  v_agent_id UUID := auth.uid();
+  v_agent_id UUID := public.assert_authenticated();
 BEGIN
-  IF v_agent_id IS NULL THEN
-    RAISE EXCEPTION 'Unauthenticated';
-  END IF;
-
-  p_nominees := COALESCE(p_nominees, '[]'::jsonb);
-
-  -- Security Check: Validate customer ownership
-  IF NOT EXISTS (SELECT 1 FROM public.customers WHERE id = p_customer_id AND agent_id = v_agent_id) THEN
-    RAISE EXCEPTION 'Unauthorized: Customer does not belong to active agent';
-  END IF;
+  PERFORM public.assert_customer_owner(p_customer_id, v_agent_id);
 
   -- Security Check: Validate existing account identity ownership
   IF p_id IS NOT NULL AND EXISTS (SELECT 1 FROM public.account_identities WHERE id = p_id AND agent_id <> v_agent_id) THEN
@@ -130,18 +93,7 @@ BEGIN
     updated_at = NOW();
 
   -- 3. Replace nominees
-  DELETE FROM public.nominees WHERE account_id = p_id;
-
-  IF jsonb_array_length(p_nominees) > 0 THEN
-    INSERT INTO public.nominees (account_id, name, relationship, custom_relationship, percentage)
-    SELECT
-      p_id,
-      elem->>'name',
-      elem->>'relationship',
-      elem->>'custom_relationship',
-      (elem->>'percentage')::numeric
-    FROM jsonb_array_elements(p_nominees) AS elem;
-  END IF;
+  PERFORM public.replace_account_nominees(p_id, p_nominees);
 
   RETURN p_id;
 END;
@@ -163,18 +115,9 @@ CREATE OR REPLACE FUNCTION public.save_recurring_deposit(
   p_nominees JSONB DEFAULT '[]'::jsonb
 ) RETURNS UUID AS $$
 DECLARE
-  v_agent_id UUID := auth.uid();
+  v_agent_id UUID := public.assert_authenticated();
 BEGIN
-  IF v_agent_id IS NULL THEN
-    RAISE EXCEPTION 'Unauthenticated';
-  END IF;
-
-  p_nominees := COALESCE(p_nominees, '[]'::jsonb);
-
-  -- Security Check: Validate customer ownership
-  IF NOT EXISTS (SELECT 1 FROM public.customers WHERE id = p_customer_id AND agent_id = v_agent_id) THEN
-    RAISE EXCEPTION 'Unauthorized: Customer does not belong to active agent';
-  END IF;
+  PERFORM public.assert_customer_owner(p_customer_id, v_agent_id);
 
   -- Security Check: Validate existing account identity ownership
   IF p_id IS NOT NULL AND EXISTS (SELECT 1 FROM public.account_identities WHERE id = p_id AND agent_id <> v_agent_id) THEN
@@ -210,18 +153,7 @@ BEGIN
     updated_at = NOW();
 
   -- 3. Replace nominees
-  DELETE FROM public.nominees WHERE account_id = p_id;
-
-  IF jsonb_array_length(p_nominees) > 0 THEN
-    INSERT INTO public.nominees (account_id, name, relationship, custom_relationship, percentage)
-    SELECT
-      p_id,
-      elem->>'name',
-      elem->>'relationship',
-      elem->>'custom_relationship',
-      (elem->>'percentage')::numeric
-    FROM jsonb_array_elements(p_nominees) AS elem;
-  END IF;
+  PERFORM public.replace_account_nominees(p_id, p_nominees);
 
   RETURN p_id;
 END;
