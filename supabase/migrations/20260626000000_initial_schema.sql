@@ -11,7 +11,7 @@ $$ LANGUAGE plpgsql;
 
 -- 1. Create agent_profiles table
 CREATE TABLE IF NOT EXISTS public.agent_profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE RESTRICT,
     legacy_firebase_uid TEXT UNIQUE,
     name TEXT,
     email TEXT,
@@ -83,7 +83,6 @@ CREATE TRIGGER trigger_savings_accounts_updated_at
 -- 6. Create recurring_deposits table
 CREATE TABLE IF NOT EXISTS public.recurring_deposits (
     id UUID PRIMARY KEY REFERENCES public.account_identities(id) ON DELETE CASCADE,
-    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
     status TEXT NOT NULL,
     scheme_type TEXT NOT NULL,
     account_no TEXT,
@@ -104,7 +103,6 @@ CREATE TRIGGER trigger_recurring_deposits_updated_at
 -- 7. Create one_time_deposits table
 CREATE TABLE IF NOT EXISTS public.one_time_deposits (
     id UUID PRIMARY KEY REFERENCES public.account_identities(id) ON DELETE CASCADE,
-    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
     status TEXT NOT NULL,
     scheme_type TEXT NOT NULL,
     account_no TEXT,
@@ -163,6 +161,15 @@ ALTER TABLE public.one_time_deposits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.nominees ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rd_transactions ENABLE ROW LEVEL SECURITY;
 
+-- Performance Indexes for Foreign Keys and RLS Filtering
+CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON public.user_roles(user_id, role);
+CREATE INDEX IF NOT EXISTS idx_customers_agent_id ON public.customers(agent_id);
+CREATE INDEX IF NOT EXISTS idx_account_identities_agent_id ON public.account_identities(agent_id);
+CREATE INDEX IF NOT EXISTS idx_account_identities_customer_id ON public.account_identities(customer_id);
+CREATE INDEX IF NOT EXISTS idx_nominees_account_id ON public.nominees(account_id);
+CREATE INDEX IF NOT EXISTS idx_rd_transactions_rd_id ON public.rd_transactions(rd_id);
+CREATE INDEX IF NOT EXISTS idx_rd_transactions_agent_id ON public.rd_transactions(agent_id);
+
 -- RLS Policies
 
 -- Helper function to check if user is admin
@@ -174,7 +181,7 @@ BEGIN
         WHERE user_id = auth.uid() AND role = 'admin'
     );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Agent Profiles: Users can see their own profile, admins can see all
 CREATE POLICY "Users can see own profile" ON public.agent_profiles
@@ -376,26 +383,22 @@ BEGIN
         updated_at = NOW();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE OR REPLACE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- Table & Schema Grants for Supabase API roles
-GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon;
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO authenticated, service_role;
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO anon;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO authenticated, service_role;
