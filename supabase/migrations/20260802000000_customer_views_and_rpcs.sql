@@ -27,6 +27,49 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
 
+-- Account Ownership Guard
+CREATE OR REPLACE FUNCTION public.assert_account_owner(p_account_id UUID, p_agent_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  IF p_account_id IS NOT NULL AND EXISTS (
+    SELECT 1 FROM public.account_identities WHERE id = p_account_id AND agent_id <> p_agent_id
+  ) THEN
+    RAISE EXCEPTION 'Unauthorized: Account identity does not belong to active agent';
+  END IF;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
+
+-- Unified Polymorphic Upsert for Account Identities
+CREATE OR REPLACE FUNCTION public.upsert_account_identity(
+  p_id UUID,
+  p_customer_id UUID,
+  p_agent_id UUID,
+  p_account_type TEXT
+) RETURNS UUID AS $$
+DECLARE
+  v_account_id UUID := p_id;
+BEGIN
+  -- If direct account identity ID isn't provided, try to locate an existing one of that type for the customer
+  IF v_account_id IS NULL THEN
+    SELECT id INTO v_account_id
+    FROM public.account_identities
+    WHERE customer_id = p_customer_id AND account_type = p_account_type
+    ORDER BY created_at ASC
+    LIMIT 1;
+  END IF;
+
+  v_account_id := COALESCE(v_account_id, gen_random_uuid());
+
+  INSERT INTO public.account_identities (id, customer_id, agent_id, account_type)
+  VALUES (v_account_id, p_customer_id, p_agent_id, p_account_type)
+  ON CONFLICT (id) DO UPDATE SET
+    customer_id = EXCLUDED.customer_id,
+    updated_at = NOW();
+
+  RETURN v_account_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
 -- Nominee Aggregate Helper (Read)
 CREATE OR REPLACE FUNCTION public.get_account_nominees(p_account_id UUID)
 RETURNS JSONB AS $$
@@ -155,21 +198,7 @@ BEGIN
 
   -- 2. Handle Savings Account & Nominees
   IF p_sb_account_number IS NOT NULL AND TRIM(p_sb_account_number) <> '' THEN
-    SELECT id INTO v_account_id
-    FROM public.account_identities
-    WHERE customer_id = v_customer_id AND account_type = 'SB'
-    ORDER BY created_at ASC
-    LIMIT 1;
-
-    IF v_account_id IS NULL THEN
-      INSERT INTO public.account_identities (customer_id, agent_id, account_type)
-      VALUES (v_customer_id, v_agent_id, 'SB')
-      RETURNING id INTO v_account_id;
-    ELSE
-      UPDATE public.account_identities
-      SET updated_at = NOW()
-      WHERE id = v_account_id;
-    END IF;
+    v_account_id := public.upsert_account_identity(NULL, v_customer_id, v_agent_id, 'SB');
 
     INSERT INTO public.savings_accounts (id, account_number)
     VALUES (v_account_id, TRIM(p_sb_account_number))
