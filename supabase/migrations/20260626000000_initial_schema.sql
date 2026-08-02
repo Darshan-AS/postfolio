@@ -193,6 +193,9 @@ CREATE POLICY "Users can insert own profile" ON public.agent_profiles
 CREATE POLICY "Users can update own profile" ON public.agent_profiles
     FOR UPDATE USING (auth.uid() = id);
 
+CREATE POLICY "Users can delete own profile" ON public.agent_profiles
+    FOR DELETE USING (auth.uid() = id);
+
 -- User Roles: Users can see own roles, admins can see all
 CREATE POLICY "Users can see own roles" ON public.user_roles
     FOR SELECT USING (user_id = auth.uid() OR public.is_admin());
