@@ -17,11 +17,14 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   @override
   Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits() {
     return _supabaseClient
-        .from('recurring_deposit_details_view')
+        .from('account_identities')
         .stream(primaryKey: ['id'])
-        .eq('agent_id', _userId)
-        .map((data) {
+        .asyncMap((_) async {
           try {
+            final data = await _supabaseClient
+                .from('recurring_deposit_details_view')
+                .select()
+                .eq('agent_id', _userId);
             final deposits = data.map((json) => RecurringDeposit.fromJson(json)).toList();
             return Success(deposits);
           } catch (e) {

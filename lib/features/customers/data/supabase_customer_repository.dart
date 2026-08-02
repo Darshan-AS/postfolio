@@ -17,11 +17,14 @@ class SupabaseCustomerRepository implements CustomerRepository {
   @override
   Stream<Result<List<Customer>, String>> watchCustomers() {
     return _supabaseClient
-        .from('customer_details_view')
+        .from('customers')
         .stream(primaryKey: ['id'])
-        .eq('agent_id', _userId)
-        .map((data) {
+        .asyncMap((_) async {
           try {
+            final data = await _supabaseClient
+                .from('customer_details_view')
+                .select()
+                .eq('agent_id', _userId);
             final customers = data.map((json) => Customer.fromJson(json)).toList();
             return Success(customers);
           } catch (e) {
@@ -33,17 +36,21 @@ class SupabaseCustomerRepository implements CustomerRepository {
   @override
   Stream<Result<Customer, String>> watchCustomerById(String id) {
     return _supabaseClient
-        .from('customer_details_view')
+        .from('customers')
         .stream(primaryKey: ['id'])
         .eq('id', id)
-        .map((data) {
+        .asyncMap((_) async {
           try {
-            if (data.isEmpty) return const Failure<Customer, String>('Customer not found');
-            final customerData = Map<String, dynamic>.from(data.first);
-            if (customerData['agent_id'] != _userId) {
+            final data = await _supabaseClient
+                .from('customer_details_view')
+                .select()
+                .eq('id', id)
+                .maybeSingle();
+            if (data == null) return const Failure<Customer, String>('Customer not found');
+            if (data['agent_id'] != _userId) {
               return const Failure<Customer, String>('Unauthorized');
             }
-            return Success(Customer.fromJson(customerData));
+            return Success(Customer.fromJson(data));
           } catch (e) {
             return Failure(e.toString());
           }
