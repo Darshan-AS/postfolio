@@ -20,7 +20,11 @@ Throughout this migration, several actions must be performed manually in externa
 2. **UI State Management**: **Blocking Overlays**. When a user saves a form, the UI will block with a loading spinner until the Supabase network request completes, ensuring absolute data consistency.
 3. **The Firebase Purge**: **Hybrid Stack (Community Standard)**. We will eventually remove `cloud_firestore` and `firebase_auth`, but we will **keep** `firebase_core`, `firebase_analytics`, and `firebase_crashlytics`. *Note: The actual removal of the Firestore/Auth packages will happen at the very end of Phase 4; they must remain installed during development to support the parallel Riverpod toggles.*
 4. **Implementation & Schema Strategy**: **Parallel Implementations & Iterative Normalization**. We will build this in a dedicated `feature/supabase-migration` branch. Instead of overwriting code, we will rename existing repositories to `Firebase*` and build `Supabase*` equivalents alongside them. We will start with a "Lift and Shift" of the flat Firestore schema to reach immediate compile parity, and then step-by-step write SQL migrations to transform it into the ideal relational state before launch.
-5. **Data Migration**: **Maintenance Window**. Given the low active user count (< 5), we will schedule a brief downtime to run a migration script, moving Firestore data and Google Auth users directly into the finalized Supabase relational tables.
+5. **Data Persistence Architecture**: **Database Views (Reads) + Strongly-Typed RPC Stored Procedures (Writes)**. 
+   * *Reads*: Relational joins across multiple tables (`customers`, `account_identities`, `savings_accounts`, `nominees`) are pre-joined into server-side Postgres Views (`customer_details_view`). Client repositories query these views directly.
+   * *Writes*: Relational persistence operations are wrapped inside server-side PL/pgSQL Stored Procedures (`save_customer_with_sb_account`) accepting explicit, strongly-typed arguments. The Flutter repository invokes them using `supabase.rpc()`.
+   * *Why*: Guarantees **100% atomic database transactions** in a single HTTP roundtrip over mobile network connections (eliminating orphaned/corrupted database records if a connection drops) while keeping business domain rules strictly in Dart models.
+6. **Data Migration**: **Maintenance Window**. Given the low active user count (< 5), we will schedule a brief downtime to run a migration script, moving Firestore data and Google Auth users directly into the finalized Supabase relational tables.
 
 ---
 
@@ -84,8 +88,10 @@ We will initially deploy flat tables that mirror our Firestore documents. Then, 
     *   `amount` (Numeric)
     *   `agent_id` (UUID, FK to `agent_profiles`)
 
-### Database Views (For Dashboards)
-Instead of fetching all deposits to Dart, we will create SQL `VIEW`s that pre-calculate metrics.
+### Database Views (For Reads) & Stored Procedures (For Writes)
+Instead of executing complex multi-table join queries or making sequential client-side HTTP requests, we will leverage server-side SQL Views and Stored Procedures (Option 2):
+*   **`customer_details_view`**: Flattens `customers`, `account_identities`, `savings_accounts`, and `nominees` into a single JSON representation that maps directly to Dart's `Customer` model.
+*   **`save_customer_with_sb_account(...)`**: A strongly-typed PL/pgSQL RPC procedure accepting explicit named parameters (`p_id`, `p_full_name`, `p_phone`, etc.). Performs an atomic `INSERT`/`UPDATE` on `customers`, upserts `savings_accounts`, and replaces `nominees` inside a single Postgres transaction.
 *   **`dashboard_metrics_view`**: Aggregates total active RDs, total OTDs, and total investment volume per agent.
 *   **`monthly_investment_view`**: Groups deposits by month/year for the charts.
 
