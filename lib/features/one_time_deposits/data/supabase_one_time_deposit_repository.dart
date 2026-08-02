@@ -17,11 +17,14 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
   @override
   Stream<Result<List<OneTimeDeposit>, String>> watchOneTimeDeposits() {
     return _supabaseClient
-        .from('one_time_deposit_details_view')
+        .from('account_identities')
         .stream(primaryKey: ['id'])
-        .eq('agent_id', _userId)
-        .map((data) {
+        .asyncMap((_) async {
           try {
+            final data = await _supabaseClient
+                .from('one_time_deposit_details_view')
+                .select()
+                .eq('agent_id', _userId);
             final deposits = data.map((json) => OneTimeDeposit.fromJson(json)).toList();
             return Success(deposits);
           } catch (e) {

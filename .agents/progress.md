@@ -1,11 +1,15 @@
 # Project Progress
 
 ## Current State
-**Supabase Migration - Option 2 CQRS Architecture Implemented across All Repositories**:
+**Supabase Migration - Option 2 CQRS Architecture & Realtime Auto-Update Implemented**:
 - Successfully created and applied migrations:
   - `supabase/migrations/20260802000000_customer_views_and_rpcs.sql`: `customer_details_view` and `save_customer_with_sb_account` RPC.
   - `supabase/migrations/20260802000001_deposit_views_and_rpcs.sql`: `one_time_deposit_details_view`, `recurring_deposit_details_view`, `save_one_time_deposit` RPC, and `save_recurring_deposit` RPC.
-- Refactored `SupabaseCustomerRepository`, `SupabaseOneTimeDepositRepository`, and `SupabaseRecurringDepositRepository` to stream from views for reads and call RPCs for 100% atomic writes.
+  - `supabase/migrations/20260802000002_enable_realtime.sql`: Added base tables to `supabase_realtime` publication for WebSockets CDC events.
+- Refactored `SupabaseCustomerRepository`, `SupabaseOneTimeDepositRepository`, and `SupabaseRecurringDepositRepository`:
+  - Stream base table change events and query pre-joined Postgres Views via `asyncMap`, restoring automatic UI screen updates upon mutations without manual refreshes.
+  - Call RPCs for 100% atomic multi-table writes in 1 network roundtrip.
+- Updated `docs/supabase_migration_plan.md` to document Realtime base table streaming + view data fetching strategy.
 - Added comprehensive integration test suite `test/supabase_one_time_deposit_repository_test.dart`.
 - Verified 100% test pass (`flutter test`) and clean static analysis (`flutter analyze`).
 
