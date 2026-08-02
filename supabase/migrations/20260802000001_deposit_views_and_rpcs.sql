@@ -59,18 +59,10 @@ DECLARE
   v_agent_id UUID := public.assert_authenticated();
 BEGIN
   PERFORM public.assert_customer_owner(p_customer_id, v_agent_id);
+  PERFORM public.assert_account_owner(p_id, v_agent_id);
 
-  -- Security Check: Validate existing account identity ownership
-  IF p_id IS NOT NULL AND EXISTS (SELECT 1 FROM public.account_identities WHERE id = p_id AND agent_id <> v_agent_id) THEN
-    RAISE EXCEPTION 'Unauthorized: Account identity does not belong to active agent';
-  END IF;
-
-  -- 1. Ensure account_identity exists
-  INSERT INTO public.account_identities (id, customer_id, agent_id, account_type)
-  VALUES (p_id, p_customer_id, v_agent_id, 'OTD')
-  ON CONFLICT (id) DO UPDATE SET
-    customer_id = EXCLUDED.customer_id,
-    updated_at = NOW();
+  -- 1. Ensure account_identity exists (Unified polymorphic upserter)
+  PERFORM public.upsert_account_identity(p_id, p_customer_id, v_agent_id, 'OTD');
 
   -- 2. Upsert into one_time_deposits
   INSERT INTO public.one_time_deposits (
@@ -118,18 +110,10 @@ DECLARE
   v_agent_id UUID := public.assert_authenticated();
 BEGIN
   PERFORM public.assert_customer_owner(p_customer_id, v_agent_id);
+  PERFORM public.assert_account_owner(p_id, v_agent_id);
 
-  -- Security Check: Validate existing account identity ownership
-  IF p_id IS NOT NULL AND EXISTS (SELECT 1 FROM public.account_identities WHERE id = p_id AND agent_id <> v_agent_id) THEN
-    RAISE EXCEPTION 'Unauthorized: Account identity does not belong to active agent';
-  END IF;
-
-  -- 1. Ensure account_identity exists
-  INSERT INTO public.account_identities (id, customer_id, agent_id, account_type)
-  VALUES (p_id, p_customer_id, v_agent_id, 'RD')
-  ON CONFLICT (id) DO UPDATE SET
-    customer_id = EXCLUDED.customer_id,
-    updated_at = NOW();
+  -- 1. Ensure account_identity exists (Unified polymorphic upserter)
+  PERFORM public.upsert_account_identity(p_id, p_customer_id, v_agent_id, 'RD');
 
   -- 2. Upsert into recurring_deposits
   INSERT INTO public.recurring_deposits (
