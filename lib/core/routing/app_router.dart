@@ -42,7 +42,21 @@ GoRouter goRouter(Ref ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: AppRoutes.customers,
-    routes: $appRoutes,
+    routes: [
+      GoRoute(
+        path: '/',
+        redirect: (context, state) {
+          if (state.uri.queryParameters.isNotEmpty) {
+            return Uri(
+              path: AppRoutes.login,
+              queryParameters: state.uri.queryParameters,
+            ).toString();
+          }
+          return AppRoutes.customers;
+        },
+      ),
+      ...$appRoutes,
+    ],
     refreshListenable: listenable,
     redirect: (context, state) {
       final authState = ref.read(authControllerProvider);

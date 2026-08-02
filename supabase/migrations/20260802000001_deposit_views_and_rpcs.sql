@@ -5,7 +5,7 @@ CREATE OR REPLACE VIEW public.one_time_deposit_details_view WITH (security_invok
 SELECT 
   d.id,
   ai.agent_id,
-  d.customer_id,
+  ai.customer_id,
   d.status,
   d.scheme_type,
   d.account_no,
@@ -39,7 +39,7 @@ CREATE OR REPLACE VIEW public.recurring_deposit_details_view WITH (security_invo
 SELECT 
   d.id,
   ai.agent_id,
-  d.customer_id,
+  ai.customer_id,
   d.status,
   d.scheme_type,
   d.account_no,
@@ -90,6 +90,18 @@ BEGIN
     RAISE EXCEPTION 'Unauthenticated';
   END IF;
 
+  p_nominees := COALESCE(p_nominees, '[]'::jsonb);
+
+  -- Security Check: Validate customer ownership
+  IF NOT EXISTS (SELECT 1 FROM public.customers WHERE id = p_customer_id AND agent_id = v_agent_id) THEN
+    RAISE EXCEPTION 'Unauthorized: Customer does not belong to active agent';
+  END IF;
+
+  -- Security Check: Validate existing account identity ownership
+  IF p_id IS NOT NULL AND EXISTS (SELECT 1 FROM public.account_identities WHERE id = p_id AND agent_id <> v_agent_id) THEN
+    RAISE EXCEPTION 'Unauthorized: Account identity does not belong to active agent';
+  END IF;
+
   -- 1. Ensure account_identity exists
   INSERT INTO public.account_identities (id, customer_id, agent_id, account_type)
   VALUES (p_id, p_customer_id, v_agent_id, 'OTD')
@@ -99,15 +111,14 @@ BEGIN
 
   -- 2. Upsert into one_time_deposits
   INSERT INTO public.one_time_deposits (
-    id, customer_id, status, scheme_type, account_no,
+    id, status, scheme_type, account_no,
     principal_amount, interest_rate, term_years, term_months, start_date
   )
   VALUES (
-    p_id, p_customer_id, p_status, p_scheme_type, p_account_no,
+    p_id, p_status, p_scheme_type, p_account_no,
     p_principal_amount, p_interest_rate, p_term_years, p_term_months, p_start_date
   )
   ON CONFLICT (id) DO UPDATE SET
-    customer_id = EXCLUDED.customer_id,
     status = EXCLUDED.status,
     scheme_type = EXCLUDED.scheme_type,
     account_no = EXCLUDED.account_no,
@@ -134,7 +145,7 @@ BEGIN
 
   RETURN p_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 4. Create save_recurring_deposit RPC function for atomic writes
 CREATE OR REPLACE FUNCTION public.save_recurring_deposit(
@@ -158,6 +169,18 @@ BEGIN
     RAISE EXCEPTION 'Unauthenticated';
   END IF;
 
+  p_nominees := COALESCE(p_nominees, '[]'::jsonb);
+
+  -- Security Check: Validate customer ownership
+  IF NOT EXISTS (SELECT 1 FROM public.customers WHERE id = p_customer_id AND agent_id = v_agent_id) THEN
+    RAISE EXCEPTION 'Unauthorized: Customer does not belong to active agent';
+  END IF;
+
+  -- Security Check: Validate existing account identity ownership
+  IF p_id IS NOT NULL AND EXISTS (SELECT 1 FROM public.account_identities WHERE id = p_id AND agent_id <> v_agent_id) THEN
+    RAISE EXCEPTION 'Unauthorized: Account identity does not belong to active agent';
+  END IF;
+
   -- 1. Ensure account_identity exists
   INSERT INTO public.account_identities (id, customer_id, agent_id, account_type)
   VALUES (p_id, p_customer_id, v_agent_id, 'RD')
@@ -167,15 +190,14 @@ BEGIN
 
   -- 2. Upsert into recurring_deposits
   INSERT INTO public.recurring_deposits (
-    id, customer_id, status, scheme_type, account_no, serial_no,
+    id, status, scheme_type, account_no, serial_no,
     installment_amount, interest_rate, term_years, term_months, start_date
   )
   VALUES (
-    p_id, p_customer_id, p_status, p_scheme_type, p_account_no, p_serial_no,
+    p_id, p_status, p_scheme_type, p_account_no, p_serial_no,
     p_installment_amount, p_interest_rate, p_term_years, p_term_months, p_start_date
   )
   ON CONFLICT (id) DO UPDATE SET
-    customer_id = EXCLUDED.customer_id,
     status = EXCLUDED.status,
     scheme_type = EXCLUDED.scheme_type,
     account_no = EXCLUDED.account_no,
@@ -203,4 +225,4 @@ BEGIN
 
   RETURN p_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;

@@ -1,10 +1,6 @@
 -- Migration: 20260802000000_customer_views_and_rpcs.sql
 
--- 1. Ensure Unique Constraint on (customer_id, account_type) for account_identities
-CREATE UNIQUE INDEX IF NOT EXISTS idx_account_identities_customer_type 
-    ON public.account_identities(customer_id, account_type);
-
--- 2. Create customer_details_view for clean reads
+-- 1. Create customer_details_view for clean reads
 CREATE OR REPLACE VIEW public.customer_details_view WITH (security_invoker = true) AS
 SELECT 
   c.id,
@@ -20,33 +16,35 @@ SELECT
   c.notes,
   c.created_at,
   c.updated_at,
-  CASE 
-    WHEN sa.account_number IS NOT NULL THEN
-      jsonb_build_object(
-        'account_number', sa.account_number,
-        'nominees', COALESCE(
-          (
-            SELECT jsonb_agg(
-              jsonb_build_object(
-                'name', n.name,
-                'relationship', n.relationship,
-                'custom_relationship', n.custom_relationship,
-                'percentage', n.percentage
-              )
-            )
-            FROM public.nominees n
-            WHERE n.account_id = ai.id
-          ),
-          '[]'::jsonb
-        )
-      )
-    ELSE NULL
-  END AS savings_account
+  sa_lat.savings_account
 FROM public.customers c
-LEFT JOIN public.account_identities ai ON ai.customer_id = c.id AND ai.account_type = 'SB'
-LEFT JOIN public.savings_accounts sa ON sa.id = ai.id;
+LEFT JOIN LATERAL (
+  SELECT jsonb_build_object(
+    'account_number', sa.account_number,
+    'nominees', COALESCE(
+      (
+        SELECT jsonb_agg(
+          jsonb_build_object(
+            'name', n.name,
+            'relationship', n.relationship,
+            'custom_relationship', n.custom_relationship,
+            'percentage', n.percentage
+          )
+        )
+        FROM public.nominees n
+        WHERE n.account_id = ai.id
+      ),
+      '[]'::jsonb
+    )
+  ) AS savings_account
+  FROM public.account_identities ai
+  JOIN public.savings_accounts sa ON sa.id = ai.id
+  WHERE ai.customer_id = c.id AND ai.account_type = 'SB'
+  ORDER BY ai.created_at ASC
+  LIMIT 1
+) sa_lat ON true;
 
--- 3. Create save_customer_with_sb_account RPC function for atomic writes
+-- 2. Create save_customer_with_sb_account RPC function for atomic writes
 CREATE OR REPLACE FUNCTION public.save_customer_with_sb_account(
   p_id UUID DEFAULT NULL,
   p_name TEXT DEFAULT NULL,
@@ -68,6 +66,13 @@ DECLARE
 BEGIN
   IF v_agent_id IS NULL THEN
     RAISE EXCEPTION 'Unauthenticated';
+  END IF;
+
+  p_nominees := COALESCE(p_nominees, '[]'::jsonb);
+
+  -- Security Check: Ensure target customer belongs to the active agent if updating existing
+  IF p_id IS NOT NULL AND EXISTS (SELECT 1 FROM public.customers WHERE id = p_id AND agent_id <> v_agent_id) THEN
+    RAISE EXCEPTION 'Unauthorized: Customer does not belong to active agent';
   END IF;
 
   -- 1. Insert or Update Customer
@@ -103,10 +108,21 @@ BEGIN
 
   -- 2. Handle Savings Account & Nominees
   IF p_sb_account_number IS NOT NULL AND TRIM(p_sb_account_number) <> '' THEN
-    INSERT INTO public.account_identities (customer_id, agent_id, account_type)
-    VALUES (v_customer_id, v_agent_id, 'SB')
-    ON CONFLICT (customer_id, account_type) DO UPDATE SET updated_at = NOW()
-    RETURNING id INTO v_account_id;
+    SELECT id INTO v_account_id
+    FROM public.account_identities
+    WHERE customer_id = v_customer_id AND account_type = 'SB'
+    ORDER BY created_at ASC
+    LIMIT 1;
+
+    IF v_account_id IS NULL THEN
+      INSERT INTO public.account_identities (customer_id, agent_id, account_type)
+      VALUES (v_customer_id, v_agent_id, 'SB')
+      RETURNING id INTO v_account_id;
+    ELSE
+      UPDATE public.account_identities
+      SET updated_at = NOW()
+      WHERE id = v_account_id;
+    END IF;
 
     INSERT INTO public.savings_accounts (id, account_number)
     VALUES (v_account_id, TRIM(p_sb_account_number))
@@ -130,4 +146,4 @@ BEGIN
 
   RETURN v_customer_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;

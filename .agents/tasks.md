@@ -10,6 +10,7 @@
 - [x] **Parallel Repositories**: Create `Supabase*Repository` implementations alongside `Firebase*Repository`.
 - [x] **Riverpod Toggle**: Implement provider overrides based on `Env.useSupabase`.
 - [x] **SQL Views & RPC Procedures (Option 2 Architecture)**: Create SQL migrations for views (`customer_details_view`, `one_time_deposit_details_view`, `recurring_deposit_details_view`) and stored procedure RPCs (`save_customer_with_sb_account`, `save_one_time_deposit`, `save_recurring_deposit`). Refactor all `Supabase*Repository` implementations to use views for reads and RPCs for 100% atomic writes.
+- [ ] **Automated Database Backups to Google Drive**: Set up scheduled GitHub Action / cron job with `supabase db dump` to automatically export and upload daily database backups to Google Drive.
 
 ## 📦 Release & Publication (Play Store)
 - [x] **Change Application ID**: Update `applicationId` in `android/app/build.gradle.kts` (e.g., to `dev.darshanas.postfolio`).
@@ -22,6 +23,7 @@
 - [x] **AAB Build**: Run `flutter build appbundle` for release. (v1.5.1+15 built and successfully deployed to Internal Testing)
 
 ## 🧮 Domain Math & Business Logic
+- [ ] **Trigram Fuzzy Search Index (`pg_trgm`)**: When production database scales beyond 1,000s of customer records, add a PostgreSQL `pg_trgm` GIN index (`CREATE INDEX idx_customers_name_trgm ON public.customers USING gin (name gin_trgm_ops);`) for fast substring search.
 - [ ] **KVP Term DB Sync**: Decide whether to sync the dynamically calculated KVP term to the database (`termYears`/`termMonths`) or skip storing it entirely and rely purely on the dynamic calculation.
 - [ ] **Commissions**: Auto-calculate Gross Commission, deduct 2% TDS, and derive Net Payout.
 - [ ] **Penalties & Rebates**: Calculate RD Late Fees and Advance Deposit Rebates.

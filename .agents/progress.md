@@ -1,16 +1,19 @@
 # Project Progress
 
 ## Current State
-**Supabase Migration - Option 2 CQRS Architecture & Realtime Auto-Update Implemented**:
-- Successfully created and applied migrations:
-  - `supabase/migrations/20260802000000_customer_views_and_rpcs.sql`: `customer_details_view` and `save_customer_with_sb_account` RPC.
-  - `supabase/migrations/20260802000001_deposit_views_and_rpcs.sql`: `one_time_deposit_details_view`, `recurring_deposit_details_view`, `save_one_time_deposit` RPC, and `save_recurring_deposit` RPC.
-  - `supabase/migrations/20260802000002_enable_realtime.sql`: Added base tables to `supabase_realtime` publication for WebSockets CDC events.
-- Refactored `SupabaseCustomerRepository`, `SupabaseOneTimeDepositRepository`, and `SupabaseRecurringDepositRepository`:
-  - Stream base table change events and query pre-joined Postgres Views via `asyncMap`, restoring automatic UI screen updates upon mutations without manual refreshes.
-  - Call RPCs for 100% atomic multi-table writes in 1 network roundtrip.
-- Updated `docs/supabase_migration_plan.md` to document Realtime base table streaming + view data fetching strategy.
-- Added comprehensive integration test suite `test/supabase_one_time_deposit_repository_test.dart`.
+**Supabase Migration - Option 2 CQRS Architecture, Security Audit & Schema Normalization Implemented**:
+- Refactored and optimized Supabase migrations (`20260626000000` through `20260802000002`):
+  - Removed redundant `customer_id` from deposit tables, standardizing on `account_identities` as the single FK source of truth.
+  - Added FK & RLS query performance indexes across `user_roles`, `customers`, `account_identities`, `nominees`, and `rd_transactions`.
+  - Added tenant isolation ownership checks (`agent_id = v_agent_id`) and `SET search_path = public` to all `SECURITY DEFINER` RPCs (`save_customer_with_sb_account`, `save_one_time_deposit`, `save_recurring_deposit`).
+  - Revoked write privileges on public tables from the `anon` role.
+  - Added `rd_transactions` to `REPLICA IDENTITY FULL` and `supabase_realtime` publication.
+- GoRouter Root Route & OAuth Parameter Handling:
+  - Added fallback `GoRoute(path: '/', redirect: ...)` to handle OAuth redirects landing on `http://127.0.0.1:3000/?code=...` and forward parameters to `/login` to prevent missing route exceptions.
+- CQRS Data Persistence Pattern:
+  - `customer_details_view`, `one_time_deposit_details_view`, and `recurring_deposit_details_view` for pre-joined reads.
+  - RPC stored procedures for 100% atomic multi-table writes in 1 network roundtrip.
+  - Repositories stream base table CDC change events and map through `asyncMap` view queries for real-time UI updates.
 - Verified 100% test pass (`flutter test`) and clean static analysis (`flutter analyze`).
 
 - **Phase 1 Complete**:
