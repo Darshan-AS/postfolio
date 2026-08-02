@@ -1,19 +1,24 @@
 # Project Progress
 
 ## Current State
-**Supabase Migration - Customer Persistence Hardened**: Successfully verified and enhanced `SupabaseCustomerRepository` for saving customer savings account details and nominees.
+**Supabase Migration - Option 2 CQRS Architecture Implemented across All Repositories**:
+- Successfully created and applied migrations:
+  - `supabase/migrations/20260802000000_customer_views_and_rpcs.sql`: `customer_details_view` and `save_customer_with_sb_account` RPC.
+  - `supabase/migrations/20260802000001_deposit_views_and_rpcs.sql`: `one_time_deposit_details_view`, `recurring_deposit_details_view`, `save_one_time_deposit` RPC, and `save_recurring_deposit` RPC.
+- Refactored `SupabaseCustomerRepository`, `SupabaseOneTimeDepositRepository`, and `SupabaseRecurringDepositRepository` to stream from views for reads and call RPCs for 100% atomic writes.
+- Added comprehensive integration test suite `test/supabase_one_time_deposit_repository_test.dart`.
+- Verified 100% test pass (`flutter test`) and clean static analysis (`flutter analyze`).
 
 - **Phase 1 Complete**:
     - Initialized Supabase CLI and started local emulators.
     - Defined and applied initial Postgres schema (`agent_profiles`, `customers`, `deposits`, etc.) with RLS policies.
     - Added `supabase_flutter` and `envied` dependencies.
     - Fixed schema column alignment (`percentage` instead of `share_percentage` for `nominees`).
-    - Enhanced `SupabaseCustomerRepository` saving logic (`upsert` for `savings_accounts`, robust PostgREST parsing) and verified via integration tests against local Supabase instance.
     - Fixed deposit amount editing persistence across `SupabaseRecurringDepositRepository` and `SupabaseOneTimeDepositRepository` by cleaning immutable payload fields (`id`, `created_at`, `updated_at`) and robustly extracting raw numeric input from formatted currency text fields in forms.
     - Validated zero issues with `flutter analyze` and `flutter test`.
     - Configured environment variable management with `Env` class and `.env` file.
     - Created `supabase/seed.sql` for local testing.
-    - Updated documentation (`README.md`, `tasks.md`) for the new backend stack.
+    - Updated documentation (`README.md`, `tasks.md`, `docs/supabase_migration_plan.md`) for Option 2 data persistence architecture.
 - Bumped app version to **v1.6.0+16** and updated `CHANGELOG.md`.
 - Successfully validated codebase with `flutter analyze` and `flutter test` (100% pass).
 - Migrated Application ID from `com.example.postfolio` to `dev.darshanas.postfolio` across Android, iOS, macOS, and Linux.

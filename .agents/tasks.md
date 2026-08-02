@@ -2,13 +2,14 @@
 
 *Note: For a summarized history of past work, see `.agents/historical_summary.md` and `.agents/progress.md`. For the raw chronological task history, see `.agents/historical_tasks_archive.md`.*
 
-## 🚀 Next Up (Supabase Migration - Phase 2)
+## 🚀 Next Up (Supabase Migration - Phase 2 & 3)
 - [x] **Environments**: Add `GOOGLE_WEB_CLIENT_ID` and `GOOGLE_IOS_CLIENT_ID` to `.env`.
 - [x] **Freezed Snake Case**: Update all Freezed models with `@JsonSerializable(fieldRename: FieldRename.snake)`.
 - [x] **Date Conversion**: Update `@TimestampConverter()` to support both Firebase and Supabase.
 - [x] **Interfaces**: Define abstract interfaces for all repositories.
 - [x] **Parallel Repositories**: Create `Supabase*Repository` implementations alongside `Firebase*Repository`.
 - [x] **Riverpod Toggle**: Implement provider overrides based on `Env.useSupabase`.
+- [x] **SQL Views & RPC Procedures (Option 2 Architecture)**: Create SQL migrations for views (`customer_details_view`, `one_time_deposit_details_view`, `recurring_deposit_details_view`) and stored procedure RPCs (`save_customer_with_sb_account`, `save_one_time_deposit`, `save_recurring_deposit`). Refactor all `Supabase*Repository` implementations to use views for reads and RPCs for 100% atomic writes.
 
 ## 📦 Release & Publication (Play Store)
 - [x] **Change Application ID**: Update `applicationId` in `android/app/build.gradle.kts` (e.g., to `dev.darshanas.postfolio`).
