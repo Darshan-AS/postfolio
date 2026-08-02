@@ -23,6 +23,11 @@ void main() {
     final user = authRes.user ?? client.auth.currentUser;
     expect(user, isNotNull);
 
+    // Register cleanup hook to delete test agent profile and cascaded records
+    addTearDown(() async {
+      await client.from('agent_profiles').delete().eq('id', user!.id);
+    });
+
     // Ensure agent_profile exists
     await client.from('agent_profiles').upsert({
       'id': user!.id,

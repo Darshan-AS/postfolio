@@ -7,6 +7,8 @@
   - Added FK & RLS query performance indexes across `user_roles`, `customers`, `account_identities`, `nominees`, and `rd_transactions`.
   - Added tenant isolation ownership checks (`agent_id = v_agent_id`) and `SET search_path = public` to all `SECURITY DEFINER` RPCs (`save_customer_with_sb_account`, `save_one_time_deposit`, `save_recurring_deposit`).
   - Extracted DRY helper functions for SQL migration operations (`assert_authenticated`, `assert_customer_owner`, `get_account_nominees`, `replace_account_nominees`) to simplify views and RPC procedures while keeping business logic in the app layer.
+  - Added RLS DELETE policy on `agent_profiles` (`Users can delete own profile`) allowing authenticated users and test teardown hooks to purge test profiles and cascaded records.
+  - Added automatic test teardown hooks (`addTearDown`) across Supabase repository integration test files to clean up test agent profiles and cascaded records, leaving the database clean after test runs.
   - Revoked write privileges on public tables from the `anon` role.
   - Added `rd_transactions` to `REPLICA IDENTITY FULL` and `supabase_realtime` publication.
 - GoRouter Root Route & OAuth Parameter Handling:
