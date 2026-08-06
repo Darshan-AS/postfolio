@@ -54,7 +54,7 @@ jobs:
       - name: Extract Release Notes
         # Extracts release notes for the current version from CHANGELOG.md
         id: release_notes
-        uses: ffurrer2/extract-release-notes@v2
+        uses: ffurrer2/extract-release-notes@v3
 
       - name: Write Release Notes to File
         env:
