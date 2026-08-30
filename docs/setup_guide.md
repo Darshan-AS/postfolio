@@ -22,7 +22,23 @@ If you are starting work on a new machine, follow these steps to get fully opera
     flutter pub get
     ```
 
-### C. Google Sign-In (Debug)
+### C. Environment Configuration (Supabase & Envied)
+Because the codebase uses `envied` to secure and obfuscate project API keys, follow these instructions to configure and switch environments:
+1. **Local Emulator Config**: Copy the `.env.local` template to `.env`:
+   ```bash
+   cp .env.local .env
+   ```
+2. **Production Config**: Copy the `.env.prod` template to `.env`:
+   ```bash
+   cp .env.prod .env
+   ```
+   *(Ensure you update the publishable/secret tokens in `.env` if targeting live production databases)*.
+3. **Compile Configuration**: Whenever you update or switch your `.env` file, you **must** compile the variables into the Dart configuration target:
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
+
+### D. Google Sign-In (Debug)
 Each development machine has a unique debug signature. To make Google Sign-In work locally:
 1.  **Generate Debug SHA-1**:
     ```bash

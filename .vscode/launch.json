@@ -63,7 +63,7 @@
             "deviceId": "macos"
         },
         {
-            "name": "Postfolio (Chrome)",
+            "name": "Postfolio (Chrome - Emulator)",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
@@ -71,6 +71,16 @@
             "toolArgs": [
                 "--web-port=3000",
                 "--dart-define=USE_EMULATOR=true"
+            ]
+        },
+        {
+            "name": "Postfolio (Chrome - Production)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "chrome",
+            "toolArgs": [
+                "--web-port=3000"
             ]
         },
         {
