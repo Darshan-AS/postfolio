@@ -40,7 +40,14 @@ npx supabase start
 > **Tip**: You can access the **Supabase Studio** (Database UI) at `http://localhost:54323`.
 
 **Step B: Configure Environment**
-Copy `.env.example` to `.env` and ensure the local credentials (from `npx supabase status`) are correct.
+1. Copy either `.env.local` or `.env.prod` to `.env` depending on your active target:
+   ```bash
+   cp .env.local .env
+   ```
+2. Build/Compile the env variables using the generator:
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
 
 **Step C: Run the App**
 Run the app normally:

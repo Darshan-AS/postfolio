@@ -59,6 +59,8 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
   SupabaseClient? _adminClient;
   final Map<String, String> _userMapping = {}; // maps firebase_uid -> supabase_user_id (UUID)
   final Map<String, String> _userEmailMapping = {}; // maps firebase_uid -> email
+  final Map<String, String> _userNameMapping = {};  // maps firebase_uid -> displayName
+  final Map<String, bool> _selectedUsers = {};      // maps firebase_uid -> isSelected
 
   @override
   void initState() {
@@ -193,6 +195,7 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
 
       _userMapping.clear();
       _userEmailMapping.clear();
+      _userNameMapping.clear();
 
       for (var u in users) {
         final fUid = u['localId'] as String?;
@@ -206,6 +209,10 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
 
         _log("Processing User: $email (Firebase UID: $fUid)");
         _userEmailMapping[fUid] = email;
+        _userNameMapping[fUid] = displayName;
+        
+        // Auto-select by default
+        _selectedUsers[fUid] = true;
 
         // Check if user already exists in Supabase by email
         final match = existingSupabaseUsers.where((u) => u.email?.toLowerCase() == email.toLowerCase()).firstOrNull;
@@ -260,11 +267,13 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
   }
 
   Future<void> _runDataMigration() async {
-    if (_userMapping.isEmpty) {
+    final activeMappings = _userMapping.keys.where((fUid) => _selectedUsers[fUid] ?? false).toList();
+
+    if (activeMappings.isEmpty) {
       setState(() {
-        _status = "Error: Please run Step 1 (Load Users) first to map auth profiles.";
+        _status = "Error: Please select at least one agent to migrate.";
       });
-      _log("Error: No user mapping found. Load users first.");
+      _log("Error: No agents selected for migration.");
       return;
     }
 
@@ -280,7 +289,7 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
       int totalRecurring = 0;
       int totalNominees = 0;
 
-      for (var fUid in _userMapping.keys) {
+      for (var fUid in activeMappings) {
         final sUid = _userMapping[fUid]!;
         final email = _userEmailMapping[fUid]!;
 
@@ -627,7 +636,38 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    const Spacer(),
+                    if (_userMapping.isNotEmpty) ...[
+                      const SizedBox(height: AppDimensions.paddingLg),
+                      Text(
+                        'Select Agents to Migrate',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: AppDimensions.paddingSm),
+                      Expanded(
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: _userMapping.keys.map((fUid) {
+                            final email = _userEmailMapping[fUid] ?? '';
+                            final name = _userNameMapping[fUid] ?? '';
+                            return CheckboxListTile(
+                              title: Text(name),
+                              subtitle: Text(email),
+                              value: _selectedUsers[fUid] ?? false,
+                              onChanged: _isMigrating
+                                  ? null
+                                  : (bool? val) {
+                                      setState(() {
+                                        _selectedUsers[fUid] = val ?? false;
+                                      });
+                                    },
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ] else
+                      const Spacer(),
                     const Divider(),
                     const SizedBox(height: AppDimensions.paddingSm),
                     ElevatedButton.icon(
