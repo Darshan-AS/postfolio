@@ -64,6 +64,7 @@
 - [ ] **Analytics & Tracing**: Add Firebase Analytics wrapper, `GoRouter` observer, and custom Performance traces.
 - [ ] **Native Integration**: Integrate `share_plus` (reports), `flutter_native_splash` (splash screen), and Local App Lock (Biometrics/PIN).
 - [ ] **Value Objects**: Explore migrating `termYears`/`termMonths` into a custom Domain-Driven Value Object.
+- [ ] **Unique Email Guardrails**: Enforce a case-insensitive unique email constraint on `agent_profiles` at the DB level, and intercept constraint violations (PostgreSQL error code `23505`) in the repository/controllers to present clean user-facing error messages.
 
 ## 📱 Future Epics
 ### Epic: Responsive Architecture
@@ -105,7 +106,7 @@
 - [x] Centralized Slang localizations (`.i18n.yaml`).
 - [x] Added persistent unified Search/Filter/Sort UI across all listing screens.
 
-### Supabase Migration (Phase 1)
+### Supabase Migration (Phases 1-4)
 - [x] **CLI Init**: Initialized Supabase project using `supabase init`.
 - [x] **Docker**: Started local Supabase emulators (`supabase start`).
 - [x] **Schema**: Defined initial Postgres schema with RLS policies in `supabase/migrations/`.
@@ -113,3 +114,8 @@
 - [x] **Env Config**: Set up type-safe environment management with `Env` class and `.env`.
 - [x] **Web Fixes**: Added Passkeys Web SDK to `web/index.html`.
 - [x] **Seed**: Created `supabase/seed.sql` for local testing.
+- [x] **Pre-Joined Views (Reads)**: Implemented server-side Postgres Views to eliminate client-side N+1 queries.
+- [x] **PL/pgSQL RPC Stored Procedures (Writes)**: Implemented atomic multi-table write operations in 1 network roundtrip.
+- [x] **Realtime CDC Streams**: Streamed base tables with `REPLICA IDENTITY FULL` mapped via `asyncMap` for seamless real-time updates.
+- [x] **High-Fidelity Migration Screen**: Built programmatic user provisioning and data migration module in `lib/run_supabase_migration.dart` with Admin API integration and visual progress/error console.
+- [x] **VS Code Launch Targets**: Integrated emulator and production execution targets inside `.vscode/launch.json` for 1-click execution.

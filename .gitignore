@@ -69,3 +69,8 @@ data/*
 # Environment Variables
 .env
 .env.*
+
+# Local/Production migration files containing real production data or backups
+data_export/
+prod_users.json
+

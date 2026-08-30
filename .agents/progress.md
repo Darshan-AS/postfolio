@@ -1,6 +1,15 @@
 # Project Progress
 
 ## Current State
+**Supabase Migration - Phase 4 Live Migration & Setup Complete**:
+- **High-Fidelity Migration Screen**: Built a robust, admin-focused data migrator utility in `lib/run_supabase_migration.dart`.
+  - Integrates direct administrative schema-level database migrations from Firebase Firestore to local/production Supabase.
+  - Automatically provisions Supabase Auth users using the Service Role Admin client, maintaining verified states and linking them to `agent_profiles` with `legacy_firebase_uid`.
+  - Performs multi-stage, transactional data mapping of nested collection schemas (Customers, SB accounts, OTDs, RDs, and Nominees) to normalized relational Postgres tables.
+  - Supports full administrative safety controls, live step-by-step progress/error console reporting, and full database purge execution.
+- **VS Code Integration**: Configured dedicated launch targets inside `.vscode/launch.json` for running the Supabase Migrator tool in both Emulator and Production configurations with 1-click execution.
+- Verified 100% clean static analysis (`flutter analyze`) and successful testing (`flutter test` passes 4/4).
+
 **Supabase Migration - Option 2 CQRS Architecture, Security Audit & Schema Normalization Implemented**:
 - Standardized local development origin configurations to `localhost` (`http://localhost:3000`) instead of `127.0.0.1` across `supabase/config.toml` and `SupabaseAuthRepository` to resolve white-screen connection crashes in Chrome debug mode.
 - Refactored and optimized Supabase migrations (`20260626000000` through `20260802000002`):

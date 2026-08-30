@@ -22,6 +22,21 @@
             ]
         },
         {
+            "name": "Supabase Migration (Emulator)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/run_supabase_migration.dart",
+            "toolArgs": [
+                "--dart-define=USE_EMULATOR=true"
+            ]
+        },
+        {
+            "name": "Supabase Migration (Production)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/run_supabase_migration.dart"
+        },
+        {
             "name": "Migration (Production)",
             "request": "launch",
             "type": "dart",
