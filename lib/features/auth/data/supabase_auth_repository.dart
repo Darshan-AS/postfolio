@@ -43,7 +43,7 @@ class SupabaseAuthRepository implements AuthRepository {
         
         // Only override redirectTo in local emulator, otherwise let Supabase use its configured site_url (Prod)
         // We redirect directly to '/login' so GoRouter doesn't strip the '?code=' parameter in an intermediate redirect.
-        final String? redirectTo = useEmulator ? 'http://127.0.0.1:3000/login' : null;
+        final String? redirectTo = useEmulator ? 'http://localhost:3000/login' : null;
 
         final success = await _supabaseClient.auth.signInWithOAuth(
           OAuthProvider.google,

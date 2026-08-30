@@ -2,6 +2,7 @@
 
 ## Current State
 **Supabase Migration - Option 2 CQRS Architecture, Security Audit & Schema Normalization Implemented**:
+- Standardized local development origin configurations to `localhost` (`http://localhost:3000`) instead of `127.0.0.1` across `supabase/config.toml` and `SupabaseAuthRepository` to resolve white-screen connection crashes in Chrome debug mode.
 - Refactored and optimized Supabase migrations (`20260626000000` through `20260802000002`):
   - Removed redundant `customer_id` from deposit tables, standardizing on `account_identities` as the single FK source of truth.
   - Added FK & RLS query performance indexes across `user_roles`, `customers`, `account_identities`, `nominees`, and `rd_transactions`.
