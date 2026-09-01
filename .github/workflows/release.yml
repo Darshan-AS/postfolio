@@ -34,6 +34,27 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
+      - name: Generate Environment File
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          USE_SUPABASE: ${{ secrets.USE_SUPABASE }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          GOOGLE_IOS_CLIENT_ID: ${{ secrets.GOOGLE_IOS_CLIENT_ID }}
+        run: |
+          cat <<EOF > .env
+          SUPABASE_URL=$SUPABASE_URL
+          SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY
+          USE_SUPABASE=$USE_SUPABASE
+          GOOGLE_WEB_CLIENT_ID=$GOOGLE_WEB_CLIENT_ID
+          GOOGLE_IOS_CLIENT_ID=$GOOGLE_IOS_CLIENT_ID
+          EOF
+
+      - name: Run Code Generation
+        run: |
+          dart run slang
+          dart run build_runner build --delete-conflicting-outputs
+
       - name: Decode Keystore
         # Decodes the base64 keystore secret and injects it into the android/app folder.
         # This ensures the CI build has the exact same SHA-1 hash registered in Firebase,
@@ -45,11 +66,11 @@ jobs:
 
       - name: Build Universal APK (for Firebase)
         # Generates a single APK that works on all devices for beta testers
-        run: flutter build apk --release
+        run: flutter build apk --flavor prod --release
 
       - name: Build Split APKs (for GitHub Release)
         # Generates per-architecture APKs to keep download sizes small on GitHub
-        run: flutter build apk --split-per-abi --release
+        run: flutter build apk --flavor prod --split-per-abi --release
 
       - name: Extract Release Notes
         # Extracts release notes for the current version from CHANGELOG.md
@@ -67,7 +88,7 @@ jobs:
           appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIAL_FILE_CONTENT }}
           groups: testers
-          file: build/app/outputs/flutter-apk/app-release.apk
+          file: build/app/outputs/flutter-apk/app-prod-release.apk
           # We pass the generated changelog file directly to Firebase
           releaseNotesFile: release-notes.txt
 

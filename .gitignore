@@ -72,6 +72,10 @@ data/*
 !.env.example
 lib/core/env/env.g.dart
 
+# Generated Dart files
+*.g.dart
+*.freezed.dart
+
 # Local/Production migration files containing real production data or backups
 data_export/
 prod_users.json
