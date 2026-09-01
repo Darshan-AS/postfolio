@@ -66,6 +66,20 @@ android {
         versionName = flutter.versionName
     }
 
+    flavorDimensions += "environment"
+
+    productFlavors {
+        create("staging") {
+            dimension = "environment"
+            applicationIdSuffix = ".staging"
+            resValue("string", "app_name", "Postfolio Staging")
+        }
+        create("prod") {
+            dimension = "environment"
+            resValue("string", "app_name", "Postfolio")
+        }
+    }
+
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")

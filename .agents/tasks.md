@@ -15,7 +15,8 @@
 
 ## 📦 Release & Publication (Play Store)
 - [x] **Change Application ID**: Update `applicationId` in `android/app/build.gradle.kts` (e.g., to `dev.darshanas.postfolio`).
-- [ ] **Update App Icons**: Replace default icons with branded adaptive icons (using `flutter_launcher_icons`). (Skipped for initial internal testing)
+- [x] **Android Product Flavors (Staging & Prod)**: Configured `staging` (`.staging` package suffix, "Postfolio Staging") and `prod` ("Postfolio") flavors for side-by-side device installation and independent testing.
+- [x] **Distinguishing Staging & Prod App Icons**: Configured flavor-specific app icons generated via `flutter_launcher_icons`. Staging icon features a prominent orange banner and "STAGING" badge to clearly distinguish from the production icon.
 - [ ] **Native Splash Screen**: Implement using `flutter_native_splash`. (Skipped for initial internal testing)
 - [x] **Production Keystore**: Generate release JKS and configure `key.properties`. (Placeholder `key.properties` created and `build.gradle` updated)
 - [ ] **Firebase Production**: Configure production project, update `google-services.json`, and enable **App Check** (Security Hardening).

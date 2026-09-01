@@ -1,6 +1,24 @@
 # Project Progress
 
 ## Current State
+**Git Hygiene & Sensitive File Tracking Cleanup**:
+- Updated `.gitignore` to explicitly ignore generated environment files (`lib/core/env/env.g.dart`) and include `.env.example` template tracking (`!.env.example`).
+- Removed `lib/core/env/env.g.dart` from Git index tracking (`git rm --cached`).
+- Audited git commit history for `lib/core/env/env.g.dart` (contained local emulator keys / dummy values).
+
+**Android Product Flavors & Staging Launcher Icon Setup**:
+- Configured Android Product Flavors in `android/app/build.gradle.kts`:
+  - `staging`: Application ID suffix `.staging` (`dev.darshanas.postfolio.staging`), app name "Postfolio Staging".
+  - `prod`: Base Application ID (`dev.darshanas.postfolio`), app name "Postfolio".
+- Configured dynamic application label `@string/app_name` in `android/app/src/main/AndroidManifest.xml`.
+- Configured distinguishing app launcher icons for `staging` vs `prod` using `flutter_launcher_icons`:
+  - `staging`: Features a vibrant orange background banner and corner ribbon with clear "STAGING" and "STAGE" branding in `android/app/src/staging/res/mipmap-*/ic_launcher.png`.
+  - `prod`: Uses clean base branding in `android/app/src/prod/res/mipmap-*/ic_launcher.png`.
+- Configured dedicated VS Code launch targets in `.vscode/launch.json` for Staging and Production across physical devices and Android emulators.
+- Set up system JDK to Java 21 (`/usr/lib/jvm/java-21-openjdk-amd64`) in `~/.zshrc` to resolve Gradle build compatibility with Java 25.
+- Created and committed dedicated feature branch `feature/android-build-flavors`.
+- Deployed production Firestore security rules (`firestore.rules`) to `postfolio-app` via Firebase CLI.
+
 **Supabase Migration - Phase 4 Live Migration & Setup Complete**:
 - **High-Fidelity Migration Screen**: Built a robust, admin-focused data migrator utility in `lib/run_supabase_migration.dart`.
   - Integrates direct administrative schema-level database migrations from Firebase Firestore to local/production Supabase.
