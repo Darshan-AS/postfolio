@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0+17] - 2026-09-02
+
+### Added
+- **Android Flavors**: Added `staging` and `prod` build flavors with distinct package suffixes (`dev.darshanas.postfolio.staging` vs `dev.darshanas.postfolio`) and distinguishable app launcher icons.
+- **Supabase Architecture**: Implemented parallel Supabase repository layer with Riverpod provider toggling, CQRS views, and atomic RPC stored procedures.
+- **Migration Tool**: Built a visual Supabase migrator utility screen with bulk insertion optimization (100x+ speedup) and JIT user account provisioning.
+- **Realtime**: Enabled Supabase realtime publication and full replica identity for CDC stream updates.
+
+### Changed
+- **Environment**: Standardized local OAuth redirects and site URL to `localhost` to fix connection issues.
+- **Schema**: Organized SQL migrations with DRY helper functions, Class Table Inheritance, and automated trigger generation.
+
+### Fixed
+- **Supabase**: Resolved duplicate primary key violations on savings accounts and fixed customer, nominee, and deposit update persistence.
+- **Security**: Hardened RLS policies and normalized deposit table schemas.
+
 ## [1.6.0+16] - 2026-06-26
 
 ### Added

@@ -1,6 +1,12 @@
 # Project Progress
 
 ## Current State
+**Release Prepared (v2.0.0+17) & CI/CD Pipeline Updated**:
+- Bumped app version to **v2.0.0+17** in `pubspec.yaml` and documented changes in `CHANGELOG.md`.
+- Evaluated git commits since `v1.6.0+16` (Major release type due to Supabase migration, CQRS architecture, and Android build flavors).
+- Updated GitHub Actions workflow (`.github/workflows/release.yml`) to inject repository secrets into `.env`, run `build_runner` for `env.g.dart`, and target `--flavor prod`.
+- Verified pre-release validation: 100% clean static analysis (`flutter analyze`) and all tests passing (`flutter test`).
+
 **Git Hygiene & Sensitive File Tracking Cleanup**:
 - Updated `.gitignore` to explicitly ignore generated environment files (`lib/core/env/env.g.dart`) and include `.env.example` template tracking (`!.env.example`).
 - Removed `lib/core/env/env.g.dart` from Git index tracking (`git rm --cached`).

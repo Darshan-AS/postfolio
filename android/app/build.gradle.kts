@@ -82,7 +82,14 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            val keystorePropertiesFile = rootProject.file("key.properties")
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            } else if (signingConfigs.findByName("injected_debug") != null) {
+                signingConfig = signingConfigs.getByName("injected_debug")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+            }
         }
     }
 }
