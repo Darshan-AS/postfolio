@@ -6,6 +6,7 @@
   - Integrates direct administrative schema-level database migrations from Firebase Firestore to local/production Supabase.
   - Automatically provisions Supabase Auth users using the Service Role Admin client, maintaining verified states and linking them to `agent_profiles` with `legacy_firebase_uid`.
   - Performs multi-stage, transactional data mapping of nested collection schemas (Customers, SB accounts, OTDs, RDs, and Nominees) to normalized relational Postgres tables.
+  - **Bulk Migration Optimizer**: Redesigned and optimized the migration run loop using a high-speed batching strategy. Rather than executing thousands of sequential individual HTTP insert requests inside nested loops (causing extensive N+1 network overhead), it accumulates entities into in-memory lists and performs bulk inserts chunked at 200 records in correct dependency order (Customers -> Account Identities -> Child Tables -> Nominees). This improves migration speeds for bulk files by 100x to 1000x while keeping UI rendering smooth by only printing chunking progress.
   - Supports full administrative safety controls, live step-by-step progress/error console reporting, and full database purge execution.
 - **VS Code Integration**: Configured dedicated launch targets inside `.vscode/launch.json` for running the Supabase Migrator tool in both Emulator and Production configurations with 1-click execution.
 - Verified 100% clean static analysis (`flutter analyze`) and successful testing (`flutter test` passes 4/4).

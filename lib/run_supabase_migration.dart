@@ -101,16 +101,12 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
     });
   }
 
-  String _toUuid(String legacyId) {
+  String _toUuid(String legacyId, {String? prefix}) {
     if (legacyId.isEmpty) {
       return const Uuid().v4();
     }
-    try {
-      Uuid.parse(legacyId);
-      return legacyId;
-    } catch (_) {
-      return const Uuid().v5(Namespace.url.value, 'postfolio://firestore/$legacyId');
-    }
+    final prefixStr = prefix != null ? '$prefix/' : '';
+    return const Uuid().v5(Namespace.url.value, 'postfolio://firestore/$prefixStr$legacyId');
   }
 
   Map<String, dynamic> _convertKeysToSnakeCase(Map<String, dynamic> map) {
@@ -266,6 +262,16 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
     }
   }
 
+  Future<void> _insertInChunks(String table, List<Map<String, dynamic>> records, {int chunkSize = 200}) async {
+    if (records.isEmpty) return;
+    _log("Inserting ${records.length} records into '$table' in chunks of $chunkSize...");
+    for (var i = 0; i < records.length; i += chunkSize) {
+      final chunk = records.sublist(i, i + chunkSize > records.length ? records.length : i + chunkSize);
+      await _adminClient!.from(table).insert(chunk);
+      _log(" -> Inserted chunk ${i ~/ chunkSize + 1}/${(records.length + chunkSize - 1) ~/ chunkSize} (${chunk.length} records)");
+    }
+  }
+
   Future<void> _runDataMigration() async {
     final activeMappings = _userMapping.keys.where((fUid) => _selectedUsers[fUid] ?? false).toList();
 
@@ -284,10 +290,33 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
     _log("Starting high-fidelity data migration...");
 
     try {
-      int totalCustomers = 0;
-      int totalOneTime = 0;
-      int totalRecurring = 0;
-      int totalNominees = 0;
+      _log("Fetching existing customer IDs from Supabase to prevent overrides...");
+      final List<dynamic> existingCustomersData = await _adminClient!.from('customers').select('id');
+      final Set<String> existingCustomerIds = existingCustomersData.map((e) => e['id'] as String).toSet();
+      _log(" -> Found ${existingCustomerIds.length} existing customer(s) in Supabase.");
+
+      _log("Fetching existing account identity IDs from Supabase to prevent overrides...");
+      final List<dynamic> existingIdentitiesData = await _adminClient!.from('account_identities').select('id');
+      final Set<String> existingIdentityIds = existingIdentitiesData.map((e) => e['id'] as String).toSet();
+      _log(" -> Found ${existingIdentityIds.length} existing account identity(s) in Supabase.");
+
+      int totalCustomersProcessed = 0;
+      int totalCustomersMigrated = 0;
+      int totalCustomersSkipped = 0;
+
+      int totalSBProcessed = 0;
+      int totalSBMigrated = 0;
+      int totalSBSkipped = 0;
+
+      int totalOneTimeProcessed = 0;
+      int totalOneTimeMigrated = 0;
+      int totalOneTimeSkipped = 0;
+
+      int totalRecurringProcessed = 0;
+      int totalRecurringMigrated = 0;
+      int totalRecurringSkipped = 0;
+
+      int totalNomineesMigrated = 0;
 
       for (var fUid in activeMappings) {
         final sUid = _userMapping[fUid]!;
@@ -298,6 +327,13 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
         _log("Firebase UID: $fUid -> Supabase UUID: $sUid");
         _log("=========================================");
 
+        final List<Map<String, dynamic>> customersBatch = [];
+        final List<Map<String, dynamic>> accountIdentitiesBatch = [];
+        final List<Map<String, dynamic>> savingsAccountsBatch = [];
+        final List<Map<String, dynamic>> otdsBatch = [];
+        final List<Map<String, dynamic>> rdsBatch = [];
+        final List<Map<String, dynamic>> nomineesBatch = [];
+
         // --- 1. Migrate Customers ---
         _log("Fetching customers from Firestore for Firebase UID: $fUid...");
         final customerSnapshots = await FirebaseFirestore.instance
@@ -306,75 +342,85 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
             .collection(FirestoreCollections.customers)
             .get();
 
-        _log("Found ${customerSnapshots.docs.length} customers in Firestore.");
+        _log("Found ${customerSnapshots.docs.length} customers in Firestore. Preparing payloads...");
 
         for (var doc in customerSnapshots.docs) {
+          totalCustomersProcessed++;
           final data = doc.data();
           final customer = Customer.fromJson({..._convertKeysToSnakeCase(data), 'id': doc.id});
-          final customerUuid = _toUuid(customer.id);
-          _log("Migrating Customer: ${customer.name} (ID: ${customer.id}) -> UUID: $customerUuid...");
+          final customerUuid = _toUuid(customer.id, prefix: '$fUid/customer');
 
-          // Direct insert bypassing RLS via Admin/Service Role Key
-          await _adminClient!.from('customers').insert({
-            'id': customerUuid,
-            'agent_id': sUid,
-            'name': customer.name,
-            'phone': customer.phone,
-            'email': customer.email,
-            'address': customer.address,
-            'cif_number': customer.cifNumber,
-            'aadhaar_number': customer.aadhaarNumber,
-            'pan_number': customer.panNumber,
-            'date_of_birth': customer.dateOfBirth?.toIso8601String().split('T').first,
-            'notes': customer.notes,
-            'created_at': customer.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-            'updated_at': customer.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-          });
+          if (existingCustomerIds.contains(customerUuid)) {
+            totalCustomersSkipped++;
+            _log(" -> Skipped existing Customer: '${customer.name}' | CIF: ${customer.cifNumber ?? 'N/A'} | Firestore Path: users/$fUid/customers/${doc.id} (Supabase UUID: $customerUuid)");
+          } else {
+            customersBatch.add({
+              'id': customerUuid,
+              'agent_id': sUid,
+              'name': customer.name,
+              'phone': customer.phone,
+              'email': customer.email,
+              'address': customer.address,
+              'cif_number': customer.cifNumber,
+              'aadhaar_number': customer.aadhaarNumber,
+              'pan_number': customer.panNumber,
+              'date_of_birth': customer.dateOfBirth?.toIso8601String().split('T').first,
+              'notes': customer.notes,
+              'created_at': customer.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+              'updated_at': customer.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+            });
+            totalCustomersMigrated++;
+            existingCustomerIds.add(customerUuid);
+          }
 
           // Handle Savings Account & Savings Nominees if present
           if (customer.savingsAccount != null) {
             final saAccountNumber = customer.savingsAccount!.accountNumber;
             if (saAccountNumber.isNotEmpty) {
-              _log(" -> Found SB Account: $saAccountNumber. Creating account identity...");
-              final saAccountId = const Uuid().v4();
+              totalSBProcessed++;
+              final saAccountId = _toUuid(customer.id, prefix: '$fUid/savings_account');
               
-              await _adminClient!.from('account_identities').insert({
-                'id': saAccountId,
-                'customer_id': customerUuid,
-                'agent_id': sUid,
-                'account_type': 'SB',
-                'created_at': customer.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-                'updated_at': customer.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-              });
+              if (existingIdentityIds.contains(saAccountId)) {
+                totalSBSkipped++;
+                _log(" -> Skipped existing SB Account: '$saAccountNumber' for Customer '${customer.name}' | Firestore Path: users/$fUid/customers/${doc.id} (Supabase UUID: $saAccountId)");
+              } else {
+                accountIdentitiesBatch.add({
+                  'id': saAccountId,
+                  'customer_id': customerUuid,
+                  'agent_id': sUid,
+                  'account_type': 'SB',
+                  'created_at': customer.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+                  'updated_at': customer.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+                });
 
-              _log(" -> Creating savings_account row...");
-              await _adminClient!.from('savings_accounts').insert({
-                'id': saAccountId,
-                'account_number': saAccountNumber,
-                'linked_date': null,
-                'updated_at': customer.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-              });
+                savingsAccountsBatch.add({
+                  'id': saAccountId,
+                  'account_number': saAccountNumber,
+                  'linked_date': null,
+                  'updated_at': customer.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+                });
+                totalSBMigrated++;
+                existingIdentityIds.add(saAccountId);
 
-              // Migrate nominees for this SB account
-              if (customer.savingsAccount!.nominees.isNotEmpty) {
-                _log(" -> Migrating ${customer.savingsAccount!.nominees.length} nominees for SB Account...");
-                for (var nominee in customer.savingsAccount!.nominees) {
-                  await _adminClient!.from('nominees').insert({
-                    'id': const Uuid().v4(),
-                    'account_id': saAccountId,
-                    'name': nominee.name,
-                    'relationship': nominee.toJson()['relationship'],
-                    'custom_relationship': nominee.customRelationship,
-                    'percentage': nominee.percentage,
-                    'created_at': customer.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-                    'updated_at': customer.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-                  });
-                  totalNominees++;
+                // Migrate nominees for this SB account
+                if (customer.savingsAccount!.nominees.isNotEmpty) {
+                  for (var nominee in customer.savingsAccount!.nominees) {
+                    nomineesBatch.add({
+                      'id': const Uuid().v4(),
+                      'account_id': saAccountId,
+                      'name': nominee.name,
+                      'relationship': nominee.toJson()['relationship'],
+                      'custom_relationship': nominee.customRelationship,
+                      'percentage': nominee.percentage,
+                      'created_at': customer.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+                      'updated_at': customer.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+                    });
+                    totalNomineesMigrated++;
+                  }
                 }
               }
             }
           }
-          totalCustomers++;
         }
 
         // --- 2. Migrate One-Time Deposits ---
@@ -385,9 +431,10 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
             .collection(FirestoreCollections.oneTimeDeposits)
             .get();
 
-        _log("Found ${otdSnapshots.docs.length} one-time deposits in Firestore.");
+        _log("Found ${otdSnapshots.docs.length} one-time deposits in Firestore. Preparing payloads...");
 
         for (var doc in otdSnapshots.docs) {
+          totalOneTimeProcessed++;
           final data = doc.data();
           OneTimeDeposit otd;
           try {
@@ -397,53 +444,57 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
             _log("JSON keys and values: ${_convertKeysToSnakeCase(data)}");
             rethrow;
           }
-          final otdUuid = _toUuid(otd.id);
-          final customerUuid = _toUuid(otd.customerId);
-          _log("Migrating OTD: Account ${otd.accountNo ?? 'Pending'} (ID: ${otd.id}) -> UUID: $otdUuid...");
+          final otdUuid = _toUuid(otd.id, prefix: '$fUid/otd');
+          final customerUuid = _toUuid(otd.customerId, prefix: '$fUid/customer');
 
-          // Create account identity
-          await _adminClient!.from('account_identities').insert({
-            'id': otdUuid,
-            'customer_id': customerUuid,
-            'agent_id': sUid,
-            'account_type': 'OTD',
-            'created_at': otd.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-            'updated_at': otd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-          });
+          if (existingIdentityIds.contains(otdUuid)) {
+            totalOneTimeSkipped++;
+            _log(" -> Skipped existing OTD: Account '${otd.accountNo ?? 'Pending'}' | Scheme: ${otd.schemeType.name} | Firestore Path: users/$fUid/oneTimeDeposits/${doc.id} (Supabase UUID: $otdUuid)");
+          } else {
+            // Create account identity
+            accountIdentitiesBatch.add({
+              'id': otdUuid,
+              'customer_id': customerUuid,
+              'agent_id': sUid,
+              'account_type': 'OTD',
+              'created_at': otd.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+              'updated_at': otd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+            });
 
-          // Create OTD details
-          await _adminClient!.from('one_time_deposits').insert({
-            'id': otdUuid,
-            'status': otd.status.name,
-            'scheme_type': otd.schemeType.name,
-            'account_no': otd.accountNo,
-            'principal_amount': otd.principalAmount,
-            'interest_rate': otd.interestRate,
-            'term_years': otd.termYears,
-            'term_months': otd.termMonths,
-            'start_date': otd.startDate.toIso8601String().split('T').first,
-            'created_at': otd.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-            'updated_at': otd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-          });
+            // Create OTD details
+            otdsBatch.add({
+              'id': otdUuid,
+              'status': otd.status.name,
+              'scheme_type': otd.schemeType.name,
+              'account_no': otd.accountNo,
+              'principal_amount': otd.principalAmount,
+              'interest_rate': otd.interestRate,
+              'term_years': otd.termYears,
+              'term_months': otd.termMonths,
+              'start_date': otd.startDate.toIso8601String().split('T').first,
+              'created_at': otd.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+              'updated_at': otd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+            });
+            totalOneTimeMigrated++;
+            existingIdentityIds.add(otdUuid);
 
-          // Create nominees
-          if (otd.nominees.isNotEmpty) {
-            _log(" -> Migrating ${otd.nominees.length} nominees for OTD...");
-            for (var nominee in otd.nominees) {
-              await _adminClient!.from('nominees').insert({
-                'id': const Uuid().v4(),
-                'account_id': otdUuid,
-                'name': nominee.name,
-                'relationship': nominee.toJson()['relationship'],
-                'custom_relationship': nominee.customRelationship,
-                'percentage': nominee.percentage,
-                'created_at': otd.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-                'updated_at': otd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-              });
-              totalNominees++;
+            // Create nominees
+            if (otd.nominees.isNotEmpty) {
+              for (var nominee in otd.nominees) {
+                nomineesBatch.add({
+                  'id': const Uuid().v4(),
+                  'account_id': otdUuid,
+                  'name': nominee.name,
+                  'relationship': nominee.toJson()['relationship'],
+                  'custom_relationship': nominee.customRelationship,
+                  'percentage': nominee.percentage,
+                  'created_at': otd.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+                  'updated_at': otd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+                });
+                totalNomineesMigrated++;
+              }
             }
           }
-          totalOneTime++;
         }
 
         // --- 3. Migrate Recurring Deposits ---
@@ -454,71 +505,91 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
             .collection(FirestoreCollections.recurringDeposits)
             .get();
 
-        _log("Found ${rdSnapshots.docs.length} recurring deposits in Firestore.");
+        _log("Found ${rdSnapshots.docs.length} recurring deposits in Firestore. Preparing payloads...");
 
         for (var doc in rdSnapshots.docs) {
+          totalRecurringProcessed++;
           final data = doc.data();
           final rd = RecurringDeposit.fromJson({..._convertKeysToSnakeCase(data), 'id': doc.id});
-          final rdUuid = _toUuid(rd.id);
-          final customerUuid = _toUuid(rd.customerId);
-          _log("Migrating RD: Account ${rd.accountNo ?? 'Pending'} (ID: ${rd.id}) -> UUID: $rdUuid...");
+          final rdUuid = _toUuid(rd.id, prefix: '$fUid/rd');
+          final customerUuid = _toUuid(rd.customerId, prefix: '$fUid/customer');
 
-          // Create account identity
-          await _adminClient!.from('account_identities').insert({
-            'id': rdUuid,
-            'customer_id': customerUuid,
-            'agent_id': sUid,
-            'account_type': 'RD',
-            'created_at': rd.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-            'updated_at': rd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-          });
+          if (existingIdentityIds.contains(rdUuid)) {
+            totalRecurringSkipped++;
+            _log(" -> Skipped existing RD: Account '${rd.accountNo ?? 'Pending'}' (Serial: ${rd.serialNo}) | Firestore Path: users/$fUid/recurringDeposits/${doc.id} (Supabase UUID: $rdUuid)");
+          } else {
+            // Create account identity
+            accountIdentitiesBatch.add({
+              'id': rdUuid,
+              'customer_id': customerUuid,
+              'agent_id': sUid,
+              'account_type': 'RD',
+              'created_at': rd.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+              'updated_at': rd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+            });
 
-          // Create RD details
-          await _adminClient!.from('recurring_deposits').insert({
-            'id': rdUuid,
-            'status': rd.status.name,
-            'scheme_type': rd.schemeType.name,
-            'account_no': rd.accountNo,
-            'serial_no': rd.serialNo,
-            'installment_amount': rd.installmentAmount,
-            'interest_rate': rd.interestRate,
-            'term_years': rd.termYears,
-            'term_months': rd.termMonths,
-            'start_date': rd.startDate.toIso8601String().split('T').first,
-            'created_at': rd.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-            'updated_at': rd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-          });
+            // Create RD details
+            rdsBatch.add({
+              'id': rdUuid,
+              'status': rd.status.name,
+              'scheme_type': rd.schemeType.name,
+              'account_no': rd.accountNo,
+              'serial_no': rd.serialNo,
+              'installment_amount': rd.installmentAmount,
+              'interest_rate': rd.interestRate,
+              'term_years': rd.termYears,
+              'term_months': rd.termMonths,
+              'start_date': rd.startDate.toIso8601String().split('T').first,
+              'created_at': rd.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+              'updated_at': rd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+            });
+            totalRecurringMigrated++;
+            existingIdentityIds.add(rdUuid);
 
-          // Create nominees
-          if (rd.nominees.isNotEmpty) {
-            _log(" -> Migrating ${rd.nominees.length} nominees for RD...");
-            for (var nominee in rd.nominees) {
-              await _adminClient!.from('nominees').insert({
-                'id': const Uuid().v4(),
-                'account_id': rdUuid,
-                'name': nominee.name,
-                'relationship': nominee.toJson()['relationship'],
-                'custom_relationship': nominee.customRelationship,
-                'percentage': nominee.percentage,
-                'created_at': rd.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-                'updated_at': rd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
-              });
-              totalNominees++;
+            // Create nominees
+            if (rd.nominees.isNotEmpty) {
+              for (var nominee in rd.nominees) {
+                nomineesBatch.add({
+                  'id': const Uuid().v4(),
+                  'account_id': rdUuid,
+                  'name': nominee.name,
+                  'relationship': nominee.toJson()['relationship'],
+                  'custom_relationship': nominee.customRelationship,
+                  'percentage': nominee.percentage,
+                  'created_at': rd.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+                  'updated_at': rd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+                });
+                totalNomineesMigrated++;
+              }
             }
           }
-          totalRecurring++;
         }
+
+        // --- 4. Execute Optimized Bulk Inserts ---
+        _log("Executing bulk database inserts...");
+        await _insertInChunks('customers', customersBatch);
+        await _insertInChunks('account_identities', accountIdentitiesBatch);
+        await _insertInChunks('savings_accounts', savingsAccountsBatch);
+        await _insertInChunks('one_time_deposits', otdsBatch);
+        await _insertInChunks('recurring_deposits', rdsBatch);
+        await _insertInChunks('nominees', nomineesBatch);
       }
 
       setState(() {
-        _status = "Migration Complete! 🎉 Created $totalCustomers Customers, $totalOneTime OTDs, $totalRecurring RDs, and $totalNominees Nominees.";
+        _status = "Migration Complete! 🎉\n\n"
+            "Customers: processed=$totalCustomersProcessed, migrated=$totalCustomersMigrated, skipped=$totalCustomersSkipped\n"
+            "Savings Accounts: processed=$totalSBProcessed, migrated=$totalSBMigrated, skipped=$totalSBSkipped\n"
+            "One-Time Deposits: processed=$totalOneTimeProcessed, migrated=$totalOneTimeMigrated, skipped=$totalOneTimeSkipped\n"
+            "Recurring Deposits: processed=$totalRecurringProcessed, migrated=$totalRecurringMigrated, skipped=$totalRecurringSkipped\n"
+            "Nominees: migrated=$totalNomineesMigrated";
         _isMigrating = false;
       });
       _log("---------------- MIGRATION COMPLETED ----------------");
-      _log("Total Customers Migrated: $totalCustomers");
-      _log("Total One-Time Deposits Migrated: $totalOneTime");
-      _log("Total Recurring Deposits Migrated: $totalRecurring");
-      _log("Total Nominees Migrated: $totalNominees");
+      _log("Customers: Processed: $totalCustomersProcessed, Migrated: $totalCustomersMigrated, Skipped: $totalCustomersSkipped");
+      _log("Savings Accounts: Processed: $totalSBProcessed, Migrated: $totalSBMigrated, Skipped: $totalSBSkipped");
+      _log("One-Time Deposits: Processed: $totalOneTimeProcessed, Migrated: $totalOneTimeMigrated, Skipped: $totalOneTimeSkipped");
+      _log("Recurring Deposits: Processed: $totalRecurringProcessed, Migrated: $totalRecurringMigrated, Skipped: $totalRecurringSkipped");
+      _log("Nominees: Migrated: $totalNomineesMigrated");
       _log("You can now safely run and verify the app on Supabase!");
     } catch (e, stack) {
       _log("Migration aborted due to critical error: $e\n$stack");
