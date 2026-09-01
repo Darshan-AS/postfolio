@@ -43,17 +43,46 @@
             "program": "lib/run_migration.dart"
         },
         {
-            "name": "Postfolio (Current Device)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart"
-        },
-        {
-            "name": "Postfolio (Android Emulator)",
+            "name": "Postfolio (Staging - Current Device)",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
-            "deviceId": "emulator-5554"
+            "args": [
+                "--flavor",
+                "staging"
+            ]
+        },
+        {
+            "name": "Postfolio (Prod - Current Device)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "prod"
+            ]
+        },
+        {
+            "name": "Postfolio (Staging - Android Emulator)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "emulator-5554",
+            "args": [
+                "--flavor",
+                "staging"
+            ]
+        },
+        {
+            "name": "Postfolio (Prod - Android Emulator)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "emulator-5554",
+            "args": [
+                "--flavor",
+                "prod"
+            ]
         },
         {
             "name": "Postfolio (macOS)",

@@ -69,6 +69,8 @@ data/*
 # Environment Variables
 .env
 .env.*
+!.env.example
+lib/core/env/env.g.dart
 
 # Local/Production migration files containing real production data or backups
 data_export/
