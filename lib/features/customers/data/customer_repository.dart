@@ -25,13 +25,13 @@ abstract class CustomerRepository {
 
 class FirestoreCustomerRepository implements CustomerRepository {
   final firestore.FirebaseFirestore _firestore;
-  final String _userId;
+  final String _agentId;
 
-  FirestoreCustomerRepository(this._firestore, this._userId);
+  FirestoreCustomerRepository(this._firestore, this._agentId);
 
   firestore.CollectionReference<Customer> get _customers => _firestore
       .collection(FirestoreCollections.users)
-      .doc(_userId)
+      .doc(_agentId)
       .collection(FirestoreCollections.customers)
       .withConverter<Customer>(
         fromFirestore: (snapshot, _) {
@@ -209,19 +209,19 @@ CustomerRepository customerRepository(Ref ref) {
   }
 
   final authState = ref.watch(authControllerProvider);
-  final userId = switch (authState) {
+  final agentId = switch (authState) {
     AuthStateAuthenticated state => state.user.id,
     _ => null,
   };
 
-  if (userId == null) {
+  if (agentId == null) {
     throw StateError(
-      'User is not authenticated. Cannot access CustomerRepository.',
+      'Agent is not authenticated. Cannot access CustomerRepository.',
     );
   }
 
   return FirestoreCustomerRepository(
     firestore.FirebaseFirestore.instance,
-    userId,
+    agentId,
   );
 }

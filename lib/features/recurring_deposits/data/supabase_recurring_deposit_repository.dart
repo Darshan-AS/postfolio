@@ -8,9 +8,9 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
 
   SupabaseRecurringDepositRepository(this._supabaseClient);
 
-  String get _userId {
+  String get _agentId {
     final user = _supabaseClient.auth.currentUser;
-    if (user == null) throw StateError('User not authenticated');
+    if (user == null) throw StateError('Agent not authenticated');
     return user.id;
   }
 
@@ -19,13 +19,13 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
     return _supabaseClient
         .from('account_identities')
         .stream(primaryKey: ['id'])
-        .eq('agent_id', _userId)
+        .eq('agent_id', _agentId)
         .asyncMap((_) async {
           try {
             final data = await _supabaseClient
                 .from('recurring_deposit_details_view')
                 .select()
-                .eq('agent_id', _userId);
+                .eq('agent_id', _agentId);
             final deposits = data.map((json) => RecurringDeposit.fromJson(json)).toList();
             return Success(deposits);
           } catch (e) {

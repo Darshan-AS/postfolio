@@ -26,13 +26,13 @@ abstract class OneTimeDepositRepository {
 
 class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
   final firestore.FirebaseFirestore _firestore;
-  final String _userId;
+  final String _agentId;
 
-  FirestoreOneTimeDepositRepository(this._firestore, this._userId);
+  FirestoreOneTimeDepositRepository(this._firestore, this._agentId);
 
   firestore.CollectionReference<OneTimeDeposit> get _deposits => _firestore
       .collection(FirestoreCollections.users)
-      .doc(_userId)
+      .doc(_agentId)
       .collection(FirestoreCollections.oneTimeDeposits)
       .withConverter<OneTimeDeposit>(
         fromFirestore: (snapshot, _) {
@@ -179,19 +179,19 @@ OneTimeDepositRepository oneTimeDepositRepository(Ref ref) {
   }
 
   final authState = ref.watch(authControllerProvider);
-  final userId = switch (authState) {
+  final agentId = switch (authState) {
     AuthStateAuthenticated state => state.user.id,
     _ => null,
   };
 
-  if (userId == null) {
+  if (agentId == null) {
     throw StateError(
-      'User is not authenticated. Cannot access OneTimeDepositRepository.',
+      'Agent is not authenticated. Cannot access OneTimeDepositRepository.',
     );
   }
 
   return FirestoreOneTimeDepositRepository(
     firestore.FirebaseFirestore.instance,
-    userId,
+    agentId,
   );
 }

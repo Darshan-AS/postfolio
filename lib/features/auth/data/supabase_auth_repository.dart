@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:postfolio/features/auth/domain/app_user.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
+import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/env/env.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
@@ -17,12 +17,12 @@ class SupabaseAuthRepository implements AuthRepository {
         _googleSignIn = googleSignIn;
 
   @override
-  Stream<AppUser?> get authStateChanges {
+  Stream<AuthUser?> get authStateChanges {
     return _supabaseClient.auth.onAuthStateChange.map((event) {
       final session = event.session;
       if (session == null) return null;
       final user = session.user;
-      return AppUser(
+      return AuthUser(
         id: user.id,
         email: user.email,
         displayName: user.userMetadata?['full_name'] as String?,
@@ -32,7 +32,7 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<Result<AppUser, String>> signInWithGoogle() async {
+  Future<Result<AuthUser, String>> signInWithGoogle() async {
     try {
       if (kIsWeb) {
         // Read USE_EMULATOR to determine if we are running locally
@@ -92,7 +92,7 @@ class SupabaseAuthRepository implements AuthRepository {
       }
 
       return Success(
-        AppUser(
+        AuthUser(
           id: user.id,
           email: user.email,
           displayName: user.userMetadata?['full_name'] as String?,

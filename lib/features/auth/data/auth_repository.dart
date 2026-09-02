@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:postfolio/features/auth/domain/app_user.dart';
+import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/env/env.dart';
@@ -38,8 +38,8 @@ AuthRepository authRepository(Ref ref) {
 }
 
 abstract class AuthRepository {
-  Stream<AppUser?> get authStateChanges;
-  Future<Result<AppUser, String>> signInWithGoogle();
+  Stream<AuthUser?> get authStateChanges;
+  Future<Result<AuthUser, String>> signInWithGoogle();
   Future<Result<void, String>> signOut();
 }
 
@@ -54,10 +54,10 @@ class FirebaseAuthRepository implements AuthRepository {
        _googleSignIn = googleSignIn;
 
   @override
-  Stream<AppUser?> get authStateChanges {
+  Stream<AuthUser?> get authStateChanges {
     return _firebaseAuth.authStateChanges().map((User? user) {
       if (user == null) return null;
-      return AppUser(
+      return AuthUser(
         id: user.uid,
         email: user.email,
         displayName: user.displayName,
@@ -67,7 +67,7 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<Result<AppUser, String>> signInWithGoogle() async {
+  Future<Result<AuthUser, String>> signInWithGoogle() async {
     try {
       UserCredential userCredential;
 
@@ -111,7 +111,7 @@ class FirebaseAuthRepository implements AuthRepository {
       }
 
       return Success(
-        AppUser(
+        AuthUser(
           id: user.uid,
           email: user.email,
           displayName: user.displayName,

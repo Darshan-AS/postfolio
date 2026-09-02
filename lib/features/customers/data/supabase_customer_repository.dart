@@ -8,9 +8,9 @@ class SupabaseCustomerRepository implements CustomerRepository {
 
   SupabaseCustomerRepository(this._supabaseClient);
 
-  String get _userId {
+  String get _agentId {
     final user = _supabaseClient.auth.currentUser;
-    if (user == null) throw StateError('User not authenticated');
+    if (user == null) throw StateError('Agent not authenticated');
     return user.id;
   }
 
@@ -19,13 +19,13 @@ class SupabaseCustomerRepository implements CustomerRepository {
     return _supabaseClient
         .from('customers')
         .stream(primaryKey: ['id'])
-        .eq('agent_id', _userId)
+        .eq('agent_id', _agentId)
         .asyncMap((_) async {
           try {
             final data = await _supabaseClient
                 .from('customer_details_view')
                 .select()
-                .eq('agent_id', _userId);
+                .eq('agent_id', _agentId);
             final customers = data.map((json) => Customer.fromJson(json)).toList();
             return Success(customers);
           } catch (e) {
@@ -48,7 +48,7 @@ class SupabaseCustomerRepository implements CustomerRepository {
                 .eq('id', id)
                 .maybeSingle();
             if (data == null) return const Failure<Customer, String>('Customer not found');
-            if (data['agent_id'] != _userId) {
+            if (data['agent_id'] != _agentId) {
               return const Failure<Customer, String>('Unauthorized');
             }
             return Success(Customer.fromJson(data));

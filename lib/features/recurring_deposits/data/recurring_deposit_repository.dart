@@ -27,13 +27,13 @@ abstract class RecurringDepositRepository {
 class FirestoreRecurringDepositRepository
     implements RecurringDepositRepository {
   final firestore.FirebaseFirestore _firestore;
-  final String _userId;
+  final String _agentId;
 
-  FirestoreRecurringDepositRepository(this._firestore, this._userId);
+  FirestoreRecurringDepositRepository(this._firestore, this._agentId);
 
   firestore.CollectionReference<RecurringDeposit> get _deposits => _firestore
       .collection(FirestoreCollections.users)
-      .doc(_userId)
+      .doc(_agentId)
       .collection(FirestoreCollections.recurringDeposits)
       .withConverter<RecurringDeposit>(
         fromFirestore: (snapshot, _) {
@@ -180,19 +180,19 @@ RecurringDepositRepository recurringDepositRepository(Ref ref) {
   }
 
   final authState = ref.watch(authControllerProvider);
-  final userId = switch (authState) {
+  final agentId = switch (authState) {
     AuthStateAuthenticated state => state.user.id,
     _ => null,
   };
 
-  if (userId == null) {
+  if (agentId == null) {
     throw StateError(
-      'User is not authenticated. Cannot access RecurringDepositRepository.',
+      'Agent is not authenticated. Cannot access RecurringDepositRepository.',
     );
   }
 
   return FirestoreRecurringDepositRepository(
     firestore.FirebaseFirestore.instance,
-    userId,
+    agentId,
   );
 }

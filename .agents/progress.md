@@ -1,6 +1,12 @@
 # Project Progress
 
 ## Current State
+**DDD Auth User Decoupling & Ubiquitous Language Refactor Completed**:
+- Refactored `AppUser` to `AuthUser` in the authentication domain context (`lib/features/auth/domain/auth_user.dart`) to strictly represent lightweight session identities. This aligns with Bounded Context design principles by preventing the core business `Agent` domain from being polluted with technical authentication details.
+- Avoided name collisions with Supabase Flutter's exported `AuthUser` by utilizing `hide AuthUser` on the Supabase import inside `SupabaseAuthRepository`.
+- Renamed all occurrences of technical `_userId` and `userId` inside all `CustomerRepository`, `OneTimeDepositRepository`, and `RecurringDepositRepository` implementations to ubiquitous, business-centric terms: `_agentId` and `agentId`. This strictly maps the persistence and presentation layers to real-world business entities (`agent_profiles` / `agent_id`).
+- Regenerated all required boilerplate with code-generation and verified that 100% of static analysis checks (`flutter analyze`) and unit tests (`flutter test`) pass cleanly.
+
 **P2 Optimization - Filter Real-Time CDC Streams by Agent ID Completed**:
 - Updated `watchCustomers()` stream in `SupabaseCustomerRepository` to filter real-time CDC updates using `.eq('agent_id', _userId)`.
 - Updated `watchOneTimeDeposits()` stream in `SupabaseOneTimeDepositRepository` to filter real-time CDC updates using `.eq('agent_id', _userId)`.

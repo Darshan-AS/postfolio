@@ -1,5 +1,5 @@
 import 'package:postfolio/features/auth/data/auth_repository.dart';
-import 'package:postfolio/features/auth/domain/app_user.dart';
+import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
@@ -17,7 +17,7 @@ class AuthController extends _$AuthController {
       // Instantly authenticate with a dummy user
       // so the router thinks we are authenticated in Demo Mode.
       return const AuthState.authenticated(
-        user: AppUser(
+        user: AuthUser(
           id: 'demo_user',
           email: 'agent@demo.com',
           displayName: 'Demo Agent',
