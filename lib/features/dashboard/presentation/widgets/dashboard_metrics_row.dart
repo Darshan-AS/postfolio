@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/features/dashboard/providers/dashboard_provider.dart';
 

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';

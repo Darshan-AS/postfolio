@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:animations/animations.dart';
 import 'package:postfolio/core/theme/app_widget_themes.dart';
 
