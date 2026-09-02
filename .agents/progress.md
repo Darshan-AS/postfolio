@@ -1,6 +1,12 @@
 # Project Progress
 
 ## Current State
+**Flutter SDK Upgrade (v3.47.2) & Dependency Baseline Update**:
+- Upgraded Flutter SDK to **3.47.2** (Dart 3.13.2, DevTools 2.60.0).
+- Ran `flutter pub upgrade` updating 103 dependencies to latest compatible versions (`cloud_firestore` 6.9.0, `firebase_core` 4.14.0, `supabase_flutter` 2.17.2, `go_router` 17.5.0, `intl` 0.20.3, `slang` 4.19.0).
+- Re-ran code generation (`dart run build_runner build --delete-conflicting-outputs`), updating 57 generated artifacts.
+- Verified 100% clean static analysis (`flutter analyze`) and all tests passing (`flutter test`, 4/4 passed).
+
 **Release Prepared (v2.0.0+17) & CI/CD Pipeline Updated**:
 - Bumped app version to **v2.0.0+17** in `pubspec.yaml` and documented changes in `CHANGELOG.md`.
 - Evaluated git commits since `v1.6.0+16` (Major release type due to Supabase migration, CQRS architecture, and Android build flavors).
