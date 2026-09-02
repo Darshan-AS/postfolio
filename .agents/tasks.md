@@ -60,6 +60,7 @@
 
 ## ⚙️ Architecture, Tooling & Security
 - [x] **Agent Customization**: Refactored guidelines into a modular rule system in `.agents/rules/` for improved agent compliance and platform-agnosticism.
+- [x] **Modern Android & Gradle Ecosystem Migration**: Upgraded project to use modern Android tooling: Gradle 9.5.1, AGP 9.3.0, Kotlin 2.3.20, and modern Firebase plugins (google-services 4.5.0, firebase-perf 2.0.2, firebase-crashlytics 3.0.8). Fully migrated to **Built-in Kotlin** (`android.builtInKotlin=true`), eliminating KGP-related deprecation warnings, and enabled AGP 9.0+ resource value compatibility.
 - [ ] **Linting**: Add `riverpod_lint` and `custom_lint` for static analysis.
 - [ ] **Firebase App Check**: Configure with Play Integrity/App Attest and local Debug Tokens.
 - [ ] **Firebase Remote Config**: Integrate for dynamic rates, version enforcement, and feature flags.
