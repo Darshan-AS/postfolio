@@ -98,9 +98,14 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
     recurringDepositsControllerProvider.future,
   );
 
-  // We may also need customer names to search by them
-  final asyncCustomers = await ref.watch(customersControllerProvider.future);
-  final customerMap = {for (var c in asyncCustomers) c.id: c.name};
+  final hasNullNames = asyncDeposits.any((d) => d.customerName == null);
+  final Map<String, String> customerMap;
+  if (hasNullNames) {
+    final asyncCustomers = await ref.watch(customersControllerProvider.future);
+    customerMap = {for (var c in asyncCustomers) c.id: c.name};
+  } else {
+    customerMap = const {};
+  }
 
   var result = asyncDeposits.toList();
 
@@ -121,7 +126,7 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
   if (criteria.searchQuery.isNotEmpty) {
     final query = criteria.searchQuery.toLowerCase().trim();
     result = result.where((d) {
-      final customerName = customerMap[d.customerId]?.toLowerCase() ?? '';
+      final customerName = (d.customerName ?? customerMap[d.customerId])?.toLowerCase() ?? '';
       return (d.accountNo?.toLowerCase().contains(query) ?? false) ||
           customerName.contains(query) ||
           d.schemeType.displayName.toLowerCase().contains(query) ||
@@ -158,8 +163,8 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
       break;
     case RDSortField.name:
       result.sort((a, b) {
-        final nameA = customerMap[a.customerId]?.toLowerCase() ?? '';
-        final nameB = customerMap[b.customerId]?.toLowerCase() ?? '';
+        final nameA = (a.customerName ?? customerMap[a.customerId])?.toLowerCase() ?? '';
+        final nameB = (b.customerName ?? customerMap[b.customerId])?.toLowerCase() ?? '';
         final comp = nameA.compareTo(nameB);
         return isAsc ? comp : -comp;
       });

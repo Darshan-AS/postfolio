@@ -24,6 +24,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     required int termMonths,
     required double interestRate,
     required String customerId,
+    @JsonKey(includeFromJson: true, includeToJson: false) String? customerName,
     required OneTimeSchemeType schemeType,
     required DateTime startDate,
     @Default([]) List<Nominee> nominees,
@@ -65,6 +66,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     termMonths: 0,
     interestRate: 6.5,
     customerId: 'Loading Dummy Name...',
+    customerName: 'Loading Dummy Name...',
     schemeType: OneTimeSchemeType.timeDeposit,
     startDate: DateTime.now(),
   );

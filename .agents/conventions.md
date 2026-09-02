@@ -13,6 +13,7 @@ Detailed technical conventions are separated into focused modules for easier ref
 1. **Committing Erroring States**: Never commit code that does not compile or pass the analyzer (`dart analyze`). Always format, build, and analyze before committing.
 2. **List Controller Mutation Spoilage**: DO NOT manually set `state = loading` inside mutation methods (like `save()` or `delete()`) within a list controller. This wipes out data and causes UI rebuild bugs.
 3. **Riverpod for Form Input**: Do NOT use Riverpod Notifiers to track individual keystrokes. Use `flutter_hooks` (`useTextEditingController`, `useState`) for live form inputs, and only pass structured data to Riverpod on submission.
+4. **Destructive Database Commands in Production**: NEVER execute destructive database commands (such as `supabase db reset`, `db/migrate` with purge options, or raw table drops) against a production database environment. Always assume actions are targeting local development/emulators first unless production is explicitly specified and confirmed by the user. Ensure proper guards or confirmation checks are in place.
 
 ## 3. Release Process
 Releases are tag-driven and automated via GitHub Actions.

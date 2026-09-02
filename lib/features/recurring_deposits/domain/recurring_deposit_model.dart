@@ -25,6 +25,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required int termMonths,
     required double interestRate,
     required String customerId,
+    @JsonKey(includeFromJson: true, includeToJson: false) String? customerName,
     required RecurringSchemeType schemeType,
     required DateTime startDate,
     @Default([]) List<Nominee> nominees,
@@ -73,6 +74,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     termMonths: 0,
     interestRate: 5.8,
     customerId: 'Loading Dummy Name...',
+    customerName: 'Loading Dummy Name...',
     schemeType: RecurringSchemeType.recurringDeposit,
     startDate: DateTime.now(),
   );

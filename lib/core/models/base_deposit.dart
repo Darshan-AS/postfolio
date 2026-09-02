@@ -12,6 +12,7 @@ abstract interface class BaseDeposit {
   int get termMonths;
   double get interestRate;
   String get customerId;
+  String? get customerName;
   DateTime get startDate;
   InvestmentProjection get projection;
   double get maturityAmount;

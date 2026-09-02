@@ -13,6 +13,22 @@
 - [x] **SQL Views & RPC Procedures (Option 2 Architecture)**: Create SQL migrations for views (`customer_details_view`, `one_time_deposit_details_view`, `recurring_deposit_details_view`) and stored procedure RPCs (`save_customer_with_sb_account`, `save_one_time_deposit`, `save_recurring_deposit`). Refactor all `Supabase*Repository` implementations to use views for reads and RPCs for 100% atomic writes.
 - [ ] **Automated Database Backups to Google Drive**: Set up scheduled GitHub Action / cron job with `supabase db dump` to automatically export and upload daily database backups to Google Drive.
 
+## ⚡ Supabase Query Optimizations (Prioritized)
+- [x] **P1: Server-Side Joins for Deposit Customer Names**: Modify `one_time_deposit_details_view` and `recurring_deposit_details_view` views to join with the `customers` table and return `customer_name`. Add `@JsonKey(includeFromJson: true, includeToJson: false) String? customerName` to deposit models to eliminate client-side cross-fetching/map loops.
+- [ ] **P1.1: Migrate to Two Channels CQRS Pattern**: Refactor the data & domain models to use separate, direct channels for reads vs writes, eliminating **Domain Pollution** and avoid mapping overhead (never decoupling/recombining views).
+  - *Architectural Design:*
+    - **Read Channel (Direct & Pragmatic)**: Database View (`one_time_deposit_details_view`) maps 1-to-1 to a read-only Presentation DTO (`OneTimeDepositWithCustomer`). The repository queries the view and outputs the DTO straight to the UI. The core write domain entity is never touched during reads.
+    - **Write Channel (Pure & Controlled)**: UI Form maps to a pure domain model (`OneTimeDeposit` — stripped of `customerName`) to enforce domain calculations and logic validation (`OneTimeDeposit.create(...)`). The repository sends this pure model to the database write RPC (`save_one_time_deposit`).
+  - *Benefits to achieve:*
+    - **No Mapping Trap**: Eliminates complex intermediate mapping where fields are split and recombined.
+    - **Strict Boundaries**: Core entities remain 100% focused on business logic/writes. Read-only DTOs represent exact screens.
+    - **Performance & Safety**: No fallback checks, clean and fast JSON parsing directly from database views, and zero state desynchronization.
+- [ ] **P2: Filter Real-Time CDC Streams by Agent ID**: Update repositories to filter change streams using `.stream(...).eq('agent_id', _userId)` instead of listening to all database-wide table changes.
+- [ ] **P3: Server-Side Searching, Filtering, and Sorting**: Offload sorting, filtering, and search matching to PostgREST/Supabase query builders instead of pulling entire tables into Dart in-memory lists.
+- [ ] **P4: Server-Side Pagination**: Implement offset/limit pagination using Supabase's `.range()` builder paired with `infinite_scroll_pagination` on list screens to cap memory/RAM usage.
+- [ ] **P5: Database Fuzzy Search Indexes**: Enable `pg_trgm` extension and create GIN trigram indexes on text search targets (e.g. `idx_customers_name_trgm` on `customers(name)`) to avoid CPU-intensive sequential table scans.
+- [ ] **P6: Upgrade Client UUID Generation to UUIDv7**: Migrate the client-side `uuid` package to use time-ordered v7 UUIDs (`Uuid().v7()`) to prevent index B-tree fragmentation on insertion.
+
 ## 📦 Release & Publication (Play Store)
 - [x] **Change Application ID**: Update `applicationId` in `android/app/build.gradle.kts` (e.g., to `dev.darshanas.postfolio`).
 - [x] **Android Product Flavors (Staging & Prod)**: Configured `staging` (`.staging` package suffix, "Postfolio Staging") and `prod` ("Postfolio") flavors for side-by-side device installation and independent testing.
@@ -25,7 +41,6 @@
 - [x] **AAB Build**: Run `flutter build appbundle` for release. (v1.5.1+15 built and successfully deployed to Internal Testing)
 
 ## 🧮 Domain Math & Business Logic
-- [ ] **Trigram Fuzzy Search Index (`pg_trgm`)**: When production database scales beyond 1,000s of customer records, add a PostgreSQL `pg_trgm` GIN index (`CREATE INDEX idx_customers_name_trgm ON public.customers USING gin (name gin_trgm_ops);`) for fast substring search.
 - [ ] **KVP Term DB Sync**: Decide whether to sync the dynamically calculated KVP term to the database (`termYears`/`termMonths`) or skip storing it entirely and rely purely on the dynamic calculation.
 - [ ] **Commissions**: Auto-calculate Gross Commission, deduct 2% TDS, and derive Net Payout.
 - [ ] **Penalties & Rebates**: Calculate RD Late Fees and Advance Deposit Rebates.
@@ -75,6 +90,11 @@
 - [ ] Implement adaptive navigation (BottomNavigationBar vs NavigationRail).
 - [ ] Create Master-Detail layouts for large screens.
 - [ ] Conditionally render `BottomSheet` as `AlertDialog`/Side Panel on large screens.
+
+### Epic: Firebase Elimination
+- [ ] Complete codebase cleanup of Firebase dependencies (`firebase_core`, `firebase_auth`, `cloud_firestore`).
+- [ ] Remove legacy `Firebase*Repository` classes and the `Env.useSupabase` toggle strategy.
+- [ ] Clean up redundant fallback `customerMap` logic in `one_time_deposits_controller.dart` and `recurring_deposits_controller.dart` once pre-joined database views are the sole source of truth.
 
 ### Epic: Agent Profile
 - [ ] Expand `AppUser` to include personal/agency details.

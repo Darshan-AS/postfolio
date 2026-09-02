@@ -1,6 +1,12 @@
 # Project Progress
 
 ## Current State
+**P1 Optimization - Server-Side Joins for Deposit Customer Names Completed**:
+- Created database migration `supabase/migrations/20260902000000_p1_server_side_joins.sql` to join `customers` in `one_time_deposit_details_view` and `recurring_deposit_details_view`, returning pre-joined `customer_name`.
+- Added `customerName` field to `BaseDeposit` interface, and `@JsonKey(includeFromJson: true, includeToJson: false) String? customerName` to Freezed models `OneTimeDeposit` and `RecurringDeposit` to read joining values but ignore them in client-side inserts/updates.
+- Upgraded Riverpod list controllers `filteredOneTimeDeposits` and `filteredRecurringDeposits` with zero-overhead fallback mechanisms that fetch customer maps only when `customerName` is missing, allowing optimal Supabase performance while preserving full Firebase compatibility.
+- Verified 100% clean compilation via `flutter analyze` and passing unit tests.
+
 **Standalone Material/Cupertino Migration Complete**:
 - Added `material_ui` (1.1.0) and `cupertino_ui` (1.0.1) as direct dependencies to decouple the app UI framework.
 - Upgraded `dynamic_color` to `^2.1.0` to correctly align and resolve `ColorScheme` dynamic colors under `material_ui` across platforms.
