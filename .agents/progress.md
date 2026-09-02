@@ -1,6 +1,14 @@
 # Project Progress
 
 ## Current State
+**Major Dependency Upgrades & New Features Leveraged**:
+- Upgraded direct dependencies to major releases: `go_router` (^18.0.0), `csv` (^8.0.0), `animations` (^3.0.0), `freezed` (^4.0.1).
+- **Leveraged Android 14+ Predictive Back Gestures**: Configured `PredictiveBackPageTransitionsBuilder` on Android in `lib/core/theme/app_theme.dart` for native swipe-to-pop back navigation.
+- **Leveraged Freezed 4 / Dart 3 Destructuring**: Updated `login_screen.dart` with `if (authState case AuthStateError(:final message))` pattern matching.
+- **CSV 8.0 Engine Upgrade**: Updated `lib/run_migration.dart` to use `csv` 8.0's stream-ready `Csv(lineDelimiter: '\n').decode(rawData)`.
+- Re-ran code generation (`dart run build_runner build --delete-conflicting-outputs`), generating 57 outputs.
+- Verified zero analysis issues (`flutter analyze`) and all unit tests passing (`flutter test`, 4/4 passed).
+
 **Flutter SDK Upgrade (v3.47.2) & Dependency Baseline Update**:
 - Upgraded Flutter SDK to **3.47.2** (Dart 3.13.2, DevTools 2.60.0).
 - Ran `flutter pub upgrade` updating 103 dependencies to latest compatible versions (`cloud_firestore` 6.9.0, `firebase_core` 4.14.0, `supabase_flutter` 2.17.2, `go_router` 17.5.0, `intl` 0.20.3, `slang` 4.19.0).

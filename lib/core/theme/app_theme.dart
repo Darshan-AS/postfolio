@@ -14,9 +14,7 @@ class AppTheme {
       scaffoldBackgroundColor: colorScheme.surface,
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
-          TargetPlatform.android: SharedAxisPageTransitionsBuilder(
-            transitionType: SharedAxisTransitionType.horizontal,
-          ),
+          TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
           TargetPlatform.iOS: SharedAxisPageTransitionsBuilder(
             transitionType: SharedAxisTransitionType.horizontal,
           ),

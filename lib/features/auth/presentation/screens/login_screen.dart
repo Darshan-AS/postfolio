@@ -104,10 +104,10 @@ class LoginScreen extends ConsumerWidget {
                   ],
                 ),
               },
-              if (authState is AuthStateError) ...[
+              if (authState case AuthStateError(:final message)) ...[
                 AppSpacings.gapMd,
                 Text(
-                  authState.message,
+                  message,
                   style: TextStyle(color: theme.colorScheme.error),
                   textAlign: TextAlign.center,
                 ),

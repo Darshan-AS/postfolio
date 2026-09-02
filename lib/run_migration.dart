@@ -657,7 +657,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
       () => status = "Migrating first $maxCustomers Customers to $envLabel...",
     );
     final rawData = await rootBundle.loadString(MigrationAssets.customers);
-    final rows = const CsvToListConverter(eol: '\n').convert(rawData);
+    final rows = Csv(lineDelimiter: '\n').decode(rawData);
     if (rows.isEmpty) return MigrationStats();
 
     final headers = CsvHeaders(rows.first);
@@ -756,7 +756,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
       () => status = "Migrating $collectionName for imported customers...",
     );
     final rawData = await rootBundle.loadString(csvPath);
-    final rows = const CsvToListConverter(eol: '\n').convert(rawData);
+    final rows = Csv(lineDelimiter: '\n').decode(rawData);
     if (rows.isEmpty) return MigrationStats();
 
     final headers = CsvHeaders(rows.first);
@@ -1059,7 +1059,7 @@ Future<Map<String, DateTime>> _calculateCustomerDates() async {
 
   try {
     final otRaw = await rootBundle.loadString(MigrationAssets.oneTimeDeposits);
-    final otRows = const CsvToListConverter(eol: '\n').convert(otRaw);
+    final otRows = Csv(lineDelimiter: '\n').decode(otRaw);
     if (otRows.isNotEmpty) {
       processRows(otRows, CsvHeaders(otRows.first), 'Deposit Date');
     }
@@ -1067,7 +1067,7 @@ Future<Map<String, DateTime>> _calculateCustomerDates() async {
     final rdRaw = await rootBundle.loadString(
       MigrationAssets.recurringDeposits,
     );
-    final rdRows = const CsvToListConverter(eol: '\n').convert(rdRaw);
+    final rdRows = Csv(lineDelimiter: '\n').decode(rdRaw);
     if (rdRows.isNotEmpty) {
       processRows(rdRows, CsvHeaders(rdRows.first), 'Opening Date');
     }
