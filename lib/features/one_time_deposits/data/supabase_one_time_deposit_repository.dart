@@ -19,6 +19,7 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
     return _supabaseClient
         .from('account_identities')
         .stream(primaryKey: ['id'])
+        .eq('agent_id', _userId)
         .asyncMap((_) async {
           try {
             final data = await _supabaseClient

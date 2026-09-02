@@ -23,7 +23,7 @@
     - **No Mapping Trap**: Eliminates complex intermediate mapping where fields are split and recombined.
     - **Strict Boundaries**: Core entities remain 100% focused on business logic/writes. Read-only DTOs represent exact screens.
     - **Performance & Safety**: No fallback checks, clean and fast JSON parsing directly from database views, and zero state desynchronization.
-- [ ] **P2: Filter Real-Time CDC Streams by Agent ID**: Update repositories to filter change streams using `.stream(...).eq('agent_id', _userId)` instead of listening to all database-wide table changes.
+- [x] **P2: Filter Real-Time CDC Streams by Agent ID**: Update repositories to filter change streams using `.stream(...).eq('agent_id', _userId)` instead of listening to all database-wide table changes.
 - [ ] **P3: Server-Side Searching, Filtering, and Sorting**: Offload sorting, filtering, and search matching to PostgREST/Supabase query builders instead of pulling entire tables into Dart in-memory lists.
 - [ ] **P4: Server-Side Pagination**: Implement offset/limit pagination using Supabase's `.range()` builder paired with `infinite_scroll_pagination` on list screens to cap memory/RAM usage.
 - [ ] **P5: Database Fuzzy Search Indexes**: Enable `pg_trgm` extension and create GIN trigram indexes on text search targets (e.g. `idx_customers_name_trgm` on `customers(name)`) to avoid CPU-intensive sequential table scans.

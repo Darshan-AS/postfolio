@@ -1,6 +1,13 @@
 # Project Progress
 
 ## Current State
+**P2 Optimization - Filter Real-Time CDC Streams by Agent ID Completed**:
+- Updated `watchCustomers()` stream in `SupabaseCustomerRepository` to filter real-time CDC updates using `.eq('agent_id', _userId)`.
+- Updated `watchOneTimeDeposits()` stream in `SupabaseOneTimeDepositRepository` to filter real-time CDC updates using `.eq('agent_id', _userId)`.
+- Updated `watchRecurringDeposits()` stream in `SupabaseRecurringDepositRepository` to filter real-time CDC updates using `.eq('agent_id', _userId)`.
+- This ensures only relevant real-time mutations are streamed to the client, drastically decreasing network egress, client-side message processing overhead, and memory load on shared tables.
+- Passed 100% of static analysis checks (`flutter analyze`) and unit tests (`flutter test`).
+
 **P1 Optimization - Server-Side Joins for Deposit Customer Names Completed**:
 - Created database migration `supabase/migrations/20260902000000_p1_server_side_joins.sql` to join `customers` in `one_time_deposit_details_view` and `recurring_deposit_details_view`, returning pre-joined `customer_name`.
 - Added `customerName` field to `BaseDeposit` interface, and `@JsonKey(includeFromJson: true, includeToJson: false) String? customerName` to Freezed models `OneTimeDeposit` and `RecurringDeposit` to read joining values but ignore them in client-side inserts/updates.
