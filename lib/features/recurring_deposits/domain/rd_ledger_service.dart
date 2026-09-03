@@ -94,9 +94,9 @@ class RDLedgerService {
 
       double currentLateFee = inst.lateFee;
 
-      // Calculate 1% late fee if paid past due date and late fee is not already applied
+      // Calculate 1% late fee per defaulted month if paid past due date and late fee is not already locked in
       if (paidDate.isAfter(inst.dueDate) && inst.lateFee == 0.0) {
-        currentLateFee = (inst.installmentAmount * 0.01).ceilToDouble();
+        currentLateFee = inst.computeExpectedLateFee(paidDate);
       }
 
       final double outstanding =

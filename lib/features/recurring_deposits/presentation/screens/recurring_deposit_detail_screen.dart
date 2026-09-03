@@ -308,13 +308,106 @@ class _InstallmentsList extends HookConsumerWidget {
           );
         }
 
-        final poEligible = installments.where(
-          (inst) => inst.customerStatus == RDInstallmentStatus.fullyPaid &&
-                    inst.poStatus == RDPoStatus.unpaid
+        final poUnpaidInstallments = installments.where(
+          (inst) => inst.poStatus == RDPoStatus.unpaid,
         ).toList();
+
+        // Calculate summary KPI metrics
+        final pendingPoAmount = installments
+            .where((inst) =>
+                inst.customerStatus == RDInstallmentStatus.fullyPaid &&
+                inst.poStatus == RDPoStatus.unpaid)
+            .fold<double>(0, (sum, inst) => sum + inst.installmentAmount);
+
+        final advancedPoAmount = installments
+            .where((inst) =>
+                inst.poStatus == RDPoStatus.paid &&
+                inst.customerStatus != RDInstallmentStatus.fullyPaid)
+            .fold<double>(
+              0,
+              (sum, inst) => sum + inst.outstandingAmount,
+            );
 
         return Column(
           children: [
+            // Summary KPI Chips
+            if (pendingPoAmount > 0 || advancedPoAmount > 0) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.paddingMd,
+                  vertical: AppDimensions.paddingSm,
+                ),
+                child: Row(
+                  children: [
+                    if (pendingPoAmount > 0)
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(AppDimensions.paddingSm),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                            border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Pending at PO',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: Colors.blue.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                pendingPoAmount.toRupeeFormat(),
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  color: Colors.blue.shade900,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if (pendingPoAmount > 0 && advancedPoAmount > 0)
+                      const SizedBox(width: AppDimensions.paddingSm),
+                    if (advancedPoAmount > 0)
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(AppDimensions.paddingSm),
+                          decoration: BoxDecoration(
+                            color: Colors.purple.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                            border: Border.all(color: Colors.purple.withValues(alpha: 0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Advanced (Receivable)',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: Colors.purple.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                advancedPoAmount.toRupeeFormat(),
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  color: Colors.purple.shade900,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+            ],
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppDimensions.paddingMd,
@@ -358,7 +451,7 @@ class _InstallmentsList extends HookConsumerWidget {
                         ),
                       ),
                     ),
-                    if (poEligible.isNotEmpty) ...[
+                    if (poUnpaidInstallments.isNotEmpty) ...[
                       AppSpacings.gapSm,
                       OutlinedButton.icon(
                         onPressed: () {
@@ -433,32 +526,43 @@ class _InstallmentsList extends HookConsumerWidget {
                 final inst = installments[index];
                 final monthNum = index + 1;
                 final isOverdue = inst.isOverdueAt(DateTime.now());
+                final isPoPaid = inst.poStatus == RDPoStatus.paid;
 
+                // Determine badge and state mapping across the 3x2 matrix
                 Color statusColor;
                 List<List<dynamic>> statusIcon;
                 String statusText;
 
-                switch (inst.customerStatus) {
-                  case RDInstallmentStatus.fullyPaid:
-                    statusColor = Colors.green;
-                    statusIcon = HugeIcons.strokeRoundedCheckmarkCircle01;
-                    statusText = 'Fully Paid';
-                    break;
-                  case RDInstallmentStatus.partiallyPaid:
-                    statusColor = Colors.orange;
-                    statusIcon = HugeIcons.strokeRoundedAlert01;
-                    statusText = 'Partially Paid';
-                    break;
-                  case RDInstallmentStatus.unpaid:
-                    statusColor = isOverdue ? Colors.red : Colors.grey;
-                    statusIcon = isOverdue
-                        ? HugeIcons.strokeRoundedAlert01
-                        : HugeIcons.strokeRoundedTimer02;
-                    statusText = isOverdue ? 'Overdue' : 'Unpaid';
-                    break;
+                if (inst.customerStatus == RDInstallmentStatus.fullyPaid && isPoPaid) {
+                  // State 6: Fully Settled
+                  statusColor = Colors.green;
+                  statusIcon = HugeIcons.strokeRoundedCheckmarkCircle01;
+                  statusText = 'Settled';
+                } else if (inst.customerStatus == RDInstallmentStatus.fullyPaid && !isPoPaid) {
+                  // State 3: Collected, Pending PO
+                  statusColor = Colors.blue;
+                  statusIcon = HugeIcons.strokeRoundedCheckmarkCircle01;
+                  statusText = 'Collected (Pending PO)';
+                } else if (isPoPaid) {
+                  // State 4 & 5: Advanced by Agent to PO
+                  statusColor = Colors.purple;
+                  statusIcon = HugeIcons.strokeRoundedAlert01;
+                  statusText = inst.customerStatus == RDInstallmentStatus.partiallyPaid
+                      ? 'Advance Partially Repaid'
+                      : 'Advanced to PO';
+                } else if (inst.customerStatus == RDInstallmentStatus.partiallyPaid) {
+                  // State 2: Partially Paid, PO Unpaid
+                  statusColor = Colors.orange;
+                  statusIcon = HugeIcons.strokeRoundedAlert01;
+                  statusText = 'Partially Paid';
+                } else {
+                  // State 1: Unpaid, PO Unpaid
+                  statusColor = isOverdue ? Colors.red : Colors.grey;
+                  statusIcon = isOverdue
+                      ? HugeIcons.strokeRoundedAlert01
+                      : HugeIcons.strokeRoundedTimer02;
+                  statusText = isOverdue ? 'Overdue' : 'Unpaid';
                 }
-
-                final isPoPaid = inst.poStatus == RDPoStatus.paid;
 
                 final titleRow = Row(
                   children: [
@@ -518,6 +622,37 @@ class _InstallmentsList extends HookConsumerWidget {
                   ],
                 );
 
+                // Principal-first allocation model:
+                // 1. Paid breakdown: Principal fills first, any excess covers late fee.
+                final principalPaid = inst.customerPaidAmount.clamp(0.0, inst.installmentAmount);
+                final lateFeePaid = (inst.customerPaidAmount - inst.installmentAmount).clamp(0.0, inst.lateFee);
+
+                // 2. Owed breakdown: Remaining principal balance + remaining unpaid late fee.
+                final principalOwed = (inst.installmentAmount - principalPaid).clamp(0.0, inst.installmentAmount);
+                final lateFeeOwed = (inst.lateFee - lateFeePaid).clamp(0.0, inst.lateFee);
+                final totalOwed = inst.outstandingAmount;
+
+                // Build granular breakdown string for Paid
+                final String paidBreakdown;
+                if (lateFeePaid > 0) {
+                  paidBreakdown =
+                      'Paid by Customer: ${inst.customerPaidAmount.toRupeeFormat()} (Principal: ${principalPaid.toRupeeFormat()} + Default Fee: ${lateFeePaid.toRupeeFormat()})';
+                } else {
+                  paidBreakdown = 'Paid by Customer: ${inst.customerPaidAmount.toRupeeFormat()}';
+                }
+
+                // Build granular breakdown string for Owed
+                final String owedBreakdown;
+                if (principalOwed > 0 && lateFeeOwed > 0) {
+                  owedBreakdown =
+                      'Customer owes: ${totalOwed.toRupeeFormat()} (Balance: ${principalOwed.toRupeeFormat()} + Default Fee: ${lateFeeOwed.toRupeeFormat()})';
+                } else if (principalOwed == 0 && lateFeeOwed > 0) {
+                  owedBreakdown =
+                      'Customer owes: ${totalOwed.toRupeeFormat()} (Default Fee: ${lateFeeOwed.toRupeeFormat()})';
+                } else {
+                  owedBreakdown = 'Customer owes: ${totalOwed.toRupeeFormat()}';
+                }
+
                 final subtitleColumn = Padding(
                   padding: const EdgeInsets.only(top: 4.0),
                   child: Column(
@@ -529,9 +664,20 @@ class _InstallmentsList extends HookConsumerWidget {
                       ),
                       if (inst.customerPaidAmount > 0)
                         Text(
-                          'Paid by Customer: ${inst.customerPaidAmount.toRupeeFormat()}',
+                          paidBreakdown,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      if (isPoPaid && inst.customerStatus != RDInstallmentStatus.fullyPaid)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2.0),
+                          child: Text(
+                            owedBreakdown,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.purple.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       if (isPoPaid)
@@ -575,8 +721,7 @@ class _InstallmentsList extends HookConsumerWidget {
                 );
 
                 if (isSelectionMode.value) {
-                  final isEligible = inst.customerStatus == RDInstallmentStatus.fullyPaid &&
-                      inst.poStatus == RDPoStatus.unpaid;
+                  final isEligible = inst.poStatus == RDPoStatus.unpaid;
                   return CheckboxListTile(
                     controlAffinity: ListTileControlAffinity.leading,
                     value: selectedIds.value.contains(inst.id),
