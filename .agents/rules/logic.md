@@ -5,7 +5,12 @@
 - **Sealed Classes**: Always use `sealed class` for Freezed models to ensure exhaustive pattern matching.
 - **Immutability**: Never mutate state in place; always use `copyWith`.
 
-## 2. Modern Dart 3 Features
+## 2. Enums and JSON Serialization
+- **Case and Format Parity**: Ensure that serialization casing (camelCase, snake_case, PascalCase) matches consistently across all models and the database. By default, enums in the codebase serialize to `camelCase` (e.g. `OneTimeSchemeType`, `DepositStatus`). Ensure new enums align with this standard unless explicit database rules dictate otherwise.
+- **Dangers of raw `.name` in DB payloads**: Avoid using the raw Dart `.name` property when serializing enums for database payloads. A refactor or a different serialization configuration (like `@JsonEnum` renaming) will cause silent runtime validation failures or database check constraint violations. Always serialize enums using their designated serialization method (e.g., `.toJson()`) or map them cleanly through model-level serialization.
+- **Brain & Muscle Separation**: Business rules, sequential workflows, allocations, and dynamic mathematical logic (The Brain) belong in pure, highly-testable client-side Dart files. The database schema, indexes, and cascades (The Muscle) are responsible for data integrity, atomicity, and performance. Do not leak complex domain calculations or client-side business rules into PostgreSQL database triggers.
+
+## 3. Modern Dart 3 Features
 - Use native **Records**, **Pattern Matching**, and **Sealed Classes** for error handling.
 - Prohibited: Heavy functional packages like `dartz`.
 

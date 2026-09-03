@@ -6,14 +6,14 @@
 - Added support for onboarding baseline via `initialPaidInstallments`: payments before the specified threshold are automatically marked settled prior to onboarding.
 - Standardized domain modeling with `validateInitialPaidInstallments` integrated directly with the central Slang localization system (`en.i18n.yaml` translation files).
 - Decoupled `RDLedgerService` and `isNew` boolean flags from repositories; orchestrated ledger schedule generation cleanly in `RecurringDepositsController` to respect Clean Architecture boundaries.
-- Resolved `PostgrestException` check constraint violations by mapping enums utilizing `@JsonValue` serialized keys via `inst.toJson()` instead of raw `.name` properties, matching PostgreSQL snake_case constraints precisely.
+- Standardized enums (`RDInstallmentStatus`, `RDPoStatus`, and `RDPaymentMode`) on default camelCase `@JsonEnum()` to maintain parity across the codebase, and removed database-level `CHECK` and `DEFAULT` constraints from the PostgreSQL migration to match, resolving any check constraint violations cleanly.
 - Implemented full 3x2 state matrix handling agent pre-payments to the Post Office: enabled PO deposit selection for all unpaid PO installments, added purple `Advanced to PO` & `Advance Partially Repaid` badges with comprehensive breakdown indicators (`Customer owes: ₹X (Balance: ₹Y + Default Fee: ₹Z)`), and added summary KPI cards for `Pending at PO` and `Advanced (Receivable)`.
 - Updated default/late fee calculation in `RDInstallment` and `RDLedgerService` to compute cumulative $1\% \times \text{months defaulted}$ dynamically in accordance with Post Office rules.
 - Verified 100% clean static analysis (`flutter analyze` - 0 issues) and 100% passing tests (`flutter test`).
 
 **RD Ledger Feature - Phase 1, 2 & 3 Complete (Relational Muscle, Pure Dart Domain Modeling, Repository Signatures, & Riverpod State Providers)**:
 - Designed and built a high-performance relational database migration in `supabase/migrations/20260903000000_rd_ledger_feature.sql` implementing `rd_installments` monthly schedules and adding payment mode tracking to `rd_transactions`.
-- Structured constraints to enforce data integrity: set up foreign keys with cascades, standard indexes, and database-level `CHECK` constraints on status/payment type text columns.
+- Structured constraints to enforce data integrity: set up foreign keys with cascades, and standard indexes.
 - Adopted a pure **"Brain & Muscle"** architecture: decoupled trigger-based business rules from the DB. Built lightweight, versatile database RPC functions (`save_recurring_deposit`, `record_rd_customer_payment_allocated`, `record_rd_po_payments`) supporting transaction logging and bulk schedule updates, ensuring calculations can be run client-side for immediate user previews while preserving atomic, single-roundtrip server writes.
 - Defined Freezed domain models (`RDInstallment`, `RDTransaction`) as well as type-safe ledger enums (`RDInstallmentStatus`, `RDPoStatus`, `RDPaymentMode`) in Dart, cleanly compiling them via `build_runner`.
 - Engineered a calendar-drift-safe chronological allocation service (`RDLedgerService`) in Dart (the "Brain") that handles 1% PO late-fee capping and calculation dynamically.

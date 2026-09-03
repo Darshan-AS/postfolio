@@ -7,7 +7,7 @@ ALTER TABLE public.recurring_deposits
 
 -- 2. Alter rd_transactions to support payment_mode
 ALTER TABLE public.rd_transactions 
-  ADD COLUMN IF NOT EXISTS payment_mode TEXT CHECK (payment_mode IN ('cash', 'upi', 'cheque', 'bank_transfer')) NOT NULL DEFAULT 'cash';
+  ADD COLUMN IF NOT EXISTS payment_mode TEXT NOT NULL;
 
 -- 3. Create rd_installments table
 CREATE TABLE IF NOT EXISTS public.rd_installments (
@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS public.rd_installments (
   due_date DATE NOT NULL,
   installment_amount NUMERIC NOT NULL,
   customer_paid_amount NUMERIC NOT NULL DEFAULT 0,
-  customer_status TEXT CHECK (customer_status IN ('unpaid', 'partially_paid', 'fully_paid')) NOT NULL DEFAULT 'unpaid',
-  po_status TEXT CHECK (po_status IN ('unpaid', 'paid')) NOT NULL DEFAULT 'unpaid',
+  customer_status TEXT NOT NULL,
+  po_status TEXT NOT NULL,
   po_paid_date DATE,
   late_fee NUMERIC NOT NULL DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
