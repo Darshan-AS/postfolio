@@ -10,6 +10,7 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
@@ -211,6 +212,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     String? interestRate,
     DepositStatus status = DepositStatus.active,
     List<Nominee> nominees = const [],
+    String initialPaidInstallments = '0',
   }) async {
     final depositId = id ?? const Uuid().v4();
     final postalRateService = ref.read(postalRateServiceProvider);
@@ -219,6 +221,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     final rate = interestRate != null
         ? double.tryParse(interestRate.trim())
         : null;
+    final initialPaid = int.tryParse(initialPaidInstallments.trim()) ?? 0;
 
     final createResult = RecurringDeposit.create(
       id: depositId,
@@ -234,6 +237,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
       startDate: startDate,
       nominees: nominees,
       postalRateService: postalRateService,
+      initialPaidInstallments: initialPaid,
     );
 
     final RecurringDeposit deposit;
@@ -245,14 +249,22 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     }
 
     final repository = ref.read(recurringDepositRepositoryProvider);
-    final Result<void, String> result = id != null
-        ? await repository.updateRecurringDeposit(deposit)
-        : await repository.createRecurringDeposit(deposit);
-
-    return switch (result) {
-      Success() => const Success<void, String>(null),
-      Failure(error: final err) => Failure<void, String>(err),
-    };
+    if (id != null) {
+      return await repository.updateRecurringDeposit(deposit);
+    } else {
+      final initialSchedule = RDLedgerService.generateInitialSchedule(
+        rdId: deposit.id,
+        startDate: deposit.startDate,
+        installmentAmount: deposit.installmentAmount,
+        termYears: deposit.termYears,
+        termMonths: deposit.termMonths,
+        initialPaidInstallments: deposit.initialPaidInstallments,
+      );
+      return await repository.createRecurringDeposit(
+        deposit,
+        initialSchedule: initialSchedule,
+      );
+    }
   }
 
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {

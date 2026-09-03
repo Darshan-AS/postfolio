@@ -1,10 +1,13 @@
 # Project Progress
 
 ## Current State
-**RD Ledger Feature - Phase 4 In-Progress (Interactive Inline Collapsible Ledger UI Prototype & Full State Matrix)**:
-- Resolved all static analysis errors in `RecurringDepositDetailScreen` by fixing dimension token lookups (`radiusLg`, `radiusMd`), aligning HugeIcon names, replacing deprecated `.withOpacity()` with `.withValues(alpha: ...)`, typing `Failure<void, String>` pattern matches, and updating provider invocations to the generated `rDLedgerControllerProvider`.
-- Integrated `_CollapsibleInstallmentsSection`, `_CollapsibleTransactionsSection`, and `_LogPaymentBottomSheet` featuring interactive chronological allocation previews ("Pure Brain" calculations), bulk PO deposit selections, and real-time CDC updates.
-- Implemented the complete 3x2 state matrix handling agent pre-payments to the Post Office: enabled PO deposit selection for all unpaid PO installments, added purple `Advanced to PO` & `Advance Partially Repaid` badges with comprehensive breakdown indicators (`Customer owes: ₹X (Balance: ₹Y + Default Fee: ₹Z)`), and added summary KPI cards for `Pending at PO` and `Advanced (Receivable)`.
+**RD Ledger Feature - Phase 4 Complete (Interactive Inline Collapsible Ledger UI, Onboarding Baseline, & Domain/Constraint Alignment)**:
+- Designed and built standard Material 3 collapsible ledger segments in `RecurringDepositDetailScreen` for monthly schedules, raw transaction logs, and interactive chronological payment log sheets.
+- Added support for onboarding baseline via `initialPaidInstallments`: payments before the specified threshold are automatically marked settled prior to onboarding.
+- Standardized domain modeling with `validateInitialPaidInstallments` integrated directly with the central Slang localization system (`en.i18n.yaml` translation files).
+- Decoupled `RDLedgerService` and `isNew` boolean flags from repositories; orchestrated ledger schedule generation cleanly in `RecurringDepositsController` to respect Clean Architecture boundaries.
+- Resolved `PostgrestException` check constraint violations by mapping enums utilizing `@JsonValue` serialized keys via `inst.toJson()` instead of raw `.name` properties, matching PostgreSQL snake_case constraints precisely.
+- Implemented full 3x2 state matrix handling agent pre-payments to the Post Office: enabled PO deposit selection for all unpaid PO installments, added purple `Advanced to PO` & `Advance Partially Repaid` badges with comprehensive breakdown indicators (`Customer owes: ₹X (Balance: ₹Y + Default Fee: ₹Z)`), and added summary KPI cards for `Pending at PO` and `Advanced (Receivable)`.
 - Updated default/late fee calculation in `RDInstallment` and `RDLedgerService` to compute cumulative $1\% \times \text{months defaulted}$ dynamically in accordance with Post Office rules.
 - Verified 100% clean static analysis (`flutter analyze` - 0 issues) and 100% passing tests (`flutter test`).
 

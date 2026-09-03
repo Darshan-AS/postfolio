@@ -23,7 +23,10 @@ part 'recurring_deposit_repository.g.dart';
 abstract class RecurringDepositRepository {
   Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits();
   Stream<Result<RecurringDeposit, String>> watchRecurringDepositById(String id);
-  Future<Result<void, String>> createRecurringDeposit(RecurringDeposit deposit);
+  Future<Result<void, String>> createRecurringDeposit(
+    RecurringDeposit deposit, {
+    List<RDInstallment> initialSchedule = const [],
+  });
   Future<Result<void, String>> updateRecurringDeposit(RecurringDeposit deposit);
   Future<Result<void, String>> deleteRecurringDeposit(String id);
 
@@ -99,8 +102,9 @@ class FirestoreRecurringDepositRepository
 
   @override
   Future<Result<void, String>> createRecurringDeposit(
-    RecurringDeposit deposit,
-  ) async {
+    RecurringDeposit deposit, {
+    List<RDInstallment> initialSchedule = const [],
+  }) async {
     try {
       _deposits.doc(deposit.id).set(deposit);
       return const Success(null);
@@ -250,13 +254,20 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 
   @override
   Future<Result<void, String>> createRecurringDeposit(
-    RecurringDeposit deposit,
-  ) async {
+    RecurringDeposit deposit, {
+    List<RDInstallment> initialSchedule = const [],
+  }) async {
     await Future.delayed(const Duration(milliseconds: 500));
     final newDeposit = deposit.copyWith(
       id: deposit.id.isEmpty ? const Uuid().v4() : deposit.id,
     );
     _deposits.add(newDeposit);
+    if (initialSchedule.isNotEmpty) {
+      final insts = _getOrGenerateInstallments(newDeposit.id);
+      insts.clear();
+      insts.addAll(initialSchedule);
+      _getInstallmentsController(newDeposit.id).add(Success([...insts]));
+    }
     _emit();
     return const Success(null);
   }

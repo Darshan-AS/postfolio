@@ -25,6 +25,7 @@ class RecurringDepositFormState {
   final TextEditingController installmentAmountController;
   final TextEditingController interestRateController;
   final TextEditingController startDateController;
+  final TextEditingController initialPaidInstallmentsController;
   final ValueNotifier<String?> selectedCustomerId;
   final ValueNotifier<RecurringSchemeType> selectedScheme;
   final ValueNotifier<int> selectedTermYears;
@@ -48,6 +49,7 @@ class RecurringDepositFormState {
     required this.installmentAmountController,
     required this.interestRateController,
     required this.startDateController,
+    required this.initialPaidInstallmentsController,
     required this.selectedCustomerId,
     required this.selectedScheme,
     required this.selectedTermYears,
@@ -105,6 +107,9 @@ RecurringDepositFormState useRecurringDepositForm({
     text: (deposit?.interestRate ?? initialTerms.interestRate).toStringAsFixed(
       2,
     ),
+  );
+  final initialPaidInstallmentsController = useTextEditingController(
+    text: deposit?.initialPaidInstallments.toString() ?? '0',
   );
 
   final selectedCustomerId = useState<String?>(
@@ -235,6 +240,7 @@ RecurringDepositFormState useRecurringDepositForm({
             status: selectedStatus.value,
             startDate: startDate.value,
             nominees: nominees.value,
+            initialPaidInstallments: initialPaidInstallmentsController.text,
           );
 
       if (!context.mounted) return;
@@ -262,6 +268,7 @@ RecurringDepositFormState useRecurringDepositForm({
     installmentAmountController: installmentAmountController,
     interestRateController: interestRateController,
     startDateController: startDateController,
+    initialPaidInstallmentsController: initialPaidInstallmentsController,
     selectedCustomerId: selectedCustomerId,
     selectedScheme: selectedScheme,
     selectedTermYears: selectedTermYears,

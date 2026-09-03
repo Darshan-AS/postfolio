@@ -106,6 +106,26 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   static String? validateInterestRate(double? rate, String fieldName) =>
       BaseDeposit.validateInterestRate(rate, fieldName);
 
+  static String? validateInitialPaidInstallments(
+    String? val,
+    int termYears,
+    int termMonths,
+  ) {
+    if (val == null || val.trim().isEmpty) return null;
+    final num = int.tryParse(val.trim());
+    if (num == null || num < 0) {
+      return t.errors.invalidPositiveNumber;
+    }
+    final totalMonths = termYears * 12 + termMonths;
+    if (num > totalMonths) {
+      return t.errors.invalidInitialPaidInstallments(
+        paid: num,
+        total: totalMonths,
+      );
+    }
+    return null;
+  }
+
   static Result<RecurringDeposit, String> create({
     required String id,
     String? serialNo,
@@ -143,6 +163,11 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
         BaseDeposit.validateInterestRate(
           resolvedInterestRate,
           t.recurringDeposits.fields.interestRate,
+        ) ??
+        validateInitialPaidInstallments(
+          initialPaidInstallments.toString(),
+          resolvedTermYears,
+          resolvedTermMonths,
         ) ??
         Nominee.validateNominees(nominees);
 
