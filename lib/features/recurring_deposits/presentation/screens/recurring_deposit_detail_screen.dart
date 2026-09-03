@@ -19,6 +19,14 @@ import 'package:postfolio/core/widgets/domain/wealth_accumulation_grid.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
+import 'package:postfolio/core/extensions/double_extension.dart';
+import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
+
 class RecurringDepositDetailScreen extends ConsumerWidget {
   final String depositId;
 
@@ -226,9 +234,797 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
             AppSpacings.gapLg,
             if (deposit.nominees.isNotEmpty)
               NomineesDetailSection(nominees: deposit.nominees),
+            AppSpacings.gapLg,
+            _CollapsibleInstallmentsSection(deposit: deposit),
+            AppSpacings.gapLg,
+            _CollapsibleTransactionsSection(deposit: deposit),
           ],
         );
       },
+    );
+  }
+}
+
+class _CollapsibleInstallmentsSection extends HookConsumerWidget {
+  final RecurringDeposit deposit;
+
+  const _CollapsibleInstallmentsSection({required this.deposit});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isExpanded = useState(false);
+    final theme = Theme.of(context);
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      ),
+      child: ExpansionTile(
+        title: Text(
+          'Installments Ledger',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: const HugeIcon(
+          icon: HugeIcons.strokeRoundedCalendar01,
+          size: AppDimensions.iconMd,
+        ),
+        onExpansionChanged: (val) {
+          isExpanded.value = val;
+        },
+        children: [
+          if (isExpanded.value)
+            _InstallmentsList(deposit: deposit)
+          else
+            const SizedBox.shrink(),
+        ],
+      ),
+    );
+  }
+}
+
+class _InstallmentsList extends HookConsumerWidget {
+  final RecurringDeposit deposit;
+
+  const _InstallmentsList({required this.deposit});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final installmentsAsync = ref.watch(rdInstallmentsStreamProvider(deposit.id));
+    final isSelectionMode = useState(false);
+    final selectedIds = useState<Set<String>>({});
+    final theme = Theme.of(context);
+
+    return installmentsAsync.when(
+      data: (installments) {
+        if (installments.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(AppDimensions.paddingLg),
+            child: Text('No installments found.'),
+          );
+        }
+
+        final poEligible = installments.where(
+          (inst) => inst.customerStatus == RDInstallmentStatus.fullyPaid &&
+                    inst.poStatus == RDPoStatus.unpaid
+        ).toList();
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingMd,
+                vertical: AppDimensions.paddingSm,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: isSelectionMode.value
+                        ? Text(
+                            '${selectedIds.value.length} selected for PO',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  if (!isSelectionMode.value) ...[
+                    FilledButton.icon(
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          builder: (context) => _LogPaymentBottomSheet(
+                            deposit: deposit,
+                            currentSchedule: installments,
+                          ),
+                        );
+                      },
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedCoins01,
+                        size: AppDimensions.iconSm,
+                        color: Colors.white,
+                      ),
+                      label: const Text('Log Payment'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.paddingMd,
+                          vertical: AppDimensions.paddingSm,
+                        ),
+                      ),
+                    ),
+                    if (poEligible.isNotEmpty) ...[
+                      AppSpacings.gapSm,
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          isSelectionMode.value = true;
+                          selectedIds.value = {};
+                        },
+                        icon: const HugeIcon(
+                          icon: HugeIcons.strokeRoundedCheckmarkCircle01,
+                          size: AppDimensions.iconSm,
+                        ),
+                        label: const Text('Bulk PO'),
+                      ),
+                    ],
+                  ] else ...[
+                    TextButton(
+                      onPressed: () {
+                        isSelectionMode.value = false;
+                        selectedIds.value = {};
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    AppSpacings.gapSm,
+                    FilledButton(
+                      onPressed: selectedIds.value.isEmpty
+                          ? null
+                          : () async {
+                              final toUpdate = installments
+                                  .where((inst) => selectedIds.value.contains(inst.id))
+                                  .map((inst) => inst.copyWith(
+                                        poStatus: RDPoStatus.paid,
+                                        poPaidDate: DateTime.now(),
+                                      ))
+                                  .toList();
+
+                              final result = await ref
+                                  .read(rDLedgerControllerProvider.notifier)
+                                  .recordPoPayments(installments: toUpdate);
+
+                              if (result is Success) {
+                                isSelectionMode.value = false;
+                                selectedIds.value = {};
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      behavior: SnackBarBehavior.floating,
+                                      content: Text('Bulk PO deposit updated successfully!'),
+                                    ),
+                                  );
+                                }
+                              } else if (result is Failure<void, String> && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    behavior: SnackBarBehavior.floating,
+                                    content: Text(result.error),
+                                  ),
+                                );
+                              }
+                            },
+                      child: Text('Deposit (${selectedIds.value.length})'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: installments.length,
+              separatorBuilder: (context, index) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final inst = installments[index];
+                final monthNum = index + 1;
+                final isOverdue = inst.isOverdueAt(DateTime.now());
+
+                Color statusColor;
+                List<List<dynamic>> statusIcon;
+                String statusText;
+
+                switch (inst.customerStatus) {
+                  case RDInstallmentStatus.fullyPaid:
+                    statusColor = Colors.green;
+                    statusIcon = HugeIcons.strokeRoundedCheckmarkCircle01;
+                    statusText = 'Fully Paid';
+                    break;
+                  case RDInstallmentStatus.partiallyPaid:
+                    statusColor = Colors.orange;
+                    statusIcon = HugeIcons.strokeRoundedAlert01;
+                    statusText = 'Partially Paid';
+                    break;
+                  case RDInstallmentStatus.unpaid:
+                    statusColor = isOverdue ? Colors.red : Colors.grey;
+                    statusIcon = isOverdue
+                        ? HugeIcons.strokeRoundedAlert01
+                        : HugeIcons.strokeRoundedTimer02;
+                    statusText = isOverdue ? 'Overdue' : 'Unpaid';
+                    break;
+                }
+
+                final isPoPaid = inst.poStatus == RDPoStatus.paid;
+
+                final titleRow = Row(
+                  children: [
+                    Text(
+                      'Month $monthNum',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: AppDimensions.paddingSm),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: statusColor.withValues(alpha: 0.5)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          HugeIcon(icon: statusIcon, size: 10, color: statusColor),
+                          const SizedBox(width: 2),
+                          Text(
+                            statusText,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: statusColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (inst.lateFee > 0) ...[
+                      const SizedBox(width: AppDimensions.paddingSm),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+                        ),
+                        child: Text(
+                          'Late Fee: ${inst.lateFee.toRupeeFormat()}',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+
+                final subtitleColumn = Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Due: ${inst.dueDate.toAppFormat()} | Installment: ${inst.installmentAmount.toRupeeFormat()}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      if (inst.customerPaidAmount > 0)
+                        Text(
+                          'Paid by Customer: ${inst.customerPaidAmount.toRupeeFormat()}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      if (isPoPaid)
+                        Row(
+                          children: [
+                            HugeIcon(
+                              icon: HugeIcons.strokeRoundedCheckmarkBadge01,
+                              size: 12,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Deposited to PO on ${inst.poPaidDate?.toAppFormat()}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        )
+                      else if (inst.customerStatus == RDInstallmentStatus.fullyPaid)
+                        Row(
+                          children: [
+                            const HugeIcon(
+                              icon: HugeIcons.strokeRoundedAlert01,
+                              size: 12,
+                              color: Colors.blue,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Paid but pending PO deposit',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                );
+
+                if (isSelectionMode.value) {
+                  final isEligible = inst.customerStatus == RDInstallmentStatus.fullyPaid &&
+                      inst.poStatus == RDPoStatus.unpaid;
+                  return CheckboxListTile(
+                    controlAffinity: ListTileControlAffinity.leading,
+                    value: selectedIds.value.contains(inst.id),
+                    onChanged: isEligible
+                        ? (checked) {
+                            final current = Set<String>.from(selectedIds.value);
+                            if (checked == true) {
+                              current.add(inst.id);
+                            } else {
+                              current.remove(inst.id);
+                            }
+                            selectedIds.value = current;
+                          }
+                        : null,
+                    title: titleRow,
+                    subtitle: subtitleColumn,
+                  );
+                }
+
+                return ListTile(
+                  title: titleRow,
+                  subtitle: subtitleColumn,
+                );
+              },
+            ),
+          ],
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.all(AppDimensions.paddingLg),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => Padding(
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
+        child: Center(
+          child: Text(
+            'Error: $err',
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LogPaymentBottomSheet extends HookConsumerWidget {
+  final RecurringDeposit deposit;
+  final List<RDInstallment> currentSchedule;
+
+  const _LogPaymentBottomSheet({
+    required this.deposit,
+    required this.currentSchedule,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final amountController = useTextEditingController();
+    final paidDate = useState(DateTime.now());
+    final paymentMode = useState(RDPaymentMode.cash);
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+    final theme = Theme.of(context);
+
+    final amountText = useListenable(amountController);
+    final double amountValue = double.tryParse(amountText.text.trim()) ?? 0.0;
+
+    final previewResult = useMemoized(() {
+      if (amountValue <= 0.0) return null;
+      return RDLedgerService.allocateCustomerPayment(
+        currentSchedule: currentSchedule,
+        paymentAmount: amountValue,
+        paidDate: paidDate.value,
+        paymentMode: paymentMode.value,
+        rdId: deposit.id,
+      );
+    }, [amountValue, paidDate.value, paymentMode.value, currentSchedule]);
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
+        child: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Log Customer Payment',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                AppSpacings.gapLg,
+                AppTextField(
+                  controller: amountController,
+                  labelText: 'Payment Amount',
+                  isRequired: true,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  prefixText: t.format.currencySymbol,
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Amount is required';
+                    }
+                    final numVal = double.tryParse(val.trim());
+                    if (numVal == null || numVal <= 0) {
+                      return 'Enter a valid amount';
+                    }
+                    return null;
+                  },
+                ),
+                AppSpacings.gapLg,
+                Text(
+                  'Payment Mode',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SegmentedButton<RDPaymentMode>(
+                  selected: {paymentMode.value},
+                  onSelectionChanged: (selected) {
+                    paymentMode.value = selected.first;
+                  },
+                  segments: RDPaymentMode.values.map((mode) {
+                    List<List<dynamic>> icon;
+                    switch (mode) {
+                      case RDPaymentMode.cash:
+                        icon = HugeIcons.strokeRoundedCoins01;
+                        break;
+                      case RDPaymentMode.upi:
+                        icon = HugeIcons.strokeRoundedCreditCard;
+                        break;
+                      case RDPaymentMode.cheque:
+                        icon = HugeIcons.strokeRoundedTicket01;
+                        break;
+                      case RDPaymentMode.bankTransfer:
+                        icon = HugeIcons.strokeRoundedBank;
+                        break;
+                    }
+                    return ButtonSegment<RDPaymentMode>(
+                      value: mode,
+                      label: Text(mode.displayName),
+                      icon: HugeIcon(icon: icon, size: 16),
+                    );
+                  }).toList(),
+                ),
+                AppSpacings.gapLg,
+                AppTextField(
+                  readOnly: true,
+                  labelText: 'Payment Date',
+                  controller: TextEditingController(
+                    text: paidDate.value.toAppFormat(),
+                  ),
+                  prefixIcon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedCalendar01,
+                    size: AppDimensions.iconMd,
+                  ),
+                  onTap: () async {
+                    final selected = await showDatePicker(
+                      context: context,
+                      initialDate: paidDate.value,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (selected != null) {
+                      paidDate.value = selected;
+                    }
+                  },
+                ),
+                AppSpacings.gapXl,
+                Container(
+                  padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          HugeIcon(
+                            icon: HugeIcons.strokeRoundedActivity01,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Allocation Preview (Pure Brain)',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (previewResult == null)
+                        Text(
+                          'Enter a payment amount to see how the ledger cascade distributes funds chronologically.',
+                          style: theme.textTheme.bodySmall,
+                        )
+                      else ...[
+                        Text(
+                          'This payment will cover:',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        ...previewResult.updatedInstallments.map((inst) {
+                          final monthIdx = currentSchedule.indexWhere((s) => s.id == inst.id);
+                          final monthNum = monthIdx != -1 ? monthIdx + 1 : '?';
+
+                          String allocationDesc;
+                          if (inst.customerStatus == RDInstallmentStatus.fullyPaid) {
+                            allocationDesc = 'Fully Paid (covered ${inst.installmentAmount.toRupeeFormat()})';
+                          } else {
+                            allocationDesc = 'Partially Paid (allocated ${inst.customerPaidAmount.toRupeeFormat()})';
+                          }
+
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 8.0, top: 2.0),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.subdirectory_arrow_right, size: 12, color: Colors.grey),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Month $monthNum: $allocationDesc',
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                                if (inst.lateFee > 0) ...[
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '(includes ${inst.lateFee.toRupeeFormat()} Late Fee)',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        }),
+                        if (previewResult.leftoverAmount > 0) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.star, size: 12, color: Colors.green),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Advance Credit (Leftover): ${previewResult.leftoverAmount.toRupeeFormat()}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ],
+                  ),
+                ),
+                AppSpacings.gapXl,
+                FilledButton(
+                  onPressed: () async {
+                    if (formKey.currentState?.validate() != true) return;
+                    if (previewResult == null) return;
+
+                    final Result<void, String> result = await ref
+                        .read(rDLedgerControllerProvider.notifier)
+                        .recordCustomerPayment(
+                          rdId: deposit.id,
+                          paymentAmount: amountValue,
+                          paidDate: paidDate.value,
+                          paymentMode: paymentMode.value,
+                          currentSchedule: currentSchedule,
+                        );
+
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                      if (result is Success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            behavior: SnackBarBehavior.floating,
+                            content: Text('Payment recorded successfully!'),
+                          ),
+                        );
+                      } else if (result is Failure<void, String>) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            behavior: SnackBarBehavior.floating,
+                            content: Text(result.error),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Record Payment'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CollapsibleTransactionsSection extends HookConsumerWidget {
+  final RecurringDeposit deposit;
+
+  const _CollapsibleTransactionsSection({required this.deposit});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isExpanded = useState(false);
+    final theme = Theme.of(context);
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      ),
+      child: ExpansionTile(
+        title: Text(
+          'Payment History',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: const HugeIcon(
+          icon: HugeIcons.strokeRoundedCalendar01,
+          size: AppDimensions.iconMd,
+        ),
+        onExpansionChanged: (val) {
+          isExpanded.value = val;
+        },
+        children: [
+          if (isExpanded.value)
+            _TransactionsList(deposit: deposit)
+          else
+            const SizedBox.shrink(),
+        ],
+      ),
+    );
+  }
+}
+
+class _TransactionsList extends ConsumerWidget {
+  final RecurringDeposit deposit;
+
+  const _TransactionsList({required this.deposit});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final transactionsAsync = ref.watch(rdTransactionsStreamProvider(deposit.id));
+    final theme = Theme.of(context);
+
+    return transactionsAsync.when(
+      data: (transactions) {
+        if (transactions.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(AppDimensions.paddingLg),
+            child: Center(
+              child: Text('No payments recorded yet.'),
+            ),
+          );
+        }
+
+        return ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: transactions.length,
+          separatorBuilder: (context, index) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final tx = transactions[index];
+            List<List<dynamic>> modeIcon;
+            switch (tx.paymentMode) {
+              case RDPaymentMode.cash:
+                modeIcon = HugeIcons.strokeRoundedCoins01;
+                break;
+              case RDPaymentMode.upi:
+                modeIcon = HugeIcons.strokeRoundedCreditCard;
+                break;
+              case RDPaymentMode.cheque:
+                modeIcon = HugeIcons.strokeRoundedTicket01;
+                break;
+              case RDPaymentMode.bankTransfer:
+                modeIcon = HugeIcons.strokeRoundedBank;
+                break;
+            }
+
+            return ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer,
+                  shape: BoxShape.circle,
+                ),
+                child: HugeIcon(
+                  icon: modeIcon,
+                  size: AppDimensions.iconSm,
+                  color: theme.colorScheme.onSecondaryContainer,
+                ),
+              ),
+              title: Text(
+                tx.amount.toRupeeFormat(),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text('Paid on ${tx.paidDate.toAppFormat()} via ${tx.paymentMode.displayName}'),
+            );
+          },
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.all(AppDimensions.paddingLg),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => Padding(
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
+        child: Center(
+          child: Text(
+            'Error: $err',
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
+      ),
     );
   }
 }

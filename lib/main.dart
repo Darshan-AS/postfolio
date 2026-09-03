@@ -21,10 +21,14 @@ import 'package:postfolio/core/env/env.dart';
 
 import 'package:flutter_web_plugins/url_strategy.dart';
 
-const bool useFirebaseEmulator = bool.fromEnvironment(
+const bool useEmulator = bool.fromEnvironment(
   'USE_EMULATOR',
   defaultValue: false,
 );
+
+const String _localSupabaseUrl = 'http://127.0.0.1:54321';
+const String _localSupabaseAnonKey =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
 
 void main() async {
   usePathUrlStrategy();
@@ -33,8 +37,8 @@ void main() async {
 
   // Initialize Supabase
   await Supabase.initialize(
-    url: Env.supabaseUrl,
-    publishableKey: Env.supabasePublishableKey,
+    url: useEmulator ? _localSupabaseUrl : Env.supabaseUrl,
+    publishableKey: useEmulator ? _localSupabaseAnonKey : Env.supabasePublishableKey,
   );
 
   // Enable Firestore cache specifically for Web
@@ -56,7 +60,7 @@ void main() async {
     return true;
   };
 
-  if (useFirebaseEmulator) {
+  if (useEmulator) {
     try {
       final String host;
       if (kIsWeb) {
