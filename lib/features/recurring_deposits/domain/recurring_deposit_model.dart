@@ -30,6 +30,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required DateTime startDate,
     @Default([]) List<Nominee> nominees,
     @Default(DepositStatus.active) DepositStatus status,
+    @Default(0) int initialPaidInstallments,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? createdAt,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? updatedAt,
     @JsonKey(includeIfNull: false) String? migrationSource,
@@ -106,6 +107,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required DateTime startDate,
     List<Nominee> nominees = const [],
     DepositStatus status = DepositStatus.active,
+    int initialPaidInstallments = 0,
   }) {
     final validationError =
         BaseDeposit.validateAccountNo(accountNo) ??
@@ -150,6 +152,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
         startDate: startDate,
         nominees: List.unmodifiable(nominees),
         status: status,
+        initialPaidInstallments: initialPaidInstallments,
       ),
     );
   }
