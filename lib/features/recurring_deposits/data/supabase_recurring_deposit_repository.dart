@@ -2,7 +2,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/core/utils/result.dart';
 
@@ -38,13 +37,16 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   }
 
   @override
-  Future<Result<void, String>> createRecurringDeposit(RecurringDeposit deposit) async {
-    return _saveRecurringDeposit(deposit);
+  Future<Result<void, String>> createRecurringDeposit(
+    RecurringDeposit deposit, {
+    List<RDInstallment> initialSchedule = const [],
+  }) async {
+    return _saveRecurringDeposit(deposit, initialSchedule: initialSchedule);
   }
 
   @override
   Future<Result<void, String>> updateRecurringDeposit(RecurringDeposit deposit) async {
-    return _saveRecurringDeposit(deposit);
+    return _saveRecurringDeposit(deposit, initialSchedule: const []);
   }
 
   @override
@@ -144,26 +146,21 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
     }
   }
 
-  Future<Result<void, String>> _saveRecurringDeposit(RecurringDeposit deposit) async {
+  Future<Result<void, String>> _saveRecurringDeposit(
+    RecurringDeposit deposit, {
+    List<RDInstallment> initialSchedule = const [],
+  }) async {
     try {
       final json = deposit.toJson();
-      final installments = RDLedgerService.generateInitialSchedule(
-        rdId: deposit.id,
-        startDate: deposit.startDate,
-        installmentAmount: deposit.installmentAmount,
-        termYears: deposit.termYears,
-        termMonths: deposit.termMonths,
-        initialPaidInstallments: deposit.initialPaidInstallments,
-      );
-      final installmentsJson = installments.map((inst) => {
+      final installmentsJson = initialSchedule.map((inst) => {
         'id': inst.id,
         'rd_id': inst.rdId,
         'installment_date': inst.installmentDate.toIso8601String().split('T').first,
         'due_date': inst.dueDate.toIso8601String().split('T').first,
         'installment_amount': inst.installmentAmount,
         'customer_paid_amount': inst.customerPaidAmount,
-        'customer_status': inst.customerStatus.name,
-        'po_status': inst.poStatus.name,
+        'customer_status': inst.toJson()['customer_status'],
+        'po_status': inst.toJson()['po_status'],
         'po_paid_date': inst.poPaidDate?.toIso8601String().split('T').first,
         'late_fee': inst.lateFee,
       }).toList();

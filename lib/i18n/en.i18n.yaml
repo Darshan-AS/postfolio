@@ -17,6 +17,8 @@ errors:
   invalidCif: "CIF number must be at least 9 characters"
   invalidInterestRate: "Interest rate must be between 0 and 100"
   percentageRange: "Percentage must be between 0 and 100"
+  invalidInitialPaidInstallments: "Already paid installments (${paid}) cannot be negative or exceed total term (${total} months)"
+  invalidPositiveNumber: "Please enter a valid positive number"
 
 format:
   date: "dd MMM yyyy"
@@ -260,6 +262,9 @@ recurringDeposits:
     maturityAmount: "Maturity Amount"
     startDate: "Start Date"
     maturityDate: "Maturity Date"
+    initialPaidInstallments: "Already Paid Installments"
+    initialPaidInstallmentsHelper: "Number of months already settled with Post Office prior to onboarding"
+    financialTermsLocked: "Financial terms are locked because installments/payments are already recorded."
 
 nominees:
   title: "Nominees"

@@ -653,6 +653,8 @@ class _InstallmentsList extends HookConsumerWidget {
                   owedBreakdown = 'Customer owes: ${totalOwed.toRupeeFormat()}';
                 }
 
+                final isOpeningBaseline = index < deposit.initialPaidInstallments;
+
                 final subtitleColumn = Padding(
                   padding: const EdgeInsets.only(top: 4.0),
                   child: Column(
@@ -662,60 +664,83 @@ class _InstallmentsList extends HookConsumerWidget {
                         'Due: ${inst.dueDate.toAppFormat()} | Installment: ${inst.installmentAmount.toRupeeFormat()}',
                         style: theme.textTheme.bodySmall,
                       ),
-                      if (inst.customerPaidAmount > 0)
-                        Text(
-                          paidBreakdown,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      if (isPoPaid && inst.customerStatus != RDInstallmentStatus.fullyPaid)
+                      if (isOpeningBaseline) ...[
                         Padding(
                           padding: const EdgeInsets.only(top: 2.0),
-                          child: Text(
-                            owedBreakdown,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.purple.shade700,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          child: Row(
+                            children: [
+                              HugeIcon(
+                                icon: HugeIcons.strokeRoundedCheckmarkBadge01,
+                                size: 12,
+                                color: Colors.green.shade700,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Opening Baseline (Settled prior to onboarding)',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.green.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      if (isPoPaid)
-                        Row(
-                          children: [
-                            HugeIcon(
-                              icon: HugeIcons.strokeRoundedCheckmarkBadge01,
-                              size: 12,
-                              color: theme.colorScheme.primary,
+                      ] else ...[
+                        if (inst.customerPaidAmount > 0)
+                          Text(
+                            paidBreakdown,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Deposited to PO on ${inst.poPaidDate?.toAppFormat()}',
+                          ),
+                        if (isPoPaid && inst.customerStatus != RDInstallmentStatus.fullyPaid)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2.0),
+                            child: Text(
+                              owedBreakdown,
                               style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.purple.shade700,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        if (isPoPaid)
+                          Row(
+                            children: [
+                              HugeIcon(
+                                icon: HugeIcons.strokeRoundedCheckmarkBadge01,
+                                size: 12,
                                 color: theme.colorScheme.primary,
-                                fontWeight: FontWeight.bold,
                               ),
-                            ),
-                          ],
-                        )
-                      else if (inst.customerStatus == RDInstallmentStatus.fullyPaid)
-                        Row(
-                          children: [
-                            const HugeIcon(
-                              icon: HugeIcons.strokeRoundedAlert01,
-                              size: 12,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Paid but pending PO deposit',
-                              style: theme.textTheme.bodySmall?.copyWith(
+                              const SizedBox(width: 4),
+                              Text(
+                                'Deposited to PO on ${inst.poPaidDate?.toAppFormat()}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          )
+                        else if (inst.customerStatus == RDInstallmentStatus.fullyPaid)
+                          Row(
+                            children: [
+                              const HugeIcon(
+                                icon: HugeIcons.strokeRoundedAlert01,
+                                size: 12,
                                 color: Colors.blue,
-                                fontWeight: FontWeight.bold,
                               ),
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Paid but pending PO deposit',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
                     ],
                   ),
                 );

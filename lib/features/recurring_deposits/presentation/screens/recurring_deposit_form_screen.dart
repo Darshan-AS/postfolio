@@ -296,6 +296,23 @@ List<Widget> _buildInvestmentDetails(
         selectedTermMonths.value = months;
       },
     ),
+    AppSpacings.gapLg,
+    AppTextField(
+      controller: state.initialPaidInstallmentsController,
+      labelText: t.recurringDeposits.fields.initialPaidInstallments,
+      enabled: !state.isUpdating,
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+        size: AppDimensions.iconMd,
+      ),
+      keyboardType: TextInputType.number,
+      validator: (val) => RecurringDeposit.validateInitialPaidInstallments(
+        val,
+        selectedTermYears.value,
+        selectedTermMonths.value,
+      ),
+      textInputAction: TextInputAction.next,
+    ),
     InvestmentProjectionCard(projection: projection),
   ];
 }
