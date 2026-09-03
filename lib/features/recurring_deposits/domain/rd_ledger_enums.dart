@@ -2,11 +2,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 @JsonEnum()
 enum RDInstallmentStatus {
-  @JsonValue('unpaid')
   unpaid,
-  @JsonValue('partially_paid')
   partiallyPaid,
-  @JsonValue('fully_paid')
   fullyPaid;
 
   String get displayName {
@@ -23,9 +20,7 @@ enum RDInstallmentStatus {
 
 @JsonEnum()
 enum RDPoStatus {
-  @JsonValue('unpaid')
   unpaid,
-  @JsonValue('paid')
   paid;
 
   String get displayName {
@@ -40,13 +35,9 @@ enum RDPoStatus {
 
 @JsonEnum()
 enum RDPaymentMode {
-  @JsonValue('cash')
   cash,
-  @JsonValue('upi')
   upi,
-  @JsonValue('cheque')
   cheque,
-  @JsonValue('bank_transfer')
   bankTransfer;
 
   String get displayName {

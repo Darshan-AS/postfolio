@@ -90,6 +90,7 @@
 - [ ] **Analytics & Tracing**: Add Firebase Analytics wrapper, `GoRouter` observer, and custom Performance traces.
 - [ ] **Native Integration**: Integrate `share_plus` (reports), `flutter_native_splash` (splash screen), and Local App Lock (Biometrics/PIN).
 - [ ] **Value Objects**: Explore migrating `termYears`/`termMonths` into a custom Domain-Driven Value Object.
+- [ ] **Database Casing and Constraint Alignment**: Revisit database columns and serialization enums in a future phase to standardize all tables on Postgres snake_case enums paired with strict database-level `CHECK` constraints (currently using default camelCase to maintain parity with legacy enums).
 - [ ] **Unique Email Guardrails**: Enforce a case-insensitive unique email constraint on `agent_profiles` at the DB level, and intercept constraint violations (PostgreSQL error code `23505`) in the repository/controllers to present clean user-facing error messages.
 
 ## 📱 Future Epics
