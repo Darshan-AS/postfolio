@@ -37,8 +37,18 @@ abstract class RDInstallment with _$RDInstallment {
     return evaluationDate.isAfter(dueDate);
   }
 
-  /// Helper to check if late fee is calculated yet (it should be 1% of installment amount).
-  double computeExpectedLateFee(double installmentAmt) {
-    return (installmentAmt * 0.01).ceilToDouble();
+  /// Calculates the number of defaulted calendar months at an evaluation date.
+  int defaultedMonthsAt(DateTime evaluationDate) {
+    if (!evaluationDate.isAfter(dueDate)) return 0;
+    final months = (evaluationDate.year - dueDate.year) * 12 +
+        (evaluationDate.month - dueDate.month);
+    return months < 1 ? 1 : months;
+  }
+
+  /// Helper to calculate 1% per defaulted month according to Post Office rules.
+  double computeExpectedLateFee(DateTime evaluationDate) {
+    final months = defaultedMonthsAt(evaluationDate);
+    if (months <= 0) return 0.0;
+    return (installmentAmount * 0.01 * months).ceilToDouble();
   }
 }

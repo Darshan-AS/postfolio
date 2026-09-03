@@ -1,9 +1,11 @@
 # Project Progress
 
 ## Current State
-**RD Ledger Feature - Phase 4 In-Progress (Interactive Inline Collapsible Ledger UI Prototype)**:
+**RD Ledger Feature - Phase 4 In-Progress (Interactive Inline Collapsible Ledger UI Prototype & Full State Matrix)**:
 - Resolved all static analysis errors in `RecurringDepositDetailScreen` by fixing dimension token lookups (`radiusLg`, `radiusMd`), aligning HugeIcon names, replacing deprecated `.withOpacity()` with `.withValues(alpha: ...)`, typing `Failure<void, String>` pattern matches, and updating provider invocations to the generated `rDLedgerControllerProvider`.
 - Integrated `_CollapsibleInstallmentsSection`, `_CollapsibleTransactionsSection`, and `_LogPaymentBottomSheet` featuring interactive chronological allocation previews ("Pure Brain" calculations), bulk PO deposit selections, and real-time CDC updates.
+- Implemented the complete 3x2 state matrix handling agent pre-payments to the Post Office: enabled PO deposit selection for all unpaid PO installments, added purple `Advanced to PO` & `Advance Partially Repaid` badges with comprehensive breakdown indicators (`Customer owes: ₹X (Balance: ₹Y + Default Fee: ₹Z)`), and added summary KPI cards for `Pending at PO` and `Advanced (Receivable)`.
+- Updated default/late fee calculation in `RDInstallment` and `RDLedgerService` to compute cumulative $1\% \times \text{months defaulted}$ dynamically in accordance with Post Office rules.
 - Verified 100% clean static analysis (`flutter analyze` - 0 issues) and 100% passing tests (`flutter test`).
 
 **RD Ledger Feature - Phase 1, 2 & 3 Complete (Relational Muscle, Pure Dart Domain Modeling, Repository Signatures, & Riverpod State Providers)**:
