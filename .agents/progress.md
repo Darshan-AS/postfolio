@@ -1,6 +1,11 @@
 # Project Progress
 
 ## Current State
+**RD Ledger Feature - Phase 4 In-Progress (Interactive Inline Collapsible Ledger UI Prototype)**:
+- Resolved all static analysis errors in `RecurringDepositDetailScreen` by fixing dimension token lookups (`radiusLg`, `radiusMd`), aligning HugeIcon names, replacing deprecated `.withOpacity()` with `.withValues(alpha: ...)`, typing `Failure<void, String>` pattern matches, and updating provider invocations to the generated `rDLedgerControllerProvider`.
+- Integrated `_CollapsibleInstallmentsSection`, `_CollapsibleTransactionsSection`, and `_LogPaymentBottomSheet` featuring interactive chronological allocation previews ("Pure Brain" calculations), bulk PO deposit selections, and real-time CDC updates.
+- Verified 100% clean static analysis (`flutter analyze` - 0 issues) and 100% passing tests (`flutter test`).
+
 **RD Ledger Feature - Phase 1, 2 & 3 Complete (Relational Muscle, Pure Dart Domain Modeling, Repository Signatures, & Riverpod State Providers)**:
 - Designed and built a high-performance relational database migration in `supabase/migrations/20260903000000_rd_ledger_feature.sql` implementing `rd_installments` monthly schedules and adding payment mode tracking to `rd_transactions`.
 - Structured constraints to enforce data integrity: set up foreign keys with cascades, standard indexes, and database-level `CHECK` constraints on status/payment type text columns.
