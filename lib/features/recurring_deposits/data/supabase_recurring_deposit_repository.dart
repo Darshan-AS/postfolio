@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/core/utils/result.dart';
 
@@ -17,7 +18,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   static const _listColumns =
       'id,agent_id,customer_id,customer_name,status,scheme_type,account_no,'
       'serial_no,installment_amount,interest_rate,term_years,term_months,'
-      'start_date,created_at,updated_at';
+      'start_date,initial_paid_installments,created_at,updated_at';
 
   @override
   Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits() {
@@ -92,6 +93,27 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   Future<Result<void, String>> _saveRecurringDeposit(RecurringDeposit deposit) async {
     try {
       final json = deposit.toJson();
+      final installments = RDLedgerService.generateInitialSchedule(
+        rdId: deposit.id,
+        startDate: deposit.startDate,
+        installmentAmount: deposit.installmentAmount,
+        termYears: deposit.termYears,
+        termMonths: deposit.termMonths,
+        initialPaidInstallments: deposit.initialPaidInstallments,
+      );
+      final installmentsJson = installments.map((inst) => {
+        'id': inst.id,
+        'rd_id': inst.rdId,
+        'installment_date': inst.installmentDate.toIso8601String().split('T').first,
+        'due_date': inst.dueDate.toIso8601String().split('T').first,
+        'installment_amount': inst.installmentAmount,
+        'customer_paid_amount': inst.customerPaidAmount,
+        'customer_status': inst.customerStatus.name,
+        'po_status': inst.poStatus.name,
+        'po_paid_date': inst.poPaidDate?.toIso8601String().split('T').first,
+        'late_fee': inst.lateFee,
+      }).toList();
+
       await _supabaseClient.rpc('save_recurring_deposit', params: {
         'p_id': deposit.id,
         'p_customer_id': deposit.customerId,
@@ -105,6 +127,8 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
         'p_term_months': deposit.termMonths,
         'p_start_date': deposit.startDate.toIso8601String().split('T').first,
         'p_nominees': deposit.nominees.map((n) => n.toJson()).toList(),
+        'p_initial_paid_installments': deposit.initialPaidInstallments,
+        'p_installments': installmentsJson,
       });
       return const Success(null);
     } catch (e) {
