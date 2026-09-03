@@ -4,6 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:postfolio/core/constants/firestore_keys.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:postfolio/features/auth/domain/auth_state.dart';
@@ -22,6 +25,17 @@ abstract class RecurringDepositRepository {
   Future<Result<void, String>> createRecurringDeposit(RecurringDeposit deposit);
   Future<Result<void, String>> updateRecurringDeposit(RecurringDeposit deposit);
   Future<Result<void, String>> deleteRecurringDeposit(String id);
+
+  // RD Ledger & Transaction Tracking
+  Stream<Result<List<RDInstallment>, String>> watchRDInstallments(String rdId);
+  Stream<Result<List<RDTransaction>, String>> watchRDTransactions(String rdId);
+  Future<Result<void, String>> recordCustomerPayment(
+    RDTransaction transaction,
+    List<RDInstallment> updatedInstallments,
+  );
+  Future<Result<void, String>> recordPoPayments(
+    List<RDInstallment> installments,
+  );
 }
 
 class FirestoreRecurringDepositRepository
@@ -99,6 +113,33 @@ class FirestoreRecurringDepositRepository
       return Failure(e.toString());
     }
   }
+
+  @override
+  Stream<Result<List<RDInstallment>, String>> watchRDInstallments(String rdId) {
+    // Firestore does not support the relational RD ledger feature (Supabase only)
+    return Stream.value(const Success([]));
+  }
+
+  @override
+  Stream<Result<List<RDTransaction>, String>> watchRDTransactions(String rdId) {
+    // Firestore does not support the relational RD ledger feature (Supabase only)
+    return Stream.value(const Success([]));
+  }
+
+  @override
+  Future<Result<void, String>> recordCustomerPayment(
+    RDTransaction transaction,
+    List<RDInstallment> updatedInstallments,
+  ) async {
+    return const Failure('Firestore repository does not support RD ledger payments');
+  }
+
+  @override
+  Future<Result<void, String>> recordPoPayments(
+    List<RDInstallment> installments,
+  ) async {
+    return const Failure('Firestore repository does not support RD ledger payments');
+  }
 }
 
 class FakeRecurringDepositRepository implements RecurringDepositRepository {
@@ -107,6 +148,48 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 
   final List<RecurringDeposit> _deposits = FakeDataSource().recurringDeposits
       .toList();
+
+  final Map<String, List<RDInstallment>> _fakeInstallments = {};
+  final Map<String, List<RDTransaction>> _fakeTransactions = {};
+
+  final _installmentsControllers = <String, StreamController<Result<List<RDInstallment>, String>>>{};
+  final _transactionsControllers = <String, StreamController<Result<List<RDTransaction>, String>>>{};
+
+  StreamController<Result<List<RDInstallment>, String>> _getInstallmentsController(String rdId) {
+    return _installmentsControllers.putIfAbsent(rdId, () {
+      return StreamController<Result<List<RDInstallment>, String>>.broadcast();
+    });
+  }
+
+  StreamController<Result<List<RDTransaction>, String>> _getTransactionsController(String rdId) {
+    return _transactionsControllers.putIfAbsent(rdId, () {
+      return StreamController<Result<List<RDTransaction>, String>>.broadcast();
+    });
+  }
+
+  List<RDInstallment> _getOrGenerateInstallments(String rdId) {
+    if (!_fakeInstallments.containsKey(rdId)) {
+      final rdIndex = _deposits.indexWhere((d) => d.id == rdId);
+      final rd = rdIndex != -1 ? _deposits[rdIndex] : _deposits.first;
+      final schedule = RDLedgerService.generateInitialSchedule(
+        rdId: rd.id,
+        startDate: rd.startDate,
+        installmentAmount: rd.installmentAmount,
+        termYears: rd.termYears,
+        termMonths: rd.termMonths,
+        initialPaidInstallments: rd.initialPaidInstallments,
+      );
+      _fakeInstallments[rdId] = schedule;
+    }
+    return _fakeInstallments[rdId]!;
+  }
+
+  List<RDTransaction> _getOrGenerateTransactions(String rdId) {
+    if (!_fakeTransactions.containsKey(rdId)) {
+      _fakeTransactions[rdId] = [];
+    }
+    return _fakeTransactions[rdId]!;
+  }
 
   void _emit() {
     if (!_controller.isClosed) {
@@ -160,8 +243,70 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     return const Failure('Recurring Deposit not found');
   }
 
+  @override
+  Stream<Result<List<RDInstallment>, String>> watchRDInstallments(String rdId) async* {
+    yield Success(_getOrGenerateInstallments(rdId));
+    yield* _getInstallmentsController(rdId).stream;
+  }
+
+  @override
+  Stream<Result<List<RDTransaction>, String>> watchRDTransactions(String rdId) async* {
+    yield Success(_getOrGenerateTransactions(rdId));
+    yield* _getTransactionsController(rdId).stream;
+  }
+
+  @override
+  Future<Result<void, String>> recordCustomerPayment(
+    RDTransaction transaction,
+    List<RDInstallment> updatedInstallments,
+  ) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final rdId = transaction.rdId;
+
+    final txs = _getOrGenerateTransactions(rdId);
+    txs.insert(0, transaction);
+    _getTransactionsController(rdId).add(Success([...txs]));
+
+    final currentInsts = _getOrGenerateInstallments(rdId);
+    for (final updated in updatedInstallments) {
+      final idx = currentInsts.indexWhere((inst) => inst.id == updated.id);
+      if (idx != -1) {
+        currentInsts[idx] = updated;
+      }
+    }
+    _getInstallmentsController(rdId).add(Success([...currentInsts]));
+
+    return const Success(null);
+  }
+
+  @override
+  Future<Result<void, String>> recordPoPayments(
+    List<RDInstallment> installments,
+  ) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (installments.isEmpty) return const Success(null);
+    final rdId = installments.first.rdId;
+
+    final currentInsts = _getOrGenerateInstallments(rdId);
+    for (final updated in installments) {
+      final idx = currentInsts.indexWhere((inst) => inst.id == updated.id);
+      if (idx != -1) {
+        currentInsts[idx] = updated;
+      }
+    }
+    _getInstallmentsController(rdId).add(Success([...currentInsts]));
+
+    return const Success(null);
+  }
+
   void dispose() {
     _controller.close();
+    for (final ctrl in _installmentsControllers.values) {
+      ctrl.close();
+    }
+    for (final ctrl in _transactionsControllers.values) {
+      ctrl.close();
+    }
   }
 }
 

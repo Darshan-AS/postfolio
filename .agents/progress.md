@@ -1,13 +1,17 @@
 # Project Progress
 
 ## Current State
-**RD Ledger Feature - Phase 1 & 2 Complete (Relational Muscle & Pure Dart Domain Modeling)**:
+**RD Ledger Feature - Phase 1, 2 & 3 Complete (Relational Muscle, Pure Dart Domain Modeling, Repository Signatures, & Riverpod State Providers)**:
 - Designed and built a high-performance relational database migration in `supabase/migrations/20260903000000_rd_ledger_feature.sql` implementing `rd_installments` monthly schedules and adding payment mode tracking to `rd_transactions`.
 - Structured constraints to enforce data integrity: set up foreign keys with cascades, standard indexes, and database-level `CHECK` constraints on status/payment type text columns.
 - Adopted a pure **"Brain & Muscle"** architecture: decoupled trigger-based business rules from the DB. Built lightweight, versatile database RPC functions (`save_recurring_deposit`, `record_rd_customer_payment_allocated`, `record_rd_po_payments`) supporting transaction logging and bulk schedule updates, ensuring calculations can be run client-side for immediate user previews while preserving atomic, single-roundtrip server writes.
 - Defined Freezed domain models (`RDInstallment`, `RDTransaction`) as well as type-safe ledger enums (`RDInstallmentStatus`, `RDPoStatus`, `RDPaymentMode`) in Dart, cleanly compiling them via `build_runner`.
 - Engineered a calendar-drift-safe chronological allocation service (`RDLedgerService`) in Dart (the "Brain") that handles 1% PO late-fee capping and calculation dynamically.
 - Integrated the new `initialPaidInstallments` onboarding/backfill parameter into the parent `RecurringDeposit` domain model, updated `SupabaseRecurringDepositRepository` to generate initial ledger schedules automatically on creation/saves, resolved function overloading via `DROP FUNCTION` on schema reset, and verified that 100% of integration and unit tests pass cleanly.
+- Fully implemented concrete ledger repository methods in `SupabaseRecurringDepositRepository` utilizing real-time CDC streams and Postgres RPC parameters (`record_rd_customer_payment_allocated`, `record_rd_po_payments`).
+- Implemented robust in-memory ledger state and CDC-mocking stream providers in `FakeRecurringDepositRepository` for flawless offline Demo Mode functionality.
+- Created `rdInstallmentsStreamProvider` and `rdTransactionsStreamProvider` to stream real-time ledger data reactively down to the UI.
+- Built a unified `RDLedgerController` to handle side-effects such as logging customer payments and PO deposits, automatically computing payment allocations and triggering atomic DB writes.
 - Verified local schema compilation with 100% success via local emulator reset (`npx supabase db reset`).
 
 **DDD Auth User Decoupling & Ubiquitous Language Refactor Completed**:

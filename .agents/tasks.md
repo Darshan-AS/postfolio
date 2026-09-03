@@ -16,7 +16,7 @@
 ## 📅 Epic: RD Monthly Ledger & Transaction Tracking
 - [x] **Phase 1: Database Schema & Migration (Muscle Approach)**: Created migration `20260903000000_rd_ledger_feature.sql` defining `rd_installments` schedule, check constraints, indexing, enabling real-time CDC, and designing atomic, lightweight bulk-write RPCs (`save_recurring_deposit`, `record_rd_customer_payment_allocated`, `record_rd_po_payments`). Verified successfully with local database compilation via `supabase db reset`.
 - [x] **Phase 2: Dart Domain Models & Data Mapping**: Define Freezed domain models (`RDInstallment`, `RDTransaction`), implement pure late fee calculation, due date resolution, and payment allocation service in Dart, and compile using `build_runner`.
-- [ ] **Phase 3: Repository & State Architecture (DDD)**: Add ledger signatures to `RecurringDepositRepository` and implement in `SupabaseRecurringDepositRepository`. Set up Riverpod controllers and streams.
+- [x] **Phase 3: Repository & State Architecture (DDD)**: Add ledger signatures to `RecurringDepositRepository` and implement in `SupabaseRecurringDepositRepository` & `FakeRecurringDepositRepository`. Set up Riverpod controllers and streams.
 - [ ] **Phase 4: UI Screen Integration & Polish**: Enhance `RecurringDepositDetailScreen` with Tabbed layout showing Projections vs Ledger. Build Ledger schedule month-cards and log payment sheet.
 - [ ] **Phase 5: Migration Script Backfill Adjustments**: Update `lib/run_supabase_migration.dart` to compute `initial_paid_installments` chronologically and populate legacy RD schedules.
 

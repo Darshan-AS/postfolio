@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -49,6 +51,93 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {
     try {
       await _supabaseClient.from('account_identities').delete().eq('id', id);
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
+  Stream<Result<List<RDInstallment>, String>> watchRDInstallments(String rdId) {
+    return _supabaseClient
+        .from('rd_installments')
+        .stream(primaryKey: ['id'])
+        .eq('rd_id', rdId)
+        .map((data) {
+          try {
+            final installments = data.map((json) => RDInstallment.fromJson(json)).toList();
+            installments.sort((a, b) => a.installmentDate.compareTo(b.installmentDate));
+            return Success(installments);
+          } catch (e) {
+            return Failure(e.toString());
+          }
+        });
+  }
+
+  @override
+  Stream<Result<List<RDTransaction>, String>> watchRDTransactions(String rdId) {
+    return _supabaseClient
+        .from('rd_transactions')
+        .stream(primaryKey: ['id'])
+        .eq('rd_id', rdId)
+        .map((data) {
+          try {
+            final transactions = data.map((json) => RDTransaction.fromJson(json)).toList();
+            transactions.sort((a, b) => b.paidDate.compareTo(a.paidDate));
+            return Success(transactions);
+          } catch (e) {
+            return Failure(e.toString());
+          }
+        });
+  }
+
+  @override
+  Future<Result<void, String>> recordCustomerPayment(
+    RDTransaction transaction,
+    List<RDInstallment> updatedInstallments,
+  ) async {
+    try {
+      final transactionJson = {
+        'id': transaction.id,
+        'rd_id': transaction.rdId,
+        'paid_date': transaction.paidDate.toIso8601String().split('T').first,
+        'amount': transaction.amount,
+        'payment_mode': transaction.toJson()['payment_mode'],
+      };
+
+      final installmentsJson = updatedInstallments.map((inst) => {
+        'id': inst.id,
+        'customer_paid_amount': inst.customerPaidAmount,
+        'customer_status': inst.toJson()['customer_status'],
+        'late_fee': inst.lateFee,
+      }).toList();
+
+      await _supabaseClient.rpc('record_rd_customer_payment_allocated', params: {
+        'p_transaction': transactionJson,
+        'p_installments': installmentsJson,
+      });
+
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
+  Future<Result<void, String>> recordPoPayments(
+    List<RDInstallment> installments,
+  ) async {
+    try {
+      final installmentsJson = installments.map((inst) => {
+        'id': inst.id,
+        'po_status': inst.toJson()['po_status'],
+        'po_paid_date': inst.poPaidDate?.toIso8601String().split('T').first,
+      }).toList();
+
+      await _supabaseClient.rpc('record_rd_po_payments', params: {
+        'p_installments': installmentsJson,
+      });
+
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
