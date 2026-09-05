@@ -1,6 +1,14 @@
 # Project Progress
 
 ## Current State
+**RD Ledger Feature - Robust Financial Guardrails & Validation Complete (Phase 4 Polish & Architecture Safeguards)**:
+- **Form Screen Guard (`RecurringDepositFormScreen`)**: Implemented robust UI locking in `useRecurringDepositForm` and `_RecurringDepositForm` by checking for existing payment transactions (`hasTransactions`). When payments exist, financial terms are completely disabled/greyed out (`installmentAmount`, `startDate`, `term (years/months)`, `initialPaidInstallments`), keeping administrative fields like `accountNumber`, `serialNumber`, `nominees`, and `status` editable.
+- **Helpful Alert Badge**: Added a visually prominent error-container themed notice banner at the top of the Investment Details section in the form screen: *"Financial terms cannot be modified after payments have been recorded."*
+- **Domain Validation**: Created a pure, centralized validation rule `RecurringDeposit.validateUpdate` in the domain model to prevent any save or update operations from changing financial parameters if active payments have been recorded.
+- **Backend RPC Safety**: Modified the database procedural function `save_recurring_deposit` inside PostgreSQL migration `20260903000000_rd_ledger_feature.sql` to explicitly assert that no updates can touch `installment_amount` and `start_date` if `rd_transactions` records are linked to the deposit, throwing a robust, human-friendly exception if violated.
+- **Unified Clean Architecture Enforcement**: Integrated the validation flow consistently across presentation (form hooks, alert banner), application (controllers), domain models, and repositories (fake and Supabase) to guarantee comprehensive coverage against accidental edits or direct API manipulation.
+- **Verified Stability**: Achieved 100% clean static analysis (`flutter analyze` returns 0 issues) and 100% passing test suite.
+
 **RD Ledger Feature - Phase 4 Complete (Interactive Inline Collapsible Ledger UI, Onboarding Baseline, & Domain/Constraint Alignment)**:
 - Designed and built standard Material 3 collapsible ledger segments in `RecurringDepositDetailScreen` for monthly schedules, raw transaction logs, and interactive chronological payment log sheets.
 - Added support for onboarding baseline via `initialPaidInstallments`: payments before the specified threshold are automatically marked settled prior to onboarding.

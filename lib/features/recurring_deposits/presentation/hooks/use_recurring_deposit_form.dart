@@ -12,6 +12,7 @@ import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:number_to_indian_words/number_to_indian_words.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
@@ -41,6 +42,7 @@ class RecurringDepositFormState {
   final void Function(DateTime pickedDate) onStartDateChanged;
   final VoidCallback save;
   final bool isUpdating;
+  final bool hasTransactions;
 
   RecurringDepositFormState({
     required this.formKey,
@@ -65,6 +67,7 @@ class RecurringDepositFormState {
     required this.onStartDateChanged,
     required this.save,
     required this.isUpdating,
+    required this.hasTransactions,
   });
 }
 
@@ -77,6 +80,11 @@ RecurringDepositFormState useRecurringDepositForm({
   final formKey = useMemoized(() => GlobalKey<FormState>());
   final isUpdating = deposit != null;
   final postalRateService = ref.watch(postalRateServiceProvider);
+
+  final hasTransactionsAsync = deposit != null
+      ? ref.watch(rdHasTransactionsProvider(deposit.id))
+      : const AsyncValue<bool>.data(false);
+  final hasTransactions = hasTransactionsAsync.value ?? false;
 
   final amountFormatter = useMemoized(
     () => CurrencyTextInputFormatter.currency(
@@ -284,5 +292,6 @@ RecurringDepositFormState useRecurringDepositForm({
     onStartDateChanged: onStartDateChanged,
     save: save,
     isUpdating: isUpdating,
+    hasTransactions: hasTransactions,
   );
 }

@@ -31,6 +31,16 @@ Stream<List<RDTransaction>> rdTransactionsStream(Ref ref, String rdId) {
 }
 
 @riverpod
+Future<bool> rdHasTransactions(Ref ref, String rdId) async {
+  final repository = ref.watch(recurringDepositRepositoryProvider);
+  final result = await repository.hasTransactions(rdId);
+  return switch (result) {
+    Success(value: final has) => has,
+    Failure(error: final error) => throw Exception(error),
+  };
+}
+
+@riverpod
 class RDLedgerController extends _$RDLedgerController {
   @override
   void build() {
