@@ -164,6 +164,59 @@ void main() {
       expect(currentInsts.first.customerStatus, RDInstallmentStatus.unpaid);
       expect(currentInsts.first.customerPaidAmount, 0.0);
     });
+
+    test('hasTransactions and hasPoPaidInstallments detect locked states independently', () async {
+      final startDate = DateTime(2026, 1, 1);
+      final schedule = RDLedgerService.generateInitialSchedule(
+        rdId: rdId,
+        startDate: startDate,
+        installmentAmount: 1000.0,
+        termYears: 1,
+        termMonths: 0,
+        initialPaidInstallments: 0,
+      );
+
+      final rd = RecurringDeposit(
+        id: rdId,
+        customerId: customerId,
+        schemeType: RecurringSchemeType.recurringDeposit,
+        status: DepositStatus.active,
+        installmentAmount: 1000.0,
+        interestRate: 6.7,
+        termYears: 1,
+        termMonths: 0,
+        startDate: startDate,
+        nominees: const [],
+        initialPaidInstallments: 0,
+      );
+
+      await repository.saveRecurringDeposit(rd, schedule: schedule);
+
+      // Initially both false
+      final initialHasTx = await repository.hasTransactions(rdId);
+      expect((initialHasTx as Success<bool, String>).value, isFalse);
+
+      final initialHasPo = await repository.hasPoPaidInstallments(rdId);
+      expect((initialHasPo as Success<bool, String>).value, isFalse);
+
+      // Now record PO payment status on one installment
+      final updatedInstallments = schedule.map((inst) {
+        if (inst == schedule.first) {
+          return inst.copyWith(poStatus: RDPoStatus.paid, poPaidDate: DateTime.now());
+        }
+        return inst;
+      }).toList();
+
+      await repository.recordPoPayments(updatedInstallments);
+
+      // hasTransactions should still be false
+      final hasTxAfterPo = await repository.hasTransactions(rdId);
+      expect((hasTxAfterPo as Success<bool, String>).value, isFalse);
+
+      // but hasPoPaidInstallments should now be true
+      final hasPoAfterPo = await repository.hasPoPaidInstallments(rdId);
+      expect((hasPoAfterPo as Success<bool, String>).value, isTrue);
+    });
   });
 }
 

@@ -176,7 +176,7 @@ List<Widget> _buildInvestmentDetails(
 }) {
   return [
     FormSectionHeader(title: t.recurringDeposits.sections.investmentDetails),
-    if (state.hasTransactions) ...[
+    if (state.isFinancialTermsLocked) ...[
       Container(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         decoration: BoxDecoration(
@@ -211,7 +211,7 @@ List<Widget> _buildInvestmentDetails(
     AppSegmentedButtonField<RecurringSchemeType>(
       value: selectedScheme.value,
       labelText: t.recurringDeposits.fields.schemeType,
-      enabled: !state.hasTransactions,
+      enabled: !state.isFinancialTermsLocked,
       segments: RecurringSchemeType.values
           .map(
             (scheme) =>
@@ -246,7 +246,7 @@ List<Widget> _buildInvestmentDetails(
         AppTextField(
           controller: installmentAmountController,
           labelText: t.recurringDeposits.fields.installmentAmount,
-          enabled: !state.hasTransactions,
+          enabled: !state.isFinancialTermsLocked,
           prefixIcon: const HugeIcon(
             icon: HugeIcons.strokeRoundedCoins01,
             size: AppDimensions.iconMd,
@@ -287,7 +287,7 @@ List<Widget> _buildInvestmentDetails(
     AppTextField(
       controller: interestRateController,
       labelText: t.recurringDeposits.fields.interestRate,
-      enabled: !state.hasTransactions,
+      enabled: !state.isFinancialTermsLocked,
       prefixIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedPercent,
         size: AppDimensions.iconMd,
@@ -305,7 +305,7 @@ List<Widget> _buildInvestmentDetails(
       controller: startDateController,
       labelText: t.recurringDeposits.fields.startDate,
       isRequired: true,
-      enabled: !state.hasTransactions,
+      enabled: !state.isFinancialTermsLocked,
       onTap: () async {
         final picked = await showDatePicker(
           context: context,
@@ -327,7 +327,7 @@ List<Widget> _buildInvestmentDetails(
       allowedTenuresInYears: selectedScheme.value.allowedTenuresInYears,
       selectedYears: selectedTermYears.value,
       selectedMonths: selectedTermMonths.value,
-      enabled: !state.hasTransactions,
+      enabled: !state.isFinancialTermsLocked,
       onChanged: (years, months) {
         selectedTermYears.value = years;
         selectedTermMonths.value = months;
@@ -337,7 +337,7 @@ List<Widget> _buildInvestmentDetails(
     AppTextField(
       controller: state.initialPaidInstallmentsController,
       labelText: t.recurringDeposits.fields.initialPaidInstallments,
-      enabled: !state.isUpdating && !state.hasTransactions,
+      enabled: !state.isUpdating && !state.isFinancialTermsLocked,
       prefixIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedCheckmarkCircle02,
         size: AppDimensions.iconMd,

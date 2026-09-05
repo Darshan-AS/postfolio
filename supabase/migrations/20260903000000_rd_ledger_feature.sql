@@ -73,8 +73,9 @@ BEGIN
   PERFORM public.assert_customer_owner(p_customer_id, v_agent_id);
   PERFORM public.assert_account_owner(p_id, v_agent_id);
 
-  -- Protect financial terms if transactions are linked
-  IF EXISTS(SELECT 1 FROM public.rd_transactions WHERE rd_id = p_id) THEN
+  -- Protect financial terms if transactions or PO payments are linked
+  IF EXISTS(SELECT 1 FROM public.rd_transactions WHERE rd_id = p_id) OR
+     EXISTS(SELECT 1 FROM public.rd_installments WHERE rd_id = p_id AND po_status = 'paid') THEN
     SELECT installment_amount, start_date INTO v_existing_amount, v_existing_start_date
     FROM public.recurring_deposits WHERE id = p_id;
     
@@ -115,8 +116,9 @@ BEGIN
 
   -- Bulk insert/upsert installments
   IF jsonb_array_length(p_installments) > 0 THEN
-    -- If no transactions exist, purge existing installments to avoid orphaned rows when schedule dates shift or term changes
-    IF NOT EXISTS(SELECT 1 FROM public.rd_transactions WHERE rd_id = p_id) THEN
+    -- If no transactions or PO paid installments exist, purge existing installments to avoid orphaned rows when schedule dates shift or term changes
+    IF NOT EXISTS(SELECT 1 FROM public.rd_transactions WHERE rd_id = p_id) AND
+       NOT EXISTS(SELECT 1 FROM public.rd_installments WHERE rd_id = p_id AND po_status = 'paid') THEN
       DELETE FROM public.rd_installments WHERE rd_id = p_id;
     END IF;
 

@@ -6,6 +6,7 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:postfolio/features/auth/domain/auth_state.dart';
@@ -31,6 +32,7 @@ abstract class RecurringDepositRepository {
   Stream<Result<List<RDInstallment>, String>> watchRDInstallments(String rdId);
   Stream<Result<List<RDTransaction>, String>> watchRDTransactions(String rdId);
   Future<Result<bool, String>> hasTransactions(String rdId);
+  Future<Result<bool, String>> hasPoPaidInstallments(String rdId);
   Future<Result<void, String>> recordCustomerPayment(
     RDTransaction transaction,
     List<RDInstallment> updatedInstallments,
@@ -158,6 +160,11 @@ class FirestoreRecurringDepositRepository
 
   @override
   Future<Result<bool, String>> hasTransactions(String rdId) async {
+    return const Success(false);
+  }
+
+  @override
+  Future<Result<bool, String>> hasPoPaidInstallments(String rdId) async {
     return const Success(false);
   }
 }
@@ -389,7 +396,14 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 
   @override
   Future<Result<bool, String>> hasTransactions(String rdId) async {
-    return Success(_getTransactions(rdId).isNotEmpty);
+    final hasTx = _getTransactions(rdId).isNotEmpty;
+    return Success(hasTx);
+  }
+
+  @override
+  Future<Result<bool, String>> hasPoPaidInstallments(String rdId) async {
+    final hasPoPaid = _getInstallments(rdId).any((inst) => inst.poStatus == RDPoStatus.paid);
+    return Success(hasPoPaid);
   }
 
   void dispose() {

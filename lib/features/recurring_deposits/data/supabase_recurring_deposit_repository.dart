@@ -104,6 +104,22 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   }
 
   @override
+  Future<Result<bool, String>> hasPoPaidInstallments(String rdId) async {
+    try {
+      final response = await _supabaseClient
+          .from('rd_installments')
+          .select('id')
+          .eq('rd_id', rdId)
+          .eq('po_status', 'paid')
+          .limit(1)
+          .maybeSingle();
+      return Success(response != null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
   Future<Result<void, String>> recordCustomerPayment(
     RDTransaction transaction,
     List<RDInstallment> updatedInstallments,
