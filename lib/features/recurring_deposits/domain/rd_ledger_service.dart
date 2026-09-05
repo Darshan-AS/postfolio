@@ -141,6 +141,69 @@ class RDLedgerService {
       leftoverAmount: remainingPool,
     );
   }
+
+  /// Recomputes all customer payment allocations and late fees across the entire schedule
+  /// by resetting customer payments (respecting opening baseline) and sequentially replaying transactions.
+  /// Preserves PO settlement status (poStatus, poPaidDate) and installment calendar identity.
+  static List<RDInstallment> recomputeScheduleFromTransactions({
+    required List<RDInstallment> currentSchedule,
+    required List<RDTransaction> transactions,
+    required int initialPaidInstallments,
+  }) {
+    // 1. Reset all installments to baseline state (preserving poStatus, poPaidDate, etc.):
+    final sortedSchedule = [...currentSchedule]
+      ..sort((a, b) => a.installmentDate.compareTo(b.installmentDate));
+
+    final List<RDInstallment> baselineSchedule = [];
+    for (int i = 0; i < sortedSchedule.length; i++) {
+      final inst = sortedSchedule[i];
+      final isPrePaid = i < initialPaidInstallments;
+      baselineSchedule.add(
+        inst.copyWith(
+          customerPaidAmount: isPrePaid ? inst.installmentAmount : 0.0,
+          customerStatus: isPrePaid
+              ? RDInstallmentStatus.fullyPaid
+              : RDInstallmentStatus.unpaid,
+          lateFee: 0.0,
+          updatedAt: DateTime.now(),
+        ),
+      );
+    }
+
+    // 2. Sort transactions chronologically (oldest to newest):
+    final sortedTransactions = [...transactions]
+      ..sort((a, b) {
+        final dateComp = a.paidDate.compareTo(b.paidDate);
+        if (dateComp != 0) return dateComp;
+        if (a.createdAt != null && b.createdAt != null) {
+          return a.createdAt!.compareTo(b.createdAt!);
+        }
+        return a.id.compareTo(b.id);
+      });
+
+    // 3. Replay each transaction sequentially:
+    List<RDInstallment> runningSchedule = baselineSchedule;
+    for (final tx in sortedTransactions) {
+      final result = allocateCustomerPayment(
+        currentSchedule: runningSchedule,
+        paymentAmount: tx.amount,
+        paidDate: tx.paidDate,
+        paymentMode: tx.paymentMode,
+        rdId: tx.rdId,
+        transactionId: tx.id,
+      );
+
+      // Merge updated installments back into runningSchedule
+      final updatedMap = {
+        for (final u in result.updatedInstallments) u.id: u,
+      };
+      runningSchedule = runningSchedule.map((inst) {
+        return updatedMap[inst.id] ?? inst;
+      }).toList();
+    }
+
+    return runningSchedule;
+  }
 }
 
 class RDAllocationResult {

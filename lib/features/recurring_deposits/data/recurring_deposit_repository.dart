@@ -35,6 +35,14 @@ abstract class RecurringDepositRepository {
     RDTransaction transaction,
     List<RDInstallment> updatedInstallments,
   );
+  Future<Result<void, String>> deleteCustomerPayment(
+    String transactionId,
+    List<RDInstallment> updatedInstallments,
+  );
+  Future<Result<void, String>> updateCustomerPayment(
+    RDTransaction transaction,
+    List<RDInstallment> updatedInstallments,
+  );
   Future<Result<void, String>> recordPoPayments(
     List<RDInstallment> installments,
   );
@@ -119,6 +127,22 @@ class FirestoreRecurringDepositRepository
 
   @override
   Future<Result<void, String>> recordCustomerPayment(
+    RDTransaction transaction,
+    List<RDInstallment> updatedInstallments,
+  ) async {
+    return const Failure('Firestore repository does not support RD ledger payments');
+  }
+
+  @override
+  Future<Result<void, String>> deleteCustomerPayment(
+    String transactionId,
+    List<RDInstallment> updatedInstallments,
+  ) async {
+    return const Failure('Firestore repository does not support RD ledger payments');
+  }
+
+  @override
+  Future<Result<void, String>> updateCustomerPayment(
     RDTransaction transaction,
     List<RDInstallment> updatedInstallments,
   ) async {
@@ -266,6 +290,69 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 
     final txs = _getTransactions(rdId);
     txs.insert(0, transaction);
+    _getTransactionsController(rdId).add(Success([...txs]));
+
+    final currentInsts = _getInstallments(rdId);
+    for (final updated in updatedInstallments) {
+      final idx = currentInsts.indexWhere((inst) => inst.id == updated.id);
+      if (idx != -1) {
+        currentInsts[idx] = updated;
+      }
+    }
+    _getInstallmentsController(rdId).add(Success([...currentInsts]));
+
+    return const Success(null);
+  }
+
+  @override
+  Future<Result<void, String>> deleteCustomerPayment(
+    String transactionId,
+    List<RDInstallment> updatedInstallments,
+  ) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    String? targetRdId;
+    for (final entry in _fakeTransactions.entries) {
+      if (entry.value.any((t) => t.id == transactionId)) {
+        targetRdId = entry.key;
+        break;
+      }
+    }
+
+    if (targetRdId == null) {
+      return const Failure('Transaction not found');
+    }
+
+    final txs = _getTransactions(targetRdId);
+    txs.removeWhere((t) => t.id == transactionId);
+    _getTransactionsController(targetRdId).add(Success([...txs]));
+
+    final currentInsts = _getInstallments(targetRdId);
+    for (final updated in updatedInstallments) {
+      final idx = currentInsts.indexWhere((inst) => inst.id == updated.id);
+      if (idx != -1) {
+        currentInsts[idx] = updated;
+      }
+    }
+    _getInstallmentsController(targetRdId).add(Success([...currentInsts]));
+
+    return const Success(null);
+  }
+
+  @override
+  Future<Result<void, String>> updateCustomerPayment(
+    RDTransaction transaction,
+    List<RDInstallment> updatedInstallments,
+  ) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final rdId = transaction.rdId;
+
+    final txs = _getTransactions(rdId);
+    final txIdx = txs.indexWhere((t) => t.id == transaction.id);
+    if (txIdx != -1) {
+      txs[txIdx] = transaction;
+    } else {
+      txs.insert(0, transaction);
+    }
     _getTransactionsController(rdId).add(Success([...txs]));
 
     final currentInsts = _getInstallments(rdId);

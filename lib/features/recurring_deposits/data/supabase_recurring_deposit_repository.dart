@@ -136,6 +136,62 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   }
 
   @override
+  Future<Result<void, String>> deleteCustomerPayment(
+    String transactionId,
+    List<RDInstallment> updatedInstallments,
+  ) async {
+    try {
+      final installmentsJson = updatedInstallments.map((inst) => {
+        'id': inst.id,
+        'customer_paid_amount': inst.customerPaidAmount,
+        'customer_status': inst.toJson()['customer_status'],
+        'late_fee': inst.lateFee,
+      }).toList();
+
+      await _supabaseClient.rpc('delete_rd_transaction', params: {
+        'p_transaction_id': transactionId,
+        'p_installments': installmentsJson,
+      });
+
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
+  Future<Result<void, String>> updateCustomerPayment(
+    RDTransaction transaction,
+    List<RDInstallment> updatedInstallments,
+  ) async {
+    try {
+      final transactionJson = {
+        'id': transaction.id,
+        'rd_id': transaction.rdId,
+        'paid_date': transaction.paidDate.toIso8601String().split('T').first,
+        'amount': transaction.amount,
+        'payment_mode': transaction.toJson()['payment_mode'],
+      };
+
+      final installmentsJson = updatedInstallments.map((inst) => {
+        'id': inst.id,
+        'customer_paid_amount': inst.customerPaidAmount,
+        'customer_status': inst.toJson()['customer_status'],
+        'late_fee': inst.lateFee,
+      }).toList();
+
+      await _supabaseClient.rpc('update_rd_transaction', params: {
+        'p_transaction': transactionJson,
+        'p_installments': installmentsJson,
+      });
+
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
   Future<Result<void, String>> recordPoPayments(
     List<RDInstallment> installments,
   ) async {

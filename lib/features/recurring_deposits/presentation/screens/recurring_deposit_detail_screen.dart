@@ -308,9 +308,15 @@ class _InstallmentsList extends HookConsumerWidget {
           );
         }
 
-        final poUnpaidInstallments = installments.where(
-          (inst) => inst.poStatus == RDPoStatus.unpaid,
-        ).toList();
+        final selectedInstallments = installments
+            .where((inst) => selectedIds.value.contains(inst.id))
+            .toList();
+        final unpaidSelected = selectedInstallments
+            .where((inst) => inst.poStatus == RDPoStatus.unpaid)
+            .toList();
+        final paidSelected = selectedInstallments
+            .where((inst) => inst.poStatus == RDPoStatus.paid)
+            .toList();
 
         // Calculate summary KPI metrics
         final pendingPoAmount = installments
@@ -451,7 +457,7 @@ class _InstallmentsList extends HookConsumerWidget {
                         ),
                       ),
                     ),
-                    if (poUnpaidInstallments.isNotEmpty) ...[
+                    if (installments.isNotEmpty) ...[
                       AppSpacings.gapSm,
                       OutlinedButton.icon(
                         onPressed: () {
@@ -462,7 +468,7 @@ class _InstallmentsList extends HookConsumerWidget {
                           icon: HugeIcons.strokeRoundedCheckmarkCircle01,
                           size: AppDimensions.iconSm,
                         ),
-                        label: const Text('Bulk PO'),
+                        label: const Text('Manage PO'),
                       ),
                     ],
                   ] else ...[
@@ -473,45 +479,99 @@ class _InstallmentsList extends HookConsumerWidget {
                       },
                       child: const Text('Cancel'),
                     ),
-                    AppSpacings.gapSm,
-                    FilledButton(
-                      onPressed: selectedIds.value.isEmpty
-                          ? null
-                          : () async {
-                              final toUpdate = installments
-                                  .where((inst) => selectedIds.value.contains(inst.id))
-                                  .map((inst) => inst.copyWith(
-                                        poStatus: RDPoStatus.paid,
-                                        poPaidDate: DateTime.now(),
-                                      ))
-                                  .toList();
+                    if (unpaidSelected.isNotEmpty) ...[
+                      AppSpacings.gapSm,
+                      FilledButton(
+                        onPressed: () async {
+                          final toUpdate = unpaidSelected
+                              .map((inst) => inst.copyWith(
+                                    poStatus: RDPoStatus.paid,
+                                    poPaidDate: DateTime.now(),
+                                  ))
+                              .toList();
 
-                              final result = await ref
-                                  .read(rDLedgerControllerProvider.notifier)
-                                  .recordPoPayments(installments: toUpdate);
+                          final result = await ref
+                              .read(rDLedgerControllerProvider.notifier)
+                              .recordPoPayments(installments: toUpdate);
 
-                              if (result is Success) {
-                                isSelectionMode.value = false;
-                                selectedIds.value = {};
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      behavior: SnackBarBehavior.floating,
-                                      content: Text('Bulk PO deposit updated successfully!'),
-                                    ),
-                                  );
-                                }
-                              } else if (result is Failure<void, String> && context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    behavior: SnackBarBehavior.floating,
-                                    content: Text(result.error),
+                          if (result is Success) {
+                            isSelectionMode.value = false;
+                            selectedIds.value = {};
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  behavior: SnackBarBehavior.floating,
+                                  content: Text(
+                                    '${toUpdate.length} installment(s) marked as deposited to PO!',
                                   ),
-                                );
-                              }
-                            },
-                      child: Text('Deposit (${selectedIds.value.length})'),
-                    ),
+                                ),
+                              );
+                            }
+                          } else if (result is Failure<void, String> && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                behavior: SnackBarBehavior.floating,
+                                content: Text(result.error),
+                              ),
+                            );
+                          }
+                        },
+                        child: Text('Deposit (${unpaidSelected.length})'),
+                      ),
+                    ],
+                    if (paidSelected.isNotEmpty) ...[
+                      AppSpacings.gapSm,
+                      FilledButton.tonal(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: theme.colorScheme.errorContainer,
+                          foregroundColor: theme.colorScheme.onErrorContainer,
+                        ),
+                        onPressed: () async {
+                          final confirmed = await AppDialogs.confirmAction(
+                            context,
+                            title: 'Revert PO Deposit',
+                            content:
+                                'Are you sure you want to revert ${paidSelected.length} installment(s) to unpaid at Post Office?',
+                            confirmText: 'Revert',
+                          );
+                          if (confirmed != true) return;
+
+                          final result = await ref
+                              .read(rDLedgerControllerProvider.notifier)
+                              .revertPoPayments(installments: paidSelected);
+
+                          if (result is Success) {
+                            isSelectionMode.value = false;
+                            selectedIds.value = {};
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  behavior: SnackBarBehavior.floating,
+                                  content: Text(
+                                    '${paidSelected.length} installment(s) reverted to unpaid at PO!',
+                                  ),
+                                ),
+                              );
+                            }
+                          } else if (result is Failure<void, String> && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                behavior: SnackBarBehavior.floating,
+                                content: Text(result.error),
+                              ),
+                            );
+                          }
+                        },
+                        child: Text('Revert (${paidSelected.length})'),
+                      ),
+                    ],
+                    if (selectedIds.value.isEmpty) ...[
+                      AppSpacings.gapSm,
+                      const FilledButton(
+                        onPressed: null,
+                        child: Text('Select'),
+                      ),
+                    ],
                   ],
                 ],
               ),
@@ -746,21 +806,18 @@ class _InstallmentsList extends HookConsumerWidget {
                 );
 
                 if (isSelectionMode.value) {
-                  final isEligible = inst.poStatus == RDPoStatus.unpaid;
                   return CheckboxListTile(
                     controlAffinity: ListTileControlAffinity.leading,
                     value: selectedIds.value.contains(inst.id),
-                    onChanged: isEligible
-                        ? (checked) {
-                            final current = Set<String>.from(selectedIds.value);
-                            if (checked == true) {
-                              current.add(inst.id);
-                            } else {
-                              current.remove(inst.id);
-                            }
-                            selectedIds.value = current;
-                          }
-                        : null,
+                    onChanged: (checked) {
+                      final current = Set<String>.from(selectedIds.value);
+                      if (checked == true) {
+                        current.add(inst.id);
+                      } else {
+                        current.remove(inst.id);
+                      }
+                      selectedIds.value = current;
+                    },
                     title: titleRow,
                     subtitle: subtitleColumn,
                   );
@@ -1122,6 +1179,7 @@ class _TransactionsList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final transactionsAsync = ref.watch(rdTransactionsStreamProvider(deposit.id));
+    final installments = ref.watch(rdInstallmentsStreamProvider(deposit.id)).value ?? const [];
     final theme = Theme.of(context);
 
     return transactionsAsync.when(
@@ -1177,7 +1235,97 @@ class _TransactionsList extends ConsumerWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              subtitle: Text('Paid on ${tx.paidDate.toAppFormat()} via ${tx.paymentMode.displayName}'),
+              subtitle: Text(
+                'Paid on ${tx.paidDate.toAppFormat()} via ${tx.paymentMode.displayName}',
+              ),
+              trailing: MenuAnchor(
+                builder: (context, controller, child) {
+                  return IconButton(
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedMoreVertical,
+                      size: AppDimensions.iconMd,
+                    ),
+                    tooltip: t.common.moreOptions,
+                    onPressed: () {
+                      if (controller.isOpen) {
+                        controller.close();
+                      } else {
+                        controller.open();
+                      }
+                    },
+                  );
+                },
+                menuChildren: [
+                  MenuItemButton(
+                    leadingIcon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedEdit02,
+                      size: AppDimensions.iconSm,
+                    ),
+                    child: const Text('Edit Payment'),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (context) => _EditPaymentBottomSheet(
+                          deposit: deposit,
+                          transaction: tx,
+                          allTransactions: transactions,
+                          currentSchedule: installments,
+                        ),
+                      );
+                    },
+                  ),
+                  MenuItemButton(
+                    leadingIcon: HugeIcon(
+                      icon: HugeIcons.strokeRoundedDelete02,
+                      size: AppDimensions.iconSm,
+                      color: theme.colorScheme.error,
+                    ),
+                    child: Text(
+                      'Delete Payment',
+                      style: TextStyle(color: theme.colorScheme.error),
+                    ),
+                    onPressed: () async {
+                      final confirmed = await AppDialogs.confirmAction(
+                        context,
+                        title: 'Delete Payment',
+                        content:
+                            'Are you sure you want to delete this payment of ${tx.amount.toRupeeFormat()} made on ${tx.paidDate.toAppFormat()}? Installment allocations will be recalculated.',
+                        confirmText: 'Delete',
+                      );
+
+                      if (confirmed == true && context.mounted) {
+                        final result = await ref
+                            .read(rDLedgerControllerProvider.notifier)
+                            .deleteCustomerPayment(
+                              transactionId: tx.id,
+                              deposit: deposit,
+                              currentSchedule: installments,
+                              currentTransactions: transactions,
+                            );
+
+                        if (context.mounted) {
+                          if (result is Success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                behavior: SnackBarBehavior.floating,
+                                content: Text('Payment deleted and ledger recalculated.'),
+                              ),
+                            );
+                          } else if (result is Failure<void, String>) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                behavior: SnackBarBehavior.floating,
+                                content: Text(result.error),
+                              ),
+                            );
+                          }
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
             );
           },
         );
@@ -1192,6 +1340,298 @@ class _TransactionsList extends ConsumerWidget {
           child: Text(
             'Error: $err',
             style: const TextStyle(color: Colors.red),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EditPaymentBottomSheet extends HookConsumerWidget {
+  final RecurringDeposit deposit;
+  final RDTransaction transaction;
+  final List<RDTransaction> allTransactions;
+  final List<RDInstallment> currentSchedule;
+
+  const _EditPaymentBottomSheet({
+    required this.deposit,
+    required this.transaction,
+    required this.allTransactions,
+    required this.currentSchedule,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final amountController = useTextEditingController(
+      text: transaction.amount.toStringAsFixed(
+        transaction.amount.truncateToDouble() == transaction.amount ? 0 : 2,
+      ),
+    );
+    final paidDate = useState(transaction.paidDate);
+    final paymentMode = useState(transaction.paymentMode);
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+    final theme = Theme.of(context);
+
+    final amountText = useListenable(amountController);
+    final double amountValue = double.tryParse(amountText.text.trim()) ?? 0.0;
+
+    final previewSchedule = useMemoized(() {
+      if (amountValue <= 0.0) return null;
+      final updatedTx = transaction.copyWith(
+        amount: amountValue,
+        paidDate: paidDate.value,
+        paymentMode: paymentMode.value,
+      );
+      final updatedTxs = allTransactions
+          .map((t) => t.id == transaction.id ? updatedTx : t)
+          .toList();
+      return RDLedgerService.recomputeScheduleFromTransactions(
+        currentSchedule: currentSchedule,
+        transactions: updatedTxs,
+        initialPaidInstallments: deposit.initialPaidInstallments,
+      );
+    }, [amountValue, paidDate.value, paymentMode.value, currentSchedule, allTransactions]);
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
+        child: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Edit Customer Payment',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                AppSpacings.gapLg,
+                AppTextField(
+                  controller: amountController,
+                  labelText: 'Payment Amount',
+                  isRequired: true,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  prefixText: t.format.currencySymbol,
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Amount is required';
+                    }
+                    final numVal = double.tryParse(val.trim());
+                    if (numVal == null || numVal <= 0) {
+                      return 'Enter a valid amount';
+                    }
+                    return null;
+                  },
+                ),
+                AppSpacings.gapLg,
+                Text(
+                  'Payment Mode',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SegmentedButton<RDPaymentMode>(
+                  selected: {paymentMode.value},
+                  onSelectionChanged: (selected) {
+                    paymentMode.value = selected.first;
+                  },
+                  segments: RDPaymentMode.values.map((mode) {
+                    List<List<dynamic>> icon;
+                    switch (mode) {
+                      case RDPaymentMode.cash:
+                        icon = HugeIcons.strokeRoundedCoins01;
+                        break;
+                      case RDPaymentMode.upi:
+                        icon = HugeIcons.strokeRoundedCreditCard;
+                        break;
+                      case RDPaymentMode.cheque:
+                        icon = HugeIcons.strokeRoundedTicket01;
+                        break;
+                      case RDPaymentMode.bankTransfer:
+                        icon = HugeIcons.strokeRoundedBank;
+                        break;
+                    }
+                    return ButtonSegment<RDPaymentMode>(
+                      value: mode,
+                      label: Text(mode.displayName),
+                      icon: HugeIcon(icon: icon, size: 16),
+                    );
+                  }).toList(),
+                ),
+                AppSpacings.gapLg,
+                AppTextField(
+                  readOnly: true,
+                  labelText: 'Payment Date',
+                  controller: TextEditingController(
+                    text: paidDate.value.toAppFormat(),
+                  ),
+                  prefixIcon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedCalendar01,
+                    size: AppDimensions.iconMd,
+                  ),
+                  onTap: () async {
+                    final selected = await showDatePicker(
+                      context: context,
+                      initialDate: paidDate.value,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (selected != null) {
+                      paidDate.value = selected;
+                    }
+                  },
+                ),
+                AppSpacings.gapXl,
+                Container(
+                  padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          HugeIcon(
+                            icon: HugeIcons.strokeRoundedActivity01,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Recalculated Allocation Preview',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (previewSchedule == null)
+                        Text(
+                          'Enter a payment amount to preview recalculated schedule.',
+                          style: theme.textTheme.bodySmall,
+                        )
+                      else ...[
+                        Text(
+                          'Updated Installment Allocations:',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        ...previewSchedule
+                            .where((inst) => inst.customerPaidAmount > 0)
+                            .map((inst) {
+                          final monthIdx =
+                              currentSchedule.indexWhere((s) => s.id == inst.id);
+                          final monthNum = monthIdx != -1 ? monthIdx + 1 : '?';
+
+                          String allocationDesc;
+                          if (inst.customerStatus ==
+                              RDInstallmentStatus.fullyPaid) {
+                            allocationDesc =
+                                'Fully Paid (${inst.customerPaidAmount.toRupeeFormat()})';
+                          } else {
+                            allocationDesc =
+                                'Partially Paid (${inst.customerPaidAmount.toRupeeFormat()})';
+                          }
+
+                          return Padding(
+                            padding:
+                                const EdgeInsets.only(left: 8.0, top: 2.0),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.subdirectory_arrow_right,
+                                    size: 12, color: Colors.grey),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Month $monthNum: $allocationDesc',
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                                if (inst.lateFee > 0) ...[
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '(includes ${inst.lateFee.toRupeeFormat()} Late Fee)',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ],
+                  ),
+                ),
+                AppSpacings.gapXl,
+                FilledButton(
+                  onPressed: () async {
+                    if (formKey.currentState?.validate() != true) return;
+                    if (previewSchedule == null) return;
+
+                    final updatedTx = transaction.copyWith(
+                      amount: amountValue,
+                      paidDate: paidDate.value,
+                      paymentMode: paymentMode.value,
+                      updatedAt: DateTime.now(),
+                    );
+
+                    final Result<void, String> result = await ref
+                        .read(rDLedgerControllerProvider.notifier)
+                        .updateCustomerPayment(
+                          updatedTransaction: updatedTx,
+                          deposit: deposit,
+                          currentSchedule: currentSchedule,
+                          currentTransactions: allTransactions,
+                        );
+
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                      if (result is Success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            behavior: SnackBarBehavior.floating,
+                            content: Text('Payment updated successfully!'),
+                          ),
+                        );
+                      } else if (result is Failure<void, String>) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            behavior: SnackBarBehavior.floating,
+                            content: Text(result.error),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Save Changes'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
