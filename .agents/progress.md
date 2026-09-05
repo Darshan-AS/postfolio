@@ -1,6 +1,13 @@
 # Project Progress
 
 ## Current State
+**RD Ledger Feature - Installment Schedule Update Fix & Clean DDD Save Unification**:
+- **Resolved Stale Installment Schedule on Update**: Fixed the issue where editing start date, amount, tenure, or initial paid installments on an RD without payment transactions left `rd_installments` referring to old dates/amounts.
+- **Unified Repository Write Pipeline (`saveRecurringDeposit`)**: Replaced split `createRecurringDeposit` and `updateRecurringDeposit` methods across all repository implementations (`RecurringDepositRepository`, `SupabaseRecurringDepositRepository`, `FakeRecurringDepositRepository`, `FirestoreRecurringDepositRepository`) with a single, atomic `saveRecurringDeposit(deposit, {schedule})` method, aligning with the idempotent Postgres `save_recurring_deposit` RPC.
+- **Clean Application Orchestration (`RecurringDepositsController`)**: Simplified controller logic to eliminate branching: whenever `hasTransactions` is false (for new deposits or edits without recorded payments), `RDLedgerService.generateInitialSchedule` is invoked and the resulting schedule is passed to `repository.saveRecurringDeposit`.
+- **Decoupled Repositories from Domain Logic**: Pre-seeded all mock installments directly in `FakeDataSource` at bootstrap, completely removing lazy runtime `RDLedgerService` calls and unused imports from `FakeRecurringDepositRepository`.
+- **Database Safety Guard**: Enhanced `save_recurring_deposit` RPC in PostgreSQL migration `20260903000000_rd_ledger_feature.sql` to execute `DELETE FROM public.rd_installments WHERE rd_id = p_id;` when `NOT EXISTS (SELECT 1 FROM public.rd_transactions WHERE rd_id = p_id)` before inserting the updated schedule, preventing orphaned calendar dates.
+
 **RD Ledger Feature - Robust Financial Guardrails & Validation Complete (Phase 4 Polish & Architecture Safeguards)**:
 - **Form Screen Guard (`RecurringDepositFormScreen`)**: Implemented robust UI locking in `useRecurringDepositForm` and `_RecurringDepositForm` by checking for existing payment transactions (`hasTransactions`). When payments exist, financial terms are completely disabled/greyed out (`installmentAmount`, `startDate`, `term (years/months)`, `initialPaidInstallments`), keeping administrative fields like `accountNumber`, `serialNumber`, `nominees`, and `status` editable.
 - **Helpful Alert Badge**: Added a visually prominent error-container themed notice banner at the top of the Investment Details section in the form screen: *"Financial terms cannot be modified after payments have been recorded."*
