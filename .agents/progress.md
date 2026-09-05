@@ -1,6 +1,16 @@
 # Project Progress
 
 ## Current State
+**RD Ledger Feature - Transaction Mutations & PO Settlement Reversals (Phase 4.1)**:
+- **Domain Allocation Replay Engine (`RDLedgerService.recomputeScheduleFromTransactions`)**: Engineered a pure, testable recalculation engine that resets installment customer payment states (respecting opening baseline and preserving PO settlement state) and sequentially replays all surviving transactions to recalculate customer paid amounts, statuses, and late fees deterministically.
+- **Atomic Database RPCs (`20260905000000_rd_transaction_mutations.sql`)**: Created PostgreSQL stored procedures `delete_rd_transaction` and `update_rd_transaction` enforcing agent ownership (`assert_account_owner`), row-level security, and atomic multi-table updates across `rd_transactions` and `rd_installments`.
+- **Repository Signatures & Fake Persistence**: Added `deleteCustomerPayment` and `updateCustomerPayment` to `RecurringDepositRepository`, fully implemented in `SupabaseRecurringDepositRepository` and `FakeRecurringDepositRepository` with reactive stream broadcasting.
+- **Application Orchestration (`RDLedgerController`)**: Added `deleteCustomerPayment`, `updateCustomerPayment`, and `revertPoPayments` to orchestrate domain recalculations and repository persistence cleanly.
+- **Material 3 UI Polish (`RecurringDepositDetailScreen`)**:
+  - Payment History: Added `MenuAnchor` actions on each transaction row for "Edit Payment" (opening `_EditPaymentBottomSheet` with live reactive allocation preview) and "Delete Payment" (with confirmation dialog).
+  - Installment Ledger: Reused the selection mode UI to provide dual action controls: `Deposit (N)` for pending installments and `Revert (N)` with confirmation dialog for mistakenly marked PO deposits, allowing any installment row to be selected.
+- **Unit & Domain Tests**: Created comprehensive unit tests in `test/rd_ledger_service_recalculation_test.dart` and integration tests in `test/recurring_deposit_ledger_update_test.dart`.
+
 **RD Ledger Feature - Installment Schedule Update Fix & Clean DDD Save Unification**:
 - **Resolved Stale Installment Schedule on Update**: Fixed the issue where editing start date, amount, tenure, or initial paid installments on an RD without payment transactions left `rd_installments` referring to old dates/amounts.
 - **Unified Repository Write Pipeline (`saveRecurringDeposit`)**: Replaced split `createRecurringDeposit` and `updateRecurringDeposit` methods across all repository implementations (`RecurringDepositRepository`, `SupabaseRecurringDepositRepository`, `FakeRecurringDepositRepository`, `FirestoreRecurringDepositRepository`) with a single, atomic `saveRecurringDeposit(deposit, {schedule})` method, aligning with the idempotent Postgres `save_recurring_deposit` RPC.

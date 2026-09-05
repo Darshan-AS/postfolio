@@ -4,6 +4,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_installment_mode
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'rd_ledger_controller.g.dart';
@@ -69,10 +70,68 @@ class RDLedgerController extends _$RDLedgerController {
     );
   }
 
+  Future<Result<void, String>> deleteCustomerPayment({
+    required String transactionId,
+    required RecurringDeposit deposit,
+    required List<RDInstallment> currentSchedule,
+    required List<RDTransaction> currentTransactions,
+  }) async {
+    final remainingTransactions = currentTransactions
+        .where((t) => t.id != transactionId)
+        .toList();
+
+    final recomputedSchedule = RDLedgerService.recomputeScheduleFromTransactions(
+      currentSchedule: currentSchedule,
+      transactions: remainingTransactions,
+      initialPaidInstallments: deposit.initialPaidInstallments,
+    );
+
+    final repository = ref.read(recurringDepositRepositoryProvider);
+    return await repository.deleteCustomerPayment(
+      transactionId,
+      recomputedSchedule,
+    );
+  }
+
+  Future<Result<void, String>> updateCustomerPayment({
+    required RDTransaction updatedTransaction,
+    required RecurringDeposit deposit,
+    required List<RDInstallment> currentSchedule,
+    required List<RDTransaction> currentTransactions,
+  }) async {
+    final updatedTransactions = currentTransactions
+        .map((t) => t.id == updatedTransaction.id ? updatedTransaction : t)
+        .toList();
+
+    final recomputedSchedule = RDLedgerService.recomputeScheduleFromTransactions(
+      currentSchedule: currentSchedule,
+      transactions: updatedTransactions,
+      initialPaidInstallments: deposit.initialPaidInstallments,
+    );
+
+    final repository = ref.read(recurringDepositRepositoryProvider);
+    return await repository.updateCustomerPayment(
+      updatedTransaction,
+      recomputedSchedule,
+    );
+  }
+
   Future<Result<void, String>> recordPoPayments({
     required List<RDInstallment> installments,
   }) async {
     final repository = ref.read(recurringDepositRepositoryProvider);
     return await repository.recordPoPayments(installments);
+  }
+
+  Future<Result<void, String>> revertPoPayments({
+    required List<RDInstallment> installments,
+  }) async {
+    final toUpdate = installments.map((inst) => inst.copyWith(
+      poStatus: RDPoStatus.unpaid,
+      poPaidDate: null,
+    )).toList();
+
+    final repository = ref.read(recurringDepositRepositoryProvider);
+    return await repository.recordPoPayments(toUpdate);
   }
 }
