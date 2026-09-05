@@ -4,6 +4,8 @@ import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/models/savings_account.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
@@ -16,6 +18,7 @@ class FakeDataSource {
   late final List<Customer> customers;
   late final List<OneTimeDeposit> oneTimeDeposits;
   late final List<RecurringDeposit> recurringDeposits;
+  late final Map<String, List<RDInstallment>> rdInstallments;
 
   FakeDataSource._internal() {
     _generateData();
@@ -165,5 +168,17 @@ class FakeDataSource {
         ),
       );
     });
+
+    rdInstallments = {
+      for (final rd in recurringDeposits)
+        rd.id: RDLedgerService.generateInitialSchedule(
+          rdId: rd.id,
+          startDate: rd.startDate,
+          installmentAmount: rd.installmentAmount,
+          termYears: rd.termYears,
+          termMonths: rd.termMonths,
+          initialPaidInstallments: rd.initialPaidInstallments,
+        ),
+    };
   }
 }

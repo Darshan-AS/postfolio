@@ -238,22 +238,34 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     }
 
     final repository = ref.read(recurringDepositRepositoryProvider);
-    if (id != null) {
-      return await repository.updateRecurringDeposit(deposit);
+
+    final isNew = id == null;
+    final bool hasTx;
+    if (isNew) {
+      hasTx = false;
     } else {
-      final initialSchedule = RDLedgerService.generateInitialSchedule(
-        rdId: deposit.id,
-        startDate: deposit.startDate,
-        installmentAmount: deposit.installmentAmount,
-        termYears: deposit.termYears,
-        termMonths: deposit.termMonths,
-        initialPaidInstallments: deposit.initialPaidInstallments,
-      );
-      return await repository.createRecurringDeposit(
-        deposit,
-        initialSchedule: initialSchedule,
-      );
+      final txResult = await repository.hasTransactions(deposit.id);
+      hasTx = switch (txResult) {
+        Success(value: final v) => v,
+        Failure() => true,
+      };
     }
+
+    final schedule = !hasTx
+        ? RDLedgerService.generateInitialSchedule(
+            rdId: deposit.id,
+            startDate: deposit.startDate,
+            installmentAmount: deposit.installmentAmount,
+            termYears: deposit.termYears,
+            termMonths: deposit.termMonths,
+            initialPaidInstallments: deposit.initialPaidInstallments,
+          )
+        : const <RDInstallment>[];
+
+    return await repository.saveRecurringDeposit(
+      deposit,
+      schedule: schedule,
+    );
   }
 
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {
@@ -282,6 +294,6 @@ class RecurringDepositsController extends _$RecurringDepositsController {
 
     final updatedDeposit = deposit.copyWith(status: newStatus);
     final repository = ref.read(recurringDepositRepositoryProvider);
-    return await repository.updateRecurringDeposit(updatedDeposit);
+    return await repository.saveRecurringDeposit(updatedDeposit);
   }
 }

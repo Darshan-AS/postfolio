@@ -115,6 +115,11 @@ BEGIN
 
   -- Bulk insert/upsert installments
   IF jsonb_array_length(p_installments) > 0 THEN
+    -- If no transactions exist, purge existing installments to avoid orphaned rows when schedule dates shift or term changes
+    IF NOT EXISTS(SELECT 1 FROM public.rd_transactions WHERE rd_id = p_id) THEN
+      DELETE FROM public.rd_installments WHERE rd_id = p_id;
+    END IF;
+
     INSERT INTO public.rd_installments (
       id, rd_id, agent_id, installment_date, due_date, installment_amount,
       customer_paid_amount, customer_status, po_status, po_paid_date, late_fee

@@ -37,16 +37,11 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   }
 
   @override
-  Future<Result<void, String>> createRecurringDeposit(
+  Future<Result<void, String>> saveRecurringDeposit(
     RecurringDeposit deposit, {
-    List<RDInstallment> initialSchedule = const [],
+    List<RDInstallment> schedule = const [],
   }) async {
-    return _saveRecurringDeposit(deposit, initialSchedule: initialSchedule);
-  }
-
-  @override
-  Future<Result<void, String>> updateRecurringDeposit(RecurringDeposit deposit) async {
-    return _saveRecurringDeposit(deposit, initialSchedule: const []);
+    return _saveRecurringDeposit(deposit, initialSchedule: schedule);
   }
 
   @override

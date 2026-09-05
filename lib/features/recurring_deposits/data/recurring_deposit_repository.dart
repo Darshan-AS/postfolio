@@ -6,7 +6,6 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:postfolio/features/auth/domain/auth_state.dart';
@@ -22,11 +21,10 @@ part 'recurring_deposit_repository.g.dart';
 
 abstract class RecurringDepositRepository {
   Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits();
-  Future<Result<void, String>> createRecurringDeposit(
+  Future<Result<void, String>> saveRecurringDeposit(
     RecurringDeposit deposit, {
-    List<RDInstallment> initialSchedule = const [],
+    List<RDInstallment> schedule = const [],
   });
-  Future<Result<void, String>> updateRecurringDeposit(RecurringDeposit deposit);
   Future<Result<void, String>> deleteRecurringDeposit(String id);
 
   // RD Ledger & Transaction Tracking
@@ -85,22 +83,10 @@ class FirestoreRecurringDepositRepository
   }
 
   @override
-  Future<Result<void, String>> createRecurringDeposit(
+  Future<Result<void, String>> saveRecurringDeposit(
     RecurringDeposit deposit, {
-    List<RDInstallment> initialSchedule = const [],
+    List<RDInstallment> schedule = const [],
   }) async {
-    try {
-      _deposits.doc(deposit.id).set(deposit);
-      return const Success(null);
-    } catch (e) {
-      return Failure(e.toString());
-    }
-  }
-
-  @override
-  Future<Result<void, String>> updateRecurringDeposit(
-    RecurringDeposit deposit,
-  ) async {
     try {
       _deposits.doc(deposit.id).set(deposit, firestore.SetOptions(merge: true));
       return const Success(null);
@@ -159,7 +145,10 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   final List<RecurringDeposit> _deposits = FakeDataSource().recurringDeposits
       .toList();
 
-  final Map<String, List<RDInstallment>> _fakeInstallments = {};
+  final Map<String, List<RDInstallment>> _fakeInstallments = {
+    for (var entry in FakeDataSource().rdInstallments.entries)
+      entry.key: [...entry.value],
+  };
   final Map<String, List<RDTransaction>> _fakeTransactions = {};
 
   final _installmentsControllers = <String, StreamController<Result<List<RDInstallment>, String>>>{};
@@ -177,28 +166,12 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     });
   }
 
-  List<RDInstallment> _getOrGenerateInstallments(String rdId) {
-    if (!_fakeInstallments.containsKey(rdId)) {
-      final rdIndex = _deposits.indexWhere((d) => d.id == rdId);
-      final rd = rdIndex != -1 ? _deposits[rdIndex] : _deposits.first;
-      final schedule = RDLedgerService.generateInitialSchedule(
-        rdId: rd.id,
-        startDate: rd.startDate,
-        installmentAmount: rd.installmentAmount,
-        termYears: rd.termYears,
-        termMonths: rd.termMonths,
-        initialPaidInstallments: rd.initialPaidInstallments,
-      );
-      _fakeInstallments[rdId] = schedule;
-    }
-    return _fakeInstallments[rdId]!;
+  List<RDInstallment> _getInstallments(String rdId) {
+    return _fakeInstallments.putIfAbsent(rdId, () => []);
   }
 
-  List<RDTransaction> _getOrGenerateTransactions(String rdId) {
-    if (!_fakeTransactions.containsKey(rdId)) {
-      _fakeTransactions[rdId] = [];
-    }
-    return _fakeTransactions[rdId]!;
+  List<RDTransaction> _getTransactions(String rdId) {
+    return _fakeTransactions.putIfAbsent(rdId, () => []);
   }
 
   void _emit() {
@@ -215,34 +188,15 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   }
 
   @override
-  Future<Result<void, String>> createRecurringDeposit(
+  Future<Result<void, String>> saveRecurringDeposit(
     RecurringDeposit deposit, {
-    List<RDInstallment> initialSchedule = const [],
+    List<RDInstallment> schedule = const [],
   }) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    final newDeposit = deposit.copyWith(
-      id: deposit.id.isEmpty ? const Uuid().v4() : deposit.id,
-    );
-    _deposits.add(newDeposit);
-    if (initialSchedule.isNotEmpty) {
-      final insts = _getOrGenerateInstallments(newDeposit.id);
-      insts.clear();
-      insts.addAll(initialSchedule);
-      _getInstallmentsController(newDeposit.id).add(Success([...insts]));
-    }
-    _emit();
-    return const Success(null);
-  }
-
-  @override
-  Future<Result<void, String>> updateRecurringDeposit(
-    RecurringDeposit deposit,
-  ) async {
     await Future.delayed(const Duration(milliseconds: 500));
     final index = _deposits.indexWhere((d) => d.id == deposit.id);
     if (index != -1) {
       final existing = _deposits[index];
-      final transactions = _getOrGenerateTransactions(deposit.id);
+      final transactions = _getTransactions(deposit.id);
       final validation = RecurringDeposit.validateUpdate(
         existing: existing,
         updated: deposit,
@@ -252,10 +206,30 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
         return Failure(err);
       }
       _deposits[index] = deposit;
+
+      if (schedule.isNotEmpty && transactions.isEmpty) {
+        final currentInsts = _getInstallments(deposit.id);
+        currentInsts.clear();
+        currentInsts.addAll(schedule);
+        _getInstallmentsController(deposit.id).add(Success([...currentInsts]));
+      }
+
+      _emit();
+      return const Success(null);
+    } else {
+      final newDeposit = deposit.copyWith(
+        id: deposit.id.isEmpty ? const Uuid().v4() : deposit.id,
+      );
+      _deposits.add(newDeposit);
+      if (schedule.isNotEmpty) {
+        final insts = _getInstallments(newDeposit.id);
+        insts.clear();
+        insts.addAll(schedule);
+        _getInstallmentsController(newDeposit.id).add(Success([...insts]));
+      }
       _emit();
       return const Success(null);
     }
-    return const Failure('Recurring Deposit not found');
   }
 
   @override
@@ -272,13 +246,13 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 
   @override
   Stream<Result<List<RDInstallment>, String>> watchRDInstallments(String rdId) async* {
-    yield Success(_getOrGenerateInstallments(rdId));
+    yield Success(_getInstallments(rdId));
     yield* _getInstallmentsController(rdId).stream;
   }
 
   @override
   Stream<Result<List<RDTransaction>, String>> watchRDTransactions(String rdId) async* {
-    yield Success(_getOrGenerateTransactions(rdId));
+    yield Success(_getTransactions(rdId));
     yield* _getTransactionsController(rdId).stream;
   }
 
@@ -290,11 +264,11 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     await Future.delayed(const Duration(milliseconds: 300));
     final rdId = transaction.rdId;
 
-    final txs = _getOrGenerateTransactions(rdId);
+    final txs = _getTransactions(rdId);
     txs.insert(0, transaction);
     _getTransactionsController(rdId).add(Success([...txs]));
 
-    final currentInsts = _getOrGenerateInstallments(rdId);
+    final currentInsts = _getInstallments(rdId);
     for (final updated in updatedInstallments) {
       final idx = currentInsts.indexWhere((inst) => inst.id == updated.id);
       if (idx != -1) {
@@ -314,7 +288,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     if (installments.isEmpty) return const Success(null);
     final rdId = installments.first.rdId;
 
-    final currentInsts = _getOrGenerateInstallments(rdId);
+    final currentInsts = _getInstallments(rdId);
     for (final updated in installments) {
       final idx = currentInsts.indexWhere((inst) => inst.id == updated.id);
       if (idx != -1) {
@@ -328,7 +302,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 
   @override
   Future<Result<bool, String>> hasTransactions(String rdId) async {
-    return Success(_getOrGenerateTransactions(rdId).isNotEmpty);
+    return Success(_getTransactions(rdId).isNotEmpty);
   }
 
   void dispose() {
