@@ -181,4 +181,68 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
       ),
     );
   }
+
+  static Result<void, String> validateUpdate({
+    required RecurringDeposit existing,
+    required RecurringDeposit updated,
+    required bool hasPayments,
+  }) {
+    if (hasPayments) {
+      if (existing.installmentAmount != updated.installmentAmount ||
+          existing.startDate.year != updated.startDate.year ||
+          existing.startDate.month != updated.startDate.month ||
+          existing.startDate.day != updated.startDate.day) {
+        return Failure(t.recurringDeposits.fields.financialTermsLocked);
+      }
+    }
+    return const Success(null);
+  }
+
+  static Result<RecurringDeposit, String> update({
+    required RecurringDeposit existing,
+    String? serialNo,
+    String? accountNo,
+    required double installmentAmount,
+    required int termYears,
+    required int termMonths,
+    required double interestRate,
+    required String customerId,
+    required RecurringSchemeType schemeType,
+    required DateTime startDate,
+    required bool hasPayments,
+    List<Nominee> nominees = const [],
+    DepositStatus status = DepositStatus.active,
+    int initialPaidInstallments = 0,
+  }) {
+    final tempRes = create(
+      id: existing.id,
+      serialNo: serialNo,
+      accountNo: accountNo,
+      installmentAmount: installmentAmount,
+      termYears: termYears,
+      termMonths: termMonths,
+      interestRate: interestRate,
+      customerId: customerId,
+      schemeType: schemeType,
+      startDate: startDate,
+      nominees: nominees,
+      status: status,
+      initialPaidInstallments: initialPaidInstallments,
+    );
+
+    switch (tempRes) {
+      case Failure(error: final err):
+        return Failure(err);
+      case Success(value: final updated):
+        final validation = validateUpdate(
+          existing: existing,
+          updated: updated,
+          hasPayments: hasPayments,
+        );
+        if (validation case Failure(error: final err)) {
+          return Failure(err);
+        }
+        return Success(updated);
+    }
+  }
 }

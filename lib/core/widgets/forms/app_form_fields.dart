@@ -112,6 +112,7 @@ class AppDateField extends StatelessWidget {
   final String labelText;
   final VoidCallback onTap;
   final bool isRequired;
+  final bool enabled;
 
   const AppDateField({
     super.key,
@@ -119,6 +120,7 @@ class AppDateField extends StatelessWidget {
     required this.labelText,
     required this.onTap,
     this.isRequired = false,
+    this.enabled = true,
   });
 
   @override
@@ -131,8 +133,9 @@ class AppDateField extends StatelessWidget {
         size: AppDimensions.iconMd,
       ),
       readOnly: true,
-      onTap: onTap,
+      onTap: enabled ? onTap : null,
       isRequired: isRequired,
+      enabled: enabled,
     );
   }
 }
@@ -144,6 +147,7 @@ class AppSegmentedButtonField<T> extends StatelessWidget {
   final List<ButtonSegment<T>> segments;
   final void Function(T) onChanged;
   final bool isRequired;
+  final bool enabled;
 
   const AppSegmentedButtonField({
     super.key,
@@ -153,6 +157,7 @@ class AppSegmentedButtonField<T> extends StatelessWidget {
     required this.onChanged,
     this.prefixIcon,
     this.isRequired = false,
+    this.enabled = true,
   });
 
   @override
@@ -189,9 +194,11 @@ class AppSegmentedButtonField<T> extends StatelessWidget {
         SegmentedButton<T>(
           segments: segments,
           selected: {value},
-          onSelectionChanged: (Set<T> newSelection) {
-            onChanged(newSelection.first);
-          },
+          onSelectionChanged: enabled
+              ? (Set<T> newSelection) {
+                  onChanged(newSelection.first);
+                }
+              : null,
         ),
       ],
     );

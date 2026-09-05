@@ -32,6 +32,7 @@ abstract class RecurringDepositRepository {
   // RD Ledger & Transaction Tracking
   Stream<Result<List<RDInstallment>, String>> watchRDInstallments(String rdId);
   Stream<Result<List<RDTransaction>, String>> watchRDTransactions(String rdId);
+  Future<Result<bool, String>> hasTransactions(String rdId);
   Future<Result<void, String>> recordCustomerPayment(
     RDTransaction transaction,
     List<RDInstallment> updatedInstallments,
@@ -144,6 +145,11 @@ class FirestoreRecurringDepositRepository
   ) async {
     return const Failure('Firestore repository does not support RD ledger payments');
   }
+
+  @override
+  Future<Result<bool, String>> hasTransactions(String rdId) async {
+    return const Success(false);
+  }
 }
 
 class FakeRecurringDepositRepository implements RecurringDepositRepository {
@@ -235,6 +241,16 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     await Future.delayed(const Duration(milliseconds: 500));
     final index = _deposits.indexWhere((d) => d.id == deposit.id);
     if (index != -1) {
+      final existing = _deposits[index];
+      final transactions = _getOrGenerateTransactions(deposit.id);
+      final validation = RecurringDeposit.validateUpdate(
+        existing: existing,
+        updated: deposit,
+        hasPayments: transactions.isNotEmpty,
+      );
+      if (validation case Failure(error: final err)) {
+        return Failure(err);
+      }
       _deposits[index] = deposit;
       _emit();
       return const Success(null);
@@ -308,6 +324,11 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     _getInstallmentsController(rdId).add(Success([...currentInsts]));
 
     return const Success(null);
+  }
+
+  @override
+  Future<Result<bool, String>> hasTransactions(String rdId) async {
+    return Success(_getOrGenerateTransactions(rdId).isNotEmpty);
   }
 
   void dispose() {

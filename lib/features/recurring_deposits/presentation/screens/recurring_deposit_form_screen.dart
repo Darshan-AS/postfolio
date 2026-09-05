@@ -176,9 +176,42 @@ List<Widget> _buildInvestmentDetails(
 }) {
   return [
     FormSectionHeader(title: t.recurringDeposits.sections.investmentDetails),
+    if (state.hasTransactions) ...[
+      Container(
+        padding: const EdgeInsets.all(AppDimensions.paddingMd),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.error.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedAlertCircle,
+              color: Theme.of(context).colorScheme.error,
+              size: AppDimensions.iconMd,
+            ),
+            AppSpacings.gapMd,
+            Expanded(
+              child: Text(
+                t.recurringDeposits.fields.financialTermsLocked,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      AppSpacings.gapLg,
+    ],
     AppSegmentedButtonField<RecurringSchemeType>(
       value: selectedScheme.value,
       labelText: t.recurringDeposits.fields.schemeType,
+      enabled: !state.hasTransactions,
       segments: RecurringSchemeType.values
           .map(
             (scheme) =>
@@ -213,6 +246,7 @@ List<Widget> _buildInvestmentDetails(
         AppTextField(
           controller: installmentAmountController,
           labelText: t.recurringDeposits.fields.installmentAmount,
+          enabled: !state.hasTransactions,
           prefixIcon: const HugeIcon(
             icon: HugeIcons.strokeRoundedCoins01,
             size: AppDimensions.iconMd,
@@ -253,6 +287,7 @@ List<Widget> _buildInvestmentDetails(
     AppTextField(
       controller: interestRateController,
       labelText: t.recurringDeposits.fields.interestRate,
+      enabled: !state.hasTransactions,
       prefixIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedPercent,
         size: AppDimensions.iconMd,
@@ -270,6 +305,7 @@ List<Widget> _buildInvestmentDetails(
       controller: startDateController,
       labelText: t.recurringDeposits.fields.startDate,
       isRequired: true,
+      enabled: !state.hasTransactions,
       onTap: () async {
         final picked = await showDatePicker(
           context: context,
@@ -291,6 +327,7 @@ List<Widget> _buildInvestmentDetails(
       allowedTenuresInYears: selectedScheme.value.allowedTenuresInYears,
       selectedYears: selectedTermYears.value,
       selectedMonths: selectedTermMonths.value,
+      enabled: !state.hasTransactions,
       onChanged: (years, months) {
         selectedTermYears.value = years;
         selectedTermMonths.value = months;
@@ -300,7 +337,7 @@ List<Widget> _buildInvestmentDetails(
     AppTextField(
       controller: state.initialPaidInstallmentsController,
       labelText: t.recurringDeposits.fields.initialPaidInstallments,
-      enabled: !state.isUpdating,
+      enabled: !state.isUpdating && !state.hasTransactions,
       prefixIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedCheckmarkCircle02,
         size: AppDimensions.iconMd,
