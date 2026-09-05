@@ -42,7 +42,7 @@ class RecurringDepositFormState {
   final void Function(DateTime pickedDate) onStartDateChanged;
   final VoidCallback save;
   final bool isUpdating;
-  final bool hasTransactions;
+  final bool isFinancialTermsLocked;
 
   RecurringDepositFormState({
     required this.formKey,
@@ -67,7 +67,7 @@ class RecurringDepositFormState {
     required this.onStartDateChanged,
     required this.save,
     required this.isUpdating,
-    required this.hasTransactions,
+    required this.isFinancialTermsLocked,
   });
 }
 
@@ -81,10 +81,10 @@ RecurringDepositFormState useRecurringDepositForm({
   final isUpdating = deposit != null;
   final postalRateService = ref.watch(postalRateServiceProvider);
 
-  final hasTransactionsAsync = deposit != null
-      ? ref.watch(rdHasTransactionsProvider(deposit.id))
+  final isLockedAsync = deposit != null
+      ? ref.watch(rdIsFinancialTermsLockedProvider(deposit.id))
       : const AsyncValue<bool>.data(false);
-  final hasTransactions = hasTransactionsAsync.value ?? false;
+  final isFinancialTermsLocked = isLockedAsync.value ?? false;
 
   final amountFormatter = useMemoized(
     () => CurrencyTextInputFormatter.currency(
@@ -292,6 +292,6 @@ RecurringDepositFormState useRecurringDepositForm({
     onStartDateChanged: onStartDateChanged,
     save: save,
     isUpdating: isUpdating,
-    hasTransactions: hasTransactions,
+    isFinancialTermsLocked: isFinancialTermsLocked,
   );
 }
