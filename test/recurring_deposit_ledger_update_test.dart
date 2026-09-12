@@ -273,6 +273,56 @@ void main() {
       final reinstatedInst = instsAfterReinstate.firstWhere((i) => i.id == targetInstallment.id);
       expect(reinstatedInst.isLateFeeWaived, isFalse);
     });
+
+    test('toggleLateFeeWaiver rejects waiving if late fee is already paid in full', () async {
+      final startDate = DateTime(2026, 1, 1);
+      final schedule = RDLedgerService.generateInitialSchedule(
+        rdId: rdId,
+        startDate: startDate,
+        installmentAmount: 1000.0,
+        termYears: 1,
+        termMonths: 0,
+        initialPaidInstallments: 0,
+      );
+
+      final rd = RecurringDeposit(
+        id: rdId,
+        customerId: customerId,
+        schemeType: RecurringSchemeType.recurringDeposit,
+        status: DepositStatus.active,
+        installmentAmount: 1000.0,
+        interestRate: 6.7,
+        termYears: 1,
+        termMonths: 0,
+        startDate: startDate,
+        nominees: const [],
+        initialPaidInstallments: 0,
+      );
+
+      final instWithPaidFee = schedule.first.copyWith(
+        lateFee: 10.0,
+        paidLateFee: 10.0,
+        customerPaidAmount: 1000.0,
+        customerStatus: RDInstallmentStatus.fullyPaid,
+      );
+      final customSchedule = [
+        instWithPaidFee,
+        ...schedule.sublist(1),
+      ];
+
+      await repository.saveRecurringDeposit(rd, schedule: customSchedule);
+
+      final failRes = await repository.toggleLateFeeWaiver(
+        installmentId: instWithPaidFee.id,
+        isWaived: true,
+      );
+
+      expect(failRes, isA<Failure<void, String>>());
+      expect(
+        (failRes as Failure<void, String>).error,
+        contains('Cannot forgive an already paid default fee'),
+      );
+    });
   });
 }
 
