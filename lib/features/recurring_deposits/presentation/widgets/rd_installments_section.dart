@@ -81,7 +81,12 @@ class _RDInstallmentsContent extends HookConsumerWidget {
         }
 
         final selectedInstallments = installments
-            .where((inst) => selectedIds.value.contains(inst.id))
+            .asMap()
+            .entries
+            .where((entry) =>
+                selectedIds.value.contains(entry.value.id) &&
+                entry.key >= deposit.initialPaidInstallments)
+            .map((entry) => entry.value)
             .toList();
         final unpaidSelected = selectedInstallments
             .where((inst) => inst.poStatus == RDPoStatus.unpaid)
@@ -151,15 +156,17 @@ class _RDInstallmentsContent extends HookConsumerWidget {
                   isOpeningBaseline: isOpeningBaseline,
                   isSelectionMode: isSelectionMode.value,
                   isSelected: selectedIds.value.contains(inst.id),
-                  onSelectionChanged: (checked) {
-                    final current = Set<String>.from(selectedIds.value);
-                    if (checked == true) {
-                      current.add(inst.id);
-                    } else {
-                      current.remove(inst.id);
-                    }
-                    selectedIds.value = current;
-                  },
+                  onSelectionChanged: isOpeningBaseline
+                      ? null
+                      : (checked) {
+                          final current = Set<String>.from(selectedIds.value);
+                          if (checked == true) {
+                            current.add(inst.id);
+                          } else {
+                            current.remove(inst.id);
+                          }
+                          selectedIds.value = current;
+                        },
                 );
               },
             ),
@@ -486,7 +493,7 @@ class RDInstallmentTile extends ConsumerWidget {
   final bool isOpeningBaseline;
   final bool isSelectionMode;
   final bool isSelected;
-  final ValueChanged<bool?> onSelectionChanged;
+  final ValueChanged<bool?>? onSelectionChanged;
 
   const RDInstallmentTile({
     super.key,
@@ -496,7 +503,7 @@ class RDInstallmentTile extends ConsumerWidget {
     required this.isOpeningBaseline,
     required this.isSelectionMode,
     required this.isSelected,
-    required this.onSelectionChanged,
+    this.onSelectionChanged,
   });
 
   @override
@@ -786,13 +793,21 @@ class RDInstallmentTile extends ConsumerWidget {
     );
 
     if (isSelectionMode) {
-      return CheckboxListTile(
+      final tile = CheckboxListTile(
         controlAffinity: ListTileControlAffinity.leading,
-        value: isSelected,
-        onChanged: onSelectionChanged,
+        value: isOpeningBaseline ? false : isSelected,
+        onChanged: isOpeningBaseline ? null : onSelectionChanged,
         title: titleRow,
         subtitle: subtitleColumn,
       );
+
+      if (isOpeningBaseline) {
+        return Tooltip(
+          message: ledger.actions.baselineImmutableTooltip,
+          child: tile,
+        );
+      }
+      return tile;
     }
 
     final hasPendingFee = !isOpeningBaseline &&

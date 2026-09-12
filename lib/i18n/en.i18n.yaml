@@ -323,6 +323,7 @@ recurringDeposits:
       reinstateFeeSuccess: "Default fee for Month ${month} reinstated."
       editPayment: "Edit Payment"
       deletePayment: "Delete Payment"
+      baselineImmutableTooltip: "Opening baseline installments are settled prior to onboarding and cannot be modified or reverted here."
     statuses:
       settled: "Settled"
       collectedFeePending: "Collected (Fee Pending)"
