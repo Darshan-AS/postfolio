@@ -63,6 +63,9 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     return schemeType.shortName;
   }
 
+  /// Total tenure in months derived from termYears and termMonths.
+  int get totalMonths => (termYears * 12) + termMonths;
+
   /// Default sorting logic for Recurring Deposits (ascending by serial no).
   static int defaultCompare(RecurringDeposit a, RecurringDeposit b) {
     final sA = a.serialNo ?? '';
