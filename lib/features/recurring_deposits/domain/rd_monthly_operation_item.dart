@@ -47,7 +47,8 @@ abstract class RDMonthlyOperationItem with _$RDMonthlyOperationItem {
   /// Installment sequence number (1 to 60) relative to deposit start date.
   int get installmentNumber {
     final diffYears = installment.installmentDate.year - deposit.startDate.year;
-    final diffMonths = installment.installmentDate.month - deposit.startDate.month;
+    final diffMonths =
+        installment.installmentDate.month - deposit.startDate.month;
     final num = diffYears * 12 + diffMonths + 1;
     return num > 0 ? num : 1;
   }
@@ -88,5 +89,15 @@ abstract class RDMonthlyOperationItem with _$RDMonthlyOperationItem {
       installment.installmentDate.month,
     );
     return targetMonthStart.isAfter(currentMonthStart);
+  }
+
+  /// Whether any default fee exists for this item (pending, paid, or waived).
+  /// Hidden when there is no default fee at all.
+  bool hasDefaultFee(DateTime now) {
+    if (isUpcoming(now)) return false;
+    return installment.isLateFeeWaived ||
+        installment.paidLateFee > 0 ||
+        totalDefaultFee(now) > 0 ||
+        installment.lateFee > 0;
   }
 }

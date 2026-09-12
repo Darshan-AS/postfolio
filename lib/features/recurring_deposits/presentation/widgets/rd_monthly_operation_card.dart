@@ -77,19 +77,25 @@ class RDMonthlyOperationCard extends StatelessWidget {
     final deposit = item.deposit;
 
     final currentMonthStart = DateTime(now.year, now.month);
-    final targetMonthStart = DateTime(inst.installmentDate.year, inst.installmentDate.month);
+    final targetMonthStart = DateTime(
+      inst.installmentDate.year,
+      inst.installmentDate.month,
+    );
     final isFutureMonth = targetMonthStart.isAfter(currentMonthStart);
 
     final hasOverdueDebt = !isFutureMonth && item.hasOverdueDebt(now);
-    final isCurrentMonthOverdue = !isFutureMonth && item.isOverdue(now) && item.isCustomerPending;
+    final isCurrentMonthOverdue =
+        !isFutureMonth && item.isOverdue(now) && item.isCustomerPending;
     final hasPriorArrears = !isFutureMonth && item.priorOverdueCount > 0;
-    final dynamicLateFee = isFutureMonth ? 0.0 : inst.dynamicLateFeeAt(now);
     final totalDefaultFee = item.totalDefaultFee(now);
     final totalPayable = hasPriorArrears
         ? item.totalOutstandingPayable(now)
         : item.totalPayable(now);
-    final hasDivergentPending = item.isCustomerPending &&
-        (totalPayable != deposit.installmentAmount || hasPriorArrears || totalDefaultFee > 0);
+    final hasDivergentPending =
+        item.isCustomerPending &&
+        (totalPayable != deposit.installmentAmount ||
+            hasPriorArrears ||
+            totalDefaultFee > 0);
 
     // Visual urgency indicator bar along the left edge
     Color? indicatorColor;
@@ -157,31 +163,14 @@ class RDMonthlyOperationCard extends StatelessWidget {
                     item.priorOverdueCount,
                     item.priorOverdueAmount,
                   ),
-                if (dynamicLateFee > 0 && item.isCustomerPending)
-                  Text(
-                    card.defaultFee(amount: dynamicLateFee.toRupeeFormat()),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.error,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                if (item.isPoAdvanced)
-                  _buildPoAdvancedBadge(context),
-                if (totalDefaultFee > 0 && item.isCustomerPending)
-                if (totalDefaultFee > 0 && !inst.isLateFeeWaived)
-                  _buildDefaultFeeBadge(context, totalDefaultFee),
-                if (inst.isLateFeeWaived && item.isCustomerPending)
-                if (inst.isLateFeeWaived)
-                  _buildWaivedFeeBadge(context),
-                if (inst.customerPaidAmount > 0 && !inst.isInstallmentPaid)
-                  Text(
-                    '${card.collected}: ${inst.customerPaidAmount.toRupeeFormat()}',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
               ],
+            ),
+            AppSpacings.gapXs,
+            _buildCheckpointsRow(
+              context,
+              now,
+              isCurrentMonthOverdue,
+              hasOverdueDebt,
             ),
           ],
         ),
@@ -377,7 +366,9 @@ class RDMonthlyOperationCard extends StatelessWidget {
                 vertical: AppDimensions.paddingXs,
               ),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                color: theme.colorScheme.primaryContainer.withValues(
+                  alpha: 0.5,
+                ),
                 borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
               ),
               child: Row(
@@ -439,9 +430,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
           onTap: onTap,
         ),
       ],
-      onTap: isSelectionMode
-          ? () => onSelect?.call(!isSelected)
-          : onTap,
+      onTap: isSelectionMode ? () => onSelect?.call(!isSelected) : onTap,
       onLongPress: onLongPress,
     );
   }
@@ -470,7 +459,8 @@ class RDMonthlyOperationCard extends StatelessWidget {
     }
 
     final diffYears = inst.installmentDate.year - item.deposit.startDate.year;
-    final diffMonths = inst.installmentDate.month - item.deposit.startDate.month;
+    final diffMonths =
+        inst.installmentDate.month - item.deposit.startDate.month;
     final monthNum = diffYears * 12 + diffMonths + 1;
     final label = monthNum > 0 ? '#$monthNum' : '#1';
 
@@ -585,93 +575,197 @@ class RDMonthlyOperationCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDefaultFeeBadge(
+  Widget _buildCheckpointsRow(
     BuildContext context,
-    double fee,
+    DateTime now,
+    bool isCurrentMonthOverdue,
+    bool hasOverdueDebt,
+  ) {
+    return Wrap(
+      spacing: AppDimensions.paddingSm,
+      runSpacing: AppDimensions.paddingXs,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _buildCustomerCheckpoint(
+          context,
+          now,
+          isCurrentMonthOverdue,
+          hasOverdueDebt,
+        ),
+        _buildPoCheckpoint(context),
+        if (item.hasDefaultFee(now)) _buildFeeCheckpoint(context, now),
+      ],
+    );
+  }
+
+  Widget _buildCustomerCheckpoint(
+    BuildContext context,
+    DateTime now,
+    bool isCurrentMonthOverdue,
+    bool hasOverdueDebt,
   ) {
     final theme = Theme.of(context);
     final card = t.recurringDeposits.monthlyOperations.card;
+    final inst = item.installment;
+    final paidStr = inst.customerPaidAmount.toRupeeFormat();
+    final totalStr = inst.installmentAmount.toRupeeFormat();
+    final label = card.checkpoints.cash(paid: paidStr, total: totalStr);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingSm,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.errorContainer.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          HugeIcon(
-            icon: HugeIcons.strokeRoundedAlertCircle,
-            size: AppDimensions.iconXs,
-            color: theme.colorScheme.error,
-          ),
-          AppSpacings.gapXs,
-          Text(
-            card.defaultFeeBadge(amount: fee.toRupeeFormat()),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.error,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
+    if (inst.isInstallmentPaid) {
+      return _buildCheckpointBadge(
+        context,
+        icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+        label: label,
+        bgColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+        fgColor: theme.colorScheme.primary,
+      );
+    } else if (inst.customerPaidAmount > 0) {
+      final isOverdue = isCurrentMonthOverdue || hasOverdueDebt;
+      return _buildCheckpointBadge(
+        context,
+        icon: HugeIcons.strokeRoundedCoins01,
+        label: label,
+        bgColor: Colors.transparent,
+        fgColor: isOverdue
+            ? theme.colorScheme.error
+            : theme.colorScheme.primary,
+        borderColor: isOverdue
+            ? theme.colorScheme.error
+            : theme.colorScheme.primary,
+        isOutlined: true,
+      );
+    } else if (isCurrentMonthOverdue || hasOverdueDebt) {
+      return _buildCheckpointBadge(
+        context,
+        icon: HugeIcons.strokeRoundedAlert02,
+        label: label,
+        bgColor: Colors.transparent,
+        fgColor: theme.colorScheme.error,
+        borderColor: theme.colorScheme.error,
+        isOutlined: true,
+      );
+    } else {
+      return _buildCheckpointBadge(
+        context,
+        icon: HugeIcons.strokeRoundedClock01,
+        label: label,
+        bgColor: Colors.transparent,
+        fgColor: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+        borderColor: theme.colorScheme.outlineVariant,
+        isOutlined: true,
+      );
+    }
   }
 
-  Widget _buildWaivedFeeBadge(BuildContext context) {
+  Widget _buildPoCheckpoint(BuildContext context) {
     final theme = Theme.of(context);
     final card = t.recurringDeposits.monthlyOperations.card;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingSm,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
-      ),
-      child: Text(
-        card.feeWaived,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.w600,
+    if (item.isPoAdvanced) {
+      return _buildCheckpointBadge(
+        context,
+        icon: HugeIcons.strokeRoundedFlash,
+        label: card.checkpoints.poAdvanced,
+        bgColor: theme.colorScheme.tertiaryContainer,
+        fgColor: theme.colorScheme.onTertiaryContainer,
+      );
+    } else if (item.isPoPaid) {
+      return _buildCheckpointBadge(
+        context,
+        icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+        label: card.checkpoints.po,
+        bgColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+        fgColor: theme.colorScheme.primary,
+      );
+    } else {
+      return _buildCheckpointBadge(
+        context,
+        icon: HugeIcons.strokeRoundedClock01,
+        label: card.checkpoints.po,
+        bgColor: Colors.transparent,
+        fgColor: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+        borderColor: theme.colorScheme.outlineVariant,
+        isOutlined: true,
+      );
+    }
+  }
+
+  Widget _buildFeeCheckpoint(BuildContext context, DateTime now) {
+    final theme = Theme.of(context);
+    final card = t.recurringDeposits.monthlyOperations.card;
+    final inst = item.installment;
+    final totalFee = item.totalDefaultFee(now);
+
+    if (inst.isLateFeeWaived) {
+      return _buildCheckpointBadge(
+        context,
+        icon: HugeIcons.strokeRoundedCheckmarkBadge01,
+        label: card.checkpoints.feeWaived,
+        bgColor: theme.colorScheme.surfaceContainerHighest,
+        fgColor: theme.colorScheme.onSurfaceVariant,
+      );
+    } else if (totalFee > 0) {
+      final totalAssessedFee = inst.paidLateFee + totalFee;
+      return _buildCheckpointBadge(
+        context,
+        icon: HugeIcons.strokeRoundedAlertCircle,
+        label: card.checkpoints.fee(
+          paid: inst.paidLateFee.toRupeeFormat(),
+          total: totalAssessedFee.toRupeeFormat(),
         ),
-      ),
-    );
+        bgColor: Colors.transparent,
+        fgColor: theme.colorScheme.error,
+        borderColor: theme.colorScheme.error,
+        isOutlined: true,
+      );
+    } else if (inst.paidLateFee > 0) {
+      final paidStr = inst.paidLateFee.toRupeeFormat();
+      return _buildCheckpointBadge(
+        context,
+        icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+        label: card.checkpoints.fee(paid: paidStr, total: paidStr),
+        bgColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+        fgColor: theme.colorScheme.primary,
+      );
+    }
+    return const SizedBox.shrink();
   }
 
-  Widget _buildPoAdvancedBadge(BuildContext context) {
+  Widget _buildCheckpointBadge(
+    BuildContext context, {
+    required dynamic icon,
+    required String label,
+    required Color bgColor,
+    required Color fgColor,
+    bool isOutlined = false,
+    Color? borderColor,
+  }) {
     final theme = Theme.of(context);
-    final card = t.recurringDeposits.monthlyOperations.card;
-
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.paddingSm,
         vertical: 2,
       ),
       decoration: BoxDecoration(
-        color: theme.colorScheme.tertiaryContainer,
+        color: isOutlined ? Colors.transparent : bgColor,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
+        border: isOutlined
+            ? Border.all(
+                color: borderColor ?? theme.colorScheme.outlineVariant,
+                width: AppDimensions.borderSm,
+              )
+            : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          HugeIcon(
-            icon: HugeIcons.strokeRoundedBuilding03,
-            size: AppDimensions.iconXs,
-            color: theme.colorScheme.onTertiaryContainer,
-          ),
+          HugeIcon(icon: icon, size: AppDimensions.iconXs, color: fgColor),
           AppSpacings.gapXs,
           Text(
-            card.advancedToPo,
+            label,
             style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onTertiaryContainer,
-              fontWeight: FontWeight.bold,
+              color: fgColor,
+              fontWeight: isOutlined ? FontWeight.w500 : FontWeight.bold,
             ),
           ),
         ],
