@@ -358,6 +358,7 @@ recurringDeposits:
       customerOwesFeeOnly: "Customer owes: ${total} (Default Fee: ${fee})"
       customerOwesWaived: "Customer owes: ₹0 (Default Fee Waived)"
       customerOwesPrincipal: "Customer owes: ${total}"
+      customerOwesPrincipalWaived: "Customer owes: ${total} (Default Fee Waived)"
       dueInstallment: "Due: ${date} | Installment: ${amount}"
       openingBaseline: "Opening Baseline (Settled prior to onboarding)"
       depositedToPo: "Deposited to PO on ${date}"

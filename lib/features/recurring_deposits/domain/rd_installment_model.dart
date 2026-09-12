@@ -32,6 +32,18 @@ abstract class RDInstallment with _$RDInstallment {
   /// Effective late fee considering any fee waiver.
   double get effectiveLateFee => isLateFeeWaived ? 0.0 : lateFee;
 
+  /// Dynamically computes effective late fee at [evaluationDate].
+  /// If already recorded in database (> 0), uses [lateFee].
+  /// Otherwise, if currently overdue and not waived, dynamically computes expected 1% fee.
+  double dynamicLateFeeAt(DateTime evaluationDate) {
+    if (isLateFeeWaived) return 0.0;
+    if (lateFee > 0.0) return lateFee;
+    if (customerStatus == RDInstallmentStatus.fullyPaid || isInstallmentPaid) {
+      return 0.0;
+    }
+    return computeExpectedLateFee(evaluationDate);
+  }
+
   /// Remaining unpaid principal balance for this installment.
   double get outstandingPrincipal =>
       (installmentAmount - customerPaidAmount).clamp(0.0, double.infinity);
@@ -40,8 +52,19 @@ abstract class RDInstallment with _$RDInstallment {
   double get outstandingLateFee =>
       isLateFeeWaived ? 0.0 : (lateFee - paidLateFee).clamp(0.0, double.infinity);
 
+  /// Outstanding late fee owed by customer at [evaluationDate].
+  double outstandingLateFeeAt(DateTime evaluationDate) {
+    if (isLateFeeWaived) return 0.0;
+    final totalFee = dynamicLateFeeAt(evaluationDate);
+    return (totalFee - paidLateFee).clamp(0.0, double.infinity);
+  }
+
   /// Computes remaining total balance due (principal + outstanding late fee).
   double get outstandingAmount => outstandingPrincipal + outstandingLateFee;
+
+  /// Remaining total balance due at [evaluationDate].
+  double outstandingAmountAt(DateTime evaluationDate) =>
+      outstandingPrincipal + outstandingLateFeeAt(evaluationDate);
 
   /// Whether the customer has fully covered the base installment amount.
   bool get isInstallmentPaid => customerPaidAmount >= installmentAmount;

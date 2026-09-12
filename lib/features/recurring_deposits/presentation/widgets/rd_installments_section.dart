@@ -504,8 +504,11 @@ class RDInstallmentTile extends ConsumerWidget {
     final theme = Theme.of(context);
     final ledger = t.recurringDeposits.ledger;
     final inst = installment;
-    final isOverdue = inst.isOverdueAt(DateTime.now());
+    final now = DateTime.now();
+    final isOverdue = inst.isOverdueAt(now);
     final isPoPaid = inst.poStatus == RDPoStatus.paid;
+    final displayedLateFee =
+        isOpeningBaseline ? 0.0 : inst.dynamicLateFeeAt(now);
 
     Color statusColor;
     List<List<dynamic>> statusIcon;
@@ -581,7 +584,7 @@ class RDInstallmentTile extends ConsumerWidget {
             ],
           ),
         ),
-        if (inst.lateFee > 0) ...[
+        if (displayedLateFee > 0) ...[
           AppSpacings.gapSm,
           Container(
             padding: const EdgeInsets.symmetric(
@@ -604,19 +607,19 @@ class RDInstallmentTile extends ConsumerWidget {
             child: Text(
               inst.isLateFeeWaived
                   ? ledger.installmentDetails.lateFeeWaived(
-                      amount: inst.lateFee.toRupeeFormat(),
+                      amount: displayedLateFee.toRupeeFormat(),
                     )
-                  : (inst.paidLateFee >= inst.lateFee
+                  : (inst.paidLateFee >= displayedLateFee
                       ? ledger.installmentDetails.lateFeePaid(
-                          amount: inst.lateFee.toRupeeFormat(),
+                          amount: displayedLateFee.toRupeeFormat(),
                         )
                       : (inst.paidLateFee > 0
                           ? ledger.installmentDetails.lateFeePartial(
                               paid: inst.paidLateFee.toRupeeFormat(),
-                              total: inst.lateFee.toRupeeFormat(),
+                              total: displayedLateFee.toRupeeFormat(),
                             )
                           : ledger.installmentDetails.lateFeePending(
-                              amount: inst.lateFee.toRupeeFormat(),
+                              amount: displayedLateFee.toRupeeFormat(),
                             ))),
               style: theme.textTheme.labelSmall?.copyWith(
                 color: inst.isLateFeeWaived
@@ -635,8 +638,10 @@ class RDInstallmentTile extends ConsumerWidget {
     final lateFeePaid = inst.paidLateFee;
 
     final principalOwed = inst.outstandingPrincipal;
-    final lateFeeOwed = inst.outstandingLateFee;
-    final totalOwed = inst.outstandingAmount;
+    final lateFeeOwed = inst.isLateFeeWaived
+        ? 0.0
+        : (displayedLateFee - inst.paidLateFee).clamp(0.0, double.infinity);
+    final totalOwed = principalOwed + lateFeeOwed;
 
     final String paidBreakdown;
     if (lateFeePaid > 0) {
@@ -665,6 +670,14 @@ class RDInstallmentTile extends ConsumerWidget {
       );
     } else if (inst.isLateFeeWaived && principalOwed == 0) {
       owedBreakdown = ledger.installmentDetails.customerOwesWaived;
+    } else if (inst.isLateFeeWaived && displayedLateFee > 0) {
+      if (principalOwed > 0) {
+        owedBreakdown = ledger.installmentDetails.customerOwesPrincipalWaived(
+          total: totalOwed.toRupeeFormat(),
+        );
+      } else {
+        owedBreakdown = ledger.installmentDetails.customerOwesWaived;
+      }
     } else {
       owedBreakdown = ledger.installmentDetails.customerOwesPrincipal(
         total: totalOwed.toRupeeFormat(),
@@ -712,7 +725,7 @@ class RDInstallmentTile extends ConsumerWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-            if (totalOwed > 0)
+            if (totalOwed > 0 || (inst.isLateFeeWaived && displayedLateFee > 0))
               Padding(
                 padding: const EdgeInsets.only(top: 2.0),
                 child: Text(
@@ -720,8 +733,12 @@ class RDInstallmentTile extends ConsumerWidget {
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: isPoPaid
                         ? theme.colorScheme.tertiary
-                        : theme.colorScheme.error,
-                    fontWeight: FontWeight.bold,
+                        : isOverdue
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.onSurfaceVariant,
+                    fontWeight: isOverdue || isPoPaid
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ),
               ),
@@ -778,10 +795,17 @@ class RDInstallmentTile extends ConsumerWidget {
       );
     }
 
+    final hasPendingFee = !isOpeningBaseline &&
+        !inst.isLateFeeWaived &&
+        displayedLateFee > 0 &&
+        inst.paidLateFee < displayedLateFee;
+    final canToggleWaiver =
+        !isOpeningBaseline && (inst.isLateFeeWaived || hasPendingFee);
+
     return ListTile(
       title: titleRow,
       subtitle: subtitleColumn,
-      trailing: !isSelectionMode && inst.lateFee > 0
+      trailing: !isSelectionMode && canToggleWaiver
           ? MenuAnchor(
               builder: (context, controller, child) {
                 return IconButton(
@@ -809,11 +833,13 @@ class RDInstallmentTile extends ConsumerWidget {
                     ),
                     child: Text(ledger.actions.forgiveFee),
                     onPressed: () async {
+                      final pendingFeeAmount = (displayedLateFee - inst.paidLateFee)
+                          .clamp(0.0, double.infinity);
                       final confirmed = await AppDialogs.confirmAction(
                         context,
                         title: ledger.actions.forgiveFeeTitle,
                         content: ledger.actions.forgiveFeeContent(
-                          amount: inst.lateFee.toRupeeFormat(),
+                          amount: pendingFeeAmount.toRupeeFormat(),
                           month: monthNum.toString(),
                         ),
                         confirmText: ledger.actions.forgiveFee,

@@ -412,5 +412,88 @@ void main() {
       expect(m1.outstandingLateFee, 0.0);
       expect(m1.isFullySettled, isTrue);
     });
+
+    test('dynamicLateFeeAt and outstandingLateFeeAt dynamically evaluate overdue fees before transactions exist', () {
+      final inst = RDInstallment(
+        id: 'inst-1',
+        rdId: rdId,
+        installmentDate: DateTime(2026, 1, 1),
+        dueDate: DateTime(2026, 1, 15),
+        installmentAmount: 1000.0,
+        customerPaidAmount: 0.0,
+        customerStatus: RDInstallmentStatus.unpaid,
+        poStatus: RDPoStatus.unpaid,
+        lateFee: 0.0,
+        paidLateFee: 0.0,
+        isLateFeeWaived: false,
+      );
+
+      // 1. When evaluated prior to due date (not overdue)
+      final evalEarly = DateTime(2026, 1, 10);
+      expect(inst.dynamicLateFeeAt(evalEarly), 0.0);
+      expect(inst.outstandingLateFeeAt(evalEarly), 0.0);
+      expect(inst.outstandingAmountAt(evalEarly), 1000.0);
+
+      // 2. When evaluated 1 month after due date (Feb 2026 -> 1 defaulted month -> ₹10)
+      final evalOneMonth = DateTime(2026, 2, 16);
+      expect(inst.dynamicLateFeeAt(evalOneMonth), 10.0);
+      expect(inst.outstandingLateFeeAt(evalOneMonth), 10.0);
+      expect(inst.outstandingAmountAt(evalOneMonth), 1010.0);
+
+      // 3. When fee is waived, dynamic late fee drops to 0.0
+      final waivedInst = inst.copyWith(isLateFeeWaived: true);
+      expect(waivedInst.dynamicLateFeeAt(evalOneMonth), 0.0);
+      expect(waivedInst.outstandingLateFeeAt(evalOneMonth), 0.0);
+      expect(waivedInst.outstandingAmountAt(evalOneMonth), 1000.0);
+    });
+
+    test('initialPaidInstallments settled prior to onboarding do not incur default fees when subsequent payments are made overdue', () {
+      final scheduleWithBaseline = RDLedgerService.generateInitialSchedule(
+        rdId: rdId,
+        startDate: DateTime(2026, 1, 1),
+        installmentAmount: 1000.0,
+        termYears: 1,
+        termMonths: 0,
+        initialPaidInstallments: 2, // Months 1 & 2 already paid prior to onboarding
+      );
+
+      // Verify months 1 and 2 are fully paid and settled with 0 late fee
+      expect(scheduleWithBaseline[0].isFullySettled, isTrue);
+      expect(scheduleWithBaseline[0].lateFee, 0.0);
+      expect(scheduleWithBaseline[0].paidLateFee, 0.0);
+      expect(scheduleWithBaseline[1].isFullySettled, isTrue);
+      expect(scheduleWithBaseline[1].lateFee, 0.0);
+      expect(scheduleWithBaseline[1].paidLateFee, 0.0);
+
+      // Now customer makes payment for Month 3 late, in May 2026 (Month 3 due March 15).
+      final txMonth3 = RDTransaction(
+        id: 'tx-m3',
+        rdId: rdId,
+        paidDate: DateTime(2026, 5, 20),
+        amount: 1000.0,
+        paymentMode: RDPaymentMode.cash,
+        installmentAmount: 1000.0,
+        lateFeeAmount: 0.0,
+      );
+
+      final recomputed = RDLedgerService.recomputeScheduleFromTransactions(
+        currentSchedule: scheduleWithBaseline,
+        transactions: [txMonth3],
+        initialPaidInstallments: 2,
+      );
+
+      // Month 1 & 2 must NOT have incurred any late fee
+      expect(recomputed[0].lateFee, 0.0);
+      expect(recomputed[0].paidLateFee, 0.0);
+      expect(recomputed[0].isFullySettled, isTrue);
+      expect(recomputed[1].lateFee, 0.0);
+      expect(recomputed[1].paidLateFee, 0.0);
+      expect(recomputed[1].isFullySettled, isTrue);
+
+      // Month 3 should have received the payment, and incurred late fee since paid in May
+      expect(recomputed[2].customerPaidAmount, 1000.0);
+      expect(recomputed[2].lateFee, greaterThan(0.0));
+      expect(recomputed[2].paidLateFee, 0.0);
+    });
   });
 }

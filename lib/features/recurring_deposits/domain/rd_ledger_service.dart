@@ -197,7 +197,7 @@ class RDLedgerService {
     for (final inst in currentSchedule) {
       if (!inst.isLateFeeWaived &&
           inst.lateFee == 0.0 &&
-          paidDate.isAfter(inst.dueDate)) {
+          inst.isOverdueAt(paidDate)) {
         final fee = inst.computeExpectedLateFee(paidDate);
         if (fee > 0) {
           scheduleMap[inst.id] = inst.copyWith(lateFee: fee);

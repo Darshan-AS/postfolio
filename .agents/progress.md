@@ -28,10 +28,20 @@
   - No Magic Numbers: standardized all paddings, margins, gaps, and micro-icons using `AppDimensions` (including new `iconXs: 12.0`) and `AppSpacings`.
   - Standardized all paddings, margins, gaps, and micro-icons using `AppDimensions` (including `iconXs: 12.0`) and `AppSpacings`.
   - Decomposed 2,068-line screen into modular presentation widgets: `RDInstallmentsSection`, `RDInstallmentTile`, `RDInstallmentKpiRow`, `RDInstallmentActionBar`, `RDTransactionsSection`, `RDTransactionTile`, `RDLogPaymentSheet`, `RDEditPaymentSheet`, `PaymentSplitSelector`, `CustomSplitFields`, and `RDAllocationPreviewCard`.
-- **Database Migrations & Emulator Validation**:
-  - Cleaned and validated `supabase/migrations/20260903000000_rd_ledger_feature.sql` and `supabase/migrations/20260905000000_rd_transaction_mutations.sql`.
-  - Executed `npx supabase db reset` on local Docker stack: all 8 migrations cleanly applied and test seed successfully loaded.
-- **Verification**: `dart analyze` passes with 0 issues. Both test suites (`test/rd_ledger_service_recalculation_test.dart` and `test/recurring_deposit_ledger_update_test.dart`) pass 100% (14/14 tests in Chrome).
+- **Ledger UX Polish & Dynamic Fee Assessment**:
+  - Future installment subtitle text color now uses neutral theme color (`theme.colorScheme.onSurfaceVariant`, regular weight); only overdue installments are highlighted in red (`theme.colorScheme.error`, bold).
+  - Added `dynamicLateFeeAt`, `outstandingLateFeeAt`, and `outstandingAmountAt` to `RDInstallment` to dynamically compute overdue penalties before payment transactions exist.
+  - Subtitle explicitly reflects waived default fee status (`customerOwesPrincipalWaived`: "Customer owes: ₹X (Default Fee Waived)").
+  - Overdue installments without previous payments now surface the 3-dot fee forgiveness action menu and pending fee badges dynamically.
+- **Verification**: `dart analyze` passes with 0 issues. Chrome tests pass 100% (15/15 tests across both test suites).
+- **Option 2 Enforcement (Restricting Forgiveness to Unpaid Default Fees)**:
+  - UI 3-dot menu conditionally hides "Forgive Default Fee" when `paidLateFee >= displayedLateFee && displayedLateFee > 0`.
+  - Both repository (`FakeRecurringDepositRepository`) and database RPC (`toggle_rd_late_fee_waiver` in PostgreSQL migration `20260903000000_rd_ledger_feature.sql`) strictly guard against waiving paid fees, rejecting with descriptive error to edit the payment transaction.
+- **Verification**: `dart analyze` passes with 0 issues. Local database reset with `npx supabase db reset` completed with exit code 0. Chrome tests pass 100% (16/16 tests across both test suites).
+- **Already Paid Installments / Baseline Default Fee Safety**:
+  - Guaranteed that installments settled prior to onboarding (`initialPaidInstallments`) never incur default fees when subsequent payments are made.
+  - Guarded `_assessOverdueLateFees` in `RDLedgerService` to check `inst.isOverdueAt(paidDate)` rather than solely `paidDate.isAfter(inst.dueDate)`, ensuring already settled installments are completely immune to default fee assessment.
+- **Verification**: `dart analyze` passes with 0 issues. Local database reset with `npx supabase db reset` completed with exit code 0. Chrome test suite passes 100% (21/21 tests across all test suites).
 
 
 

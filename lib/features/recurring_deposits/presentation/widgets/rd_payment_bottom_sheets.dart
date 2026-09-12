@@ -327,9 +327,9 @@ class RDLogPaymentSheet extends HookConsumerWidget {
     final pendingLateFeesTotal = useMemoized(() {
       return currentSchedule.fold<double>(
         0.0,
-        (sum, inst) => sum + inst.outstandingLateFee,
+        (sum, inst) => sum + inst.outstandingLateFeeAt(paidDate.value),
       );
-    }, [currentSchedule]);
+    }, [currentSchedule, paidDate.value]);
 
     final baseInstallment = deposit.installmentAmount;
 

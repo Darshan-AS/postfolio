@@ -218,16 +218,27 @@ CREATE OR REPLACE FUNCTION public.toggle_rd_late_fee_waiver(
 ) RETURNS VOID AS $$
 DECLARE
   v_agent_id UUID := public.assert_authenticated();
+  v_paid_late_fee NUMERIC;
+  v_late_fee NUMERIC;
 BEGIN
-  UPDATE public.rd_installments
-  SET
-    is_late_fee_waived = p_is_waived,
-    updated_at = NOW()
+  SELECT paid_late_fee, late_fee
+  INTO v_paid_late_fee, v_late_fee
+  FROM public.rd_installments
   WHERE id = p_installment_id AND agent_id = v_agent_id;
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Installment not found or access denied';
   END IF;
+
+  IF p_is_waived AND v_paid_late_fee >= v_late_fee AND v_late_fee > 0 THEN
+    RAISE EXCEPTION 'Cannot forgive an already paid default fee. Edit payment transaction to reallocate funds.';
+  END IF;
+
+  UPDATE public.rd_installments
+  SET
+    is_late_fee_waived = p_is_waived,
+    updated_at = NOW()
+  WHERE id = p_installment_id AND agent_id = v_agent_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 

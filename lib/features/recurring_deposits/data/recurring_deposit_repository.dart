@@ -429,6 +429,9 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       final idx = list.indexWhere((inst) => inst.id == installmentId);
       if (idx != -1) {
         final existing = list[idx];
+        if (isWaived && existing.paidLateFee >= existing.lateFee && existing.lateFee > 0) {
+          return const Failure('Cannot forgive an already paid default fee. Edit payment transaction to reallocate funds.');
+        }
         list[idx] = existing.copyWith(
           isLateFeeWaived: isWaived,
           updatedAt: DateTime.now(),
