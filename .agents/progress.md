@@ -33,14 +33,12 @@
   - Added `dynamicLateFeeAt`, `outstandingLateFeeAt`, and `outstandingAmountAt` to `RDInstallment` to dynamically compute overdue penalties before payment transactions exist.
   - Subtitle explicitly reflects waived default fee status (`customerOwesPrincipalWaived`: "Customer owes: ₹X (Default Fee Waived)").
   - Overdue installments without previous payments now surface the 3-dot fee forgiveness action menu and pending fee badges dynamically.
-- **Verification**: `dart analyze` passes with 0 issues. Chrome tests pass 100% (15/15 tests across both test suites).
 - **Option 2 Enforcement (Restricting Forgiveness to Unpaid Default Fees)**:
   - UI 3-dot menu conditionally hides "Forgive Default Fee" when `paidLateFee >= displayedLateFee && displayedLateFee > 0`.
   - Both repository (`FakeRecurringDepositRepository`) and database RPC (`toggle_rd_late_fee_waiver` in PostgreSQL migration `20260903000000_rd_ledger_feature.sql`) strictly guard against waiving paid fees, rejecting with descriptive error to edit the payment transaction.
-- **Verification**: `dart analyze` passes with 0 issues. Local database reset with `npx supabase db reset` completed with exit code 0. Chrome tests pass 100% (16/16 tests across both test suites).
-- **Already Paid Installments / Baseline Default Fee Safety**:
-  - Guaranteed that installments settled prior to onboarding (`initialPaidInstallments`) never incur default fees when subsequent payments are made.
-  - Guarded `_assessOverdueLateFees` in `RDLedgerService` to check `inst.isOverdueAt(paidDate)` rather than solely `paidDate.isAfter(inst.dueDate)`, ensuring already settled installments are completely immune to default fee assessment.
+- **Already Paid Installments / Baseline Safety (Option A)**:
+  - Guaranteed that installments settled prior to onboarding (`initialPaidInstallments`) never incur default fees when subsequent payments are made (`_assessOverdueLateFees` checks `inst.isOverdueAt(paidDate)`).
+  - Opening baseline installments are immutable against PO reversal: checkboxes are disabled (`onChanged: null`) with explanatory tooltip (`t.recurringDeposits.ledger.actions.baselineImmutableTooltip`), and excluded from selection pools.
 - **Verification**: `dart analyze` passes with 0 issues. Local database reset with `npx supabase db reset` completed with exit code 0. Chrome test suite passes 100% (21/21 tests across all test suites).
 
 
