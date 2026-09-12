@@ -62,7 +62,9 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                   horizontal: AppDimensions.paddingLg,
                 ),
                 child: Material(
-                  color: theme.colorScheme.errorContainer.withValues(alpha: 0.5),
+                  color: theme.colorScheme.errorContainer.withValues(
+                    alpha: 0.5,
+                  ),
                   borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   child: InkWell(
                     onTap: () => controller.setFilter(RDMonthlyFilter.overdue),
@@ -137,16 +139,17 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
             Expanded(
               child: switch (asyncItems) {
                 AsyncData(:final value) => _buildDataList(
-                    context,
-                    ref,
-                    value,
-                    opsState,
-                    controller,
-                  ),
+                  context,
+                  ref,
+                  value,
+                  opsState,
+                  controller,
+                ),
                 AsyncError(:final error) => ErrorStateView(
-                    message: error.toString(),
-                    onRetry: () => ref.invalidate(rawMonthlyOperationsStreamProvider),
-                  ),
+                  message: error.toString(),
+                  onRetry: () =>
+                      ref.invalidate(rawMonthlyOperationsStreamProvider),
+                ),
                 _ => _buildLoadingList(),
               },
             ),
@@ -154,7 +157,8 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
         ),
 
         // Batch PO Action Bar at the bottom
-        if (opsState.isSelectionMode && opsState.selectedInstallmentIds.isNotEmpty)
+        if (opsState.isSelectionMode &&
+            opsState.selectedInstallmentIds.isNotEmpty)
           Positioned(
             left: 0,
             right: 0,
@@ -177,9 +181,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLg,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
       child: Row(
         children: [
           FilterChip(
@@ -222,9 +224,11 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            label: Text(state.isSelectionMode
-                ? ops.card.doneSelectMode
-                : ops.card.selectMode),
+            label: Text(
+              state.isSelectionMode
+                  ? ops.card.doneSelectMode
+                  : ops.card.selectMode,
+            ),
             backgroundColor: state.isSelectionMode
                 ? Theme.of(context).colorScheme.primaryContainer
                 : null,
@@ -245,7 +249,8 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
     final ops = t.recurringDeposits.monthlyOperations;
 
     if (items.isEmpty) {
-      final hasFilters = state.selectedFilter != RDMonthlyFilter.all ||
+      final hasFilters =
+          state.selectedFilter != RDMonthlyFilter.all ||
           state.searchQuery.isNotEmpty;
 
       return Center(
@@ -257,8 +262,8 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
               Text(
                 hasFilters ? ops.noFilterResults : ops.noInstallments,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
               if (hasFilters) ...[
@@ -295,7 +300,9 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
         itemBuilder: (context, index) {
           final item = items[index];
           final installment = item.installment;
-          final isSelected = state.selectedInstallmentIds.contains(installment.id);
+          final isSelected = state.selectedInstallmentIds.contains(
+            installment.id,
+          );
 
           return RDMonthlyOperationCard(
             item: item,
@@ -307,8 +314,9 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
             },
             onLogPayment: () async {
               final repository = ref.read(recurringDepositRepositoryProvider);
-              final scheduleResult =
-                  await repository.getRDInstallments(item.deposit.id);
+              final scheduleResult = await repository.getRDInstallments(
+                item.deposit.id,
+              );
               if (!context.mounted) return;
 
               final schedule = switch (scheduleResult) {
@@ -330,13 +338,25 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                 return;
               }
 
+              final now = DateTime.now();
+              final isFeeOnly = item.isFeePending;
+              final amount = isFeeOnly
+                  ? item.totalDefaultFee(now)
+                  : item.totalOutstandingPayable(now);
+              final splitMode = isFeeOnly
+                  ? PaymentSplitMode.feesOnly
+                  : (item.hasOverdueDebt(now) && item.totalDefaultFee(now) > 0
+                        ? PaymentSplitMode.includeFees
+                        : null);
+
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
                 builder: (ctx) => RDLogPaymentSheet(
                   deposit: item.deposit,
                   currentSchedule: schedule,
-                  initialAmount: item.totalOutstandingPayable(DateTime.now()),
+                  initialAmount: amount,
+                  initialSplitMode: splitMode,
                 ),
               );
             },
@@ -351,7 +371,9 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                 poStatus: RDPoStatus.paid,
                 poPaidDate: DateTime.now(),
               );
-              final res = await ledger.recordPoPayments(installments: [updated]);
+              final res = await ledger.recordPoPayments(
+                installments: [updated],
+              );
               if (context.mounted && res is Success) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -391,7 +413,9 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                   poStatus: RDPoStatus.paid,
                   poPaidDate: DateTime.now(),
                 );
-                final res = await ledger.recordPoPayments(installments: [updated]);
+                final res = await ledger.recordPoPayments(
+                  installments: [updated],
+                );
                 if (context.mounted && res is Success) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -435,7 +459,9 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
 
               if (confirmed == true && context.mounted) {
                 final ledger = ref.read(rDLedgerControllerProvider.notifier);
-                final res = await ledger.revertPoPayments(installments: [installment]);
+                final res = await ledger.revertPoPayments(
+                  installments: [installment],
+                );
                 if (context.mounted && res is Success) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -513,10 +539,14 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
     final asyncItems = ref.watch(rawMonthlyOperationsStreamProvider);
     final items = asyncItems.value ?? [];
     final selectedItems = items
-        .where((item) => state.selectedInstallmentIds.contains(item.installment.id))
+        .where(
+          (item) => state.selectedInstallmentIds.contains(item.installment.id),
+        )
         .toList();
 
-    final canDepositList = selectedItems.where((i) => i.canDepositToPo).toList();
+    final canDepositList = selectedItems
+        .where((i) => i.canDepositToPo)
+        .toList();
     final canRevertList = selectedItems.where((i) => i.canRevertPo).toList();
     final count = state.selectedInstallmentIds.length;
 
@@ -568,7 +598,9 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                     context: context,
                     builder: (ctx) => AlertDialog(
                       title: Text(ops.revertConfirmTitle),
-                      content: Text(ops.revertConfirmMessage(count: canRevertList.length)),
+                      content: Text(
+                        ops.revertConfirmMessage(count: canRevertList.length),
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(ctx).pop(false),
@@ -591,11 +623,15 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                         .map((item) => item.installment)
                         .toList();
 
-                    final result = await controller.revertSelectedPo(installments);
+                    final result = await controller.revertSelectedPo(
+                      installments,
+                    );
                     if (context.mounted && result is Success) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(ops.revertSuccess(count: canRevertList.length)),
+                          content: Text(
+                            ops.revertSuccess(count: canRevertList.length),
+                          ),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -625,12 +661,15 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                     0.0,
                     (sum, i) => sum + i.installment.installmentAmount,
                   );
-                  final collectedItems =
-                      canDepositList.where((i) => i.installment.isInstallmentPaid).toList();
-                  final advanceItems =
-                      canDepositList.where((i) => !i.installment.isInstallmentPaid).toList();
+                  final collectedItems = canDepositList
+                      .where((i) => i.installment.isInstallmentPaid)
+                      .toList();
+                  final advanceItems = canDepositList
+                      .where((i) => !i.installment.isInstallmentPaid)
+                      .toList();
 
-                  final message = (advanceItems.isNotEmpty && collectedItems.isNotEmpty)
+                  final message =
+                      (advanceItems.isNotEmpty && collectedItems.isNotEmpty)
                       ? '${ops.confirmMessage(count: canDepositList.length, amount: totalDepositAmount.toRupeeFormat())}\n\n${ops.confirmBreakdown(collectedCount: collectedItems.length.toString(), advanceCount: advanceItems.length.toString())}'
                       : ops.confirmMessage(
                           count: canDepositList.length,
@@ -660,11 +699,15 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                         .map((item) => item.installment)
                         .toList();
 
-                    final result = await controller.depositSelectedToPo(installments);
+                    final result = await controller.depositSelectedToPo(
+                      installments,
+                    );
                     if (context.mounted && result is Success) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(ops.success(count: canDepositList.length)),
+                          content: Text(
+                            ops.success(count: canDepositList.length),
+                          ),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -688,7 +731,9 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
     return Skeletonizer(
       enabled: true,
       child: ListView.separated(
-        padding: const EdgeInsets.only(bottom: AppDimensions.listBottomPaddingFAB),
+        padding: const EdgeInsets.only(
+          bottom: AppDimensions.listBottomPaddingFAB,
+        ),
         itemCount: 5,
         separatorBuilder: (context, index) =>
             const Divider(height: AppDimensions.dividerHeight),

@@ -58,6 +58,38 @@
   - **Advance to PO from Pocket**: Contextual 3-dot overflow menu allows agents to advance payments to the Post Office from pocket before customer collection. Renders purple `[ PO Advanced ]` badge with tertiary edge indicator and primary action becomes `[ ⚡ Collect (₹X) ]`. Batch PO deposit transparently displays breakdown between customer collections and pocket advances.
   - **PO Reversal**: Single-card "Revert PO Deposit" action in overflow menu and "Revert PO (N)" batch action bar button with confirmation dialogs.
 - **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 22 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+- **Checkpoints Strip ("Filled vs. Hollow" Visual Hierarchy - Option 1)**:
+  - Added a glanceable, 3-entity checkpoint strip (`_buildCheckpointsRow`) to `RDMonthlyOperationCard`:
+    - **Entity Consistency**: Words stay fixed as `Cash` and `PO` (rather than changing between "Paid" vs "Pending"), completely eliminating the need to read text.
+    - **Completed / Actionable**: Solid filled pills with bold icons (`[ ✓ Cash ]`, `[ ✓ PO ]`, `[ ⚡ PO Adv ]`, `[ ! Cash ]`).
+    - **Pending / Waiting**: Hollow / outlined ghost pills (`color: Colors.transparent`, `border: Border.all(color: outlineVariant)`), light clock icons, muted text (`[ ○ Cash ]`, `[ ○ PO ]`).
+    - **Default Fee (Conditional)**: Only shown when relevant (solid error fill for owed `[ ⚠️ Fee: ₹X ]`, solid primary fill for paid `[ ✓ Fee ]`, muted for waived `[ Fee Waived ]`, and completely hidden when 0/none).
+  - Fixed "Collect Fee" button prefill to default to `PaymentSplitMode.feesOnly` when principal is settled and fees are pending.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 50/50 tests pass across the entire repository, including 29 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+- **Checkpoints Strip ("True Literal" Option 1: Strict Lifecycle + Fraction Split Everywhere)**:
+  - Implemented a unified, glanceable 3-entity checkpoint strip (`_buildCheckpointsRow`) in `RDMonthlyOperationCard`:
+    - **Strict Lifecycle Rule**: Solid fill = 100% Settled / Resolved; Hollow / Outlined = Incomplete / Action Required.
+    - **True Literal Fraction Split**: ALWAYS displays `${paid}/${total}` for BOTH Cash and Fee across ALL lifecycle states:
+      - **Cash Checkpoint**:
+        - 100% Settled: Solid Primary `[ ✓ Cash: ₹1,000/₹1,000 ]`
+        - Partial (On-Time): Hollow Primary `[ 🪙 Cash: ₹400/₹1,000 ]`
+        - Partial (Overdue): Hollow Error `[ 🪙 Cash: ₹400/₹1,000 ]`
+        - 0% Paid (Overdue): Hollow Error `[ ! Cash: ₹0/₹1,000 ]`
+        - 0% Paid (On-Time Pending): Hollow Neutral `[ ○ Cash: ₹0/₹1,000 ]`
+      - **PO Checkpoint**:
+        - 0% Deposited: Hollow Neutral `[ ○ PO ]`
+        - 100% Deposited: Solid Primary `[ ✓ PO ]`
+        - 100% Pocket Advanced: Solid Tertiary `[ ⚡ PO Adv ]`
+      - **Fee Checkpoint (Conditional)**:
+        - Only shown when `item.hasDefaultFee(now)` is true (completely suppressed if 0 fee accrued).
+        - Waived: Solid Neutral `[ Fee Waived ]`
+        - 100% Paid: Solid Primary `[ ✓ Fee: ₹20/₹20 ]`
+        - Partial Paid: Hollow Error `[ ⚠️ Fee: ₹10/₹20 ]`
+        - 0% Paid (Owed): Hollow Error `[ ⚠️ Fee: ₹0/₹20 ]`
+    - **Localization (`en.i18n.yaml`)**: Centralized into `checkpoints` map (`cash: "Cash: ${paid}/${total}"`, `po: "PO"`, `poAdvanced: "PO Adv"`, `fee: "Fee: ${paid}/${total}"`, `feeWaived: "Fee Waived"`).
+    - Fixed "Collect Fee" button prefill to default to `PaymentSplitMode.feesOnly` when principal is settled and fees are pending.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 56/56 tests pass across the entire repository, including 35 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+- **Verification**: 100% clean static analysis (`flutter analyze --fatal-infos` returns 0 issues), standard `dart format` applied, 100% passing Chrome test suite (all 56/56 tests pass across the entire repository, including 35 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`, exit code 0).
 - **Default Fee Pending Surfacing & Operational Partitioning**:
   - Accounts with customer principal and PO deposited but an unresolved default fee (`isFeePending`) are surfaced under the **`To Collect`** operational filter and counter.
   - Symmetrical partition: `To Collect` (unpaid customer principal, PO advanced, and pending fees) + `Ready for PO` (customer paid, PO pending) + `Settled` (100% reconciled) sums to total accounts.
@@ -67,6 +99,23 @@
     - Primary action button renders contextual **`[ ⚡ Collect Fee (₹X) ]`** prefilling payment sheet.
     - 3-dot overflow menu features **`Forgive Default Fee`** with confirmation dialog calling `toggleLateFeeWaiver`.
 - **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 45 tests across all test suites, including 24 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+- **Glanceable Checkpoints Bar & Conditional Default Fee (Option A Implementation)**:
+  - Addressed card glanceability by introducing a structured 3-tier subtitle hierarchy and a dedicated Checkpoint Strip (`_buildCheckpointsRow`) in `RDMonthlyOperationCard`:
+    - **Tier 1**: Serial and account number (`(Sl #01) 1234567890`).
+    - **Tier 2**: Due date and prior arrears badge (if any).
+    - **Tier 3 (The Checkpoint Strip)**:
+      - **Customer Checkpoint**: `[ ✓ Cust Paid ]` (primaryContainer / checkmark), `[ ! Cust Overdue ]` (errorContainer / alert), `[ 🪙 Cust: ₹X ]` (tonal primary / coins for partial payments), or `[ ⏳ Cust Pending ]` (surfaceContainerHighest / clock).
+      - **Post Office Checkpoint**: `[ ⚡ Advanced to PO ]` (tertiaryContainer / flash), `[ ✓ PO Deposited ]` (primaryContainer / checkmark), or `[ ⏳ PO Pending ]` (surfaceContainerHighest / clock).
+      - **Default Fee Checkpoint (Conditional)**:
+        - Completely suppressed when no default fee exists (preserving clean, noise-free cards for on-time accounts).
+        - `[ ⚠️ Fee: ₹X ]`: Prominent errorContainer badge when fee is owed.
+        - `[ ✓ Fee Paid ]`: Primary container badge when default fee was paid by customer.
+        - `[ Fee Waived ]`: Surface container highest badge when forgiven by agent.
+  - Added pure domain helper `hasDefaultFee(DateTime now)` on `RDMonthlyOperationItem`.
+  - Added localized Slang keys under `recurringDeposits.monthlyOperations.card.checkpoints`.
+  - Verification: 100% clean static analysis (`dart analyze --fatal-infos` 0 issues), all 49 Chrome tests passing (28 tests in `rd_monthly_operations_test.dart` + 21 across other suites), and clean Flutter web release build.
+  - Fixed "Collect Fee" button prefill: `RDLogPaymentSheet` now accepts optional `initialSplitMode`, and automatically defaults to `PaymentSplitMode.feesOnly` when only default fees are pending. `RDMonthlyOperationsView` now explicitly pre-fills the fee amount and selects `feesOnly` split mode when tapping "Collect Fee".
+  - Verification: 100% clean static analysis (`dart analyze --fatal-infos` 0 issues), all 50 Chrome tests passing (29 tests in `rd_monthly_operations_test.dart` + 21 across other suites), and clean Flutter web release build.
 
 **RD Ledger Feature - Micro-View Overhaul: Heatmap, Hero Card, Inspector & Yearly Accordion (Phase 4.4)**:
 - **`RDNextDueHeroCard`**: Anchored at the top of the RD ledger. Chronologically pinpoints the next pending installment, urgency badge (overdue days/due in days), total payable, and 1-tap "Log Next Payment" button pre-filling `RDLogPaymentSheet`. Displays congratulatory completion card when all 60 installments are settled.

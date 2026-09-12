@@ -15,12 +15,7 @@ import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_m
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-enum PaymentSplitMode {
-  installmentsOnly,
-  includeFees,
-  feesOnly,
-  custom,
-}
+enum PaymentSplitMode { installmentsOnly, includeFees, feesOnly, custom }
 
 class PaymentSplitSelector extends StatelessWidget {
   final PaymentSplitMode splitMode;
@@ -167,10 +162,10 @@ class RDAllocationPreviewCard extends StatelessWidget {
             ),
             AppSpacings.gapXs,
             ...installmentsToPreview!.map((inst) {
-              final monthIdx =
-                  currentSchedule.indexWhere((s) => s.id == inst.id);
-              final monthNum =
-                  monthIdx != -1 ? (monthIdx + 1).toString() : '?';
+              final monthIdx = currentSchedule.indexWhere(
+                (s) => s.id == inst.id,
+              );
+              final monthNum = monthIdx != -1 ? (monthIdx + 1).toString() : '?';
 
               final String principalDesc = inst.isInstallmentPaid
                   ? preview.principalCovered(
@@ -215,23 +210,28 @@ class RDAllocationPreviewCard extends StatelessWidget {
                           inst.isLateFeeWaived
                               ? preview.feeWaived
                               : (inst.paidLateFee >= inst.lateFee
-                                  ? preview.feePaid(
-                                      amount: inst.lateFee.toRupeeFormat(),
-                                    )
-                                  : (inst.paidLateFee > 0
-                                      ? preview.feePartial(
-                                          paid: inst.paidLateFee.toRupeeFormat(),
-                                          pending: (inst.lateFee - inst.paidLateFee).toRupeeFormat(),
-                                        )
-                                      : preview.feePending(
-                                          amount: inst.lateFee.toRupeeFormat(),
-                                        ))),
+                                    ? preview.feePaid(
+                                        amount: inst.lateFee.toRupeeFormat(),
+                                      )
+                                    : (inst.paidLateFee > 0
+                                          ? preview.feePartial(
+                                              paid: inst.paidLateFee
+                                                  .toRupeeFormat(),
+                                              pending:
+                                                  (inst.lateFee -
+                                                          inst.paidLateFee)
+                                                      .toRupeeFormat(),
+                                            )
+                                          : preview.feePending(
+                                              amount: inst.lateFee
+                                                  .toRupeeFormat(),
+                                            ))),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: inst.isLateFeeWaived
                                 ? theme.colorScheme.secondary
                                 : (inst.paidLateFee >= inst.lateFee
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.error),
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.error),
                           ),
                         ),
                       ),
@@ -272,12 +272,14 @@ class RDLogPaymentSheet extends HookConsumerWidget {
   final RecurringDeposit deposit;
   final List<RDInstallment> currentSchedule;
   final double? initialAmount;
+  final PaymentSplitMode? initialSplitMode;
 
   const RDLogPaymentSheet({
     super.key,
     required this.deposit,
     required this.currentSchedule,
     this.initialAmount,
+    this.initialSplitMode,
   });
 
   @override
@@ -285,17 +287,35 @@ class RDLogPaymentSheet extends HookConsumerWidget {
     final ledger = t.recurringDeposits.ledger;
     final initialText = initialAmount != null && initialAmount! > 0
         ? (initialAmount! % 1 == 0
-            ? initialAmount!.toInt().toString()
-            : initialAmount!.toString())
+              ? initialAmount!.toInt().toString()
+              : initialAmount!.toString())
         : '';
     final amountController = useTextEditingController(text: initialText);
     final paidDate = useState(DateTime.now());
     final paymentMode = useState(RDPaymentMode.cash);
-    final initialSplitMode =
-        initialAmount != null && initialAmount! > deposit.installmentAmount
-            ? PaymentSplitMode.includeFees
-            : PaymentSplitMode.installmentsOnly;
-    final splitMode = useState<PaymentSplitMode>(initialSplitMode);
+
+    final pendingPrincipalTotal = useMemoized(() {
+      return currentSchedule
+          .where((inst) => !inst.installmentDate.isAfter(paidDate.value))
+          .fold<double>(0.0, (sum, inst) => sum + inst.outstandingPrincipal);
+    }, [currentSchedule, paidDate.value]);
+
+    final pendingLateFeesTotal = useMemoized(() {
+      return currentSchedule.fold<double>(
+        0.0,
+        (sum, inst) => sum + inst.outstandingLateFeeAt(paidDate.value),
+      );
+    }, [currentSchedule, paidDate.value]);
+
+    final defaultSplitMode =
+        initialSplitMode ??
+        (pendingPrincipalTotal == 0.0 && pendingLateFeesTotal > 0
+            ? PaymentSplitMode.feesOnly
+            : (initialAmount != null &&
+                      initialAmount! > deposit.installmentAmount
+                  ? PaymentSplitMode.includeFees
+                  : PaymentSplitMode.installmentsOnly));
+    final splitMode = useState<PaymentSplitMode>(defaultSplitMode);
     final customInstallmentController = useTextEditingController();
     final customFeeController = useTextEditingController();
     final formKey = useMemoized(() => GlobalKey<FormState>());
@@ -309,39 +329,45 @@ class RDLogPaymentSheet extends HookConsumerWidget {
     final customInstValue = double.tryParse(customInstText.text.trim()) ?? 0.0;
     final customFeeValue = double.tryParse(customFeeText.text.trim()) ?? 0.0;
 
-    final (double? effectiveInstComp, double? effectiveFeeComp) = useMemoized(() {
-      switch (splitMode.value) {
-        case PaymentSplitMode.installmentsOnly:
-          return (amountValue, 0.0);
-        case PaymentSplitMode.feesOnly:
-          return (0.0, amountValue);
-        case PaymentSplitMode.includeFees:
-          return (null, null);
-        case PaymentSplitMode.custom:
-          return (customInstValue, customFeeValue);
-      }
-    }, [splitMode.value, amountValue, customInstValue, customFeeValue]);
+    final (double? effectiveInstComp, double? effectiveFeeComp) = useMemoized(
+      () {
+        switch (splitMode.value) {
+          case PaymentSplitMode.installmentsOnly:
+            return (amountValue, 0.0);
+          case PaymentSplitMode.feesOnly:
+            return (0.0, amountValue);
+          case PaymentSplitMode.includeFees:
+            return (null, null);
+          case PaymentSplitMode.custom:
+            return (customInstValue, customFeeValue);
+        }
+      },
+      [splitMode.value, amountValue, customInstValue, customFeeValue],
+    );
 
-    final previewResult = useMemoized(() {
-      if (amountValue <= 0.0) return null;
-      return RDLedgerService.allocateCustomerPayment(
-        currentSchedule: currentSchedule,
-        paymentAmount: amountValue,
-        installmentComponent: effectiveInstComp,
-        lateFeeComponent: effectiveFeeComp,
-        paidDate: paidDate.value,
-        paymentMode: paymentMode.value,
-        rdId: deposit.id,
-      );
-    }, [amountValue, effectiveInstComp, effectiveFeeComp, paidDate.value, paymentMode.value, currentSchedule, deposit.id]);
-
-    final pendingLateFeesTotal = useMemoized(() {
-      return currentSchedule.fold<double>(
-        0.0,
-        (sum, inst) => sum + inst.outstandingLateFeeAt(paidDate.value),
-      );
-    }, [currentSchedule, paidDate.value]);
-
+    final previewResult = useMemoized(
+      () {
+        if (amountValue <= 0.0) return null;
+        return RDLedgerService.allocateCustomerPayment(
+          currentSchedule: currentSchedule,
+          paymentAmount: amountValue,
+          installmentComponent: effectiveInstComp,
+          lateFeeComponent: effectiveFeeComp,
+          paidDate: paidDate.value,
+          paymentMode: paymentMode.value,
+          rdId: deposit.id,
+        );
+      },
+      [
+        amountValue,
+        effectiveInstComp,
+        effectiveFeeComp,
+        paidDate.value,
+        paymentMode.value,
+        currentSchedule,
+        deposit.id,
+      ],
+    );
     final baseInstallment = deposit.installmentAmount;
 
     return Padding(
@@ -392,8 +418,8 @@ class RDLogPaymentSheet extends HookConsumerWidget {
                           ),
                         ),
                         onPressed: () {
-                          amountController.text =
-                              baseInstallment.toStringAsFixed(0);
+                          amountController.text = baseInstallment
+                              .toStringAsFixed(0);
                           splitMode.value = PaymentSplitMode.installmentsOnly;
                         },
                       ),
@@ -408,8 +434,8 @@ class RDLogPaymentSheet extends HookConsumerWidget {
                           ),
                         ),
                         onPressed: () {
-                          amountController.text =
-                              pendingLateFeesTotal.toStringAsFixed(0);
+                          amountController.text = pendingLateFeesTotal
+                              .toStringAsFixed(0);
                           splitMode.value = PaymentSplitMode.feesOnly;
                         },
                       ),
@@ -439,8 +465,9 @@ class RDLogPaymentSheet extends HookConsumerWidget {
                   controller: amountController,
                   labelText: ledger.paymentAmount,
                   isRequired: true,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   prefixText: t.format.currencySymbol,
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
@@ -467,8 +494,8 @@ class RDLogPaymentSheet extends HookConsumerWidget {
                   onSplitModeChanged: (mode) {
                     splitMode.value = mode;
                     if (mode == PaymentSplitMode.custom) {
-                      customInstallmentController.text =
-                          amountValue.toStringAsFixed(0);
+                      customInstallmentController.text = amountValue
+                          .toStringAsFixed(0);
                       customFeeController.text = '0';
                     }
                   },
@@ -622,9 +649,11 @@ class RDEditPaymentSheet extends HookConsumerWidget {
     final initialSplitMode = useMemoized(() {
       if (transaction.installmentAmount > 0 && transaction.lateFeeAmount == 0) {
         return PaymentSplitMode.installmentsOnly;
-      } else if (transaction.installmentAmount == 0 && transaction.lateFeeAmount > 0) {
+      } else if (transaction.installmentAmount == 0 &&
+          transaction.lateFeeAmount > 0) {
         return PaymentSplitMode.feesOnly;
-      } else if (transaction.installmentAmount > 0 && transaction.lateFeeAmount > 0) {
+      } else if (transaction.installmentAmount > 0 &&
+          transaction.lateFeeAmount > 0) {
         return PaymentSplitMode.custom;
       } else {
         return PaymentSplitMode.includeFees;
@@ -664,45 +693,63 @@ class RDEditPaymentSheet extends HookConsumerWidget {
     final customInstValue = double.tryParse(customInstText.text.trim()) ?? 0.0;
     final customFeeValue = double.tryParse(customFeeText.text.trim()) ?? 0.0;
 
-    final (double? effectiveInstComp, double? effectiveFeeComp) = useMemoized(() {
-      switch (splitMode.value) {
-        case PaymentSplitMode.installmentsOnly:
-          return (amountValue, 0.0);
-        case PaymentSplitMode.feesOnly:
-          return (0.0, amountValue);
-        case PaymentSplitMode.includeFees:
-          return (null, null);
-        case PaymentSplitMode.custom:
-          return (customInstValue, customFeeValue);
-      }
-    }, [splitMode.value, amountValue, customInstValue, customFeeValue]);
+    final (double? effectiveInstComp, double? effectiveFeeComp) = useMemoized(
+      () {
+        switch (splitMode.value) {
+          case PaymentSplitMode.installmentsOnly:
+            return (amountValue, 0.0);
+          case PaymentSplitMode.feesOnly:
+            return (0.0, amountValue);
+          case PaymentSplitMode.includeFees:
+            return (null, null);
+          case PaymentSplitMode.custom:
+            return (customInstValue, customFeeValue);
+        }
+      },
+      [splitMode.value, amountValue, customInstValue, customFeeValue],
+    );
 
-    final previewSchedule = useMemoized(() {
-      if (amountValue <= 0.0) return null;
-      final updatedTx = transaction.copyWith(
-        amount: amountValue,
-        installmentAmount: effectiveInstComp ?? 0.0,
-        lateFeeAmount: effectiveFeeComp ?? 0.0,
-        paidDate: paidDate.value,
-        paymentMode: paymentMode.value,
-      );
-      final updatedTxs = allTransactions
-          .map((t) => t.id == transaction.id ? updatedTx : t)
-          .toList();
-      return RDLedgerService.recomputeScheduleFromTransactions(
-        currentSchedule: currentSchedule,
-        transactions: updatedTxs,
-        initialPaidInstallments: deposit.initialPaidInstallments,
-      );
-    }, [amountValue, effectiveInstComp, effectiveFeeComp, paidDate.value, paymentMode.value, currentSchedule, allTransactions, transaction, deposit.initialPaidInstallments]);
+    final previewSchedule = useMemoized(
+      () {
+        if (amountValue <= 0.0) return null;
+        final updatedTx = transaction.copyWith(
+          amount: amountValue,
+          installmentAmount: effectiveInstComp ?? 0.0,
+          lateFeeAmount: effectiveFeeComp ?? 0.0,
+          paidDate: paidDate.value,
+          paymentMode: paymentMode.value,
+        );
+        final updatedTxs = allTransactions
+            .map((t) => t.id == transaction.id ? updatedTx : t)
+            .toList();
+        return RDLedgerService.recomputeScheduleFromTransactions(
+          currentSchedule: currentSchedule,
+          transactions: updatedTxs,
+          initialPaidInstallments: deposit.initialPaidInstallments,
+        );
+      },
+      [
+        amountValue,
+        effectiveInstComp,
+        effectiveFeeComp,
+        paidDate.value,
+        paymentMode.value,
+        currentSchedule,
+        allTransactions,
+        transaction,
+        deposit.initialPaidInstallments,
+      ],
+    );
 
     final previewInstallments = useMemoized(() {
       if (previewSchedule == null) return null;
       return previewSchedule
-          .where((inst) =>
-              inst.customerPaidAmount > 0 ||
-              inst.paidLateFee > 0 ||
-              inst.isLateFeeWaived)
+          .where(
+            (inst) =>
+                inst.customerPaidAmount > 0 ||
+                inst.paidLateFee > 0 ||
+                inst.isLateFeeWaived,
+          )
           .toList();
     }, [previewSchedule]);
 
@@ -742,8 +789,9 @@ class RDEditPaymentSheet extends HookConsumerWidget {
                   controller: amountController,
                   labelText: ledger.paymentAmount,
                   isRequired: true,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   prefixText: t.format.currencySymbol,
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
@@ -770,8 +818,8 @@ class RDEditPaymentSheet extends HookConsumerWidget {
                   onSplitModeChanged: (mode) {
                     splitMode.value = mode;
                     if (mode == PaymentSplitMode.custom) {
-                      customInstallmentController.text =
-                          amountValue.toStringAsFixed(0);
+                      customInstallmentController.text = amountValue
+                          .toStringAsFixed(0);
                       customFeeController.text = '0';
                     }
                   },
