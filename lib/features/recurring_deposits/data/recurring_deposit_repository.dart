@@ -48,6 +48,10 @@ abstract class RecurringDepositRepository {
   Future<Result<void, String>> recordPoPayments(
     List<RDInstallment> installments,
   );
+  Future<Result<void, String>> toggleLateFeeWaiver({
+    required String installmentId,
+    required bool isWaived,
+  });
 }
 
 class FirestoreRecurringDepositRepository
@@ -166,6 +170,14 @@ class FirestoreRecurringDepositRepository
   @override
   Future<Result<bool, String>> hasPoPaidInstallments(String rdId) async {
     return const Success(false);
+  }
+
+  @override
+  Future<Result<void, String>> toggleLateFeeWaiver({
+    required String installmentId,
+    required bool isWaived,
+  }) async {
+    return const Failure('Firestore repository does not support RD ledger');
   }
 }
 
@@ -404,6 +416,28 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   Future<Result<bool, String>> hasPoPaidInstallments(String rdId) async {
     final hasPoPaid = _getInstallments(rdId).any((inst) => inst.poStatus == RDPoStatus.paid);
     return Success(hasPoPaid);
+  }
+
+  @override
+  Future<Result<void, String>> toggleLateFeeWaiver({
+    required String installmentId,
+    required bool isWaived,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    for (final entry in _fakeInstallments.entries) {
+      final list = entry.value;
+      final idx = list.indexWhere((inst) => inst.id == installmentId);
+      if (idx != -1) {
+        final existing = list[idx];
+        list[idx] = existing.copyWith(
+          isLateFeeWaived: isWaived,
+          updatedAt: DateTime.now(),
+        );
+        _getInstallmentsController(entry.key).add(Success([...list]));
+        return const Success(null);
+      }
+    }
+    return const Failure('Installment not found');
   }
 
   void dispose() {

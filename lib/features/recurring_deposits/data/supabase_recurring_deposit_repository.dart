@@ -131,6 +131,8 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
         'paid_date': transaction.paidDate.toIso8601String().split('T').first,
         'amount': transaction.amount,
         'payment_mode': transaction.toJson()['payment_mode'],
+        'installment_amount': transaction.installmentAmount,
+        'late_fee_amount': transaction.lateFeeAmount,
       };
 
       final installmentsJson = updatedInstallments.map((inst) => {
@@ -138,6 +140,8 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
         'customer_paid_amount': inst.customerPaidAmount,
         'customer_status': inst.toJson()['customer_status'],
         'late_fee': inst.lateFee,
+        'paid_late_fee': inst.paidLateFee,
+        'is_late_fee_waived': inst.isLateFeeWaived,
       }).toList();
 
       await _supabaseClient.rpc('record_rd_customer_payment_allocated', params: {
@@ -162,6 +166,8 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
         'customer_paid_amount': inst.customerPaidAmount,
         'customer_status': inst.toJson()['customer_status'],
         'late_fee': inst.lateFee,
+        'paid_late_fee': inst.paidLateFee,
+        'is_late_fee_waived': inst.isLateFeeWaived,
       }).toList();
 
       await _supabaseClient.rpc('delete_rd_transaction', params: {
@@ -187,6 +193,8 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
         'paid_date': transaction.paidDate.toIso8601String().split('T').first,
         'amount': transaction.amount,
         'payment_mode': transaction.toJson()['payment_mode'],
+        'installment_amount': transaction.installmentAmount,
+        'late_fee_amount': transaction.lateFeeAmount,
       };
 
       final installmentsJson = updatedInstallments.map((inst) => {
@@ -194,6 +202,8 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
         'customer_paid_amount': inst.customerPaidAmount,
         'customer_status': inst.toJson()['customer_status'],
         'late_fee': inst.lateFee,
+        'paid_late_fee': inst.paidLateFee,
+        'is_late_fee_waived': inst.isLateFeeWaived,
       }).toList();
 
       await _supabaseClient.rpc('update_rd_transaction', params: {
@@ -228,6 +238,22 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
     }
   }
 
+  @override
+  Future<Result<void, String>> toggleLateFeeWaiver({
+    required String installmentId,
+    required bool isWaived,
+  }) async {
+    try {
+      await _supabaseClient.rpc('toggle_rd_late_fee_waiver', params: {
+        'p_installment_id': installmentId,
+        'p_is_waived': isWaived,
+      });
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
   Future<Result<void, String>> _saveRecurringDeposit(
     RecurringDeposit deposit, {
     List<RDInstallment> initialSchedule = const [],
@@ -245,6 +271,8 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
         'po_status': inst.toJson()['po_status'],
         'po_paid_date': inst.poPaidDate?.toIso8601String().split('T').first,
         'late_fee': inst.lateFee,
+        'paid_late_fee': inst.paidLateFee,
+        'is_late_fee_waived': inst.isLateFeeWaived,
       }).toList();
 
       await _supabaseClient.rpc('save_recurring_deposit', params: {

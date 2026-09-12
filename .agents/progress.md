@@ -1,6 +1,40 @@
 # Project Progress
 
 ## Current State
+**RD Ledger Feature - Fee Waivers, Dual Tracking & Split Allocations (Phase 4.2)**:
+- **Dual-Track Balance Modeling**: Decoupled monthly installment principal from default fees. Extended `rd_installments` with `paid_late_fee` and `is_late_fee_waived`, and `rd_transactions` with `installment_amount` and `late_fee_amount`.
+- **Domain Model Computations (`RDInstallment`)**: Implemented pure domain getters (`outstandingPrincipal`, `effectiveLateFee`, `outstandingLateFee`, `outstandingAmount`, `isInstallmentPaid`, `isLateFeeResolved`, and `isFullySettled`).
+- **Two-Pass Chronological Allocation (`RDLedgerService.allocateCustomerPayment`)**:
+  - Dynamically assesses 1% per defaulted month on overdue installments.
+  - Automatically checks `totalPendingLateFees` before splitting pools: whole installments allocate to base principal, leaving default fees pending when round amounts are collected.
+  - Explicit split support: `installmentComponent` and `lateFeeComponent`.
+- **Recomputation & Fee Waiver Persistence (`RDLedgerService.recomputeScheduleFromTransactions`)**: Preserves `isLateFeeWaived` across transaction deletions/edits, and deterministically replays transactions respecting split components.
+- **Database Migrations (In-Place Updates)**:
+  - `supabase/migrations/20260903000000_rd_ledger_feature.sql`: Added columns to tables and updated RPCs `save_recurring_deposit`, `record_rd_customer_payment_allocated`; added `toggle_rd_late_fee_waiver` RPC.
+  - `supabase/migrations/20260905000000_rd_transaction_mutations.sql`: Updated `delete_rd_transaction` and `update_rd_transaction` to handle split components, `paid_late_fee`, and `is_late_fee_waived`.
+- **Repository & Riverpod Controllers**:
+  - Added `toggleLateFeeWaiver` to `RecurringDepositRepository`, `SupabaseRecurringDepositRepository`, and `FakeRecurringDepositRepository`.
+  - Exposed `toggleLateFeeWaiver` in `RDLedgerController`.
+- **Material 3 UI Polish (`RecurringDepositDetailScreen`)**:
+  - Installment rows show `Collected (Fee Pending)` status, separate paid/pending breakdown for principal vs default fee, and `MenuAnchor` action to "Forgive Default Fee" / "Reinstate Default Fee".
+  - `_LogPaymentBottomSheet` and `_EditPaymentBottomSheet` feature split selector (`Installments Only`, `Include Fees`, `Fees Only`, `Custom`), quick preset chips, and detailed multi-line allocation preview.
+- **Verification**: `dart analyze` passes with 0 issues. Both test suites (`test/rd_ledger_service_recalculation_test.dart` and `test/recurring_deposit_ledger_update_test.dart`) pass 100% (14/14 tests).
+- **Domain Refactoring (`RDLedgerService`)**:
+  - Decomposed monolithic procedural methods into pure, focused single-responsibility helper functions (`_assessOverdueLateFees`, `_calculatePendingLateFees`, `_resolveSplitPools`, `_allocatePrincipalPool`, `_allocateLateFeePool`, `_buildBaselineSchedule`, and `_chronologicalTxOrder`).
+  - Refactored `recomputeScheduleFromTransactions` to an elegant, declarative functional `fold` pattern over chronological transactions.
+- **Material 3 UI Polish, Localization & Modularization (`RecurringDepositDetailScreen`)**:
+  - Full Slang localization via `t.recurringDeposits.ledger`: eliminated all hardcoded/raw strings across dialogs, snackbars, split modes, preset chips, preview rows, and installment badges.
+  - Complete `HugeIcons` compliance: replaced all Material `Icons.*` with corresponding `HugeIcons.*` exclusively.
+  - No Magic Numbers: standardized all paddings, margins, gaps, and micro-icons using `AppDimensions` (including new `iconXs: 12.0`) and `AppSpacings`.
+  - Standardized all paddings, margins, gaps, and micro-icons using `AppDimensions` (including `iconXs: 12.0`) and `AppSpacings`.
+  - Decomposed 2,068-line screen into modular presentation widgets: `RDInstallmentsSection`, `RDInstallmentTile`, `RDInstallmentKpiRow`, `RDInstallmentActionBar`, `RDTransactionsSection`, `RDTransactionTile`, `RDLogPaymentSheet`, `RDEditPaymentSheet`, `PaymentSplitSelector`, `CustomSplitFields`, and `RDAllocationPreviewCard`.
+- **Database Migrations & Emulator Validation**:
+  - Cleaned and validated `supabase/migrations/20260903000000_rd_ledger_feature.sql` and `supabase/migrations/20260905000000_rd_transaction_mutations.sql`.
+  - Executed `npx supabase db reset` on local Docker stack: all 8 migrations cleanly applied and test seed successfully loaded.
+- **Verification**: `dart analyze` passes with 0 issues. Both test suites (`test/rd_ledger_service_recalculation_test.dart` and `test/recurring_deposit_ledger_update_test.dart`) pass 100% (14/14 tests in Chrome).
+
+
+
 **RD Ledger Feature - Transaction Mutations & PO Settlement Reversals (Phase 4.1)**:
 - **Domain Allocation Replay Engine (`RDLedgerService.recomputeScheduleFromTransactions`)**: Engineered a pure, testable recalculation engine that resets installment customer payment states (respecting opening baseline and preserving PO settlement state) and sequentially replays all surviving transactions to recalculate customer paid amounts, statuses, and late fees deterministically.
 - **Atomic Database RPCs (`20260905000000_rd_transaction_mutations.sql`)**: Created PostgreSQL stored procedures `delete_rd_transaction` and `update_rd_transaction` enforcing agent ownership (`assert_account_owner`), row-level security, and atomic multi-table updates across `rd_transactions` and `rd_installments`.
