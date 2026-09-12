@@ -53,6 +53,9 @@ abstract class RecurringDepositRepository {
     required String installmentId,
     required bool isWaived,
   });
+  Stream<Result<List<RDInstallment>, String>> watchInstallmentsForMonth(DateTime month);
+  Future<Result<List<RDInstallment>, String>> getUnpaidInstallmentsBefore(DateTime date);
+  Future<Result<List<RDInstallment>, String>> getRDInstallments(String rdId);
 }
 
 class FirestoreRecurringDepositRepository
@@ -143,6 +146,12 @@ class FirestoreRecurringDepositRepository
   }
 
   @override
+  Future<Result<List<RDInstallment>, String>> getRDInstallments(String rdId) async {
+    // Firestore does not support the relational RD ledger feature (Supabase only)
+    return const Success([]);
+  }
+
+  @override
   Stream<Result<List<RDTransaction>, String>> watchRDTransactions(String rdId) {
     // Firestore does not support the relational RD ledger feature (Supabase only)
     return Stream.value(const Success([]));
@@ -196,6 +205,16 @@ class FirestoreRecurringDepositRepository
   }) async {
     return const Failure('Firestore repository does not support RD ledger');
   }
+
+  @override
+  Stream<Result<List<RDInstallment>, String>> watchInstallmentsForMonth(DateTime month) {
+    return Stream.value(const Success([]));
+  }
+
+  @override
+  Future<Result<List<RDInstallment>, String>> getUnpaidInstallmentsBefore(DateTime date) async {
+    return const Success([]);
+  }
 }
 
 class FakeRecurringDepositRepository implements RecurringDepositRepository {
@@ -213,6 +232,39 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 
   final _installmentsControllers = <String, StreamController<Result<List<RDInstallment>, String>>>{};
   final _transactionsControllers = <String, StreamController<Result<List<RDTransaction>, String>>>{};
+  final _monthInstallmentsControllers = <String, StreamController<Result<List<RDInstallment>, String>>>{};
+
+  String _monthKey(DateTime m) => '${m.year}-${m.month}';
+
+  StreamController<Result<List<RDInstallment>, String>> _getMonthController(DateTime m) {
+    return _monthInstallmentsControllers.putIfAbsent(_monthKey(m), () {
+      return StreamController<Result<List<RDInstallment>, String>>.broadcast();
+    });
+  }
+
+  List<RDInstallment> _getInstallmentsForMonth(DateTime m) {
+    final list = <RDInstallment>[];
+    for (final insts in _fakeInstallments.values) {
+      for (final inst in insts) {
+        if (inst.installmentDate.year == m.year && inst.installmentDate.month == m.month) {
+          list.add(inst);
+        }
+      }
+    }
+    return list;
+  }
+
+  void _emitMonthInstallments() {
+    for (final entry in _monthInstallmentsControllers.entries) {
+      final parts = entry.key.split('-');
+      final y = int.parse(parts[0]);
+      final m = int.parse(parts[1]);
+      final date = DateTime(y, m);
+      if (!entry.value.isClosed) {
+        entry.value.add(Success(_getInstallmentsForMonth(date)));
+      }
+    }
+  }
 
   StreamController<Result<List<RDInstallment>, String>> _getInstallmentsController(String rdId) {
     return _installmentsControllers.putIfAbsent(rdId, () {
@@ -299,6 +351,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
         currentInsts.clear();
         currentInsts.addAll(schedule);
         _getInstallmentsController(deposit.id).add(Success([...currentInsts]));
+        _emitMonthInstallments();
       }
 
       _emit();
@@ -313,6 +366,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
         insts.clear();
         insts.addAll(schedule);
         _getInstallmentsController(newDeposit.id).add(Success([...insts]));
+        _emitMonthInstallments();
       }
       _emit();
       return const Success(null);
@@ -363,6 +417,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       }
     }
     _getInstallmentsController(rdId).add(Success([...currentInsts]));
+    _emitMonthInstallments();
 
     return const Success(null);
   }
@@ -397,6 +452,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       }
     }
     _getInstallmentsController(targetRdId).add(Success([...currentInsts]));
+    _emitMonthInstallments();
 
     return const Success(null);
   }
@@ -426,6 +482,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       }
     }
     _getInstallmentsController(rdId).add(Success([...currentInsts]));
+    _emitMonthInstallments();
 
     return const Success(null);
   }
@@ -446,6 +503,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       }
     }
     _getInstallmentsController(rdId).add(Success([...currentInsts]));
+    _emitMonthInstallments();
 
     return const Success(null);
   }
@@ -481,10 +539,35 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
           updatedAt: DateTime.now(),
         );
         _getInstallmentsController(entry.key).add(Success([...list]));
+        _emitMonthInstallments();
         return const Success(null);
       }
     }
     return const Failure('Installment not found');
+  }
+
+  @override
+  Stream<Result<List<RDInstallment>, String>> watchInstallmentsForMonth(DateTime month) async* {
+    yield Success(_getInstallmentsForMonth(month));
+    yield* _getMonthController(month).stream;
+  }
+
+  @override
+  Future<Result<List<RDInstallment>, String>> getUnpaidInstallmentsBefore(DateTime date) async {
+    final list = <RDInstallment>[];
+    for (final insts in _fakeInstallments.values) {
+      for (final inst in insts) {
+        if (inst.installmentDate.isBefore(date) && !inst.isInstallmentPaid) {
+          list.add(inst);
+        }
+      }
+    }
+    return Success(list);
+  }
+
+  @override
+  Future<Result<List<RDInstallment>, String>> getRDInstallments(String rdId) async {
+    return Success(_getInstallments(rdId));
   }
 
   void dispose() {
@@ -493,6 +576,9 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       ctrl.close();
     }
     for (final ctrl in _transactionsControllers.values) {
+      ctrl.close();
+    }
+    for (final ctrl in _monthInstallmentsControllers.values) {
       ctrl.close();
     }
   }

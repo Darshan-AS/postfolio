@@ -20,6 +20,12 @@ extension DateTimeFormatting on DateTime {
     return DateFormat(t.format.dateTime, locale).format(this);
   }
 
+  /// Returns month and year formatted e.g. "September 2026"
+  String toMonthYearFormat() {
+    final locale = LocaleSettings.currentLocale.languageTag;
+    return DateFormat.yMMMM(locale).format(this);
+  }
+
   /// The financial year starts in April.
   /// Returns the start year of the financial year for this date.
   int get financialYearStart {

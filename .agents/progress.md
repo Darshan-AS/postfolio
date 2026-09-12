@@ -1,6 +1,73 @@
 # Project Progress
 
 ## Current State
+**RD Ledger Feature - Macro Monthly Operations Hub (Phase 4.5)**:
+- **Top Navigation Switcher (`SegmentedButton`)**: Added `SegmentedButton<RDViewMode>` (`[ Accounts | Monthly Hub ]`) into `RecurringDepositsScreen`, toggling between the accounts list and the macro monthly operational command center.
+- **Calendar Month Switcher (`RDMonthSwitcher`)**: Month navigation with prev/next buttons, formatted display ("September 2026"), and a dynamic quick-reset chip (`[ ↺ Current Month ]`) that appears whenever viewing past or future months.
+- **Monthly Operations KPI Row (`RDMonthlyKpiRow`)**: Real-time aggregated cards calculating *To Collect* (with customer counts), *Ready for PO* (with deposit count), *Settled* (fully collected and deposited), and *Overdue* (overdue counts). Tapping any KPI card instantly activates its corresponding filter.
+- **Filter Chips**: Horizontal scrollable chips (`All`, `To Collect`, `Ready for PO`, `Settled`, `Overdue`) with dynamic counts.
+- **High-Density Operation Card (`RDMonthlyOperationCard`)**:
+  - Customer name, account number, serial number, and installment number (#N).
+  - Urgency badge for overdue accounts (`Overdue (X prior months)` in bold error styling).
+  - Contextual status badges: `Customer Paid`, `Ready for PO`, `Settled`, `PO Advanced`, `Pending`.
+  - Contextual 1-tap **"Log Payment"** button that pre-fills `RDLogPaymentSheet` with the exact installment amount + pending default fees.
+  - Contextual 1-tap **"Deposit to PO"** button.
+  - Multi-select mode with checkboxes and floating/bottom batch action button (`Deposit to PO (N)`).
+  - Tapping the card body routes to `RecurringDepositDetailRoute` for full 60-month micro-view drill-down.
+- **Harmonized Operation Tile (`RDMonthlyOperationCard` & `EntityListTile`)**:
+  - Re-architected using `EntityListTile` to follow the exact visual rhythm of the Accounts tab (`RecurringDepositCard`), preserving muscle memory.
+  - Enhanced `EntityListTile` with `leading` override and `isSelected` background state while maintaining 100% backward compatibility.
+  - Structure:
+    - **Leading**: Installment sequence badge (`#N`) in a `CircleAvatar` (or checkmark for settled), which seamlessly morphs into a `Checkbox` when an account is `Ready for PO` or in selection mode.
+    - **Title**: Customer name (bold, identical to Accounts tab).
+    - **Subtitle**: Line 1 shows `(SerialNo) AccountNo` (exact same string format as `RecurringDepositCard`); Line 2 shows Due date, overdue days urgency, prior overdue badge, and default fee.
+    - **Indicator Color**: Color-coded left edge bar (Red for overdue, Yellow for Ready for PO, Green for Settled).
+    - **Trailing**: Total payable amount (bold titleMedium) + compact 1-tap action button (`[ ⚡ Log ]` prefilling payment sheet, `[ 🏢 PO ]` depositing to PO, or `[ ✓ Settled ]` badge).
+  - High density: 2x screen density (~80px vs ~160px), displaying 6–7 accounts per screen on mobile without scrolling.
+  - Switched `RDMonthlyOperationsView` to `ListView.separated` with `Divider(height: AppDimensions.dividerHeight)` and `RDMonthlyOperationCard.skeleton()`.
+- **Database & CDC Streaming**:
+  - Added migration `20260912000000_rd_monthly_operations_view.sql` creating `rd_monthly_operations_view` with subqueries for prior overdue counts and amounts.
+  - Streamed `rd_installments` CDC in `SupabaseRecurringDepositRepository` and added `watchInstallmentsForMonth` to `RecurringDepositRepository`.
+  - Added full reactive mock broadcasting for monthly schedules in `FakeRecurringDepositRepository`.
+- **Domain & State Architecture**:
+  - Built `RDMonthlyOperationItem` Freezed domain model with pure status/payable getters.
+  - Built `RDMonthlyOperationsController` Riverpod notifier managing selected month, view mode, active filter, and multi-selection state.
+  - Added localized keys in `en.i18n.yaml` under `recurringDeposits.views` and `recurringDeposits.monthlyOperations`.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues) and 100% passing Chrome test suite (25/25 tests across all test suites, including dedicated `rd_monthly_operations_test.dart`).
+- **Prior Arrears & Carryover Overdue Flow Complete**:
+  - Enhanced repository contract with `getUnpaidInstallmentsBefore(DateTime date)` implemented across `SupabaseRecurringDepositRepository` and `FakeRecurringDepositRepository`.
+  - Updated `rawMonthlyOperationsStream` in `RDMonthlyOperationsController` to query prior unpaid installments before the selected month, compute `priorOverdueCount` and `priorOverdueAmount`, and supply them to `RDMonthlyOperationItem`.
+  - Fully lights up carryover overdue indicators when navigating to any month with previous unpaid installments: top alert banner (`Review Overdue`), card red indicator, subtitle `+N Past Due (₹X)` badge, `Total Due` amount, and contextual `[ ⚡ Pay All (₹X) ]` button.
+- **Button High-Contrast Polish**:
+  - Explicitly assigned high-contrast foreground and background colors to `HugeIcon` and `Text` on action buttons in `RDMonthlyOperationCard` and `RDMonthlyOperationsView`, resolving low-contrast text on error and primary button backgrounds.
+- **Future Months Advance Planning Mode**:
+  - Differentiated between active operations (current month) and advance planning (future months).
+  - Gated prior unpaid installments and overdue debt in domain (`RDMonthlyOperationItem.isUpcoming(now)` and `hasOverdueDebt(now)`), controllers, and KPI cards when viewing future calendar months.
+  - Future months suppress false red overdue flags, zero out overdue count in KPIs, display an informational planning banner (`🗓️ Upcoming schedule & advance planning for [Month Year]`), and render calm tonal `[ 🪙 Advance Pay ]` buttons on pending accounts.
+- **Log Payment Debug Freeze Fix**:
+  - Resolved unhandled `StateError` where `ref.read(rdInstallmentsStreamProvider.future)` in `RDMonthlyOperationsView` was disposed by Riverpod during loading state because no active widget listened to the autoDispose provider.
+  - Added dedicated one-shot `getRDInstallments(rdId)` method on `RecurringDepositRepository` implemented across Supabase, Fake, and Firestore repositories, decoupling ephemeral UI sheet opening from autoDispose streaming.
+- **Option 1 Layout (Monthly Amount, Total Pending, and Default Fees)**:
+  - Anchored baseline monthly installment amount (`₹X /mo`) in trailing top-right to preserve visual parity and muscle memory with the Accounts tab (`RecurringDepositCard`).
+  - Conditionally displays `Total Due: ₹X` right beneath the monthly amount whenever pending balance diverges (prior arrears, default fees, partial payments), and avoids redundant clutter for normal on-time installments.
+  - Subtitle surfaces due date, `+N Past Due` chip, and a prominent `Fee: ₹X` badge whenever default fees exist.
+  - Extended domain model `RDMonthlyOperationItem` with `priorOverdueFee` and `totalDefaultFee(DateTime now)`.
+- **Post Office Agent Workflow & UX Polish (Avatar Uniformity, Advance to PO, and PO Reversal)**:
+  - **Strict Avatar Uniformity**: Eliminated spontaneous checkboxes on Ready for PO cards; browse mode strictly displays circular `#N` avatar or checkmark across all cards. Checkbox is rendered exclusively when selection mode is active.
+  - **Dedicated Selection Mode**: Added `[ ◩ Select ]` action chip in filter header and wired long-press on cards to activate selection.
+  - **Advance to PO from Pocket**: Contextual 3-dot overflow menu allows agents to advance payments to the Post Office from pocket before customer collection. Renders purple `[ PO Advanced ]` badge with tertiary edge indicator and primary action becomes `[ ⚡ Collect (₹X) ]`. Batch PO deposit transparently displays breakdown between customer collections and pocket advances.
+  - **PO Reversal**: Single-card "Revert PO Deposit" action in overflow menu and "Revert PO (N)" batch action bar button with confirmation dialogs.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 22 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+- **Default Fee Pending Surfacing & Operational Partitioning**:
+  - Accounts with customer principal and PO deposited but an unresolved default fee (`isFeePending`) are surfaced under the **`To Collect`** operational filter and counter.
+  - Symmetrical partition: `To Collect` (unpaid customer principal, PO advanced, and pending fees) + `Ready for PO` (customer paid, PO pending) + `Settled` (100% reconciled) sums to total accounts.
+  - High-density card (`RDMonthlyOperationCard`):
+    - Subtitle shows `Fee: ₹X` badge.
+    - Trailing column shows `Fee Due: ₹X`.
+    - Primary action button renders contextual **`[ ⚡ Collect Fee (₹X) ]`** prefilling payment sheet.
+    - 3-dot overflow menu features **`Forgive Default Fee`** with confirmation dialog calling `toggleLateFeeWaiver`.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 45 tests across all test suites, including 24 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+
 **RD Ledger Feature - Micro-View Overhaul: Heatmap, Hero Card, Inspector & Yearly Accordion (Phase 4.4)**:
 - **`RDNextDueHeroCard`**: Anchored at the top of the RD ledger. Chronologically pinpoints the next pending installment, urgency badge (overdue days/due in days), total payable, and 1-tap "Log Next Payment" button pre-filling `RDLogPaymentSheet`. Displays congratulatory completion card when all 60 installments are settled.
 - **`RDInstallmentHeatmap`**: Built custom pure Flutter 60-month tenure matrix (Years 1 to 5 x Months 1 to 12) with 0 third-party packages. Color codes discrete domain states: Settled (primary), Ready for PO (secondary), Advanced to PO (tertiary), Overdue / Fee Pending (error), Upcoming (surfaceContainerHighest). Responsive across all mobile viewports without horizontal scrolling. Features tactile active selection ring and tooltip.
