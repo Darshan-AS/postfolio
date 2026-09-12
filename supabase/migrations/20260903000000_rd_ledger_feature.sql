@@ -5,9 +5,11 @@
 ALTER TABLE public.recurring_deposits 
   ADD COLUMN IF NOT EXISTS initial_paid_installments INTEGER NOT NULL DEFAULT 0;
 
--- 2. Alter rd_transactions to support payment_mode
+-- 2. Alter rd_transactions to support payment_mode and split allocation components
 ALTER TABLE public.rd_transactions 
-  ADD COLUMN IF NOT EXISTS payment_mode TEXT NOT NULL;
+  ADD COLUMN IF NOT EXISTS payment_mode TEXT NOT NULL DEFAULT 'cash',
+  ADD COLUMN IF NOT EXISTS installment_amount NUMERIC,
+  ADD COLUMN IF NOT EXISTS late_fee_amount NUMERIC;
 
 -- 3. Create rd_installments table
 CREATE TABLE IF NOT EXISTS public.rd_installments (
@@ -22,6 +24,8 @@ CREATE TABLE IF NOT EXISTS public.rd_installments (
   po_status TEXT NOT NULL,
   po_paid_date DATE,
   late_fee NUMERIC NOT NULL DEFAULT 0,
+  paid_late_fee NUMERIC NOT NULL DEFAULT 0,
+  is_late_fee_waived BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(rd_id, installment_date)
@@ -124,7 +128,8 @@ BEGIN
 
     INSERT INTO public.rd_installments (
       id, rd_id, agent_id, installment_date, due_date, installment_amount,
-      customer_paid_amount, customer_status, po_status, po_paid_date, late_fee
+      customer_paid_amount, customer_status, po_status, po_paid_date, late_fee,
+      paid_late_fee, is_late_fee_waived
     )
     SELECT 
       COALESCE((elem->>'id')::UUID, gen_random_uuid()),
@@ -137,7 +142,9 @@ BEGIN
       (elem->>'customer_status')::TEXT,
       (elem->>'po_status')::TEXT,
       (elem->>'po_paid_date')::DATE,
-      (elem->>'late_fee')::NUMERIC
+      (elem->>'late_fee')::NUMERIC,
+      COALESCE((elem->>'paid_late_fee')::NUMERIC, 0),
+      COALESCE((elem->>'is_late_fee_waived')::BOOLEAN, FALSE)
     FROM jsonb_array_elements(p_installments) AS elem
     ON CONFLICT (rd_id, installment_date) DO UPDATE SET
       installment_amount = EXCLUDED.installment_amount,
@@ -146,6 +153,8 @@ BEGIN
       po_status = EXCLUDED.po_status,
       po_paid_date = EXCLUDED.po_paid_date,
       late_fee = EXCLUDED.late_fee,
+      paid_late_fee = EXCLUDED.paid_late_fee,
+      is_late_fee_waived = EXCLUDED.is_late_fee_waived,
       updated_at = NOW();
   END IF;
 
@@ -170,15 +179,20 @@ BEGIN
   -- Verify agent ownership of RD
   PERFORM public.assert_account_owner(v_rd_id, v_agent_id);
 
-  -- Insert raw transaction log record
-  INSERT INTO public.rd_transactions (id, rd_id, agent_id, paid_date, amount, payment_mode)
+  -- Insert raw transaction log record with split allocation components
+  INSERT INTO public.rd_transactions (
+    id, rd_id, agent_id, paid_date, amount, payment_mode,
+    installment_amount, late_fee_amount
+  )
   VALUES (
     COALESCE(v_transaction_id, gen_random_uuid()),
     v_rd_id,
     v_agent_id,
     (p_transaction->>'paid_date')::DATE,
     (p_transaction->>'amount')::NUMERIC,
-    (p_transaction->>'payment_mode')::TEXT
+    (p_transaction->>'payment_mode')::TEXT,
+    (p_transaction->>'installment_amount')::NUMERIC,
+    (p_transaction->>'late_fee_amount')::NUMERIC
   )
   ON CONFLICT (id) DO NOTHING;
 
@@ -189,9 +203,31 @@ BEGIN
       customer_paid_amount = (v_elem->>'customer_paid_amount')::NUMERIC,
       customer_status = (v_elem->>'customer_status')::TEXT,
       late_fee = (v_elem->>'late_fee')::NUMERIC,
+      paid_late_fee = COALESCE((v_elem->>'paid_late_fee')::NUMERIC, 0),
+      is_late_fee_waived = COALESCE((v_elem->>'is_late_fee_waived')::BOOLEAN, FALSE),
       updated_at = NOW()
     WHERE id = (v_elem->>'id')::UUID AND agent_id = v_agent_id;
   END LOOP;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- 7.1 Atomic RPC to toggle late fee waiver on an installment
+CREATE OR REPLACE FUNCTION public.toggle_rd_late_fee_waiver(
+  p_installment_id UUID,
+  p_is_waived BOOLEAN
+) RETURNS VOID AS $$
+DECLARE
+  v_agent_id UUID := public.assert_authenticated();
+BEGIN
+  UPDATE public.rd_installments
+  SET
+    is_late_fee_waived = p_is_waived,
+    updated_at = NOW()
+  WHERE id = p_installment_id AND agent_id = v_agent_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Installment not found or access denied';
+  END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 

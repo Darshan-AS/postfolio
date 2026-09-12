@@ -61,6 +61,7 @@ class AppDimensions {
   static const double radiusDetailAvatar = 72.0;
 
   // Icon Sizes
+  static const double iconXs = 12.0;
   static const double iconSm = 16.0;
   static const double iconMd = 24.0;
   static const double iconLg = 32.0;

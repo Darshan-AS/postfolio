@@ -71,6 +71,8 @@ class RDLedgerController extends _$RDLedgerController {
     required DateTime paidDate,
     required RDPaymentMode paymentMode,
     required List<RDInstallment> currentSchedule,
+    double? installmentComponent,
+    double? lateFeeComponent,
   }) async {
     final allocationResult = RDLedgerService.allocateCustomerPayment(
       currentSchedule: currentSchedule,
@@ -78,12 +80,25 @@ class RDLedgerController extends _$RDLedgerController {
       paidDate: paidDate,
       paymentMode: paymentMode,
       rdId: rdId,
+      installmentComponent: installmentComponent,
+      lateFeeComponent: lateFeeComponent,
     );
 
     final repository = ref.read(recurringDepositRepositoryProvider);
     return await repository.recordCustomerPayment(
       allocationResult.transaction,
       allocationResult.updatedInstallments,
+    );
+  }
+
+  Future<Result<void, String>> toggleLateFeeWaiver({
+    required String installmentId,
+    required bool isWaived,
+  }) async {
+    final repository = ref.read(recurringDepositRepositoryProvider);
+    return await repository.toggleLateFeeWaiver(
+      installmentId: installmentId,
+      isWaived: isWaived,
     );
   }
 

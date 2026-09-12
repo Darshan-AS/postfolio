@@ -217,6 +217,62 @@ void main() {
       final hasPoAfterPo = await repository.hasPoPaidInstallments(rdId);
       expect((hasPoAfterPo as Success<bool, String>).value, isTrue);
     });
+
+    test('toggleLateFeeWaiver updates installment waiver state in repository and reactive stream', () async {
+      final startDate = DateTime(2026, 1, 1);
+      final schedule = RDLedgerService.generateInitialSchedule(
+        rdId: rdId,
+        startDate: startDate,
+        installmentAmount: 1000.0,
+        termYears: 1,
+        termMonths: 0,
+        initialPaidInstallments: 0,
+      );
+
+      final rd = RecurringDeposit(
+        id: rdId,
+        customerId: customerId,
+        schemeType: RecurringSchemeType.recurringDeposit,
+        status: DepositStatus.active,
+        installmentAmount: 1000.0,
+        interestRate: 6.7,
+        termYears: 1,
+        termMonths: 0,
+        startDate: startDate,
+        nominees: const [],
+        initialPaidInstallments: 0,
+      );
+
+      await repository.saveRecurringDeposit(rd, schedule: schedule);
+
+      final targetInstallment = schedule.first;
+      expect(targetInstallment.isLateFeeWaived, isFalse);
+
+      // Waive late fee
+      final waiveRes = await repository.toggleLateFeeWaiver(
+        installmentId: targetInstallment.id,
+        isWaived: true,
+      );
+      expect(waiveRes, isA<Success<void, String>>());
+
+      // Stream should emit updated installment with isLateFeeWaived = true
+      final instsAfterWaiveRes = await repository.watchRDInstallments(rdId).first;
+      final instsAfterWaive = (instsAfterWaiveRes as Success<List<RDInstallment>, String>).value;
+      final waivedInst = instsAfterWaive.firstWhere((i) => i.id == targetInstallment.id);
+      expect(waivedInst.isLateFeeWaived, isTrue);
+
+      // Reinstate late fee (unwaive)
+      final reinstateRes = await repository.toggleLateFeeWaiver(
+        installmentId: targetInstallment.id,
+        isWaived: false,
+      );
+      expect(reinstateRes, isA<Success<void, String>>());
+
+      final instsAfterReinstateRes = await repository.watchRDInstallments(rdId).first;
+      final instsAfterReinstate = (instsAfterReinstateRes as Success<List<RDInstallment>, String>).value;
+      final reinstatedInst = instsAfterReinstate.firstWhere((i) => i.id == targetInstallment.id);
+      expect(reinstatedInst.isLateFeeWaived, isFalse);
+    });
   });
 }
 

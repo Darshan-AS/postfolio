@@ -33,6 +33,8 @@ BEGIN
       customer_paid_amount = (v_elem->>'customer_paid_amount')::NUMERIC,
       customer_status = (v_elem->>'customer_status')::TEXT,
       late_fee = (v_elem->>'late_fee')::NUMERIC,
+      paid_late_fee = COALESCE((v_elem->>'paid_late_fee')::NUMERIC, 0),
+      is_late_fee_waived = COALESCE((v_elem->>'is_late_fee_waived')::BOOLEAN, FALSE),
       updated_at = NOW()
     WHERE id = (v_elem->>'id')::UUID AND agent_id = v_agent_id;
   END LOOP;
@@ -56,11 +58,14 @@ BEGIN
   PERFORM public.assert_account_owner(v_rd_id, v_agent_id);
 
   -- Update transaction log record
+  -- Update transaction log record with split allocation components
   UPDATE public.rd_transactions
   SET
     paid_date = (p_transaction->>'paid_date')::DATE,
     amount = (p_transaction->>'amount')::NUMERIC,
     payment_mode = (p_transaction->>'payment_mode')::TEXT,
+    installment_amount = (p_transaction->>'installment_amount')::NUMERIC,
+    late_fee_amount = (p_transaction->>'late_fee_amount')::NUMERIC,
     updated_at = NOW()
   WHERE id = v_transaction_id AND agent_id = v_agent_id;
 
@@ -71,6 +76,8 @@ BEGIN
       customer_paid_amount = (v_elem->>'customer_paid_amount')::NUMERIC,
       customer_status = (v_elem->>'customer_status')::TEXT,
       late_fee = (v_elem->>'late_fee')::NUMERIC,
+      paid_late_fee = COALESCE((v_elem->>'paid_late_fee')::NUMERIC, 0),
+      is_late_fee_waived = COALESCE((v_elem->>'is_late_fee_waived')::BOOLEAN, FALSE),
       updated_at = NOW()
     WHERE id = (v_elem->>'id')::UUID AND agent_id = v_agent_id;
   END LOOP;

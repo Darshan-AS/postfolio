@@ -20,6 +20,8 @@ abstract class RDInstallment with _$RDInstallment {
     @Default(RDPoStatus.unpaid) RDPoStatus poStatus,
     @TimestampConverter() DateTime? poPaidDate,
     @Default(0.0) double lateFee,
+    @Default(0.0) double paidLateFee,
+    @Default(false) bool isLateFeeWaived,
     @TimestampConverter() DateTime? createdAt,
     @TimestampConverter() DateTime? updatedAt,
   }) = _RDInstallment;
@@ -27,13 +29,33 @@ abstract class RDInstallment with _$RDInstallment {
   factory RDInstallment.fromJson(Map<String, dynamic> json) =>
       _$RDInstallmentFromJson(json);
 
-  /// Computes remaining balance due to fully cover installment + late fee.
-  double get outstandingAmount =>
-      (installmentAmount + lateFee - customerPaidAmount).clamp(0.0, double.infinity);
+  /// Effective late fee considering any fee waiver.
+  double get effectiveLateFee => isLateFeeWaived ? 0.0 : lateFee;
+
+  /// Remaining unpaid principal balance for this installment.
+  double get outstandingPrincipal =>
+      (installmentAmount - customerPaidAmount).clamp(0.0, double.infinity);
+
+  /// Remaining unpaid late fee owed by customer.
+  double get outstandingLateFee =>
+      isLateFeeWaived ? 0.0 : (lateFee - paidLateFee).clamp(0.0, double.infinity);
+
+  /// Computes remaining total balance due (principal + outstanding late fee).
+  double get outstandingAmount => outstandingPrincipal + outstandingLateFee;
+
+  /// Whether the customer has fully covered the base installment amount.
+  bool get isInstallmentPaid => customerPaidAmount >= installmentAmount;
+
+  /// Whether the late fee is fully resolved (either waived, 0, or fully paid).
+  bool get isLateFeeResolved => isLateFeeWaived || lateFee == 0.0 || paidLateFee >= lateFee;
+
+  /// Whether this installment is completely settled (both principal and late fee).
+  bool get isFullySettled => isInstallmentPaid && isLateFeeResolved;
 
   /// Determine if this installment is currently overdue based on due date.
   bool isOverdueAt(DateTime evaluationDate) {
     if (customerStatus == RDInstallmentStatus.fullyPaid) return false;
+    if (isInstallmentPaid) return false;
     return evaluationDate.isAfter(dueDate);
   }
 
