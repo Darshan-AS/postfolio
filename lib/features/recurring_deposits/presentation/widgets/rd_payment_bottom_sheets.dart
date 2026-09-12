@@ -271,20 +271,31 @@ class RDAllocationPreviewCard extends StatelessWidget {
 class RDLogPaymentSheet extends HookConsumerWidget {
   final RecurringDeposit deposit;
   final List<RDInstallment> currentSchedule;
+  final double? initialAmount;
 
   const RDLogPaymentSheet({
     super.key,
     required this.deposit,
     required this.currentSchedule,
+    this.initialAmount,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ledger = t.recurringDeposits.ledger;
-    final amountController = useTextEditingController();
+    final initialText = initialAmount != null && initialAmount! > 0
+        ? (initialAmount! % 1 == 0
+            ? initialAmount!.toInt().toString()
+            : initialAmount!.toString())
+        : '';
+    final amountController = useTextEditingController(text: initialText);
     final paidDate = useState(DateTime.now());
     final paymentMode = useState(RDPaymentMode.cash);
-    final splitMode = useState<PaymentSplitMode>(PaymentSplitMode.installmentsOnly);
+    final initialSplitMode =
+        initialAmount != null && initialAmount! > deposit.installmentAmount
+            ? PaymentSplitMode.includeFees
+            : PaymentSplitMode.installmentsOnly;
+    final splitMode = useState<PaymentSplitMode>(initialSplitMode);
     final customInstallmentController = useTextEditingController();
     final customFeeController = useTextEditingController();
     final formKey = useMemoized(() => GlobalKey<FormState>());

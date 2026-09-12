@@ -1,6 +1,14 @@
 # Project Progress
 
 ## Current State
+**RD Ledger Feature - Micro-View Overhaul: Heatmap, Hero Card, Inspector & Yearly Accordion (Phase 4.4)**:
+- **`RDNextDueHeroCard`**: Anchored at the top of the RD ledger. Chronologically pinpoints the next pending installment, urgency badge (overdue days/due in days), total payable, and 1-tap "Log Next Payment" button pre-filling `RDLogPaymentSheet`. Displays congratulatory completion card when all 60 installments are settled.
+- **`RDInstallmentHeatmap`**: Built custom pure Flutter 60-month tenure matrix (Years 1 to 5 x Months 1 to 12) with 0 third-party packages. Color codes discrete domain states: Settled (primary), Ready for PO (secondary), Advanced to PO (tertiary), Overdue / Fee Pending (error), Upcoming (surfaceContainerHighest). Responsive across all mobile viewports without horizontal scrolling. Features tactile active selection ring and tooltip.
+- **`RDMonthInspectorCard`**: Directly beneath the heatmap. Noise-Free Guarantee: completely suppresses fee row when default fee is ₹0. Surfaces principal, default fee (if applicable), and PO deposit status. Embeds 1-tap payment, PO deposit action, and fee waiver toggle menu.
+- **`_RDYearlyScheduleAccordion`**: Replaced 60-row uncollapsed list with expandable yearly accordion (`Year 1 (12/12 Settled)`, etc.), preserving selection mode and PO deposit controls intact.
+- **`_RDYearlyScheduleAccordion`**: Replaced 60-row uncollapsed list with expandable yearly accordion (`Year 1 (12/12 Settled)`, etc.), preserving selection mode and PO deposit controls intact. Fixed horizontal overflow on narrow cards by wrapping `RDInstallmentTile` badges in responsive `Wrap`, wrapping subtitle texts in `Expanded`, adding stable `PageStorageKey`s, and guarding Crashlytics against web execution in `lib/main.dart`.
+- **Verification**: `dart analyze` passes with 0 issues. Slang translations compiled with 100% success.
+
 **RD Ledger Feature - Fee Waivers, Dual Tracking & Split Allocations (Phase 4.2)**:
 - **Dual-Track Balance Modeling**: Decoupled monthly installment principal from default fees. Extended `rd_installments` with `paid_late_fee` and `is_late_fee_waived`, and `rd_transactions` with `installment_amount` and `late_fee_amount`.
 - **Domain Model Computations (`RDInstallment`)**: Implemented pure domain getters (`outstandingPrincipal`, `effectiveLateFee`, `outstandingLateFee`, `outstandingAmount`, `isInstallmentPaid`, `isLateFeeResolved`, and `isFullySettled`).

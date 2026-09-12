@@ -11,6 +11,9 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_installment_mode
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_heatmap.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_month_inspector_card.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_next_due_hero_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -110,67 +113,96 @@ class _RDInstallmentsContent extends HookConsumerWidget {
               (sum, inst) => sum + inst.outstandingAmount,
             );
 
-        return Column(
-          children: [
-            if (pendingPoAmount > 0 || advancedPoAmount > 0) ...[
-              RDInstallmentKpiRow(
-                pendingPoAmount: pendingPoAmount,
-                advancedPoAmount: advancedPoAmount,
-              ),
-              const Divider(height: AppDimensions.dividerHeight),
-            ],
-            RDInstallmentActionBar(
-              deposit: deposit,
-              installments: installments,
-              isSelectionMode: isSelectionMode.value,
-              selectedCount: selectedIds.value.length,
-              unpaidSelected: unpaidSelected,
-              paidSelected: paidSelected,
-              onToggleSelectionMode: (mode) {
-                isSelectionMode.value = mode;
-                if (!mode) {
-                  selectedIds.value = {};
-                }
-              },
-              onClearSelection: () {
-                selectedIds.value = {};
-              },
-            ),
-            const Divider(height: AppDimensions.dividerHeight),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: installments.length,
-              separatorBuilder: (context, index) =>
-                  const Divider(height: AppDimensions.dividerHeight),
-              itemBuilder: (context, index) {
-                final inst = installments[index];
-                final monthNum = index + 1;
-                final isOpeningBaseline =
-                    index < deposit.initialPaidInstallments;
+        final now = DateTime.now();
+        final earliestPendingIndex = installments.indexWhere(
+          (inst) =>
+              !inst.isInstallmentPaid ||
+              (!inst.isLateFeeWaived && inst.outstandingLateFeeAt(now) > 0),
+        );
+        final defaultIndex =
+            earliestPendingIndex != -1 ? earliestPendingIndex : 0;
+        final selectedMonthIndex = useState(defaultIndex);
 
-                return RDInstallmentTile(
-                  deposit: deposit,
-                  installment: inst,
-                  monthNum: monthNum,
-                  isOpeningBaseline: isOpeningBaseline,
-                  isSelectionMode: isSelectionMode.value,
-                  isSelected: selectedIds.value.contains(inst.id),
-                  onSelectionChanged: isOpeningBaseline
-                      ? null
-                      : (checked) {
-                          final current = Set<String>.from(selectedIds.value);
-                          if (checked == true) {
-                            current.add(inst.id);
-                          } else {
-                            current.remove(inst.id);
-                          }
-                          selectedIds.value = current;
-                        },
-                );
-              },
-            ),
-          ],
+        final safeSelectedIndex = selectedMonthIndex.value < installments.length
+            ? selectedMonthIndex.value
+            : 0;
+
+        return Padding(
+          padding: const EdgeInsets.all(AppDimensions.paddingMd),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 1. Next Due Hero Card
+              RDNextDueHeroCard(
+                deposit: deposit,
+                installments: installments,
+              ),
+              AppSpacings.gapMd,
+
+              // 2. Tenure Heatmap Matrix
+              RDInstallmentHeatmap(
+                deposit: deposit,
+                installments: installments,
+                selectedMonthIndex: safeSelectedIndex,
+                nextDueIndex: earliestPendingIndex,
+                onSelectMonth: (idx) {
+                  selectedMonthIndex.value = idx;
+                },
+              ),
+              AppSpacings.gapMd,
+
+              // 3. Single Month Inspector Card
+              RDMonthInspectorCard(
+                deposit: deposit,
+                installment: installments[safeSelectedIndex],
+                monthNum: safeSelectedIndex + 1,
+                isOpeningBaseline:
+                    safeSelectedIndex < deposit.initialPaidInstallments,
+                allInstallments: installments,
+              ),
+              AppSpacings.gapMd,
+
+              // 4. KPI Row (Pending / Advanced at PO)
+              if (pendingPoAmount > 0 || advancedPoAmount > 0) ...[
+                RDInstallmentKpiRow(
+                  pendingPoAmount: pendingPoAmount,
+                  advancedPoAmount: advancedPoAmount,
+                ),
+                AppSpacings.gapSm,
+              ],
+
+              // 5. Action Bar (Manage PO / Selection Mode)
+              RDInstallmentActionBar(
+                deposit: deposit,
+                installments: installments,
+                isSelectionMode: isSelectionMode.value,
+                selectedCount: selectedIds.value.length,
+                unpaidSelected: unpaidSelected,
+                paidSelected: paidSelected,
+                onToggleSelectionMode: (mode) {
+                  isSelectionMode.value = mode;
+                  if (!mode) {
+                    selectedIds.value = {};
+                  }
+                },
+                onClearSelection: () {
+                  selectedIds.value = {};
+                },
+              ),
+              AppSpacings.gapSm,
+
+              // 6. Expandable Yearly Schedule Accordion
+              _RDYearlyScheduleAccordion(
+                deposit: deposit,
+                installments: installments,
+                isSelectionMode: isSelectionMode.value,
+                selectedIds: selectedIds.value,
+                onSelectionChanged: (newIds) {
+                  selectedIds.value = newIds;
+                },
+              ),
+            ],
+          ),
         );
       },
       loading: () => const Padding(
@@ -186,6 +218,128 @@ class _RDInstallmentsContent extends HookConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RDYearlyScheduleAccordion extends StatelessWidget {
+  final RecurringDeposit deposit;
+  final List<RDInstallment> installments;
+  final bool isSelectionMode;
+  final Set<String> selectedIds;
+  final ValueChanged<Set<String>> onSelectionChanged;
+
+  const _RDYearlyScheduleAccordion({
+    required this.deposit,
+    required this.installments,
+    required this.isSelectionMode,
+    required this.selectedIds,
+    required this.onSelectionChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final ledger = t.recurringDeposits.ledger;
+    final totalMonths = installments.length;
+    final numYears = (totalMonths / 12).ceil();
+
+    return Card(
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      ),
+      child: ExpansionTile(
+        key: PageStorageKey<String>('rd_${deposit.id}_full_schedule'),
+        initiallyExpanded: isSelectionMode,
+        leading: const HugeIcon(
+          icon: HugeIcons.strokeRoundedListView,
+          size: AppDimensions.iconSm,
+        ),
+        title: Text(
+          ledger.schedule.fullSchedule,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        children: [
+          for (int y = 0; y < numYears; y++) ...[
+            _buildYearSection(context, yearIndex: y),
+            if (y < numYears - 1)
+              const Divider(height: AppDimensions.dividerHeight),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildYearSection(BuildContext context, {required int yearIndex}) {
+    final theme = Theme.of(context);
+    final ledger = t.recurringDeposits.ledger;
+    final startIndex = yearIndex * 12;
+    final endIndex = (startIndex + 12 < installments.length)
+        ? startIndex + 12
+        : installments.length;
+    final yearInstallments = installments.sublist(startIndex, endIndex);
+
+    final settledCount = yearInstallments
+        .where((inst) => inst.isFullySettled && inst.poStatus == RDPoStatus.paid)
+        .length;
+    final isYearSettled = settledCount == yearInstallments.length;
+
+    return ExpansionTile(
+      key: PageStorageKey<String>('rd_${deposit.id}_year_$yearIndex'),
+      initiallyExpanded: isSelectionMode || !isYearSettled,
+      leading: HugeIcon(
+        icon: isYearSettled
+            ? HugeIcons.strokeRoundedCheckmarkBadge01
+            : HugeIcons.strokeRoundedCalendar03,
+        size: AppDimensions.iconSm,
+        color: isYearSettled
+            ? theme.colorScheme.primary
+            : theme.colorScheme.onSurfaceVariant,
+      ),
+      title: Text(
+        ledger.schedule.yearSummary(
+          year: (yearIndex + 1).toString(),
+          settled: settledCount.toString(),
+          total: yearInstallments.length.toString(),
+        ),
+        style: theme.textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: isYearSettled
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurface,
+        ),
+      ),
+      children: [
+        for (final (i, inst) in yearInstallments.indexed) ...[
+          RDInstallmentTile(
+            deposit: deposit,
+            installment: inst,
+            monthNum: startIndex + i + 1,
+            isOpeningBaseline:
+                (startIndex + i) < deposit.initialPaidInstallments,
+            isSelectionMode: isSelectionMode,
+            isSelected: selectedIds.contains(inst.id),
+            onSelectionChanged: (startIndex + i) < deposit.initialPaidInstallments
+                ? null
+                : (checked) {
+                    final current = Set<String>.from(selectedIds);
+                    if (checked == true) {
+                      current.add(inst.id);
+                    } else {
+                      current.remove(inst.id);
+                    }
+                    onSelectionChanged(current);
+                  },
+          ),
+          if (i < yearInstallments.length - 1)
+            const Divider(height: AppDimensions.dividerHeight),
+        ],
+      ],
     );
   }
 }
@@ -553,7 +707,10 @@ class RDInstallmentTile extends ConsumerWidget {
       statusText = isOverdue ? ledger.statuses.overdue : ledger.statuses.unpaid;
     }
 
-    final titleRow = Row(
+    final titleRow = Wrap(
+      spacing: AppDimensions.paddingXs + 2,
+      runSpacing: AppDimensions.paddingXs,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
           ledger.installmentDetails.month(month: monthNum.toString()),
@@ -561,7 +718,6 @@ class RDInstallmentTile extends ConsumerWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        AppSpacings.gapSm,
         Container(
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.paddingXs + 2,
@@ -591,8 +747,7 @@ class RDInstallmentTile extends ConsumerWidget {
             ],
           ),
         ),
-        if (displayedLateFee > 0) ...[
-          AppSpacings.gapSm,
+        if (displayedLateFee > 0)
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppDimensions.paddingXs + 2,
@@ -636,7 +791,6 @@ class RDInstallmentTile extends ConsumerWidget {
               ),
             ),
           ),
-        ],
       ],
     );
 
@@ -714,11 +868,13 @@ class RDInstallmentTile extends ConsumerWidget {
                     color: theme.colorScheme.primary,
                   ),
                   AppSpacings.gapXs,
-                  Text(
-                    ledger.installmentDetails.openingBaseline,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      ledger.installmentDetails.openingBaseline,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -758,13 +914,15 @@ class RDInstallmentTile extends ConsumerWidget {
                     color: theme.colorScheme.primary,
                   ),
                   AppSpacings.gapXs,
-                  Text(
-                    ledger.installmentDetails.depositedToPo(
-                      date: inst.poPaidDate?.toAppFormat() ?? '',
-                    ),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      ledger.installmentDetails.depositedToPo(
+                        date: inst.poPaidDate?.toAppFormat() ?? '',
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -778,11 +936,13 @@ class RDInstallmentTile extends ConsumerWidget {
                     color: theme.colorScheme.secondary,
                   ),
                   AppSpacings.gapXs,
-                  Text(
-                    ledger.installmentDetails.pendingPoDeposit,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.secondary,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      ledger.installmentDetails.pendingPoDeposit,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.secondary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
