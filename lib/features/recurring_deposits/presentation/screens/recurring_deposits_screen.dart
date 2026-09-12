@@ -20,12 +20,16 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operations_view.dart';
 
 class RecurringDepositsScreen extends HookConsumerWidget {
   const RecurringDepositsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final viewMode = ref.watch(rDViewModeControllerProvider);
+    final opsState = ref.watch(rDMonthlyOperationsControllerProvider);
     final depositsState = ref.watch(filteredRecurringDepositsProvider);
     final criteria = ref.watch(recurringListCriteriaProvider);
 
@@ -40,17 +44,89 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     final activeFilterCount =
         statusModifications + criteria.urgencyFilters.length;
 
+    final showFab = viewMode == RDViewMode.accounts ||
+        (!opsState.isSelectionMode || opsState.selectedInstallmentIds.isEmpty);
+
     return Scaffold(
       appBar: ShellAppBar(title: t.recurringDeposits.title),
       body: Column(
         children: [
-          AppSpacings.gapSm,
-          AppSearchBar(
-            hintText: t.recurringDeposits.searchHint,
-            onChanged: (val) => ref
-                .read(recurringListCriteriaProvider.notifier)
-                .updateSearch(val),
-            trailing: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingLg,
+              vertical: AppDimensions.paddingXs,
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<RDViewMode>(
+                segments: [
+                  ButtonSegment(
+                    value: RDViewMode.accounts,
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedFolder01,
+                      size: AppDimensions.iconSm,
+                    ),
+                    label: Text(t.recurringDeposits.views.accounts),
+                  ),
+                  ButtonSegment(
+                    value: RDViewMode.monthlyHub,
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedCalendar03,
+                      size: AppDimensions.iconSm,
+                    ),
+                    label: Text(t.recurringDeposits.views.monthlyHub),
+                  ),
+                ],
+                selected: {viewMode},
+                onSelectionChanged: (set) => ref
+                    .read(rDViewModeControllerProvider.notifier)
+                    .setMode(set.first),
+              ),
+            ),
+          ),
+          Expanded(
+            child: viewMode == RDViewMode.accounts
+                ? _buildAccountsView(
+                    context,
+                    ref,
+                    depositsState,
+                    criteria,
+                    activeFilterCount,
+                  )
+                : const RDMonthlyOperationsView(),
+          ),
+        ],
+      ),
+      floatingActionButton: showFab
+          ? FloatingActionButton.extended(
+              heroTag: null,
+              onPressed: () =>
+                  const RecurringDepositCreateRoute().push(context),
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedAdd01,
+                size: AppDimensions.iconMd,
+              ),
+              label: Text(t.recurringDeposits.newDeposit),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildAccountsView(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<RecurringDeposit>> depositsState,
+    RDSearchCriteria criteria,
+    int activeFilterCount,
+  ) {
+    return Column(
+      children: [
+        AppSearchBar(
+          hintText: t.recurringDeposits.searchHint,
+          onChanged: (val) => ref
+              .read(recurringListCriteriaProvider.notifier)
+              .updateSearch(val),
+          trailing: [
               IconButton(
                 icon: Badge(
                   isLabelVisible:
@@ -160,17 +236,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
             },
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
-        onPressed: () => const RecurringDepositCreateRoute().push(context),
-        icon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedAdd01,
-          size: AppDimensions.iconMd,
-        ),
-        label: Text(t.recurringDeposits.newDeposit),
-      ),
-    );
+      );
   }
 
   Widget _buildDataState(

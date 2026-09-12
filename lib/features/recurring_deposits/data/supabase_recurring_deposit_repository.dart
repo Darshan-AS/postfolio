@@ -72,6 +72,67 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   }
 
   @override
+  Stream<Result<List<RDInstallment>, String>> watchInstallmentsForMonth(DateTime month) {
+    final startOfMonth = DateTime(month.year, month.month, 1);
+    final endOfMonth = DateTime(month.year, month.month + 1, 0);
+    final startStr = startOfMonth.toIso8601String().split('T').first;
+    final endStr = endOfMonth.toIso8601String().split('T').first;
+
+    return _supabaseClient
+        .from('rd_installments')
+        .stream(primaryKey: ['id'])
+        .eq('agent_id', _agentId)
+        .asyncMap((_) async {
+          try {
+            final data = await _supabaseClient
+                .from('rd_installments')
+                .select()
+                .eq('agent_id', _agentId)
+                .gte('installment_date', startStr)
+                .lte('installment_date', endStr);
+            final installments = data.map((json) => RDInstallment.fromJson(json)).toList();
+            installments.sort((a, b) => a.installmentDate.compareTo(b.installmentDate));
+            return Success(installments);
+          } catch (e) {
+            return Failure(e.toString());
+          }
+        });
+  }
+
+  @override
+  Future<Result<List<RDInstallment>, String>> getUnpaidInstallmentsBefore(DateTime date) async {
+    try {
+      final dateStr = date.toIso8601String().split('T').first;
+      final data = await _supabaseClient
+          .from('rd_installments')
+          .select()
+          .eq('agent_id', _agentId)
+          .lt('installment_date', dateStr)
+          .neq('customer_status', 'fullyPaid');
+      final installments = data.map((json) => RDInstallment.fromJson(json)).toList();
+      return Success(installments);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
+  Future<Result<List<RDInstallment>, String>> getRDInstallments(String rdId) async {
+    try {
+      final data = await _supabaseClient
+          .from('rd_installments')
+          .select()
+          .eq('rd_id', rdId)
+          .eq('agent_id', _agentId);
+      final installments = data.map((json) => RDInstallment.fromJson(json)).toList();
+      installments.sort((a, b) => a.installmentDate.compareTo(b.installmentDate));
+      return Success(installments);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
   Stream<Result<List<RDTransaction>, String>> watchRDTransactions(String rdId) {
     return _supabaseClient
         .from('rd_transactions')

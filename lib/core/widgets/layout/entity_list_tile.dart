@@ -52,6 +52,7 @@ class EntityAction {
 }
 
 class EntityListTile extends StatelessWidget {
+  final Widget? leading;
   final Widget? leadingIcon;
   final String? leadingText;
   final Color? leadingBackgroundColor;
@@ -61,10 +62,13 @@ class EntityListTile extends StatelessWidget {
   final Widget? subtitle;
   final Widget? trailing;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final List<EntityAction> actions;
+  final bool isSelected;
 
   const EntityListTile({
     super.key,
+    this.leading,
     this.leadingIcon,
     this.leadingText,
     this.leadingBackgroundColor,
@@ -74,7 +78,9 @@ class EntityListTile extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.onTap,
+    this.onLongPress,
     this.actions = const [],
+    this.isSelected = false,
   });
 
   @override
@@ -89,42 +95,47 @@ class EntityListTile extends StatelessWidget {
         ? AppDimensions.paddingNone
         : AppDimensions.paddingLg;
 
-    Widget tile = InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: AppDimensions.paddingLg,
-          right: rightPadding,
-          top: AppDimensions.paddingMd,
-          bottom: AppDimensions.paddingMd,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _buildLeading(theme),
-            AppSpacings.gapMd,
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+    Widget tile = Material(
+      color: isSelected
+          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.25)
+          : Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: AppDimensions.paddingLg,
+            right: rightPadding,
+            top: AppDimensions.paddingMd,
+            bottom: AppDimensions.paddingMd,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              leading ?? _buildLeading(theme),
+              AppSpacings.gapMd,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  ?subtitle,
-                ],
+                    ?subtitle,
+                  ],
+                ),
               ),
-            ),
-            if (trailing != null || hasActionButtons) AppSpacings.gapSm,
-            ?trailing,
-            if (trailing != null && hasActionButtons) AppSpacings.gapXs,
-            for (final action in inlineActions)
+              if (trailing != null || hasActionButtons) AppSpacings.gapSm,
+              ?trailing,
+              if (trailing != null && hasActionButtons) AppSpacings.gapXs,
+              for (final action in inlineActions)
               IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(
@@ -197,7 +208,8 @@ class EntityListTile extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ),
+  );
 
     if (indicatorColor != null) {
       tile = DecoratedBox(
