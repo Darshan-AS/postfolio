@@ -1,6 +1,13 @@
 # Project Progress
 
 ## Current State
+**Deposit Cards & Form Streams Optimization (N+1 Elimination) Completed**:
+- Refactored `OneTimeDepositCard` and `RecurringDepositCard` to eliminate `ref.watch(customerByIdProvider(deposit.customerId))` and unused imports. Card titles resolve directly from pre-joined `deposit.customerName` (falling back to account number / localized placeholder), preventing 300+ spawned customer WebSocket subscriptions and view queries when scrolling deposit lists.
+- Refactored `filteredOneTimeDeposits` and `filteredRecurringDeposits` fallback mapping to directly copy the resolved customer names into deposit entities (`d.copyWith(customerName: customerMap[d.customerId])`), ensuring non-null names across the entire UI pipeline even if views are not pre-joined.
+- Updated `OneTimeDepositDetailScreen` and `RecurringDepositDetailScreen` to prefer `deposit.customerName` prior to falling back to single customer watch.
+- Updated `OneTimeDepositFormScreen` and `RecurringDepositFormScreen` to bypass list controller streams when creating new deposits (`depositId == null`).
+- Added widget test coverage in `test/widget_test.dart` for cards and creation forms (7/7 tests passing, 0 analysis issues).
+
 **Customer List CDC Stream Optimization & Lazy Detail Loading Completed**:
 - Refactored `watchCustomers()` in `SupabaseCustomerRepository` to stream directly from the base `customers` table with `.eq('agent_id', _agentId)`. Removed `.asyncMap(...)` which previously executed 749 lateral joins and `get_account_nominees` calls on `customer_details_view` per CDC mutation event.
 - Added `AsyncSingleEntityBuilder<T>` to `async_entity_builder.dart` for individual entity views.

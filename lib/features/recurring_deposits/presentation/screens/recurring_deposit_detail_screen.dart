@@ -212,12 +212,13 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                     size: AppDimensions.iconMd,
                   ),
                   label: t.recurringDeposits.fields.customerId,
-                  value:
-                      ref
-                          .watch(customerByIdProvider(deposit.customerId))
-                          .value
-                          ?.name ??
-                      deposit.customerId,
+                  value: (deposit.customerName?.isNotEmpty ?? false)
+                      ? deposit.customerName!
+                      : (ref
+                              .watch(customerByIdProvider(deposit.customerId))
+                              .value
+                              ?.name ??
+                          deposit.customerId),
                   onTap: () =>
                       CustomerDetailRoute(deposit.customerId).push(context),
                 ),

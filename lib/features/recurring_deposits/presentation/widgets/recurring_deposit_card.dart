@@ -16,7 +16,6 @@ import 'package:postfolio/core/models/base_deposit.dart';
 
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
-import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class _RecurringDepositCardView extends StatelessWidget {
@@ -207,13 +206,12 @@ class RecurringDepositCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    String title = overrideTitle ?? '';
-    if (title.isEmpty) {
-      final customerAsync = ref.watch(customerByIdProvider(deposit.customerId));
-      title =
-          customerAsync.value?.name ??
-          (deposit.accountNo ?? t.common.notProvided);
-    }
+    final title = (overrideTitle?.isNotEmpty == true ? overrideTitle : null) ??
+        (deposit.customerName?.isNotEmpty == true
+            ? deposit.customerName
+            : null) ??
+        deposit.accountNo ??
+        t.common.notProvided;
 
     String subtitle = overrideSubtitle ?? '';
     if (overrideSubtitle == null) {

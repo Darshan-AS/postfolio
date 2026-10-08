@@ -122,7 +122,13 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
     customerMap = const {};
   }
 
-  var result = asyncDeposits.toList();
+  var result = hasNullNames
+      ? asyncDeposits
+          .map((d) => d.customerName == null
+              ? d.copyWith(customerName: customerMap[d.customerId])
+              : d)
+          .toList()
+      : asyncDeposits.toList();
 
   // Filters
   if (criteria.statusFilters.isNotEmpty) {

@@ -34,6 +34,11 @@ class RecurringDepositFormScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (depositId == null) {
+      return _RecurringDepositForm(
+        initialCustomerId: initialCustomerId,
+      );
+    }
     return AsyncEntityBuilder<RecurringDeposit>(
       state: ref.watch(recurringDepositsControllerProvider),
       entityId: depositId,

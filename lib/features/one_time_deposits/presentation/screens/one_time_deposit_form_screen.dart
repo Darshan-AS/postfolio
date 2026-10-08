@@ -34,6 +34,11 @@ class OneTimeDepositFormScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (depositId == null) {
+      return _OneTimeDepositForm(
+        initialCustomerId: initialCustomerId,
+      );
+    }
     return AsyncEntityBuilder<OneTimeDeposit>(
       state: ref.watch(oneTimeDepositsControllerProvider),
       entityId: depositId,
