@@ -35,6 +35,36 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   }
 
   @override
+  Stream<Result<RecurringDeposit, String>> watchRecurringDepositById(
+    String id,
+  ) {
+    return _supabaseClient
+        .from('account_identities')
+        .stream(primaryKey: ['id'])
+        .eq('id', id)
+        .asyncMap((_) async {
+          try {
+            final data = await _supabaseClient
+                .from('recurring_deposit_details_view')
+                .select()
+                .eq('id', id)
+                .maybeSingle();
+            if (data == null) {
+              return const Failure<RecurringDeposit, String>(
+                'Recurring Deposit not found',
+              );
+            }
+            if (data['agent_id'] != _agentId) {
+              return const Failure<RecurringDeposit, String>('Unauthorized');
+            }
+            return Success(RecurringDeposit.fromJson(data));
+          } catch (e) {
+            return Failure(e.toString());
+          }
+        });
+  }
+
+  @override
   Future<Result<void, String>> createRecurringDeposit(RecurringDeposit deposit) async {
     return _saveRecurringDeposit(deposit);
   }

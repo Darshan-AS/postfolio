@@ -39,12 +39,10 @@ class RecurringDepositFormScreen extends ConsumerWidget {
         initialCustomerId: initialCustomerId,
       );
     }
-    return AsyncEntityBuilder<RecurringDeposit>(
-      state: ref.watch(recurringDepositsControllerProvider),
-      entityId: depositId,
-      idSelector: (d) => d.id,
+    return AsyncSingleEntityBuilder<RecurringDeposit>(
+      state: ref.watch(recurringDepositByIdProvider(depositId!)),
       notFoundMessage: t.recurringDeposits.depositNotFound,
-      onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
+      onRetry: () => ref.invalidate(recurringDepositByIdProvider(depositId!)),
       builder: (deposit) => _RecurringDepositForm(
         existingDeposit: deposit,
         initialCustomerId: initialCustomerId,

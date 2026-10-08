@@ -274,20 +274,38 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
 
   Future<Result<void, String>> toggleDepositStatus(
     String id,
-    DepositStatus newStatus,
-  ) async {
-    final deposits = state.value;
-    if (deposits == null) {
-      return const Failure('Deposits not loaded');
+    DepositStatus newStatus, {
+    OneTimeDeposit? deposit,
+  }) async {
+    OneTimeDeposit? targetDeposit = deposit;
+    if (targetDeposit == null) {
+      final deposits = state.value;
+      targetDeposit = deposits?.where((d) => d.id == id).firstOrNull;
     }
 
-    final deposit = deposits.where((d) => d.id == id).firstOrNull;
-    if (deposit == null) {
-      return const Failure('Deposit not found');
+    if (targetDeposit == null) {
+      final repository = ref.read(oneTimeDepositRepositoryProvider);
+      final singleResult = await repository.watchOneTimeDepositById(id).first;
+      return switch (singleResult) {
+        Success(value: final d) =>
+          await repository.updateOneTimeDeposit(d.copyWith(status: newStatus)),
+        Failure(error: final err) => Failure(err),
+      };
     }
 
-    final updatedDeposit = deposit.copyWith(status: newStatus);
+    final updatedDeposit = targetDeposit.copyWith(status: newStatus);
     final repository = ref.read(oneTimeDepositRepositoryProvider);
     return await repository.updateOneTimeDeposit(updatedDeposit);
   }
+}
+
+@riverpod
+Stream<OneTimeDeposit> oneTimeDepositById(Ref ref, String id) {
+  final repository = ref.watch(oneTimeDepositRepositoryProvider);
+  return repository.watchOneTimeDepositById(id).map((result) {
+    return switch (result) {
+      Success(value: final deposit) => deposit,
+      Failure(error: final error) => throw Exception(error),
+    };
+  });
 }

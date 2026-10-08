@@ -12,6 +12,10 @@ import 'package:postfolio/features/recurring_deposits/presentation/screens/recur
 import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/features/one_time_deposits/presentation/screens/one_time_deposit_detail_screen.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/screens/recurring_deposit_detail_screen.dart';
+import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() {
@@ -149,6 +153,80 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Shivanand A B'), findsOneWidget);
       expect(find.text('RD987654'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'OneTimeDepositDetailScreen renders with oneTimeDepositByIdProvider',
+    (WidgetTester tester) async {
+      final deposit = OneTimeDeposit(
+        id: 'otd-1',
+        accountNo: 'TD123456',
+        principalAmount: 50000,
+        termYears: 5,
+        termMonths: 0,
+        interestRate: 7.5,
+        customerId: 'cust-1',
+        customerName: 'Shivanand A B',
+        schemeType: OneTimeSchemeType.timeDeposit,
+        startDate: DateTime(2025, 1, 1),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            oneTimeDepositByIdProvider('otd-1').overrideWith(
+              (ref) => Stream.value(deposit),
+            ),
+          ],
+          child: const MaterialApp(
+            home: OneTimeDepositDetailScreen(depositId: 'otd-1'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('TD123456'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Shivanand A B'), 200);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(find.text('Shivanand A B'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'RecurringDepositDetailScreen renders with recurringDepositByIdProvider',
+    (WidgetTester tester) async {
+      final deposit = RecurringDeposit(
+        id: 'rd-1',
+        accountNo: 'RD987654',
+        installmentAmount: 2000,
+        termYears: 5,
+        termMonths: 0,
+        interestRate: 6.7,
+        customerId: 'cust-1',
+        customerName: 'Shivanand A B',
+        schemeType: RecurringSchemeType.recurringDeposit,
+        startDate: DateTime(2025, 1, 1),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            recurringDepositByIdProvider('rd-1').overrideWith(
+              (ref) => Stream.value(deposit),
+            ),
+          ],
+          child: const MaterialApp(
+            home: RecurringDepositDetailScreen(depositId: 'rd-1'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('RD987654'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Shivanand A B'), 200);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(find.text('Shivanand A B'), findsOneWidget);
     },
   );
 }

@@ -262,20 +262,39 @@ class RecurringDepositsController extends _$RecurringDepositsController {
 
   Future<Result<void, String>> toggleDepositStatus(
     String id,
-    DepositStatus newStatus,
-  ) async {
-    final deposits = state.value;
-    if (deposits == null) {
-      return const Failure('Deposits not loaded');
+    DepositStatus newStatus, {
+    RecurringDeposit? deposit,
+  }) async {
+    RecurringDeposit? targetDeposit = deposit;
+    if (targetDeposit == null) {
+      final deposits = state.value;
+      targetDeposit = deposits?.where((d) => d.id == id).firstOrNull;
     }
 
-    final deposit = deposits.where((d) => d.id == id).firstOrNull;
-    if (deposit == null) {
-      return const Failure('Deposit not found');
+    if (targetDeposit == null) {
+      final repository = ref.read(recurringDepositRepositoryProvider);
+      final singleResult =
+          await repository.watchRecurringDepositById(id).first;
+      return switch (singleResult) {
+        Success(value: final d) =>
+          await repository.updateRecurringDeposit(d.copyWith(status: newStatus)),
+        Failure(error: final err) => Failure(err),
+      };
     }
 
-    final updatedDeposit = deposit.copyWith(status: newStatus);
+    final updatedDeposit = targetDeposit.copyWith(status: newStatus);
     final repository = ref.read(recurringDepositRepositoryProvider);
     return await repository.updateRecurringDeposit(updatedDeposit);
   }
+}
+
+@riverpod
+Stream<RecurringDeposit> recurringDepositById(Ref ref, String id) {
+  final repository = ref.watch(recurringDepositRepositoryProvider);
+  return repository.watchRecurringDepositById(id).map((result) {
+    return switch (result) {
+      Success(value: final deposit) => deposit,
+      Failure(error: final error) => throw Exception(error),
+    };
+  });
 }

@@ -1,6 +1,14 @@
 # Project Progress
 
 ## Current State
+**Single Deposit Detail Providers & Watchers (Phase 2 Optimization) Completed**:
+- Implemented `watchOneTimeDepositById` and `watchRecurringDepositById` in `OneTimeDepositRepository` and `RecurringDepositRepository` across Supabase, Firestore, and Fake repositories. In Supabase, the watcher queries `one_time_deposit_details_view` and `recurring_deposit_details_view` directly by ID when change events occur on `account_identities`.
+- Added `@riverpod` family stream providers `oneTimeDepositById` and `recurringDepositById` in `one_time_deposits_controller.dart` and `recurring_deposits_controller.dart`.
+- Refactored `OneTimeDepositDetailScreen` and `RecurringDepositDetailScreen` to use `AsyncSingleEntityBuilder`, eliminating whole-list subscriptions when opening deposit detail views.
+- Refactored `OneTimeDepositFormScreen` and `RecurringDepositFormScreen` edit mode (`depositId != null`) to use `AsyncSingleEntityBuilder` with single deposit providers, avoiding whole-list subscriptions during edit operations.
+- Enhanced `toggleDepositStatus` across controllers to support optional direct deposit entities and fallback to single-entity fetching without crashing if list controllers have not been loaded.
+- Verified 100% clean static analysis (`flutter analyze`, 0 issues) and passing widget tests (9/9 passed).
+
 **Deposit Cards & Form Streams Optimization (N+1 Elimination) Completed**:
 - Refactored `OneTimeDepositCard` and `RecurringDepositCard` to eliminate `ref.watch(customerByIdProvider(deposit.customerId))` and unused imports. Card titles resolve directly from pre-joined `deposit.customerName` (falling back to account number / localized placeholder), preventing 300+ spawned customer WebSocket subscriptions and view queries when scrolling deposit lists.
 - Refactored `filteredOneTimeDeposits` and `filteredRecurringDeposits` fallback mapping to directly copy the resolved customer names into deposit entities (`d.copyWith(customerName: customerMap[d.customerId])`), ensuring non-null names across the entire UI pipeline even if views are not pre-joined.

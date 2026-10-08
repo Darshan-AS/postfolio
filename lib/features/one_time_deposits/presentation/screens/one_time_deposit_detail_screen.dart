@@ -27,56 +27,57 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AsyncEntityBuilder<OneTimeDeposit>(
-      state: ref.watch(oneTimeDepositsControllerProvider),
-      entityId: depositId,
-      idSelector: (d) => d.id,
+    return AsyncSingleEntityBuilder<OneTimeDeposit>(
+      state: ref.watch(oneTimeDepositByIdProvider(depositId)),
       notFoundMessage: t.oneTimeDeposits.depositNotFound,
-      onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
+      onRetry: () => ref.invalidate(oneTimeDepositByIdProvider(depositId)),
       dummyEntity: OneTimeDeposit.dummy,
       builder: (deposit) {
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
           customActions: [
-            if (deposit?.status != null)
-              IconButton(
-                icon: HugeIcon(
-                  icon: deposit!.status == DepositStatus.active
-                      ? HugeIcons.strokeRoundedCheckmarkBadge01
-                      : HugeIcons.strokeRoundedArrowTurnBackward,
-                  size: AppDimensions.iconMd,
-                ),
-                tooltip: deposit.status == DepositStatus.active
-                    ? t.common.close
-                    : t.common.reopen,
-                onPressed: () async {
-                  final isActive = deposit.status == DepositStatus.active;
-                  final confirmed = await AppDialogs.confirmAction(
-                    context,
-                    title: isActive ? t.common.close : t.common.reopen,
-                    content: isActive
-                        ? t.oneTimeDeposits.closeDepositConfirmation
-                        : t.oneTimeDeposits.reopenDepositConfirmation,
-                    confirmText: isActive ? t.common.close : t.common.reopen,
-                  );
-                  if (confirmed == true && context.mounted) {
-                    final newStatus = isActive
-                        ? DepositStatus.closed
-                        : DepositStatus.active;
-                    final result = await ref
-                        .read(oneTimeDepositsControllerProvider.notifier)
-                        .toggleDepositStatus(depositId, newStatus);
-
-                    if (result is Failure && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text((result as Failure).error.toString()),
-                        ),
-                      );
-                    }
-                  }
-                },
+            IconButton(
+              icon: HugeIcon(
+                icon: deposit.status == DepositStatus.active
+                    ? HugeIcons.strokeRoundedCheckmarkBadge01
+                    : HugeIcons.strokeRoundedArrowTurnBackward,
+                size: AppDimensions.iconMd,
               ),
+              tooltip: deposit.status == DepositStatus.active
+                  ? t.common.close
+                  : t.common.reopen,
+              onPressed: () async {
+                final isActive = deposit.status == DepositStatus.active;
+                final confirmed = await AppDialogs.confirmAction(
+                  context,
+                  title: isActive ? t.common.close : t.common.reopen,
+                  content: isActive
+                      ? t.oneTimeDeposits.closeDepositConfirmation
+                      : t.oneTimeDeposits.reopenDepositConfirmation,
+                  confirmText: isActive ? t.common.close : t.common.reopen,
+                );
+                if (confirmed == true && context.mounted) {
+                  final newStatus = isActive
+                      ? DepositStatus.closed
+                      : DepositStatus.active;
+                  final result = await ref
+                      .read(oneTimeDepositsControllerProvider.notifier)
+                      .toggleDepositStatus(
+                        depositId,
+                        newStatus,
+                        deposit: deposit,
+                      );
+
+                  if (result is Failure && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text((result as Failure).error.toString()),
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
           ],
           onEdit: () => OneTimeDepositEditRoute(depositId).push(context),
           deleteDialogTitle: t.oneTimeDeposits.deleteDeposit,
@@ -96,7 +97,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
               size: AppDimensions.iconLg,
             ),
-            title: deposit!.accountNo ?? t.common.notProvided,
+            title: deposit.accountNo ?? t.common.notProvided,
             subtitle: Text(
               deposit.schemeType.displayName,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(

@@ -35,6 +35,34 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
   }
 
   @override
+  Stream<Result<OneTimeDeposit, String>> watchOneTimeDepositById(String id) {
+    return _supabaseClient
+        .from('account_identities')
+        .stream(primaryKey: ['id'])
+        .eq('id', id)
+        .asyncMap((_) async {
+          try {
+            final data = await _supabaseClient
+                .from('one_time_deposit_details_view')
+                .select()
+                .eq('id', id)
+                .maybeSingle();
+            if (data == null) {
+              return const Failure<OneTimeDeposit, String>(
+                'One Time Deposit not found',
+              );
+            }
+            if (data['agent_id'] != _agentId) {
+              return const Failure<OneTimeDeposit, String>('Unauthorized');
+            }
+            return Success(OneTimeDeposit.fromJson(data));
+          } catch (e) {
+            return Failure(e.toString());
+          }
+        });
+  }
+
+  @override
   Future<Result<void, String>> createOneTimeDeposit(OneTimeDeposit deposit) async {
     return _saveOneTimeDeposit(deposit);
   }

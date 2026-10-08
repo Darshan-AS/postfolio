@@ -19,6 +19,7 @@ part 'recurring_deposit_repository.g.dart';
 
 abstract class RecurringDepositRepository {
   Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits();
+  Stream<Result<RecurringDeposit, String>> watchRecurringDepositById(String id);
   Future<Result<void, String>> createRecurringDeposit(RecurringDeposit deposit);
   Future<Result<void, String>> updateRecurringDeposit(RecurringDeposit deposit);
   Future<Result<void, String>> deleteRecurringDeposit(String id);
@@ -60,6 +61,22 @@ class FirestoreRecurringDepositRepository
       try {
         final deposits = snapshot.docs.map((doc) => doc.data()).toList();
         return Success(deposits);
+      } catch (e) {
+        return Failure(e.toString());
+      }
+    });
+  }
+
+  @override
+  Stream<Result<RecurringDeposit, String>> watchRecurringDepositById(
+    String id,
+  ) {
+    return _deposits.doc(id).snapshots().map((snapshot) {
+      try {
+        if (!snapshot.exists) {
+          return const Failure('Recurring Deposit not found');
+        }
+        return Success(snapshot.data()!);
       } catch (e) {
         return Failure(e.toString());
       }
@@ -119,6 +136,33 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   watchRecurringDeposits() async* {
     yield Success([..._deposits]);
     yield* _controller.stream;
+  }
+
+  @override
+  Stream<Result<RecurringDeposit, String>> watchRecurringDepositById(
+    String id,
+  ) async* {
+    final deposit = _deposits.where((d) => d.id == id).firstOrNull;
+    if (deposit != null) {
+      yield Success(deposit);
+    } else {
+      yield const Failure('Recurring Deposit not found');
+    }
+
+    yield* _controller.stream.map((result) {
+      return switch (result) {
+        Success(value: final deposits) => () {
+          final d = deposits.where((d) => d.id == id).firstOrNull;
+          if (d != null) {
+            return Success<RecurringDeposit, String>(d);
+          }
+          return const Failure<RecurringDeposit, String>(
+            'Recurring Deposit not found',
+          );
+        }(),
+        Failure(error: final error) => Failure(error),
+      };
+    });
   }
 
   @override

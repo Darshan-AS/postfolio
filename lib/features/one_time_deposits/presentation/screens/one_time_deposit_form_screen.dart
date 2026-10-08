@@ -39,12 +39,10 @@ class OneTimeDepositFormScreen extends ConsumerWidget {
         initialCustomerId: initialCustomerId,
       );
     }
-    return AsyncEntityBuilder<OneTimeDeposit>(
-      state: ref.watch(oneTimeDepositsControllerProvider),
-      entityId: depositId,
-      idSelector: (d) => d.id,
+    return AsyncSingleEntityBuilder<OneTimeDeposit>(
+      state: ref.watch(oneTimeDepositByIdProvider(depositId!)),
       notFoundMessage: t.oneTimeDeposits.depositNotFound,
-      onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
+      onRetry: () => ref.invalidate(oneTimeDepositByIdProvider(depositId!)),
       builder: (deposit) => _OneTimeDepositForm(
         existingDeposit: deposit,
         initialCustomerId: initialCustomerId,

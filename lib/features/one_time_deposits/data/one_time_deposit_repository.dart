@@ -19,6 +19,7 @@ part 'one_time_deposit_repository.g.dart';
 
 abstract class OneTimeDepositRepository {
   Stream<Result<List<OneTimeDeposit>, String>> watchOneTimeDeposits();
+  Stream<Result<OneTimeDeposit, String>> watchOneTimeDepositById(String id);
   Future<Result<void, String>> createOneTimeDeposit(OneTimeDeposit deposit);
   Future<Result<void, String>> updateOneTimeDeposit(OneTimeDeposit deposit);
   Future<Result<void, String>> deleteOneTimeDeposit(String id);
@@ -59,6 +60,20 @@ class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
       try {
         final deposits = snapshot.docs.map((doc) => doc.data()).toList();
         return Success(deposits);
+      } catch (e) {
+        return Failure(e.toString());
+      }
+    });
+  }
+
+  @override
+  Stream<Result<OneTimeDeposit, String>> watchOneTimeDepositById(String id) {
+    return _deposits.doc(id).snapshots().map((snapshot) {
+      try {
+        if (!snapshot.exists) {
+          return const Failure('One Time Deposit not found');
+        }
+        return Success(snapshot.data()!);
       } catch (e) {
         return Failure(e.toString());
       }
@@ -118,6 +133,33 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
   Stream<Result<List<OneTimeDeposit>, String>> watchOneTimeDeposits() async* {
     yield Success([..._deposits]);
     yield* _controller.stream;
+  }
+
+  @override
+  Stream<Result<OneTimeDeposit, String>> watchOneTimeDepositById(
+    String id,
+  ) async* {
+    final deposit = _deposits.where((d) => d.id == id).firstOrNull;
+    if (deposit != null) {
+      yield Success(deposit);
+    } else {
+      yield const Failure('One Time Deposit not found');
+    }
+
+    yield* _controller.stream.map((result) {
+      return switch (result) {
+        Success(value: final deposits) => () {
+          final d = deposits.where((d) => d.id == id).firstOrNull;
+          if (d != null) {
+            return Success<OneTimeDeposit, String>(d);
+          }
+          return const Failure<OneTimeDeposit, String>(
+            'One Time Deposit not found',
+          );
+        }(),
+        Failure(error: final error) => Failure(error),
+      };
+    });
   }
 
   @override
