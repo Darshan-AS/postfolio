@@ -14,6 +14,11 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
     return user.id;
   }
 
+  static const _listColumns =
+      'id,agent_id,customer_id,customer_name,status,scheme_type,account_no,'
+      'principal_amount,interest_rate,term_years,term_months,start_date,'
+      'created_at,updated_at';
+
   @override
   Stream<Result<List<OneTimeDeposit>, String>> watchOneTimeDeposits() {
     return _supabaseClient
@@ -24,7 +29,7 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
           try {
             final data = await _supabaseClient
                 .from('one_time_deposit_details_view')
-                .select()
+                .select(_listColumns)
                 .eq('agent_id', _agentId);
             final deposits = data.map((json) => OneTimeDeposit.fromJson(json)).toList();
             return Success(deposits);

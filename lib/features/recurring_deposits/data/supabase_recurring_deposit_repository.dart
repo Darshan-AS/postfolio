@@ -14,6 +14,11 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
     return user.id;
   }
 
+  static const _listColumns =
+      'id,agent_id,customer_id,customer_name,status,scheme_type,account_no,'
+      'serial_no,installment_amount,interest_rate,term_years,term_months,'
+      'start_date,created_at,updated_at';
+
   @override
   Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits() {
     return _supabaseClient
@@ -24,7 +29,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
           try {
             final data = await _supabaseClient
                 .from('recurring_deposit_details_view')
-                .select()
+                .select(_listColumns)
                 .eq('agent_id', _agentId);
             final deposits = data.map((json) => RecurringDeposit.fromJson(json)).toList();
             return Success(deposits);
