@@ -35,15 +35,10 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<Result<AuthUser, String>> signInWithGoogle() async {
     try {
       if (kIsWeb) {
-        // Read USE_EMULATOR to determine if we are running locally
-        const bool useEmulator = bool.fromEnvironment(
-          'USE_EMULATOR',
-          defaultValue: false,
-        );
-        
-        // Only override redirectTo in local emulator, otherwise let Supabase use its configured site_url (Prod)
-        // We redirect directly to '/login' so GoRouter doesn't strip the '?code=' parameter in an intermediate redirect.
-        final String? redirectTo = useEmulator ? 'http://localhost:3000/login' : null;
+        // Dynamically redirect to the current web origin's /login route
+        // This supports local dev (http://localhost:3000), staging, and
+        // production (https://postfolio.darshanas.dev) without hardcoding.
+        final redirectTo = '${Uri.base.origin}/login';
 
         final success = await _supabaseClient.auth.signInWithOAuth(
           OAuthProvider.google,

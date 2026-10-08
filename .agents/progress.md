@@ -1,6 +1,10 @@
 # Project Progress
 
 ## Current State
+**Web OAuth Dynamic Redirect Fix for Production Domains**:
+- Fixed Google login redirect on `https://postfolio.darshanas.dev` where login redirected to `http://localhost:3000/?code=...` due to `redirectTo` being null in non-emulator environments.
+- Updated `SupabaseAuthRepository.signInWithGoogle()` on Web to pass `redirectTo: ${Uri.base.origin}/login`, dynamically resolving to the active deployment domain.
+
 **CI/CD Java 21 & Android Lint Fix for v2.1.0+18 Release**:
 - Fixed GitHub Actions release pipeline failure where AGP 9.3.0 and Kotlin lint invoked `List.removeLast()` (a Java 21 API), causing `NoSuchMethodError` under Java 17 during `:firebase_core:lintVitalAnalyzeRelease`.
 - Upgraded Java version to `21` in `.github/workflows/release.yml`.
