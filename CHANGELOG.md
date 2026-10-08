@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0+18] - 2026-10-08
+
+### Added
+- **Performance**: Implemented server-side customer name joins in `one_time_deposit_details_view` and `recurring_deposit_details_view`.
+- **Tenant Isolation**: Filtered real-time CDC streams by `agent_id` across Customers, One-Time Deposits, and Recurring Deposits.
+- **Single Deposit Providers**: Added `oneTimeDepositById` and `recurringDepositById` family stream providers to lazily load full view details for detail and edit screens.
+
+### Changed
+- **Lightweight Streaming**: Streamed raw `customers` table directly in `watchCustomers()`, eliminating 749-row lateral join subqueries on every CDC event.
+- **Streamlined Deposit Lists**: Omitted `nominees` in list queries (`watchOneTimeDeposits`, `watchRecurringDeposits`) to bypass `get_account_nominees` lateral joins across all rows.
+- **Dumb Widgets**: Eliminated client-side `customerByIdProvider` stream watchers from `OneTimeDepositCard` and `RecurringDepositCard`, resolving customer titles directly from pre-joined data.
+- **Architecture**: Decoupled `AuthUser` from business `Agent` domain for bounded-context DDD compliance.
+- **Dependencies**: Migrated to standalone `material_ui` and `cupertino_ui` packages. Upgraded Flutter SDK baseline to 3.47.2, Android Gradle Plugin to 9.3.0, and major package dependencies.
+
+### Fixed
+- **Web**: Guarded Firebase Crashlytics initialization on Web to prevent unsupported platform crashes.
+- **Network Stability**: Eliminated 300+ spawned concurrent WebSocket subscriptions and CDC query loops, resolving Cloudflare/Supabase TLS handshake connection drops (`HandshakeException`) on Wi-Fi networks.
+
 ## [2.0.0+17] - 2026-09-02
 
 ### Added

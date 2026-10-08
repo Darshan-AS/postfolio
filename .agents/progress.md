@@ -1,11 +1,6 @@
 # Project Progress
 
 ## Current State
-**Defer Nominees from Deposit List Queries (P2.4 Optimization) Completed**:
-- Specified explicit column projections (`_listColumns`) in `watchOneTimeDeposits()` in `SupabaseOneTimeDepositRepository` and `watchRecurringDeposits()` in `SupabaseRecurringDepositRepository` to omit `nominees`.
-- By omitting `nominees` from list queries, the PostgreSQL query planner completely prunes execution of the `public.get_account_nominees(d.id)` lateral function across all returned rows, eliminating correlated subqueries and payload bloat on list screens while detail queries (`watch*DepositById`) retain full nominee datasets.
-- Logged task `P2.5` in `.agents/tasks.md` to transition from static query projection strings to dedicated PostgreSQL views (`one_time_deposit_list_view` and `recurring_deposit_list_view`).
-
 **Single Deposit Detail Providers & Watchers (Phase 2 Optimization) Completed**:
 - Implemented `watchOneTimeDepositById` and `watchRecurringDepositById` in `OneTimeDepositRepository` and `RecurringDepositRepository` across Supabase, Firestore, and Fake repositories. In Supabase, the watcher queries `one_time_deposit_details_view` and `recurring_deposit_details_view` directly by ID when change events occur on `account_identities`.
 - Added `@riverpod` family stream providers `oneTimeDepositById` and `recurringDepositById` in `one_time_deposits_controller.dart` and `recurring_deposits_controller.dart`.
@@ -231,6 +226,8 @@
 - Standardized UI bottom sheets (`AppSortBottomSheet`, `AppFilterBottomSheet`), standardizing their "Clear" actions to prevent abrupt closures and migrating the Sort sheet from `flutter_hooks` to a purely reactive Riverpod `Consumer` pattern.
 
 ## Releases
+- **v2.1.0+18 (2026-10-08)**: High-performance CDC streaming stabilization, N+1 deposit card watcher elimination, nominee lateral query pruning, single-entity lazy detail providers, standalone Material/Cupertino packages, DDD AuthUser refactoring, and Flutter SDK baseline upgrade.
+- **v2.0.0+17 (2026-09-02)**: CQRS architecture, parallel Supabase repositories, visual migrator tool, Android build flavors (staging/prod), and initial Supabase CDC streams.
 - **v1.6.0+16 (2026-06-26)**: Application ID migration, nominee migration fix, and Supabase roadmap.
 - **v1.5.1+15 (2026-06-07)**: Added multiline notes field to customer profiles. Formatted currency strings with numeric word translation. Show full amount in dashboard chart tooltips.
 - **v1.5.0+14 (2026-06-07)**: Built analytics dashboard with interactive charts and Financial Year mappings. Enabled Firestore Web offline persistence. Standardized SchemeType UI to Segmented Buttons and restored predictive back gestures on forms.
