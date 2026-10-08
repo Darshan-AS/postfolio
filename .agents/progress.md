@@ -1,6 +1,11 @@
 # Project Progress
 
 ## Current State
+**CI/CD Java 21 & Android Lint Fix for v2.1.0+18 Release**:
+- Fixed GitHub Actions release pipeline failure where AGP 9.3.0 and Kotlin lint invoked `List.removeLast()` (a Java 21 API), causing `NoSuchMethodError` under Java 17 during `:firebase_core:lintVitalAnalyzeRelease`.
+- Upgraded Java version to `21` in `.github/workflows/release.yml`.
+- Added `lint { abortOnError = false; checkReleaseBuilds = false }` to `android/app/build.gradle.kts` to protect release builds against third-party plugin lint crashes.
+
 **Single Deposit Detail Providers & Watchers (Phase 2 Optimization) Completed**:
 - Implemented `watchOneTimeDepositById` and `watchRecurringDepositById` in `OneTimeDepositRepository` and `RecurringDepositRepository` across Supabase, Firestore, and Fake repositories. In Supabase, the watcher queries `one_time_deposit_details_view` and `recurring_deposit_details_view` directly by ID when change events occur on `account_identities`.
 - Added `@riverpod` family stream providers `oneTimeDepositById` and `recurringDepositById` in `one_time_deposits_controller.dart` and `recurring_deposits_controller.dart`.
