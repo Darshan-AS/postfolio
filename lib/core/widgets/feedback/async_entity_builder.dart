@@ -76,3 +76,54 @@ class AsyncEntityBuilder<T> extends StatelessWidget {
         : errorView;
   }
 }
+
+class AsyncSingleEntityBuilder<T> extends StatelessWidget {
+  final AsyncValue<T> state;
+  final Widget Function(T entity) builder;
+  final String notFoundMessage;
+  final VoidCallback onRetry;
+  final T? dummyEntity;
+  final bool wrapWithScaffold;
+
+  const AsyncSingleEntityBuilder({
+    super.key,
+    required this.state,
+    required this.builder,
+    required this.notFoundMessage,
+    required this.onRetry,
+    this.dummyEntity,
+    this.wrapWithScaffold = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (state) {
+      AsyncData(:final value) => builder(value),
+      AsyncError(:final error) => _buildErrorState(context, error.toString()),
+      _ => _buildLoadingState(context),
+    };
+  }
+
+  Widget _buildLoadingState(BuildContext context) {
+    if (dummyEntity != null) {
+      return Skeletonizer(enabled: true, child: builder(dummyEntity as T));
+    }
+    const loadingView = Center(child: CircularProgressIndicator());
+    return wrapWithScaffold
+        ? Scaffold(
+            appBar: AppBar(title: Text(t.common.loading)),
+            body: loadingView,
+          )
+        : loadingView;
+  }
+
+  Widget _buildErrorState(BuildContext context, String error) {
+    final errorView = ErrorStateView(message: error, onRetry: onRetry);
+    return wrapWithScaffold
+        ? Scaffold(
+            appBar: AppBar(title: Text(t.common.error)),
+            body: errorView,
+          )
+        : errorView;
+  }
+}

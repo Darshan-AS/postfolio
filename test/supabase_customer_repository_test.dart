@@ -99,13 +99,13 @@ void main() {
         .eq('account_type', 'SB');
     expect(rawSbAccountsData, isNotEmpty);
 
-    // Test watchCustomers
+    // Test watchCustomers (lightweight base table stream for list view)
     final watchedCustomersResult = await repository.watchCustomers().first;
     expect(watchedCustomersResult, isA<Success<List<Customer>, String>>());
     final watchedList = (watchedCustomersResult as Success<List<Customer>, String>).value;
     final watchedCust = watchedList.firstWhere((c) => c.id == customerId);
-    expect(watchedCust.savingsAccount, isNotNull);
-    expect(watchedCust.savingsAccount?.accountNumber, 'SB999999999');
+    expect(watchedCust.name, 'Test Customer Updated');
+    expect(watchedCust.phone, '9876543210');
 
     // Test watchCustomerById
     final watchedByIdResult = await repository.watchCustomerById(customerId).first;

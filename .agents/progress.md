@@ -1,6 +1,13 @@
 # Project Progress
 
 ## Current State
+**Customer List CDC Stream Optimization & Lazy Detail Loading Completed**:
+- Refactored `watchCustomers()` in `SupabaseCustomerRepository` to stream directly from the base `customers` table with `.eq('agent_id', _agentId)`. Removed `.asyncMap(...)` which previously executed 749 lateral joins and `get_account_nominees` calls on `customer_details_view` per CDC mutation event.
+- Added `AsyncSingleEntityBuilder<T>` to `async_entity_builder.dart` for individual entity views.
+- Updated `CustomerDetailScreen` and `CustomerFormScreen` (in edit mode) to watch `customerByIdProvider(customerId)` on demand, loading full view details with savings account and nominees strictly for the requested customer.
+- Form creation mode (`customerId == null`) renders immediately without subscribing to customer list providers.
+- Verified 100% clean static analysis (`flutter analyze`, 0 issues) and passing widget tests (3/3 passed).
+
 **DDD Auth User Decoupling & Ubiquitous Language Refactor Completed**:
 - Refactored `AppUser` to `AuthUser` in the authentication domain context (`lib/features/auth/domain/auth_user.dart`) to strictly represent lightweight session identities. This aligns with Bounded Context design principles by preventing the core business `Agent` domain from being polluted with technical authentication details.
 - Avoided name collisions with Supabase Flutter's exported `AuthUser` by utilizing `hide AuthUser` on the Supabase import inside `SupabaseAuthRepository`.

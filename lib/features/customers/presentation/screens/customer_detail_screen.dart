@@ -35,12 +35,10 @@ class CustomerDetailScreen extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    return AsyncEntityBuilder<Customer>(
-      state: ref.watch(customersControllerProvider),
-      entityId: customerId,
-      idSelector: (c) => c.id,
+    return AsyncSingleEntityBuilder<Customer>(
+      state: ref.watch(customerByIdProvider(customerId)),
       notFoundMessage: t.customers.customerNotFound,
-      onRetry: () => ref.invalidate(customersControllerProvider),
+      onRetry: () => ref.invalidate(customerByIdProvider(customerId)),
       dummyEntity: Customer.dummy,
       builder: (customer) {
         return EntityDetailScaffold(
@@ -60,7 +58,7 @@ class CustomerDetailScreen extends ConsumerWidget {
           },
           header: EntityDetailHeader(
             avatarChild: Text(
-              customer!.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
+              customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
               style: textTheme.headlineLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onPrimaryContainer,

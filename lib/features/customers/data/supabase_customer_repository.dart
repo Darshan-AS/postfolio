@@ -20,13 +20,10 @@ class SupabaseCustomerRepository implements CustomerRepository {
         .from('customers')
         .stream(primaryKey: ['id'])
         .eq('agent_id', _agentId)
-        .asyncMap((_) async {
+        .map((data) {
           try {
-            final data = await _supabaseClient
-                .from('customer_details_view')
-                .select()
-                .eq('agent_id', _agentId);
-            final customers = data.map((json) => Customer.fromJson(json)).toList();
+            final customers =
+                data.map((json) => Customer.fromJson(json)).toList();
             return Success(customers);
           } catch (e) {
             return Failure(e.toString());

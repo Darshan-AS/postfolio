@@ -22,12 +22,13 @@ class CustomerFormScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AsyncEntityBuilder<Customer>(
-      state: ref.watch(customersControllerProvider),
-      entityId: customerId,
-      idSelector: (c) => c.id,
+    if (customerId == null) {
+      return const _CustomerForm();
+    }
+    return AsyncSingleEntityBuilder<Customer>(
+      state: ref.watch(customerByIdProvider(customerId!)),
       notFoundMessage: t.customers.customerNotFound,
-      onRetry: () => ref.invalidate(customersControllerProvider),
+      onRetry: () => ref.invalidate(customerByIdProvider(customerId!)),
       builder: (customer) => _CustomerForm(existingCustomer: customer),
     );
   }
