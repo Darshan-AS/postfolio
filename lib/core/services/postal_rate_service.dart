@@ -497,52 +497,9 @@ class PostalRateService {
       }
     }
 
-    return legacyFormulaRoundMonths(interestRate);
-  }
-
-  /// Computes the raw mathematical compound interest doubling months using
-  /// `.round()`, matching the legacy formula behavior.
-  int legacyFormulaRoundMonths(double interestRate) {
-    if (interestRate <= 0) return 0;
     final decimalInterestRate = interestRate / _percentageDivisor;
     final timeInYears = log(2) / log(1 + decimalInterestRate);
     return (timeInYears * _monthsInYear).round();
-  }
-
-  /// Resolves the effective KVP tenure in months, self-healing legacy stored
-  /// defaults (`9Y 0M` = 108 months) and legacy `.round()` formula overshoots
-  /// (e.g., 114 months instead of 113 months at 7.6%) while preserving any
-  /// intentional custom user overrides.
-  int resolveEffectiveKvpMonths({
-    required double interestRate,
-    DateTime? startDate,
-    int? termYears,
-    int? termMonths,
-  }) {
-    final scheduleMonths = calculateKvpTermMonths(
-      interestRate,
-      startDate: startDate,
-    );
-    if (termYears == null && termMonths == null) {
-      return scheduleMonths;
-    }
-
-    final providedMonths =
-        ((termYears ?? 0) * _monthsInYear) + (termMonths ?? 0);
-    if (providedMonths <= 0) {
-      return scheduleMonths;
-    }
-
-    final defaultPlaceholderMonths =
-        OneTimeSchemeType.kisanVikasPatra.defaultTenureYears * _monthsInYear;
-    final legacyRoundedMonths = legacyFormulaRoundMonths(interestRate);
-
-    if (providedMonths == defaultPlaceholderMonths ||
-        providedMonths == legacyRoundedMonths) {
-      return scheduleMonths;
-    }
-
-    return providedMonths;
   }
 }
 

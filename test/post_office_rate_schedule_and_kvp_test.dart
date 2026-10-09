@@ -223,48 +223,42 @@ void main() {
     );
   });
 
-  group('OneTimeDeposit KVP self-healing and custom overrides', () {
+  group('Contractual Snapshot & Custom Overrides', () {
     test(
-      'self-heals legacy 9Y 6M (114m) and 9Y 0M (108m) DB records for 7.6% KVP so detail field and banner match',
+      'trusts stored DB contractual snapshot on read so detail field and banner always match',
       () {
-        final legacyRoundedDeposit = OneTimeDeposit(
-          id: 'kvp-legacy-round',
+        final createdResult = OneTimeDeposit.create(
+          id: 'kvp-snapshot',
           principalAmount: 100000,
-          termYears: 9,
-          termMonths: 6, // Old .round() artifact (114 months)
-          interestRate: 7.6,
           customerId: 'cust-1',
           schemeType: OneTimeSchemeType.kisanVikasPatra,
           startDate: DateTime(2019, 10, 1),
         );
 
-        expect(legacyRoundedDeposit.effectiveTermYears, 9);
-        expect(legacyRoundedDeposit.effectiveTermMonths, 5);
-        expect(legacyRoundedDeposit.maturityDate, DateTime(2029, 3, 1));
+        expect(createdResult, isA<Success<OneTimeDeposit, String>>());
+        final deposit =
+            (createdResult as Success<OneTimeDeposit, String>).value;
+
+        expect(deposit.interestRate, 7.6);
+        expect(deposit.termYears, 9);
+        expect(deposit.termMonths, 5);
+        expect(deposit.maturityDate, DateTime(2029, 3, 1));
         expect(
-          (legacyRoundedDeposit.projection as WealthAccumulation).note,
+          (deposit.projection as WealthAccumulation).note,
           '9 Years & 5 Months',
         );
-
-        final legacyDefaultDeposit = legacyRoundedDeposit.copyWith(
-          termYears: 9,
-          termMonths: 0, // Old 9Y 0M migration placeholder (108 months)
-        );
-        expect(legacyDefaultDeposit.effectiveTermYears, 9);
-        expect(legacyDefaultDeposit.effectiveTermMonths, 5);
-        expect(legacyDefaultDeposit.maturityDate, DateTime(2029, 3, 1));
       },
     );
 
     test(
-      'preserves intentional custom KVP tenure override across projection and detail getters',
+      'preserves intentional custom KVP rate and tenure overrides across projection and detail fields without service overwrite on read',
       () {
         final customDepositResult = OneTimeDeposit.create(
           id: 'kvp-custom',
           principalAmount: 100000,
           termYears: 9,
           termMonths: 8, // Custom override (116 months)
-          interestRate: 7.6,
+          interestRate: 7.9, // Custom override rate
           customerId: 'cust-1',
           schemeType: OneTimeSchemeType.kisanVikasPatra,
           startDate: DateTime(2019, 10, 1),
@@ -273,10 +267,9 @@ void main() {
         expect(customDepositResult, isA<Success<OneTimeDeposit, String>>());
         final deposit =
             (customDepositResult as Success<OneTimeDeposit, String>).value;
+        expect(deposit.interestRate, 7.9);
         expect(deposit.termYears, 9);
         expect(deposit.termMonths, 8);
-        expect(deposit.effectiveTermYears, 9);
-        expect(deposit.effectiveTermMonths, 8);
         expect(deposit.maturityDate, DateTime(2029, 6, 1));
         expect(
           (deposit.projection as WealthAccumulation).note,

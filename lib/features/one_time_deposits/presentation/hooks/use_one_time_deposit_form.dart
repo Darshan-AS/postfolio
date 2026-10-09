@@ -103,8 +103,9 @@ OneTimeDepositFormState useOneTimeDepositForm({
         : '',
   );
   final interestRateController = useTextEditingController(
-    text: (deposit?.effectiveInterestRate ?? initialTerms.interestRate)
-        .toStringAsFixed(2),
+    text: (deposit?.interestRate ?? initialTerms.interestRate).toStringAsFixed(
+      2,
+    ),
   );
 
   final selectedCustomerId = useState<String?>(
@@ -112,10 +113,10 @@ OneTimeDepositFormState useOneTimeDepositForm({
   );
   final selectedScheme = useState<OneTimeSchemeType>(initialScheme);
   final selectedTermYears = useState<int>(
-    deposit?.effectiveTermYears ?? initialTerms.termYears,
+    deposit?.termYears ?? initialTerms.termYears,
   );
   final selectedTermMonths = useState<int>(
-    deposit?.effectiveTermMonths ?? initialTerms.termMonths,
+    deposit?.termMonths ?? initialTerms.termMonths,
   );
   final selectedStatus = useState<DepositStatus>(
     deposit?.status ?? DepositStatus.active,

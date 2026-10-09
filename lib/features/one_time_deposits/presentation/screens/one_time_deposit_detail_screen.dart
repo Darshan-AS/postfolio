@@ -149,7 +149,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   ),
                   label: t.oneTimeDeposits.fields.termYears,
                   value:
-                      '${deposit.effectiveTermYears} Years, ${deposit.effectiveTermMonths} Months',
+                      '${deposit.termYears} Years, ${deposit.termMonths} Months',
                 ),
                 const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
@@ -158,8 +158,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                     size: AppDimensions.iconMd,
                   ),
                   label: t.oneTimeDeposits.fields.interestRate,
-                  value:
-                      '${deposit.effectiveInterestRate.toStringAsFixed(2)}%',
+                  value: '${deposit.interestRate.toStringAsFixed(2)}%',
                 ),
               ],
             ),

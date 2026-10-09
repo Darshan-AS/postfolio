@@ -232,12 +232,14 @@ class ProjectionCalculator {
     final maturityAmount = principal * 2;
     final totalInterestEarned = principal;
 
-    final timeInMonths = postalRateService.resolveEffectiveKvpMonths(
-      interestRate: resolvedRate,
-      startDate: startDate,
-      termYears: termYears,
-      termMonths: termMonths,
-    );
+    final providedMonths =
+        ((termYears ?? 0) * _monthsInYear) + (termMonths ?? 0);
+    final timeInMonths = providedMonths > 0
+        ? providedMonths
+        : postalRateService.calculateKvpTermMonths(
+            resolvedRate,
+            startDate: startDate,
+          );
 
     final maturityDate = DateTime(
       startDate.year,

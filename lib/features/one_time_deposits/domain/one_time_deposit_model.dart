@@ -1,6 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
-import 'package:postfolio/core/models/postal_scheme_terms.dart';
 import 'package:postfolio/core/utils/timestamp_converter.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
@@ -17,8 +16,6 @@ part 'one_time_deposit_model.g.dart';
 @freezed
 sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
   const OneTimeDeposit._();
-
-  static const PostalRateService _postalRateService = PostalRateService();
 
   const factory OneTimeDeposit({
     required String id,
@@ -38,57 +35,15 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     @JsonKey(includeIfNull: false) String? migrationSource,
   }) = _OneTimeDeposit;
 
-  /// Official Post Office terms for [schemeType] and [startDate].
-  PostalSchemeTerms get postalTerms =>
-      _postalRateService.resolveOneTimeSchemeTerms(
-        schemeType: schemeType,
-        startDate: startDate,
-        tdTenureYears: termYears,
-      );
-
-  /// Effective interest rate, resolving from the Postal Service if not stored.
-  double get effectiveInterestRate =>
-      interestRate > 0 ? interestRate : postalTerms.interestRate;
-
-  /// Effective tenure years, self-healing legacy KVP defaults or formula
-  /// rounding drift while respecting intentional custom overrides.
-  int get effectiveTermYears {
-    if (schemeType == OneTimeSchemeType.kisanVikasPatra) {
-      final months = _postalRateService.resolveEffectiveKvpMonths(
-        interestRate: effectiveInterestRate,
-        startDate: startDate,
-        termYears: termYears,
-        termMonths: termMonths,
-      );
-      return months ~/ 12;
-    }
-    return termYears > 0 ? termYears : postalTerms.termYears;
-  }
-
-  /// Effective tenure months, self-healing legacy KVP defaults or formula
-  /// rounding drift while respecting intentional custom overrides.
-  int get effectiveTermMonths {
-    if (schemeType == OneTimeSchemeType.kisanVikasPatra) {
-      final months = _postalRateService.resolveEffectiveKvpMonths(
-        interestRate: effectiveInterestRate,
-        startDate: startDate,
-        termYears: termYears,
-        termMonths: termMonths,
-      );
-      return months % 12;
-    }
-    return termMonths;
-  }
-
   @override
   InvestmentProjection get projection =>
       ProjectionCalculator.calculateOneTimeDeposit(
         schemeType: schemeType,
         principalAmount: principalAmount,
-        interestRate: effectiveInterestRate,
+        interestRate: interestRate,
         startDate: startDate,
-        termYears: effectiveTermYears,
-        termMonths: effectiveTermMonths,
+        termYears: termYears,
+        termMonths: termMonths,
       );
 
   @override
@@ -160,14 +115,15 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     final int resolvedTermMonths;
 
     if (schemeType == OneTimeSchemeType.kisanVikasPatra) {
-      final effectiveMonths = postalRateService.resolveEffectiveKvpMonths(
-        interestRate: resolvedInterestRate,
-        startDate: startDate,
-        termYears: termYears,
-        termMonths: termMonths,
-      );
-      resolvedTermYears = effectiveMonths ~/ 12;
-      resolvedTermMonths = effectiveMonths % 12;
+      final providedMonths = ((termYears ?? 0) * 12) + (termMonths ?? 0);
+      final totalMonths = providedMonths > 0
+          ? providedMonths
+          : postalRateService.calculateKvpTermMonths(
+              resolvedInterestRate,
+              startDate: startDate,
+            );
+      resolvedTermYears = totalMonths ~/ 12;
+      resolvedTermMonths = totalMonths % 12;
     } else {
       resolvedTermYears = termYears ?? postalTerms.termYears;
       resolvedTermMonths = termMonths ?? postalTerms.termMonths;

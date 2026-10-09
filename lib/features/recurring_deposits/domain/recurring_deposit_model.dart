@@ -1,6 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
-import 'package:postfolio/core/models/postal_scheme_terms.dart';
 import 'package:postfolio/core/utils/timestamp_converter.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
@@ -17,8 +16,6 @@ part 'recurring_deposit_model.g.dart';
 @freezed
 sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   const RecurringDeposit._();
-
-  static const PostalRateService _postalRateService = PostalRateService();
 
   const factory RecurringDeposit({
     required String id,
@@ -39,31 +36,13 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     @JsonKey(includeIfNull: false) String? migrationSource,
   }) = _RecurringDeposit;
 
-  /// Official Post Office terms for [schemeType] and [startDate].
-  PostalSchemeTerms get postalTerms =>
-      _postalRateService.resolveRecurringSchemeTerms(
-        schemeType: schemeType,
-        startDate: startDate,
-      );
-
-  /// Effective interest rate, resolving from the Postal Service if not stored.
-  double get effectiveInterestRate =>
-      interestRate > 0 ? interestRate : postalTerms.interestRate;
-
-  /// Effective tenure years, resolving from the Postal Service if not stored.
-  int get effectiveTermYears =>
-      termYears > 0 ? termYears : postalTerms.termYears;
-
-  /// Effective tenure months.
-  int get effectiveTermMonths => termMonths;
-
   @override
   InvestmentProjection get projection => ProjectionCalculator.calculateRD(
     monthlyInstallment: installmentAmount,
-    interestRate: effectiveInterestRate,
+    interestRate: interestRate,
     startDate: startDate,
-    termYears: effectiveTermYears,
-    termMonths: effectiveTermMonths,
+    termYears: termYears,
+    termMonths: termMonths,
   );
 
   @override
