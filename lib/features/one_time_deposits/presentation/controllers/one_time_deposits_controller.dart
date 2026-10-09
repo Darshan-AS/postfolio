@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
 import 'package:postfolio/core/services/storage_service.dart';
@@ -215,19 +216,22 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
     String? id,
     String? accountNo,
     required String principalAmount,
-    required int termYears,
-    required int termMonths,
-    String interestRate = '0.0',
     required String customerId,
     required OneTimeSchemeType schemeType,
-    DepositStatus status = DepositStatus.active,
     required DateTime startDate,
+    int? termYears,
+    int? termMonths,
+    String? interestRate,
+    DepositStatus status = DepositStatus.active,
     List<Nominee> nominees = const [],
   }) async {
     final depositId = id ?? const Uuid().v4();
+    final postalRateService = ref.read(postalRateServiceProvider);
 
     final amount = double.tryParse(principalAmount.trim()) ?? 0.0;
-    final rate = double.tryParse(interestRate.trim()) ?? 0.0;
+    final rate = interestRate != null
+        ? double.tryParse(interestRate.trim())
+        : null;
 
     final createResult = OneTimeDeposit.create(
       id: depositId,
@@ -241,6 +245,7 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
       status: status,
       startDate: startDate,
       nominees: nominees,
+      postalRateService: postalRateService,
     );
 
     final OneTimeDeposit deposit;

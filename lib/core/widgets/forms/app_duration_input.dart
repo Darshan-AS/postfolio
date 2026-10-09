@@ -1,9 +1,10 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class AppDurationInput extends HookWidget {
@@ -29,29 +30,35 @@ class AppDurationInput extends HookWidget {
     final yearsController = useTextEditingController(
       text: selectedYears.toString(),
     );
-    final derivedController = useTextEditingController(
-      text: derivedString ?? '',
+    final monthsController = useTextEditingController(
+      text: selectedMonths.toString(),
     );
 
-    // Sync controllers with external state if it changes
+    // Sync controllers with external state if it changes programmatically
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (yearsController.text != selectedYears.toString()) {
+        final parsedYears = int.tryParse(yearsController.text) ?? 0;
+        if (parsedYears != selectedYears || yearsController.text.isEmpty) {
           yearsController.text = selectedYears.toString();
         }
-        if (derivedController.text != (derivedString ?? '')) {
-          derivedController.text = derivedString ?? '';
+        final parsedMonths = int.tryParse(monthsController.text) ?? 0;
+        if (parsedMonths != selectedMonths || monthsController.text.isEmpty) {
+          monthsController.text = selectedMonths.toString();
         }
       });
       return null;
-    }, [selectedYears, selectedMonths, derivedString]);
+    }, [selectedYears, selectedMonths]);
 
     switch (tenureInputType) {
       case TenureInputType.singleFixed:
       case TenureInputType.fixedOptions:
         return _buildFixedTenure(context, yearsController);
       case TenureInputType.derived:
-        return _buildDerivedTenure(context, derivedController);
+        return _buildDerivedTenure(
+          context,
+          yearsController: yearsController,
+          monthsController: monthsController,
+        );
     }
   }
 
@@ -72,7 +79,6 @@ class AppDurationInput extends HookWidget {
         ),
         isRequired: true,
         readOnly: true,
-        enabled: true,
       );
     }
 
@@ -98,19 +104,51 @@ class AppDurationInput extends HookWidget {
   }
 
   Widget _buildDerivedTenure(
-    BuildContext context,
-    TextEditingController derivedController,
-  ) {
-    return AppTextField(
-      controller: derivedController,
-      labelText: t.common.duration.termYears,
-      prefixIcon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedCalendar01,
-        size: AppDimensions.iconMd,
-      ),
-      isRequired: true,
-      readOnly: true,
-      enabled: true,
+    BuildContext context, {
+    required TextEditingController yearsController,
+    required TextEditingController monthsController,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: AppTextField(
+            controller: yearsController,
+            labelText: t.common.duration.termYears,
+            prefixIcon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedCalendar01,
+              size: AppDimensions.iconMd,
+            ),
+            isRequired: true,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (val) {
+              final years = int.tryParse(val) ?? 0;
+              final months = int.tryParse(monthsController.text) ?? 0;
+              onChanged(years, months);
+            },
+          ),
+        ),
+        AppSpacings.gapMd,
+        Expanded(
+          child: AppTextField(
+            controller: monthsController,
+            labelText: t.common.duration.termMonths,
+            prefixIcon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedCalendar01,
+              size: AppDimensions.iconMd,
+            ),
+            isRequired: true,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (val) {
+              final years = int.tryParse(yearsController.text) ?? 0;
+              final months = int.tryParse(val) ?? 0;
+              onChanged(years, months);
+            },
+          ),
+        ),
+      ],
     );
   }
 }

@@ -17,7 +17,6 @@ import 'package:postfolio/core/widgets/forms/app_duration_input.dart';
 import 'package:postfolio/core/widgets/domain/investment_projection_card.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/models/nominee.dart';
-import 'package:postfolio/core/extensions/date_time_extension.dart';
 
 import 'package:postfolio/features/one_time_deposits/presentation/hooks/use_one_time_deposit_form.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -176,10 +175,7 @@ List<Widget> _buildInvestmentDetails(
                 ButtonSegment(value: scheme, label: Text(scheme.shortName)),
           )
           .toList(),
-      onChanged: (scheme) {
-        selectedScheme.value = scheme;
-        selectedTermYears.value = scheme.defaultTenureYears;
-      },
+      onChanged: state.onSchemeChanged,
       prefixIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedLayers01,
         size: AppDimensions.iconMd,
@@ -241,22 +237,6 @@ List<Widget> _buildInvestmentDetails(
       ],
     ),
     AppSpacings.gapLg,
-    AppTextField(
-      controller: interestRateController,
-      labelText: t.oneTimeDeposits.fields.interestRate,
-      prefixIcon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedPercent,
-        size: AppDimensions.iconMd,
-      ),
-      isRequired: true,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      validator: (val) => OneTimeDeposit.validateInterestRate(
-        double.tryParse(val ?? ''),
-        t.oneTimeDeposits.fields.interestRate,
-      ),
-      textInputAction: TextInputAction.next,
-    ),
-    AppSpacings.gapLg,
     AppDateField(
       controller: startDateController,
       labelText: t.oneTimeDeposits.fields.startDate,
@@ -268,11 +248,8 @@ List<Widget> _buildInvestmentDetails(
           firstDate: DateTime(AppConstants.firstStartYear),
           lastDate: DateTime(AppConstants.lastDatePickerYear),
         );
-        if (picked != null) {
-          startDate.value = picked;
-          if (context.mounted) {
-            startDateController.text = picked.toAppFormat();
-          }
+        if (picked != null && context.mounted) {
+          state.onStartDateChanged(picked);
         }
       },
     ),
@@ -283,10 +260,24 @@ List<Widget> _buildInvestmentDetails(
       selectedYears: selectedTermYears.value,
       selectedMonths: selectedTermMonths.value,
       derivedString: projection is WealthAccumulation ? projection.note : null,
-      onChanged: (years, months) {
-        selectedTermYears.value = years;
-        selectedTermMonths.value = months;
-      },
+      onChanged: state.onDurationChanged,
+    ),
+    AppSpacings.gapLg,
+    AppTextField(
+      controller: interestRateController,
+      labelText: t.oneTimeDeposits.fields.interestRate,
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedPercent,
+        size: AppDimensions.iconMd,
+      ),
+      isRequired: true,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      onChanged: state.onInterestRateChanged,
+      validator: (val) => OneTimeDeposit.validateInterestRate(
+        double.tryParse(val ?? ''),
+        t.oneTimeDeposits.fields.interestRate,
+      ),
+      textInputAction: TextInputAction.next,
     ),
     InvestmentProjectionCard(projection: projection),
   ];

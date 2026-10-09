@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:postfolio/core/enums/payout_frequency.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
+import 'package:postfolio/core/services/postal_rate_service.dart';
 
 /// Pure utility class to calculate investment projections based on Post Office formulas.
 class ProjectionCalculator {
@@ -12,19 +13,33 @@ class ProjectionCalculator {
   static const int _monthsInQuarter = 3;
   static const int _quartersInYear = 4;
   static const double _percentageDivisor = 100.0;
+  static const PostalRateService _postalRateService = PostalRateService();
 
   /// Calculate projection for Recurring Deposit (RD)
   /// Compounding Frequency: Quarterly.
   static InvestmentProjection calculateRD({
     required double monthlyInstallment,
-    required double interestRate,
     required DateTime startDate,
-    required int termYears,
-    required int termMonths,
+    double? interestRate,
+    int? termYears,
+    int? termMonths,
     int defaultedMonths = 0,
+    PostalRateService postalRateService = _postalRateService,
   }) {
-    final totalMonths = (termYears * _monthsInYear) + termMonths;
-    final decimalInterestRate = interestRate / _percentageDivisor;
+    final postalTerms = postalRateService.resolveRecurringSchemeTerms(
+      schemeType: RecurringSchemeType.recurringDeposit,
+      startDate: startDate,
+    );
+    final resolvedRate = (interestRate != null && interestRate > 0)
+        ? interestRate
+        : postalTerms.interestRate;
+    final resolvedYears = (termYears != null && termYears > 0)
+        ? termYears
+        : postalTerms.termYears;
+    final resolvedMonths = termMonths ?? postalTerms.termMonths;
+
+    final totalMonths = (resolvedYears * _monthsInYear) + resolvedMonths;
+    final decimalInterestRate = resolvedRate / _percentageDivisor;
     final quarterlyInterestRate = decimalInterestRate / _quartersInYear;
 
     // RD Compounding Formula: M = sum(P * (1 + r/n)^(n*t_i))
@@ -57,6 +72,9 @@ class ProjectionCalculator {
       maturityAmount: maturityAmount,
       totalInterestEarned: totalInterestEarned,
       maturityDate: maturityDate,
+      interestRate: resolvedRate,
+      termYears: resolvedYears,
+      termMonths: resolvedMonths,
     );
   }
 
@@ -64,11 +82,21 @@ class ProjectionCalculator {
   /// Compounding Frequency: Quarterly, paid annually.
   static InvestmentProjection calculateTD({
     required double principal,
-    required double interestRate,
     required DateTime startDate,
     required int termYears,
+    double? interestRate,
+    PostalRateService postalRateService = _postalRateService,
   }) {
-    final decimalInterestRate = interestRate / _percentageDivisor;
+    final postalTerms = postalRateService.resolveOneTimeSchemeTerms(
+      schemeType: OneTimeSchemeType.timeDeposit,
+      startDate: startDate,
+      tdTenureYears: termYears,
+    );
+    final resolvedRate = (interestRate != null && interestRate > 0)
+        ? interestRate
+        : postalTerms.interestRate;
+
+    final decimalInterestRate = resolvedRate / _percentageDivisor;
     final quarterlyInterestRate = decimalInterestRate / _quartersInYear;
 
     // Annual Payout: P * [ (1 + r/n)^n - 1 ]
@@ -89,6 +117,8 @@ class ProjectionCalculator {
       maturityDate: maturityDate,
       periodicPayoutAmount: annualPayout,
       payoutFrequency: PayoutFrequency.annually,
+      interestRate: resolvedRate,
+      termYears: termYears,
     );
   }
 
@@ -96,19 +126,31 @@ class ProjectionCalculator {
   /// Interest Type: Simple interest, paid monthly.
   static InvestmentProjection calculateMIS({
     required double principal,
-    required double interestRate,
     required DateTime startDate,
-    int termYears = 5, // MIS is typically fixed to 5 years
+    double? interestRate,
+    int? termYears,
+    PostalRateService postalRateService = _postalRateService,
   }) {
-    final decimalInterestRate = interestRate / _percentageDivisor;
+    final postalTerms = postalRateService.resolveOneTimeSchemeTerms(
+      schemeType: OneTimeSchemeType.monthlyIncomeScheme,
+      startDate: startDate,
+    );
+    final resolvedRate = (interestRate != null && interestRate > 0)
+        ? interestRate
+        : postalTerms.interestRate;
+    final resolvedYears = (termYears != null && termYears > 0)
+        ? termYears
+        : postalTerms.termYears;
+
+    final decimalInterestRate = resolvedRate / _percentageDivisor;
 
     // Monthly Payout: P * (r / 12)
     final monthlyPayout = principal * (decimalInterestRate / _monthsInYear);
-    final totalMonths = termYears * _monthsInYear;
+    final totalMonths = resolvedYears * _monthsInYear;
     final totalInterestEarned = monthlyPayout * totalMonths;
 
     final maturityDate = DateTime(
-      startDate.year + termYears,
+      startDate.year + resolvedYears,
       startDate.month,
       startDate.day,
     );
@@ -120,6 +162,8 @@ class ProjectionCalculator {
       maturityDate: maturityDate,
       periodicPayoutAmount: monthlyPayout,
       payoutFrequency: PayoutFrequency.monthly,
+      interestRate: resolvedRate,
+      termYears: resolvedYears,
     );
   }
 
@@ -127,18 +171,31 @@ class ProjectionCalculator {
   /// Compounding Frequency: Annually.
   static InvestmentProjection calculateNSC({
     required double principal,
-    required double interestRate,
     required DateTime startDate,
-    int termYears = 5, // NSC is typically fixed to 5 years
+    double? interestRate,
+    int? termYears,
+    PostalRateService postalRateService = _postalRateService,
   }) {
-    final decimalInterestRate = interestRate / _percentageDivisor;
+    final postalTerms = postalRateService.resolveOneTimeSchemeTerms(
+      schemeType: OneTimeSchemeType.nationalSavingsCertificate,
+      startDate: startDate,
+    );
+    final resolvedRate = (interestRate != null && interestRate > 0)
+        ? interestRate
+        : postalTerms.interestRate;
+    final resolvedYears = (termYears != null && termYears > 0)
+        ? termYears
+        : postalTerms.termYears;
+
+    final decimalInterestRate = resolvedRate / _percentageDivisor;
 
     // Maturity Amount: P * (1 + r)^t
-    final maturityAmount = principal * pow(1 + decimalInterestRate, termYears);
+    final maturityAmount =
+        principal * pow(1 + decimalInterestRate, resolvedYears);
     final totalInterestEarned = maturityAmount - principal;
 
     final maturityDate = DateTime(
-      startDate.year + termYears,
+      startDate.year + resolvedYears,
       startDate.month,
       startDate.day,
     );
@@ -148,21 +205,39 @@ class ProjectionCalculator {
       maturityAmount: maturityAmount,
       totalInterestEarned: totalInterestEarned,
       maturityDate: maturityDate,
+      interestRate: resolvedRate,
+      termYears: resolvedYears,
     );
   }
 
   /// Calculate projection for Kisan Vikas Patra (KVP)
-  /// Maturity: Dynamic based on interest rate (Strictly doubles).
+  /// Maturity: Dynamic based on Post Office circular schedule or interest rate (Strictly doubles).
   static InvestmentProjection calculateKVP({
     required double principal,
-    required double interestRate,
     required DateTime startDate,
+    double? interestRate,
+    int? termYears,
+    int? termMonths,
+    PostalRateService postalRateService = _postalRateService,
   }) {
+    final postalTerms = postalRateService.resolveOneTimeSchemeTerms(
+      schemeType: OneTimeSchemeType.kisanVikasPatra,
+      startDate: startDate,
+    );
+    final resolvedRate = (interestRate != null && interestRate > 0)
+        ? interestRate
+        : postalTerms.interestRate;
+
     // Principal strictly doubles
     final maturityAmount = principal * 2;
     final totalInterestEarned = principal;
 
-    int timeInMonths = calculateKvpTermMonths(interestRate);
+    final timeInMonths = postalRateService.resolveEffectiveKvpMonths(
+      interestRate: resolvedRate,
+      startDate: startDate,
+      termYears: termYears,
+      termMonths: termMonths,
+    );
 
     final maturityDate = DateTime(
       startDate.year,
@@ -181,48 +256,63 @@ class ProjectionCalculator {
       maturityAmount: maturityAmount,
       totalInterestEarned: totalInterestEarned,
       maturityDate: maturityDate,
+      interestRate: resolvedRate,
+      termYears: years,
+      termMonths: months,
       note: durationNote,
     );
   }
 
-  /// Calculates the time in months it takes to double at a given interest rate.
-  static int calculateKvpTermMonths(double interestRate) {
-    if (interestRate <= 0) return 0;
-    final decimalInterestRate = interestRate / _percentageDivisor;
-    final timeInYears = log(2) / log(1 + decimalInterestRate);
-    return (timeInYears * _monthsInYear).round();
+  /// Calculates the official Post Office KVP doubling tenure in months.
+  static int calculateKvpTermMonths(
+    double interestRate, {
+    DateTime? startDate,
+    PostalRateService postalRateService = _postalRateService,
+  }) {
+    return postalRateService.calculateKvpTermMonths(
+      interestRate,
+      startDate: startDate,
+    );
   }
 
   /// Helper to route One Time Deposits to the correct calculation
   static InvestmentProjection calculateOneTimeDeposit({
     required OneTimeSchemeType schemeType,
     required double principalAmount,
-    required double interestRate,
     required DateTime startDate,
-    required int termYears,
+    double? interestRate,
+    int? termYears,
+    int? termMonths,
+    PostalRateService postalRateService = _postalRateService,
   }) => switch (schemeType) {
     OneTimeSchemeType.timeDeposit => calculateTD(
       principal: principalAmount,
       interestRate: interestRate,
       startDate: startDate,
-      termYears: termYears,
+      termYears: termYears ?? OneTimeSchemeType.timeDeposit.defaultTenureYears,
+      postalRateService: postalRateService,
     ),
     OneTimeSchemeType.monthlyIncomeScheme => calculateMIS(
       principal: principalAmount,
       interestRate: interestRate,
       startDate: startDate,
       termYears: termYears,
+      postalRateService: postalRateService,
     ),
     OneTimeSchemeType.nationalSavingsCertificate => calculateNSC(
       principal: principalAmount,
       interestRate: interestRate,
       startDate: startDate,
       termYears: termYears,
+      postalRateService: postalRateService,
     ),
     OneTimeSchemeType.kisanVikasPatra => calculateKVP(
       principal: principalAmount,
       interestRate: interestRate,
       startDate: startDate,
+      termYears: termYears,
+      termMonths: termMonths,
+      postalRateService: postalRateService,
     ),
   };
 }

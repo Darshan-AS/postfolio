@@ -6,6 +6,8 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/models/nominee.dart';
+import 'package:postfolio/core/models/postal_scheme_terms.dart';
+import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
@@ -34,6 +36,8 @@ class RecurringDepositFormState {
   final InvestmentProjection projection;
   final String amountInWords;
   final CurrencyTextInputFormatter amountFormatter;
+  final void Function(RecurringSchemeType scheme) onSchemeChanged;
+  final void Function(DateTime pickedDate) onStartDateChanged;
   final VoidCallback save;
   final bool isUpdating;
 
@@ -55,6 +59,8 @@ class RecurringDepositFormState {
     required this.projection,
     required this.amountInWords,
     required this.amountFormatter,
+    required this.onSchemeChanged,
+    required this.onStartDateChanged,
     required this.save,
     required this.isUpdating,
   });
@@ -68,6 +74,7 @@ RecurringDepositFormState useRecurringDepositForm({
 }) {
   final formKey = useMemoized(() => GlobalKey<FormState>());
   final isUpdating = deposit != null;
+  final postalRateService = ref.watch(postalRateServiceProvider);
 
   final amountFormatter = useMemoized(
     () => CurrencyTextInputFormatter.currency(
@@ -75,6 +82,14 @@ RecurringDepositFormState useRecurringDepositForm({
       symbol: '',
       decimalDigits: 0,
     ),
+  );
+
+  final initialScheme =
+      deposit?.schemeType ?? RecurringSchemeType.recurringDeposit;
+  final initialStartDate = deposit?.startDate ?? DateTime.now();
+  final initialTerms = postalRateService.resolveRecurringSchemeTerms(
+    schemeType: initialScheme,
+    startDate: initialStartDate,
   );
 
   final serialNoController = useTextEditingController(text: deposit?.serialNo);
@@ -87,26 +102,24 @@ RecurringDepositFormState useRecurringDepositForm({
         : '',
   );
   final interestRateController = useTextEditingController(
-    text: deposit?.interestRate.toString(),
+    text: (deposit?.effectiveInterestRate ?? initialTerms.interestRate)
+        .toStringAsFixed(2),
   );
 
   final selectedCustomerId = useState<String?>(
     deposit?.customerId ?? initialCustomerId,
   );
-  final selectedScheme = useState<RecurringSchemeType>(
-    deposit?.schemeType ?? RecurringSchemeType.recurringDeposit,
+  final selectedScheme = useState<RecurringSchemeType>(initialScheme);
+  final selectedTermYears = useState<int>(
+    deposit?.effectiveTermYears ?? initialTerms.termYears,
   );
-
-  final initialTermYears =
-      deposit?.termYears ?? selectedScheme.value.defaultTenureYears;
-  final initialTermMonths = deposit?.termMonths ?? 0;
-
-  final selectedTermYears = useState<int>(initialTermYears);
-  final selectedTermMonths = useState<int>(initialTermMonths);
+  final selectedTermMonths = useState<int>(
+    deposit?.effectiveTermMonths ?? initialTerms.termMonths,
+  );
   final selectedStatus = useState<DepositStatus>(
     deposit?.status ?? DepositStatus.active,
   );
-  final startDate = useState<DateTime>(deposit?.startDate ?? DateTime.now());
+  final startDate = useState<DateTime>(initialStartDate);
   final nominees = useState<List<Nominee>>(deposit?.nominees.toList() ?? []);
 
   final isSaving = useState(false);
@@ -122,8 +135,12 @@ RecurringDepositFormState useRecurringDepositForm({
   final amountInWords = useMemoized(() {
     if (installmentAmountController.text.trim().isEmpty) return '';
 
-    final cleaned = installmentAmountController.text.replaceAll(RegExp(r'[^0-9.]'), '');
-    final number = int.tryParse(cleaned) ?? amountFormatter.getUnformattedValue().toInt();
+    final cleaned = installmentAmountController.text.replaceAll(
+      RegExp(r'[^0-9.]'),
+      '',
+    );
+    final number =
+        int.tryParse(cleaned) ?? amountFormatter.getUnformattedValue().toInt();
     if (number > 0) {
       final words = NumToWords.convertNumberToIndianWords(number);
       return words;
@@ -131,17 +148,20 @@ RecurringDepositFormState useRecurringDepositForm({
     return '';
   }, [installmentAmountController.text]);
 
-  final cleanedInstallmentStr = installmentAmountController.text.replaceAll(RegExp(r'[^0-9.]'), '');
-  final currentInstallment = double.tryParse(cleanedInstallmentStr) ??
+  final cleanedInstallmentStr = installmentAmountController.text.replaceAll(
+    RegExp(r'[^0-9.]'),
+    '',
+  );
+  final currentInstallment =
+      double.tryParse(cleanedInstallmentStr) ??
       amountFormatter.getUnformattedValue().toDouble();
-  final currentInterest =
-      double.tryParse(interestRateController.text.trim()) ?? 0.0;
+  final currentRate = double.tryParse(interestRateController.text.trim()) ?? 0.0;
 
   final projection = useMemoized(
     () {
       return ProjectionCalculator.calculateRD(
         monthlyInstallment: currentInstallment,
-        interestRate: currentInterest,
+        interestRate: currentRate,
         startDate: startDate.value,
         termYears: selectedTermYears.value,
         termMonths: selectedTermMonths.value,
@@ -149,12 +169,37 @@ RecurringDepositFormState useRecurringDepositForm({
     },
     [
       currentInstallment,
-      currentInterest,
+      currentRate,
       startDate.value,
       selectedTermYears.value,
       selectedTermMonths.value,
     ],
   );
+
+  void syncTermsFromSchedule({
+    required RecurringSchemeType scheme,
+    required DateTime date,
+  }) {
+    final PostalSchemeTerms terms =
+        postalRateService.resolveRecurringSchemeTerms(
+          schemeType: scheme,
+          startDate: date,
+        );
+    interestRateController.text = terms.interestRate.toStringAsFixed(2);
+    selectedTermYears.value = terms.termYears;
+    selectedTermMonths.value = terms.termMonths;
+  }
+
+  void onSchemeChanged(RecurringSchemeType scheme) {
+    selectedScheme.value = scheme;
+    syncTermsFromSchedule(scheme: scheme, date: startDate.value);
+  }
+
+  void onStartDateChanged(DateTime pickedDate) {
+    startDate.value = pickedDate;
+    startDateController.text = pickedDate.toAppFormat();
+    syncTermsFromSchedule(scheme: selectedScheme.value, date: pickedDate);
+  }
 
   Future<void> save() async {
     if (formKey.currentState!.validate()) {
@@ -165,7 +210,10 @@ RecurringDepositFormState useRecurringDepositForm({
         return;
       }
 
-      final cleanedAmountStr = installmentAmountController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+      final cleanedAmountStr = installmentAmountController.text.replaceAll(
+        RegExp(r'[^0-9.]'),
+        '',
+      );
       final installmentAmountVal = cleanedAmountStr.isNotEmpty
           ? cleanedAmountStr
           : amountFormatter.getUnformattedValue().toString();
@@ -179,10 +227,7 @@ RecurringDepositFormState useRecurringDepositForm({
             accountNo: accountNoController.text,
             installmentAmount: installmentAmountVal,
             termYears: selectedTermYears.value,
-            termMonths:
-                selectedScheme.value.tenureInputType == TenureInputType.derived
-                ? 0 // RD doesn't have derived, but keeping pattern
-                : selectedTermMonths.value,
+            termMonths: selectedTermMonths.value,
             interestRate: interestRateController.text,
             customerId: selectedCustomerId.value ?? '',
             schemeType: selectedScheme.value,
@@ -227,6 +272,8 @@ RecurringDepositFormState useRecurringDepositForm({
     projection: projection,
     amountInWords: amountInWords,
     amountFormatter: amountFormatter,
+    onSchemeChanged: onSchemeChanged,
+    onStartDateChanged: onStartDateChanged,
     save: save,
     isUpdating: isUpdating,
   );

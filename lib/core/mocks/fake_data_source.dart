@@ -1,6 +1,6 @@
 import "package:postfolio/core/constants/app_constants.dart";
 import 'package:faker/faker.dart';
-import 'package:postfolio/core/services/projection_calculator.dart';
+import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
@@ -12,6 +12,8 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 class FakeDataSource {
   static final FakeDataSource _instance = FakeDataSource._internal();
   factory FakeDataSource() => _instance;
+
+  static const PostalRateService _postalRateService = PostalRateService();
 
   late final List<Customer> customers;
   late final List<OneTimeDeposit> oneTimeDeposits;
@@ -61,29 +63,23 @@ class FakeDataSource {
     final oneTimeSchemes = OneTimeSchemeType.values;
     oneTimeDeposits = List.generate(15, (index) {
       final scheme = random.element(oneTimeSchemes);
-      final int termYears;
-      final int termMonths;
-
-      final interestRate = random.decimal(scale: 2, min: 5.0) + 5.0;
-
-      if (scheme.tenureInputType != TenureInputType.derived) {
-        termYears = random.element(scheme.allowedTenuresInYears);
-        termMonths = 0;
-      } else {
-        final timeInMonths = ProjectionCalculator.calculateKvpTermMonths(
-          interestRate,
-        );
-        termYears = timeInMonths ~/ 12;
-        termMonths = timeInMonths % 12;
-      }
-
       final startDate = faker.date.dateTimeBetween(
         DateTime(2020),
         DateTime.now(),
       );
+      final tdOption = scheme.tenureInputType != TenureInputType.derived
+          ? random.element(scheme.allowedTenuresInYears)
+          : null;
+
+      final terms = _postalRateService.resolveOneTimeSchemeTerms(
+        schemeType: scheme,
+        startDate: startDate,
+        tdTenureYears: tdOption,
+      );
+
       final maturityDate = DateTime(
-        startDate.year + termYears,
-        startDate.month + termMonths,
+        startDate.year + terms.termYears,
+        startDate.month + terms.termMonths,
         startDate.day,
       );
 
@@ -99,9 +95,9 @@ class FakeDataSource {
         id: faker.guid.guid(),
         accountNo: faker.randomGenerator.fromCharSet('0123456789', 10),
         principalAmount: random.integer(500000, min: 10000).toDouble(),
-        termYears: termYears,
-        termMonths: termMonths,
-        interestRate: interestRate,
+        termYears: terms.termYears,
+        termMonths: terms.termMonths,
+        interestRate: terms.interestRate,
         customerId: random.element(customerIds),
         schemeType: scheme,
         startDate: startDate,
@@ -121,17 +117,18 @@ class FakeDataSource {
     final recurringSchemes = RecurringSchemeType.values;
     recurringDeposits = List.generate(15, (index) {
       final scheme = random.element(recurringSchemes);
-      final termYears = scheme.tenureInputType != TenureInputType.derived
-          ? random.element(scheme.allowedTenuresInYears)
-          : 5;
-
       final startDate = faker.date.dateTimeBetween(
         DateTime(2020),
         DateTime.now(),
       );
+      final terms = _postalRateService.resolveRecurringSchemeTerms(
+        schemeType: scheme,
+        startDate: startDate,
+      );
+
       final maturityDate = DateTime(
-        startDate.year + termYears,
-        startDate.month,
+        startDate.year + terms.termYears,
+        startDate.month + terms.termMonths,
         startDate.day,
       );
 
@@ -148,9 +145,9 @@ class FakeDataSource {
         serialNo: 'RD-${random.integer(9999, min: 1000)}',
         accountNo: 'RD-${random.fromCharSet('0123456789', 7)}',
         installmentAmount: random.integer(50000, min: 1000).toDouble(),
-        termYears: termYears,
-        termMonths: 0,
-        interestRate: random.decimal(scale: 2, min: 5.0) + 5.0,
+        termYears: terms.termYears,
+        termMonths: terms.termMonths,
+        interestRate: terms.interestRate,
         customerId: random.element(customerIds),
         schemeType: scheme,
         startDate: startDate,

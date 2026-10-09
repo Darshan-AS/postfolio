@@ -14,6 +14,9 @@ sealed class InvestmentProjection with _$InvestmentProjection {
     required double maturityAmount,
     required double totalInterestEarned,
     required DateTime maturityDate,
+    @Default(0.0) double interestRate,
+    @Default(0) int termYears,
+    @Default(0) int termMonths,
     String? note,
   }) = WealthAccumulation;
 
@@ -26,6 +29,9 @@ sealed class InvestmentProjection with _$InvestmentProjection {
     required DateTime maturityDate,
     required double periodicPayoutAmount,
     required PayoutFrequency payoutFrequency,
+    @Default(0.0) double interestRate,
+    @Default(0) int termYears,
+    @Default(0) int termMonths,
     String? note,
   }) = IncomeGeneration;
 
@@ -52,5 +58,23 @@ sealed class InvestmentProjection with _$InvestmentProjection {
   DateTime get maturityDate => switch (this) {
     WealthAccumulation p => p.maturityDate,
     IncomeGeneration p => p.maturityDate,
+  };
+
+  @override
+  double get interestRate => switch (this) {
+    WealthAccumulation p => p.interestRate,
+    IncomeGeneration p => p.interestRate,
+  };
+
+  @override
+  int get termYears => switch (this) {
+    WealthAccumulation p => p.termYears,
+    IncomeGeneration p => p.termYears,
+  };
+
+  @override
+  int get termMonths => switch (this) {
+    WealthAccumulation p => p.termMonths,
+    IncomeGeneration p => p.termMonths,
   };
 }

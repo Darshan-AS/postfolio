@@ -6,6 +6,8 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/models/nominee.dart';
+import 'package:postfolio/core/models/postal_scheme_terms.dart';
+import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
@@ -33,6 +35,10 @@ class OneTimeDepositFormState {
   final InvestmentProjection projection;
   final String amountInWords;
   final CurrencyTextInputFormatter amountFormatter;
+  final void Function(OneTimeSchemeType scheme) onSchemeChanged;
+  final void Function(DateTime pickedDate) onStartDateChanged;
+  final void Function(int years, int months) onDurationChanged;
+  final void Function(String val) onInterestRateChanged;
   final VoidCallback save;
   final bool isUpdating;
 
@@ -53,6 +59,10 @@ class OneTimeDepositFormState {
     required this.projection,
     required this.amountInWords,
     required this.amountFormatter,
+    required this.onSchemeChanged,
+    required this.onStartDateChanged,
+    required this.onDurationChanged,
+    required this.onInterestRateChanged,
     required this.save,
     required this.isUpdating,
   });
@@ -66,6 +76,7 @@ OneTimeDepositFormState useOneTimeDepositForm({
 }) {
   final formKey = useMemoized(() => GlobalKey<FormState>());
   final isUpdating = deposit != null;
+  final postalRateService = ref.watch(postalRateServiceProvider);
 
   final amountFormatter = useMemoized(
     () => CurrencyTextInputFormatter.currency(
@@ -73,6 +84,14 @@ OneTimeDepositFormState useOneTimeDepositForm({
       symbol: '',
       decimalDigits: 0,
     ),
+  );
+
+  final initialScheme = deposit?.schemeType ?? OneTimeSchemeType.timeDeposit;
+  final initialStartDate = deposit?.startDate ?? DateTime.now();
+  final initialTerms = postalRateService.resolveOneTimeSchemeTerms(
+    schemeType: initialScheme,
+    startDate: initialStartDate,
+    tdTenureYears: deposit?.termYears ?? initialScheme.defaultTenureYears,
   );
 
   final accountNoController = useTextEditingController(
@@ -84,26 +103,24 @@ OneTimeDepositFormState useOneTimeDepositForm({
         : '',
   );
   final interestRateController = useTextEditingController(
-    text: deposit?.interestRate.toString(),
+    text: (deposit?.effectiveInterestRate ?? initialTerms.interestRate)
+        .toStringAsFixed(2),
   );
 
   final selectedCustomerId = useState<String?>(
     deposit?.customerId ?? initialCustomerId,
   );
-  final selectedScheme = useState<OneTimeSchemeType>(
-    deposit?.schemeType ?? OneTimeSchemeType.timeDeposit,
+  final selectedScheme = useState<OneTimeSchemeType>(initialScheme);
+  final selectedTermYears = useState<int>(
+    deposit?.effectiveTermYears ?? initialTerms.termYears,
   );
-
-  final initialTermYears =
-      deposit?.termYears ?? selectedScheme.value.defaultTenureYears;
-  final initialTermMonths = deposit?.termMonths ?? 0;
-
-  final selectedTermYears = useState<int>(initialTermYears);
-  final selectedTermMonths = useState<int>(initialTermMonths);
+  final selectedTermMonths = useState<int>(
+    deposit?.effectiveTermMonths ?? initialTerms.termMonths,
+  );
   final selectedStatus = useState<DepositStatus>(
     deposit?.status ?? DepositStatus.active,
   );
-  final startDate = useState<DateTime>(deposit?.startDate ?? DateTime.now());
+  final startDate = useState<DateTime>(initialStartDate);
   final nominees = useState<List<Nominee>>(deposit?.nominees.toList() ?? []);
 
   final isSaving = useState(false);
@@ -119,8 +136,12 @@ OneTimeDepositFormState useOneTimeDepositForm({
   final amountInWords = useMemoized(() {
     if (principalAmountController.text.trim().isEmpty) return '';
 
-    final cleaned = principalAmountController.text.replaceAll(RegExp(r'[^0-9.]'), '');
-    final number = int.tryParse(cleaned) ?? amountFormatter.getUnformattedValue().toInt();
+    final cleaned = principalAmountController.text.replaceAll(
+      RegExp(r'[^0-9.]'),
+      '',
+    );
+    final number =
+        int.tryParse(cleaned) ?? amountFormatter.getUnformattedValue().toInt();
     if (number > 0) {
       final words = NumToWords.convertNumberToIndianWords(number);
       return words;
@@ -128,50 +149,95 @@ OneTimeDepositFormState useOneTimeDepositForm({
     return '';
   }, [principalAmountController.text]);
 
-  final cleanedPrincipalStr = principalAmountController.text.replaceAll(RegExp(r'[^0-9.]'), '');
-  final currentPrincipal = double.tryParse(cleanedPrincipalStr) ??
+  final cleanedPrincipalStr = principalAmountController.text.replaceAll(
+    RegExp(r'[^0-9.]'),
+    '',
+  );
+  final currentPrincipal =
+      double.tryParse(cleanedPrincipalStr) ??
       amountFormatter.getUnformattedValue().toDouble();
-  final currentInterest =
-      double.tryParse(interestRateController.text.trim()) ?? 0.0;
+  final currentRate = double.tryParse(interestRateController.text.trim()) ?? 0.0;
 
   final projection = useMemoized(
     () {
       return ProjectionCalculator.calculateOneTimeDeposit(
         schemeType: selectedScheme.value,
         principalAmount: currentPrincipal,
-        interestRate: currentInterest,
+        interestRate: currentRate,
         startDate: startDate.value,
         termYears: selectedTermYears.value,
+        termMonths: selectedTermMonths.value,
       );
     },
     [
       currentPrincipal,
-      currentInterest,
-      startDate.value,
+      currentRate,
       selectedTermYears.value,
+      selectedTermMonths.value,
+      startDate.value,
       selectedScheme.value,
     ],
   );
 
-  // Keep hidden state in sync for derived tenures like KVP
-  useEffect(() {
-    if (selectedScheme.value.tenureInputType == TenureInputType.derived) {
-      final timeInMonths = ProjectionCalculator.calculateKvpTermMonths(
-        currentInterest,
-      );
-      final years = timeInMonths ~/ 12;
-      final months = timeInMonths % 12;
+  void syncTermsFromSchedule({
+    required OneTimeSchemeType scheme,
+    required DateTime date,
+    int? tdYears,
+  }) {
+    final PostalSchemeTerms terms = postalRateService.resolveOneTimeSchemeTerms(
+      schemeType: scheme,
+      startDate: date,
+      tdTenureYears: tdYears ?? scheme.defaultTenureYears,
+    );
+    interestRateController.text = terms.interestRate.toStringAsFixed(2);
+    selectedTermYears.value = terms.termYears;
+    selectedTermMonths.value = terms.termMonths;
+  }
 
-      if (selectedTermYears.value != years ||
-          selectedTermMonths.value != months) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          selectedTermYears.value = years;
-          selectedTermMonths.value = months;
-        });
+  void onSchemeChanged(OneTimeSchemeType scheme) {
+    selectedScheme.value = scheme;
+    syncTermsFromSchedule(
+      scheme: scheme,
+      date: startDate.value,
+      tdYears: scheme.defaultTenureYears,
+    );
+  }
+
+  void onStartDateChanged(DateTime pickedDate) {
+    startDate.value = pickedDate;
+    startDateController.text = pickedDate.toAppFormat();
+    syncTermsFromSchedule(
+      scheme: selectedScheme.value,
+      date: pickedDate,
+      tdYears: selectedTermYears.value,
+    );
+  }
+
+  void onDurationChanged(int years, int months) {
+    selectedTermYears.value = years;
+    selectedTermMonths.value = months;
+    if (selectedScheme.value == OneTimeSchemeType.timeDeposit) {
+      syncTermsFromSchedule(
+        scheme: selectedScheme.value,
+        date: startDate.value,
+        tdYears: years,
+      );
+    }
+  }
+
+  void onInterestRateChanged(String val) {
+    if (selectedScheme.value == OneTimeSchemeType.kisanVikasPatra) {
+      final parsedRate = double.tryParse(val);
+      if (parsedRate != null && parsedRate > 0) {
+        final kvpMonths = postalRateService.calculateKvpTermMonths(
+          parsedRate,
+          startDate: startDate.value,
+        );
+        selectedTermYears.value = kvpMonths ~/ 12;
+        selectedTermMonths.value = kvpMonths % 12;
       }
     }
-    return null;
-  }, [selectedScheme.value, currentInterest]);
+  }
 
   Future<void> save() async {
     if (formKey.currentState!.validate()) {
@@ -182,7 +248,10 @@ OneTimeDepositFormState useOneTimeDepositForm({
         return;
       }
 
-      final cleanedAmountStr = principalAmountController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+      final cleanedAmountStr = principalAmountController.text.replaceAll(
+        RegExp(r'[^0-9.]'),
+        '',
+      );
       final principalAmountVal = cleanedAmountStr.isNotEmpty
           ? cleanedAmountStr
           : amountFormatter.getUnformattedValue().toString();
@@ -195,10 +264,7 @@ OneTimeDepositFormState useOneTimeDepositForm({
             accountNo: accountNoController.text,
             principalAmount: principalAmountVal,
             termYears: selectedTermYears.value,
-            termMonths:
-                selectedScheme.value.tenureInputType == TenureInputType.derived
-                ? selectedTermMonths.value
-                : 0,
+            termMonths: selectedTermMonths.value,
             interestRate: interestRateController.text,
             customerId: selectedCustomerId.value ?? '',
             schemeType: selectedScheme.value,
@@ -242,6 +308,10 @@ OneTimeDepositFormState useOneTimeDepositForm({
     projection: projection,
     amountInWords: amountInWords,
     amountFormatter: amountFormatter,
+    onSchemeChanged: onSchemeChanged,
+    onStartDateChanged: onStartDateChanged,
+    onDurationChanged: onDurationChanged,
+    onInterestRateChanged: onInterestRateChanged,
     save: save,
     isUpdating: isUpdating,
   );

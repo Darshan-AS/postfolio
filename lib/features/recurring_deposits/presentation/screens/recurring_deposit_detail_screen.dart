@@ -125,7 +125,8 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                 AppSpacings.gapLg,
                 DetailStatCard(
                   title: t.recurringDeposits.fields.interestRate,
-                  value: '${deposit.interestRate.toStringAsFixed(2)}%',
+                  value:
+                      '${deposit.effectiveInterestRate.toStringAsFixed(2)}%',
                   backgroundColor: Theme.of(
                     context,
                   ).colorScheme.surfaceContainerHighest,
@@ -158,7 +159,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                   ),
                   label: t.recurringDeposits.fields.termYears,
                   value:
-                      '${deposit.termYears} Years, ${deposit.termMonths} Months',
+                      '${deposit.effectiveTermYears} Years, ${deposit.effectiveTermMonths} Months',
                 ),
                 const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
@@ -167,7 +168,8 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
                     size: AppDimensions.iconMd,
                   ),
                   label: t.recurringDeposits.fields.interestRate,
-                  value: '${deposit.interestRate.toStringAsFixed(2)}%',
+                  value:
+                      '${deposit.effectiveInterestRate.toStringAsFixed(2)}%',
                 ),
               ],
             ),

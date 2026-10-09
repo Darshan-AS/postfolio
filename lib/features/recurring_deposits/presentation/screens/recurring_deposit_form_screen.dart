@@ -17,7 +17,6 @@ import 'package:postfolio/core/widgets/forms/app_duration_input.dart';
 import 'package:postfolio/core/widgets/domain/investment_projection_card.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/models/nominee.dart';
-import 'package:postfolio/core/extensions/date_time_extension.dart';
 
 import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_recurring_deposit_form.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -188,10 +187,7 @@ List<Widget> _buildInvestmentDetails(
                 ButtonSegment(value: scheme, label: Text(scheme.shortName)),
           )
           .toList(),
-      onChanged: (scheme) {
-        selectedScheme.value = scheme;
-        selectedTermYears.value = scheme.defaultTenureYears;
-      },
+      onChanged: state.onSchemeChanged,
       prefixIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedLayers01,
         size: AppDimensions.iconMd,
@@ -253,6 +249,34 @@ List<Widget> _buildInvestmentDetails(
       ],
     ),
     AppSpacings.gapLg,
+    AppDateField(
+      controller: startDateController,
+      labelText: t.recurringDeposits.fields.startDate,
+      isRequired: true,
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: startDate.value,
+          firstDate: DateTime(AppConstants.firstStartYear),
+          lastDate: DateTime(AppConstants.lastDatePickerYear),
+        );
+        if (picked != null && context.mounted) {
+          state.onStartDateChanged(picked);
+        }
+      },
+    ),
+    AppSpacings.gapLg,
+    AppDurationInput(
+      tenureInputType: selectedScheme.value.tenureInputType,
+      allowedTenuresInYears: selectedScheme.value.allowedTenuresInYears,
+      selectedYears: selectedTermYears.value,
+      selectedMonths: selectedTermMonths.value,
+      onChanged: (years, months) {
+        selectedTermYears.value = years;
+        selectedTermMonths.value = months;
+      },
+    ),
+    AppSpacings.gapLg,
     AppTextField(
       controller: interestRateController,
       labelText: t.recurringDeposits.fields.interestRate,
@@ -267,37 +291,6 @@ List<Widget> _buildInvestmentDetails(
         t.recurringDeposits.fields.interestRate,
       ),
       textInputAction: TextInputAction.next,
-    ),
-    AppSpacings.gapLg,
-    AppDateField(
-      controller: startDateController,
-      labelText: t.recurringDeposits.fields.startDate,
-      isRequired: true,
-      onTap: () async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: startDate.value,
-          firstDate: DateTime(AppConstants.firstStartYear),
-          lastDate: DateTime(AppConstants.lastDatePickerYear),
-        );
-        if (picked != null) {
-          startDate.value = picked;
-          if (context.mounted) {
-            startDateController.text = picked.toAppFormat();
-          }
-        }
-      },
-    ),
-    AppSpacings.gapLg,
-    AppDurationInput(
-      tenureInputType: selectedScheme.value.tenureInputType,
-      allowedTenuresInYears: selectedScheme.value.allowedTenuresInYears,
-      selectedYears: selectedTermYears.value,
-      selectedMonths: selectedTermMonths.value,
-      onChanged: (years, months) {
-        selectedTermYears.value = years;
-        selectedTermMonths.value = months;
-      },
     ),
     InvestmentProjectionCard(projection: projection),
   ];

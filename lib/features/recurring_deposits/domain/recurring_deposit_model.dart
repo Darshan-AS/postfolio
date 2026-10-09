@@ -1,10 +1,12 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
+import 'package:postfolio/core/models/postal_scheme_terms.dart';
 import 'package:postfolio/core/utils/timestamp_converter.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
+import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -15,6 +17,8 @@ part 'recurring_deposit_model.g.dart';
 @freezed
 sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   const RecurringDeposit._();
+
+  static const PostalRateService _postalRateService = PostalRateService();
 
   const factory RecurringDeposit({
     required String id,
@@ -35,13 +39,31 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     @JsonKey(includeIfNull: false) String? migrationSource,
   }) = _RecurringDeposit;
 
+  /// Official Post Office terms for [schemeType] and [startDate].
+  PostalSchemeTerms get postalTerms =>
+      _postalRateService.resolveRecurringSchemeTerms(
+        schemeType: schemeType,
+        startDate: startDate,
+      );
+
+  /// Effective interest rate, resolving from the Postal Service if not stored.
+  double get effectiveInterestRate =>
+      interestRate > 0 ? interestRate : postalTerms.interestRate;
+
+  /// Effective tenure years, resolving from the Postal Service if not stored.
+  int get effectiveTermYears =>
+      termYears > 0 ? termYears : postalTerms.termYears;
+
+  /// Effective tenure months.
+  int get effectiveTermMonths => termMonths;
+
   @override
   InvestmentProjection get projection => ProjectionCalculator.calculateRD(
     monthlyInstallment: installmentAmount,
-    interestRate: interestRate,
+    interestRate: effectiveInterestRate,
     startDate: startDate,
-    termYears: termYears,
-    termMonths: termMonths,
+    termYears: effectiveTermYears,
+    termMonths: effectiveTermMonths,
   );
 
   @override
@@ -72,7 +94,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     installmentAmount: 1000.0,
     termYears: 5,
     termMonths: 0,
-    interestRate: 5.8,
+    interestRate: 6.7,
     customerId: 'Loading Dummy Name...',
     customerName: 'Loading Dummy Name...',
     schemeType: RecurringSchemeType.recurringDeposit,
@@ -98,24 +120,36 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     String? serialNo,
     String? accountNo,
     required double installmentAmount,
-    required int termYears,
-    required int termMonths,
-    required double interestRate,
     required String customerId,
     required RecurringSchemeType schemeType,
     required DateTime startDate,
+    int? termYears,
+    int? termMonths,
+    double? interestRate,
     List<Nominee> nominees = const [],
     DepositStatus status = DepositStatus.active,
+    PostalRateService postalRateService = const PostalRateService(),
   }) {
+    final postalTerms = postalRateService.resolveRecurringSchemeTerms(
+      schemeType: schemeType,
+      startDate: startDate,
+    );
+
+    final resolvedTermYears = termYears ?? postalTerms.termYears;
+    final resolvedTermMonths = termMonths ?? postalTerms.termMonths;
+    final resolvedInterestRate = (interestRate != null && interestRate > 0)
+        ? interestRate
+        : postalTerms.interestRate;
+
     final validationError =
         BaseDeposit.validateAccountNo(accountNo) ??
         BaseDeposit.validateAmount(
           installmentAmount,
           t.recurringDeposits.fields.installmentAmount,
         ) ??
-        BaseDeposit.validateTerm(termYears, termMonths) ??
+        BaseDeposit.validateTerm(resolvedTermYears, resolvedTermMonths) ??
         BaseDeposit.validateInterestRate(
-          interestRate,
+          resolvedInterestRate,
           t.recurringDeposits.fields.interestRate,
         ) ??
         Nominee.validateNominees(nominees);
@@ -123,15 +157,15 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     if (validationError != null) return Failure(validationError);
 
     if (schemeType.tenureInputType != TenureInputType.derived) {
-      if (!schemeType.allowedTenuresInYears.contains(termYears)) {
+      if (!schemeType.allowedTenuresInYears.contains(resolvedTermYears)) {
         return Failure(
           t.errors.invalidTenure(
-            years: termYears,
+            years: resolvedTermYears,
             scheme: schemeType.displayName,
           ),
         );
       }
-      if (termMonths != 0) {
+      if (resolvedTermMonths != 0) {
         return Failure(t.errors.fixedTenureNoMonths);
       }
     }
@@ -142,9 +176,9 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
         serialNo: serialNo?.trim().isEmpty == true ? null : serialNo?.trim(),
         accountNo: accountNo?.trim(),
         installmentAmount: installmentAmount,
-        termYears: termYears,
-        termMonths: termMonths,
-        interestRate: interestRate,
+        termYears: resolvedTermYears,
+        termMonths: resolvedTermMonths,
+        interestRate: resolvedInterestRate,
         customerId: customerId,
         schemeType: schemeType,
         startDate: startDate,

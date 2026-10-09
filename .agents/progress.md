@@ -1,6 +1,14 @@
 # Project Progress
 
 ## Current State
+**Official Post Office Rate Schedule (`PostalRateService`), KVP Maturity Accuracy & Editable Override Completed**:
+- Resolved the KVP maturity date +1 month overshoot (`9Y 6M` / `114` months instead of official `9Y 5M` / `113` months at `7.6%`) and the detail screen banner vs. field mismatch (`9Y 0M` stored in DB vs. dynamically calculated banner).
+- Created `@freezed sealed class PostalSchemeTerms` (`lib/core/models/postal_scheme_terms.dart`) and `@riverpod PostalRateService` (`lib/core/services/postal_rate_service.dart`) using Dart 3 Records for the Ministry of Finance / Department of Posts historical circular schedules (`2000-03-01` to Present) across `KVP`, `NSC`, `MIS`, `TD` (1/2/3/5Y), and `RD`.
+- Updated `ProjectionCalculator`, `OneTimeDeposit.create`, `RecurringDeposit.create`, and deposit controllers (`OneTimeDepositsController`, `RecurringDepositsController`) so all OTD and RD investments only require `startDate` (and `1Y/2Y/3Y/5Y` for `TD`) to resolve official `interestRate`, `termYears`, `termMonths`, `maturityDate`, and `maturityAmount` via `postalRateServiceProvider`.
+- Updated `useOneTimeDepositForm`, `useRecurringDepositForm`, `OneTimeDepositFormScreen`, `RecurringDepositFormScreen`, and `AppDurationInput` (`TenureInputType.derived`) so picking a `startDate` (or switching scheme/TD tenure) automatically populates `Interest Rate (%)` and `Term (Years / Months)` from `PostalRateService`, while keeping both `Interest Rate (%)` and KVP `Term (Years)` / `Term (Months)` editable in the UI for newly announced Post Office circulars or custom passbook overrides.
+- Added `effectiveTermYears`, `effectiveTermMonths`, and `effectiveInterestRate` on `OneTimeDeposit` and `RecurringDeposit` to self-heal legacy DB records (e.g., `9Y 0M` = `108m` or legacy `.round()` overshoots like `114m` at `7.6%`) while honoring explicit manual overrides.
+- Added comprehensive unit test suite in `test/post_office_rate_schedule_and_kvp_test.dart` (10 tests covering historical circular lookups, KVP `7.6%` -> `113m` / `7.7%` -> `112m`, legacy record self-healing, and manual override preservation).
+
 **Web OAuth Dynamic Redirect Fix for Production Domains**:
 - Fixed Google login redirect on `https://postfolio.darshanas.dev` where login redirected to `http://localhost:3000/?code=...` due to `redirectTo` being null in non-emulator environments.
 - Updated `SupabaseAuthRepository.signInWithGoogle()` on Web to pass `redirectTo: ${Uri.base.origin}/login`, dynamically resolving to the active deployment domain.
