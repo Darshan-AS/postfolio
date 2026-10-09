@@ -1,6 +1,10 @@
 # Project Progress
 
 ## Current State
+**Release v2.2.0+19 Prepared**:
+- Bumped application version in `pubspec.yaml` from `2.1.0+18` to `2.2.0+19` and updated `CHANGELOG.md` summarizing the official Post Office rate schedule (`PostalRateService`), KVP maturity accuracy fix, Contractual Snapshot pattern, and Docker database backup documentation.
+- Validated zero analysis issues (`dart analyze --fatal-infos`) and passing unit/widget test suites (`16/16` passed).
+
 **Manual Full Database Backup via Docker Completed & Failed CI Backup Cleaned Up**:
 - Documented manual full database backup and restore commands (complete DDL schema + data rows) using official PostgreSQL 17 Docker container (`postgres:17 pg_dump` and `psql`) in `docs/setup_guide.md`, including Session Pooler IPv4 routing guidance.
 - Hardened `.gitignore` to prevent sensitive database dumps (`*.dump`, `full_backup*.sql`, `postfolio_backup*.sql`) from being committed to the public repository.

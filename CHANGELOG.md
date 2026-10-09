@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0+19] - 2026-10-10
+
+### Added
+- **Official Post Office Rate Schedule (`PostalRateService`)**: Implemented historical Ministry of Finance / Department of Posts circular lookup service (`2000-03-01` to Present) across `KVP`, `NSC`, `MIS`, `TD` (`1Y/2Y/3Y/5Y`), and `RD`.
+- **Start-Date Auto-Resolution**: Picking an investment `startDate` (or switching scheme/TD tenure) in One-Time Deposit and Recurring Deposit forms now automatically populates the official `Interest Rate (%)` and `Term (Years / Months)` while keeping fields editable for custom passbook overrides.
+- **Documentation**: Documented Docker-based Supabase database backup and restore workflows in `docs/setup_guide.md`.
+
+### Changed
+- **Contractual Snapshot Pattern**: Enforced write-time rate/tenure resolution via `PostalRateService` and 100% read-time fidelity to the persisted database snapshot across `OneTimeDeposit` and `RecurringDeposit`.
+- **Editable KVP Tenure**: Updated `AppDurationInput` (`TenureInputType.derived`) to render side-by-side editable `Term (Years)` and `Term (Months)` fields for KVP.
+
+### Fixed
+- **KVP Maturity Accuracy**: Fixed the +1 month rounding overshoot on 1-decimal-place truncated KVP rates (e.g., `7.6%` now resolves to the official `113` months / `9Y 5M` passbook tenure instead of `114` months / `9Y 6M`).
+- **KVP Detail Screen Consistency**: Fixed mismatch between the top `KvpMultiplierBanner` and the tenure `DetailItem` on `OneTimeDepositDetailScreen`.
+
 ## [2.1.0+18] - 2026-10-08
 
 ### Added
