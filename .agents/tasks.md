@@ -11,7 +11,8 @@
 - [x] **Parallel Repositories**: Create `Supabase*Repository` implementations alongside `Firebase*Repository`.
 - [x] **Riverpod Toggle**: Implement provider overrides based on `Env.useSupabase`.
 - [x] **SQL Views & RPC Procedures (Option 2 Architecture)**: Create SQL migrations for views (`customer_details_view`, `one_time_deposit_details_view`, `recurring_deposit_details_view`) and stored procedure RPCs (`save_customer_with_sb_account`, `save_one_time_deposit`, `save_recurring_deposit`). Refactor all `Supabase*Repository` implementations to use views for reads and RPCs for 100% atomic writes.
-- [ ] **Automated Database Backups to Google Drive**: Set up scheduled GitHub Action / cron job with `supabase db dump` to automatically export and upload daily database backups to Google Drive.
+- [x] **Manual Full Database Backup via Docker**: Documented and verified official PostgreSQL 17 Docker container command to dump complete schema + data to local SQL files for manual cold storage archiving.
+- [ ] **Automated Off-site Database Backups**: Explore zero-cost automated off-site backup solutions (avoiding Firebase Storage due to Blaze pay-as-you-go credit card requirements, and keeping in mind repository is public so GitHub Actions artifacts cannot store unencrypted DB dumps).
 
 ## ⚡ Supabase Query Optimizations (Prioritized)
 - [x] **P1: Server-Side Joins for Deposit Customer Names**: Modify `one_time_deposit_details_view` and `recurring_deposit_details_view` views to join with the `customers` table and return `customer_name`. Add `@JsonKey(includeFromJson: true, includeToJson: false) String? customerName` to deposit models to eliminate client-side cross-fetching/map loops.

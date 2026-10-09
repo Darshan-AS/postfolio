@@ -1,6 +1,11 @@
 # Project Progress
 
 ## Current State
+**Manual Full Database Backup via Docker Completed & Failed CI Backup Cleaned Up**:
+- Documented manual full database backup and restore commands (complete DDL schema + data rows) using official PostgreSQL 17 Docker container (`postgres:17 pg_dump` and `psql`) in `docs/setup_guide.md`, including Session Pooler IPv4 routing guidance.
+- Hardened `.gitignore` to prevent sensitive database dumps (`*.dump`, `full_backup*.sql`, `postfolio_backup*.sql`) from being committed to the public repository.
+- Reverted/reset the 4 previous commits attempting automated GitHub Actions backups to Firebase Storage (which failed due to Firebase requiring the Blaze plan for Cloud Storage buckets and public repo artifact security constraints).
+
 **Official Post Office Rate Schedule (`PostalRateService`), KVP Maturity Accuracy & Editable Override Completed**:
 - Resolved the KVP maturity date +1 month overshoot (`9Y 6M` / `114` months instead of official `9Y 5M` / `113` months at `7.6%`) and the detail screen banner vs. field mismatch (`9Y 0M` stored in DB vs. dynamically calculated banner).
 - Created `@freezed sealed class PostalSchemeTerms` (`lib/core/models/postal_scheme_terms.dart`) and `@riverpod PostalRateService` (`lib/core/services/postal_rate_service.dart`) using Dart 3 Records for the Ministry of Finance / Department of Posts historical circular schedules (`2000-03-01` to Present) across `KVP`, `NSC`, `MIS`, `TD` (1/2/3/5Y), and `RD`.

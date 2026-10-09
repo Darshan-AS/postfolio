@@ -80,3 +80,8 @@ lib/core/env/env.g.dart
 data_export/
 prod_users.json
 
+# Database dumps & local backups (sensitive data)
+*.dump
+full_backup*.sql
+postfolio_backup*.sql
+

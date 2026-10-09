@@ -12,6 +12,7 @@ Throughout this migration, several actions must be performed manually in externa
 *   [ ] **Firebase Console (CLI):** Export Auth users to JSON (`firebase auth:export users.json`).
 *   [ ] **Google Cloud Console:** Add production Play Store SHA-1 and SHA-256 fingerprints to the Web Client ID credentials before final deployment.
 *   [ ] **Firebase Console:** Add production Play Store SHA-1 and SHA-256 fingerprints to Firebase settings to ensure Crashlytics/Analytics continue working.
+*   [ ] **Database Disaster Recovery Backup:** Before running destructive schema resets or migrations, create a full dump (schema + rows) using Docker: `docker run --rm -v $(pwd):/backup postgres:17 pg_dump "<SESSION_POOLER_URL>" -f /backup/full_backup_$(date +%Y_%m_%d).sql` (see [docs/setup_guide.md](setup_guide.md#database-backups-schema--all-data-via-docker)).
 
 ### Core Decisions
 1. **Offline Strategy**: **Online-Only (V1)**. The initial migration will require an active internet connection to read/write data. 

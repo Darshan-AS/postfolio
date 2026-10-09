@@ -85,6 +85,18 @@ If you need to bootstrap your local environment with legacy data (CSV/JSON), use
 
 ---
 
+## Database Backups
+
+To create a full manual backup (complete DDL schema + all data rows) into a self-contained SQL file using Docker:
+
+```bash
+docker run --rm -v $(pwd):/backup postgres:17 pg_dump "YOUR_SESSION_POOLER_DATABASE_URL" -f /backup/full_backup_$(date +%Y_%m_%d).sql
+```
+
+For complete instructions on retrieving the Supabase Session Pooler connection string, verifying the dump, and restoring the database, see the **[Setup & Disaster Recovery Guide](docs/setup_guide.md#database-backups-schema--all-data-via-docker)**.
+
+---
+
 ## Architecture & Conventions
 
 This project follows strict architectural patterns:
