@@ -93,10 +93,8 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 : null;
           },
           header: EntityDetailHeader(
-            avatarChild: const HugeIcon(
-              icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
-              size: AppDimensions.iconLg,
-            ),
+            avatarText: deposit.schemeType.shortName,
+            avatarSubtext: deposit.schemeTermLabel,
             title: deposit.accountNo ?? t.common.notProvided,
             subtitle: Text(
               deposit.schemeType.displayName,

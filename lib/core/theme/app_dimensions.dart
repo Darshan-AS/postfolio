@@ -14,6 +14,7 @@ class AppDimensions {
 
   // Padding & Margins
   static const double paddingNone = 0.0;
+  static const double paddingXxs = 2.0;
   static const double paddingXs = 4.0;
   static const double paddingSm = 8.0;
   static const double paddingMd = 12.0;
@@ -57,6 +58,7 @@ class AppDimensions {
   static const double radiusXxl = 24.0;
   static const double radiusXxxl = 32.0;
   static const double radiusMax = 48.0;
+  static const double radiusDetailAvatar = 72.0;
 
   // Icon Sizes
   static const double iconSm = 16.0;
@@ -72,6 +74,10 @@ class AppDimensions {
 }
 
 class AppSpacings {
+  static const SizedBox gapXxs = SizedBox(
+    height: AppDimensions.paddingXxs,
+    width: AppDimensions.paddingXxs,
+  );
   static const SizedBox gapXs = SizedBox(
     height: AppDimensions.paddingXs,
     width: AppDimensions.paddingXs,

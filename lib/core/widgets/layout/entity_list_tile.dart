@@ -257,6 +257,10 @@ class EntityListTile extends StatelessWidget {
                       children: [
                         Text(
                           leadingText!,
+                          textHeightBehavior: const TextHeightBehavior(
+                            applyHeightToFirstAscent: false,
+                            applyHeightToLastDescent: false,
+                          ),
                           style: textStyle?.copyWith(
                             fontWeight: FontWeight.bold,
                             height: hasSubtext
@@ -265,9 +269,14 @@ class EntityListTile extends StatelessWidget {
                             color: fgColor,
                           ),
                         ),
-                        if (hasSubtext)
+                        if (hasSubtext) ...[
+                          AppSpacings.gapXxs,
                           Text(
                             leadingSubtext!,
+                            textHeightBehavior: const TextHeightBehavior(
+                              applyHeightToFirstAscent: false,
+                              applyHeightToLastDescent: false,
+                            ),
                             style: theme.textTheme.labelSmall?.copyWith(
                               fontSize: AppDimensions.fontXs,
                               fontWeight: FontWeight.w600,
@@ -277,6 +286,7 @@ class EntityListTile extends StatelessWidget {
                               ),
                             ),
                           ),
+                        ],
                       ],
                     ),
                   ),

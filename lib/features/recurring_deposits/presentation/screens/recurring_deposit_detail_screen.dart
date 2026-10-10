@@ -98,10 +98,7 @@ class RecurringDepositDetailScreen extends ConsumerWidget {
             avatarForegroundColor: Theme.of(
               context,
             ).colorScheme.onSecondaryContainer,
-            avatarChild: const HugeIcon(
-              icon: HugeIcons.strokeRoundedTransaction,
-              size: AppDimensions.iconLg,
-            ),
+            avatarText: deposit.avatarLabel,
             title: deposit.accountNo ?? t.common.notProvided,
             subtitle: Text(
               deposit.schemeType.displayName,

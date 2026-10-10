@@ -134,7 +134,9 @@ class EntityDetailScaffold extends StatelessWidget {
 }
 
 class EntityDetailHeader extends StatelessWidget {
-  final Widget avatarChild;
+  final Widget? avatarChild;
+  final String? avatarText;
+  final String? avatarSubtext;
   final Color? avatarBackgroundColor;
   final Color? avatarForegroundColor;
   final String title;
@@ -144,7 +146,9 @@ class EntityDetailHeader extends StatelessWidget {
 
   const EntityDetailHeader({
     super.key,
-    required this.avatarChild,
+    this.avatarChild,
+    this.avatarText,
+    this.avatarSubtext,
     this.avatarBackgroundColor,
     this.avatarForegroundColor,
     required this.title,
@@ -159,14 +163,7 @@ class EntityDetailHeader extends StatelessWidget {
     return Center(
       child: Column(
         children: [
-          CircleAvatar(
-            radius: AppDimensions.iconXl * 1.5,
-            backgroundColor:
-                avatarBackgroundColor ?? theme.colorScheme.primaryContainer,
-            foregroundColor:
-                avatarForegroundColor ?? theme.colorScheme.onPrimaryContainer,
-            child: avatarChild,
-          ),
+          _buildAvatar(theme),
           AppSpacings.gapLg,
           Text(
             title,
@@ -188,6 +185,66 @@ class EntityDetailHeader extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildAvatar(ThemeData theme) {
+    final fgColor =
+        avatarForegroundColor ?? theme.colorScheme.onPrimaryContainer;
+    final hasSubtext = avatarSubtext != null && avatarSubtext!.isNotEmpty;
+
+    return CircleAvatar(
+      radius: AppDimensions.radiusDetailAvatar,
+      backgroundColor:
+          avatarBackgroundColor ?? theme.colorScheme.primaryContainer,
+      foregroundColor: fgColor,
+      child:
+          avatarChild ??
+          (avatarText != null
+              ? Padding(
+                  padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          avatarText!,
+                          textHeightBehavior: const TextHeightBehavior(
+                            applyHeightToFirstAscent: false,
+                            applyHeightToLastDescent: false,
+                          ),
+                          style: theme.textTheme.headlineLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            height: hasSubtext
+                                ? AppDimensions.lineHeightTight
+                                : null,
+                            color: fgColor,
+                          ),
+                        ),
+                        if (hasSubtext) ...[
+                          AppSpacings.gapXs,
+                          Text(
+                            avatarSubtext!,
+                            textHeightBehavior: const TextHeightBehavior(
+                              applyHeightToFirstAscent: false,
+                              applyHeightToLastDescent: false,
+                            ),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              height: AppDimensions.lineHeightTight,
+                              color: fgColor.withValues(
+                                alpha: AppDimensions.opacityMuted,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                )
+              : null),
     );
   }
 }

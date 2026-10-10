@@ -68,7 +68,7 @@
   - [ ] Ensure the relationship of each nominee is clearly displayed.
 - [x] **Preferences**: Persist sort/filter selections and `maturityWarningDays` across sessions.
 - [ ] **Visual Enhancements**:
-  - [x] Redesign leading visual elements in deposit list tiles (replace generic circular icons): OTD cards display scheme short name (`TD`, `MIS`, `NSC`, `KVP`) with smaller tenure sub-label (`1Y`–`5Y` for TD); RD cards display serial number (`#<serialNo>`) with `RD` fallback.
+  - [x] Redesign leading visual elements in deposit list tiles and detail headers (replace generic circular icons): OTD cards and detail headers display scheme short name (`TD`, `MIS`, `NSC`, `KVP`) with smaller tenure sub-label (`1Y`–`5Y` for TD); RD cards and detail headers display serial number (`#<serialNo>`) with `RD` fallback.
   - [ ] Apply distinct color coding for deposit types.
   - [x] Enhance visual prominence of scheme type in detail views and forms (Migrated Dropdowns to Segmented Buttons).
   - [x] Form inputs correctly format currency strings and auto-display localized amount in words.

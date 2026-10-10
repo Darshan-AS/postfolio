@@ -57,13 +57,9 @@ class CustomerDetailScreen extends ConsumerWidget {
                 : null;
           },
           header: EntityDetailHeader(
-            avatarChild: Text(
-              customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
-              style: textTheme.headlineLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onPrimaryContainer,
-              ),
-            ),
+            avatarText: customer.name.isNotEmpty
+                ? customer.name[0].toUpperCase()
+                : t.common.notProvided,
             title: customer.name,
             subtitle: Column(
               children: [

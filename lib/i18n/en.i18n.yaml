@@ -283,12 +283,12 @@ enums:
     active: "Active"
     closed: "Closed"
   oneTimeSchemeType(map):
-    timeDeposit: "Time Deposit (TD)"
-    monthlyIncomeScheme: "Monthly Income Scheme (MIS)"
-    nationalSavingsCertificate: "National Savings Certificate (NSC)"
-    kisanVikasPatra: "Kisan Vikas Patra (KVP)"
+    timeDeposit: "Time Deposit"
+    monthlyIncomeScheme: "Monthly Income Scheme"
+    nationalSavingsCertificate: "National Savings Certificate"
+    kisanVikasPatra: "Kisan Vikas Patra"
   recurringSchemeType(map):
-    recurringDeposit: "Recurring Deposit (RD)"
+    recurringDeposit: "Recurring Deposit"
   maturityUrgency(map):
     normal: "Normal"
     maturingSoon: "Maturing Soon"
