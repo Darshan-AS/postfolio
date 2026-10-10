@@ -1,6 +1,10 @@
 # Project Progress
 
 ## Current State
+**Release v2.2.1+20 Prepared**:
+- Bumped application version in `pubspec.yaml` from `2.2.0+19` to `2.2.1+20` and updated `CHANGELOG.md` summarizing the deposit list & detail avatar overhaul (`TD` + tenure sublabel, `MIS`, `NSC`, `KVP`, and RD `#<serialNo>`), optical spacing improvements, and polished scheme display names.
+- Validated zero analysis issues (`flutter analyze`) and passing unit/widget test suites (`16/16` passed).
+
 **Deposit List & Detail Avatars Overhaul (OTD Scheme/Term & RD Serial Number) Completed**:
 - Replaced the repetitive generic money icon in `OneTimeDepositCard` and `OneTimeDepositDetailScreen` with `deposit.schemeType.shortName` (`TD`, `MIS`, `NSC`, `KVP`) and optional Slang-localized `deposit.schemeTermLabel` (`t.common.duration.yearShort(n: termYears)` -> `1Y`, `2Y`, `3Y`, `5Y` for Time Deposits) inside the circular avatar.
 - Replaced the repetitive transaction icon in `RecurringDepositCard` and `RecurringDepositDetailScreen` with `deposit.avatarLabel` (`#<serialNo>` using `t.format.countSymbol` when present, falling back to `RD`) inside the circular avatar, decluttering the card subtitle to show only the account number and surfacing the RD serial number in the detail header.
@@ -258,6 +262,8 @@
 - Standardized UI bottom sheets (`AppSortBottomSheet`, `AppFilterBottomSheet`), standardizing their "Clear" actions to prevent abrupt closures and migrating the Sort sheet from `flutter_hooks` to a purely reactive Riverpod `Consumer` pattern.
 
 ## Releases
+- **v2.2.1+20 (2026-10-10)**: Overhauled deposit list and detail avatars (`TD` + tenure sublabel, `MIS`, `NSC`, `KVP`, and RD `#<serialNo>`), refined avatar subtext optical spacing, and polished scheme display names.
+- **v2.2.0+19 (2026-10-10)**: Official Post Office historical rate schedule (`PostalRateService`), KVP maturity accuracy fix (`113` months at `7.6%`), Contractual Snapshot pattern, and Docker database backup documentation.
 - **v2.1.0+18 (2026-10-08)**: High-performance CDC streaming stabilization, N+1 deposit card watcher elimination, nominee lateral query pruning, single-entity lazy detail providers, standalone Material/Cupertino packages, DDD AuthUser refactoring, and Flutter SDK baseline upgrade.
 - **v2.0.0+17 (2026-09-02)**: CQRS architecture, parallel Supabase repositories, visual migrator tool, Android build flavors (staging/prod), and initial Supabase CDC streams.
 - **v1.6.0+16 (2026-06-26)**: Application ID migration, nominee migration fix, and Supabase roadmap.

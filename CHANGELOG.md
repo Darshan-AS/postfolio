@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1+20] - 2026-10-10
+
+### Changed
+- **Deposit List & Detail Avatars**: Replaced generic icons in `OneTimeDepositCard`, `OneTimeDepositDetailScreen`, `RecurringDepositCard`, and `RecurringDepositDetailScreen` with scheme/tenure labels (`TD` + `1Y`–`5Y`, `MIS`, `NSC`, `KVP`) and RD serial numbers (`#<serialNo>` with `RD` fallback).
+- **Avatar Subtext & Optical Spacing**: Added `leadingSubtext` to `EntityListTile` and `avatarText`/`avatarSubtext` to `EntityDetailHeader` with `TextHeightBehavior` and tokenized spacing (`AppSpacings.gapXxs` / `AppSpacings.gapXs`).
+- **Scheme Display Names**: Polished scheme display names in Slang localizations (`en.i18n.yaml`) to remove redundant parenthetical acronym suffixes (`(TD)`, `(MIS)`, `(NSC)`, `(KVP)`, `(RD)`).
+
 ## [2.2.0+19] - 2026-10-10
 
 ### Added
