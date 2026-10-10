@@ -124,14 +124,17 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Shivanand A B'), findsOneWidget);
       expect(find.text('TD123456'), findsOneWidget);
+      expect(find.text('TD'), findsOneWidget);
+      expect(find.text('5Y'), findsOneWidget);
     },
   );
 
   testWidgets(
-    'RecurringDepositCard renders customerName directly without stream watcher',
+    'RecurringDepositCard renders customerName and avatarLabel directly without stream watcher',
     (WidgetTester tester) async {
       final deposit = RecurringDeposit(
         id: 'rd-1',
+        serialNo: '14',
         accountNo: 'RD987654',
         installmentAmount: 2000,
         termYears: 5,
@@ -153,6 +156,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Shivanand A B'), findsOneWidget);
       expect(find.text('RD987654'), findsOneWidget);
+      expect(find.text('#14'), findsOneWidget);
     },
   );
 

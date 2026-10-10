@@ -52,6 +52,11 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
   @override
   DateTime get maturityDate => projection.maturityDate;
 
+  /// Optional term sub-label for list avatars (e.g., `5Y` for TD, `null` otherwise).
+  String? get schemeTermLabel => schemeType == OneTimeSchemeType.timeDeposit
+      ? t.common.duration.yearShort(n: termYears)
+      : null;
+
   /// Default sorting logic for One Time Deposits (ascending by maturity date).
   static int defaultCompare(OneTimeDeposit a, OneTimeDeposit b) {
     return a.maturityDate.compareTo(b.maturityDate);
@@ -62,13 +67,13 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
 
   static OneTimeDeposit get dummy => OneTimeDeposit(
     id: 'dummy',
-    accountNo: 'Loading...',
+    accountNo: t.common.loading,
     principalAmount: 10000.0,
     termYears: 5,
     termMonths: 0,
     interestRate: 7.5,
-    customerId: 'Loading Dummy Name...',
-    customerName: 'Loading Dummy Name...',
+    customerId: t.common.loading,
+    customerName: t.common.loading,
     schemeType: OneTimeSchemeType.timeDeposit,
     startDate: DateTime.now(),
   );

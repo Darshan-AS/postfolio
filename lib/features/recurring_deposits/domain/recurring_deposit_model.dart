@@ -51,6 +51,17 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   @override
   DateTime get maturityDate => projection.maturityDate;
 
+  /// Leading label for list avatars (`#<serialNo>` when present, otherwise `RD`).
+  String get avatarLabel {
+    final trimmed = serialNo?.trim();
+    if (trimmed != null && trimmed.isNotEmpty) {
+      return trimmed.startsWith(t.format.countSymbol)
+          ? trimmed
+          : '${t.format.countSymbol}$trimmed';
+    }
+    return schemeType.shortName;
+  }
+
   /// Default sorting logic for Recurring Deposits (ascending by serial no).
   static int defaultCompare(RecurringDeposit a, RecurringDeposit b) {
     final sA = a.serialNo ?? '';
@@ -68,14 +79,14 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
 
   static RecurringDeposit get dummy => RecurringDeposit(
     id: 'dummy',
-    serialNo: 'RD12345',
-    accountNo: 'Loading...',
+    serialNo: '12',
+    accountNo: t.common.loading,
     installmentAmount: 1000.0,
     termYears: 5,
     termMonths: 0,
     interestRate: 6.7,
-    customerId: 'Loading Dummy Name...',
-    customerName: 'Loading Dummy Name...',
+    customerId: t.common.loading,
+    customerName: t.common.loading,
     schemeType: RecurringSchemeType.recurringDeposit,
     startDate: DateTime.now(),
   );

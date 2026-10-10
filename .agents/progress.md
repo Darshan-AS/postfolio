@@ -1,6 +1,11 @@
 # Project Progress
 
 ## Current State
+**Deposit List Leading Avatars Overhaul (OTD Scheme/Term & RD Serial Number) Completed**:
+- Replaced the repetitive generic money icon in `OneTimeDepositCard` with `deposit.schemeType.shortName` (`TD`, `MIS`, `NSC`, `KVP`) and optional Slang-localized `deposit.schemeTermLabel` (`t.common.duration.yearShort(n: termYears)` -> `1Y`, `2Y`, `3Y`, `5Y` for Time Deposits) inside the leading `CircleAvatar`.
+- Replaced the repetitive transaction icon in `RecurringDepositCard` with `deposit.avatarLabel` (`#<serialNo>` using `t.format.countSymbol` when present, falling back to `RD`) inside the leading `CircleAvatar`, decluttering the card subtitle to show only the account number and unifying `CustomerDetailScreen` deposit card layouts.
+- Added optional `leadingSubtext` to `EntityListTile` and `lineHeightTight` to `AppDimensions` so multi-character `leadingText` renders in bold `titleMedium` and `leadingSubtext` renders underneath in `labelSmall` (`AppDimensions.fontXs`, `AppDimensions.lineHeightTight`, `AppDimensions.opacityMuted`), adhering strictly to project conventions (zero magic numbers or hardcoded strings).
+
 **Release v2.2.0+19 Prepared**:
 - Bumped application version in `pubspec.yaml` from `2.1.0+18` to `2.2.0+19` and updated `CHANGELOG.md` summarizing the official Post Office rate schedule (`PostalRateService`), KVP maturity accuracy fix, Contractual Snapshot pattern, and Docker database backup documentation.
 - Validated zero analysis issues (`dart analyze --fatal-infos`) and passing unit/widget test suites (`16/16` passed).

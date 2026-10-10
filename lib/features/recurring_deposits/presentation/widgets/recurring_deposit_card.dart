@@ -21,6 +21,7 @@ import 'package:postfolio/i18n/strings.g.dart';
 class _RecurringDepositCardView extends StatelessWidget {
   final String title;
   final String subtitle;
+  final String leadingLabel;
   final double installmentAmount;
   final DepositStatus status;
   final MaturityUrgency urgency;
@@ -34,6 +35,7 @@ class _RecurringDepositCardView extends StatelessWidget {
   const _RecurringDepositCardView({
     required this.title,
     required this.subtitle,
+    required this.leadingLabel,
     required this.installmentAmount,
     required this.status,
     required this.urgency,
@@ -56,10 +58,7 @@ class _RecurringDepositCardView extends StatelessWidget {
 
     return EntityListTile(
       indicatorColor: indicatorColor,
-      leadingIcon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedTransaction,
-        size: AppDimensions.iconMd,
-      ),
+      leadingText: leadingLabel,
       leadingBackgroundColor: Theme.of(context).colorScheme.secondaryContainer,
       leadingForegroundColor: Theme.of(
         context,
@@ -92,7 +91,7 @@ class _RecurringDepositCardView extends StatelessWidget {
                         ? Theme.of(context).colorScheme.error
                         : Theme.of(context).colorScheme.tertiary,
                   ),
-                  const SizedBox(width: 4),
+                  AppSpacings.gapXs,
                   Text(
                     relativeTimeText,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -133,7 +132,7 @@ class _RecurringDepositCardView extends StatelessWidget {
                     size: AppDimensions.iconSm,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                  const SizedBox(width: 4),
+                  AppSpacings.gapXs,
                   Text(
                     maturityDate.toAppFormat(),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -194,8 +193,9 @@ class RecurringDepositCard extends ConsumerWidget {
   static Widget skeleton() {
     final dummy = RecurringDeposit.dummy;
     return _RecurringDepositCardView(
-      title: dummy.accountNo ?? 'Loading...',
-      subtitle: dummy.accountNo ?? 'Loading...',
+      title: dummy.accountNo ?? t.common.loading,
+      subtitle: dummy.accountNo ?? t.common.loading,
+      leadingLabel: dummy.avatarLabel,
       installmentAmount: dummy.installmentAmount,
       status: dummy.status,
       urgency: MaturityUrgency.normal,
@@ -213,16 +213,13 @@ class RecurringDepositCard extends ConsumerWidget {
         deposit.accountNo ??
         t.common.notProvided;
 
-    String subtitle = overrideSubtitle ?? '';
-    if (overrideSubtitle == null) {
-      subtitle = (deposit.serialNo?.isNotEmpty ?? false)
-          ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
-          : (deposit.accountNo ?? t.common.notProvided);
-    }
+    final subtitle =
+        overrideSubtitle ?? (deposit.accountNo ?? t.common.notProvided);
 
     return _RecurringDepositCardView(
       title: title,
       subtitle: subtitle,
+      leadingLabel: deposit.avatarLabel,
       installmentAmount: deposit.installmentAmount,
       status: deposit.status,
       urgency: deposit.maturityUrgency,

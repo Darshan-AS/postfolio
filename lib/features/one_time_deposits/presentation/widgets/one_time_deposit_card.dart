@@ -21,6 +21,8 @@ import 'package:postfolio/i18n/strings.g.dart';
 class _OneTimeDepositCardView extends StatelessWidget {
   final String title;
   final String subtitle;
+  final String schemeShortName;
+  final String? schemeTermLabel;
   final double principalAmount;
   final DepositStatus status;
   final MaturityUrgency urgency;
@@ -34,6 +36,8 @@ class _OneTimeDepositCardView extends StatelessWidget {
   const _OneTimeDepositCardView({
     required this.title,
     required this.subtitle,
+    required this.schemeShortName,
+    this.schemeTermLabel,
     required this.principalAmount,
     required this.status,
     required this.urgency,
@@ -56,10 +60,8 @@ class _OneTimeDepositCardView extends StatelessWidget {
 
     return EntityListTile(
       indicatorColor: indicatorColor,
-      leadingIcon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
-        size: AppDimensions.iconMd,
-      ),
+      leadingText: schemeShortName,
+      leadingSubtext: schemeTermLabel,
       leadingBackgroundColor: Theme.of(context).colorScheme.primaryContainer,
       leadingForegroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
       title: title,
@@ -90,7 +92,7 @@ class _OneTimeDepositCardView extends StatelessWidget {
                         ? Theme.of(context).colorScheme.error
                         : Theme.of(context).colorScheme.tertiary,
                   ),
-                  const SizedBox(width: 4),
+                  AppSpacings.gapXs,
                   Text(
                     relativeTimeText,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -131,7 +133,7 @@ class _OneTimeDepositCardView extends StatelessWidget {
                     size: AppDimensions.iconSm,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                  const SizedBox(width: 4),
+                  AppSpacings.gapXs,
                   Text(
                     maturityDate.toAppFormat(),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -190,8 +192,10 @@ class OneTimeDepositCard extends ConsumerWidget {
   static Widget skeleton() {
     final dummy = OneTimeDeposit.dummy;
     return _OneTimeDepositCardView(
-      title: dummy.accountNo ?? 'Loading...',
-      subtitle: dummy.accountNo ?? 'Loading...',
+      title: dummy.accountNo ?? t.common.loading,
+      subtitle: dummy.accountNo ?? t.common.loading,
+      schemeShortName: dummy.schemeType.shortName,
+      schemeTermLabel: dummy.schemeTermLabel,
       principalAmount: dummy.principalAmount,
       status: dummy.status,
       urgency: MaturityUrgency.normal,
@@ -212,6 +216,8 @@ class OneTimeDepositCard extends ConsumerWidget {
     return _OneTimeDepositCardView(
       title: title,
       subtitle: deposit.accountNo ?? t.common.notProvided,
+      schemeShortName: deposit.schemeType.shortName,
+      schemeTermLabel: deposit.schemeTermLabel,
       principalAmount: deposit.principalAmount,
       status: deposit.status,
       urgency: deposit.maturityUrgency,

@@ -54,6 +54,7 @@ class EntityAction {
 class EntityListTile extends StatelessWidget {
   final Widget? leadingIcon;
   final String? leadingText;
+  final String? leadingSubtext;
   final Color? leadingBackgroundColor;
   final Color? leadingForegroundColor;
   final Color? indicatorColor;
@@ -67,6 +68,7 @@ class EntityListTile extends StatelessWidget {
     super.key,
     this.leadingIcon,
     this.leadingText,
+    this.leadingSubtext,
     this.leadingBackgroundColor,
     this.leadingForegroundColor,
     this.indicatorColor,
@@ -229,22 +231,54 @@ class EntityListTile extends StatelessWidget {
   }
 
   Widget _buildLeading(ThemeData theme) {
+    final fgColor =
+        leadingForegroundColor ?? theme.colorScheme.onPrimaryContainer;
+    final hasSubtext = leadingSubtext != null && leadingSubtext!.isNotEmpty;
+    final isSingleChar = leadingText != null && leadingText!.length == 1;
+    final textStyle = isSingleChar
+        ? theme.textTheme.titleLarge
+        : theme.textTheme.titleMedium;
+
     return CircleAvatar(
       radius: AppDimensions.radiusXxl,
       backgroundColor:
           leadingBackgroundColor ?? theme.colorScheme.primaryContainer,
-      foregroundColor:
-          leadingForegroundColor ?? theme.colorScheme.onPrimaryContainer,
+      foregroundColor: fgColor,
       child:
           leadingIcon ??
           (leadingText != null
-              ? Text(
-                  leadingText!,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color:
-                        leadingForegroundColor ??
-                        theme.colorScheme.onPrimaryContainer,
+              ? Padding(
+                  padding: const EdgeInsets.all(AppDimensions.paddingXs),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          leadingText!,
+                          style: textStyle?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            height: hasSubtext
+                                ? AppDimensions.lineHeightTight
+                                : null,
+                            color: fgColor,
+                          ),
+                        ),
+                        if (hasSubtext)
+                          Text(
+                            leadingSubtext!,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontSize: AppDimensions.fontXs,
+                              fontWeight: FontWeight.w600,
+                              height: AppDimensions.lineHeightTight,
+                              color: fgColor.withValues(
+                                alpha: AppDimensions.opacityMuted,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 )
               : null),

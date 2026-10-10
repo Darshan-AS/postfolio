@@ -358,10 +358,7 @@ class _CustomerDepositsSection extends ConsumerWidget {
             closedDeposits: closedRecurring,
             itemBuilder: (deposit) => RecurringDepositCard(
               deposit: deposit,
-              overrideTitle: (deposit.serialNo?.isNotEmpty ?? false)
-                  ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
-                  : (deposit.accountNo ?? t.common.notProvided),
-              overrideSubtitle: '',
+              overrideTitle: deposit.schemeType.displayName,
             ),
           ),
       ],

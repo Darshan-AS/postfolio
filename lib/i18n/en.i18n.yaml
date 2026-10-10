@@ -37,6 +37,7 @@ common:
   duration:
     termYears: "Term (Years)"
     termMonths: "Term (Months)"
+    yearShort: "${n}Y"
     yearAbbreviation:
       one: "1 Yr"
       other: "${n} Yrs"
