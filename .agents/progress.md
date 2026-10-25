@@ -1,7 +1,11 @@
 # Project Progress
 
 ## Current State
-**RD Ledger Architecture Redesign (Option 1+ — Stages 1–3 Complete)**:
+**RD Ledger Architecture Redesign (Option 1+ — Stages 1–4 Complete)**:
+- **Post Office Agent Workflow Enhancements (Stage 4)**:
+  - Added India Post statutory deadline window filtering (`RDDueWindowFilter`: `Due 15th` vs `Due EOM`) with live counters in `RDMonthlyOperationsController` and `RDMonthlyOperationsView`.
+  - Added Household / Customer Grouping (`groupByCustomer` toggle) in the Monthly Hub with customer summary headers (`N accounts • ₹X/mo`) and 1-tap `Select All` per household.
+  - Added Cross-Month Global Agent Float (`globalAgentFloatProvider` & `RDAgentFloatSummary`) computing `undepositedCashAmount` (`Cash in Hand`) and `pocketAdvancesAmount` (`PO Advances`) across all sparse installments.
 - **Dumb Widgets & Presentation Decomposition (Stage 3)**:
   - Added pure domain getters (`isCurrentMonthOverdue`, `hasPriorArrears`, `effectiveTotalPayable`, `hasDivergentPending`, `isFirstHalfDue`, `initialPaymentAmount`, `initialPaymentSplitMode`) to `RDMonthlyOperationItem`.
   - Moved `prepareLogPayment(RDMonthlyOperationItem)` into `RDMonthlyOperationsController` with zero-latency in-memory hydration fallback.

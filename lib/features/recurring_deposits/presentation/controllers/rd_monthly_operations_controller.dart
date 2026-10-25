@@ -32,11 +32,19 @@ enum RDMonthlyFilter {
   overdue,
 }
 
+enum RDDueWindowFilter {
+  all,
+  firstHalf,
+  secondHalf,
+}
+
 @freezed
 abstract class RDMonthlyOperationsState with _$RDMonthlyOperationsState {
   const factory RDMonthlyOperationsState({
     required DateTime selectedMonth,
     @Default(RDMonthlyFilter.all) RDMonthlyFilter selectedFilter,
+    @Default(RDDueWindowFilter.all) RDDueWindowFilter dueWindowFilter,
+    @Default(false) bool groupByCustomer,
     @Default('') String searchQuery,
     @Default(<String>{}) Set<String> selectedInstallmentIds,
     @Default(false) bool isSelectionMode,
@@ -54,6 +62,8 @@ class RDMonthlyKpiSummary {
   final int overdueCount;
   final int priorArrearsAccountsCount;
   final double priorArrearsAmount;
+  final int firstHalfCount;
+  final int secondHalfCount;
   final int totalCount;
 
   const RDMonthlyKpiSummary({
@@ -67,8 +77,26 @@ class RDMonthlyKpiSummary {
     this.overdueCount = 0,
     this.priorArrearsAccountsCount = 0,
     this.priorArrearsAmount = 0.0,
+    this.firstHalfCount = 0,
+    this.secondHalfCount = 0,
     this.totalCount = 0,
   });
+}
+
+class RDAgentFloatSummary {
+  final double undepositedCashAmount;
+  final int undepositedCashCount;
+  final double pocketAdvancesAmount;
+  final int pocketAdvancesCount;
+
+  const RDAgentFloatSummary({
+    this.undepositedCashAmount = 0.0,
+    this.undepositedCashCount = 0,
+    this.pocketAdvancesAmount = 0.0,
+    this.pocketAdvancesCount = 0,
+  });
+
+  bool get hasFloat => undepositedCashCount > 0 || pocketAdvancesCount > 0;
 }
 
 @riverpod
@@ -114,6 +142,17 @@ class RDMonthlyOperationsController extends _$RDMonthlyOperationsController {
 
   void setFilter(RDMonthlyFilter filter) {
     state = state.copyWith(selectedFilter: filter);
+  }
+
+  void setDueWindowFilter(RDDueWindowFilter filter) {
+    final next = state.dueWindowFilter == filter
+        ? RDDueWindowFilter.all
+        : filter;
+    state = state.copyWith(dueWindowFilter: next);
+  }
+
+  void toggleGroupByCustomer([bool? value]) {
+    state = state.copyWith(groupByCustomer: value ?? !state.groupByCustomer);
   }
 
   void setSearchQuery(String query) {
@@ -373,8 +412,16 @@ RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
   int overdueCount = 0;
   int priorArrearsAccountsCount = 0;
   double priorArrearsAmount = 0.0;
+  int firstHalfCount = 0;
+  int secondHalfCount = 0;
 
   for (final item in items) {
+    if (item.isFirstHalfDue) {
+      firstHalfCount++;
+    } else {
+      secondHalfCount++;
+    }
+
     if (item.isSettled) {
       settledAmount += item.installment.installmentAmount;
       settledCount++;
@@ -411,7 +458,47 @@ RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
     overdueCount: overdueCount,
     priorArrearsAccountsCount: priorArrearsAccountsCount,
     priorArrearsAmount: priorArrearsAmount,
+    firstHalfCount: firstHalfCount,
+    secondHalfCount: secondHalfCount,
     totalCount: items.length,
+  );
+}
+
+@riverpod
+RDAgentFloatSummary globalAgentFloat(Ref ref) {
+  final sparseAsync = ref.watch(rdAllSparseInstallmentsStreamProvider);
+  final sparse = sparseAsync.value ?? const <RDInstallment>[];
+  final deposits = ref.watch(recurringDepositsControllerProvider).value;
+
+  final closedRdIds = deposits == null
+      ? const <String>{}
+      : {
+          for (final d in deposits)
+            if (d.status == DepositStatus.closed) d.id,
+        };
+
+  double undepositedCashAmount = 0.0;
+  int undepositedCashCount = 0;
+  double pocketAdvancesAmount = 0.0;
+  int pocketAdvancesCount = 0;
+
+  for (final inst in sparse) {
+    if (closedRdIds.contains(inst.rdId)) continue;
+
+    if (inst.isInstallmentPaid && inst.poStatus != RDPoStatus.paid) {
+      undepositedCashAmount += inst.installmentAmount;
+      undepositedCashCount++;
+    } else if (!inst.isInstallmentPaid && inst.poStatus == RDPoStatus.paid) {
+      pocketAdvancesAmount += inst.outstandingPrincipal;
+      pocketAdvancesCount++;
+    }
+  }
+
+  return RDAgentFloatSummary(
+    undepositedCashAmount: undepositedCashAmount,
+    undepositedCashCount: undepositedCashCount,
+    pocketAdvancesAmount: pocketAdvancesAmount,
+    pocketAdvancesCount: pocketAdvancesCount,
   );
 }
 
@@ -423,17 +510,25 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> filteredMonthlyOperations(
   final now = ref.watch(clockProvider)();
   final items = await ref.watch(rawMonthlyOperationsStreamProvider.future);
   final filter = state.selectedFilter;
+  final dueWindow = state.dueWindowFilter;
   final searchQuery = state.searchQuery;
   final isFutureMonth = DateTime(state.selectedMonth.year, state.selectedMonth.month)
       .isAfter(DateTime(now.year, now.month));
 
   var filtered = items.where((item) {
-    return switch (filter) {
+    final matchesStatus = switch (filter) {
       RDMonthlyFilter.all => true,
       RDMonthlyFilter.toCollect => item.isCustomerPending,
       RDMonthlyFilter.readyForPo => item.isReadyForPo,
       RDMonthlyFilter.settled => item.isSettled,
       RDMonthlyFilter.overdue => isFutureMonth ? false : item.hasOverdueDebt(now),
+    };
+    if (!matchesStatus) return false;
+
+    return switch (dueWindow) {
+      RDDueWindowFilter.all => true,
+      RDDueWindowFilter.firstHalf => item.isFirstHalfDue,
+      RDDueWindowFilter.secondHalf => !item.isFirstHalfDue,
     };
   }).toList();
 
@@ -447,9 +542,16 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> filteredMonthlyOperations(
     }).toList();
   }
 
-  // Sort: Overdue first, then by serial number or account number
-  // Sort: Overdue debt first (prioritizing more prior overdue months), then standard order
   filtered.sort((a, b) {
+    if (state.groupByCustomer) {
+      final aName = (a.deposit.customerName ?? a.deposit.customerId).toLowerCase();
+      final bName = (b.deposit.customerName ?? b.deposit.customerId).toLowerCase();
+      final nameCmp = aName.compareTo(bName);
+      if (nameCmp != 0) return nameCmp;
+      final idCmp = a.deposit.customerId.compareTo(b.deposit.customerId);
+      if (idCmp != 0) return idCmp;
+    }
+
     final aOverdue = a.isOverdue(now) && a.isCustomerPending;
     final bOverdue = b.isOverdue(now) && b.isCustomerPending;
     if (aOverdue && !bOverdue) return -1;

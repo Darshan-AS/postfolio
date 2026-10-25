@@ -291,6 +291,15 @@ recurringDeposits:
       readyForPo: "Ready for PO (${count})"
       settled: "Settled (${count})"
       overdue: "Overdue (${count})"
+      due15th: "Due 15th (${count})"
+      dueEom: "Due EOM (${count})"
+      byCustomer: "By Customer"
+    customerGroup:
+      accountsSummary: "${count} accounts • ${amount}/mo"
+      selectGroup: "Select All"
+    agentFloat:
+      cashInHand: "Cash in Hand: ${amount} (${count})"
+      pocketAdvances: "PO Advances: ${amount} (${count})"
     priorArrearsBanner:
       message:
         one: "1 account has ${amount} in overdue arrears from past months."

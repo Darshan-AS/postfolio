@@ -10,6 +10,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_installment_mode
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_monthly_operation_item.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operation_card.dart';
@@ -1651,6 +1652,130 @@ void main() {
           expect(item.installment.installmentDate.month, 10);
           expect(item.priorOverdueCount, 0);
         }
+      },
+    );
+
+    test(
+      'setDueWindowFilter and toggleGroupByCustomer filter and sort items accurately',
+      () async {
+        final fakeRepo = FakeRecurringDepositRepository();
+        addTearDown(fakeRepo.dispose);
+
+        final fixedNow = DateTime(2026, 9, 20);
+        final container = ProviderContainer(
+          overrides: [
+            recurringDepositRepositoryProvider.overrideWithValue(fakeRepo),
+            clockProvider.overrideWithValue(() => fixedNow),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final sub = container.listen(
+          filteredMonthlyOperationsProvider,
+          (previous, next) {},
+        );
+        addTearDown(sub.close);
+
+        final notifier = container.read(
+          rDMonthlyOperationsControllerProvider.notifier,
+        );
+
+        notifier.setDueWindowFilter(RDDueWindowFilter.firstHalf);
+        expect(
+          container.read(rDMonthlyOperationsControllerProvider).dueWindowFilter,
+          RDDueWindowFilter.firstHalf,
+        );
+        final firstHalfItems = await container.read(
+          filteredMonthlyOperationsProvider.future,
+        );
+        for (final item in firstHalfItems) {
+          expect(item.isFirstHalfDue, isTrue);
+        }
+
+        // Toggling the same due window filter resets to all
+        notifier.setDueWindowFilter(RDDueWindowFilter.firstHalf);
+        expect(
+          container.read(rDMonthlyOperationsControllerProvider).dueWindowFilter,
+          RDDueWindowFilter.all,
+        );
+
+        notifier.toggleGroupByCustomer();
+        expect(
+          container.read(rDMonthlyOperationsControllerProvider).groupByCustomer,
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'globalAgentFloatProvider calculates undeposited cash in hand and pocket advances across months',
+      () {
+        final sparseRows = [
+          // 1. Customer paid, PO unpaid -> Cash in hand (₹2,000)
+          RDInstallment(
+            id: 'f-1',
+            rdId: 'rd-1',
+            installmentNo: 3,
+            installmentDate: DateTime(2026, 3, 1),
+            dueDate: DateTime(2026, 3, 15),
+            installmentAmount: 2000.0,
+            customerPaidAmount: 2000.0,
+            customerStatus: RDInstallmentStatus.fullyPaid,
+            poStatus: RDPoStatus.unpaid,
+          ),
+          // 2. Customer unpaid, PO paid -> Pocket advance (₹1,500)
+          RDInstallment(
+            id: 'f-2',
+            rdId: 'rd-2',
+            installmentNo: 5,
+            installmentDate: DateTime(2026, 5, 1),
+            dueDate: DateTime(2026, 5, 15),
+            installmentAmount: 1500.0,
+            customerPaidAmount: 0.0,
+            customerStatus: RDInstallmentStatus.unpaid,
+            poStatus: RDPoStatus.paid,
+            poPaidDate: DateTime(2026, 5, 10),
+          ),
+          // 3. Settled -> 0 float
+          RDInstallment(
+            id: 'f-3',
+            rdId: 'rd-1',
+            installmentNo: 4,
+            installmentDate: DateTime(2026, 4, 1),
+            dueDate: DateTime(2026, 4, 15),
+            installmentAmount: 2000.0,
+            customerPaidAmount: 2000.0,
+            customerStatus: RDInstallmentStatus.fullyPaid,
+            poStatus: RDPoStatus.paid,
+            poPaidDate: DateTime(2026, 4, 12),
+          ),
+        ];
+
+        final container = ProviderContainer(
+          overrides: [
+            rdAllSparseInstallmentsStreamProvider.overrideWith(
+              (ref) => Stream.value(sparseRows),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final sub = container.listen(
+          rdAllSparseInstallmentsStreamProvider,
+          (previous, next) {},
+        );
+        addTearDown(sub.close);
+
+        return container
+            .read(rdAllSparseInstallmentsStreamProvider.future)
+            .then((_) {
+              final floatSummary = container.read(globalAgentFloatProvider);
+              expect(floatSummary.hasFloat, isTrue);
+              expect(floatSummary.undepositedCashCount, 1);
+              expect(floatSummary.undepositedCashAmount, 2000.0);
+              expect(floatSummary.pocketAdvancesCount, 1);
+              expect(floatSummary.pocketAdvancesAmount, 1500.0);
+            });
       },
     );
   });

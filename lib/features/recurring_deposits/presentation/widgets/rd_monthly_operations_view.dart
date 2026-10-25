@@ -29,6 +29,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
     final opsState = ref.watch(rDMonthlyOperationsControllerProvider);
     final controller = ref.read(rDMonthlyOperationsControllerProvider.notifier);
     final kpis = ref.watch(monthlyOperationsKpiProvider);
+    final floatSummary = ref.watch(globalAgentFloatProvider);
     final asyncItems = ref.watch(filteredMonthlyOperationsProvider);
     final ops = t.recurringDeposits.monthlyOperations;
 
@@ -54,6 +55,11 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
               selectedFilter: opsState.selectedFilter,
               onFilterSelected: controller.setFilter,
             ),
+
+            if (floatSummary.hasFloat) ...[
+              AppSpacings.gapSm,
+              _buildAgentFloatStrip(context, floatSummary),
+            ],
 
             if (kpis.priorArrearsAccountsCount > 0) ...[
               AppSpacings.gapSm,
@@ -216,6 +222,33 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
             onSelected: (_) => controller.setFilter(RDMonthlyFilter.overdue),
           ),
           AppSpacings.gapXs,
+          FilterChip(
+            label: Text(filters.due15th(count: kpis.firstHalfCount)),
+            selected: state.dueWindowFilter == RDDueWindowFilter.firstHalf,
+            onSelected: (_) =>
+                controller.setDueWindowFilter(RDDueWindowFilter.firstHalf),
+          ),
+          AppSpacings.gapXs,
+          FilterChip(
+            label: Text(filters.dueEom(count: kpis.secondHalfCount)),
+            selected: state.dueWindowFilter == RDDueWindowFilter.secondHalf,
+            onSelected: (_) =>
+                controller.setDueWindowFilter(RDDueWindowFilter.secondHalf),
+          ),
+          AppSpacings.gapXs,
+          FilterChip(
+            avatar: HugeIcon(
+              icon: HugeIcons.strokeRoundedUserGroup,
+              size: AppDimensions.iconXs,
+              color: state.groupByCustomer
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            label: Text(filters.byCustomer),
+            selected: state.groupByCustomer,
+            onSelected: (_) => controller.toggleGroupByCustomer(),
+          ),
+          AppSpacings.gapXs,
           ActionChip(
             avatar: HugeIcon(
               icon: state.isSelectionMode
@@ -253,6 +286,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
     if (items.isEmpty) {
       final hasFilters =
           state.selectedFilter != RDMonthlyFilter.all ||
+          state.dueWindowFilter != RDDueWindowFilter.all ||
           state.searchQuery.isNotEmpty;
 
       return Center(
@@ -273,6 +307,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                 TextButton.icon(
                   onPressed: () {
                     controller.setFilter(RDMonthlyFilter.all);
+                    controller.setDueWindowFilter(RDDueWindowFilter.all);
                     controller.setSearchQuery('');
                   },
                   icon: const HugeIcon(
@@ -307,8 +342,13 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
           final isSelected = state.selectedInstallmentIds.contains(
             installment.id,
           );
+          final showCustomerHeader =
+              state.groupByCustomer &&
+              (index == 0 ||
+                  items[index - 1].deposit.customerId !=
+                      item.deposit.customerId);
 
-          return RDMonthlyOperationCard(
+          final cardWidget = RDMonthlyOperationCard(
             item: item,
             evaluationDate: evaluationDate,
             isSelected: isSelected,
@@ -465,7 +505,174 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
               }
             },
           );
+
+          if (!showCustomerHeader) return cardWidget;
+
+          final customerItems = items
+              .where((i) => i.deposit.customerId == item.deposit.customerId)
+              .toList();
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildCustomerGroupHeader(
+                context,
+                item.deposit.customerName ??
+                    t.recurringDeposits.depositNotFound,
+                customerItems,
+                controller,
+              ),
+              cardWidget,
+            ],
+          );
         },
+      ),
+    );
+  }
+
+  Widget _buildAgentFloatStrip(
+    BuildContext context,
+    RDAgentFloatSummary floatSummary,
+  ) {
+    final theme = Theme.of(context);
+    final floatStrings = t.recurringDeposits.monthlyOperations.agentFloat;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+      child: Row(
+        children: [
+          if (floatSummary.undepositedCashCount > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingSm,
+                vertical: AppDimensions.paddingXs,
+              ),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  HugeIcon(
+                    icon: HugeIcons.strokeRoundedBuilding03,
+                    size: AppDimensions.iconXs,
+                    color: theme.colorScheme.onSecondaryContainer,
+                  ),
+                  AppSpacings.gapXs,
+                  Text(
+                    floatStrings.cashInHand(
+                      amount: floatSummary.undepositedCashAmount
+                          .toRupeeFormat(),
+                      count: floatSummary.undepositedCashCount,
+                    ),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSecondaryContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (floatSummary.undepositedCashCount > 0 &&
+              floatSummary.pocketAdvancesCount > 0)
+            AppSpacings.gapSm,
+          if (floatSummary.pocketAdvancesCount > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingSm,
+                vertical: AppDimensions.paddingXs,
+              ),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.tertiaryContainer,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  HugeIcon(
+                    icon: HugeIcons.strokeRoundedFlash,
+                    size: AppDimensions.iconXs,
+                    color: theme.colorScheme.onTertiaryContainer,
+                  ),
+                  AppSpacings.gapXs,
+                  Text(
+                    floatStrings.pocketAdvances(
+                      amount: floatSummary.pocketAdvancesAmount.toRupeeFormat(),
+                      count: floatSummary.pocketAdvancesCount,
+                    ),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onTertiaryContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomerGroupHeader(
+    BuildContext context,
+    String customerName,
+    List<RDMonthlyOperationItem> customerItems,
+    RDMonthlyOperationsController controller,
+  ) {
+    final theme = Theme.of(context);
+    final groupStrings = t.recurringDeposits.monthlyOperations.customerGroup;
+    final totalMonthly = customerItems.fold<double>(
+      0.0,
+      (sum, i) => sum + i.deposit.installmentAmount,
+    );
+
+    return Container(
+      color: theme.colorScheme.surfaceContainerLow,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingLg,
+        vertical: AppDimensions.paddingXs,
+      ),
+      child: Row(
+        children: [
+          HugeIcon(
+            icon: HugeIcons.strokeRoundedUser,
+            size: AppDimensions.iconSm,
+            color: theme.colorScheme.primary,
+          ),
+          AppSpacings.gapXs,
+          Expanded(
+            child: Text(
+              '$customerName • ${groupStrings.accountsSummary(count: customerItems.length, amount: totalMonthly.toRupeeFormat())}',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingSm,
+              ),
+            ),
+            onPressed: () {
+              final ids = customerItems.map((i) => i.installment.id).toList();
+              controller.selectAll(ids);
+            },
+            child: Text(
+              groupStrings.selectGroup,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
