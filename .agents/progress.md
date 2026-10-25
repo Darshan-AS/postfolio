@@ -1,7 +1,10 @@
 # Project Progress
 
 ## Current State
-**RD Ledger Architecture Redesign (Option 1+ — Stage 1 Complete)**:
+**RD Ledger Architecture Redesign (Option 1+ — Stage 1 & Stage 2 Complete)**:
+- **Zero-Latency Monthly Hub Hydration & Deterministic Clock (Stage 2)**:
+  - Created injectable `clockProvider` (`lib/core/providers/clock_provider.dart`) replacing scattered `DateTime.now()` calls across `RDMonthlyOperationsController`, `RDMonthlyOperationsView`, and `RDMonthlyOperationCard` (`evaluationDate`).
+  - Refactored `rawMonthlyOperationsStream` in `RDMonthlyOperationsController` to hydrate monthly operations and prior carryover arrears in memory using `RDLedgerService.hydrateSchedule` over `rdAllSparseInstallmentsStreamProvider` and `recurringDepositsControllerProvider`, eliminating network roundtrips and skeleton loading flashes when switching months (`< Prev | Next >`).
 - **Sparse `rd_installments` + Normalized `rd_payment_allocations` (`20261025000000_sparse_rd_ledger_and_allocations.sql`)**:
   - Created `public.rd_payment_allocations` (`transaction_id REFERENCES rd_transactions(id) ON DELETE CASCADE`, `rd_id`, `installment_no`, `principal_amount`, `late_fee_amount`) and added `split_mode` to `rd_transactions` plus `installment_no` and `po_batch_id` to `rd_installments`.
   - Replaced procedural `FOR v_elem IN ... LOOP` updates in Postgres RPCs with set-based `upsert_and_prune_rd_installments`, automatically pruning untouched post-onboarding baseline rows and eliminating 60-row upfront insertions on RD creation/update.

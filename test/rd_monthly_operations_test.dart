@@ -3,6 +3,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
@@ -784,7 +785,7 @@ void main() {
           id: 'inst-normal',
           rdId: testDeposit.id,
           installmentDate: DateTime(2026, 9, 1),
-          dueDate: DateTime.now().add(const Duration(days: 10)), // Not overdue
+          dueDate: DateTime(2026, 9, 25), // Not overdue at Sep 20
           installmentAmount: 1000.0,
           customerStatus: RDInstallmentStatus.unpaid,
         );
@@ -799,6 +800,7 @@ void main() {
             home: Scaffold(
               body: RDMonthlyOperationCard(
                 item: normalItem,
+                evaluationDate: DateTime(2026, 9, 20),
                 isSelected: false,
                 isSelectionMode: false,
                 onTap: () {},
@@ -1172,7 +1174,7 @@ void main() {
           id: 'inst-partial-cust',
           rdId: testDeposit.id,
           installmentDate: DateTime(2026, 9, 1),
-          dueDate: DateTime.now().add(const Duration(days: 10)),
+          dueDate: DateTime(2026, 9, 25),
           installmentAmount: 1000.0,
           customerStatus: RDInstallmentStatus.partiallyPaid,
           customerPaidAmount: 400.0,
@@ -1189,6 +1191,7 @@ void main() {
             home: Scaffold(
               body: RDMonthlyOperationCard(
                 item: item,
+                evaluationDate: DateTime(2026, 9, 20),
                 isSelected: false,
                 isSelectionMode: false,
                 onTap: () {},
@@ -1352,7 +1355,7 @@ void main() {
           id: 'inst-zero-on-time',
           rdId: testDeposit.id,
           installmentDate: DateTime(2026, 9, 1),
-          dueDate: DateTime.now().add(const Duration(days: 10)),
+          dueDate: DateTime(2026, 9, 25),
           installmentAmount: 1000.0,
           customerStatus: RDInstallmentStatus.unpaid,
           customerPaidAmount: 0.0,
@@ -1369,6 +1372,7 @@ void main() {
             home: Scaffold(
               body: RDMonthlyOperationCard(
                 item: item,
+                evaluationDate: DateTime(2026, 9, 20),
                 isSelected: false,
                 isSelectionMode: false,
                 onTap: () {},
@@ -1600,5 +1604,54 @@ void main() {
         isEmpty,
       );
     });
+
+    test(
+      'hydrates monthly operations in memory using clockProvider and sparse installments stream',
+      () async {
+        final fakeRepo = FakeRecurringDepositRepository();
+        addTearDown(fakeRepo.dispose);
+
+        final fixedNow = DateTime(2026, 9, 20);
+        final container = ProviderContainer(
+          overrides: [
+            recurringDepositRepositoryProvider.overrideWithValue(fakeRepo),
+            clockProvider.overrideWithValue(() => fixedNow),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final state = container.read(rDMonthlyOperationsControllerProvider);
+        expect(state.selectedMonth, DateTime(2026, 9, 1));
+
+        final sub = container.listen(
+          rawMonthlyOperationsStreamProvider,
+          (previous, next) {},
+        );
+        addTearDown(sub.close);
+
+        final sepItems = await container.read(
+          rawMonthlyOperationsStreamProvider.future,
+        );
+        expect(sepItems, isNotEmpty);
+        for (final item in sepItems) {
+          expect(item.installment.installmentDate.year, 2026);
+          expect(item.installment.installmentDate.month, 9);
+        }
+
+        // Switching to next month (Oct 2026) hydrates in memory from sparse stream
+        container
+            .read(rDMonthlyOperationsControllerProvider.notifier)
+            .nextMonth();
+        final octItems = await container.read(
+          rawMonthlyOperationsStreamProvider.future,
+        );
+        expect(octItems, isNotEmpty);
+        for (final item in octItems) {
+          expect(item.installment.installmentDate.year, 2026);
+          expect(item.installment.installmentDate.month, 10);
+          expect(item.priorOverdueCount, 0);
+        }
+      },
+    );
   });
 }

@@ -2,11 +2,12 @@ import 'dart:collection';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
-import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_monthly_operation_item.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
@@ -80,7 +81,7 @@ class RDViewModeController extends _$RDViewModeController {
 class RDMonthlyOperationsController extends _$RDMonthlyOperationsController {
   @override
   RDMonthlyOperationsState build() {
-    final now = DateTime.now();
+    final now = ref.watch(clockProvider)();
     return RDMonthlyOperationsState(
       selectedMonth: DateTime(now.year, now.month, 1),
     );
@@ -105,7 +106,7 @@ class RDMonthlyOperationsController extends _$RDMonthlyOperationsController {
   }
 
   void resetToCurrentMonth() {
-    final now = DateTime.now();
+    final now = ref.read(clockProvider)();
     setMonth(DateTime(now.year, now.month, 1));
   }
 
@@ -155,15 +156,19 @@ class RDMonthlyOperationsController extends _$RDMonthlyOperationsController {
   Future<Result<void, String>> depositSelectedToPo(
     List<RDInstallment> installments,
   ) async {
+    final now = ref.read(clockProvider)();
     final toDeposit = installments
-        .where((i) => state.selectedInstallmentIds.contains(i.id))
-        .where((i) =>
-            state.selectedInstallmentIds.contains(i.id) &&
-            i.poStatus != RDPoStatus.paid)
-        .map((i) => i.copyWith(
-              poStatus: RDPoStatus.paid,
-              poPaidDate: DateTime.now(),
-            ))
+        .where(
+          (i) =>
+              state.selectedInstallmentIds.contains(i.id) &&
+              i.poStatus != RDPoStatus.paid,
+        )
+        .map(
+          (i) => i.copyWith(
+            poStatus: RDPoStatus.paid,
+            poPaidDate: now,
+          ),
+        )
         .toList();
 
     if (toDeposit.isEmpty) return const Success(null);
@@ -203,92 +208,103 @@ class RDMonthlyOperationsController extends _$RDMonthlyOperationsController {
 }
 
 @riverpod
-Stream<List<RDMonthlyOperationItem>> rawMonthlyOperationsStream(Ref ref) {
+Future<List<RDMonthlyOperationItem>> rawMonthlyOperationsStream(Ref ref) async {
   final selectedMonth = ref.watch(
     rDMonthlyOperationsControllerProvider,
   ).selectedMonth;
-  final repository = ref.watch(recurringDepositRepositoryProvider);
+  final now = ref.watch(clockProvider)();
+  final sparseFuture = ref.watch(
+    rdAllSparseInstallmentsStreamProvider.future,
+  );
+  final depositsFuture = ref.watch(recurringDepositsControllerProvider.future);
 
-  return repository.watchInstallmentsForMonth(selectedMonth).asyncMap((result) async {
-    final installments = switch (result) {
-      Success(value: final list) => list,
-      Failure(error: final err) => throw Exception(err),
-    };
+  final sparseInstallments = await sparseFuture;
+  final deposits = await depositsFuture;
 
-    final deposits = await ref.watch(recurringDepositsControllerProvider.future);
-    final depositMap = {for (final d in deposits) d.id: d};
-
-    final hasNullNames = deposits.any((d) => d.customerName == null);
-    final Map<String, String> customerMap;
-    if (hasNullNames) {
-      final customers = await ref.watch(customersControllerProvider.future);
+  final hasNullNames = deposits.any((d) => d.customerName == null);
+  Map<String, String> customerMap = const {};
+  if (hasNullNames) {
+    try {
+      final customers = await ref.read(customersControllerProvider.future);
       customerMap = {for (final c in customers) c.id: c.name};
-    } else {
+    } catch (_) {
       customerMap = const {};
     }
+  }
 
-    final now = DateTime.now();
-    final currentMonthStart = DateTime(now.year, now.month);
-    final selectedMonthStart = DateTime(selectedMonth.year, selectedMonth.month);
-    final isFutureMonth = selectedMonthStart.isAfter(currentMonthStart);
+  final currentMonthStart = DateTime(now.year, now.month);
+  final selectedMonthStart = DateTime(selectedMonth.year, selectedMonth.month);
+  final isFutureMonth = selectedMonthStart.isAfter(currentMonthStart);
 
-    final Map<String, List<RDInstallment>> priorUnpaidByRd;
-    if (isFutureMonth) {
-      priorUnpaidByRd = const {};
-    } else {
-      final startOfMonth = DateTime(selectedMonth.year, selectedMonth.month, 1);
-      final priorUnpaidResult = await repository.getUnpaidInstallmentsBefore(startOfMonth);
-      final priorUnpaid = switch (priorUnpaidResult) {
-        Success(value: final list) => list.where((p) => p.isOverdueAt(now)).toList(),
-        Failure() => <RDInstallment>[],
-      };
+  final sparseByRd = <String, List<RDInstallment>>{};
+  for (final inst in sparseInstallments) {
+    sparseByRd.putIfAbsent(inst.rdId, () => []).add(inst);
+  }
 
-      priorUnpaidByRd = <String, List<RDInstallment>>{};
-      for (final p in priorUnpaid) {
-        priorUnpaidByRd.putIfAbsent(p.rdId, () => []).add(p);
+  final items = <RDMonthlyOperationItem>[];
+  for (var deposit in deposits) {
+    if (deposit.status == DepositStatus.closed) continue;
+
+    if (deposit.customerName == null &&
+        customerMap.containsKey(deposit.customerId)) {
+      deposit = deposit.copyWith(customerName: customerMap[deposit.customerId]);
+    }
+
+    final rdSparse = sparseByRd[deposit.id] ?? const <RDInstallment>[];
+    final schedule = RDLedgerService.hydrateSchedule(
+      deposit: deposit,
+      sparseInstallments: rdSparse,
+    );
+
+    RDInstallment? targetInst;
+    final priors = <RDInstallment>[];
+    for (final inst in schedule) {
+      final instMonth = DateTime(
+        inst.installmentDate.year,
+        inst.installmentDate.month,
+      );
+      if (instMonth.year == selectedMonthStart.year &&
+          instMonth.month == selectedMonthStart.month) {
+        targetInst = inst;
+      } else if (!isFutureMonth &&
+          instMonth.isBefore(selectedMonthStart) &&
+          !inst.isInstallmentPaid &&
+          inst.isOverdueAt(now)) {
+        priors.add(inst);
       }
     }
 
-    final items = <RDMonthlyOperationItem>[];
-    for (final inst in installments) {
-      var deposit = depositMap[inst.rdId];
-      if (deposit == null) continue;
+    if (targetInst == null) continue;
 
-      if (deposit.customerName == null && customerMap.containsKey(deposit.customerId)) {
-        deposit = deposit.copyWith(customerName: customerMap[deposit.customerId]);
-      }
+    final priorCount = priors.length;
+    final priorAmount = priors.fold<double>(
+      0.0,
+      (sum, p) => sum + p.outstandingAmountAt(now),
+    );
+    final priorFees = priors.fold<double>(
+      0.0,
+      (sum, p) => sum + p.outstandingLateFeeAt(now),
+    );
 
-      if (deposit.status == DepositStatus.closed) continue;
-
-      final priors = priorUnpaidByRd[inst.rdId] ?? const [];
-      final priorCount = priors.length;
-      final priorAmount = priors.fold<double>(
-        0.0,
-        (sum, p) => sum + p.outstandingAmountAt(now),
-      );
-      final priorFees = priors.fold<double>(
-        0.0,
-        (sum, p) => sum + p.outstandingLateFeeAt(now),
-      );
-
-      items.add(RDMonthlyOperationItem(
+    items.add(
+      RDMonthlyOperationItem(
         deposit: deposit,
-        installment: inst,
+        installment: targetInst,
         priorOverdueCount: priorCount,
         priorOverdueAmount: priorAmount,
         priorOverdueFee: priorFees,
-      ));
-    }
+      ),
+    );
+  }
 
-    return items;
-  });
+  return items;
 }
 
 @riverpod
 RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
   final asyncItems = ref.watch(rawMonthlyOperationsStreamProvider);
   final items = asyncItems.value ?? const [];
-  final now = DateTime.now();
+  final now = ref.watch(clockProvider)();
   final selectedMonth = ref.watch(
     rDMonthlyOperationsControllerProvider,
   ).selectedMonth;
@@ -352,11 +368,11 @@ RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
 Future<UnmodifiableListView<RDMonthlyOperationItem>> filteredMonthlyOperations(
   Ref ref,
 ) async {
-  final items = await ref.watch(rawMonthlyOperationsStreamProvider.future);
   final state = ref.watch(rDMonthlyOperationsControllerProvider);
+  final now = ref.watch(clockProvider)();
+  final items = await ref.watch(rawMonthlyOperationsStreamProvider.future);
   final filter = state.selectedFilter;
   final searchQuery = state.searchQuery;
-  final now = DateTime.now();
   final isFutureMonth = DateTime(state.selectedMonth.year, state.selectedMonth.month)
       .isAfter(DateTime(now.year, now.month));
 

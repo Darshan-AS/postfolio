@@ -21,6 +21,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
   final VoidCallback? onAdvanceToPo;
   final VoidCallback? onRevertPo;
   final VoidCallback? onToggleLateFeeWaiver;
+  final DateTime? evaluationDate;
 
   const RDMonthlyOperationCard({
     super.key,
@@ -35,6 +36,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
     this.onAdvanceToPo,
     this.onRevertPo,
     this.onToggleLateFeeWaiver,
+    this.evaluationDate,
   });
 
   static Widget skeleton() {
@@ -71,7 +73,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
     final theme = Theme.of(context);
     final ops = t.recurringDeposits.monthlyOperations;
     final card = ops.card;
-    final now = DateTime.now();
+    final now = evaluationDate ?? DateTime.now();
 
     final inst = item.installment;
     final deposit = item.deposit;
@@ -156,7 +158,12 @@ class RDMonthlyOperationCard extends StatelessWidget {
               runSpacing: AppDimensions.paddingXs,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                _buildDueDateText(context, inst.dueDate, isCurrentMonthOverdue),
+                _buildDueDateText(
+                  context,
+                  inst.dueDate,
+                  isCurrentMonthOverdue,
+                  now,
+                ),
                 if (hasPriorArrears)
                   _buildPriorOverdueBadge(
                     context,
@@ -488,10 +495,10 @@ class RDMonthlyOperationCard extends StatelessWidget {
     BuildContext context,
     DateTime dueDate,
     bool isOverdue,
+    DateTime now,
   ) {
     final theme = Theme.of(context);
     final card = t.recurringDeposits.monthlyOperations.card;
-    final now = DateTime.now();
 
     if (isOverdue) {
       final days = now.difference(dueDate).inDays;

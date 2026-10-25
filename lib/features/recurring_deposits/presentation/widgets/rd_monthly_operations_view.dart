@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -138,7 +139,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
             // Items List
             Expanded(
               child: switch (asyncItems) {
-                AsyncData(:final value) => _buildDataList(
+                AsyncValue(:final value?) => _buildDataList(
                   context,
                   ref,
                   value,
@@ -147,8 +148,10 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                 ),
                 AsyncError(:final error) => ErrorStateView(
                   message: error.toString(),
-                  onRetry: () =>
-                      ref.invalidate(rawMonthlyOperationsStreamProvider),
+                  onRetry: () {
+                    ref.invalidate(rdAllSparseInstallmentsStreamProvider);
+                    ref.invalidate(rawMonthlyOperationsStreamProvider);
+                  },
                 ),
                 _ => _buildLoadingList(),
               },
@@ -287,9 +290,11 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
     }
 
     const bottomPadding = AppDimensions.listBottomPaddingFAB;
+    final evaluationDate = ref.watch(clockProvider)();
 
     return RefreshIndicator(
       onRefresh: () async {
+        ref.invalidate(rdAllSparseInstallmentsStreamProvider);
         ref.invalidate(rawMonthlyOperationsStreamProvider);
       },
       child: ListView.separated(
@@ -306,6 +311,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
 
           return RDMonthlyOperationCard(
             item: item,
+            evaluationDate: evaluationDate,
             isSelected: isSelected,
             isSelectionMode: state.isSelectionMode,
             onSelect: (val) => controller.toggleSelection(installment.id),
@@ -338,7 +344,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                 return;
               }
 
-              final now = DateTime.now();
+              final now = ref.read(clockProvider)();
               final isFeeOnly = item.isFeePending;
               final amount = isFeeOnly
                   ? item.totalDefaultFee(now)
@@ -369,7 +375,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
               final ledger = ref.read(rDLedgerControllerProvider.notifier);
               final updated = installment.copyWith(
                 poStatus: RDPoStatus.paid,
-                poPaidDate: DateTime.now(),
+                poPaidDate: ref.read(clockProvider)(),
               );
               final res = await ledger.recordPoPayments(
                 installments: [updated],
@@ -411,7 +417,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                 final ledger = ref.read(rDLedgerControllerProvider.notifier);
                 final updated = installment.copyWith(
                   poStatus: RDPoStatus.paid,
-                  poPaidDate: DateTime.now(),
+                  poPaidDate: ref.read(clockProvider)(),
                 );
                 final res = await ledger.recordPoPayments(
                   installments: [updated],
@@ -477,7 +483,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
               }
             },
             onToggleLateFeeWaiver: () async {
-              final feeAmount = item.totalDefaultFee(DateTime.now());
+              final feeAmount = item.totalDefaultFee(ref.read(clockProvider)());
               final confirmed = await showAdaptiveDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
