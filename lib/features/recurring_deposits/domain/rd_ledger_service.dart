@@ -1,4 +1,5 @@
 import 'package:uuid/uuid.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_payment_allocation_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -12,6 +13,38 @@ class RDLedgerService {
       Namespace.url.value,
       'postfolio:rd:$rdId:inst:$installmentNo',
     );
+  }
+
+  /// Computes the chronological `initialPaidInstallments` onboarding baseline
+  /// for legacy or migrated RD accounts where prior monthly transactions were not tracked.
+  /// - Preserves [explicitInitialPaid] when already > 0.
+  /// - Marks all installments settled when [status] is [DepositStatus.closed].
+  /// - Otherwise counts elapsed calendar months strictly prior to the [asOf] month,
+  ///   leaving the [asOf] month as the active operational installment.
+  static int calculateInitialPaidInstallments({
+    required DateTime startDate,
+    required int termYears,
+    required int termMonths,
+    DepositStatus status = DepositStatus.active,
+    int? explicitInitialPaid,
+    DateTime? asOf,
+  }) {
+    final int totalMonths = termYears * 12 + termMonths;
+    if (totalMonths <= 0) return 0;
+
+    if (explicitInitialPaid != null && explicitInitialPaid > 0) {
+      return explicitInitialPaid.clamp(0, totalMonths);
+    }
+
+    if (status == DepositStatus.closed) {
+      return totalMonths;
+    }
+
+    final evalDate = asOf ?? DateTime.now();
+    final elapsedMonths =
+        (evalDate.year - startDate.year) * 12 + (evalDate.month - startDate.month);
+
+    return elapsedMonths.clamp(0, totalMonths);
   }
 
   /// Resolves the 1-based installment sequence number (1..totalMonths) for a given calendar month.

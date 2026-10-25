@@ -607,5 +607,56 @@ void main() {
       expect(diff.length, 1);
       expect(diff.first.installmentNo, 3);
     });
+
+    test('calculateInitialPaidInstallments computes chronological baseline accurately', () {
+      // Active RD started Jan 10, 2025 evaluated on Oct 25, 2026 -> 21 prior months (Jan 2025..Sep 2026)
+      expect(
+        RDLedgerService.calculateInitialPaidInstallments(
+          startDate: DateTime(2025, 1, 10),
+          termYears: 5,
+          termMonths: 0,
+          status: DepositStatus.active,
+          asOf: DateTime(2026, 10, 25),
+        ),
+        21,
+      );
+
+      // Closed RD always marks entire tenure settled
+      expect(
+        RDLedgerService.calculateInitialPaidInstallments(
+          startDate: DateTime(2025, 1, 10),
+          termYears: 5,
+          termMonths: 0,
+          status: DepositStatus.closed,
+          asOf: DateTime(2026, 10, 25),
+        ),
+        60,
+      );
+
+      // Explicit initialPaidInstallments > 0 is preserved and clamped to totalMonths
+      expect(
+        RDLedgerService.calculateInitialPaidInstallments(
+          startDate: DateTime(2025, 1, 10),
+          termYears: 5,
+          termMonths: 0,
+          status: DepositStatus.active,
+          explicitInitialPaid: 14,
+          asOf: DateTime(2026, 10, 25),
+        ),
+        14,
+      );
+
+      // RD opened in the current month or future has 0 prior paid installments
+      expect(
+        RDLedgerService.calculateInitialPaidInstallments(
+          startDate: DateTime(2026, 10, 5),
+          termYears: 5,
+          termMonths: 0,
+          status: DepositStatus.active,
+          asOf: DateTime(2026, 10, 25),
+        ),
+        0,
+      );
+    });
   });
 }

@@ -1,7 +1,10 @@
 # Project Progress
 
 ## Current State
-**RD Ledger Architecture Redesign (Option 1+ — Stages 1–4 Complete)**:
+**RD Ledger Architecture Redesign (Option 1+ — Stages 1–4 & Phase 5 Complete)**:
+- **Phase 5 Migration Script Backfill (`run_supabase_migration.dart` & `RDLedgerService`)**:
+  - Added `RDLedgerService.calculateInitialPaidInstallments` to compute the chronological `initial_paid_installments` onboarding baseline for legacy/migrated RD accounts (preserving explicit overrides, settling all months for closed RDs, and counting elapsed prior calendar months for active RDs).
+  - Updated `lib/run_supabase_migration.dart` to backfill `'initial_paid_installments'` on `recurring_deposits` during Firestore-to-Supabase migration, leveraging Option 1+ sparse hydration so zero dummy rows need to be inserted into `rd_installments`.
 - **Post Office Agent Workflow Enhancements (Stage 4)**:
   - Added India Post statutory deadline window filtering (`RDDueWindowFilter`: `Due 15th` vs `Due EOM`) with live counters in `RDMonthlyOperationsController` and `RDMonthlyOperationsView`.
   - Added Household / Customer Grouping (`groupByCustomer` toggle) in the Monthly Hub with customer summary headers (`N accounts • ₹X/mo`) and 1-tap `Select All` per household.
