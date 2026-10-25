@@ -106,13 +106,20 @@ void main() {
     final updatedDbData = await client.from('one_time_deposits').select().eq('id', otdId).single();
     expect((updatedDbData['principal_amount'] as num).toDouble(), 100000.0);
 
-    // Watch OTDs
+    // Watch OTDs list (lightweight list projection omits nominees per P2.4)
     final watchResult = await otdRepo.watchOneTimeDeposits().first;
     expect(watchResult, isA<Success<List<OneTimeDeposit>, String>>());
     final watchedList = (watchResult as Success<List<OneTimeDeposit>, String>).value;
     final watchedOtd = watchedList.firstWhere((o) => o.id == otdId);
     expect(watchedOtd.principalAmount, 100000.0);
-    expect(watchedOtd.nominees.length, 1);
-    expect(watchedOtd.nominees.first.name, 'OTD Nominee');
+    expect(watchedOtd.nominees, isEmpty);
+
+    // Watch single OTD by ID (full detail projection includes nominees)
+    final detailResult = await otdRepo.watchOneTimeDepositById(otdId).first;
+    expect(detailResult, isA<Success<OneTimeDeposit?, String>>());
+    final detailOtd = (detailResult as Success<OneTimeDeposit?, String>).value!;
+    expect(detailOtd.principalAmount, 100000.0);
+    expect(detailOtd.nominees.length, 1);
+    expect(detailOtd.nominees.first.name, 'OTD Nominee');
   });
 }
