@@ -100,4 +100,37 @@ abstract class RDMonthlyOperationItem with _$RDMonthlyOperationItem {
         totalDefaultFee(now) > 0 ||
         installment.lateFee > 0;
   }
+
+  /// Whether this specific month's installment is currently overdue and pending from customer.
+  bool isCurrentMonthOverdue(DateTime now) =>
+      !isUpcoming(now) && isOverdue(now) && isCustomerPending;
+
+  /// Whether there are prior unpaid overdue installments carried over into this active month.
+  bool hasPriorArrears(DateTime now) =>
+      !isUpcoming(now) && priorOverdueCount > 0;
+
+  /// Effective total payable displayed on the operation card (includes prior arrears when active).
+  double effectiveTotalPayable(DateTime now) =>
+      hasPriorArrears(now) ? totalOutstandingPayable(now) : totalPayable(now);
+
+  /// Whether the pending customer balance diverges from the standard monthly installment amount.
+  bool hasDivergentPending(DateTime now) =>
+      isCustomerPending &&
+      (effectiveTotalPayable(now) != deposit.installmentAmount ||
+          hasPriorArrears(now) ||
+          totalDefaultFee(now) > 0);
+
+  /// Whether this account falls into the 1st-to-15th India Post statutory deadline window.
+  bool get isFirstHalfDue => installment.dueDate.day <= 15;
+
+  /// Prefilled payment amount when logging a customer payment from the Monthly Hub.
+  double initialPaymentAmount(DateTime now) =>
+      isFeePending ? totalDefaultFee(now) : totalOutstandingPayable(now);
+
+  /// Prefilled payment split mode when logging a customer payment from the Monthly Hub.
+  PaymentSplitMode? initialPaymentSplitMode(DateTime now) => isFeePending
+      ? PaymentSplitMode.feesOnly
+      : (hasOverdueDebt(now) && totalDefaultFee(now) > 0
+            ? PaymentSplitMode.includeFees
+            : null);
 }

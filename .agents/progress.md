@@ -1,7 +1,11 @@
 # Project Progress
 
 ## Current State
-**RD Ledger Architecture Redesign (Option 1+ — Stage 1 & Stage 2 Complete)**:
+**RD Ledger Architecture Redesign (Option 1+ — Stages 1–3 Complete)**:
+- **Dumb Widgets & Presentation Decomposition (Stage 3)**:
+  - Added pure domain getters (`isCurrentMonthOverdue`, `hasPriorArrears`, `effectiveTotalPayable`, `hasDivergentPending`, `isFirstHalfDue`, `initialPaymentAmount`, `initialPaymentSplitMode`) to `RDMonthlyOperationItem`.
+  - Moved `prepareLogPayment(RDMonthlyOperationItem)` into `RDMonthlyOperationsController` with zero-latency in-memory hydration fallback.
+  - Extracted `RDCheckpointsRow` and `RDOperationActionButton` in `RDMonthlyOperationCard` and consolidated 5 confirmation dialogs in `RDMonthlyOperationsView` using `AppDialogs.confirmAction`.
 - **Zero-Latency Monthly Hub Hydration & Deterministic Clock (Stage 2)**:
   - Created injectable `clockProvider` (`lib/core/providers/clock_provider.dart`) replacing scattered `DateTime.now()` calls across `RDMonthlyOperationsController`, `RDMonthlyOperationsView`, and `RDMonthlyOperationCard` (`evaluationDate`).
   - Refactored `rawMonthlyOperationsStream` in `RDMonthlyOperationsController` to hydrate monthly operations and prior carryover arrears in memory using `RDLedgerService.hydrateSchedule` over `rdAllSparseInstallmentsStreamProvider` and `recurringDepositsControllerProvider`, eliminating network roundtrips and skeleton loading flashes when switching months (`< Prev | Next >`).

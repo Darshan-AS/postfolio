@@ -5,6 +5,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
+import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
@@ -12,6 +13,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_monthly_operatio
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'rd_monthly_operations_controller.freezed.dart';
@@ -204,6 +206,55 @@ class RDMonthlyOperationsController extends _$RDMonthlyOperationsController {
       clearSelection();
     }
     return result;
+  }
+
+  Future<
+    Result<
+      ({
+        List<RDInstallment> schedule,
+        double initialAmount,
+        PaymentSplitMode? splitMode,
+      }),
+      String
+    >
+  >
+  prepareLogPayment(RDMonthlyOperationItem item) async {
+    final cachedSparse = ref.read(rdAllSparseInstallmentsStreamProvider).value;
+    final List<RDInstallment> schedule;
+
+    if (cachedSparse != null) {
+      final rdSparse = cachedSparse
+          .where((i) => i.rdId == item.deposit.id)
+          .toList();
+      schedule = RDLedgerService.hydrateSchedule(
+        deposit: item.deposit,
+        sparseInstallments: rdSparse,
+      );
+    } else {
+      final repository = ref.read(recurringDepositRepositoryProvider);
+      final scheduleResult = await repository.getRDInstallments(
+        item.deposit.id,
+      );
+      switch (scheduleResult) {
+        case Failure(error: final err):
+          return Failure(err);
+        case Success(value: final list) when list.isEmpty:
+          return Failure(t.recurringDeposits.depositNotFound);
+        case Success(value: final list):
+          schedule = list;
+      }
+    }
+
+    if (schedule.isEmpty) {
+      return Failure(t.recurringDeposits.depositNotFound);
+    }
+
+    final now = ref.read(clockProvider)();
+    return Success((
+      schedule: schedule,
+      initialAmount: item.initialPaymentAmount(now),
+      splitMode: item.initialPaymentSplitMode(now),
+    ));
   }
 }
 

@@ -55,7 +55,7 @@ class AppDialogs {
         content: Text(content),
         actions: [
           TextButton(
-            onPressed: () => ctx.pop(false),
+            onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(t.common.cancel),
           ),
           FilledButton.tonal(
@@ -66,7 +66,7 @@ class AppDialogs {
                   confirmForegroundColor ??
                   theme.colorScheme.onPrimaryContainer,
             ),
-            onPressed: () => ctx.pop(true),
+            onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(confirmText ?? t.common.ok),
           ),
         ],

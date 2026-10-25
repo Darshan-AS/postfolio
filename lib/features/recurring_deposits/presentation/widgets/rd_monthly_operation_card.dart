@@ -71,33 +71,18 @@ class RDMonthlyOperationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ops = t.recurringDeposits.monthlyOperations;
-    final card = ops.card;
+    final card = t.recurringDeposits.monthlyOperations.card;
     final now = evaluationDate ?? DateTime.now();
 
     final inst = item.installment;
     final deposit = item.deposit;
 
-    final currentMonthStart = DateTime(now.year, now.month);
-    final targetMonthStart = DateTime(
-      inst.installmentDate.year,
-      inst.installmentDate.month,
-    );
-    final isFutureMonth = targetMonthStart.isAfter(currentMonthStart);
-
-    final hasOverdueDebt = !isFutureMonth && item.hasOverdueDebt(now);
-    final isCurrentMonthOverdue =
-        !isFutureMonth && item.isOverdue(now) && item.isCustomerPending;
-    final hasPriorArrears = !isFutureMonth && item.priorOverdueCount > 0;
+    final hasOverdueDebt = item.hasOverdueDebt(now);
+    final isCurrentMonthOverdue = item.isCurrentMonthOverdue(now);
+    final hasPriorArrears = item.hasPriorArrears(now);
     final totalDefaultFee = item.totalDefaultFee(now);
-    final totalPayable = hasPriorArrears
-        ? item.totalOutstandingPayable(now)
-        : item.totalPayable(now);
-    final hasDivergentPending =
-        item.isCustomerPending &&
-        (totalPayable != deposit.installmentAmount ||
-            hasPriorArrears ||
-            totalDefaultFee > 0);
+    final totalPayable = item.effectiveTotalPayable(now);
+    final hasDivergentPending = item.hasDivergentPending(now);
 
     // Visual urgency indicator bar along the left edge
     Color? indicatorColor;
@@ -110,13 +95,6 @@ class RDMonthlyOperationCard extends StatelessWidget {
     } else if (item.isSettled) {
       indicatorColor = theme.colorScheme.primary;
     }
-
-    final pendingBtnBg = hasPriorArrears
-        ? theme.colorScheme.error
-        : theme.colorScheme.primary;
-    final pendingBtnFg = hasPriorArrears
-        ? theme.colorScheme.onError
-        : theme.colorScheme.onPrimary;
 
     final serialAccount = (deposit.serialNo?.isNotEmpty ?? false)
         ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
@@ -173,11 +151,11 @@ class RDMonthlyOperationCard extends StatelessWidget {
               ],
             ),
             AppSpacings.gapXs,
-            _buildCheckpointsRow(
-              context,
-              now,
-              isCurrentMonthOverdue,
-              hasOverdueDebt,
+            RDCheckpointsRow(
+              item: item,
+              evaluationDate: now,
+              isCurrentMonthOverdue: isCurrentMonthOverdue,
+              hasOverdueDebt: hasOverdueDebt,
             ),
           ],
         ),
@@ -199,7 +177,6 @@ class RDMonthlyOperationCard extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-
               const SizedBox(width: 2),
               Text(
                 card.monthlySuffix,
@@ -231,172 +208,12 @@ class RDMonthlyOperationCard extends StatelessWidget {
             ),
           ],
           AppSpacings.gapXs,
-          if (item.isPoAdvanced)
-            FilledButton.tonalIcon(
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.tertiaryContainer,
-                foregroundColor: theme.colorScheme.onTertiaryContainer,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingSm,
-                  vertical: AppDimensions.paddingXs,
-                ),
-                visualDensity: VisualDensity.compact,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              onPressed: onLogPayment,
-              icon: HugeIcon(
-                icon: HugeIcons.strokeRoundedCoins01,
-                size: AppDimensions.iconXs,
-                color: theme.colorScheme.onTertiaryContainer,
-              ),
-              label: Text(
-                card.collectPayment(amount: totalPayable.toRupeeFormat()),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onTertiaryContainer,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            )
-          else if (item.isFeePending)
-            FilledButton.tonalIcon(
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.errorContainer,
-                foregroundColor: theme.colorScheme.onErrorContainer,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingSm,
-                  vertical: AppDimensions.paddingXs,
-                ),
-                visualDensity: VisualDensity.compact,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              onPressed: onLogPayment,
-              icon: HugeIcon(
-                icon: HugeIcons.strokeRoundedFlash,
-                size: AppDimensions.iconXs,
-                color: theme.colorScheme.onErrorContainer,
-              ),
-              label: Text(
-                card.collectFee(amount: totalDefaultFee.toRupeeFormat()),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onErrorContainer,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            )
-          else if (item.isCustomerPending)
-            if (isFutureMonth)
-              FilledButton.tonalIcon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  foregroundColor: theme.colorScheme.onPrimaryContainer,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingSm,
-                    vertical: AppDimensions.paddingXs,
-                  ),
-                  visualDensity: VisualDensity.compact,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                onPressed: onLogPayment,
-                icon: HugeIcon(
-                  icon: HugeIcons.strokeRoundedCoins01,
-                  size: AppDimensions.iconXs,
-                  color: theme.colorScheme.onPrimaryContainer,
-                ),
-                label: Text(
-                  card.advancePay,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              )
-            else
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: pendingBtnBg,
-                  foregroundColor: pendingBtnFg,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingSm,
-                    vertical: AppDimensions.paddingXs,
-                  ),
-                  visualDensity: VisualDensity.compact,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                onPressed: onLogPayment,
-                icon: HugeIcon(
-                  icon: hasPriorArrears
-                      ? HugeIcons.strokeRoundedAlertCircle
-                      : HugeIcons.strokeRoundedCoins01,
-                  size: AppDimensions.iconXs,
-                  color: pendingBtnFg,
-                ),
-                label: Text(
-                  hasPriorArrears
-                      ? card.payAll(amount: totalPayable.toRupeeFormat())
-                      : card.logPayment,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: pendingBtnFg,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              )
-          else if (item.isReadyForPo)
-            FilledButton.tonalIcon(
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.secondaryContainer,
-                foregroundColor: theme.colorScheme.onSecondaryContainer,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingSm,
-                  vertical: AppDimensions.paddingXs,
-                ),
-                visualDensity: VisualDensity.compact,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              onPressed: onDepositToPo,
-              icon: HugeIcon(
-                icon: HugeIcons.strokeRoundedBuilding03,
-                size: AppDimensions.iconXs,
-                color: theme.colorScheme.onSecondaryContainer,
-              ),
-              label: Text(
-                card.depositToPo,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSecondaryContainer,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            )
-          else
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingSm,
-                vertical: AppDimensions.paddingXs,
-              ),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withValues(
-                  alpha: 0.5,
-                ),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  HugeIcon(
-                    icon: HugeIcons.strokeRoundedCheckmarkCircle02,
-                    size: AppDimensions.iconXs,
-                    color: theme.colorScheme.primary,
-                  ),
-                  AppSpacings.gapXs,
-                  Text(
-                    t.recurringDeposits.monthlyOperations.kpis.settled,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          RDOperationActionButton(
+            item: item,
+            evaluationDate: now,
+            onLogPayment: onLogPayment,
+            onDepositToPo: onDepositToPo,
+          ),
         ],
       ),
       actions: [
@@ -465,11 +282,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
       fgColor = theme.colorScheme.onSurfaceVariant;
     }
 
-    final diffYears = inst.installmentDate.year - item.deposit.startDate.year;
-    final diffMonths =
-        inst.installmentDate.month - item.deposit.startDate.month;
-    final monthNum = diffYears * 12 + diffMonths + 1;
-    final label = monthNum > 0 ? '#$monthNum' : '#1';
+    final label = '#${item.installmentNumber}';
 
     return CircleAvatar(
       radius: AppDimensions.radiusXxl,
@@ -581,36 +394,242 @@ class RDMonthlyOperationCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildCheckpointsRow(
-    BuildContext context,
-    DateTime now,
-    bool isCurrentMonthOverdue,
-    bool hasOverdueDebt,
-  ) {
+class RDOperationActionButton extends StatelessWidget {
+  final RDMonthlyOperationItem item;
+  final DateTime evaluationDate;
+  final VoidCallback onLogPayment;
+  final VoidCallback onDepositToPo;
+
+  const RDOperationActionButton({
+    super.key,
+    required this.item,
+    required this.evaluationDate,
+    required this.onLogPayment,
+    required this.onDepositToPo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final card = t.recurringDeposits.monthlyOperations.card;
+    final isFutureMonth = item.isUpcoming(evaluationDate);
+    final hasPriorArrears = item.hasPriorArrears(evaluationDate);
+    final totalPayable = item.effectiveTotalPayable(evaluationDate);
+    final totalDefaultFee = item.totalDefaultFee(evaluationDate);
+
+    if (item.isPoAdvanced) {
+      return FilledButton.tonalIcon(
+        style: FilledButton.styleFrom(
+          backgroundColor: theme.colorScheme.tertiaryContainer,
+          foregroundColor: theme.colorScheme.onTertiaryContainer,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingSm,
+            vertical: AppDimensions.paddingXs,
+          ),
+          visualDensity: VisualDensity.compact,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        onPressed: onLogPayment,
+        icon: HugeIcon(
+          icon: HugeIcons.strokeRoundedCoins01,
+          size: AppDimensions.iconXs,
+          color: theme.colorScheme.onTertiaryContainer,
+        ),
+        label: Text(
+          card.collectPayment(amount: totalPayable.toRupeeFormat()),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onTertiaryContainer,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    if (item.isFeePending) {
+      return FilledButton.tonalIcon(
+        style: FilledButton.styleFrom(
+          backgroundColor: theme.colorScheme.errorContainer,
+          foregroundColor: theme.colorScheme.onErrorContainer,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingSm,
+            vertical: AppDimensions.paddingXs,
+          ),
+          visualDensity: VisualDensity.compact,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        onPressed: onLogPayment,
+        icon: HugeIcon(
+          icon: HugeIcons.strokeRoundedFlash,
+          size: AppDimensions.iconXs,
+          color: theme.colorScheme.onErrorContainer,
+        ),
+        label: Text(
+          card.collectFee(amount: totalDefaultFee.toRupeeFormat()),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onErrorContainer,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    if (item.isCustomerPending) {
+      if (isFutureMonth) {
+        return FilledButton.tonalIcon(
+          style: FilledButton.styleFrom(
+            backgroundColor: theme.colorScheme.primaryContainer,
+            foregroundColor: theme.colorScheme.onPrimaryContainer,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingSm,
+              vertical: AppDimensions.paddingXs,
+            ),
+            visualDensity: VisualDensity.compact,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          onPressed: onLogPayment,
+          icon: HugeIcon(
+            icon: HugeIcons.strokeRoundedCoins01,
+            size: AppDimensions.iconXs,
+            color: theme.colorScheme.onPrimaryContainer,
+          ),
+          label: Text(
+            card.advancePay,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onPrimaryContainer,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
+      }
+
+      final pendingBtnBg = hasPriorArrears
+          ? theme.colorScheme.error
+          : theme.colorScheme.primary;
+      final pendingBtnFg = hasPriorArrears
+          ? theme.colorScheme.onError
+          : theme.colorScheme.onPrimary;
+
+      return FilledButton.icon(
+        style: FilledButton.styleFrom(
+          backgroundColor: pendingBtnBg,
+          foregroundColor: pendingBtnFg,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingSm,
+            vertical: AppDimensions.paddingXs,
+          ),
+          visualDensity: VisualDensity.compact,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        onPressed: onLogPayment,
+        icon: HugeIcon(
+          icon: hasPriorArrears
+              ? HugeIcons.strokeRoundedAlertCircle
+              : HugeIcons.strokeRoundedCoins01,
+          size: AppDimensions.iconXs,
+          color: pendingBtnFg,
+        ),
+        label: Text(
+          hasPriorArrears
+              ? card.payAll(amount: totalPayable.toRupeeFormat())
+              : card.logPayment,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: pendingBtnFg,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    if (item.isReadyForPo) {
+      return FilledButton.tonalIcon(
+        style: FilledButton.styleFrom(
+          backgroundColor: theme.colorScheme.secondaryContainer,
+          foregroundColor: theme.colorScheme.onSecondaryContainer,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingSm,
+            vertical: AppDimensions.paddingXs,
+          ),
+          visualDensity: VisualDensity.compact,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        onPressed: onDepositToPo,
+        icon: HugeIcon(
+          icon: HugeIcons.strokeRoundedBuilding03,
+          size: AppDimensions.iconXs,
+          color: theme.colorScheme.onSecondaryContainer,
+        ),
+        label: Text(
+          card.depositToPo,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSecondaryContainer,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingSm,
+        vertical: AppDimensions.paddingXs,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          HugeIcon(
+            icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+            size: AppDimensions.iconXs,
+            color: theme.colorScheme.primary,
+          ),
+          AppSpacings.gapXs,
+          Text(
+            t.recurringDeposits.monthlyOperations.kpis.settled,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class RDCheckpointsRow extends StatelessWidget {
+  final RDMonthlyOperationItem item;
+  final DateTime evaluationDate;
+  final bool isCurrentMonthOverdue;
+  final bool hasOverdueDebt;
+
+  const RDCheckpointsRow({
+    super.key,
+    required this.item,
+    required this.evaluationDate,
+    required this.isCurrentMonthOverdue,
+    required this.hasOverdueDebt,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Wrap(
       spacing: AppDimensions.paddingSm,
       runSpacing: AppDimensions.paddingXs,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        _buildCustomerCheckpoint(
-          context,
-          now,
-          isCurrentMonthOverdue,
-          hasOverdueDebt,
-        ),
+        _buildCustomerCheckpoint(context),
         _buildPoCheckpoint(context),
-        if (item.hasDefaultFee(now)) _buildFeeCheckpoint(context, now),
+        if (item.hasDefaultFee(evaluationDate)) _buildFeeCheckpoint(context),
       ],
     );
   }
 
-  Widget _buildCustomerCheckpoint(
-    BuildContext context,
-    DateTime now,
-    bool isCurrentMonthOverdue,
-    bool hasOverdueDebt,
-  ) {
+  Widget _buildCustomerCheckpoint(BuildContext context) {
     final theme = Theme.of(context);
     final card = t.recurringDeposits.monthlyOperations.card;
     final inst = item.installment;
@@ -697,11 +716,11 @@ class RDMonthlyOperationCard extends StatelessWidget {
     }
   }
 
-  Widget _buildFeeCheckpoint(BuildContext context, DateTime now) {
+  Widget _buildFeeCheckpoint(BuildContext context) {
     final theme = Theme.of(context);
     final card = t.recurringDeposits.monthlyOperations.card;
     final inst = item.installment;
-    final totalFee = item.totalDefaultFee(now);
+    final totalFee = item.totalDefaultFee(evaluationDate);
 
     if (inst.isLateFeeWaived) {
       return _buildCheckpointBadge(

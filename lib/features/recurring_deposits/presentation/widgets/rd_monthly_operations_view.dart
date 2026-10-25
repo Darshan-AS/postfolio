@@ -6,10 +6,9 @@ import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
-import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_monthly_operation_item.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
@@ -319,52 +318,29 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
               RecurringDepositDetailRoute(item.deposit.id).push(context);
             },
             onLogPayment: () async {
-              final repository = ref.read(recurringDepositRepositoryProvider);
-              final scheduleResult = await repository.getRDInstallments(
-                item.deposit.id,
-              );
+              final prepared = await controller.prepareLogPayment(item);
               if (!context.mounted) return;
 
-              final schedule = switch (scheduleResult) {
-                Success(value: final list) => list,
-                Failure() => <RDInstallment>[],
-              };
-
-              if (schedule.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    behavior: SnackBarBehavior.floating,
-                    content: Text(
-                      scheduleResult is Failure<List<RDInstallment>, String>
-                          ? scheduleResult.error
-                          : t.recurringDeposits.depositNotFound,
+              switch (prepared) {
+                case Failure(error: final err):
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      behavior: SnackBarBehavior.floating,
+                      content: Text(err),
                     ),
-                  ),
-                );
-                return;
+                  );
+                case Success(:final value):
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (ctx) => RDLogPaymentSheet(
+                      deposit: item.deposit,
+                      currentSchedule: value.schedule,
+                      initialAmount: value.initialAmount,
+                      initialSplitMode: value.splitMode,
+                    ),
+                  );
               }
-
-              final now = ref.read(clockProvider)();
-              final isFeeOnly = item.isFeePending;
-              final amount = isFeeOnly
-                  ? item.totalDefaultFee(now)
-                  : item.totalOutstandingPayable(now);
-              final splitMode = isFeeOnly
-                  ? PaymentSplitMode.feesOnly
-                  : (item.hasOverdueDebt(now) && item.totalDefaultFee(now) > 0
-                        ? PaymentSplitMode.includeFees
-                        : null);
-
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                builder: (ctx) => RDLogPaymentSheet(
-                  deposit: item.deposit,
-                  currentSchedule: schedule,
-                  initialAmount: amount,
-                  initialSplitMode: splitMode,
-                ),
-              );
             },
             onLongPress: () {
               if (!state.isSelectionMode) {
@@ -390,27 +366,14 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
               }
             },
             onAdvanceToPo: () async {
-              final confirmed = await showAdaptiveDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: Text(ops.card.advanceToPoConfirmTitle),
-                  content: Text(
-                    ops.card.advanceToPoConfirmMessage(
-                      installment: item.installmentNumber.toString(),
-                      amount: installment.installmentAmount.toRupeeFormat(),
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      child: Text(t.common.cancel),
-                    ),
-                    FilledButton(
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                      child: Text(t.common.confirm),
-                    ),
-                  ],
+              final confirmed = await AppDialogs.confirmAction(
+                context,
+                title: ops.card.advanceToPoConfirmTitle,
+                content: ops.card.advanceToPoConfirmMessage(
+                  installment: item.installmentNumber.toString(),
+                  amount: installment.installmentAmount.toRupeeFormat(),
                 ),
+                confirmText: t.common.confirm,
               );
 
               if (confirmed == true && context.mounted) {
@@ -437,30 +400,16 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
               }
             },
             onRevertPo: () async {
-              final confirmed = await showAdaptiveDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: Text(ops.card.revertPoConfirmTitle),
-                  content: Text(
-                    ops.card.revertPoConfirmMessage(
-                      installment: item.installmentNumber.toString(),
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      child: Text(t.common.cancel),
-                    ),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.error,
-                        foregroundColor: Theme.of(context).colorScheme.onError,
-                      ),
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                      child: Text(t.common.confirm),
-                    ),
-                  ],
+              final theme = Theme.of(context);
+              final confirmed = await AppDialogs.confirmAction(
+                context,
+                title: ops.card.revertPoConfirmTitle,
+                content: ops.card.revertPoConfirmMessage(
+                  installment: item.installmentNumber.toString(),
                 ),
+                confirmText: t.common.confirm,
+                confirmBackgroundColor: theme.colorScheme.error,
+                confirmForegroundColor: theme.colorScheme.onError,
               );
 
               if (confirmed == true && context.mounted) {
@@ -484,27 +433,14 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
             },
             onToggleLateFeeWaiver: () async {
               final feeAmount = item.totalDefaultFee(ref.read(clockProvider)());
-              final confirmed = await showAdaptiveDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: Text(ops.card.forgiveFeeConfirmTitle),
-                  content: Text(
-                    ops.card.forgiveFeeConfirmMessage(
-                      installment: item.installmentNumber.toString(),
-                      amount: feeAmount.toRupeeFormat(),
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      child: Text(t.common.cancel),
-                    ),
-                    FilledButton(
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                      child: Text(ops.card.forgiveFee),
-                    ),
-                  ],
+              final confirmed = await AppDialogs.confirmAction(
+                context,
+                title: ops.card.forgiveFeeConfirmTitle,
+                content: ops.card.forgiveFeeConfirmMessage(
+                  installment: item.installmentNumber.toString(),
+                  amount: feeAmount.toRupeeFormat(),
                 ),
+                confirmText: ops.card.forgiveFee,
               );
 
               if (confirmed == true && context.mounted) {
@@ -601,28 +537,15 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                   visualDensity: VisualDensity.compact,
                 ),
                 onPressed: () async {
-                  final confirmed = await showAdaptiveDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: Text(ops.revertConfirmTitle),
-                      content: Text(
-                        ops.revertConfirmMessage(count: canRevertList.length),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(false),
-                          child: Text(t.common.cancel),
-                        ),
-                        FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: theme.colorScheme.error,
-                            foregroundColor: theme.colorScheme.onError,
-                          ),
-                          onPressed: () => Navigator.of(ctx).pop(true),
-                          child: Text(ops.revertButton),
-                        ),
-                      ],
+                  final confirmed = await AppDialogs.confirmAction(
+                    context,
+                    title: ops.revertConfirmTitle,
+                    content: ops.revertConfirmMessage(
+                      count: canRevertList.length,
                     ),
+                    confirmText: ops.revertButton,
+                    confirmBackgroundColor: theme.colorScheme.error,
+                    confirmForegroundColor: theme.colorScheme.onError,
                   );
 
                   if (confirmed == true && context.mounted) {
@@ -683,22 +606,11 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                           amount: totalDepositAmount.toRupeeFormat(),
                         );
 
-                  final confirmed = await showAdaptiveDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: Text(ops.confirmTitle),
-                      content: Text(message),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(false),
-                          child: Text(t.common.cancel),
-                        ),
-                        FilledButton(
-                          onPressed: () => Navigator.of(ctx).pop(true),
-                          child: Text(ops.confirmButton),
-                        ),
-                      ],
-                    ),
+                  final confirmed = await AppDialogs.confirmAction(
+                    context,
+                    title: ops.confirmTitle,
+                    content: message,
+                    confirmText: ops.confirmButton,
                   );
 
                   if (confirmed == true && context.mounted) {
