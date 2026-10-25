@@ -10,8 +10,6 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
@@ -250,34 +248,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     }
 
     final repository = ref.read(recurringDepositRepositoryProvider);
-
-    final isNew = id == null;
-    final bool hasTx;
-    if (isNew) {
-      hasTx = false;
-    } else {
-      final txResult = await repository.hasTransactions(deposit.id);
-      hasTx = switch (txResult) {
-        Success(value: final v) => v,
-        Failure() => true,
-      };
-    }
-
-    final schedule = !hasTx
-        ? RDLedgerService.generateInitialSchedule(
-            rdId: deposit.id,
-            startDate: deposit.startDate,
-            installmentAmount: deposit.installmentAmount,
-            termYears: deposit.termYears,
-            termMonths: deposit.termMonths,
-            initialPaidInstallments: deposit.initialPaidInstallments,
-          )
-        : const <RDInstallment>[];
-
-    return await repository.saveRecurringDeposit(
-      deposit,
-      schedule: schedule,
-    );
+    return await repository.saveRecurringDeposit(deposit);
   }
 
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {

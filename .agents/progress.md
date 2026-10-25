@@ -1,6 +1,22 @@
 # Project Progress
 
 ## Current State
+**RD Ledger Architecture Redesign (Option 1+ — Stage 1 Complete)**:
+- **Sparse `rd_installments` + Normalized `rd_payment_allocations` (`20261025000000_sparse_rd_ledger_and_allocations.sql`)**:
+  - Created `public.rd_payment_allocations` (`transaction_id REFERENCES rd_transactions(id) ON DELETE CASCADE`, `rd_id`, `installment_no`, `principal_amount`, `late_fee_amount`) and added `split_mode` to `rd_transactions` plus `installment_no` and `po_batch_id` to `rd_installments`.
+  - Replaced procedural `FOR v_elem IN ... LOOP` updates in Postgres RPCs with set-based `upsert_and_prune_rd_installments`, automatically pruning untouched post-onboarding baseline rows and eliminating 60-row upfront insertions on RD creation/update.
+- **Deterministic Schedule Hydration & Replay Pool Overflow (`RDLedgerService`)**:
+  - Added deterministic UUIDv5 installment IDs (`deterministicInstallmentId`), `hydrateSchedule`, `hydrateInstallmentForMonth`, `extractSparseInstallments`, and `diffSchedules`.
+  - Fixed replay pool overflow in `allocateCustomerPayment` / `recomputeScheduleFromTransactions` so unused fee/principal pools automatically overflow into remaining obligations when earlier transactions are edited or deleted.
+
+**RD Ledger Feature Rebased onto `main` (`v2.2.1+20`)**:
+- Rebased all 16 commits of `feature/rd-ledger-domain-modeling` cleanly onto `main` (`b61c427`, `v2.2.1+20`), preserving 100% of `main`'s performance optimizations, domain enhancements, and UI changes alongside the RD Ledger & Macro Monthly Operations Hub:
+  - **Single-Entity Watchers & List Column Projections**: Preserved `watchRecurringDepositById(id)`, `recurringDepositByIdProvider`, `AsyncSingleEntityBuilder`, and lightweight `_listColumns` (including `initial_paid_installments`) alongside unified `saveRecurringDeposit(deposit, {schedule})` and all RD ledger repository methods.
+  - **Official Post Office Rate Schedule (`PostalRateService`)**: Integrated `postalRateService` and `initialPaidInstallments` in `RecurringDeposit.create` / `RecurringDeposit.update`, `RecurringDepositsController`, and `useRecurringDepositForm` (keeping `Start Date -> Duration -> Interest Rate -> Initial Paid Installments` field ordering with `isFinancialTermsLocked` protection).
+  - **`AppDurationInput` & `EntityListTile`**: Preserved `main`'s editable `yearsController` + `monthsController` Row for `TenureInputType.derived` (KVP) with `enabled` support across all inputs, and merged `EntityListTile`'s `leadingSubtext` optical spacing with `leading`, `onLongPress`, and `isSelected`.
+  - **Avatar Convention**: Kept `#<serialNo>` (`deposit.avatarLabel`) on the Accounts tab (`RecurringDepositCard`) and `RecurringDepositDetailScreen`, while retaining the installment sequence badge (`#N`) in the avatar and `(${serialNo}) ${accountNo}` in the subtitle on `RDMonthlyOperationCard` in the Monthly Operations Hub.
+  - **Slang 4.19.0 & Test Suite**: Removed duplicate keys in `lib/i18n/en.i18n.yaml`, regenerated Slang and `build_runner` artifacts, updated date-relative fixtures in `test/rd_monthly_operations_test.dart`, and verified `dart analyze --fatal-infos` (0 issues) and all 68 unit/widget tests pass.
+
 **RD Ledger Feature - Macro Monthly Operations Hub (Phase 4.5)**:
 - **Top Navigation Switcher (`SegmentedButton`)**: Added `SegmentedButton<RDViewMode>` (`[ Accounts | Monthly Hub ]`) into `RecurringDepositsScreen`, toggling between the accounts list and the macro monthly operational command center.
 - **Calendar Month Switcher (`RDMonthSwitcher`)**: Month navigation with prev/next buttons, formatted display ("September 2026"), and a dynamic quick-reset chip (`[ ↺ Current Month ]`) that appears whenever viewing past or future months.

@@ -5,8 +5,10 @@ import 'package:postfolio/core/constants/firestore_keys.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_payment_allocation_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:postfolio/features/auth/domain/auth_state.dart';
@@ -31,13 +33,15 @@ abstract class RecurringDepositRepository {
 
   // RD Ledger & Transaction Tracking
   Stream<Result<List<RDInstallment>, String>> watchRDInstallments(String rdId);
+  Stream<Result<List<RDInstallment>, String>> watchAllSparseInstallments();
   Stream<Result<List<RDTransaction>, String>> watchRDTransactions(String rdId);
   Future<Result<bool, String>> hasTransactions(String rdId);
   Future<Result<bool, String>> hasPoPaidInstallments(String rdId);
   Future<Result<void, String>> recordCustomerPayment(
     RDTransaction transaction,
-    List<RDInstallment> updatedInstallments,
-  );
+    List<RDInstallment> updatedInstallments, {
+    List<RDPaymentAllocation> allocations = const [],
+  });
   Future<Result<void, String>> deleteCustomerPayment(
     String transactionId,
     List<RDInstallment> updatedInstallments,
@@ -52,6 +56,7 @@ abstract class RecurringDepositRepository {
   Future<Result<void, String>> toggleLateFeeWaiver({
     required String installmentId,
     required bool isWaived,
+    RDInstallment? installment,
   });
   Stream<Result<List<RDInstallment>, String>> watchInstallmentsForMonth(DateTime month);
   Future<Result<List<RDInstallment>, String>> getUnpaidInstallmentsBefore(DateTime date);
@@ -146,6 +151,11 @@ class FirestoreRecurringDepositRepository
   }
 
   @override
+  Stream<Result<List<RDInstallment>, String>> watchAllSparseInstallments() {
+    return Stream.value(const Success([]));
+  }
+
+  @override
   Future<Result<List<RDInstallment>, String>> getRDInstallments(String rdId) async {
     // Firestore does not support the relational RD ledger feature (Supabase only)
     return const Success([]);
@@ -160,8 +170,9 @@ class FirestoreRecurringDepositRepository
   @override
   Future<Result<void, String>> recordCustomerPayment(
     RDTransaction transaction,
-    List<RDInstallment> updatedInstallments,
-  ) async {
+    List<RDInstallment> updatedInstallments, {
+    List<RDPaymentAllocation> allocations = const [],
+  }) async {
     return const Failure('Firestore repository does not support RD ledger payments');
   }
 
@@ -202,6 +213,7 @@ class FirestoreRecurringDepositRepository
   Future<Result<void, String>> toggleLateFeeWaiver({
     required String installmentId,
     required bool isWaived,
+    RDInstallment? installment,
   }) async {
     return const Failure('Firestore repository does not support RD ledger');
   }
@@ -220,6 +232,8 @@ class FirestoreRecurringDepositRepository
 class FakeRecurringDepositRepository implements RecurringDepositRepository {
   final _controller =
       StreamController<Result<List<RecurringDeposit>, String>>.broadcast();
+  final _sparseInstallmentsController =
+      StreamController<Result<List<RDInstallment>, String>>.broadcast();
 
   final List<RecurringDeposit> _deposits = FakeDataSource().recurringDeposits
       .toList();
@@ -229,6 +243,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       entry.key: [...entry.value],
   };
   final Map<String, List<RDTransaction>> _fakeTransactions = {};
+  final Map<String, List<RDPaymentAllocation>> _fakeAllocations = {};
 
   final _installmentsControllers = <String, StreamController<Result<List<RDInstallment>, String>>>{};
   final _transactionsControllers = <String, StreamController<Result<List<RDTransaction>, String>>>{};
@@ -242,11 +257,39 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     });
   }
 
+  List<RDInstallment> _getAllSparseInstallments() {
+    final list = <RDInstallment>[];
+    for (final entry in _fakeInstallments.entries) {
+      final deposit = _deposits.where((d) => d.id == entry.key).firstOrNull;
+      final sparse = RDLedgerService.extractSparseInstallments(
+        entry.value,
+        initialPaidInstallments: deposit?.initialPaidInstallments ?? 0,
+      );
+      list.addAll(sparse);
+    }
+    return list;
+  }
+
   List<RDInstallment> _getInstallmentsForMonth(DateTime m) {
     final list = <RDInstallment>[];
-    for (final insts in _fakeInstallments.values) {
+    final processedRdIds = <String>{};
+
+    for (final deposit in _deposits) {
+      processedRdIds.add(deposit.id);
+      final insts = _getHydratedInstallments(deposit.id);
       for (final inst in insts) {
-        if (inst.installmentDate.year == m.year && inst.installmentDate.month == m.month) {
+        if (inst.installmentDate.year == m.year &&
+            inst.installmentDate.month == m.month) {
+          list.add(inst);
+        }
+      }
+    }
+
+    for (final entry in _fakeInstallments.entries) {
+      if (processedRdIds.contains(entry.key)) continue;
+      for (final inst in entry.value) {
+        if (inst.installmentDate.year == m.year &&
+            inst.installmentDate.month == m.month) {
           list.add(inst);
         }
       }
@@ -255,6 +298,9 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   }
 
   void _emitMonthInstallments() {
+    if (!_sparseInstallmentsController.isClosed) {
+      _sparseInstallmentsController.add(Success(_getAllSparseInstallments()));
+    }
     for (final entry in _monthInstallmentsControllers.entries) {
       final parts = entry.key.split('-');
       final y = int.parse(parts[0]);
@@ -280,6 +326,59 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 
   List<RDInstallment> _getInstallments(String rdId) {
     return _fakeInstallments.putIfAbsent(rdId, () => []);
+  }
+
+  List<RDInstallment> _getHydratedInstallments(String rdId) {
+    final stored = _getInstallments(rdId);
+    final deposit = _deposits.where((d) => d.id == rdId).firstOrNull;
+    if (deposit == null) return [...stored];
+    if (stored.length == deposit.totalMonths) {
+      return [...stored];
+    }
+    final hydrated = RDLedgerService.hydrateSchedule(
+      deposit: deposit,
+      sparseInstallments: stored,
+    );
+    return hydrated;
+  }
+
+  void _upsertInstallmentsInMemory(
+    String rdId,
+    List<RDInstallment> updatedInstallments,
+  ) {
+    final currentInsts = _getInstallments(rdId);
+    if (currentInsts.isEmpty) {
+      final deposit = _deposits.where((d) => d.id == rdId).firstOrNull;
+      if (deposit != null) {
+        currentInsts.addAll(
+          RDLedgerService.generateInitialSchedule(
+            rdId: deposit.id,
+            startDate: deposit.startDate,
+            installmentAmount: deposit.installmentAmount,
+            termYears: deposit.termYears,
+            termMonths: deposit.termMonths,
+            initialPaidInstallments: deposit.initialPaidInstallments,
+          ),
+        );
+      }
+    }
+
+    for (final updated in updatedInstallments) {
+      var idx = currentInsts.indexWhere((inst) => inst.id == updated.id);
+      if (idx == -1) {
+        idx = currentInsts.indexWhere(
+          (inst) =>
+              inst.installmentDate.year == updated.installmentDate.year &&
+              inst.installmentDate.month == updated.installmentDate.month,
+        );
+      }
+      if (idx != -1) {
+        currentInsts[idx] = updated;
+      } else {
+        currentInsts.add(updated);
+      }
+    }
+    currentInsts.sort((a, b) => a.installmentDate.compareTo(b.installmentDate));
   }
 
   List<RDTransaction> _getTransactions(String rdId) {
@@ -346,11 +445,15 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       }
       _deposits[index] = deposit;
 
-      if (schedule.isNotEmpty && transactions.isEmpty) {
+      if (transactions.isEmpty) {
         final currentInsts = _getInstallments(deposit.id);
         currentInsts.clear();
-        currentInsts.addAll(schedule);
-        _getInstallmentsController(deposit.id).add(Success([...currentInsts]));
+        if (schedule.isNotEmpty) {
+          currentInsts.addAll(schedule);
+        }
+        _getInstallmentsController(
+          deposit.id,
+        ).add(Success(_getHydratedInstallments(deposit.id)));
         _emitMonthInstallments();
       }
 
@@ -361,13 +464,15 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
         id: deposit.id.isEmpty ? const Uuid().v4() : deposit.id,
       );
       _deposits.add(newDeposit);
+      final insts = _getInstallments(newDeposit.id);
+      insts.clear();
       if (schedule.isNotEmpty) {
-        final insts = _getInstallments(newDeposit.id);
-        insts.clear();
         insts.addAll(schedule);
-        _getInstallmentsController(newDeposit.id).add(Success([...insts]));
-        _emitMonthInstallments();
       }
+      _getInstallmentsController(
+        newDeposit.id,
+      ).add(Success(_getHydratedInstallments(newDeposit.id)));
+      _emitMonthInstallments();
       _emit();
       return const Success(null);
     }
@@ -379,6 +484,10 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     final initialLength = _deposits.length;
     _deposits.removeWhere((d) => d.id == id);
     if (_deposits.length < initialLength) {
+      _fakeInstallments.remove(id);
+      _fakeTransactions.remove(id);
+      _fakeAllocations.remove(id);
+      _emitMonthInstallments();
       _emit();
       return const Success(null);
     }
@@ -387,8 +496,14 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 
   @override
   Stream<Result<List<RDInstallment>, String>> watchRDInstallments(String rdId) async* {
-    yield Success(_getInstallments(rdId));
+    yield Success(_getHydratedInstallments(rdId));
     yield* _getInstallmentsController(rdId).stream;
+  }
+
+  @override
+  Stream<Result<List<RDInstallment>, String>> watchAllSparseInstallments() async* {
+    yield Success(_getAllSparseInstallments());
+    yield* _sparseInstallmentsController.stream;
   }
 
   @override
@@ -400,8 +515,9 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   @override
   Future<Result<void, String>> recordCustomerPayment(
     RDTransaction transaction,
-    List<RDInstallment> updatedInstallments,
-  ) async {
+    List<RDInstallment> updatedInstallments, {
+    List<RDPaymentAllocation> allocations = const [],
+  }) async {
     await Future.delayed(const Duration(milliseconds: 300));
     final rdId = transaction.rdId;
 
@@ -409,14 +525,14 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     txs.insert(0, transaction);
     _getTransactionsController(rdId).add(Success([...txs]));
 
-    final currentInsts = _getInstallments(rdId);
-    for (final updated in updatedInstallments) {
-      final idx = currentInsts.indexWhere((inst) => inst.id == updated.id);
-      if (idx != -1) {
-        currentInsts[idx] = updated;
-      }
+    if (allocations.isNotEmpty) {
+      final list = _fakeAllocations.putIfAbsent(rdId, () => []);
+      list.removeWhere((a) => a.transactionId == transaction.id);
+      list.addAll(allocations);
     }
-    _getInstallmentsController(rdId).add(Success([...currentInsts]));
+
+    _upsertInstallmentsInMemory(rdId, updatedInstallments);
+    _getInstallmentsController(rdId).add(Success(_getHydratedInstallments(rdId)));
     _emitMonthInstallments();
 
     return const Success(null);
@@ -444,14 +560,14 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     txs.removeWhere((t) => t.id == transactionId);
     _getTransactionsController(targetRdId).add(Success([...txs]));
 
-    final currentInsts = _getInstallments(targetRdId);
-    for (final updated in updatedInstallments) {
-      final idx = currentInsts.indexWhere((inst) => inst.id == updated.id);
-      if (idx != -1) {
-        currentInsts[idx] = updated;
-      }
-    }
-    _getInstallmentsController(targetRdId).add(Success([...currentInsts]));
+    _fakeAllocations[targetRdId]?.removeWhere(
+      (a) => a.transactionId == transactionId,
+    );
+
+    _upsertInstallmentsInMemory(targetRdId, updatedInstallments);
+    _getInstallmentsController(targetRdId).add(
+      Success(_getHydratedInstallments(targetRdId)),
+    );
     _emitMonthInstallments();
 
     return const Success(null);
@@ -474,14 +590,8 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     }
     _getTransactionsController(rdId).add(Success([...txs]));
 
-    final currentInsts = _getInstallments(rdId);
-    for (final updated in updatedInstallments) {
-      final idx = currentInsts.indexWhere((inst) => inst.id == updated.id);
-      if (idx != -1) {
-        currentInsts[idx] = updated;
-      }
-    }
-    _getInstallmentsController(rdId).add(Success([...currentInsts]));
+    _upsertInstallmentsInMemory(rdId, updatedInstallments);
+    _getInstallmentsController(rdId).add(Success(_getHydratedInstallments(rdId)));
     _emitMonthInstallments();
 
     return const Success(null);
@@ -493,16 +603,18 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   ) async {
     await Future.delayed(const Duration(milliseconds: 300));
     if (installments.isEmpty) return const Success(null);
-    final rdId = installments.first.rdId;
 
-    final currentInsts = _getInstallments(rdId);
-    for (final updated in installments) {
-      final idx = currentInsts.indexWhere((inst) => inst.id == updated.id);
-      if (idx != -1) {
-        currentInsts[idx] = updated;
-      }
+    final byRd = <String, List<RDInstallment>>{};
+    for (final inst in installments) {
+      byRd.putIfAbsent(inst.rdId, () => []).add(inst);
     }
-    _getInstallmentsController(rdId).add(Success([...currentInsts]));
+
+    for (final entry in byRd.entries) {
+      _upsertInstallmentsInMemory(entry.key, entry.value);
+      _getInstallmentsController(entry.key).add(
+        Success(_getHydratedInstallments(entry.key)),
+      );
+    }
     _emitMonthInstallments();
 
     return const Success(null);
@@ -516,29 +628,68 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 
   @override
   Future<Result<bool, String>> hasPoPaidInstallments(String rdId) async {
-    final hasPoPaid = _getInstallments(rdId).any((inst) => inst.poStatus == RDPoStatus.paid);
-    return Success(hasPoPaid);
+    final deposit = _deposits.where((d) => d.id == rdId).firstOrNull;
+    final initialPaid = deposit?.initialPaidInstallments ?? 0;
+    final insts = _getHydratedInstallments(rdId);
+    for (int i = 0; i < insts.length; i++) {
+      if (i >= initialPaid && insts[i].poStatus == RDPoStatus.paid) {
+        return const Success(true);
+      }
+    }
+    return const Success(false);
   }
 
   @override
   Future<Result<void, String>> toggleLateFeeWaiver({
     required String installmentId,
     required bool isWaived,
+    RDInstallment? installment,
   }) async {
     await Future.delayed(const Duration(milliseconds: 150));
+    for (final deposit in _deposits) {
+      final hydrated = _getHydratedInstallments(deposit.id);
+      final idx = hydrated.indexWhere((inst) => inst.id == installmentId);
+      if (idx != -1) {
+        final existing = hydrated[idx];
+        if (isWaived &&
+            existing.paidLateFee >= existing.lateFee &&
+            existing.lateFee > 0) {
+          return const Failure(
+            'Cannot forgive an already paid default fee. Edit payment transaction to reallocate funds.',
+          );
+        }
+        final updated = existing.copyWith(
+          isLateFeeWaived: isWaived,
+          updatedAt: DateTime.now(),
+        );
+        _upsertInstallmentsInMemory(deposit.id, [updated]);
+        _getInstallmentsController(deposit.id).add(
+          Success(_getHydratedInstallments(deposit.id)),
+        );
+        _emitMonthInstallments();
+        return const Success(null);
+      }
+    }
+
     for (final entry in _fakeInstallments.entries) {
       final list = entry.value;
       final idx = list.indexWhere((inst) => inst.id == installmentId);
       if (idx != -1) {
         final existing = list[idx];
-        if (isWaived && existing.paidLateFee >= existing.lateFee && existing.lateFee > 0) {
-          return const Failure('Cannot forgive an already paid default fee. Edit payment transaction to reallocate funds.');
+        if (isWaived &&
+            existing.paidLateFee >= existing.lateFee &&
+            existing.lateFee > 0) {
+          return const Failure(
+            'Cannot forgive an already paid default fee. Edit payment transaction to reallocate funds.',
+          );
         }
         list[idx] = existing.copyWith(
           isLateFeeWaived: isWaived,
           updatedAt: DateTime.now(),
         );
-        _getInstallmentsController(entry.key).add(Success([...list]));
+        _getInstallmentsController(entry.key).add(
+          Success(_getHydratedInstallments(entry.key)),
+        );
         _emitMonthInstallments();
         return const Success(null);
       }
@@ -555,8 +706,18 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   @override
   Future<Result<List<RDInstallment>, String>> getUnpaidInstallmentsBefore(DateTime date) async {
     final list = <RDInstallment>[];
-    for (final insts in _fakeInstallments.values) {
-      for (final inst in insts) {
+    final processedRdIds = <String>{};
+    for (final deposit in _deposits) {
+      processedRdIds.add(deposit.id);
+      for (final inst in _getHydratedInstallments(deposit.id)) {
+        if (inst.installmentDate.isBefore(date) && !inst.isInstallmentPaid) {
+          list.add(inst);
+        }
+      }
+    }
+    for (final entry in _fakeInstallments.entries) {
+      if (processedRdIds.contains(entry.key)) continue;
+      for (final inst in entry.value) {
         if (inst.installmentDate.isBefore(date) && !inst.isInstallmentPaid) {
           list.add(inst);
         }
@@ -567,11 +728,12 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 
   @override
   Future<Result<List<RDInstallment>, String>> getRDInstallments(String rdId) async {
-    return Success(_getInstallments(rdId));
+    return Success(_getHydratedInstallments(rdId));
   }
 
   void dispose() {
     _controller.close();
+    _sparseInstallmentsController.close();
     for (final ctrl in _installmentsControllers.values) {
       ctrl.close();
     }

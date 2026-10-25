@@ -784,7 +784,7 @@ void main() {
           id: 'inst-normal',
           rdId: testDeposit.id,
           installmentDate: DateTime(2026, 9, 1),
-          dueDate: DateTime(2026, 9, 25), // Not overdue
+          dueDate: DateTime.now().add(const Duration(days: 10)), // Not overdue
           installmentAmount: 1000.0,
           customerStatus: RDInstallmentStatus.unpaid,
         );
@@ -1172,7 +1172,7 @@ void main() {
           id: 'inst-partial-cust',
           rdId: testDeposit.id,
           installmentDate: DateTime(2026, 9, 1),
-          dueDate: DateTime(2026, 9, 25),
+          dueDate: DateTime.now().add(const Duration(days: 10)),
           installmentAmount: 1000.0,
           customerStatus: RDInstallmentStatus.partiallyPaid,
           customerPaidAmount: 400.0,
@@ -1352,7 +1352,7 @@ void main() {
           id: 'inst-zero-on-time',
           rdId: testDeposit.id,
           installmentDate: DateTime(2026, 9, 1),
-          dueDate: DateTime(2026, 9, 25),
+          dueDate: DateTime.now().add(const Duration(days: 10)),
           installmentAmount: 1000.0,
           customerStatus: RDInstallmentStatus.unpaid,
           customerPaidAmount: 0.0,

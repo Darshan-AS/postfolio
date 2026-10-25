@@ -21,6 +21,17 @@ Stream<List<RDInstallment>> rdInstallmentsStream(Ref ref, String rdId) {
 }
 
 @riverpod
+Stream<List<RDInstallment>> rdAllSparseInstallmentsStream(Ref ref) {
+  final repository = ref.watch(recurringDepositRepositoryProvider);
+  return repository.watchAllSparseInstallments().map((result) {
+    return switch (result) {
+      Success(value: final installments) => installments,
+      Failure(error: final error) => throw Exception(error),
+    };
+  });
+}
+
+@riverpod
 Stream<List<RDTransaction>> rdTransactionsStream(Ref ref, String rdId) {
   final repository = ref.watch(recurringDepositRepositoryProvider);
   return repository.watchRDTransactions(rdId).map((result) {
@@ -71,6 +82,7 @@ class RDLedgerController extends _$RDLedgerController {
     required DateTime paidDate,
     required RDPaymentMode paymentMode,
     required List<RDInstallment> currentSchedule,
+    PaymentSplitMode? splitMode,
     double? installmentComponent,
     double? lateFeeComponent,
   }) async {
@@ -80,6 +92,7 @@ class RDLedgerController extends _$RDLedgerController {
       paidDate: paidDate,
       paymentMode: paymentMode,
       rdId: rdId,
+      splitMode: splitMode,
       installmentComponent: installmentComponent,
       lateFeeComponent: lateFeeComponent,
     );
@@ -88,17 +101,20 @@ class RDLedgerController extends _$RDLedgerController {
     return await repository.recordCustomerPayment(
       allocationResult.transaction,
       allocationResult.updatedInstallments,
+      allocations: allocationResult.allocations,
     );
   }
 
   Future<Result<void, String>> toggleLateFeeWaiver({
     required String installmentId,
     required bool isWaived,
+    RDInstallment? installment,
   }) async {
     final repository = ref.read(recurringDepositRepositoryProvider);
     return await repository.toggleLateFeeWaiver(
       installmentId: installmentId,
       isWaived: isWaived,
+      installment: installment,
     );
   }
 
@@ -118,10 +134,15 @@ class RDLedgerController extends _$RDLedgerController {
       initialPaidInstallments: deposit.initialPaidInstallments,
     );
 
+    final deltaInstallments = RDLedgerService.diffSchedules(
+      currentSchedule,
+      recomputedSchedule,
+    );
+
     final repository = ref.read(recurringDepositRepositoryProvider);
     return await repository.deleteCustomerPayment(
       transactionId,
-      recomputedSchedule,
+      deltaInstallments,
     );
   }
 
@@ -141,10 +162,15 @@ class RDLedgerController extends _$RDLedgerController {
       initialPaidInstallments: deposit.initialPaidInstallments,
     );
 
+    final deltaInstallments = RDLedgerService.diffSchedules(
+      currentSchedule,
+      recomputedSchedule,
+    );
+
     final repository = ref.read(recurringDepositRepositoryProvider);
     return await repository.updateCustomerPayment(
       updatedTransaction,
-      recomputedSchedule,
+      deltaInstallments,
     );
   }
 

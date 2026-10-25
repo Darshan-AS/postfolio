@@ -506,6 +506,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                 final res = await ledger.toggleLateFeeWaiver(
                   installmentId: installment.id,
                   isWaived: true,
+                  installment: installment,
                 );
                 if (context.mounted && res is Success) {
                   ScaffoldMessenger.of(context).showSnackBar(

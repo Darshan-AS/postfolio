@@ -442,6 +442,7 @@ class RDMonthInspectorCard extends ConsumerWidget {
           .toggleLateFeeWaiver(
             installmentId: installment.id,
             isWaived: true,
+            installment: installment,
           );
 
       if (context.mounted) {
@@ -476,6 +477,7 @@ class RDMonthInspectorCard extends ConsumerWidget {
         .toggleLateFeeWaiver(
           installmentId: installment.id,
           isWaived: false,
+          installment: installment,
         );
 
     if (context.mounted) {

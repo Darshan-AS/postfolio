@@ -15,6 +15,7 @@ abstract class RDTransaction with _$RDTransaction {
     @TimestampConverter() required DateTime paidDate,
     required double amount,
     required RDPaymentMode paymentMode,
+    @Default(PaymentSplitMode.includeFees) PaymentSplitMode splitMode,
     @Default(0.0) double installmentAmount,
     @Default(0.0) double lateFeeAmount,
     @TimestampConverter() DateTime? createdAt,

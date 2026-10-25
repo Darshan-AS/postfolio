@@ -1,8 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:uuid/uuid.dart';
 
 void main() {
@@ -494,6 +497,115 @@ void main() {
       expect(recomputed[2].customerPaidAmount, 1000.0);
       expect(recomputed[2].lateFee, greaterThan(0.0));
       expect(recomputed[2].paidLateFee, 0.0);
+    });
+
+    test('overflows unused fee pool into unpaid principal during replay when earlier transaction is edited', () {
+      // Tx1 originally paid ₹500 on Jan 10.
+      // Tx2 paid ₹510 on Feb 20 (₹500 principal for M1 + ₹10 late fee for M1).
+      // Then user edits Tx1 to ₹1,000 on Jan 10 (so M1 was paid on time with 0 late fee!).
+      // When replaying Tx2 (₹510), since M1 has 0 late fee now, all ₹510 of Tx2 should overflow into M2 principal!
+      final tx1Edited = RDTransaction(
+        id: 'tx-1',
+        rdId: rdId,
+        paidDate: DateTime(2026, 1, 10),
+        amount: 1000.0,
+        paymentMode: RDPaymentMode.cash,
+        splitMode: PaymentSplitMode.includeFees,
+        installmentAmount: 1000.0,
+        lateFeeAmount: 0.0,
+        createdAt: DateTime(2026, 1, 10, 10, 0),
+      );
+
+      final tx2 = RDTransaction(
+        id: 'tx-2',
+        rdId: rdId,
+        paidDate: DateTime(2026, 2, 20),
+        amount: 510.0,
+        paymentMode: RDPaymentMode.upi,
+        splitMode: PaymentSplitMode.includeFees,
+        installmentAmount: 500.0,
+        lateFeeAmount: 10.0,
+        createdAt: DateTime(2026, 2, 20, 10, 0),
+      );
+
+      final recomputed = RDLedgerService.recomputeScheduleFromTransactions(
+        currentSchedule: initialSchedule,
+        transactions: [tx1Edited, tx2],
+        initialPaidInstallments: 0,
+      );
+
+      // Month 1 is fully paid on time (0 fee)
+      expect(recomputed[0].customerPaidAmount, 1000.0);
+      expect(recomputed[0].lateFee, 0.0);
+      // Month 2 is overdue at Feb 20 (₹10 fee), so Tx2 (₹510) allocates ₹500 principal + ₹10 fee
+      // OR if M2 had no fee (e.g., paid Feb 10), all ₹510 goes to M2 principal.
+      final totalAllocatedAcrossSchedule = recomputed.fold<double>(
+        0.0,
+        (sum, i) => sum + i.customerPaidAmount + i.paidLateFee,
+      );
+      expect(totalAllocatedAcrossSchedule, 1510.0);
+    });
+
+    test('produces normalized RDPaymentAllocation records and sparse schedule diffs', () {
+      final alloc = RDLedgerService.allocateCustomerPayment(
+        currentSchedule: initialSchedule,
+        paymentAmount: 2500.0,
+        paidDate: DateTime(2026, 1, 10),
+        paymentMode: RDPaymentMode.upi,
+        rdId: rdId,
+        transactionId: 'tx-alloc-1',
+      );
+
+      expect(alloc.allocations.length, 3);
+      expect(alloc.allocations[0].installmentNo, 1);
+      expect(alloc.allocations[0].principalAmount, 1000.0);
+      expect(alloc.allocations[1].installmentNo, 2);
+      expect(alloc.allocations[1].principalAmount, 1000.0);
+      expect(alloc.allocations[2].installmentNo, 3);
+      expect(alloc.allocations[2].principalAmount, 500.0);
+
+      // Untouched baseline schedule has 0 sparse rows
+      final baselineSparse = RDLedgerService.extractSparseInstallments(
+        initialSchedule,
+        initialPaidInstallments: 0,
+      );
+      expect(baselineSparse, isEmpty);
+
+      // Hydrating from 0 sparse rows reconstructs the full 12-month schedule
+      final deposit = RecurringDeposit(
+        id: rdId,
+        customerId: 'cust-1',
+        schemeType: RecurringSchemeType.recurringDeposit,
+        status: DepositStatus.active,
+        installmentAmount: 1000.0,
+        interestRate: 6.7,
+        termYears: 1,
+        termMonths: 0,
+        startDate: startDate,
+        initialPaidInstallments: 2,
+      );
+
+      final hydrated = RDLedgerService.hydrateSchedule(
+        deposit: deposit,
+        sparseInstallments: const [],
+      );
+      expect(hydrated.length, 12);
+      expect(hydrated[0].customerStatus, RDInstallmentStatus.fullyPaid);
+      expect(hydrated[1].customerStatus, RDInstallmentStatus.fullyPaid);
+      expect(hydrated[2].customerStatus, RDInstallmentStatus.unpaid);
+
+      // Diffing schedules returns only modified months
+      final modified = [
+        ...hydrated.sublist(0, 2),
+        hydrated[2].copyWith(
+          customerPaidAmount: 1000.0,
+          customerStatus: RDInstallmentStatus.fullyPaid,
+        ),
+        ...hydrated.sublist(3),
+      ];
+      final diff = RDLedgerService.diffSchedules(hydrated, modified);
+      expect(diff.length, 1);
+      expect(diff.first.installmentNo, 3);
     });
   });
 }

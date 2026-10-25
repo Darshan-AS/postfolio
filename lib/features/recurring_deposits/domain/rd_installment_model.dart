@@ -12,6 +12,7 @@ abstract class RDInstallment with _$RDInstallment {
   const factory RDInstallment({
     required String id,
     required String rdId,
+    int? installmentNo,
     @TimestampConverter() required DateTime installmentDate,
     @TimestampConverter() required DateTime dueDate,
     required double installmentAmount,
@@ -19,6 +20,7 @@ abstract class RDInstallment with _$RDInstallment {
     @Default(RDInstallmentStatus.unpaid) RDInstallmentStatus customerStatus,
     @Default(RDPoStatus.unpaid) RDPoStatus poStatus,
     @TimestampConverter() DateTime? poPaidDate,
+    String? poBatchId,
     @Default(0.0) double lateFee,
     @Default(0.0) double paidLateFee,
     @Default(false) bool isLateFeeWaived,

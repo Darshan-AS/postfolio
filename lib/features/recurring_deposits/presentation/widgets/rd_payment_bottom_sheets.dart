@@ -15,7 +15,8 @@ import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_m
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-enum PaymentSplitMode { installmentsOnly, includeFees, feesOnly, custom }
+export 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart'
+    show PaymentSplitMode;
 
 class PaymentSplitSelector extends StatelessWidget {
   final PaymentSplitMode splitMode;

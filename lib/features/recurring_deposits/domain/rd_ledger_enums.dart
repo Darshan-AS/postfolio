@@ -53,3 +53,11 @@ enum RDPaymentMode {
     }
   }
 }
+
+@JsonEnum()
+enum PaymentSplitMode {
+  installmentsOnly,
+  includeFees,
+  feesOnly,
+  custom,
+}

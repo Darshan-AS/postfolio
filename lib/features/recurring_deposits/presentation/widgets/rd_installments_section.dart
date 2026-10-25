@@ -1025,6 +1025,7 @@ class RDInstallmentTile extends ConsumerWidget {
                             .toggleLateFeeWaiver(
                               installmentId: inst.id,
                               isWaived: true,
+                              installment: inst,
                             );
                         if (context.mounted) {
                           if (result is Success) {
@@ -1064,6 +1065,7 @@ class RDInstallmentTile extends ConsumerWidget {
                           .toggleLateFeeWaiver(
                             installmentId: inst.id,
                             isWaived: false,
+                            installment: inst,
                           );
                       if (context.mounted) {
                         if (result is Success) {
