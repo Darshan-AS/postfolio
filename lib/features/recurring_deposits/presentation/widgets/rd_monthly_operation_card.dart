@@ -122,25 +122,43 @@ class RDMonthlyOperationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              serialAccount,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            AppSpacings.gapXs,
             Wrap(
-              spacing: AppDimensions.paddingSm,
-              runSpacing: AppDimensions.paddingXs,
+              spacing: AppDimensions.paddingXs,
+              runSpacing: 2,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
+                Text(
+                  serialAccount,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  '•',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
+                ),
                 _buildDueDateText(
                   context,
                   inst.dueDate,
                   isCurrentMonthOverdue,
                   now,
+                ),
+              ],
+            ),
+            AppSpacings.gapXs,
+            Wrap(
+              spacing: AppDimensions.paddingXs,
+              runSpacing: AppDimensions.paddingXs,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                RDCheckpointsRow(
+                  item: item,
+                  evaluationDate: now,
+                  isCurrentMonthOverdue: isCurrentMonthOverdue,
+                  hasOverdueDebt: hasOverdueDebt,
                 ),
                 if (hasPriorArrears)
                   _buildPriorOverdueBadge(
@@ -149,13 +167,6 @@ class RDMonthlyOperationCard extends StatelessWidget {
                     item.priorOverdueAmount,
                   ),
               ],
-            ),
-            AppSpacings.gapXs,
-            RDCheckpointsRow(
-              item: item,
-              evaluationDate: now,
-              isCurrentMonthOverdue: isCurrentMonthOverdue,
-              hasOverdueDebt: hasOverdueDebt,
             ),
           ],
         ),
@@ -617,13 +628,27 @@ class RDCheckpointsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Wrap(
-      spacing: AppDimensions.paddingSm,
+      spacing: AppDimensions.paddingXs,
       runSpacing: AppDimensions.paddingXs,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        _buildCustomerCheckpoint(context),
-        _buildPoCheckpoint(context),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildCustomerCheckpoint(context),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: HugeIcon(
+                icon: HugeIcons.strokeRoundedArrowRight01,
+                size: AppDimensions.iconXs,
+                color: theme.colorScheme.outline,
+              ),
+            ),
+            _buildPoCheckpoint(context),
+          ],
+        ),
         if (item.hasDefaultFee(evaluationDate)) _buildFeeCheckpoint(context),
       ],
     );
@@ -633,24 +658,27 @@ class RDCheckpointsRow extends StatelessWidget {
     final theme = Theme.of(context);
     final card = t.recurringDeposits.monthlyOperations.card;
     final inst = item.installment;
-    final paidStr = inst.customerPaidAmount.toRupeeFormat();
-    final totalStr = inst.installmentAmount.toRupeeFormat();
-    final label = card.checkpoints.cash(paid: paidStr, total: totalStr);
 
     if (inst.isInstallmentPaid) {
       return _buildCheckpointBadge(
         context,
         icon: HugeIcons.strokeRoundedCheckmarkCircle02,
-        label: label,
+        label: card.checkpoints.pipelineCust,
         bgColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
         fgColor: theme.colorScheme.primary,
       );
     } else if (inst.customerPaidAmount > 0) {
+      // Partial payment exception: show fraction!
       final isOverdue = isCurrentMonthOverdue || hasOverdueDebt;
+      final paidStr = inst.customerPaidAmount.toRupeeFormat();
+      final totalStr = inst.installmentAmount.toRupeeFormat();
       return _buildCheckpointBadge(
         context,
         icon: HugeIcons.strokeRoundedCoins01,
-        label: label,
+        label: card.checkpoints.pipelineCustPartial(
+          paid: paidStr,
+          total: totalStr,
+        ),
         bgColor: Colors.transparent,
         fgColor: isOverdue
             ? theme.colorScheme.error
@@ -664,7 +692,7 @@ class RDCheckpointsRow extends StatelessWidget {
       return _buildCheckpointBadge(
         context,
         icon: HugeIcons.strokeRoundedAlert02,
-        label: label,
+        label: card.checkpoints.pipelineCust,
         bgColor: Colors.transparent,
         fgColor: theme.colorScheme.error,
         borderColor: theme.colorScheme.error,
@@ -674,7 +702,7 @@ class RDCheckpointsRow extends StatelessWidget {
       return _buildCheckpointBadge(
         context,
         icon: HugeIcons.strokeRoundedClock01,
-        label: label,
+        label: card.checkpoints.pipelineCust,
         bgColor: Colors.transparent,
         fgColor: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
         borderColor: theme.colorScheme.outlineVariant,
@@ -699,15 +727,23 @@ class RDCheckpointsRow extends StatelessWidget {
       return _buildCheckpointBadge(
         context,
         icon: HugeIcons.strokeRoundedCheckmarkCircle02,
-        label: card.checkpoints.po,
+        label: card.checkpoints.pipelinePo,
         bgColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
         fgColor: theme.colorScheme.primary,
+      );
+    } else if (item.isReadyForPo) {
+      return _buildCheckpointBadge(
+        context,
+        icon: HugeIcons.strokeRoundedBuilding03,
+        label: card.checkpoints.pipelinePoReady,
+        bgColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.7),
+        fgColor: theme.colorScheme.onSecondaryContainer,
       );
     } else {
       return _buildCheckpointBadge(
         context,
         icon: HugeIcons.strokeRoundedClock01,
-        label: card.checkpoints.po,
+        label: card.checkpoints.pipelinePo,
         bgColor: Colors.transparent,
         fgColor: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
         borderColor: theme.colorScheme.outlineVariant,
@@ -730,7 +766,8 @@ class RDCheckpointsRow extends StatelessWidget {
         bgColor: theme.colorScheme.surfaceContainerHighest,
         fgColor: theme.colorScheme.onSurfaceVariant,
       );
-    } else if (totalFee > 0) {
+    } else if (totalFee > 0 && inst.paidLateFee > 0) {
+      // Partial fee exception: show fraction
       final totalAssessedFee = inst.paidLateFee + totalFee;
       return _buildCheckpointBadge(
         context,
@@ -744,12 +781,21 @@ class RDCheckpointsRow extends StatelessWidget {
         borderColor: theme.colorScheme.error,
         isOutlined: true,
       );
+    } else if (totalFee > 0) {
+      return _buildCheckpointBadge(
+        context,
+        icon: HugeIcons.strokeRoundedAlertCircle,
+        label: card.checkpoints.feeDue(amount: totalFee.toRupeeFormat()),
+        bgColor: Colors.transparent,
+        fgColor: theme.colorScheme.error,
+        borderColor: theme.colorScheme.error,
+        isOutlined: true,
+      );
     } else if (inst.paidLateFee > 0) {
-      final paidStr = inst.paidLateFee.toRupeeFormat();
       return _buildCheckpointBadge(
         context,
         icon: HugeIcons.strokeRoundedCheckmarkCircle02,
-        label: card.checkpoints.fee(paid: paidStr, total: paidStr),
+        label: card.checkpoints.feePaid,
         bgColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
         fgColor: theme.colorScheme.primary,
       );

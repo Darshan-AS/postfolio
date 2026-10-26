@@ -658,5 +658,41 @@ void main() {
         0,
       );
     });
+
+    test('computeAllocationsByTransaction maps chronological receipts to per-month slices', () {
+      final tx1 = RDTransaction(
+        id: 'tx-slice-1',
+        rdId: rdId,
+        paidDate: DateTime(2026, 1, 20), // Overdue for Month 1 (₹10 fee)
+        amount: 1010.0,
+        paymentMode: RDPaymentMode.cash,
+        splitMode: PaymentSplitMode.includeFees,
+      );
+      final tx2 = RDTransaction(
+        id: 'tx-slice-2',
+        rdId: rdId,
+        paidDate: DateTime(2026, 2, 10), // On time for Month 2 & 3
+        amount: 2000.0,
+        paymentMode: RDPaymentMode.upi,
+      );
+
+      final map = RDLedgerService.computeAllocationsByTransaction(
+        currentSchedule: initialSchedule,
+        transactions: [tx1, tx2],
+        initialPaidInstallments: 0,
+      );
+
+      expect(map.keys, containsAll(['tx-slice-1', 'tx-slice-2']));
+      expect(map['tx-slice-1']!.length, 1);
+      expect(map['tx-slice-1']!.first.installmentNo, 1);
+      expect(map['tx-slice-1']!.first.principalAmount, 1000.0);
+      expect(map['tx-slice-1']!.first.lateFeeAmount, 10.0);
+
+      expect(map['tx-slice-2']!.length, 2);
+      expect(map['tx-slice-2']![0].installmentNo, 2);
+      expect(map['tx-slice-2']![0].principalAmount, 1000.0);
+      expect(map['tx-slice-2']![1].installmentNo, 3);
+      expect(map['tx-slice-2']![1].principalAmount, 1000.0);
+    });
   });
 }

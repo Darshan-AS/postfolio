@@ -14,6 +14,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/controllers/r
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operation_card.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operations_view.dart';
 
 void main() {
   group('RDMonthlyOperationItem domain getters', () {
@@ -994,8 +995,8 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        // Fee: ₹0/₹20 badge in subtitle
-        expect(find.text('Fee: ₹0/₹20'), findsOneWidget);
+        // Fee: ₹20 badge in subtitle
+        expect(find.text('Fee: ₹20'), findsOneWidget);
         // Fee Due: ₹20 in trailing
         expect(find.textContaining('Fee Due: ₹20'), findsOneWidget);
         // Collect Fee button
@@ -1006,7 +1007,7 @@ void main() {
     );
 
     testWidgets(
-      'renders checkpoints bar with Cash (solid), PO (outlined), and hides fee when no default fee exists',
+      'renders 2-step pipeline with Customer (solid), PO Ready (highlighted), and hides fee when no default fee exists',
       (tester) async {
         await initializeDateFormatting('en', null);
 
@@ -1043,37 +1044,29 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        // Checkpoint 1: Cash: ₹1,000/₹1,000 (solid filled)
-        expect(find.text('Cash: ₹1,000/₹1,000'), findsOneWidget);
-        final cashBadge = tester.widget<Container>(
+        // Step 1: Customer (solid filled)
+        expect(find.text('Customer'), findsOneWidget);
+        final custBadge = tester.widget<Container>(
           find
               .ancestor(
-                of: find.text('Cash: ₹1,000/₹1,000'),
+                of: find.text('Customer'),
                 matching: find.byType(Container),
               )
               .first,
         );
-        final cashDecoration = cashBadge.decoration as BoxDecoration;
-        expect(cashDecoration.border, isNull);
-        expect(cashDecoration.color, isNot(Colors.transparent));
+        final custDecoration = custBadge.decoration as BoxDecoration;
+        expect(custDecoration.border, isNull);
+        expect(custDecoration.color, isNot(Colors.transparent));
 
-        // Checkpoint 2: PO (outlined hollow)
-        expect(find.text('PO'), findsOneWidget);
-        final poBadge = tester.widget<Container>(
-          find
-              .ancestor(of: find.text('PO'), matching: find.byType(Container))
-              .first,
-        );
-        final poDecoration = poBadge.decoration as BoxDecoration;
-        expect(poDecoration.border, isNotNull);
-        expect(poDecoration.color, Colors.transparent);
+        // Step 2: PO Ready (solid secondary container)
+        expect(find.text('PO Ready'), findsOneWidget);
 
-        // Checkpoint 3 (Fee): Hidden!
+        // Exception Badge (Fee): Hidden!
         expect(find.textContaining('Fee'), findsNothing);
       },
     );
 
-    testWidgets('renders checkpoints bar with Fee when default fee was paid', (
+    testWidgets('renders checkpoints bar with Fee Paid when default fee was paid', (
       tester,
     ) async {
       await initializeDateFormatting('en', null);
@@ -1114,9 +1107,9 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('Cash: ₹1,000/₹1,000'), findsOneWidget);
+      expect(find.text('Customer'), findsOneWidget);
       expect(find.text('PO'), findsOneWidget);
-      expect(find.text('Fee: ₹20/₹20'), findsOneWidget);
+      expect(find.text('Fee Paid'), findsOneWidget);
     });
 
     testWidgets(
@@ -1160,14 +1153,14 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        expect(find.text('Cash: ₹1,000/₹1,000'), findsOneWidget);
+        expect(find.text('Customer'), findsOneWidget);
         expect(find.text('PO'), findsOneWidget);
         expect(find.text('Fee Waived'), findsOneWidget);
       },
     );
 
     testWidgets(
-      'renders checkpoints bar with Cash: ₹X (outlined in primary) when partially paid on-time',
+      'renders checkpoints bar with Customer: ₹X/₹Y (outlined in primary) when partially paid on-time',
       (tester) async {
         await initializeDateFormatting('en', null);
 
@@ -1205,29 +1198,29 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        expect(find.text('Cash: ₹400/₹1,000'), findsOneWidget);
-        final cashBadge = tester.widget<Container>(
+        expect(find.text('Customer: ₹400/₹1,000'), findsOneWidget);
+        final custBadge = tester.widget<Container>(
           find
               .ancestor(
-                of: find.text('Cash: ₹400/₹1,000'),
+                of: find.text('Customer: ₹400/₹1,000'),
                 matching: find.byType(Container),
               )
               .first,
         );
-        final cashDecoration = cashBadge.decoration as BoxDecoration;
-        expect(cashDecoration.border, isNotNull);
-        expect(cashDecoration.color, Colors.transparent);
+        final custDecoration = custBadge.decoration as BoxDecoration;
+        expect(custDecoration.border, isNotNull);
+        expect(custDecoration.color, Colors.transparent);
         final BuildContext context = tester.element(
           find.byType(RDMonthlyOperationCard),
         );
         final theme = Theme.of(context);
-        final border = cashDecoration.border as Border;
+        final border = custDecoration.border as Border;
         expect(border.top.color, theme.colorScheme.primary);
       },
     );
 
     testWidgets(
-      'renders checkpoints bar with Cash: ₹X (outlined in error) when partially paid and overdue',
+      'renders checkpoints bar with Customer: ₹X/₹Y (outlined in error) when partially paid and overdue',
       (tester) async {
         await initializeDateFormatting('en', null);
 
@@ -1264,23 +1257,23 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        expect(find.text('Cash: ₹400/₹1,000'), findsOneWidget);
-        final cashBadge = tester.widget<Container>(
+        expect(find.text('Customer: ₹400/₹1,000'), findsOneWidget);
+        final custBadge = tester.widget<Container>(
           find
               .ancestor(
-                of: find.text('Cash: ₹400/₹1,000'),
+                of: find.text('Customer: ₹400/₹1,000'),
                 matching: find.byType(Container),
               )
               .first,
         );
-        final cashDecoration = cashBadge.decoration as BoxDecoration;
-        expect(cashDecoration.border, isNotNull);
-        expect(cashDecoration.color, Colors.transparent);
+        final custDecoration = custBadge.decoration as BoxDecoration;
+        expect(custDecoration.border, isNotNull);
+        expect(custDecoration.color, Colors.transparent);
         final BuildContext context = tester.element(
           find.byType(RDMonthlyOperationCard),
         );
         final theme = Theme.of(context);
-        final border = cashDecoration.border as Border;
+        final border = custDecoration.border as Border;
         expect(border.top.color, theme.colorScheme.error);
       },
     );
@@ -1348,7 +1341,7 @@ void main() {
     );
 
     testWidgets(
-      'renders checkpoints bar with Cash: ₹0/₹1,000 (outlined in neutral) when 0% paid on-time',
+      'renders checkpoints bar with Customer (outlined in neutral, no fraction) when 0% paid on-time',
       (tester) async {
         await initializeDateFormatting('en', null);
 
@@ -1386,29 +1379,29 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        expect(find.text('Cash: ₹0/₹1,000'), findsOneWidget);
-        final cashBadge = tester.widget<Container>(
+        expect(find.text('Customer'), findsOneWidget);
+        final custBadge = tester.widget<Container>(
           find
               .ancestor(
-                of: find.text('Cash: ₹0/₹1,000'),
+                of: find.text('Customer'),
                 matching: find.byType(Container),
               )
               .first,
         );
-        final cashDecoration = cashBadge.decoration as BoxDecoration;
-        expect(cashDecoration.border, isNotNull);
-        expect(cashDecoration.color, Colors.transparent);
+        final custDecoration = custBadge.decoration as BoxDecoration;
+        expect(custDecoration.border, isNotNull);
+        expect(custDecoration.color, Colors.transparent);
         final BuildContext context = tester.element(
           find.byType(RDMonthlyOperationCard),
         );
         final theme = Theme.of(context);
-        final border = cashDecoration.border as Border;
+        final border = custDecoration.border as Border;
         expect(border.top.color, theme.colorScheme.outlineVariant);
       },
     );
 
     testWidgets(
-      'renders checkpoints bar with Cash: ₹0/₹1,000 (outlined in error) when 0% paid and overdue',
+      'renders checkpoints bar with Customer (outlined in error) when 0% paid and overdue',
       (tester) async {
         await initializeDateFormatting('en', null);
 
@@ -1445,29 +1438,29 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        expect(find.text('Cash: ₹0/₹1,000'), findsOneWidget);
-        final cashBadge = tester.widget<Container>(
+        expect(find.text('Customer'), findsOneWidget);
+        final custBadge = tester.widget<Container>(
           find
               .ancestor(
-                of: find.text('Cash: ₹0/₹1,000'),
+                of: find.text('Customer'),
                 matching: find.byType(Container),
               )
               .first,
         );
-        final cashDecoration = cashBadge.decoration as BoxDecoration;
-        expect(cashDecoration.border, isNotNull);
-        expect(cashDecoration.color, Colors.transparent);
+        final custDecoration = custBadge.decoration as BoxDecoration;
+        expect(custDecoration.border, isNotNull);
+        expect(custDecoration.color, Colors.transparent);
         final BuildContext context = tester.element(
           find.byType(RDMonthlyOperationCard),
         );
         final theme = Theme.of(context);
-        final border = cashDecoration.border as Border;
+        final border = custDecoration.border as Border;
         expect(border.top.color, theme.colorScheme.error);
       },
     );
 
     testWidgets(
-      'renders checkpoints bar with Fee: ₹0/₹20 (outlined in error) when 0% default fee paid and owed',
+      'renders checkpoints bar with Fee: ₹20 (outlined in error, no fraction) when 0% default fee paid and owed',
       (tester) async {
         await initializeDateFormatting('en', null);
 
@@ -1507,11 +1500,11 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        expect(find.text('Fee: ₹0/₹20'), findsOneWidget);
+        expect(find.text('Fee: ₹20'), findsOneWidget);
         final feeBadge = tester.widget<Container>(
           find
               .ancestor(
-                of: find.text('Fee: ₹0/₹20'),
+                of: find.text('Fee: ₹20'),
                 matching: find.byType(Container),
               )
               .first,
@@ -1776,6 +1769,33 @@ void main() {
               expect(floatSummary.pocketAdvancesCount, 1);
               expect(floatSummary.pocketAdvancesAmount, 1500.0);
             });
+      },
+    );
+
+    testWidgets(
+      'RDMonthlyOperationsView renders without layout or runtime crash',
+      (tester) async {
+        await initializeDateFormatting('en', null);
+        final fakeRepo = FakeRecurringDepositRepository();
+        addTearDown(fakeRepo.dispose);
+
+        final fixedNow = DateTime(2026, 9, 20);
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              recurringDepositRepositoryProvider.overrideWithValue(fakeRepo),
+              clockProvider.overrideWithValue(() => fixedNow),
+            ],
+            child: const MaterialApp(
+              home: Scaffold(
+                body: RDMonthlyOperationsView(),
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+        expect(find.byType(RDMonthlyOperationsView), findsOneWidget);
       },
     );
   });

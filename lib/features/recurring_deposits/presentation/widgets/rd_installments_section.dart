@@ -19,11 +19,20 @@ import 'package:postfolio/i18n/strings.g.dart';
 
 class RDInstallmentsSection extends HookConsumerWidget {
   final RecurringDeposit deposit;
+  final bool isEmbeddedTab;
 
-  const RDInstallmentsSection({super.key, required this.deposit});
+  const RDInstallmentsSection({
+    super.key,
+    required this.deposit,
+    this.isEmbeddedTab = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (isEmbeddedTab) {
+      return _RDInstallmentsContent(deposit: deposit, isEmbeddedTab: true);
+    }
+
     final isExpanded = useState(true);
     final theme = Theme.of(context);
 
@@ -62,8 +71,12 @@ class RDInstallmentsSection extends HookConsumerWidget {
 
 class _RDInstallmentsContent extends HookConsumerWidget {
   final RecurringDeposit deposit;
+  final bool isEmbeddedTab;
 
-  const _RDInstallmentsContent({required this.deposit});
+  const _RDInstallmentsContent({
+    required this.deposit,
+    this.isEmbeddedTab = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -71,6 +84,7 @@ class _RDInstallmentsContent extends HookConsumerWidget {
         ref.watch(rdInstallmentsStreamProvider(deposit.id));
     final isSelectionMode = useState(false);
     final selectedIds = useState<Set<String>>({});
+    final isListView = useState(false);
     final theme = Theme.of(context);
     final ledger = t.recurringDeposits.ledger;
 
@@ -128,7 +142,9 @@ class _RDInstallmentsContent extends HookConsumerWidget {
             : 0;
 
         return Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingMd),
+          padding: isEmbeddedTab
+              ? EdgeInsets.zero
+              : const EdgeInsets.all(AppDimensions.paddingMd),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -139,68 +155,110 @@ class _RDInstallmentsContent extends HookConsumerWidget {
               ),
               AppSpacings.gapMd,
 
-              // 2. Tenure Heatmap Matrix
-              RDInstallmentHeatmap(
-                deposit: deposit,
-                installments: installments,
-                selectedMonthIndex: safeSelectedIndex,
-                nextDueIndex: earliestPendingIndex,
-                onSelectMonth: (idx) {
-                  selectedMonthIndex.value = idx;
-                },
-              ),
-              AppSpacings.gapMd,
-
-              // 3. Single Month Inspector Card
-              RDMonthInspectorCard(
-                deposit: deposit,
-                installment: installments[safeSelectedIndex],
-                monthNum: safeSelectedIndex + 1,
-                isOpeningBaseline:
-                    safeSelectedIndex < deposit.initialPaidInstallments,
-                allInstallments: installments,
-              ),
-              AppSpacings.gapMd,
-
-              // 4. KPI Row (Pending / Advanced at PO)
+              // 2. KPI Row (Pending / Advanced at PO)
               if (pendingPoAmount > 0 || advancedPoAmount > 0) ...[
                 RDInstallmentKpiRow(
                   pendingPoAmount: pendingPoAmount,
                   advancedPoAmount: advancedPoAmount,
                 ),
-                AppSpacings.gapSm,
+                AppSpacings.gapMd,
               ],
 
-              // 5. Action Bar (Manage PO / Selection Mode)
-              RDInstallmentActionBar(
-                deposit: deposit,
-                installments: installments,
-                isSelectionMode: isSelectionMode.value,
-                selectedCount: selectedIds.value.length,
-                unpaidSelected: unpaidSelected,
-                paidSelected: paidSelected,
-                onToggleSelectionMode: (mode) {
-                  isSelectionMode.value = mode;
-                  if (!mode) {
-                    selectedIds.value = {};
-                  }
-                },
-                onClearSelection: () {
-                  selectedIds.value = {};
-                },
+              // 3. Schedule View Mode Toggle ([ Matrix | Yearly List ])
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    ledger.installmentsTitle,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SegmentedButton<bool>(
+                    style: SegmentedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    segments: [
+                      ButtonSegment(
+                        value: false,
+                        label: Text(ledger.viewModes.grid),
+                        icon: const HugeIcon(
+                          icon: HugeIcons.strokeRoundedGridView,
+                          size: AppDimensions.iconXs,
+                        ),
+                      ),
+                      ButtonSegment(
+                        value: true,
+                        label: Text(ledger.viewModes.list),
+                        icon: const HugeIcon(
+                          icon: HugeIcons.strokeRoundedCheckList,
+                          size: AppDimensions.iconXs,
+                        ),
+                      ),
+                    ],
+                    selected: {isListView.value},
+                    onSelectionChanged: (selection) {
+                      isListView.value = selection.first;
+                      if (!isListView.value) {
+                        isSelectionMode.value = false;
+                        selectedIds.value = {};
+                      }
+                    },
+                  ),
+                ],
               ),
               AppSpacings.gapSm,
 
-              // 6. Expandable Yearly Schedule Accordion
-              _RDYearlyScheduleAccordion(
-                deposit: deposit,
-                installments: installments,
-                isSelectionMode: isSelectionMode.value,
-                selectedIds: selectedIds.value,
-                onSelectionChanged: (newIds) {
-                  selectedIds.value = newIds;
-                },
-              ),
+              if (!isListView.value) ...[
+                // 4A. Tenure Heatmap Matrix + Single Month Inspector Card
+                RDInstallmentHeatmap(
+                  deposit: deposit,
+                  installments: installments,
+                  selectedMonthIndex: safeSelectedIndex,
+                  nextDueIndex: earliestPendingIndex,
+                  onSelectMonth: (idx) {
+                    selectedMonthIndex.value = idx;
+                  },
+                ),
+                AppSpacings.gapMd,
+                RDMonthInspectorCard(
+                  deposit: deposit,
+                  installment: installments[safeSelectedIndex],
+                  monthNum: safeSelectedIndex + 1,
+                  isOpeningBaseline:
+                      safeSelectedIndex < deposit.initialPaidInstallments,
+                  allInstallments: installments,
+                ),
+              ] else ...[
+                // 4B. Action Bar (Manage PO / Selection Mode) + Expandable Yearly Schedule Accordion
+                RDInstallmentActionBar(
+                  deposit: deposit,
+                  installments: installments,
+                  isSelectionMode: isSelectionMode.value,
+                  selectedCount: selectedIds.value.length,
+                  unpaidSelected: unpaidSelected,
+                  paidSelected: paidSelected,
+                  onToggleSelectionMode: (mode) {
+                    isSelectionMode.value = mode;
+                    if (!mode) {
+                      selectedIds.value = {};
+                    }
+                  },
+                  onClearSelection: () {
+                    selectedIds.value = {};
+                  },
+                ),
+                AppSpacings.gapSm,
+                _RDYearlyScheduleAccordion(
+                  deposit: deposit,
+                  installments: installments,
+                  isSelectionMode: isSelectionMode.value,
+                  selectedIds: selectedIds.value,
+                  onSelectionChanged: (newIds) {
+                    selectedIds.value = newIds;
+                  },
+                ),
+              ],
             ],
           ),
         );
@@ -240,7 +298,6 @@ class _RDYearlyScheduleAccordion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ledger = t.recurringDeposits.ledger;
     final totalMonths = installments.length;
     final numYears = (totalMonths / 12).ceil();
 
@@ -251,19 +308,7 @@ class _RDYearlyScheduleAccordion extends StatelessWidget {
         side: BorderSide(color: theme.colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       ),
-      child: ExpansionTile(
-        key: PageStorageKey<String>('rd_${deposit.id}_full_schedule'),
-        initiallyExpanded: isSelectionMode,
-        leading: const HugeIcon(
-          icon: HugeIcons.strokeRoundedListView,
-          size: AppDimensions.iconSm,
-        ),
-        title: Text(
-          ledger.schedule.fullSchedule,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+      child: Column(
         children: [
           for (int y = 0; y < numYears; y++) ...[
             _buildYearSection(context, yearIndex: y),
@@ -290,7 +335,9 @@ class _RDYearlyScheduleAccordion extends StatelessWidget {
     final isYearSettled = settledCount == yearInstallments.length;
 
     return ExpansionTile(
-      key: PageStorageKey<String>('rd_${deposit.id}_year_$yearIndex'),
+      key: ValueKey<String>(
+        'rd_${deposit.id}_year_${yearIndex}_sel_$isSelectionMode',
+      ),
       initiallyExpanded: isSelectionMode || !isYearSettled,
       leading: HugeIcon(
         icon: isYearSettled

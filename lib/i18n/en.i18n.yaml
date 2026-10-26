@@ -251,6 +251,11 @@ recurringDeposits:
     investmentDetails: "Investment Details"
     timeline: "Timeline"
     accountInformation: "Account Information"
+  detailTabs:
+    ledger: "Schedule"
+    transactions: "Transactions"
+    info: "Account Info"
+    headerSubtitle: "${amount}/mo • ${rate}% • Matures ${maturityDate} (${maturityAmount})"
   fields:
     status: "Status"
     serialNo: "Serial No."
@@ -285,6 +290,18 @@ recurringDeposits:
       accountsCount:
         one: "1 account"
         other: "${n} accounts"
+    pipeline:
+      step1Collect: "1. Collect"
+      step2PoQueue: "2. PO Queue"
+      step3Settled: "3. Settled"
+      overdueTag: "${count} Overdue"
+    poQueueBanner:
+      readyMessage: "${count} installments ready for PO (${amount})"
+      selectAllReady: "Select Ready"
+    toolbar:
+      windowAll: "All"
+      window15th: "15th (${count})"
+      windowEom: "EOM (${count})"
     filters:
       all: "All (${count})"
       toCollect: "To Collect (${count})"
@@ -324,6 +341,11 @@ recurringDeposits:
         feePartial: "Fee: ${paid}/${total}"
         fee: "Fee: ${paid}/${total}"
         feeWaived: "Fee Waived"
+        pipelineCust: "Customer"
+        pipelineCustPartial: "Customer: ${paid}/${total}"
+        pipelinePo: "PO"
+        pipelinePoReady: "PO Ready"
+        pipelinePoAdv: "PO Advanced"
       account: "A/C: ${accountNo}"
       serial: "Sl #${serialNo}"
       due: "Due: ${date}"
@@ -526,6 +548,12 @@ recurringDeposits:
     schedule:
       fullSchedule: "Full 60-Month Schedule"
       yearSummary: "Year ${year} (${settled}/${total} Settled)"
+    viewModes:
+      grid: "Matrix"
+      list: "Yearly List"
+    allocations:
+      installmentPill: "Inst #${month}: ${amount}"
+      feePill: "Fee #${month}: ${amount}"
 
 nominees:
   title: "Nominees"

@@ -35,133 +35,107 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
 
     return Stack(
       children: [
-        Column(
-          children: [
-            AppSpacings.gapSm,
-
-            // Month Switcher
-            RDMonthSwitcher(
-              selectedMonth: opsState.selectedMonth,
-              onPrevious: controller.previousMonth,
-              onNext: controller.nextMonth,
-              onResetToCurrent: controller.resetToCurrentMonth,
-            ),
-
-            AppSpacings.gapMd,
-
-            // KPI Summary Row
-            RDMonthlyKpiRow(
-              summary: kpis,
-              selectedFilter: opsState.selectedFilter,
-              onFilterSelected: controller.setFilter,
-            ),
-
-            if (floatSummary.hasFloat) ...[
-              AppSpacings.gapSm,
-              _buildAgentFloatStrip(context, floatSummary),
-            ],
-
-            if (kpis.priorArrearsAccountsCount > 0) ...[
-              AppSpacings.gapSm,
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingLg,
+        RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(rdAllSparseInstallmentsStreamProvider);
+            ref.invalidate(rawMonthlyOperationsStreamProvider);
+          },
+          child: CustomScrollView(
+            slivers: [
+              // Zone 1: Collapsible Sliver Header (scrolls away when browsing list)
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppSpacings.gapSm,
+                    RDMonthSwitcher(
+                      selectedMonth: opsState.selectedMonth,
+                      onPrevious: controller.previousMonth,
+                      onNext: controller.nextMonth,
+                      onResetToCurrent: controller.resetToCurrentMonth,
+                    ),
+                    AppSpacings.gapSm,
+                    RDMonthlyKpiRow(
+                      summary: kpis,
+                      selectedFilter: opsState.selectedFilter,
+                      onFilterSelected: controller.setFilter,
+                    ),
+                    if (floatSummary.hasFloat) ...[
+                      AppSpacings.gapSm,
+                      _buildAgentFloatStrip(context, floatSummary, controller),
+                    ],
+                    if (kpis.priorArrearsAccountsCount > 0) ...[
+                      AppSpacings.gapSm,
+                      _buildPriorArrearsBanner(context, kpis, controller),
+                    ],
+                    if (opsState.selectedFilter == RDMonthlyFilter.readyForPo &&
+                        kpis.readyForPoCount > 0) ...[
+                      AppSpacings.gapSm,
+                      _buildPoQueueReadyStrip(
+                        context,
+                        kpis,
+                        asyncItems.value ?? const [],
+                        controller,
+                      ),
+                    ],
+                    AppSpacings.gapSm,
+                  ],
                 ),
-                child: Material(
-                  color: theme.colorScheme.errorContainer.withValues(
-                    alpha: 0.5,
-                  ),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  child: InkWell(
-                    onTap: () => controller.setFilter(RDMonthlyFilter.overdue),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.paddingMd,
-                        vertical: AppDimensions.paddingSm,
-                      ),
-                      child: Row(
-                        children: [
-                          HugeIcon(
-                            icon: HugeIcons.strokeRoundedAlert02,
-                            size: AppDimensions.iconSm,
-                            color: theme.colorScheme.error,
-                          ),
-                          AppSpacings.gapSm,
-                          Expanded(
-                            child: Text(
-                              ops.priorArrearsBanner.message(
-                                n: kpis.priorArrearsAccountsCount,
-                                count: kpis.priorArrearsAccountsCount,
-                                amount: kpis.priorArrearsAmount.toRupeeFormat(),
-                              ),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onErrorContainer,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              visualDensity: VisualDensity.compact,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppDimensions.paddingSm,
-                              ),
-                            ),
-                            onPressed: () =>
-                                controller.setFilter(RDMonthlyFilter.overdue),
-                            child: Text(
-                              ops.priorArrearsBanner.action,
-                              style: TextStyle(
-                                color: theme.colorScheme.error,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+              ),
+
+              // Zone 2: Pinned Sticky Toolbar (Search + Deadline Window + Customer Group + Select)
+              PinnedHeaderSliver(
+                child: ColoredBox(
+                  color: theme.colorScheme.surface,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDimensions.paddingXs,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AppSearchBar(
+                          hintText: ops.searchHint,
+                          onChanged: controller.setSearchQuery,
+                        ),
+                        AppSpacings.gapXs,
+                        _buildCompactToolbar(
+                          context,
+                          opsState,
+                          kpis,
+                          controller,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ],
 
-            AppSpacings.gapMd,
-
-            // Search Bar
-            AppSearchBar(
-              hintText: ops.searchHint,
-              onChanged: controller.setSearchQuery,
-            ),
-
-            AppSpacings.gapSm,
-
-            // Operational Filter Chips
-            _buildFilterChips(context, ref, opsState, kpis, controller),
-
-            AppSpacings.gapSm,
-
-            // Items List
-            Expanded(
-              child: switch (asyncItems) {
-                AsyncValue(:final value?) => _buildDataList(
+              // Zone 3: High-Density Account Sliver List
+              ...switch (asyncItems) {
+                AsyncValue(:final value?) => _buildDataSlivers(
                   context,
                   ref,
                   value,
                   opsState,
                   controller,
                 ),
-                AsyncError(:final error) => ErrorStateView(
-                  message: error.toString(),
-                  onRetry: () {
-                    ref.invalidate(rdAllSparseInstallmentsStreamProvider);
-                    ref.invalidate(rawMonthlyOperationsStreamProvider);
-                  },
-                ),
-                _ => _buildLoadingList(),
+                AsyncError(:final error) => [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: ErrorStateView(
+                      message: error.toString(),
+                      onRetry: () {
+                        ref.invalidate(rdAllSparseInstallmentsStreamProvider);
+                        ref.invalidate(rawMonthlyOperationsStreamProvider);
+                      },
+                    ),
+                  ),
+                ],
+                _ => [_buildLoadingSliver()],
               },
-            ),
-          ],
+            ],
+          ),
         ),
 
         // Batch PO Action Bar at the bottom
@@ -177,15 +151,155 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
     );
   }
 
-  Widget _buildFilterChips(
+  Widget _buildPriorArrearsBanner(
     BuildContext context,
-    WidgetRef ref,
+    RDMonthlyKpiSummary kpis,
+    RDMonthlyOperationsController controller,
+  ) {
+    final theme = Theme.of(context);
+    final ops = t.recurringDeposits.monthlyOperations;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+      child: Material(
+        color: theme.colorScheme.errorContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        child: InkWell(
+          onTap: () => controller.setFilter(RDMonthlyFilter.overdue),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingMd,
+              vertical: AppDimensions.paddingXs,
+            ),
+            child: Row(
+              children: [
+                HugeIcon(
+                  icon: HugeIcons.strokeRoundedAlert02,
+                  size: AppDimensions.iconSm,
+                  color: theme.colorScheme.error,
+                ),
+                AppSpacings.gapSm,
+                Expanded(
+                  child: Text(
+                    ops.priorArrearsBanner.message(
+                      n: kpis.priorArrearsAccountsCount,
+                      count: kpis.priorArrearsAccountsCount,
+                      amount: kpis.priorArrearsAmount.toRupeeFormat(),
+                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.paddingSm,
+                    ),
+                  ),
+                  onPressed: () =>
+                      controller.setFilter(RDMonthlyFilter.overdue),
+                  child: Text(
+                    ops.priorArrearsBanner.action,
+                    style: TextStyle(
+                      color: theme.colorScheme.error,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPoQueueReadyStrip(
+    BuildContext context,
+    RDMonthlyKpiSummary kpis,
+    List<RDMonthlyOperationItem> items,
+    RDMonthlyOperationsController controller,
+  ) {
+    final theme = Theme.of(context);
+    final banner = t.recurringDeposits.monthlyOperations.poQueueBanner;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+      child: Material(
+        color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingMd,
+            vertical: AppDimensions.paddingXs,
+          ),
+          child: Row(
+            children: [
+              HugeIcon(
+                icon: HugeIcons.strokeRoundedBuilding03,
+                size: AppDimensions.iconSm,
+                color: theme.colorScheme.onSecondaryContainer,
+              ),
+              AppSpacings.gapSm,
+              Expanded(
+                child: Text(
+                  banner.readyMessage(
+                    count: kpis.readyForPoCount,
+                    amount: kpis.readyForPoAmount.toRupeeFormat(),
+                  ),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSecondaryContainer,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingSm,
+                  ),
+                ),
+                onPressed: () {
+                  final readyIds = items
+                      .where((i) => i.isReadyForPo)
+                      .map((i) => i.installment.id)
+                      .toList();
+                  controller.selectAll(readyIds);
+                },
+                icon: HugeIcon(
+                  icon: HugeIcons.strokeRoundedCheckList,
+                  size: AppDimensions.iconXs,
+                  color: theme.colorScheme.secondary,
+                ),
+                label: Text(
+                  banner.selectAllReady,
+                  style: TextStyle(
+                    color: theme.colorScheme.secondary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactToolbar(
+    BuildContext context,
     RDMonthlyOperationsState state,
     RDMonthlyKpiSummary kpis,
     RDMonthlyOperationsController controller,
   ) {
+    final theme = Theme.of(context);
     final ops = t.recurringDeposits.monthlyOperations;
-    final filters = ops.filters;
+    final toolbar = ops.toolbar;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -193,71 +307,53 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
       child: Row(
         children: [
           FilterChip(
-            label: Text(filters.all(count: kpis.totalCount)),
-            selected: state.selectedFilter == RDMonthlyFilter.all,
-            onSelected: (_) => controller.setFilter(RDMonthlyFilter.all),
+            visualDensity: VisualDensity.compact,
+            label: Text(toolbar.windowAll),
+            selected: state.dueWindowFilter == RDDueWindowFilter.all,
+            onSelected: (_) =>
+                controller.setDueWindowFilter(RDDueWindowFilter.all),
           ),
           AppSpacings.gapXs,
           FilterChip(
-            label: Text(filters.toCollect(count: kpis.toCollectCount)),
-            selected: state.selectedFilter == RDMonthlyFilter.toCollect,
-            onSelected: (_) => controller.setFilter(RDMonthlyFilter.toCollect),
-          ),
-          AppSpacings.gapXs,
-          FilterChip(
-            label: Text(filters.readyForPo(count: kpis.readyForPoCount)),
-            selected: state.selectedFilter == RDMonthlyFilter.readyForPo,
-            onSelected: (_) => controller.setFilter(RDMonthlyFilter.readyForPo),
-          ),
-          AppSpacings.gapXs,
-          FilterChip(
-            label: Text(filters.settled(count: kpis.settledCount)),
-            selected: state.selectedFilter == RDMonthlyFilter.settled,
-            onSelected: (_) => controller.setFilter(RDMonthlyFilter.settled),
-          ),
-          AppSpacings.gapXs,
-          FilterChip(
-            label: Text(filters.overdue(count: kpis.overdueCount)),
-            selected: state.selectedFilter == RDMonthlyFilter.overdue,
-            onSelected: (_) => controller.setFilter(RDMonthlyFilter.overdue),
-          ),
-          AppSpacings.gapXs,
-          FilterChip(
-            label: Text(filters.due15th(count: kpis.firstHalfCount)),
+            visualDensity: VisualDensity.compact,
+            label: Text(toolbar.window15th(count: kpis.firstHalfCount)),
             selected: state.dueWindowFilter == RDDueWindowFilter.firstHalf,
             onSelected: (_) =>
                 controller.setDueWindowFilter(RDDueWindowFilter.firstHalf),
           ),
           AppSpacings.gapXs,
           FilterChip(
-            label: Text(filters.dueEom(count: kpis.secondHalfCount)),
+            visualDensity: VisualDensity.compact,
+            label: Text(toolbar.windowEom(count: kpis.secondHalfCount)),
             selected: state.dueWindowFilter == RDDueWindowFilter.secondHalf,
             onSelected: (_) =>
                 controller.setDueWindowFilter(RDDueWindowFilter.secondHalf),
           ),
           AppSpacings.gapXs,
           FilterChip(
+            visualDensity: VisualDensity.compact,
             avatar: HugeIcon(
               icon: HugeIcons.strokeRoundedUserGroup,
               size: AppDimensions.iconXs,
               color: state.groupByCustomer
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
-            label: Text(filters.byCustomer),
+            label: Text(ops.filters.byCustomer),
             selected: state.groupByCustomer,
             onSelected: (_) => controller.toggleGroupByCustomer(),
           ),
           AppSpacings.gapXs,
           ActionChip(
+            visualDensity: VisualDensity.compact,
             avatar: HugeIcon(
               icon: state.isSelectionMode
                   ? HugeIcons.strokeRoundedCheckmarkCircle02
                   : HugeIcons.strokeRoundedCheckList,
               size: AppDimensions.iconXs,
               color: state.isSelectionMode
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
             label: Text(
               state.isSelectionMode
@@ -265,7 +361,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
                   : ops.card.selectMode,
             ),
             backgroundColor: state.isSelectionMode
-                ? Theme.of(context).colorScheme.primaryContainer
+                ? theme.colorScheme.primaryContainer
                 : null,
             onPressed: () => controller.toggleSelectionMode(),
           ),
@@ -274,7 +370,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
     );
   }
 
-  Widget _buildDataList(
+  List<Widget> _buildDataSlivers(
     BuildContext context,
     WidgetRef ref,
     List<RDMonthlyOperationItem> items,
@@ -289,50 +385,52 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
           state.dueWindowFilter != RDDueWindowFilter.all ||
           state.searchQuery.isNotEmpty;
 
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingLg),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                hasFilters ? ops.noFilterResults : ops.noInstallments,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              if (hasFilters) ...[
-                AppSpacings.gapMd,
-                TextButton.icon(
-                  onPressed: () {
-                    controller.setFilter(RDMonthlyFilter.all);
-                    controller.setDueWindowFilter(RDDueWindowFilter.all);
-                    controller.setSearchQuery('');
-                  },
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedFilterRemove,
-                    size: AppDimensions.iconSm,
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.paddingLg),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    hasFilters ? ops.noFilterResults : ops.noInstallments,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  label: Text(t.common.clearFilters),
-                ),
-              ],
-            ],
+                  if (hasFilters) ...[
+                    AppSpacings.gapMd,
+                    TextButton.icon(
+                      onPressed: () {
+                        controller.setFilter(RDMonthlyFilter.all);
+                        controller.setDueWindowFilter(RDDueWindowFilter.all);
+                        controller.setSearchQuery('');
+                      },
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedFilterRemove,
+                        size: AppDimensions.iconSm,
+                      ),
+                      label: Text(t.common.clearFilters),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
-      );
+      ];
     }
 
     const bottomPadding = AppDimensions.listBottomPaddingFAB;
     final evaluationDate = ref.watch(clockProvider)();
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(rdAllSparseInstallmentsStreamProvider);
-        ref.invalidate(rawMonthlyOperationsStreamProvider);
-      },
-      child: ListView.separated(
-        padding: EdgeInsets.only(bottom: bottomPadding),
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.only(bottom: bottomPadding),
+        sliver: SliverList.separated(
         itemCount: items.length,
         separatorBuilder: (context, index) =>
             const Divider(height: AppDimensions.dividerHeight),
@@ -526,13 +624,15 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
             ],
           );
         },
+        ),
       ),
-    );
+    ];
   }
 
   Widget _buildAgentFloatStrip(
     BuildContext context,
     RDAgentFloatSummary floatSummary,
+    RDMonthlyOperationsController controller,
   ) {
     final theme = Theme.of(context);
     final floatStrings = t.recurringDeposits.monthlyOperations.agentFloat;
@@ -543,71 +643,80 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
       child: Row(
         children: [
           if (floatSummary.undepositedCashCount > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingSm,
-                vertical: AppDimensions.paddingXs,
-              ),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  HugeIcon(
-                    icon: HugeIcons.strokeRoundedBuilding03,
-                    size: AppDimensions.iconXs,
-                    color: theme.colorScheme.onSecondaryContainer,
-                  ),
-                  AppSpacings.gapXs,
-                  Text(
-                    floatStrings.cashInHand(
-                      amount: floatSummary.undepositedCashAmount
-                          .toRupeeFormat(),
-                      count: floatSummary.undepositedCashCount,
-                    ),
-                    style: theme.textTheme.labelSmall?.copyWith(
+            InkWell(
+              onTap: () => controller.setFilter(RDMonthlyFilter.readyForPo),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.paddingSm,
+                  vertical: AppDimensions.paddingXs,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    HugeIcon(
+                      icon: HugeIcons.strokeRoundedBuilding03,
+                      size: AppDimensions.iconXs,
                       color: theme.colorScheme.onSecondaryContainer,
-                      fontWeight: FontWeight.bold,
                     ),
-                  ),
-                ],
+                    AppSpacings.gapXs,
+                    Text(
+                      floatStrings.cashInHand(
+                        amount: floatSummary.undepositedCashAmount
+                            .toRupeeFormat(),
+                        count: floatSummary.undepositedCashCount,
+                      ),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSecondaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           if (floatSummary.undepositedCashCount > 0 &&
               floatSummary.pocketAdvancesCount > 0)
             AppSpacings.gapSm,
           if (floatSummary.pocketAdvancesCount > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingSm,
-                vertical: AppDimensions.paddingXs,
-              ),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.tertiaryContainer,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  HugeIcon(
-                    icon: HugeIcons.strokeRoundedFlash,
-                    size: AppDimensions.iconXs,
-                    color: theme.colorScheme.onTertiaryContainer,
-                  ),
-                  AppSpacings.gapXs,
-                  Text(
-                    floatStrings.pocketAdvances(
-                      amount: floatSummary.pocketAdvancesAmount.toRupeeFormat(),
-                      count: floatSummary.pocketAdvancesCount,
-                    ),
-                    style: theme.textTheme.labelSmall?.copyWith(
+            InkWell(
+              onTap: () => controller.setFilter(RDMonthlyFilter.toCollect),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.paddingSm,
+                  vertical: AppDimensions.paddingXs,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.tertiaryContainer,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    HugeIcon(
+                      icon: HugeIcons.strokeRoundedFlash,
+                      size: AppDimensions.iconXs,
                       color: theme.colorScheme.onTertiaryContainer,
-                      fontWeight: FontWeight.bold,
                     ),
-                  ),
-                ],
+                    AppSpacings.gapXs,
+                    Text(
+                      floatStrings.pocketAdvances(
+                        amount: floatSummary.pocketAdvancesAmount
+                            .toRupeeFormat(),
+                        count: floatSummary.pocketAdvancesCount,
+                      ),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onTertiaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],
@@ -853,18 +962,20 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
     );
   }
 
-  Widget _buildLoadingList() {
-    return Skeletonizer(
-      enabled: true,
-      child: ListView.separated(
-        padding: const EdgeInsets.only(
-          bottom: AppDimensions.listBottomPaddingFAB,
-        ),
+  Widget _buildLoadingSliver() {
+    return SliverPadding(
+      padding: const EdgeInsets.only(
+        bottom: AppDimensions.listBottomPaddingFAB,
+      ),
+      sliver: SliverList.separated(
         itemCount: 5,
         separatorBuilder: (context, index) =>
             const Divider(height: AppDimensions.dividerHeight),
         itemBuilder: (context, index) {
-          return RDMonthlyOperationCard.skeleton();
+          return Skeletonizer(
+            enabled: true,
+            child: RDMonthlyOperationCard.skeleton(),
+          );
         },
       ),
     );

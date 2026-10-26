@@ -467,6 +467,52 @@ class RDLedgerService {
     );
   }
 
+  /// Deterministically computes the per-month [RDPaymentAllocation] slices for each transaction
+  /// by replaying the chronological transaction log over the opening baseline schedule.
+  static Map<String, List<RDPaymentAllocation>> computeAllocationsByTransaction({
+    required List<RDInstallment> currentSchedule,
+    required List<RDTransaction> transactions,
+    required int initialPaidInstallments,
+  }) {
+    if (currentSchedule.isEmpty || transactions.isEmpty) {
+      return const {};
+    }
+
+    var runningSchedule =
+        _buildBaselineSchedule(currentSchedule, initialPaidInstallments);
+    final sortedTransactions = [...transactions]..sort(_chronologicalTxOrder);
+    final Map<String, List<RDPaymentAllocation>> allocationsByTx = {};
+
+    for (final tx in sortedTransactions) {
+      final hasExplicitSplit =
+          tx.installmentAmount > 0 || tx.lateFeeAmount > 0;
+      final result = allocateCustomerPayment(
+        currentSchedule: runningSchedule,
+        paymentAmount: tx.amount,
+        splitMode: tx.splitMode,
+        installmentComponent:
+            hasExplicitSplit ? tx.installmentAmount : null,
+        lateFeeComponent: hasExplicitSplit ? tx.lateFeeAmount : null,
+        paidDate: tx.paidDate,
+        paymentMode: tx.paymentMode,
+        rdId: tx.rdId,
+        transactionId: tx.id,
+        allowPoolOverflow: true,
+      );
+
+      allocationsByTx[tx.id] = result.allocations;
+
+      final updatedMap = {
+        for (final u in result.updatedInstallments) u.id: u,
+      };
+      runningSchedule = runningSchedule
+          .map((inst) => updatedMap[inst.id] ?? inst)
+          .toList();
+    }
+
+    return allocationsByTx;
+  }
+
   // --- Pure Helper Functions ---
 
   static PaymentSplitMode _inferSplitMode({

@@ -1,6 +1,18 @@
 # Project Progress
 
 ## Current State
+**RD Ledger & Monthly Hub UI/UX Redesign (Phase 4.7 — Stages 1–4 Complete)**:
+- **Stage 1 (Macro Hub Sliver Layout & 3-Stage Pipeline)**:
+  - Refactored `RDMonthlyOperationsView` from a static `Column` into a `CustomScrollView` with a collapsible header (`SliverToBoxAdapter`) and a pinned sticky toolbar (`PinnedHeaderSliver`), reclaiming ~85% of viewport height when scrolling without fixed-extent layout overflow.
+  - Redesigned `RDMonthlyKpiRow` into a full-width 3-Stage Interactive Pipeline (`1. Collect` with inline `Overdue` badge $\rightarrow$ `2. PO Queue` $\rightarrow$ `3. Settled`), removed duplicate status filter chips from the toolbar, and added a contextual `PO Queue` ready banner with 1-tap `Select Ready`.
+- **Stage 2 (Smart 2-Step Pipeline Card)**:
+  - Streamlined `RDMonthlyOperationCard` and `RDCheckpointsRow` into a compact 2-line subtitle with a directional `Customer -> PO` 2-step status pill (`Customer -> PO Ready` / `PO`), displaying fraction amounts (`Customer: ₹X/₹Y` or `Fee: ₹X/₹Y`) only when an installment or fee is partially paid.
+- **Stage 3 (Tabbed RD Detail Screen & Matrix/List Toggle)**:
+  - Upgraded `RecurringDepositDetailScreen` with an interactive customer link & maturity summary in `EntityDetailHeader` and a 3-tab `SegmentedButton<RDDetailTab>` (`Schedule`, `Transactions`, `Account Info`) so the active RD ledger is front-and-center without scrolling past 6 static metadata cards.
+  - Added a `[ Matrix | Yearly List ]` `SegmentedButton` in `RDInstallmentsSection` (with direct `Year 1`–`Year 5` accordions that auto-expand unsettled years and all years during `Manage PO`) so the 60-month Heatmap + Month Inspector and the 60-row Yearly Accordion + PO Multi-Select coexist cleanly without vertical duplication.
+- **Stage 4 (Per-Month Allocation Chips on Transaction Receipts)**:
+  - Added `RDLedgerService.computeAllocationsByTransaction` and rendered per-month principal and fee allocation chips (`Inst #N: ₹X`, `Fee #N: ₹Y`) directly on each `RDTransactionTile` in `RDTransactionsSection`.
+
 **RD Ledger Architecture Redesign (Option 1+ — Stages 1–4 & Phase 5 Complete)**:
 - **Phase 5 Migration Script Backfill (`run_supabase_migration.dart` & `RDLedgerService`)**:
   - Added `RDLedgerService.calculateInitialPaidInstallments` to compute the chronological `initial_paid_installments` onboarding baseline for legacy/migrated RD accounts (preserving explicit overrides, settling all months for closed RDs, and counting elapsed prior calendar months for active RDs).

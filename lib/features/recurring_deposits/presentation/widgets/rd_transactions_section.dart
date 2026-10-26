@@ -9,6 +9,8 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_payment_allocation_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
@@ -17,13 +19,84 @@ import 'package:postfolio/i18n/strings.g.dart';
 
 class RDTransactionsSection extends HookConsumerWidget {
   final RecurringDeposit deposit;
+  final bool isEmbeddedTab;
 
-  const RDTransactionsSection({super.key, required this.deposit});
+  const RDTransactionsSection({
+    super.key,
+    required this.deposit,
+    this.isEmbeddedTab = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isExpanded = useState(false);
     final theme = Theme.of(context);
+
+    if (isEmbeddedTab) {
+      return Card(
+        clipBehavior: Clip.antiAlias,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: theme.colorScheme.outlineVariant),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingMd,
+                vertical: AppDimensions.paddingSm,
+              ),
+              child: Row(
+                children: [
+                  const HugeIcon(
+                    icon: HugeIcons.strokeRoundedInvoice01,
+                    size: AppDimensions.iconMd,
+                  ),
+                  AppSpacings.gapSm,
+                  Expanded(
+                    child: Text(
+                      t.recurringDeposits.ledger.transactionsTitle,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  FilledButton.tonalIcon(
+                    style: FilledButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    onPressed: () {
+                      final schedule =
+                          ref
+                              .read(rdInstallmentsStreamProvider(deposit.id))
+                              .value ??
+                          const [];
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (ctx) => RDLogPaymentSheet(
+                          deposit: deposit,
+                          currentSchedule: schedule,
+                        ),
+                      );
+                    },
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedCoins01,
+                      size: AppDimensions.iconXs,
+                    ),
+                    label: Text(t.recurringDeposits.ledger.logPayment),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: AppDimensions.dividerHeight),
+            _RDTransactionsContent(deposit: deposit),
+          ],
+        ),
+      );
+    }
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -82,6 +155,12 @@ class _RDTransactionsContent extends ConsumerWidget {
           );
         }
 
+        final allocationsByTx = RDLedgerService.computeAllocationsByTransaction(
+          currentSchedule: installments,
+          transactions: transactions,
+          initialPaidInstallments: deposit.initialPaidInstallments,
+        );
+
         return ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -95,6 +174,7 @@ class _RDTransactionsContent extends ConsumerWidget {
               transaction: tx,
               allTransactions: transactions,
               currentSchedule: installments,
+              allocations: allocationsByTx[tx.id] ?? const [],
             );
           },
         );
@@ -121,6 +201,7 @@ class RDTransactionTile extends ConsumerWidget {
   final RDTransaction transaction;
   final List<RDTransaction> allTransactions;
   final List<RDInstallment> currentSchedule;
+  final List<RDPaymentAllocation> allocations;
 
   const RDTransactionTile({
     super.key,
@@ -128,6 +209,7 @@ class RDTransactionTile extends ConsumerWidget {
     required this.transaction,
     required this.allTransactions,
     required this.currentSchedule,
+    this.allocations = const [],
   });
 
   @override
@@ -171,11 +253,47 @@ class RDTransactionTile extends ConsumerWidget {
           fontWeight: FontWeight.bold,
         ),
       ),
-      subtitle: Text(
-        ledger.installmentDetails.paidOnVia(
-          date: tx.paidDate.toAppFormat(),
-          mode: tx.paymentMode.displayName,
-        ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            ledger.installmentDetails.paidOnVia(
+              date: tx.paidDate.toAppFormat(),
+              mode: tx.paymentMode.displayName,
+            ),
+          ),
+          if (allocations.isNotEmpty) ...[
+            AppSpacings.gapXs,
+            Wrap(
+              spacing: AppDimensions.paddingXs,
+              runSpacing: AppDimensions.paddingXs,
+              children: [
+                for (final alloc in allocations) ...[
+                  if (alloc.principalAmount > 0)
+                    _AllocationChip(
+                      label: ledger.allocations.installmentPill(
+                        month: alloc.installmentNo,
+                        amount: alloc.principalAmount.toRupeeFormat(),
+                      ),
+                      backgroundColor: theme.colorScheme.primaryContainer
+                          .withValues(alpha: 0.6),
+                      foregroundColor: theme.colorScheme.onPrimaryContainer,
+                    ),
+                  if (alloc.lateFeeAmount > 0)
+                    _AllocationChip(
+                      label: ledger.allocations.feePill(
+                        month: alloc.installmentNo,
+                        amount: alloc.lateFeeAmount.toRupeeFormat(),
+                      ),
+                      backgroundColor: theme.colorScheme.errorContainer
+                          .withValues(alpha: 0.6),
+                      foregroundColor: theme.colorScheme.onErrorContainer,
+                    ),
+                ],
+              ],
+            ),
+          ],
+        ],
       ),
       trailing: MenuAnchor(
         builder: (context, controller, child) {
@@ -268,6 +386,40 @@ class RDTransactionTile extends ConsumerWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AllocationChip extends StatelessWidget {
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  const _AllocationChip({
+    required this.label,
+    required this.backgroundColor,
+    required this.foregroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingSm,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: foregroundColor,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

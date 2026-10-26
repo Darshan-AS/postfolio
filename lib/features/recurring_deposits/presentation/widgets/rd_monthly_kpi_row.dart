@@ -20,68 +20,77 @@ class RDMonthlyKpiRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final kpis = t.recurringDeposits.monthlyOperations.kpis;
+    final ops = t.recurringDeposits.monthlyOperations;
+    final kpis = ops.kpis;
+    final pipeline = ops.pipeline;
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLg,
-      ),
+    final isCollectActive =
+        selectedFilter == RDMonthlyFilter.toCollect ||
+        selectedFilter == RDMonthlyFilter.overdue;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _KpiCard(
-            title: kpis.toCollect,
-            amount: summary.toCollectAmount.toRupeeFormat(),
-            countText: kpis.accountsCount(n: summary.toCollectCount),
-            icon: HugeIcons.strokeRoundedCoins01,
-            color: theme.colorScheme.primary,
-            isSelected: selectedFilter == RDMonthlyFilter.toCollect,
-            onTap: () => onFilterSelected(
-              selectedFilter == RDMonthlyFilter.toCollect
-                  ? RDMonthlyFilter.all
-                  : RDMonthlyFilter.toCollect,
+          Expanded(
+            child: _PipelineStageCard(
+              stepLabel: pipeline.step1Collect,
+              amount: summary.toCollectAmount.toRupeeFormat(),
+              countText: kpis.accountsCount(n: summary.toCollectCount),
+              icon: HugeIcons.strokeRoundedCoins01,
+              color: selectedFilter == RDMonthlyFilter.overdue
+                  ? theme.colorScheme.error
+                  : theme.colorScheme.primary,
+              isSelected: isCollectActive,
+              onTap: () => onFilterSelected(
+                selectedFilter == RDMonthlyFilter.toCollect
+                    ? RDMonthlyFilter.all
+                    : RDMonthlyFilter.toCollect,
+              ),
+              badge: summary.overdueCount > 0
+                  ? _OverdueInlineChip(
+                      label: pipeline.overdueTag(count: summary.overdueCount),
+                      isSelected: selectedFilter == RDMonthlyFilter.overdue,
+                      onTap: () => onFilterSelected(
+                        selectedFilter == RDMonthlyFilter.overdue
+                            ? RDMonthlyFilter.all
+                            : RDMonthlyFilter.overdue,
+                      ),
+                    )
+                  : null,
             ),
           ),
-          AppSpacings.gapSm,
-          _KpiCard(
-            title: kpis.readyForPo,
-            amount: summary.readyForPoAmount.toRupeeFormat(),
-            countText: kpis.accountsCount(n: summary.readyForPoCount),
-            icon: HugeIcons.strokeRoundedBuilding03,
-            color: theme.colorScheme.secondary,
-            isSelected: selectedFilter == RDMonthlyFilter.readyForPo,
-            onTap: () => onFilterSelected(
-              selectedFilter == RDMonthlyFilter.readyForPo
-                  ? RDMonthlyFilter.all
-                  : RDMonthlyFilter.readyForPo,
+          AppSpacings.gapXs,
+          Expanded(
+            child: _PipelineStageCard(
+              stepLabel: pipeline.step2PoQueue,
+              amount: summary.readyForPoAmount.toRupeeFormat(),
+              countText: kpis.accountsCount(n: summary.readyForPoCount),
+              icon: HugeIcons.strokeRoundedBuilding03,
+              color: theme.colorScheme.secondary,
+              isSelected: selectedFilter == RDMonthlyFilter.readyForPo,
+              onTap: () => onFilterSelected(
+                selectedFilter == RDMonthlyFilter.readyForPo
+                    ? RDMonthlyFilter.all
+                    : RDMonthlyFilter.readyForPo,
+              ),
             ),
           ),
-          AppSpacings.gapSm,
-          _KpiCard(
-            title: kpis.settled,
-            amount: summary.settledAmount.toRupeeFormat(),
-            countText: kpis.accountsCount(n: summary.settledCount),
-            icon: HugeIcons.strokeRoundedCheckmarkCircle02,
-            color: theme.colorScheme.primary,
-            isSelected: selectedFilter == RDMonthlyFilter.settled,
-            onTap: () => onFilterSelected(
-              selectedFilter == RDMonthlyFilter.settled
-                  ? RDMonthlyFilter.all
-                  : RDMonthlyFilter.settled,
-            ),
-          ),
-          AppSpacings.gapSm,
-          _KpiCard(
-            title: kpis.overdue,
-            amount: summary.overdueAmount.toRupeeFormat(),
-            countText: kpis.accountsCount(n: summary.overdueCount),
-            icon: HugeIcons.strokeRoundedAlertCircle,
-            color: theme.colorScheme.error,
-            isSelected: selectedFilter == RDMonthlyFilter.overdue,
-            onTap: () => onFilterSelected(
-              selectedFilter == RDMonthlyFilter.overdue
-                  ? RDMonthlyFilter.all
-                  : RDMonthlyFilter.overdue,
+          AppSpacings.gapXs,
+          Expanded(
+            child: _PipelineStageCard(
+              stepLabel: pipeline.step3Settled,
+              amount: summary.settledAmount.toRupeeFormat(),
+              countText: kpis.accountsCount(n: summary.settledCount),
+              icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+              color: theme.colorScheme.primary,
+              isSelected: selectedFilter == RDMonthlyFilter.settled,
+              onTap: () => onFilterSelected(
+                selectedFilter == RDMonthlyFilter.settled
+                    ? RDMonthlyFilter.all
+                    : RDMonthlyFilter.settled,
+              ),
             ),
           ),
         ],
@@ -90,23 +99,25 @@ class RDMonthlyKpiRow extends StatelessWidget {
   }
 }
 
-class _KpiCard extends StatelessWidget {
-  final String title;
+class _PipelineStageCard extends StatelessWidget {
+  final String stepLabel;
   final String amount;
   final String countText;
   final List<List<dynamic>> icon;
   final Color color;
   final bool isSelected;
   final VoidCallback onTap;
+  final Widget? badge;
 
-  const _KpiCard({
-    required this.title,
+  const _PipelineStageCard({
+    required this.stepLabel,
     required this.amount,
     required this.countText,
     required this.icon,
     required this.color,
     required this.isSelected,
     required this.onTap,
+    this.badge,
   });
 
   @override
@@ -127,8 +138,7 @@ class _KpiCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        child: Container(
-          width: 145,
+        child: Padding(
           padding: const EdgeInsets.all(AppDimensions.paddingSm),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,16 +148,18 @@ class _KpiCard extends StatelessWidget {
                 children: [
                   HugeIcon(
                     icon: icon,
-                    size: AppDimensions.iconSm,
+                    size: AppDimensions.iconXs,
                     color: color,
                   ),
                   AppSpacings.gapXs,
                   Expanded(
                     child: Text(
-                      title,
+                      stepLabel,
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? color
+                            : theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -158,24 +170,88 @@ class _KpiCard extends StatelessWidget {
               AppSpacings.gapXs,
               Text(
                 amount,
-                style: theme.textTheme.titleMedium?.copyWith(
+                style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: color,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              AppSpacings.gapXs,
+              const SizedBox(height: 2),
               Text(
                 countText,
-                style: theme.textTheme.bodySmall?.copyWith(
+                style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
+              if (badge != null) ...[
+                AppSpacings.gapXs,
+                badge!,
+              ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OverdueInlineChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _OverdueInlineChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingXs,
+          vertical: 2,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.error
+              : theme.colorScheme.errorContainer,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedAlertCircle,
+              size: AppDimensions.iconXs,
+              color: isSelected
+                  ? theme.colorScheme.onError
+                  : theme.colorScheme.onErrorContainer,
+            ),
+            const SizedBox(width: 2),
+            Flexible(
+              child: Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected
+                      ? theme.colorScheme.onError
+                      : theme.colorScheme.onErrorContainer,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
       ),
     );

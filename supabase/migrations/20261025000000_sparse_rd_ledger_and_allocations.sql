@@ -110,17 +110,30 @@ BEGIN
       AND i.agent_id = p_agent_id;
   END IF;
 
-  -- Prune rows that have returned to untouched post-onboarding baseline state
+  -- Prune rows that have returned to untouched baseline state (both post-onboarding and pre-onboarding)
   DELETE FROM public.rd_installments
   WHERE rd_id = p_rd_id
     AND agent_id = p_agent_id
-    AND COALESCE(installment_no, 9999) > COALESCE(v_initial_paid, 0)
-    AND customer_paid_amount = 0
-    AND customer_status = 'unpaid'
-    AND po_status = 'unpaid'
-    AND late_fee = 0
-    AND paid_late_fee = 0
-    AND is_late_fee_waived = FALSE;
+    AND (
+      (
+        COALESCE(installment_no, 9999) > COALESCE(v_initial_paid, 0)
+        AND customer_paid_amount = 0
+        AND customer_status = 'unpaid'
+        AND po_status = 'unpaid'
+        AND late_fee = 0
+        AND paid_late_fee = 0
+        AND is_late_fee_waived = FALSE
+      )
+      OR (
+        COALESCE(installment_no, 9999) <= COALESCE(v_initial_paid, 0)
+        AND customer_paid_amount = installment_amount
+        AND customer_status = 'fullyPaid'
+        AND po_status = 'paid'
+        AND late_fee = 0
+        AND paid_late_fee = 0
+        AND is_late_fee_waived = FALSE
+      )
+    );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
