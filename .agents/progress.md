@@ -1,6 +1,19 @@
 # Project Progress
 
 ## Current State
+**RD Ledger — Facts-Only Redesign (Phase 6, Steps 1–7 Complete)** — supersedes the sparse `rd_installments` / allocation-lineage design described in the sections below:
+- **Truth = facts.** The only persisted ledger data are `rd_transactions` (customer payments), `rd_po_deposits` (PK `rd_id, installment_no`) and `rd_fee_waivers`. `rd_installments`, `rd_payment_allocations`, the monthly-operations SQL view and all ledger RPCs were dropped in `supabase/migrations/20261027000000_facts_only_rd_ledger.sql` (CHECK constraints + ownership-checked RLS on every fact table; verified by `supabase/tests/rd_ledger_facts_rls.sql`).
+- **One projection.** `RDLedgerProjector.project(facts, asOf)` (`lib/features/recurring_deposits/domain/`) derives the 60-month schedule, per-transaction allocations, accrued default fees (grow until principal is settled, then freeze), `customerCredit` (overflow is never dropped) and the hub `RDLedgerSummary`. Preview, record, edit and delete all use the same function. Money is integer paise; dates are calendar days (`RDLedgerRules`, `Money`, `DateOnlyConverter`).
+- **Read model.** `RDInstallment` is a projected value (never written). `RDInstallmentDisplayStatus` + `rd_installment_status_theme.dart` are the single source of colour/icon/label for every widget.
+- **Data.** `RDLedgerRepository` (Supabase / Fake / explicit Unsupported) exposes bounded per-RD fact streams, an agent-wide `rd_ledger_summary` stream (1 row per RD, rebuildable cache) and plain writes. `RecurringDepositRepository` is back to deposit CRUD.
+- **State.** `rdLedgerFacts/Projection(rdId)`, keepAlive `RDLedgerController` (busy flag, `Result` returns, summary refresh after each write, `rebuildSummary`), hub split into `RDHubMonth` / `RDHubFilters` / `RDHubSelection` (union select) with `select()`-friendly derived providers; rows come from summaries, `ensureSummaries()` backfills missing rows on first load.
+- **UI.** Payment sheets on `usePaymentDraft` (live projection preview, quick amounts, hidden split selector, inline validation, `AppAdaptiveSheet`); hub decomposed into header/toolbar/list/batch bar with undo on PO deposit and a real batch total; detail screen on the projection with 44dp accessible heatmap, route-driven tabs, Manage PO in both modes, swipe-to-delete receipts; `AppFeedback.showResult` on every write.
+- **Tests.** `test/features/recurring_deposits/{domain,data,presentation}` — 58 passing (projector table tests, fake repo, controller + hub providers). Legacy `RDLedgerService` tests removed with the service.
+- **Known follow-ups.** Historic-month status in the hub is "as of today" (summary-based); fee rule versioning (`effectiveFrom`) not yet modelled; summary write happens client-side after the fact write (stale-badge-until-next-write under concurrent devices, never wrong money).
+
+---
+
+## Previous State (superseded by Phase 6)
 **RD Ledger & Monthly Hub UI/UX Redesign (Phase 4.7 — Stages 1–4 Complete)**:
 - **Stage 1 (Macro Hub Sliver Layout & 3-Stage Pipeline)**:
   - Refactored `RDMonthlyOperationsView` from a static `Column` into a `CustomScrollView` with a collapsible header (`SliverToBoxAdapter`) and a pinned sticky toolbar (`PinnedHeaderSliver`), reclaiming ~85% of viewport height when scrolling without fixed-extent layout overflow.

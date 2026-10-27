@@ -153,6 +153,13 @@ Because we use **Google Play App Signing**, you can recover:
 
 ## 🛠️ 4. Common Troubleshooting
 
+### RD Ledger schema (facts-only, migration `20261027000000_facts_only_rd_ledger.sql`)
+- The ledger persists **facts only**: `rd_transactions`, `rd_po_deposits`, `rd_fee_waivers`. Installment status, default fees and arrears are projected on the client by `RDLedgerProjector`; `rd_ledger_summary` is a per-RD cache the app rebuilds itself (pull-to-refresh on the Monthly Hub, or automatically for RDs that have no row yet).
+- Apply locally with `supabase db reset` (replays all migrations; the legacy `rd_installments` rows are backfilled into the fact tables, then dropped).
+- Verify RLS + constraints at any time (every case rolls back):
+  `docker exec -i supabase_db_postfolio psql -U postgres -d postgres < supabase/tests/rd_ledger_facts_rls.sql`
+- If the Monthly Hub shows stale badges after editing data directly in SQL, pull-to-refresh on the Hub — it re-projects every visible RD from facts and rewrites the summary cache.
+
 -   **"Developer Error" on Google Sign-In**: Usually means the SHA-1 in Firebase doesn't match the key used to sign the app (Debug vs Release).
 -   **"Keystore file not found"**: Check the path in `android/key.properties`. It is relative to the `android/app` directory.
 -   **"Snapshot generator failed (exit code -9)"**: This is an Out-Of-Memory error. Close heavy applications and try building for a single architecture:
