@@ -5,18 +5,19 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
+import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_payment_allocation_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
+/// Payment history tab: transactions grouped by month with projected allocation chips.
 class RDTransactionsSection extends HookConsumerWidget {
   final RecurringDeposit deposit;
   final bool isEmbeddedTab;
@@ -31,15 +32,19 @@ class RDTransactionsSection extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isExpanded = useState(false);
     final theme = Theme.of(context);
+    final isBusy = ref.watch(rDLedgerControllerProvider).isLoading;
+    final ledger = t.recurringDeposits.ledger;
+
+    final shape = RoundedRectangleBorder(
+      side: BorderSide(color: theme.colorScheme.outlineVariant),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+    );
 
     if (isEmbeddedTab) {
       return Card(
         clipBehavior: Clip.antiAlias,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: theme.colorScheme.outlineVariant),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        ),
+        shape: shape,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -57,42 +62,28 @@ class RDTransactionsSection extends HookConsumerWidget {
                   AppSpacings.gapSm,
                   Expanded(
                     child: Text(
-                      t.recurringDeposits.ledger.transactionsTitle,
+                      ledger.transactionsTitle,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                   FilledButton.tonalIcon(
-                    style: FilledButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    onPressed: () {
-                      final schedule =
-                          ref
-                              .read(rdInstallmentsStreamProvider(deposit.id))
-                              .value ??
-                          const [];
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        builder: (ctx) => RDLogPaymentSheet(
-                          deposit: deposit,
-                          currentSchedule: schedule,
-                        ),
-                      );
-                    },
+                    style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
+                    onPressed: isBusy
+                        ? null
+                        : () => showRDLogPaymentSheet(context, rdId: deposit.id),
                     icon: const HugeIcon(
                       icon: HugeIcons.strokeRoundedCoins01,
                       size: AppDimensions.iconXs,
                     ),
-                    label: Text(t.recurringDeposits.ledger.logPayment),
+                    label: Text(ledger.logPayment),
                   ),
                 ],
               ),
             ),
             const Divider(height: AppDimensions.dividerHeight),
-            _RDTransactionsContent(deposit: deposit),
+            _RDTransactionsContent(rdId: deposit.id, isBusy: isBusy),
           ],
         ),
       );
@@ -101,29 +92,19 @@ class RDTransactionsSection extends HookConsumerWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-      ),
+      shape: shape,
       child: ExpansionTile(
         title: Text(
-          t.recurringDeposits.ledger.transactionsTitle,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          ledger.transactionsTitle,
+          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         leading: const HugeIcon(
-          icon: HugeIcons.strokeRoundedCalendar01,
+          icon: HugeIcons.strokeRoundedInvoice01,
           size: AppDimensions.iconMd,
         ),
-        onExpansionChanged: (val) {
-          isExpanded.value = val;
-        },
+        onExpansionChanged: (value) => isExpanded.value = value,
         children: [
-          if (isExpanded.value)
-            _RDTransactionsContent(deposit: deposit)
-          else
-            const SizedBox.shrink(),
+          if (isExpanded.value) _RDTransactionsContent(rdId: deposit.id, isBusy: isBusy),
         ],
       ),
     );
@@ -131,65 +112,134 @@ class RDTransactionsSection extends HookConsumerWidget {
 }
 
 class _RDTransactionsContent extends ConsumerWidget {
-  final RecurringDeposit deposit;
+  final String rdId;
+  final bool isBusy;
 
-  const _RDTransactionsContent({required this.deposit});
+  const _RDTransactionsContent({required this.rdId, required this.isBusy});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final transactionsAsync =
-        ref.watch(rdTransactionsStreamProvider(deposit.id));
-    final installments =
-        ref.watch(rdInstallmentsStreamProvider(deposit.id)).value ?? const [];
+    final transactionsAsync = ref.watch(rdTransactionsStreamProvider(rdId));
+    final allocationsByTx = ref.watch(
+      rdLedgerProjectionProvider(rdId).select(
+        (async) => async.value?.allocationsByTransaction ?? const {},
+      ),
+    );
+
+    return switch (transactionsAsync) {
+      AsyncData(:final value) => _TransactionList(
+          rdId: rdId,
+          transactions: value,
+          allocationsByTx: allocationsByTx,
+          isBusy: isBusy,
+        ),
+      AsyncLoading(:final value?) => _TransactionList(
+          rdId: rdId,
+          transactions: value,
+          allocationsByTx: allocationsByTx,
+          isBusy: isBusy,
+        ),
+      AsyncError(:final error) => ErrorStateView(
+          message: error.toString(),
+          onRetry: () => ref.invalidate(rdTransactionsStreamProvider(rdId)),
+        ),
+      AsyncLoading() => const _TransactionsSkeleton(),
+    };
+  }
+}
+
+class _TransactionList extends StatelessWidget {
+  final String rdId;
+  final List<RDTransaction> transactions;
+  final Map<String, List<RDPaymentAllocation>> allocationsByTx;
+  final bool isBusy;
+
+  const _TransactionList({
+    required this.rdId,
+    required this.transactions,
+    required this.allocationsByTx,
+    required this.isBusy,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final ledger = t.recurringDeposits.ledger;
 
-    return transactionsAsync.when(
-      data: (transactions) {
-        if (transactions.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.all(AppDimensions.paddingLg),
-            child: Center(
-              child: Text(ledger.noPayments),
+    if (transactions.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(AppDimensions.paddingXl),
+        child: Column(
+          children: [
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedInvoice01,
+              size: AppDimensions.iconXl,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-          );
-        }
+            AppSpacings.gapMd,
+            Text(
+              ledger.noPayments,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            AppSpacings.gapLg,
+            FilledButton.icon(
+              onPressed: isBusy ? null : () => showRDLogPaymentSheet(context, rdId: rdId),
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedCoins01,
+                size: AppDimensions.iconSm,
+              ),
+              label: Text(ledger.logPayment),
+            ),
+          ],
+        ),
+      );
+    }
 
-        final allocationsByTx = RDLedgerService.computeAllocationsByTransaction(
-          currentSchedule: installments,
-          transactions: transactions,
-          initialPaidInstallments: deposit.initialPaidInstallments,
-        );
+    final sorted = [...transactions]..sort((a, b) => b.paidDate.compareTo(a.paidDate));
+    final rows = <Widget>[];
+    DateTime? currentMonth;
+    for (final tx in sorted) {
+      final month = DateTime(tx.paidDate.year, tx.paidDate.month);
+      if (currentMonth != month) {
+        currentMonth = month;
+        rows.add(_MonthHeader(label: month.toMonthYearFormat()));
+      }
+      rows.add(
+        RDTransactionTile(
+          rdId: rdId,
+          transaction: tx,
+          allocations: allocationsByTx[tx.id] ?? const [],
+          isBusy: isBusy,
+        ),
+      );
+    }
 
-        return ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: transactions.length,
-          separatorBuilder: (context, index) =>
-              const Divider(height: AppDimensions.dividerHeight),
-          itemBuilder: (context, index) {
-            final tx = transactions[index];
-            return RDTransactionTile(
-              deposit: deposit,
-              transaction: tx,
-              allTransactions: transactions,
-              currentSchedule: installments,
-              allocations: allocationsByTx[tx.id] ?? const [],
-            );
-          },
-        );
-      },
-      loading: () => const Padding(
-        padding: EdgeInsets.all(AppDimensions.paddingLg),
-        child: Center(child: CircularProgressIndicator()),
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: rows);
+  }
+}
+
+class _MonthHeader extends StatelessWidget {
+  final String label;
+
+  const _MonthHeader({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      color: theme.colorScheme.surfaceContainerLow,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingLg,
+        vertical: AppDimensions.paddingXs,
       ),
-      error: (err, stack) => Padding(
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: Center(
-          child: Text(
-            '${t.common.error}: $err',
-            style: TextStyle(color: theme.colorScheme.error),
-          ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
@@ -197,61 +247,74 @@ class _RDTransactionsContent extends ConsumerWidget {
 }
 
 class RDTransactionTile extends ConsumerWidget {
-  final RecurringDeposit deposit;
+  final String rdId;
   final RDTransaction transaction;
-  final List<RDTransaction> allTransactions;
-  final List<RDInstallment> currentSchedule;
   final List<RDPaymentAllocation> allocations;
+  final bool isBusy;
 
   const RDTransactionTile({
     super.key,
-    required this.deposit,
+    required this.rdId,
     required this.transaction,
-    required this.allTransactions,
-    required this.currentSchedule,
+    required this.isBusy,
     this.allocations = const [],
   });
+
+  Future<void> _confirmAndDelete(BuildContext context, WidgetRef ref) async {
+    final ledger = t.recurringDeposits.ledger;
+    final scheme = Theme.of(context).colorScheme;
+    final tx = transaction;
+
+    final confirmed = await AppDialogs.confirmAction(
+      context,
+      title: ledger.actions.deletePaymentTitle,
+      content: ledger.actions.deletePaymentContent(
+        amount: tx.amount.toRupeeFormat(),
+        date: tx.paidDate.toAppFormat(),
+      ),
+      confirmText: t.common.delete,
+      confirmBackgroundColor: scheme.errorContainer,
+      confirmForegroundColor: scheme.onErrorContainer,
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final result = await ref
+        .read(rDLedgerControllerProvider.notifier)
+        .deletePayment(rdId: rdId, transactionId: tx.id);
+    if (!context.mounted) return;
+    AppFeedback.showResult(context, result, successMessage: ledger.paymentDeleted);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final ledger = t.recurringDeposits.ledger;
     final tx = transaction;
 
-    List<List<dynamic>> modeIcon;
-    switch (tx.paymentMode) {
-      case RDPaymentMode.cash:
-        modeIcon = HugeIcons.strokeRoundedCoins01;
-        break;
-      case RDPaymentMode.upi:
-        modeIcon = HugeIcons.strokeRoundedCreditCard;
-        break;
-      case RDPaymentMode.cheque:
-        modeIcon = HugeIcons.strokeRoundedTicket01;
-        break;
-      case RDPaymentMode.bankTransfer:
-        modeIcon = HugeIcons.strokeRoundedBank;
-        break;
-    }
+    final modeIcon = switch (tx.paymentMode) {
+      RDPaymentMode.cash => HugeIcons.strokeRoundedCoins01,
+      RDPaymentMode.upi => HugeIcons.strokeRoundedCreditCard,
+      RDPaymentMode.cheque => HugeIcons.strokeRoundedTicket01,
+      RDPaymentMode.bankTransfer => HugeIcons.strokeRoundedBank,
+    };
 
-    return ListTile(
+    final tile = ListTile(
       leading: Container(
         padding: const EdgeInsets.all(AppDimensions.paddingSm),
         decoration: BoxDecoration(
-          color: theme.colorScheme.secondaryContainer,
+          color: scheme.secondaryContainer,
           shape: BoxShape.circle,
         ),
         child: HugeIcon(
           icon: modeIcon,
           size: AppDimensions.iconSm,
-          color: theme.colorScheme.onSecondaryContainer,
+          color: scheme.onSecondaryContainer,
         ),
       ),
       title: Text(
         tx.amount.toRupeeFormat(),
-        style: theme.textTheme.bodyLarge?.copyWith(
-          fontWeight: FontWeight.bold,
-        ),
+        style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,56 +325,54 @@ class RDTransactionTile extends ConsumerWidget {
               mode: tx.paymentMode.displayName,
             ),
           ),
-          if (allocations.isNotEmpty) ...[
-            AppSpacings.gapXs,
-            Wrap(
-              spacing: AppDimensions.paddingXs,
-              runSpacing: AppDimensions.paddingXs,
-              children: [
-                for (final alloc in allocations) ...[
-                  if (alloc.principalAmount > 0)
-                    _AllocationChip(
-                      label: ledger.allocations.installmentPill(
-                        month: alloc.installmentNo,
-                        amount: alloc.principalAmount.toRupeeFormat(),
-                      ),
-                      backgroundColor: theme.colorScheme.primaryContainer
-                          .withValues(alpha: 0.6),
-                      foregroundColor: theme.colorScheme.onPrimaryContainer,
+          AppSpacings.gapXs,
+          Wrap(
+            spacing: AppDimensions.paddingXs,
+            runSpacing: AppDimensions.paddingXs,
+            children: [
+              for (final alloc in allocations) ...[
+                if (alloc.principalAmount > 0)
+                  _AllocationChip(
+                    label: ledger.allocations.installmentPill(
+                      month: alloc.installmentNo,
+                      amount: alloc.principalAmount.toRupeeFormat(),
                     ),
-                  if (alloc.lateFeeAmount > 0)
-                    _AllocationChip(
-                      label: ledger.allocations.feePill(
-                        month: alloc.installmentNo,
-                        amount: alloc.lateFeeAmount.toRupeeFormat(),
-                      ),
-                      backgroundColor: theme.colorScheme.errorContainer
-                          .withValues(alpha: 0.6),
-                      foregroundColor: theme.colorScheme.onErrorContainer,
+                    backgroundColor: scheme.primaryContainer,
+                    foregroundColor: scheme.onPrimaryContainer,
+                  ),
+                if (alloc.lateFeeAmount > 0)
+                  _AllocationChip(
+                    label: ledger.allocations.feePill(
+                      month: alloc.installmentNo,
+                      amount: alloc.lateFeeAmount.toRupeeFormat(),
                     ),
-                ],
+                    backgroundColor: scheme.errorContainer,
+                    foregroundColor: scheme.onErrorContainer,
+                  ),
               ],
-            ),
-          ],
+              if (allocations.isEmpty)
+                _AllocationChip(
+                  label: ledger.allocations.creditPill(
+                    amount: tx.amount.toRupeeFormat(),
+                  ),
+                  backgroundColor: scheme.surfaceContainerHighest,
+                  foregroundColor: scheme.onSurfaceVariant,
+                ),
+            ],
+          ),
         ],
       ),
       trailing: MenuAnchor(
-        builder: (context, controller, child) {
-          return IconButton(
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedMoreVertical,
-              size: AppDimensions.iconMd,
-            ),
-            tooltip: t.common.moreOptions,
-            onPressed: () {
-              if (controller.isOpen) {
-                controller.close();
-              } else {
-                controller.open();
-              }
-            },
-          );
-        },
+        builder: (context, controller, child) => IconButton(
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedMoreVertical,
+            size: AppDimensions.iconMd,
+          ),
+          tooltip: t.common.moreOptions,
+          onPressed: isBusy
+              ? null
+              : () => controller.isOpen ? controller.close() : controller.open(),
+        ),
         menuChildren: [
           MenuItemButton(
             leadingIcon: const HugeIcon(
@@ -319,74 +380,43 @@ class RDTransactionTile extends ConsumerWidget {
               size: AppDimensions.iconSm,
             ),
             child: Text(ledger.actions.editPayment),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                builder: (context) => RDEditPaymentSheet(
-                  deposit: deposit,
-                  transaction: tx,
-                  allTransactions: allTransactions,
-                  currentSchedule: currentSchedule,
-                ),
-              );
-            },
+            onPressed: () => showRDEditPaymentSheet(context, rdId: rdId, transaction: tx),
           ),
           MenuItemButton(
             leadingIcon: HugeIcon(
               icon: HugeIcons.strokeRoundedDelete02,
               size: AppDimensions.iconSm,
-              color: theme.colorScheme.error,
+              color: scheme.error,
             ),
             child: Text(
               ledger.actions.deletePayment,
-              style: TextStyle(color: theme.colorScheme.error),
+              style: TextStyle(color: scheme.error),
             ),
-            onPressed: () async {
-              final confirmed = await AppDialogs.confirmAction(
-                context,
-                title: ledger.actions.deletePaymentTitle,
-                content: ledger.actions.deletePaymentContent(
-                  amount: tx.amount.toRupeeFormat(),
-                  date: tx.paidDate.toAppFormat(),
-                ),
-                confirmText: t.common.delete,
-                confirmBackgroundColor: theme.colorScheme.errorContainer,
-                confirmForegroundColor: theme.colorScheme.onErrorContainer,
-              );
-
-              if (confirmed == true && context.mounted) {
-                final result = await ref
-                    .read(rDLedgerControllerProvider.notifier)
-                    .deleteCustomerPayment(
-                      transactionId: tx.id,
-                      deposit: deposit,
-                      currentSchedule: currentSchedule,
-                      currentTransactions: allTransactions,
-                    );
-
-                if (context.mounted) {
-                  if (result is Success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        behavior: SnackBarBehavior.floating,
-                        content: Text(ledger.paymentDeleted),
-                      ),
-                    );
-                  } else if (result is Failure<void, String>) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        behavior: SnackBarBehavior.floating,
-                        content: Text(result.error),
-                      ),
-                    );
-                  }
-                }
-              }
-            },
+            onPressed: () => _confirmAndDelete(context, ref),
           ),
         ],
       ),
+    );
+
+    return Dismissible(
+      key: ValueKey('rd_tx_${tx.id}'),
+      direction: isBusy ? DismissDirection.none : DismissDirection.endToStart,
+      background: Container(
+        color: scheme.errorContainer,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+        child: HugeIcon(
+          icon: HugeIcons.strokeRoundedDelete02,
+          size: AppDimensions.iconMd,
+          color: scheme.onErrorContainer,
+        ),
+      ),
+      // The stream removes the row once the delete lands, so never dismiss optimistically.
+      confirmDismiss: (_) async {
+        await _confirmAndDelete(context, ref);
+        return false;
+      },
+      child: tile,
     );
   }
 }
@@ -408,7 +438,7 @@ class _AllocationChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.paddingSm,
-        vertical: 2,
+        vertical: AppDimensions.paddingXxs,
       ),
       decoration: BoxDecoration(
         color: backgroundColor,
@@ -425,3 +455,26 @@ class _AllocationChip extends StatelessWidget {
   }
 }
 
+class _TransactionsSkeleton extends StatelessWidget {
+  const _TransactionsSkeleton();
+
+  static const int _rows = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    final ledger = t.recurringDeposits.ledger;
+    return Skeletonizer(
+      enabled: true,
+      child: Column(
+        children: [
+          for (var i = 0; i < _rows; i++)
+            ListTile(
+              leading: const CircleAvatar(),
+              title: Text(ledger.paymentAmount),
+              subtitle: Text(ledger.paymentDate),
+            ),
+        ],
+      ),
+    );
+  }
+}

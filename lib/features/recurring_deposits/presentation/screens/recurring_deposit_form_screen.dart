@@ -20,6 +20,7 @@ import 'package:postfolio/core/models/nominee.dart';
 
 import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_recurring_deposit_form.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class RecurringDepositFormScreen extends ConsumerWidget {
   final String? depositId;
@@ -84,17 +85,25 @@ class _RecurringDepositForm extends HookConsumerWidget {
               accountNoController: state.accountNoController,
               selectedStatus: state.selectedStatus,
             ),
-            ..._buildInvestmentDetails(
-              context,
-              selectedScheme: state.selectedScheme,
-              selectedTermYears: state.selectedTermYears,
-              selectedTermMonths: state.selectedTermMonths,
-              installmentAmountController: state.installmentAmountController,
-              interestRateController: state.interestRateController,
-              startDate: state.startDate,
-              startDateController: state.startDateController,
-              projection: state.projection,
-              state: state,
+            // While the ledger lock state resolves the terms are treated as locked
+            // (fail safe) and the section is skeletonized so it never looks editable.
+            Skeletonizer(
+              enabled: state.isFinancialTermsLockLoading,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: _buildInvestmentDetails(
+                  context,
+                  selectedScheme: state.selectedScheme,
+                  selectedTermYears: state.selectedTermYears,
+                  selectedTermMonths: state.selectedTermMonths,
+                  installmentAmountController: state.installmentAmountController,
+                  interestRateController: state.interestRateController,
+                  startDate: state.startDate,
+                  startDateController: state.startDateController,
+                  projection: state.projection,
+                  state: state,
+                ),
+              ),
             ),
             ..._buildNomineesSection(nominees: state.nominees),
           ],
@@ -178,7 +187,7 @@ List<Widget> _buildInvestmentDetails(
 }) {
   return [
     FormSectionHeader(title: t.recurringDeposits.sections.investmentDetails),
-    if (state.isFinancialTermsLocked) ...[
+    if (state.isFinancialTermsLocked && !state.isFinancialTermsLockLoading) ...[
       Container(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         decoration: BoxDecoration(

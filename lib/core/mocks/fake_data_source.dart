@@ -4,10 +4,8 @@ import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_rules.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -25,7 +23,6 @@ class FakeDataSource {
   late final List<Customer> customers;
   late final List<OneTimeDeposit> oneTimeDeposits;
   late final List<RecurringDeposit> recurringDeposits;
-  late final Map<String, List<RDInstallment>> rdInstallments;
   late final Map<String, List<RDTransaction>> rdTransactions;
   late final Map<String, List<RDPoDeposit>> rdPoDeposits;
 
@@ -172,18 +169,6 @@ class FakeDataSource {
         ),
       );
     });
-
-    rdInstallments = {
-      for (final rd in recurringDeposits)
-        rd.id: RDLedgerService.generateInitialSchedule(
-          rdId: rd.id,
-          startDate: rd.startDate,
-          installmentAmount: rd.installmentAmount,
-          termYears: rd.termYears,
-          termMonths: rd.termMonths,
-          initialPaidInstallments: rd.initialPaidInstallments,
-        ),
-    };
 
     // Ledger facts for demo mode: most due months are paid a few days before/after the due
     // date, a few are skipped (so arrears and default fees appear), and all but the most

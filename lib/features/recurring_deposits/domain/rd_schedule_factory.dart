@@ -1,3 +1,4 @@
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
@@ -74,5 +75,27 @@ abstract final class RDScheduleFactory {
   static bool coversMonth(RecurringDeposit deposit, DateTime month) {
     final no = installmentNoFor(deposit.startDate, month.toMonthStart());
     return no >= 1 && no <= deposit.totalMonths;
+  }
+
+  /// Onboarding baseline for legacy/migrated accounts whose earlier months were never
+  /// tracked as transactions: counts the calendar months elapsed before [asOf]
+  /// (closed accounts are fully settled; an explicit override wins).
+  static int calculateInitialPaidInstallments({
+    required DateTime startDate,
+    required int termYears,
+    required int termMonths,
+    required DateTime asOf,
+    DepositStatus status = DepositStatus.active,
+    int? explicitInitialPaid,
+  }) {
+    final totalMonths = termYears * 12 + termMonths;
+    if (totalMonths <= 0) return 0;
+    if (explicitInitialPaid != null && explicitInitialPaid > 0) {
+      return explicitInitialPaid.clamp(0, totalMonths);
+    }
+    if (status == DepositStatus.closed) return totalMonths;
+    final elapsed =
+        (asOf.year - startDate.year) * 12 + (asOf.month - startDate.month);
+    return elapsed.clamp(0, totalMonths);
   }
 }

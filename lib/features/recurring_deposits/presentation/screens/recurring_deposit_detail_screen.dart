@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
@@ -12,17 +13,36 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/domain/nominees_detail_section.dart';
 import 'package:postfolio/core/widgets/domain/wealth_accumulation_grid.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installments_section.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_transactions_section.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-enum RDDetailTab { ledger, transactions, info }
+enum RDDetailTab {
+  ledger('schedule'),
+  transactions('transactions'),
+  info('info');
+
+  const RDDetailTab(this.queryValue);
+
+  /// Value accepted by the `?tab=` query parameter.
+  final String queryValue;
+
+  static RDDetailTab? fromQuery(String? value) {
+    for (final tab in values) {
+      if (tab.queryValue == value) return tab;
+    }
+    return null;
+  }
+}
 
 class RecurringDepositDetailScreen extends HookConsumerWidget {
   final String depositId;
@@ -31,7 +51,13 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final activeTab = useState(RDDetailTab.ledger);
+    // Deep link (`?tab=schedule|transactions|info`) wins on first build; the hook keeps
+    // the user's subsequent choice. `maybeOf` keeps the screen usable outside a router.
+    final tabFromRoute = RDDetailTab.fromQuery(
+      GoRouter.maybeOf(context)?.state.uri.queryParameters['tab'],
+    );
+    final activeTab = useState(tabFromRoute ?? RDDetailTab.ledger);
+    final projectionAsync = ref.watch(rdLedgerProjectionProvider(depositId));
 
     return AsyncSingleEntityBuilder<RecurringDeposit>(
       state: ref.watch(recurringDepositByIdProvider(depositId)),
@@ -41,10 +67,12 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
       builder: (deposit) {
         final theme = Theme.of(context);
         final tabs = t.recurringDeposits.detailTabs;
+        final fields = t.recurringDeposits.fields;
         final resolvedCustomerName = (deposit.customerName?.isNotEmpty ?? false)
             ? deposit.customerName!
             : (ref.watch(customerByIdProvider(deposit.customerId)).value?.name ??
                 deposit.customerId);
+        final rateLabel = fields.ratePercent(rate: deposit.interestRate.toStringAsFixed(2));
 
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
@@ -69,25 +97,21 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                       : t.recurringDeposits.reopenDepositConfirmation,
                   confirmText: isActive ? t.common.close : t.common.reopen,
                 );
-                if (confirmed == true && context.mounted) {
-                  final newStatus = isActive
-                      ? DepositStatus.closed
-                      : DepositStatus.active;
-                  final result = await ref
-                      .read(recurringDepositsControllerProvider.notifier)
-                      .toggleDepositStatus(
-                        depositId,
-                        newStatus,
-                        deposit: deposit,
-                      );
+                if (confirmed != true || !context.mounted) return;
 
-                  if (result is Failure && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text((result as Failure).error.toString()),
-                      ),
+                final newStatus = isActive
+                    ? DepositStatus.closed
+                    : DepositStatus.active;
+                final result = await ref
+                    .read(recurringDepositsControllerProvider.notifier)
+                    .toggleDepositStatus(
+                      depositId,
+                      newStatus,
+                      deposit: deposit,
                     );
-                  }
+                if (!context.mounted) return;
+                if (result case Failure(:final error)) {
+                  AppFeedback.showError(context, error.toString());
                 }
               },
             ),
@@ -99,11 +123,11 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
             final result = await ref
                 .read(recurringDepositsControllerProvider.notifier)
                 .deleteRecurringDeposit(depositId);
-            return result is Failure
-                ? t.recurringDeposits.failedToDeleteDeposit(
-                    error: (result as Failure).error.toString(),
-                  )
-                : null;
+            return switch (result) {
+              Failure(:final error) =>
+                t.recurringDeposits.failedToDeleteDeposit(error: error.toString()),
+              Success() => null,
+            };
           },
           header: EntityDetailHeader(
             avatarBackgroundColor: theme.colorScheme.secondaryContainer,
@@ -126,7 +150,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppDimensions.paddingXs,
-                      vertical: 2,
+                      vertical: AppDimensions.paddingXxs,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -148,18 +172,10 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                     ),
                   ),
                 ),
-                AppSpacings.gapXs,
-                Text(
-                  tabs.headerSubtitle(
-                    amount: deposit.installmentAmount.toRupeeFormat(),
-                    rate: deposit.interestRate.toStringAsFixed(2),
-                    maturityDate: deposit.maturityDate.toCompactFormat(),
-                    maturityAmount: deposit.maturityAmount.toRupeeFormat(),
-                  ),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.center,
+                AppSpacings.gapSm,
+                _LedgerProgress(
+                  projectionAsync: projectionAsync,
+                  totalMonths: deposit.totalMonths,
                 ),
               ],
             ),
@@ -225,7 +241,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                       AppSpacings.gapLg,
                       DetailStatCard(
                         title: t.recurringDeposits.fields.interestRate,
-                        value: '${deposit.interestRate.toStringAsFixed(2)}%',
+                        value: rateLabel,
                         backgroundColor:
                             theme.colorScheme.surfaceContainerHighest,
                         textColor: theme.colorScheme.onSurfaceVariant,
@@ -256,8 +272,10 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                           size: AppDimensions.iconMd,
                         ),
                         label: t.recurringDeposits.fields.termYears,
-                        value:
-                            '${deposit.termYears} Years, ${deposit.termMonths} Months',
+                        value: fields.termDisplay(
+                          years: deposit.termYears.toString(),
+                          months: deposit.termMonths.toString(),
+                        ),
                       ),
                       const Divider(height: AppDimensions.dividerHeight),
                       DetailItem(
@@ -266,7 +284,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                           size: AppDimensions.iconMd,
                         ),
                         label: t.recurringDeposits.fields.interestRate,
-                        value: '${deposit.interestRate.toStringAsFixed(2)}%',
+                        value: rateLabel,
                       ),
                     ],
                   ),
@@ -329,6 +347,57 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// Header subtitle: paid-through progress bar + "x/y paid · ₹z due".
+class _LedgerProgress extends StatelessWidget {
+  final AsyncValue<RDLedgerProjection> projectionAsync;
+  final int totalMonths;
+
+  const _LedgerProgress({required this.projectionAsync, required this.totalMonths});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final tabs = t.recurringDeposits.detailTabs;
+    final projection = projectionAsync.value;
+    final isFirstLoad = projectionAsync.isLoading && projection == null;
+    final summary = projection?.summary;
+    final paidThrough = summary?.paidThroughNo ?? 0;
+    final total = totalMonths > 0 ? totalMonths : (projection?.installments.length ?? 0);
+    final progress = total > 0 ? (paidThrough / total).clamp(0.0, 1.0) : 0.0;
+    final isSettled = projection != null && projection.nextDue == null;
+
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+          child: LinearProgressIndicator(
+            // Indeterminate only while the very first projection is loading.
+            value: isFirstLoad ? null : progress,
+            minHeight: AppDimensions.paddingXs,
+          ),
+        ),
+        AppSpacings.gapXs,
+        Text(
+          isSettled
+              ? tabs.progressSettled(
+                  paid: paidThrough.toString(),
+                  total: total.toString(),
+                )
+              : tabs.progressSummary(
+                  paid: paidThrough.toString(),
+                  total: total.toString(),
+                  outstanding: (projection?.totalArrears ?? 0.0).toRupeeFormat(),
+                ),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }

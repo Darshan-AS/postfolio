@@ -29,6 +29,8 @@ class AppDimensions {
   // Buttons
   static const double buttonHeight = 56.0;
   static const double actionButtonSize = 40.0;
+  /// Minimum interactive target size (Material accessibility guideline).
+  static const double minTapTarget = 44.0;
 
   // Borders & Dividers
   static const double borderNone = 0.0;

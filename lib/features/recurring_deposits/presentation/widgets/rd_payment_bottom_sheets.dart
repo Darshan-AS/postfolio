@@ -1,63 +1,200 @@
-import 'package:material_ui/material_ui.dart';
-import 'package:hugeicons/hugeicons.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
+import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_payment_draft.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 export 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart'
     show PaymentSplitMode;
 
-class PaymentSplitSelector extends StatelessWidget {
-  final PaymentSplitMode splitMode;
-  final ValueChanged<PaymentSplitMode> onSplitModeChanged;
+/// Single source of truth for the payment-mode glyphs used across the sheets.
+extension RDPaymentModeIcon on RDPaymentMode {
+  List<List<dynamic>> get icon => switch (this) {
+        RDPaymentMode.cash => HugeIcons.strokeRoundedCoins01,
+        RDPaymentMode.upi => HugeIcons.strokeRoundedCreditCard,
+        RDPaymentMode.cheque => HugeIcons.strokeRoundedTicket01,
+        RDPaymentMode.bankTransfer => HugeIcons.strokeRoundedBank,
+      };
+}
 
-  const PaymentSplitSelector({
-    super.key,
-    required this.splitMode,
-    required this.onSplitModeChanged,
+/// Opens the "log customer payment" sheet. Resolves `true` when a payment was recorded.
+Future<bool?> showRDLogPaymentSheet(
+  BuildContext context, {
+  required String rdId,
+  double? initialAmount,
+  PaymentSplitMode? initialSplitMode,
+}) =>
+    AppAdaptiveSheet.show<bool>(
+      context,
+      builder: (_) => _PaymentForm(
+        rdId: rdId,
+        initialAmount: initialAmount,
+        initialSplitMode: initialSplitMode,
+      ),
+    );
+
+/// Opens the "edit customer payment" sheet. Resolves `true` when the payment was updated.
+Future<bool?> showRDEditPaymentSheet(
+  BuildContext context, {
+  required String rdId,
+  required RDTransaction transaction,
+}) =>
+    AppAdaptiveSheet.show<bool>(
+      context,
+      builder: (_) => _PaymentForm(rdId: rdId, existing: transaction),
+    );
+
+// --- Form ---------------------------------------------------------------------------------
+
+class _PaymentForm extends HookConsumerWidget {
+  const _PaymentForm({
+    required this.rdId,
+    this.existing,
+    this.initialAmount,
+    this.initialSplitMode,
   });
 
+  final String rdId;
+  final RDTransaction? existing;
+  final double? initialAmount;
+  final PaymentSplitMode? initialSplitMode;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final draft = usePaymentDraft(
+      ref,
+      rdId: rdId,
+      existing: existing,
+      initialAmount: initialAmount,
+      initialSplitMode: initialSplitMode,
+    );
+    final theme = Theme.of(context);
     final ledger = t.recurringDeposits.ledger;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: SegmentedButton<PaymentSplitMode>(
-        selected: {splitMode},
-        onSelectionChanged: (selected) {
-          onSplitModeChanged(selected.first);
-        },
-        segments: [
-          ButtonSegment(
-            value: PaymentSplitMode.installmentsOnly,
-            label: Text(ledger.splitModes.installmentsOnly),
-            tooltip: ledger.splitModes.installmentsOnlyTooltip,
+    final isEditing = draft.isEditing;
+
+    Future<void> handleSubmit() async {
+      final result = await draft.submit();
+      if (!context.mounted) return;
+      AppFeedback.showResult(
+        context,
+        result,
+        successMessage: isEditing ? ledger.paymentUpdated : ledger.paymentRecorded,
+      );
+      if (result is Success<void, String>) {
+        Navigator.of(context).pop(true);
+      }
+    }
+
+    Future<void> handlePopAttempt(bool didPop, bool? _) async {
+      if (didPop) return;
+      final discard = await AppDialogs.confirmAction(
+        context,
+        title: ledger.discardChangesTitle,
+        content: ledger.discardChangesContent,
+        confirmText: ledger.discard,
+      );
+      if (discard == true && context.mounted) {
+        Navigator.of(context).pop(false);
+      }
+    }
+
+    final Widget body;
+    if (draft.facts.hasValue) {
+      body = _FormBody(draft: draft);
+    } else if (draft.facts.hasError) {
+      body = Padding(
+        padding: const EdgeInsets.all(AppDimensions.paddingXl),
+        child: Text(
+          draft.facts.error.toString(),
+          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error),
+        ),
+      );
+    } else {
+      body = const Padding(
+        padding: EdgeInsets.all(AppDimensions.paddingXl),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return PopScope<bool>(
+      canPop: !isEditing || !draft.isDirty,
+      onPopInvokedWithResult: handlePopAttempt,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimensions.paddingLg,
+              AppDimensions.paddingSm,
+              AppDimensions.paddingSm,
+              AppDimensions.paddingNone,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    isEditing ? ledger.editPaymentTitle : ledger.logPaymentTitle,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: t.common.close,
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedCancel01,
+                    size: AppDimensions.iconMd,
+                  ),
+                  onPressed: () => Navigator.of(context).maybePop(false),
+                ),
+              ],
+            ),
           ),
-          ButtonSegment(
-            value: PaymentSplitMode.includeFees,
-            label: Text(ledger.splitModes.includeFees),
-            tooltip: ledger.splitModes.includeFeesTooltip,
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingLg,
+                vertical: AppDimensions.paddingSm,
+              ),
+              child: body,
+            ),
           ),
-          ButtonSegment(
-            value: PaymentSplitMode.feesOnly,
-            label: Text(ledger.splitModes.feesOnly),
-            tooltip: ledger.splitModes.feesOnlyTooltip,
-          ),
-          ButtonSegment(
-            value: PaymentSplitMode.custom,
-            label: Text(ledger.splitModes.custom),
-            tooltip: ledger.splitModes.customTooltip,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimensions.paddingLg,
+              AppDimensions.paddingSm,
+              AppDimensions.paddingLg,
+              AppDimensions.paddingLg,
+            ),
+            child: FilledButton.icon(
+              onPressed: draft.canSubmit ? handleSubmit : null,
+              icon: draft.isSubmitting
+                  ? const SizedBox.square(
+                      dimension: AppDimensions.iconSm,
+                      child: CircularProgressIndicator(
+                        strokeWidth: AppDimensions.strokeWidthSm,
+                      ),
+                    )
+                  : const HugeIcon(
+                      icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+                      size: AppDimensions.iconSm,
+                    ),
+              label: Text(isEditing ? ledger.saveChanges : ledger.recordPayment),
+            ),
           ),
         ],
       ),
@@ -65,68 +202,310 @@ class PaymentSplitSelector extends StatelessWidget {
   }
 }
 
-class CustomSplitFields extends StatelessWidget {
-  final TextEditingController installmentController;
-  final TextEditingController feeController;
+class _FormBody extends StatelessWidget {
+  const _FormBody({required this.draft});
 
-  const CustomSplitFields({
-    super.key,
-    required this.installmentController,
-    required this.feeController,
-  });
+  final PaymentDraftState draft;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final ledger = t.recurringDeposits.ledger;
-    return Row(
+    final amountText = draft.amountController.text.trim();
+    final amountError =
+        amountText.isNotEmpty && draft.validationError == ledger.enterValidAmount
+            ? ledger.enterValidAmount
+            : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: AppTextField(
-            controller: installmentController,
-            labelText: ledger.toInstallment,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        TextFormField(
+          controller: draft.amountController,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+          textInputAction: TextInputAction.done,
+          style: theme.textTheme.titleLarge,
+          decoration: AppInputDecoration.m3(
+            context,
+            labelText: ledger.paymentAmount,
             prefixText: t.format.currencySymbol,
+            isRequired: true,
+            errorText: amountError,
           ),
         ),
-        AppSpacings.gapMd,
-        Expanded(
-          child: AppTextField(
-            controller: feeController,
-            labelText: ledger.toDefaultFee,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            prefixText: t.format.currencySymbol,
+        if (draft.quickAmounts.isNotEmpty) ...[
+          AppSpacings.gapSm,
+          Wrap(
+            spacing: AppDimensions.paddingSm,
+            runSpacing: AppDimensions.paddingXs,
+            children: [
+              for (final quick in draft.quickAmounts)
+                ChoiceChip(
+                  label: Text(quick.label),
+                  selected: draft.isQuickAmountSelected(quick),
+                  onSelected: (_) => draft.applyQuickAmount(quick),
+                ),
+            ],
           ),
+        ],
+        AppSpacings.gapLg,
+        _SectionLabel(
+          text: '${ledger.paymentMode}${t.format.bulletSeparator}'
+              '${draft.paymentMode.value.displayName}',
+        ),
+        AppSpacings.gapSm,
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<RDPaymentMode>(
+            showSelectedIcon: false,
+            selected: {draft.paymentMode.value},
+            onSelectionChanged: (selection) => draft.paymentMode.value = selection.first,
+            segments: [
+              for (final mode in RDPaymentMode.values)
+                ButtonSegment<RDPaymentMode>(
+                  value: mode,
+                  tooltip: mode.displayName,
+                  icon: HugeIcon(icon: mode.icon, size: AppDimensions.iconSm),
+                ),
+            ],
+          ),
+        ),
+        AppSpacings.gapLg,
+        _PaidDateButton(draft: draft),
+        AppSpacings.gapSm,
+        _SplitSection(draft: draft),
+        AppSpacings.gapLg,
+        RDAllocationPreviewCard(
+          isRecalculation: draft.isEditing,
+          amount: draft.amount,
+          baseline: draft.baseline,
+          preview: draft.preview,
+          delta: draft.previewDelta,
+          asOf: draft.lastDate,
         ),
       ],
     );
   }
 }
 
-class RDAllocationPreviewCard extends StatelessWidget {
-  final bool isRecalculation;
-  final List<RDInstallment>? installmentsToPreview;
-  final List<RDInstallment> currentSchedule;
-  final double leftoverAmount;
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.text});
 
-  const RDAllocationPreviewCard({
-    super.key,
-    required this.isRecalculation,
-    required this.installmentsToPreview,
-    required this.currentSchedule,
-    this.leftoverAmount = 0.0,
-  });
+  final String text;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final preview = t.recurringDeposits.ledger.preview;
+    return Text(
+      text,
+      style: theme.textTheme.labelMedium?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+}
+
+class _PaidDateButton extends StatelessWidget {
+  const _PaidDateButton({required this.draft});
+
+  final PaymentDraftState draft;
+
+  @override
+  Widget build(BuildContext context) {
+    final ledger = t.recurringDeposits.ledger;
+    final current = draft.paidDate.value;
+    final initial = current.isBefore(draft.firstDate)
+        ? draft.firstDate
+        : (current.isAfter(draft.lastDate) ? draft.lastDate : current);
+
+    Future<void> pick() async {
+      final selected = await showDatePicker(
+        context: context,
+        initialDate: initial,
+        firstDate: draft.firstDate,
+        lastDate: draft.lastDate,
+      );
+      if (selected == null || !context.mounted) return;
+      draft.paidDate.value = selected;
+    }
+
+    return OutlinedButton.icon(
+      onPressed: pick,
+      icon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedCalendar01,
+        size: AppDimensions.iconSm,
+      ),
+      label: Text('${ledger.paymentDate}: ${current.toAppFormat()}'),
+    );
+  }
+}
+
+class _SplitSection extends StatelessWidget {
+  const _SplitSection({required this.draft});
+
+  final PaymentDraftState draft;
+
+  @override
+  Widget build(BuildContext context) {
+    final ledger = t.recurringDeposits.ledger;
+    final expanded = draft.showAdvancedSplit.value;
+    final isCustom = draft.splitMode.value == PaymentSplitMode.custom;
+    final showMismatch = isCustom &&
+        draft.validationError != null &&
+        draft.validationError != ledger.amountRequired &&
+        draft.validationError != ledger.enterValidAmount;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextButton.icon(
+          onPressed: () => draft.showAdvancedSplit.value = !expanded,
+          icon: HugeIcon(
+            icon: expanded
+                ? HugeIcons.strokeRoundedArrowUp01
+                : HugeIcons.strokeRoundedArrowDown01,
+            size: AppDimensions.iconSm,
+          ),
+          label: Text(expanded ? ledger.hideSplit : ledger.adjustSplit),
+        ),
+        if (expanded) ...[
+          _SectionLabel(text: ledger.allocationPriority),
+          AppSpacings.gapSm,
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SegmentedButton<PaymentSplitMode>(
+              showSelectedIcon: false,
+              selected: {draft.splitMode.value},
+              onSelectionChanged: (selection) => draft.setSplitMode(selection.first),
+              segments: [
+                ButtonSegment(
+                  value: PaymentSplitMode.installmentsOnly,
+                  label: Text(ledger.splitModes.installmentsOnly),
+                  tooltip: ledger.splitModes.installmentsOnlyTooltip,
+                ),
+                ButtonSegment(
+                  value: PaymentSplitMode.includeFees,
+                  label: Text(ledger.splitModes.includeFees),
+                  tooltip: ledger.splitModes.includeFeesTooltip,
+                ),
+                ButtonSegment(
+                  value: PaymentSplitMode.feesOnly,
+                  label: Text(ledger.splitModes.feesOnly),
+                  tooltip: ledger.splitModes.feesOnlyTooltip,
+                ),
+                ButtonSegment(
+                  value: PaymentSplitMode.custom,
+                  label: Text(ledger.splitModes.custom),
+                  tooltip: ledger.splitModes.customTooltip,
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (isCustom) ...[
+          AppSpacings.gapMd,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: draft.installmentComponentController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+                  decoration: AppInputDecoration.m3(
+                    context,
+                    labelText: ledger.toInstallment,
+                    prefixText: t.format.currencySymbol,
+                  ),
+                ),
+              ),
+              AppSpacings.gapMd,
+              Expanded(
+                child: TextFormField(
+                  controller: draft.lateFeeComponentController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+                  decoration: AppInputDecoration.m3(
+                    context,
+                    labelText: ledger.toDefaultFee,
+                    prefixText: t.format.currencySymbol,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          AppSpacings.gapXs,
+          _SplitHelperText(
+            text: showMismatch
+                ? draft.validationError!
+                : ledger.customSplitHint(total: draft.amount.toRupeeFormat()),
+            isError: showMismatch,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _SplitHelperText extends StatelessWidget {
+  const _SplitHelperText({required this.text, required this.isError});
+
+  final String text;
+  final bool isError;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+      child: Text(
+        text,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: isError ? theme.colorScheme.error : theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+}
+
+// --- Preview ------------------------------------------------------------------------------
+
+/// Shows how the draft payment lands on the schedule: a one-line summary, then every month
+/// whose collected principal or fee changes, each with its projected status chip.
+class RDAllocationPreviewCard extends StatelessWidget {
+  const RDAllocationPreviewCard({
+    super.key,
+    required this.isRecalculation,
+    required this.amount,
+    required this.baseline,
+    required this.preview,
+    required this.delta,
+    required this.asOf,
+  });
+
+  final bool isRecalculation;
+  final double amount;
+  final RDLedgerProjection? baseline;
+  final RDLedgerProjection? preview;
+  final List<RDPreviewMonthDelta> delta;
+  final DateTime asOf;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final strings = t.recurringDeposits.ledger.preview;
+    final previewValue = preview;
 
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
+        color: scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,127 +515,57 @@ class RDAllocationPreviewCard extends StatelessWidget {
               HugeIcon(
                 icon: HugeIcons.strokeRoundedActivity01,
                 size: AppDimensions.iconSm,
-                color: theme.colorScheme.primary,
+                color: scheme.primary,
               ),
               AppSpacings.gapSm,
-              Text(
-                isRecalculation ? preview.recalculatedTitle : preview.title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  isRecalculation ? strings.recalculatedTitle : strings.title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
           AppSpacings.gapSm,
-          if (installmentsToPreview == null)
+          if (previewValue == null)
             Text(
-              isRecalculation ? preview.recalculatedHint : preview.hint,
+              isRecalculation ? strings.recalculatedHint : strings.hint,
               style: theme.textTheme.bodySmall,
             )
           else ...[
             Text(
-              isRecalculation ? preview.updatedAllocations : preview.willCover,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              _summaryLine(previewValue),
+              style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
             ),
-            AppSpacings.gapXs,
-            ...installmentsToPreview!.map((inst) {
-              final monthIdx = currentSchedule.indexWhere(
-                (s) => s.id == inst.id,
-              );
-              final monthNum = monthIdx != -1 ? (monthIdx + 1).toString() : '?';
-
-              final String principalDesc = inst.isInstallmentPaid
-                  ? preview.principalCovered(
-                      amount: inst.installmentAmount.toRupeeFormat(),
-                    )
-                  : preview.principalAllocated(
-                      paid: inst.customerPaidAmount.toRupeeFormat(),
-                      total: inst.installmentAmount.toRupeeFormat(),
-                    );
-
-              return Padding(
-                padding: const EdgeInsets.only(
-                  left: AppDimensions.paddingSm,
-                  top: AppDimensions.paddingXs,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        HugeIcon(
-                          icon: HugeIcons.strokeRoundedArrowRight01,
-                          size: AppDimensions.iconXs,
-                          color: theme.colorScheme.outline,
-                        ),
-                        AppSpacings.gapXs,
-                        Text(
-                          '${t.recurringDeposits.ledger.installmentDetails.month(month: monthNum)}: $principalDesc',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (inst.lateFee > 0)
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          left: AppDimensions.paddingLg,
-                          top: 1.0,
-                        ),
-                        child: Text(
-                          inst.isLateFeeWaived
-                              ? preview.feeWaived
-                              : (inst.paidLateFee >= inst.lateFee
-                                    ? preview.feePaid(
-                                        amount: inst.lateFee.toRupeeFormat(),
-                                      )
-                                    : (inst.paidLateFee > 0
-                                          ? preview.feePartial(
-                                              paid: inst.paidLateFee
-                                                  .toRupeeFormat(),
-                                              pending:
-                                                  (inst.lateFee -
-                                                          inst.paidLateFee)
-                                                      .toRupeeFormat(),
-                                            )
-                                          : preview.feePending(
-                                              amount: inst.lateFee
-                                                  .toRupeeFormat(),
-                                            ))),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: inst.isLateFeeWaived
-                                ? theme.colorScheme.secondary
-                                : (inst.paidLateFee >= inst.lateFee
-                                      ? theme.colorScheme.primary
-                                      : theme.colorScheme.error),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            }),
-            if (leftoverAmount > 0) ...[
+            if (delta.isNotEmpty) ...[
+              AppSpacings.gapSm,
+              for (final month in delta) ...[
+                _PreviewMonthRow(month: month, asOf: asOf),
+                AppSpacings.gapXs,
+              ],
+            ],
+            if (previewValue.customerCredit > 0) ...[
               AppSpacings.gapSm,
               Row(
                 children: [
                   HugeIcon(
                     icon: HugeIcons.strokeRoundedStar,
                     size: AppDimensions.iconXs,
-                    color: theme.colorScheme.primary,
+                    color: scheme.primary,
                   ),
                   AppSpacings.gapXs,
-                  Text(
-                    preview.advanceCredit(
-                      amount: leftoverAmount.toRupeeFormat(),
-                    ),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      strings.advanceCredit(
+                        amount: previewValue.customerCredit.toRupeeFormat(),
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -267,706 +576,131 @@ class RDAllocationPreviewCard extends StatelessWidget {
       ),
     );
   }
-}
 
-class RDLogPaymentSheet extends HookConsumerWidget {
-  final RecurringDeposit deposit;
-  final List<RDInstallment> currentSchedule;
-  final double? initialAmount;
-  final PaymentSplitMode? initialSplitMode;
-
-  const RDLogPaymentSheet({
-    super.key,
-    required this.deposit,
-    required this.currentSchedule,
-    this.initialAmount,
-    this.initialSplitMode,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ledger = t.recurringDeposits.ledger;
-    final initialText = initialAmount != null && initialAmount! > 0
-        ? (initialAmount! % 1 == 0
-              ? initialAmount!.toInt().toString()
-              : initialAmount!.toString())
-        : '';
-    final amountController = useTextEditingController(text: initialText);
-    final paidDate = useState(DateTime.now());
-    final paymentMode = useState(RDPaymentMode.cash);
-
-    final pendingPrincipalTotal = useMemoized(() {
-      return currentSchedule
-          .where((inst) => !inst.installmentDate.isAfter(paidDate.value))
-          .fold<double>(0.0, (sum, inst) => sum + inst.outstandingPrincipal);
-    }, [currentSchedule, paidDate.value]);
-
-    final pendingLateFeesTotal = useMemoized(() {
-      return currentSchedule.fold<double>(
-        0.0,
-        (sum, inst) => sum + inst.outstandingLateFeeAt(paidDate.value),
-      );
-    }, [currentSchedule, paidDate.value]);
-
-    final defaultSplitMode =
-        initialSplitMode ??
-        (pendingPrincipalTotal == 0.0 && pendingLateFeesTotal > 0
-            ? PaymentSplitMode.feesOnly
-            : (initialAmount != null &&
-                      initialAmount! > deposit.installmentAmount
-                  ? PaymentSplitMode.includeFees
-                  : PaymentSplitMode.installmentsOnly));
-    final splitMode = useState<PaymentSplitMode>(defaultSplitMode);
-    final customInstallmentController = useTextEditingController();
-    final customFeeController = useTextEditingController();
-    final formKey = useMemoized(() => GlobalKey<FormState>());
-    final theme = Theme.of(context);
-
-    final amountText = useListenable(amountController);
-    final double amountValue = double.tryParse(amountText.text.trim()) ?? 0.0;
-
-    final customInstText = useListenable(customInstallmentController);
-    final customFeeText = useListenable(customFeeController);
-    final customInstValue = double.tryParse(customInstText.text.trim()) ?? 0.0;
-    final customFeeValue = double.tryParse(customFeeText.text.trim()) ?? 0.0;
-
-    final (double? effectiveInstComp, double? effectiveFeeComp) = useMemoized(
-      () {
-        switch (splitMode.value) {
-          case PaymentSplitMode.installmentsOnly:
-            return (amountValue, 0.0);
-          case PaymentSplitMode.feesOnly:
-            return (0.0, amountValue);
-          case PaymentSplitMode.includeFees:
-            return (null, null);
-          case PaymentSplitMode.custom:
-            return (customInstValue, customFeeValue);
-        }
-      },
-      [splitMode.value, amountValue, customInstValue, customFeeValue],
-    );
-
-    final previewResult = useMemoized(
-      () {
-        if (amountValue <= 0.0) return null;
-        return RDLedgerService.allocateCustomerPayment(
-          currentSchedule: currentSchedule,
-          paymentAmount: amountValue,
-          installmentComponent: effectiveInstComp,
-          lateFeeComponent: effectiveFeeComp,
-          paidDate: paidDate.value,
-          paymentMode: paymentMode.value,
-          rdId: deposit.id,
-        );
-      },
-      [
-        amountValue,
-        effectiveInstComp,
-        effectiveFeeComp,
-        paidDate.value,
-        paymentMode.value,
-        currentSchedule,
-        deposit.id,
-      ],
-    );
-    final baseInstallment = deposit.installmentAmount;
-
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: SingleChildScrollView(
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      ledger.logPaymentTitle,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedCancel01,
-                        size: AppDimensions.iconMd,
-                      ),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                if (pendingLateFeesTotal > 0) ...[
-                  AppSpacings.gapSm,
-                  Wrap(
-                    spacing: AppDimensions.paddingSm,
-                    runSpacing: AppDimensions.paddingXs,
-                    children: [
-                      ActionChip(
-                        avatar: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedFlash,
-                          size: AppDimensions.iconXs,
-                        ),
-                        label: Text(
-                          ledger.chips.oneInstallment(
-                            amount: baseInstallment.toRupeeFormat(),
-                          ),
-                        ),
-                        onPressed: () {
-                          amountController.text = baseInstallment
-                              .toStringAsFixed(0);
-                          splitMode.value = PaymentSplitMode.installmentsOnly;
-                        },
-                      ),
-                      ActionChip(
-                        avatar: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedEnergy,
-                          size: AppDimensions.iconXs,
-                        ),
-                        label: Text(
-                          ledger.chips.feesOnly(
-                            amount: pendingLateFeesTotal.toRupeeFormat(),
-                          ),
-                        ),
-                        onPressed: () {
-                          amountController.text = pendingLateFeesTotal
-                              .toStringAsFixed(0);
-                          splitMode.value = PaymentSplitMode.feesOnly;
-                        },
-                      ),
-                      ActionChip(
-                        avatar: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedCheckmarkCircle02,
-                          size: AppDimensions.iconXs,
-                        ),
-                        label: Text(
-                          ledger.chips.clearBoth(
-                            amount: (baseInstallment + pendingLateFeesTotal)
-                                .toRupeeFormat(),
-                          ),
-                        ),
-                        onPressed: () {
-                          amountController.text =
-                              (baseInstallment + pendingLateFeesTotal)
-                                  .toStringAsFixed(0);
-                          splitMode.value = PaymentSplitMode.includeFees;
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-                AppSpacings.gapLg,
-                AppTextField(
-                  controller: amountController,
-                  labelText: ledger.paymentAmount,
-                  isRequired: true,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  prefixText: t.format.currencySymbol,
-                  validator: (val) {
-                    if (val == null || val.trim().isEmpty) {
-                      return ledger.amountRequired;
-                    }
-                    final numVal = double.tryParse(val.trim());
-                    if (numVal == null || numVal <= 0) {
-                      return ledger.enterValidAmount;
-                    }
-                    return null;
-                  },
-                ),
-                AppSpacings.gapLg,
-                Text(
-                  ledger.allocationPriority,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                AppSpacings.gapSm,
-                PaymentSplitSelector(
-                  splitMode: splitMode.value,
-                  onSplitModeChanged: (mode) {
-                    splitMode.value = mode;
-                    if (mode == PaymentSplitMode.custom) {
-                      customInstallmentController.text = amountValue
-                          .toStringAsFixed(0);
-                      customFeeController.text = '0';
-                    }
-                  },
-                ),
-                if (splitMode.value == PaymentSplitMode.custom) ...[
-                  AppSpacings.gapMd,
-                  CustomSplitFields(
-                    installmentController: customInstallmentController,
-                    feeController: customFeeController,
-                  ),
-                ],
-                AppSpacings.gapLg,
-                Text(
-                  ledger.paymentMode,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                AppSpacings.gapSm,
-                SegmentedButton<RDPaymentMode>(
-                  selected: {paymentMode.value},
-                  onSelectionChanged: (selected) {
-                    paymentMode.value = selected.first;
-                  },
-                  segments: RDPaymentMode.values.map((mode) {
-                    List<List<dynamic>> icon;
-                    switch (mode) {
-                      case RDPaymentMode.cash:
-                        icon = HugeIcons.strokeRoundedCoins01;
-                        break;
-                      case RDPaymentMode.upi:
-                        icon = HugeIcons.strokeRoundedCreditCard;
-                        break;
-                      case RDPaymentMode.cheque:
-                        icon = HugeIcons.strokeRoundedTicket01;
-                        break;
-                      case RDPaymentMode.bankTransfer:
-                        icon = HugeIcons.strokeRoundedBank;
-                        break;
-                    }
-                    return ButtonSegment<RDPaymentMode>(
-                      value: mode,
-                      label: Text(mode.displayName),
-                      icon: HugeIcon(icon: icon, size: AppDimensions.iconSm),
-                    );
-                  }).toList(),
-                ),
-                AppSpacings.gapLg,
-                AppTextField(
-                  readOnly: true,
-                  labelText: ledger.paymentDate,
-                  controller: TextEditingController(
-                    text: paidDate.value.toAppFormat(),
-                  ),
-                  prefixIcon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedCalendar01,
-                    size: AppDimensions.iconMd,
-                  ),
-                  onTap: () async {
-                    final selected = await showDatePicker(
-                      context: context,
-                      initialDate: paidDate.value,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (selected != null) {
-                      paidDate.value = selected;
-                    }
-                  },
-                ),
-                AppSpacings.gapXl,
-                RDAllocationPreviewCard(
-                  isRecalculation: false,
-                  installmentsToPreview: previewResult?.updatedInstallments,
-                  currentSchedule: currentSchedule,
-                  leftoverAmount: previewResult?.leftoverAmount ?? 0.0,
-                ),
-                AppSpacings.gapXl,
-                FilledButton(
-                  onPressed: () async {
-                    if (formKey.currentState?.validate() != true) return;
-                    if (previewResult == null) return;
-
-                    final Result<void, String> result = await ref
-                        .read(rDLedgerControllerProvider.notifier)
-                        .recordCustomerPayment(
-                          rdId: deposit.id,
-                          paymentAmount: amountValue,
-                          installmentComponent: effectiveInstComp,
-                          lateFeeComponent: effectiveFeeComp,
-                          paidDate: paidDate.value,
-                          paymentMode: paymentMode.value,
-                          currentSchedule: currentSchedule,
-                        );
-
-                    if (context.mounted) {
-                      Navigator.of(context).pop();
-                      if (result is Success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            behavior: SnackBarBehavior.floating,
-                            content: Text(ledger.paymentRecorded),
-                          ),
-                        );
-                      } else if (result is Failure<void, String>) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            behavior: SnackBarBehavior.floating,
-                            content: Text(result.error),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  child: Text(ledger.recordPayment),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+  String _summaryLine(RDLedgerProjection previewValue) {
+    final strings = t.recurringDeposits.ledger.preview;
+    if (delta.isEmpty) return strings.summaryNoChange;
+    final parts = <String>[];
+    var feeDelta = 0.0;
+    for (final month in delta) {
+      final principal = month.after.customerPaidAmount - month.before.customerPaidAmount;
+      if (principal != 0) {
+        parts.add(strings.summaryPrincipalPart(
+          month: month.after.installmentNo.toString(),
+          amount: principal.toRupeeFormat(),
+        ));
+      }
+      feeDelta += month.after.paidLateFee - month.before.paidLateFee;
+    }
+    if (feeDelta != 0) {
+      parts.add(strings.summaryFeePart(amount: feeDelta.toRupeeFormat()));
+    }
+    final left = previewValue.customerCredit - (baseline?.customerCredit ?? 0.0);
+    return strings.summaryLine(
+      amount: amount.toRupeeFormat(),
+      parts: parts.join(', '),
+      left: left.toRupeeFormat(),
     );
   }
 }
 
-class RDEditPaymentSheet extends HookConsumerWidget {
-  final RecurringDeposit deposit;
-  final RDTransaction transaction;
-  final List<RDTransaction> allTransactions;
-  final List<RDInstallment> currentSchedule;
+class _PreviewMonthRow extends StatelessWidget {
+  const _PreviewMonthRow({required this.month, required this.asOf});
 
-  const RDEditPaymentSheet({
-    super.key,
-    required this.deposit,
-    required this.transaction,
-    required this.allTransactions,
-    required this.currentSchedule,
-  });
+  final RDPreviewMonthDelta month;
+  final DateTime asOf;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ledger = t.recurringDeposits.ledger;
-    final amountController = useTextEditingController(
-      text: transaction.amount.toStringAsFixed(
-        transaction.amount.truncateToDouble() == transaction.amount ? 0 : 2,
-      ),
-    );
-    final paidDate = useState(transaction.paidDate);
-    final paymentMode = useState(transaction.paymentMode);
-    final initialSplitMode = useMemoized(() {
-      if (transaction.installmentAmount > 0 && transaction.lateFeeAmount == 0) {
-        return PaymentSplitMode.installmentsOnly;
-      } else if (transaction.installmentAmount == 0 &&
-          transaction.lateFeeAmount > 0) {
-        return PaymentSplitMode.feesOnly;
-      } else if (transaction.installmentAmount > 0 &&
-          transaction.lateFeeAmount > 0) {
-        return PaymentSplitMode.custom;
-      } else {
-        return PaymentSplitMode.includeFees;
-      }
-    }, [transaction]);
-
-    final splitMode = useState<PaymentSplitMode>(initialSplitMode);
-    final customInstallmentController = useTextEditingController(
-      text: transaction.installmentAmount > 0
-          ? transaction.installmentAmount.toStringAsFixed(
-              transaction.installmentAmount.truncateToDouble() ==
-                      transaction.installmentAmount
-                  ? 0
-                  : 2,
-            )
-          : '',
-    );
-    final customFeeController = useTextEditingController(
-      text: transaction.lateFeeAmount > 0
-          ? transaction.lateFeeAmount.toStringAsFixed(
-              transaction.lateFeeAmount.truncateToDouble() ==
-                      transaction.lateFeeAmount
-                  ? 0
-                  : 2,
-            )
-          : '',
-    );
-
-    final formKey = useMemoized(() => GlobalKey<FormState>());
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final strings = t.recurringDeposits.ledger.preview;
+    final after = month.after;
+    final visual = after.displayStatusAt(asOf).visual(scheme);
 
-    final amountText = useListenable(amountController);
-    final double amountValue = double.tryParse(amountText.text.trim()) ?? 0.0;
+    final principalText = after.isInstallmentPaid
+        ? strings.principalCovered(amount: after.installmentAmount.toRupeeFormat())
+        : strings.principalAllocated(
+            paid: after.customerPaidAmount.toRupeeFormat(),
+            total: after.installmentAmount.toRupeeFormat(),
+          );
 
-    final customInstText = useListenable(customInstallmentController);
-    final customFeeText = useListenable(customFeeController);
-    final customInstValue = double.tryParse(customInstText.text.trim()) ?? 0.0;
-    final customFeeValue = double.tryParse(customFeeText.text.trim()) ?? 0.0;
+    final fee = after.dynamicLateFeeAt(asOf);
+    final String? feeText;
+    final Color feeColor;
+    if (after.isLateFeeWaived) {
+      feeText = strings.feeWaived;
+      feeColor = scheme.secondary;
+    } else if (fee <= 0) {
+      feeText = null;
+      feeColor = scheme.onSurfaceVariant;
+    } else if (after.paidLateFee >= fee) {
+      feeText = strings.feePaid(amount: fee.toRupeeFormat());
+      feeColor = scheme.primary;
+    } else if (after.paidLateFee > 0) {
+      feeText = strings.feePartial(
+        paid: after.paidLateFee.toRupeeFormat(),
+        pending: (fee - after.paidLateFee).toRupeeFormat(),
+      );
+      feeColor = scheme.error;
+    } else {
+      feeText = strings.feePending(amount: fee.toRupeeFormat());
+      feeColor = scheme.error;
+    }
 
-    final (double? effectiveInstComp, double? effectiveFeeComp) = useMemoized(
-      () {
-        switch (splitMode.value) {
-          case PaymentSplitMode.installmentsOnly:
-            return (amountValue, 0.0);
-          case PaymentSplitMode.feesOnly:
-            return (0.0, amountValue);
-          case PaymentSplitMode.includeFees:
-            return (null, null);
-          case PaymentSplitMode.custom:
-            return (customInstValue, customFeeValue);
-        }
-      },
-      [splitMode.value, amountValue, customInstValue, customFeeValue],
-    );
-
-    final previewSchedule = useMemoized(
-      () {
-        if (amountValue <= 0.0) return null;
-        final updatedTx = transaction.copyWith(
-          amount: amountValue,
-          installmentAmount: effectiveInstComp ?? 0.0,
-          lateFeeAmount: effectiveFeeComp ?? 0.0,
-          paidDate: paidDate.value,
-          paymentMode: paymentMode.value,
-        );
-        final updatedTxs = allTransactions
-            .map((t) => t.id == transaction.id ? updatedTx : t)
-            .toList();
-        return RDLedgerService.recomputeScheduleFromTransactions(
-          currentSchedule: currentSchedule,
-          transactions: updatedTxs,
-          initialPaidInstallments: deposit.initialPaidInstallments,
-        );
-      },
-      [
-        amountValue,
-        effectiveInstComp,
-        effectiveFeeComp,
-        paidDate.value,
-        paymentMode.value,
-        currentSchedule,
-        allTransactions,
-        transaction,
-        deposit.initialPaidInstallments,
-      ],
-    );
-
-    final previewInstallments = useMemoized(() {
-      if (previewSchedule == null) return null;
-      return previewSchedule
-          .where(
-            (inst) =>
-                inst.customerPaidAmount > 0 ||
-                inst.paidLateFee > 0 ||
-                inst.isLateFeeWaived,
-          )
-          .toList();
-    }, [previewSchedule]);
-
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: SingleChildScrollView(
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      ledger.editPaymentTitle,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedCancel01,
-                        size: AppDimensions.iconMd,
-                      ),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingSm,
+            vertical: AppDimensions.paddingXxs,
+          ),
+          decoration: BoxDecoration(
+            color: visual.background,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              HugeIcon(
+                icon: visual.icon,
+                size: AppDimensions.iconXs,
+                color: visual.foreground,
+              ),
+              AppSpacings.gapXs,
+              Text(
+                strings.monthLabel(month: after.installmentNo.toString()),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: visual.foreground,
+                  fontWeight: FontWeight.bold,
                 ),
-                AppSpacings.gapLg,
-                AppTextField(
-                  controller: amountController,
-                  labelText: ledger.paymentAmount,
-                  isRequired: true,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  prefixText: t.format.currencySymbol,
-                  validator: (val) {
-                    if (val == null || val.trim().isEmpty) {
-                      return ledger.amountRequired;
-                    }
-                    final numVal = double.tryParse(val.trim());
-                    if (numVal == null || numVal <= 0) {
-                      return ledger.enterValidAmount;
-                    }
-                    return null;
-                  },
-                ),
-                AppSpacings.gapLg,
-                Text(
-                  ledger.allocationPriority,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                AppSpacings.gapSm,
-                PaymentSplitSelector(
-                  splitMode: splitMode.value,
-                  onSplitModeChanged: (mode) {
-                    splitMode.value = mode;
-                    if (mode == PaymentSplitMode.custom) {
-                      customInstallmentController.text = amountValue
-                          .toStringAsFixed(0);
-                      customFeeController.text = '0';
-                    }
-                  },
-                ),
-                if (splitMode.value == PaymentSplitMode.custom) ...[
-                  AppSpacings.gapMd,
-                  CustomSplitFields(
-                    installmentController: customInstallmentController,
-                    feeController: customFeeController,
-                  ),
-                ],
-                AppSpacings.gapLg,
-                Text(
-                  ledger.paymentMode,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                AppSpacings.gapSm,
-                SegmentedButton<RDPaymentMode>(
-                  selected: {paymentMode.value},
-                  onSelectionChanged: (selected) {
-                    paymentMode.value = selected.first;
-                  },
-                  segments: RDPaymentMode.values.map((mode) {
-                    List<List<dynamic>> icon;
-                    switch (mode) {
-                      case RDPaymentMode.cash:
-                        icon = HugeIcons.strokeRoundedCoins01;
-                        break;
-                      case RDPaymentMode.upi:
-                        icon = HugeIcons.strokeRoundedCreditCard;
-                        break;
-                      case RDPaymentMode.cheque:
-                        icon = HugeIcons.strokeRoundedTicket01;
-                        break;
-                      case RDPaymentMode.bankTransfer:
-                        icon = HugeIcons.strokeRoundedBank;
-                        break;
-                    }
-                    return ButtonSegment<RDPaymentMode>(
-                      value: mode,
-                      label: Text(mode.displayName),
-                      icon: HugeIcon(icon: icon, size: AppDimensions.iconSm),
-                    );
-                  }).toList(),
-                ),
-                AppSpacings.gapLg,
-                AppTextField(
-                  readOnly: true,
-                  labelText: ledger.paymentDate,
-                  controller: TextEditingController(
-                    text: paidDate.value.toAppFormat(),
-                  ),
-                  prefixIcon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedCalendar01,
-                    size: AppDimensions.iconMd,
-                  ),
-                  onTap: () async {
-                    final selected = await showDatePicker(
-                      context: context,
-                      initialDate: paidDate.value,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (selected != null) {
-                      paidDate.value = selected;
-                    }
-                  },
-                ),
-                AppSpacings.gapXl,
-                RDAllocationPreviewCard(
-                  isRecalculation: true,
-                  installmentsToPreview: previewInstallments,
-                  currentSchedule: currentSchedule,
-                ),
-                AppSpacings.gapXl,
-                FilledButton(
-                  onPressed: () async {
-                    if (formKey.currentState?.validate() != true) return;
-                    if (previewSchedule == null) return;
-
-                    if (splitMode.value == PaymentSplitMode.custom) {
-                      final sum = customInstValue + customFeeValue;
-                      if ((sum - amountValue).abs() > 0.01) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            behavior: SnackBarBehavior.floating,
-                            content: Text(
-                              ledger.customSplitMismatch(
-                                inst: customInstValue.toRupeeFormat(),
-                                fee: customFeeValue.toRupeeFormat(),
-                                total: amountValue.toRupeeFormat(),
-                              ),
-                            ),
-                          ),
-                        );
-                        return;
-                      }
-                    }
-
-                    final updatedTx = transaction.copyWith(
-                      amount: amountValue,
-                      installmentAmount: effectiveInstComp ?? 0.0,
-                      lateFeeAmount: effectiveFeeComp ?? 0.0,
-                      paidDate: paidDate.value,
-                      paymentMode: paymentMode.value,
-                      updatedAt: DateTime.now(),
-                    );
-
-                    final Result<void, String> result = await ref
-                        .read(rDLedgerControllerProvider.notifier)
-                        .updateCustomerPayment(
-                          updatedTransaction: updatedTx,
-                          deposit: deposit,
-                          currentSchedule: currentSchedule,
-                          currentTransactions: allTransactions,
-                        );
-
-                    if (context.mounted) {
-                      Navigator.of(context).pop();
-                      if (result is Success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            behavior: SnackBarBehavior.floating,
-                            content: Text(ledger.paymentUpdated),
-                          ),
-                        );
-                      } else if (result is Failure<void, String>) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            behavior: SnackBarBehavior.floating,
-                            content: Text(result.error),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  child: Text(ledger.saveChanges),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-      ),
+        AppSpacings.gapSm,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                principalText,
+                style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              if (feeText != null)
+                Text(
+                  feeText,
+                  style: theme.textTheme.bodySmall?.copyWith(color: feeColor),
+                ),
+              Text(
+                visual.label,
+                style: theme.textTheme.labelSmall?.copyWith(color: visual.foreground),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

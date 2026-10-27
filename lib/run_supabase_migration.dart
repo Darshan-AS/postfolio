@@ -11,7 +11,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/constants/firestore_keys.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_service.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 
 // --- Migration Constants ---
@@ -530,14 +530,14 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
             });
 
             // Compute chronological onboarding baseline for legacy RD schedules.
-            // With sparse RD schedule hydration (RDLedgerService.hydrateSchedule),
-            // setting initial_paid_installments synthesizes all pre-onboarding months
-            // without inserting 60 rows per RD into rd_installments.
+            // The facts-only ledger projects every pre-onboarding month from
+            // initial_paid_installments, so no installment rows are inserted.
             final initialPaidInstallments =
-                RDLedgerService.calculateInitialPaidInstallments(
+                RDScheduleFactory.calculateInitialPaidInstallments(
                   startDate: rd.startDate,
                   termYears: rd.termYears,
                   termMonths: rd.termMonths,
+                  asOf: DateTime.now(),
                   status: rd.status,
                   explicitInitialPaid: rd.initialPaidInstallments,
                 );

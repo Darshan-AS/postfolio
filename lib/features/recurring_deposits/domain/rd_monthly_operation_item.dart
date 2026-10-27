@@ -1,12 +1,14 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
 
 part 'rd_monthly_operation_item.freezed.dart';
 
 @freezed
-abstract class RDMonthlyOperationItem with _$RDMonthlyOperationItem {
+sealed class RDMonthlyOperationItem with _$RDMonthlyOperationItem {
   const RDMonthlyOperationItem._();
 
   const factory RDMonthlyOperationItem({
@@ -15,6 +17,7 @@ abstract class RDMonthlyOperationItem with _$RDMonthlyOperationItem {
     @Default(0) int priorOverdueCount,
     @Default(0.0) double priorOverdueAmount,
     @Default(0.0) double priorOverdueFee,
+    @Default(true) bool hasSummary,
   }) = _RDMonthlyOperationItem;
 
   /// Total default fee owed across current installment and any prior overdue installments.
@@ -38,20 +41,22 @@ abstract class RDMonthlyOperationItem with _$RDMonthlyOperationItem {
   /// Whether Post Office deposit is complete (either from customer funds or agent advance).
   bool get isPoPaid => installment.poStatus == RDPoStatus.paid;
 
-  /// Whether this installment can be deposited to the Post Office (not yet deposited).
-  bool get canDepositToPo => installment.poStatus != RDPoStatus.paid;
+  /// Whether this installment can be deposited to the Post Office (not yet deposited, not baseline).
+  bool get canDepositToPo =>
+      !installment.isOpeningBaseline && installment.poStatus != RDPoStatus.paid;
 
-  /// Whether this installment's Post Office deposit can be reverted (already deposited).
-  bool get canRevertPo => installment.poStatus == RDPoStatus.paid;
+  /// Whether this installment's Post Office deposit can be reverted (already deposited, not baseline).
+  bool get canRevertPo =>
+      !installment.isOpeningBaseline && installment.poStatus == RDPoStatus.paid;
 
   /// Installment sequence number (1 to 60) relative to deposit start date.
-  int get installmentNumber {
-    final diffYears = installment.installmentDate.year - deposit.startDate.year;
-    final diffMonths =
-        installment.installmentDate.month - deposit.startDate.month;
-    final num = diffYears * 12 + diffMonths + 1;
-    return num > 0 ? num : 1;
-  }
+  int get installmentNumber =>
+      installment.installmentNo ??
+      RDScheduleFactory.installmentNoFor(deposit.startDate, installment.installmentDate);
+
+  /// Single source of truth for colour/label of this row.
+  RDInstallmentDisplayStatus displayStatus(DateTime now) =>
+      installment.displayStatusAt(now);
 
   /// Whether installment principal is paid and PO is deposited, but a default fee remains unresolved.
   bool get isFeePending =>

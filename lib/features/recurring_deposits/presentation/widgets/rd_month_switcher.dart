@@ -4,23 +4,40 @@ import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
+/// Month navigator for the Monthly Hub. Purely declarative: the caller decides what
+/// "current month" means and how a picked month is applied.
 class RDMonthSwitcher extends StatelessWidget {
   final DateTime selectedMonth;
+  final bool isCurrentMonth;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
   final VoidCallback onResetToCurrent;
+  final ValueChanged<DateTime> onPickMonth;
+
+  /// How far the "jump to month" picker may travel from the selected month.
+  static const int _pickerYearSpan = 10;
 
   const RDMonthSwitcher({
     super.key,
     required this.selectedMonth,
+    required this.isCurrentMonth,
     required this.onPrevious,
     required this.onNext,
     required this.onResetToCurrent,
+    required this.onPickMonth,
   });
 
-  bool get _isCurrentMonth {
-    final now = DateTime.now();
-    return selectedMonth.year == now.year && selectedMonth.month == now.month;
+  Future<void> _pickMonth(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: selectedMonth,
+      firstDate: DateTime(selectedMonth.year - _pickerYearSpan),
+      lastDate: DateTime(selectedMonth.year + _pickerYearSpan, DateTime.december, 31),
+      initialDatePickerMode: DatePickerMode.year,
+      helpText: t.recurringDeposits.monthlyOperations.toolbar.pickMonth,
+    );
+    if (picked == null || !context.mounted) return;
+    onPickMonth(picked);
   }
 
   @override
@@ -29,9 +46,7 @@ class RDMonthSwitcher extends StatelessWidget {
     final ops = t.recurringDeposits.monthlyOperations;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLg,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
       child: Card(
         elevation: 0,
         color: theme.colorScheme.surfaceContainerHigh,
@@ -59,15 +74,39 @@ class RDMonthSwitcher extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      selectedMonth.toMonthYearFormat(),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
+                    Tooltip(
+                      message: ops.toolbar.pickMonth,
+                      child: InkWell(
+                        onTap: () => _pickMonth(context),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppDimensions.paddingSm,
+                            vertical: AppDimensions.paddingXxs,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                selectedMonth.toMonthYearFormat(),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              AppSpacings.gapXs,
+                              HugeIcon(
+                                icon: HugeIcons.strokeRoundedArrowDown01,
+                                size: AppDimensions.iconXs,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                    if (!_isCurrentMonth) ...[
+                    if (!isCurrentMonth) ...[
                       AppSpacings.gapXs,
                       InkWell(
                         onTap: onResetToCurrent,

@@ -2,47 +2,62 @@ import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
-import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-enum HeatmapStatus {
-  settled,
-  collected,
-  advanced,
-  overdue,
-  upcoming,
-}
-
+/// Tenure matrix: one accessible cell per schedule month.
+///
+/// Pure presentation — status colour/icon/label come from `displayStatusAt(now).visual`,
+/// selection state is owned by the parent.
 class RDInstallmentHeatmap extends StatelessWidget {
-  final RecurringDeposit deposit;
   final List<RDInstallment> installments;
-  final int selectedMonthIndex;
-  final int nextDueIndex;
+  final DateTime now;
+
+  /// 1-based month currently shown in the inspector.
+  final int selectedMonthNo;
+
+  /// 1-based next-due month, or null when fully settled.
+  final int? nextDueNo;
   final ValueChanged<int> onSelectMonth;
+
+  /// Multi-select (Manage PO) support.
+  final bool isSelectionMode;
+  final Set<int> selectedNos;
+  final ValueChanged<int>? onToggleSelection;
 
   const RDInstallmentHeatmap({
     super.key,
-    required this.deposit,
     required this.installments,
-    required this.selectedMonthIndex,
-    this.nextDueIndex = -1,
+    required this.now,
+    required this.selectedMonthNo,
+    required this.nextDueNo,
     required this.onSelectMonth,
+    this.isSelectionMode = false,
+    this.selectedNos = const {},
+    this.onToggleSelection,
   });
+
+  static const int _columns = 6;
+
+  /// Statuses that can appear in a matrix cell (baseline is rendered as a locked cell).
+  static const List<RDInstallmentDisplayStatus> _legendStatuses = [
+    RDInstallmentDisplayStatus.settled,
+    RDInstallmentDisplayStatus.collectedPendingPo,
+    RDInstallmentDisplayStatus.partiallyPaid,
+    RDInstallmentDisplayStatus.pocketAdvanced,
+    RDInstallmentDisplayStatus.feePending,
+    RDInstallmentDisplayStatus.overdue,
+    RDInstallmentDisplayStatus.upcoming,
+  ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final heatmapI18n = t.recurringDeposits.ledger.heatmap;
-    final now = DateTime.now();
 
-    if (installments.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final totalMonths = deposit.totalMonths;
-    final numYears = (totalMonths / 12).ceil();
+    if (installments.isEmpty) return const SizedBox.shrink();
 
     return Card(
       elevation: 0,
@@ -56,289 +71,280 @@ class RDInstallmentHeatmap extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header Row: Title & Active Month indicator + Reset Chip
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      const HugeIcon(
-                        icon: HugeIcons.strokeRoundedGrid,
-                        size: AppDimensions.iconSm,
-                      ),
-                      AppSpacings.gapXs,
-                      Flexible(
-                        child: Text(
-                          heatmapI18n.title(months: totalMonths.toString()),
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                AppSpacings.gapSm,
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      t.recurringDeposits.ledger.installmentDetails.month(
-                        month: (selectedMonthIndex + 1).toString(),
-                      ),
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (nextDueIndex != -1 &&
-                        selectedMonthIndex != nextDueIndex) ...[
-                      AppSpacings.gapSm,
-                      InkWell(
-                        onTap: () => onSelectMonth(nextDueIndex),
-                        borderRadius:
-                            BorderRadius.circular(AppDimensions.radiusSm),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimensions.paddingSm,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer
-                                .withValues(alpha: 0.6),
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.radiusSm),
-                            border: Border.all(
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.4),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              HugeIcon(
-                                icon: HugeIcons.strokeRoundedRefresh,
-                                size: AppDimensions.iconXs - 1,
-                                color: theme.colorScheme.primary,
-                              ),
-                              AppSpacings.gapXs,
-                              Text(
-                                heatmapI18n.resetToNextDue(
-                                  month: (nextDueIndex + 1).toString(),
-                                ),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
+            _HeatmapHeader(
+              totalMonths: installments.length,
+              selectedMonthNo: selectedMonthNo,
+              nextDueNo: nextDueNo,
+              onSelectMonth: onSelectMonth,
             ),
-            AppSpacings.gapSm,
-
-            // 5 Year Rows (Months 1 to 60)
-            for (int y = 0; y < numYears; y++) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2.0),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      child: Text(
-                        'Y${y + 1}',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                    for (int m = 0; m < 12; m++) ...[
-                      Expanded(
-                        child: _buildMonthCell(
-                          context: context,
-                          yearIndex: y,
-                          monthIndexInYear: m,
-                          now: now,
-                        ),
-                      ),
-                      if (m < 11) const SizedBox(width: 2),
-                    ],
-                  ],
+            if (isSelectionMode) ...[
+              AppSpacings.gapXs,
+              Text(
+                heatmapI18n.selectionHint,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
-
+            AppSpacings.gapSm,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const spacing = AppDimensions.paddingXs;
+                final cellWidth =
+                    (constraints.maxWidth - spacing * (_columns - 1)) / _columns;
+                final cellHeight = cellWidth < AppDimensions.minTapTarget
+                    ? AppDimensions.minTapTarget
+                    : cellWidth;
+                return GridView.count(
+                  crossAxisCount: _columns,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  childAspectRatio: cellWidth / cellHeight,
+                  children: [
+                    for (final inst in installments)
+                      _HeatmapCell(
+                        installment: inst,
+                        now: now,
+                        isInspected: inst.installmentNo == selectedMonthNo,
+                        isNextDue: inst.installmentNo == nextDueNo,
+                        isSelectionMode: isSelectionMode,
+                        isChecked: selectedNos.contains(inst.installmentNo),
+                        onTap: () {
+                          final no = inst.installmentNo!;
+                          if (isSelectionMode &&
+                              onToggleSelection != null &&
+                              !inst.isOpeningBaseline) {
+                            onToggleSelection!(no);
+                          }
+                          onSelectMonth(no);
+                        },
+                      ),
+                  ],
+                );
+              },
+            ),
             AppSpacings.gapMd,
             const Divider(height: AppDimensions.dividerHeight),
             AppSpacings.gapSm,
-
-            // Legend
-            _buildLegend(context),
+            _HeatmapLegend(statuses: _legendStatuses),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildMonthCell({
-    required BuildContext context,
-    required int yearIndex,
-    required int monthIndexInYear,
-    required DateTime now,
-  }) {
-    final theme = Theme.of(context);
-    final overallIndex = (yearIndex * 12) + monthIndexInYear;
-
-    if (overallIndex >= deposit.totalMonths ||
-        overallIndex >= installments.length) {
-      return const SizedBox(height: 24);
-    }
-
-    final inst = installments[overallIndex];
-    final isSelected = overallIndex == selectedMonthIndex;
-    final isPoPaid = inst.poStatus == RDPoStatus.paid;
-    final isOverdue = inst.isOverdueAt(now);
-
-    final HeatmapStatus status;
-    final Color bgColor;
-    final Color fgColor;
-    final String statusLabel;
-
-    if (inst.isFullySettled && isPoPaid) {
-      status = HeatmapStatus.settled;
-      bgColor = theme.colorScheme.primary;
-      fgColor = theme.colorScheme.onPrimary;
-      statusLabel = t.recurringDeposits.ledger.heatmap.legend.settled;
-    } else if (inst.isInstallmentPaid && !isPoPaid) {
-      if (!inst.isLateFeeResolved) {
-        status = HeatmapStatus.overdue;
-        bgColor = theme.colorScheme.error;
-        fgColor = theme.colorScheme.onError;
-        statusLabel = t.recurringDeposits.ledger.heatmap.legend.overdue;
-      } else {
-        status = HeatmapStatus.collected;
-        bgColor = theme.colorScheme.secondary;
-        fgColor = theme.colorScheme.onSecondary;
-        statusLabel = t.recurringDeposits.ledger.heatmap.legend.collected;
-      }
-    } else if (isPoPaid) {
-      status = HeatmapStatus.advanced;
-      bgColor = theme.colorScheme.tertiary;
-      fgColor = theme.colorScheme.onTertiary;
-      statusLabel = t.recurringDeposits.ledger.heatmap.legend.advanced;
-    } else if (isOverdue) {
-      status = HeatmapStatus.overdue;
-      bgColor = theme.colorScheme.error;
-      fgColor = theme.colorScheme.onError;
-      statusLabel = t.recurringDeposits.ledger.heatmap.legend.overdue;
-    } else if (inst.customerPaidAmount > 0) {
-      status = HeatmapStatus.collected;
-      bgColor = theme.colorScheme.secondary;
-      fgColor = theme.colorScheme.onSecondary;
-      statusLabel = t.recurringDeposits.ledger.statuses.partiallyPaid;
-    } else {
-      status = HeatmapStatus.upcoming;
-      bgColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
-      fgColor = theme.colorScheme.onSurfaceVariant;
-      statusLabel = t.recurringDeposits.ledger.heatmap.legend.upcoming;
-    }
-
-    final tooltipText = t.recurringDeposits.ledger.heatmap.tooltip(
-      month: (overallIndex + 1).toString(),
-      date: inst.dueDate.toAppFormat(),
-      status: statusLabel,
-    );
-
-    return Tooltip(
-      message: tooltipText,
-      child: InkWell(
-        onTap: () => onSelectMonth(overallIndex),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          height: 24,
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-            border: isSelected
-                ? Border.all(
-                    color: theme.colorScheme.onSurface,
-                    width: 2.0,
-                  )
-                : (status == HeatmapStatus.upcoming
-                    ? Border.all(
-                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-                        width: 1.0,
-                      )
-                    : null),
-          ),
-          child: Center(
-            child: Text(
-              '${overallIndex + 1}',
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontSize: 8.5,
-                fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
-                color: fgColor,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLegend(BuildContext context) {
-    final theme = Theme.of(context);
-    final legend = t.recurringDeposits.ledger.heatmap.legend;
-
-    final items = [
-      (theme.colorScheme.primary, legend.settled),
-      (theme.colorScheme.secondary, legend.collected),
-      (theme.colorScheme.tertiary, legend.advanced),
-      (theme.colorScheme.error, legend.overdue),
-      (theme.colorScheme.surfaceContainerHighest, legend.upcoming),
-    ];
-
-    return Wrap(
-      spacing: AppDimensions.paddingSm,
-      runSpacing: AppDimensions.paddingXs,
-      children: items.map((item) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: item.$1,
-                borderRadius: BorderRadius.circular(2),
-                border: item.$2 == legend.upcoming
-                    ? Border.all(color: theme.colorScheme.outlineVariant)
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              item.$2,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontSize: 10,
-              ),
-            ),
-          ],
-        );
-      }).toList(),
     );
   }
 }
 
+class _HeatmapHeader extends StatelessWidget {
+  final int totalMonths;
+  final int selectedMonthNo;
+  final int? nextDueNo;
+  final ValueChanged<int> onSelectMonth;
+
+  const _HeatmapHeader({
+    required this.totalMonths,
+    required this.selectedMonthNo,
+    required this.nextDueNo,
+    required this.onSelectMonth,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final heatmapI18n = t.recurringDeposits.ledger.heatmap;
+    final nextDue = nextDueNo;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              const HugeIcon(
+                icon: HugeIcons.strokeRoundedGrid,
+                size: AppDimensions.iconSm,
+              ),
+              AppSpacings.gapXs,
+              Flexible(
+                child: Text(
+                  heatmapI18n.title(months: totalMonths.toString()),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+        AppSpacings.gapSm,
+        Text(
+          t.recurringDeposits.ledger.installmentDetails.monthShort(
+            month: selectedMonthNo.toString(),
+          ),
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        if (nextDue != null && nextDue != selectedMonthNo) ...[
+          AppSpacings.gapSm,
+          ActionChip(
+            visualDensity: VisualDensity.compact,
+            avatar: HugeIcon(
+              icon: HugeIcons.strokeRoundedRefresh,
+              size: AppDimensions.iconXs,
+              color: theme.colorScheme.primary,
+            ),
+            label: Text(
+              heatmapI18n.resetToNextDue(month: nextDue.toString()),
+              style: theme.textTheme.labelSmall,
+            ),
+            onPressed: () => onSelectMonth(nextDue),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _HeatmapCell extends StatelessWidget {
+  final RDInstallment installment;
+  final DateTime now;
+  final bool isInspected;
+  final bool isNextDue;
+  final bool isSelectionMode;
+  final bool isChecked;
+  final VoidCallback onTap;
+
+  const _HeatmapCell({
+    required this.installment,
+    required this.now,
+    required this.isInspected,
+    required this.isNextDue,
+    required this.isSelectionMode,
+    required this.isChecked,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final visual = installment.displayStatusAt(now).visual(scheme);
+    final monthNo = installment.installmentNo!;
+    final isHighlighted = isInspected || isChecked;
+
+    final border = isHighlighted
+        ? Border.all(color: scheme.onSurface, width: AppDimensions.borderMd)
+        : isNextDue
+            ? Border.all(color: scheme.primary, width: AppDimensions.borderSm)
+            : Border.all(color: scheme.outlineVariant, width: AppDimensions.borderSm);
+
+    return Semantics(
+      label: t.recurringDeposits.ledger.heatmap.tooltip(
+        month: monthNo.toString(),
+        date: installment.dueDate.toAppFormat(),
+        status: visual.label,
+      ),
+      button: true,
+      selected: isHighlighted,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          decoration: BoxDecoration(
+            color: visual.background,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+            border: border,
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  HugeIcon(
+                    icon: visual.icon,
+                    size: AppDimensions.iconXs,
+                    color: visual.foreground,
+                  ),
+                  AppSpacings.gapXxs,
+                  Text(
+                    '$monthNo',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: isHighlighted ? FontWeight.w900 : FontWeight.bold,
+                      color: visual.foreground,
+                    ),
+                  ),
+                ],
+              ),
+              if (isSelectionMode && isChecked)
+                Positioned(
+                  top: AppDimensions.paddingXxs,
+                  right: AppDimensions.paddingXxs,
+                  child: HugeIcon(
+                    icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+                    size: AppDimensions.iconXs,
+                    color: scheme.onSurface,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeatmapLegend extends StatelessWidget {
+  final List<RDInstallmentDisplayStatus> statuses;
+
+  const _HeatmapLegend({required this.statuses});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Wrap(
+      spacing: AppDimensions.paddingSm,
+      runSpacing: AppDimensions.paddingXs,
+      children: [
+        for (final status in statuses)
+          Builder(
+            builder: (context) {
+              final visual = status.visual(scheme);
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppDimensions.paddingXxs),
+                    decoration: BoxDecoration(
+                      color: visual.background,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                      border: Border.all(color: scheme.outlineVariant),
+                    ),
+                    child: HugeIcon(
+                      icon: visual.icon,
+                      size: AppDimensions.iconXs,
+                      color: visual.foreground,
+                    ),
+                  ),
+                  AppSpacings.gapXs,
+                  Text(
+                    visual.label,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+      ],
+    );
+  }
+}

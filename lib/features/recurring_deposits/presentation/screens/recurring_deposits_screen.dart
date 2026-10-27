@@ -29,7 +29,6 @@ class RecurringDepositsScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewMode = ref.watch(rDViewModeControllerProvider);
-    final opsState = ref.watch(rDMonthlyOperationsControllerProvider);
     final depositsState = ref.watch(filteredRecurringDepositsProvider);
     final criteria = ref.watch(recurringListCriteriaProvider);
 
@@ -44,8 +43,9 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     final activeFilterCount =
         statusModifications + criteria.urgencyFilters.length;
 
-    final showFab = viewMode == RDViewMode.accounts ||
-        (!opsState.isSelectionMode || opsState.selectedInstallmentIds.isEmpty);
+    // The "New Deposit" FAB belongs to the Accounts view only; the Hub has its own
+    // batch bar (see RDHubBatchBar) and must never be covered by a FAB.
+    final showFab = viewMode == RDViewMode.accounts;
 
     return Scaffold(
       appBar: ShellAppBar(title: t.recurringDeposits.title),

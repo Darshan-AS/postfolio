@@ -7,6 +7,7 @@ import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/models/postal_scheme_terms.dart';
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -44,6 +45,9 @@ class RecurringDepositFormState {
   final bool isUpdating;
   final bool isFinancialTermsLocked;
 
+  /// True while the lock state is still being resolved (terms are treated as locked).
+  final bool isFinancialTermsLockLoading;
+
   RecurringDepositFormState({
     required this.formKey,
     required this.serialNoController,
@@ -68,6 +72,7 @@ class RecurringDepositFormState {
     required this.save,
     required this.isUpdating,
     required this.isFinancialTermsLocked,
+    this.isFinancialTermsLockLoading = false,
   });
 }
 
@@ -84,7 +89,14 @@ RecurringDepositFormState useRecurringDepositForm({
   final isLockedAsync = deposit != null
       ? ref.watch(rdIsFinancialTermsLockedProvider(deposit.id))
       : const AsyncValue<bool>.data(false);
-  final isFinancialTermsLocked = isLockedAsync.value ?? false;
+  // Fail safe: until the ledger facts have loaded, treat the terms as locked so a
+  // half-loaded form can never edit an account that already has activity.
+  final isFinancialTermsLockLoading = isLockedAsync.isLoading && !isLockedAsync.hasValue;
+  final isFinancialTermsLocked = switch (isLockedAsync) {
+    AsyncData(:final value) => value,
+    AsyncLoading(:final value?) => value,
+    AsyncError() || AsyncLoading() => true,
+  };
 
   final amountFormatter = useMemoized(
     () => CurrencyTextInputFormatter.currency(
@@ -96,7 +108,7 @@ RecurringDepositFormState useRecurringDepositForm({
 
   final initialScheme =
       deposit?.schemeType ?? RecurringSchemeType.recurringDeposit;
-  final initialStartDate = deposit?.startDate ?? DateTime.now();
+  final initialStartDate = deposit?.startDate ?? ref.read(clockProvider)();
   final initialTerms = postalRateService.resolveRecurringSchemeTerms(
     schemeType: initialScheme,
     startDate: initialStartDate,
@@ -293,5 +305,6 @@ RecurringDepositFormState useRecurringDepositForm({
     save: save,
     isUpdating: isUpdating,
     isFinancialTermsLocked: isFinancialTermsLocked,
+    isFinancialTermsLockLoading: isFinancialTermsLockLoading,
   );
 }
