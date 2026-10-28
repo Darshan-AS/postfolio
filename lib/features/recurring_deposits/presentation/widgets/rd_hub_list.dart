@@ -13,6 +13,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_monthly_operatio
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_deposit_sheet.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operation_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -222,7 +223,11 @@ class _CustomerGroupHeader extends ConsumerWidget {
           AppSpacings.gapXs,
           Expanded(
             child: Text(
-              '${group.customerName}${t.format.bulletSeparator}${groupStrings.accountsSummary(count: group.items.length, amount: group.monthlyTotal.toRupeeFormat())}',
+              groupStrings.header(
+                name: group.customerName,
+                count: group.items.length,
+                amount: group.monthlyTotal.toRupeeFormat(),
+              ),
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.bold,
@@ -231,19 +236,22 @@ class _CustomerGroupHeader extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          TextButton(
-            style: TextButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingSm),
-            ),
-            onPressed: () => ref
-                .read(rDHubSelectionProvider.notifier)
-                .selectAll([for (final i in group.items) i.installment.id]),
-            child: Text(
-              groupStrings.selectGroup,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
+          Tooltip(
+            message: groupStrings.selectGroupFor(name: group.customerName),
+            child: TextButton(
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingSm),
+              ),
+              onPressed: () => ref
+                  .read(rDHubSelectionProvider.notifier)
+                  .selectAll([for (final i in group.items) i.installment.id]),
+              child: Text(
+                groupStrings.selectGroup,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -344,22 +352,53 @@ class _RDHubRow extends ConsumerWidget {
       );
     }
 
-    return RDMonthlyOperationCard(
-      item: item,
-      evaluationDate: now,
-      isSelected: isSelected,
-      isSelectionMode: isSelectionMode,
-      isBusy: isBusy,
-      onSelect: (_) => selection.toggle(id),
-      onTap: () => RecurringDepositDetailRoute(item.deposit.id).push(context),
-      onLongPress: () {
-        if (!isSelectionMode) selection.toggle(id);
-      },
-      onCollect: onCollect,
-      onDeposit: onDeposit,
-      onDepositFromPocket: isBusy ? null : onDepositFromPocket,
-      onUndoLatestDeposit: isBusy ? null : onUndoLatestDeposit,
-      onAbsorbFee: isBusy ? null : onAbsorbFee,
+    final status = item.displayStatus(now);
+    final statusLabel = status.visual(Theme.of(context).colorScheme).label;
+    final customerName = item.deposit.customerName ?? t.recurringDeposits.depositNotFound;
+    final serial = item.deposit.serialNo ?? t.common.notProvided;
+    final overdueDays = item.installment.overdueDaysAt(now);
+    // One sentence per row for screen readers: who, which account, where it stands.
+    final semanticLabel = !item.isCustomerPending
+        ? card.semanticsSettled(name: customerName, serial: serial, status: statusLabel)
+        : item.isOverdue(now) && overdueDays > 0
+            ? card.semanticsOverdue(
+                name: customerName,
+                serial: serial,
+                status: statusLabel,
+                amount: item.totalOutstanding.toRupeeFormat(),
+                days: overdueDays.toString(),
+              )
+            : card.semantics(
+                name: customerName,
+                serial: serial,
+                status: statusLabel,
+                amount: item.totalOutstanding.toRupeeFormat(),
+              );
+
+    // `container` (not `MergeSemantics`): the row gets its own labelled node while the
+    // Collect / Deposit buttons and the overflow menu stay individually reachable.
+    return Semantics(
+      container: true,
+      button: true,
+      label: semanticLabel,
+      child: RDMonthlyOperationCard(
+        item: item,
+        evaluationDate: now,
+        isSelected: isSelected,
+        isSelectionMode: isSelectionMode,
+        isBusy: isBusy,
+        selectSemanticLabel: card.selectRow(name: customerName),
+        onSelect: (_) => selection.toggle(id),
+        onTap: () => RecurringDepositDetailRoute(item.deposit.id).push(context),
+        onLongPress: () {
+          if (!isSelectionMode) selection.toggle(id);
+        },
+        onCollect: onCollect,
+        onDeposit: onDeposit,
+        onDepositFromPocket: isBusy ? null : onDepositFromPocket,
+        onUndoLatestDeposit: isBusy ? null : onUndoLatestDeposit,
+        onAbsorbFee: isBusy ? null : onAbsorbFee,
+      ),
     );
   }
 }

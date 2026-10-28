@@ -123,20 +123,6 @@ class _Passbook extends StatelessWidget {
     final nextDue = projection.nextDue;
     final readiness = projection.poReadiness;
 
-    // Collect prefills everything owed (opening receivable, fronted months, arrears);
-    // when nothing is owed yet it falls back to the next month's outstanding amount.
-    final collectAmount = summary.owedByCustomer > 0
-        ? summary.owedByCustomer
-        : nextDue?.outstandingAmount;
-
-    // The month right after the ready block: if the customer has not covered it, the
-    // agent may front it from pocket in the same PO visit.
-    final pocketCandidate = readiness.nextInstallmentNo == null
-        ? null
-        : projection.byNo(readiness.nextInstallmentNo! + readiness.readyCount);
-    final canDepositFromPocket =
-        pocketCandidate != null && !pocketCandidate.isCustomerSettled;
-
     return Padding(
       padding: isEmbeddedTab ? EdgeInsets.zero : const EdgeInsets.all(AppDimensions.paddingMd),
       child: Column(
@@ -149,7 +135,7 @@ class _Passbook extends StatelessWidget {
             onCollect: () => showRDLogPaymentSheet(
               context,
               rdId: rdId,
-              initialAmount: collectAmount,
+              initialAmount: projection.collectPrefillAmount,
             ),
           ),
           AppSpacings.gapSm,
@@ -157,7 +143,7 @@ class _Passbook extends StatelessWidget {
             rdId: rdId,
             readiness: readiness,
             latestPoDeposit: latestPoDeposit,
-            canDepositFromPocket: canDepositFromPocket,
+            canDepositFromPocket: projection.canFrontFromPocket,
             isBusy: isBusy,
           ),
           AppSpacings.gapMd,

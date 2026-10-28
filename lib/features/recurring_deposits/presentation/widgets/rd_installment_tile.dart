@@ -7,8 +7,9 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_installment_mode
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-/// One passbook line: `#N · <month>` · due date · status chip, with the money column on
-/// the right. Purely declarative — every number comes from the projected [installment].
+/// One passbook line: `#N · <month>` with the money on the same row, then due date ·
+/// status chip · captions underneath. Purely declarative — every number comes from the
+/// projected [installment].
 ///
 /// Tapping opens the month inspector sheet; there are no per-month PO actions here
 /// because deposits are sequential and live in the PO strip.
@@ -70,12 +71,31 @@ class RDInstallmentTile extends StatelessWidget {
 
     return ListTile(
       onTap: onTap,
-      title: Text(
-        passbook.monthLabel(
-          month: inst.installmentNo.toString(),
-          monthName: inst.installmentDate.toMonthYearFormat(),
-        ),
-        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+      // Money lives on the title row (never in `trailing`, which is capped at 56dp).
+      title: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Text(
+              passbook.monthLabel(
+                month: inst.installmentNo.toString(),
+                monthName: inst.installmentDate.toMonthYearFormat(),
+              ),
+              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          AppSpacings.gapSm,
+          Text(
+            amountLabel,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: amountColor,
+            ),
+            maxLines: 1,
+          ),
+        ],
       ),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: AppDimensions.paddingXs),
@@ -91,28 +111,15 @@ class RDInstallmentTile extends StatelessWidget {
               ),
             ),
             _StatusChip(visual: visual),
+            for (final caption in captions)
+              Text(
+                caption,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
           ],
         ),
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            amountLabel,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: amountColor,
-            ),
-          ),
-          for (final caption in captions)
-            Text(
-              caption,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
-        ],
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
+import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
@@ -20,13 +21,21 @@ import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_pay
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-/// Single source of truth for the payment-mode glyphs used across the sheets.
+/// Single source of truth for the payment-mode glyphs and short labels used across the sheets.
 extension RDPaymentModeIcon on RDPaymentMode {
   List<List<dynamic>> get icon => switch (this) {
         RDPaymentMode.cash => HugeIcons.strokeRoundedCoins01,
         RDPaymentMode.upi => HugeIcons.strokeRoundedCreditCard,
         RDPaymentMode.cheque => HugeIcons.strokeRoundedTicket01,
         RDPaymentMode.bankTransfer => HugeIcons.strokeRoundedBank,
+      };
+
+  /// One-word label that fits a segmented button next to the glyph.
+  String get shortLabel => switch (this) {
+        RDPaymentMode.cash => t.recurringDeposits.ledger.paymentModes.cash,
+        RDPaymentMode.upi => t.recurringDeposits.ledger.paymentModes.upi,
+        RDPaymentMode.cheque => t.recurringDeposits.ledger.paymentModes.cheque,
+        RDPaymentMode.bankTransfer => t.recurringDeposits.ledger.paymentModes.bankTransfer,
       };
 }
 
@@ -155,12 +164,19 @@ class _PaymentForm extends HookConsumerWidget {
       AppFeedback.showResult(context, outcome.payment, successMessage: successMessage);
     }
 
+    // Edit: confirm when the saved payment was changed. Create: confirm when an amount was
+    // typed (differs from the prefill) but not collected yet — a fat-finger dismiss must
+    // not lose the entry.
+    final hasUnsavedInput = isEditing
+        ? draft.isDirty
+        : draft.amount > 0 && !Money.equals(draft.amount, initialAmount ?? 0.0);
+
     Future<void> handlePopAttempt(bool didPop, bool? _) async {
       if (didPop) return;
       final discard = await AppDialogs.confirmAction(
         context,
         title: ledger.discardChangesTitle,
-        content: ledger.discardChangesContent,
+        content: isEditing ? ledger.discardChangesContent : ledger.discardAmountContent,
         confirmText: ledger.discard,
       );
       if (discard == true && context.mounted) {
@@ -190,7 +206,7 @@ class _PaymentForm extends HookConsumerWidget {
             : ledger.recordPayment;
 
     return PopScope<bool>(
-      canPop: !isEditing || !draft.isDirty,
+      canPop: !hasUnsavedInput,
       onPopInvokedWithResult: handlePopAttempt,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -243,6 +259,9 @@ class _PaymentForm extends HookConsumerWidget {
               AppDimensions.paddingLg,
             ),
             child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, AppDimensions.minTapTarget),
+              ),
               onPressed: draft.canSubmit ? handleSubmit : null,
               icon: draft.isSubmitting
                   ? const SizedBox.square(
@@ -314,8 +333,7 @@ class _FormBody extends StatelessWidget {
         ],
         AppSpacings.gapLg,
         _SectionLabel(
-          text: '${ledger.paymentMode}${t.format.bulletSeparator}'
-              '${draft.paymentMode.value.displayName}',
+          text: ledger.paymentModeValue(mode: draft.paymentMode.value.shortLabel),
         ),
         AppSpacings.gapSm,
         SizedBox(
@@ -330,6 +348,7 @@ class _FormBody extends StatelessWidget {
                   value: mode,
                   tooltip: mode.displayName,
                   icon: HugeIcon(icon: mode.icon, size: AppDimensions.iconSm),
+                  label: Text(mode.shortLabel, maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
             ],
           ),
@@ -403,7 +422,7 @@ class _PaidDateButton extends StatelessWidget {
         icon: HugeIcons.strokeRoundedCalendar01,
         size: AppDimensions.iconSm,
       ),
-      label: Text('${ledger.paymentDate}: ${current.toAppFormat()}'),
+      label: Text(ledger.paymentDateValue(date: current.toAppFormat())),
     );
   }
 }
@@ -576,7 +595,7 @@ class RDAllocationPreviewCard extends StatelessWidget {
     if (credit > 0) parts.add(strings.summaryCreditPart(amount: credit.toRupeeFormat()));
     return strings.summaryLine(
       amount: amount.toRupeeFormat(),
-      parts: parts.join(', '),
+      parts: parts.join(strings.summaryPartsSeparator),
       left: credit.toRupeeFormat(),
     );
   }

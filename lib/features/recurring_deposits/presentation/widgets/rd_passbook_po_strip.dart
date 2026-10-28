@@ -111,7 +111,9 @@ class RDPassbookPoStrip extends ConsumerWidget {
             ),
             AppSpacings.gapSm,
             FilledButton.tonalIcon(
-              style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, AppDimensions.minTapTarget),
+              ),
               onPressed: isBusy || !hasReady
                   ? null
                   : () => showRDDepositSheet(
@@ -160,7 +162,9 @@ class RDPassbookPoStrip extends ConsumerWidget {
                   onPressed: canUndo ? () => _undoLatest(context, ref) : null,
                   child: Text(
                     passbook.undoLastDeposit,
-                    style: canUndo ? TextStyle(color: scheme.error) : null,
+                    style: canUndo
+                        ? theme.textTheme.labelLarge?.copyWith(color: scheme.error)
+                        : null,
                   ),
                 ),
               ],

@@ -410,7 +410,10 @@ class _FailureTile extends StatelessWidget {
           AppSpacings.gapSm,
           TextButton(
             onPressed: onRetry,
-            child: Text(t.common.retry, style: TextStyle(color: scheme.error)),
+            child: Text(
+              t.common.retry,
+              style: theme.textTheme.labelLarge?.copyWith(color: scheme.error),
+            ),
           ),
         ],
       ),
@@ -453,85 +456,121 @@ class _VisitLineTile extends StatelessWidget {
 
     final muted = !line.included;
     final titleColor = muted ? scheme.onSurfaceVariant : scheme.onSurface;
+    final customerName = deposit.customerName ?? t.recurringDeposits.depositNotFound;
 
-    return ListTile(
-      dense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
-      leading: Checkbox(
-        value: line.included,
-        onChanged: isBusy ? null : (_) => onToggle(),
-      ),
-      title: Text(
-        deposit.customerName ?? t.recurringDeposits.depositNotFound,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: titleColor,
+    // Stepper buttons write to the plan; keep them at the minimum tap target.
+    final stepperStyle = TextButton.styleFrom(
+      minimumSize: const Size(AppDimensions.minTapTarget, AppDimensions.minTapTarget),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingSm),
+    );
+
+    final stepper = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Tooltip(
+          message: visit.frontFewer,
+          child: TextButton(
+            style: stepperStyle,
+            onPressed: isBusy || line.frontedCount == 0
+                ? null
+                : () => onFront(line.frontedCount - 1),
+            child: Text(visit.frontLess),
+          ),
         ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            visit.lineSubtitle(serial: serial, last4: last4),
-            style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        Tooltip(
+          message: visit.frontMore,
+          child: TextButton(
+            style: stepperStyle,
+            onPressed: isBusy || !line.canFrontMore
+                ? null
+                : () => onFront(line.frontedCount + 1),
+            child: Text(visit.front),
           ),
-          if (line.fromPocket > 0)
-            Text(
-              visit.lineFromPocket(amount: line.fromPocket.toRupeeFormat()),
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: scheme.error,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-        ],
+        ),
+      ],
+    );
+
+    // Not a ListTile: the stepper would not fit the 56dp `trailing` cap, so the row is
+    // laid out by hand — name + count·amount on the first line, identity + stepper below.
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingMd,
+        vertical: AppDimensions.paddingXs,
       ),
-      trailing: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              visit.lineTrailing(
-                count: line.count,
-                amount: line.amount.toRupeeFormat(),
-              ),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: titleColor,
-              ),
-              maxLines: 1,
-            ),
+          Checkbox(
+            value: line.included,
+            semanticLabel: visit.includeLine(name: customerName),
+            onChanged: isBusy ? null : (_) => onToggle(),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextButton(
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingSm),
+          AppSpacings.gapXs,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        customerName,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: titleColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    AppSpacings.gapSm,
+                    Text(
+                      visit.lineTrailing(
+                        count: line.count,
+                        amount: line.amount.toRupeeFormat(),
+                      ),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: titleColor,
+                      ),
+                      maxLines: 1,
+                    ),
+                  ],
                 ),
-                onPressed: isBusy || line.frontedCount == 0
-                    ? null
-                    : () => onFront(line.frontedCount - 1),
-                child: Text(visit.frontLess),
-              ),
-              TextButton(
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingSm),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            visit.lineSubtitle(serial: serial, last4: last4),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (line.fromPocket > 0)
+                            Text(
+                              visit.lineFromPocket(
+                                amount: line.fromPocket.toRupeeFormat(),
+                              ),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: scheme.error,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    stepper,
+                  ],
                 ),
-                onPressed: isBusy || !line.canFrontMore
-                    ? null
-                    : () => onFront(line.frontedCount + 1),
-                child: Text(visit.front),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

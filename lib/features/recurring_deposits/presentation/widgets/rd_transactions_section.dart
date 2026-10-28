@@ -70,7 +70,9 @@ class RDTransactionsSection extends HookConsumerWidget {
                     ),
                   ),
                   FilledButton.tonalIcon(
-                    style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, AppDimensions.minTapTarget),
+                    ),
                     onPressed: isBusy
                         ? null
                         : () => showRDLogPaymentSheet(context, rdId: deposit.id),
@@ -205,26 +207,23 @@ class _TransactionList extends StatelessWidget {
       );
     }
 
-    final sorted = [...transactions]..sort((a, b) => b.paidDate.compareTo(a.paidDate));
-    final rows = <Widget>[];
-    DateTime? currentMonth;
-    for (final tx in sorted) {
-      final month = DateTime(tx.paidDate.year, tx.paidDate.month);
-      if (currentMonth != month) {
-        currentMonth = month;
-        rows.add(_MonthHeader(label: month.toMonthYearFormat()));
-      }
-      rows.add(
-        RDTransactionTile(
-          rdId: rdId,
-          transaction: tx,
-          allocations: allocationsByTx[tx.id] ?? const [],
-          isBusy: isBusy,
-        ),
-      );
-    }
+    final groups = RDLedgerProjection.groupTransactionsByMonth(transactions);
 
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: rows);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final group in groups) ...[
+          _MonthHeader(label: group.month.toMonthYearFormat()),
+          for (final tx in group.items)
+            RDTransactionTile(
+              rdId: rdId,
+              transaction: tx,
+              allocations: allocationsByTx[tx.id] ?? const [],
+              isBusy: isBusy,
+            ),
+        ],
+      ],
+    );
   }
 }
 
@@ -395,7 +394,7 @@ class RDTransactionTile extends ConsumerWidget {
             ),
             child: Text(
               ledger.actions.deletePayment,
-              style: TextStyle(color: scheme.error),
+              style: theme.textTheme.labelLarge?.copyWith(color: scheme.error),
             ),
             onPressed: () => _confirmAndDelete(context, ref),
           ),

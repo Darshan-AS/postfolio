@@ -48,6 +48,9 @@ class RDMonthlyOperationCard extends StatelessWidget {
   /// True while the ledger controller is writing; disables every mutating control.
   final bool isBusy;
   final ValueChanged<bool?>? onSelect;
+
+  /// Screen-reader label for the selection checkbox (e.g. "Select Ramesh").
+  final String? selectSemanticLabel;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
   final VoidCallback onCollect;
@@ -64,6 +67,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
     required this.isSelectionMode,
     this.isBusy = false,
     this.onSelect,
+    this.selectSemanticLabel,
     required this.onTap,
     this.onLongPress,
     required this.onCollect,
@@ -191,7 +195,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
                 child: Checkbox(
                   value: isSelected,
                   onChanged: onSelect,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  semanticLabel: selectSemanticLabel,
                 ),
               ),
             )
@@ -340,7 +344,7 @@ class _InstallmentAvatar extends StatelessWidget {
               color: visual.foreground,
             )
           : Text(
-              '${t.format.countSymbol}$installmentNumber',
+              t.recurringDeposits.monthlyOperations.card.monthNo(n: installmentNumber.toString()),
               style: theme.textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: visual.foreground,
@@ -387,9 +391,8 @@ class _IdentityLine extends StatelessWidget {
 
     // Serial + account share one flexible span so, when space runs out, the ellipsis eats the
     // account tail first; the due date is never cut.
-    final identity = serial == null
-        ? card.accountTail(last4: last4)
-        : '$serial$separator${card.accountTail(last4: last4)}';
+    final account = card.accountTail(last4: last4);
+    final identity = serial == null ? account : card.identity(serial: serial, account: account);
 
     return Row(
       children: [
@@ -421,7 +424,7 @@ class _IdentityLine extends StatelessWidget {
     if (status == RDInstallmentDisplayStatus.overdue) {
       final days = installment.overdueDaysAt(now);
       return (
-        '$due${t.format.bulletSeparator}${card.overdueDays(days: days < 1 ? 1 : days)}',
+        card.dueOverdue(due: due, late: card.overdueDays(days: days < 1 ? 1 : days)),
         alert,
       );
     }

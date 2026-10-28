@@ -351,8 +351,9 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
   }
 }
 
-/// Header subtitle: "Paid through #N · Deposited through #M", the money the customer owes /
-/// has in credit / the agent has fronted, and a paid-through progress bar.
+/// Header subtitle: "Collected through #N" / "At PO #M" (+ "k months fronted" when the PO
+/// is ahead of the customer), the money the customer owes / has in credit / the agent has
+/// fronted, and a collected-through progress bar.
 class _LedgerProgress extends StatelessWidget {
   final AsyncValue<RDLedgerProjection> projectionAsync;
   final int totalMonths;
@@ -369,15 +370,14 @@ class _LedgerProgress extends StatelessWidget {
     final summary = projection?.summary;
     final paidThrough = summary?.paidThroughNo ?? 0;
     final depositedThrough = summary?.depositedThroughNo ?? 0;
+    final frontedMonths = depositedThrough - paidThrough;
     final total = totalMonths > 0 ? totalMonths : (projection?.installments.length ?? 0);
     final progress = total > 0 ? (paidThrough / total).clamp(0.0, 1.0) : 0.0;
 
     final owed = summary?.owedByCustomer ?? 0.0;
     final credit = summary?.customerCredit ?? 0.0;
     final receivable = summary?.receivable ?? 0.0;
-    final feeDue = projection == null
-        ? 0.0
-        : projection.customerPending.fold(0.0, (sum, i) => sum + i.customerFeeDue);
+    final feeDue = summary?.feeDue ?? 0.0;
     final isSettled = projection != null && projection.nextDue == null && owed <= 0;
 
     final moneyLines = <({String text, Color color})>[
@@ -394,6 +394,8 @@ class _LedgerProgress extends StatelessWidget {
       if (isSettled) (text: tabs.allSettled, color: scheme.primary),
     ];
 
+    final counterStyle = theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
+
     return Column(
       children: [
         ClipRRect(
@@ -405,13 +407,21 @@ class _LedgerProgress extends StatelessWidget {
           ),
         ),
         AppSpacings.gapXs,
-        Text(
-          tabs.paidThrough(
-            paid: paidThrough.toString(),
-            deposited: depositedThrough.toString(),
-          ),
-          style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-          textAlign: TextAlign.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: AppDimensions.paddingMd,
+          children: [
+            Text(tabs.collectedThrough(n: paidThrough.toString()), style: counterStyle),
+            Text(tabs.atPo(n: depositedThrough.toString()), style: counterStyle),
+            if (frontedMonths > 0)
+              Text(
+                tabs.monthsFronted(n: frontedMonths),
+                style: counterStyle?.copyWith(
+                  color: scheme.secondary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+          ],
         ),
         if (moneyLines.isNotEmpty) ...[
           AppSpacings.gapXxs,

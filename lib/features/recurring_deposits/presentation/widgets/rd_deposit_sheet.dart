@@ -52,13 +52,15 @@ class _DepositForm extends HookConsumerWidget {
     final ledger = t.recurringDeposits.ledger;
     final deposit = draft.facts.value?.deposit;
     final customer = deposit?.customerName;
+    final count = draft.count.toString();
 
     final title = (customer != null && customer.isNotEmpty)
         ? ledger.depositTitleFor(
+            n: count,
             customer: customer,
             serial: deposit?.serialNo ?? t.common.notProvided,
           )
-        : ledger.depositTitle;
+        : ledger.depositTitle(n: count);
 
     Future<void> handleSubmit() async {
       // Resolve the toast copy before the write: the quote is derived from facts that change
@@ -178,6 +180,9 @@ class _DepositForm extends HookConsumerWidget {
             AppDimensions.paddingLg,
           ),
           child: FilledButton.icon(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, AppDimensions.minTapTarget),
+            ),
             onPressed: draft.canSubmit ? handleSubmit : null,
             icon: draft.isSubmitting
                 ? const SizedBox.square(
@@ -190,7 +195,7 @@ class _DepositForm extends HookConsumerWidget {
                     icon: HugeIcons.strokeRoundedBuilding03,
                     size: AppDimensions.iconSm,
                   ),
-            label: Text(ledger.depositSubmit(n: draft.count)),
+            label: Text(ledger.depositSubmit(n: count)),
           ),
         ),
       ],
@@ -218,7 +223,10 @@ class _DepositBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '$throughText${t.format.bulletSeparator}${ledger.depositReady(n: draft.readyCount)}',
+          ledger.depositStatusLine(
+            through: throughText,
+            ready: ledger.depositReady(n: draft.readyCount),
+          ),
           style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
         ),
         AppSpacings.gapLg,
@@ -365,7 +373,7 @@ class _DepositDateButton extends StatelessWidget {
         icon: HugeIcons.strokeRoundedCalendar01,
         size: AppDimensions.iconSm,
       ),
-      label: Text('${ledger.depositDate}: ${current.toAppFormat()}'),
+      label: Text(ledger.depositDateValue(date: current.toAppFormat())),
     );
   }
 }

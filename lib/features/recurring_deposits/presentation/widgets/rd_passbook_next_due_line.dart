@@ -88,7 +88,6 @@ class RDPassbookNextDueLine extends StatelessWidget {
                   Text(
                     passbook.nextDueLine(
                       month: inst.installmentNo.toString(),
-                      monthName: inst.installmentDate.toMonthYearFormat(),
                       date: inst.dueDate.toAppFormat(),
                     ),
                     style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -106,6 +105,9 @@ class RDPassbookNextDueLine extends StatelessWidget {
             ),
             AppSpacings.gapSm,
             FilledButton.icon(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, AppDimensions.minTapTarget),
+              ),
               onPressed: isBusy ? null : onCollect,
               icon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedCoins01,

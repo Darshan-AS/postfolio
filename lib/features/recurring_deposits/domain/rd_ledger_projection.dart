@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 
 part 'rd_ledger_projection.freezed.dart';
 
@@ -38,6 +39,11 @@ sealed class RDPoReadiness with _$RDPoReadiness {
   }) = _RDPoReadiness;
 
   bool get hasReady => readyCount > 0;
+
+  /// The month right after the ready block — the first one the agent could front from
+  /// pocket in the same PO visit. `null` when every month is already deposited.
+  int? get nextFrontableInstallmentNo =>
+      nextInstallmentNo == null ? null : nextInstallmentNo! + readyCount;
 }
 
 /// Immutable output of `RDLedgerProjector.project` — everything the UI needs for one RD.
@@ -78,4 +84,35 @@ sealed class RDLedgerProjection with _$RDLedgerProjection {
 
   double get totalCollected =>
       installments.fold(0.0, (s, i) => s + (i.isOpeningBaseline ? 0 : i.customerPaidAmount));
+
+  /// Amount the **Collect** sheet should prefill: everything owed (opening receivable,
+  /// fronted months, arrears); when nothing is owed yet, the next month's outstanding.
+  double? get collectPrefillAmount =>
+      summary.owedByCustomer > 0 ? summary.owedByCustomer : nextDue?.outstandingAmount;
+
+  /// The month after the ready block, when the customer has not covered it — i.e. the
+  /// month the agent may front from pocket in the next PO visit.
+  RDInstallment? get frontableInstallment {
+    final no = poReadiness.nextFrontableInstallmentNo;
+    final candidate = no == null ? null : byNo(no);
+    return candidate != null && !candidate.isCustomerSettled ? candidate : null;
+  }
+
+  bool get canFrontFromPocket => frontableInstallment != null;
+
+  /// Groups payments by calendar month, newest month (and newest payment) first.
+  static List<({DateTime month, List<RDTransaction> items})> groupTransactionsByMonth(
+    List<RDTransaction> transactions,
+  ) {
+    final sorted = [...transactions]..sort((a, b) => b.paidDate.compareTo(a.paidDate));
+    final groups = <({DateTime month, List<RDTransaction> items})>[];
+    for (final tx in sorted) {
+      final month = DateTime(tx.paidDate.year, tx.paidDate.month);
+      if (groups.isEmpty || groups.last.month != month) {
+        groups.add((month: month, items: <RDTransaction>[]));
+      }
+      groups.last.items.add(tx);
+    }
+    return List.unmodifiable(groups);
+  }
 }

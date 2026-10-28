@@ -202,10 +202,14 @@ class _InspectorBody extends ConsumerWidget {
         _MetricRow(
           label: inspector.poFee,
           value: inst.poLateFee.toRupeeFormat(),
-          trailing: inst.agentDelayCost > 0
-              ? passbook.agentDelay(amount: inst.agentDelayCost.toRupeeFormat())
-              : t.common.notProvided,
-          trailingColor: inst.agentDelayCost > 0 ? scheme.error : null,
+          trailing: t.common.notProvided,
+        ),
+      if (inst.agentDelayCost > 0)
+        _MetricRow(
+          label: inspector.agentDelay,
+          value: inst.agentDelayCost.toRupeeFormat(),
+          trailing: t.common.notProvided,
+          valueColor: scheme.error,
         ),
       if (inst.absorbedFee > 0)
         _MetricRow(
@@ -283,6 +287,9 @@ class _InspectorBody extends ConsumerWidget {
           AppSpacings.gapLg,
           if (canCollect)
             FilledButton.icon(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, AppDimensions.minTapTarget),
+              ),
               onPressed: isBusy ? null : () => onCollect(inst.outstandingAmount),
               icon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedCoins01,
@@ -360,12 +367,14 @@ class _MetricRow extends StatelessWidget {
   final String label;
   final String value;
   final String trailing;
+  final Color? valueColor;
   final Color? trailingColor;
 
   const _MetricRow({
     required this.label,
     required this.value,
     required this.trailing,
+    this.valueColor,
     this.trailingColor,
   });
 
@@ -389,7 +398,10 @@ class _MetricRow extends StatelessWidget {
             flex: 3,
             child: Text(
               value,
-              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: valueColor,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),

@@ -125,6 +125,7 @@ class _KpiGrid extends ConsumerWidget {
                     visual: toCollectVisual,
                     isSelected: statusFilter == RDMonthlyFilter.toCollect,
                     onTap: () => toggle(RDMonthlyFilter.toCollect),
+                    hint: strings.filterHint(label: strings.toCollect),
                   ),
                 ),
                 AppSpacings.gapSm,
@@ -147,6 +148,7 @@ class _KpiGrid extends ConsumerWidget {
                     onTap: isBusy || float.cashInHandAccounts == 0
                         ? null
                         : planVisit,
+                    hint: strings.plannerHint,
                   ),
                 ),
               ],
@@ -166,6 +168,7 @@ class _KpiGrid extends ConsumerWidget {
                     visual: receivableVisual,
                     isSelected: statusFilter == RDMonthlyFilter.fronted,
                     onTap: () => toggle(RDMonthlyFilter.fronted),
+                    hint: strings.filterHint(label: strings.receivable),
                   ),
                 ),
                 AppSpacings.gapSm,
@@ -178,6 +181,7 @@ class _KpiGrid extends ConsumerWidget {
                     visual: arrearsVisual,
                     isSelected: statusFilter == RDMonthlyFilter.overdue,
                     onTap: () => toggle(RDMonthlyFilter.overdue),
+                    hint: strings.filterHint(label: strings.arrears),
                   ),
                 ),
               ],
@@ -200,6 +204,9 @@ class _KpiTile extends StatelessWidget {
   final bool isSelected;
   final VoidCallback? onTap;
 
+  /// Screen-reader hint describing what a tap does (filter / open planner).
+  final String? hint;
+
   const _KpiTile({
     required this.label,
     required this.amount,
@@ -209,91 +216,113 @@ class _KpiTile extends StatelessWidget {
     required this.visual,
     required this.isSelected,
     required this.onTap,
+    this.hint,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final kpis = t.recurringDeposits.monthlyOperations.kpis;
     final borderColor = isSelected
         ? scheme.primary
         : (visual.outline ?? scheme.outlineVariant);
 
-    return Material(
-      color: visual.background,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        side: BorderSide(
-          color: borderColor,
-          width: isSelected ? AppDimensions.borderMd : AppDimensions.borderSm,
-        ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingSm),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
+    // One node per tile: "<label>, <amount>[, <detail>], <caption>" + what a tap does.
+    final semanticLabel = detail == null
+        ? kpis.tileSemantics(label: label, amount: amount, caption: caption)
+        : kpis.tileSemanticsDetail(
+            label: label,
+            amount: amount,
+            detail: detail!,
+            caption: caption,
+          );
+
+    return Semantics(
+      container: true,
+      button: onTap != null,
+      enabled: onTap != null,
+      selected: isSelected,
+      label: semanticLabel,
+      hint: hint,
+      child: ExcludeSemantics(
+        child: Material(
+          color: visual.background,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+            side: BorderSide(
+              color: borderColor,
+              width: isSelected ? AppDimensions.borderMd : AppDimensions.borderSm,
+            ),
+          ),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.paddingSm),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  HugeIcon(
-                    icon: icon,
-                    size: AppDimensions.iconXs,
-                    color: visual.foreground,
+                  Row(
+                    children: [
+                      HugeIcon(
+                        icon: icon,
+                        size: AppDimensions.iconXs,
+                        color: visual.foreground,
+                      ),
+                      AppSpacings.gapXs,
+                      Expanded(
+                        child: Text(
+                          label,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: visual.foreground,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                   AppSpacings.gapXs,
-                  Expanded(
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
                     child: Text(
-                      label,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: visual.foreground,
+                      amount,
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: visual.foreground,
                       ),
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
+                  ),
+                  if (detail != null)
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        detail!,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: visual.foreground,
+                        ),
+                        maxLines: 1,
+                      ),
+                    ),
+                  Text(
+                    caption,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: visual.foreground.withValues(
+                        alpha: AppDimensions.opacityMuted,
+                      ),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
-              AppSpacings.gapXs,
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  amount,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: visual.foreground,
-                  ),
-                  maxLines: 1,
-                ),
-              ),
-              if (detail != null)
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    detail!,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: visual.foreground,
-                    ),
-                    maxLines: 1,
-                  ),
-                ),
-              Text(
-                caption,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: visual.foreground.withValues(
-                    alpha: AppDimensions.opacityMuted,
-                  ),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            ),
           ),
         ),
       ),
