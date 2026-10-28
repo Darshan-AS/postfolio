@@ -48,6 +48,12 @@
   - [x] **Step 1 (Schema)**: `20261028000000_sequential_rd_ledger.sql` — `rd_po_deposits` as count-on-date events (legacy rows collapsed), `rd_fee_waivers` → `rd_fee_absorptions(amount)`, split columns dropped from `rd_transactions`, `collection_id`/`batch_id` hooks, `opening_receivable`, `save_recurring_deposit` updated; seed + RLS test updated and verified on the local stack.
   - [x] **Step 2 (Dart switchover)**: v2 domain (`RDLedgerProjector` single due amount, customer-vs-PO fee, `RDPoReadiness`, `quoteNextDeposit`), repositories, controllers (`depositNextToPo`, `undoLatestPoDeposit`, `absorbFee`), widgets (passbook view, "Deposit next N", simplified payment sheet, cash/digital float), tests.
   - [x] **Step 3 (Docs)**: progress, setup guide, session log.
+- [x] **Phase 8: Ledger UI improvements (interview + review, `docs/rd_ledger_ui_improvement_plan.md`)**:
+  - [x] Tier A — money-visible correctness: accurate PO quotes (incl. fee) for batch deposits, from-pocket via the deposit sheet, one `absorbableFee` rule, Collect only on next due, batch `batch_id` + undo, no ellipsised money, ≥44dp primary buttons.
+  - [x] PO visit planner (`RDPoVisitPlanner` + `rd_po_visit_sheet.dart`): per-account counts/₹/fee on a chosen date, cash vs UPI, >₹20k cash lot grouping, front-from-pocket per line, one Undo visit.
+  - [x] Hub row re-rank (name first, `owes ₹X` primary, footer Collect/Deposit) and 2×2 header (To collect / In hand / Receivable / Arrears) as filters; toggle to app bar; distinct status colours.
+  - [x] Vocabulary, accessibility (Semantics, tooltips, tap targets), passbook/inspector layout, purity, i18n prune.
+  - [ ] Deferred by decision: household lump-sum split (`collection_id` ready), one-tap collect without sheet, Today dashboard, arrears screen, receipt screen.
 
 ## ⚡ Supabase Query Optimizations (Prioritized)
 - [x] **P1: Server-Side Joins for Deposit Customer Names**: Modify `one_time_deposit_details_view` and `recurring_deposit_details_view` views to join with the `customers` table and return `customer_name`. Add `@JsonKey(includeFromJson: true, includeToJson: false) String? customerName` to deposit models to eliminate client-side cross-fetching/map loops.

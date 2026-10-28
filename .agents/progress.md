@@ -1,7 +1,16 @@
 # Project Progress
 
 ## Current State
-**RD Ledger — Sequential Ledger (Phase 7 Complete, on top of Phase 6)** — rules confirmed with agents (`rd_ledger_usecases_agreed.md`):
+**RD Ledger UI (Phase 8 Complete)** — driven by the agent-workflow interview in `docs/rd_ledger_ui_improvement_plan.md`:
+- **Hub row**: customer name first; `Sl N · A/c …last4 · due`; the primary figure is `owes ₹X` (+ fee/arrears caption); full-width `Collect ₹X` (opens the prefilled sheet) or `Deposit N` footer button; overflow: Front from pocket (deposit sheet), Absorb remaining fee (single `absorbableFee` rule), Undo last PO deposit.
+- **Hub header**: 2×2 grid of the four agreed numbers — To collect, In hand (cash/UPI; opens the PO visit planner), Receivable, Arrears — each a filter, skeletonised as one block; one-line month switcher; Accounts⇄Hub toggle in the app bar; group-by-customer on by default; serial-first search.
+- **PO visit planner** (`RDPoVisitPlanner`, `rd_po_visit_sheet.dart`): what gets keyed into the DOP portal — per account N installments · ₹ incl. fee on the chosen date, cash vs UPI totals, >₹20k cash-lot grouping, per-line "+ front" from pocket with a pocket subtotal, one `batch_id` per visit and "Undo visit" (`undoBatch`).
+- **Sheets**: identity in titles ("Collect from Ramesh · 12", "Deposit 2 · Ramesh · 12"), toasts with Undo, Retry on errors, payment modes labelled.
+- **Passbook/detail**: "Collected through #N / At PO #M (+ months fronted)", 56dp-safe tiles, inspector rows named "Default fee (customer) / (charged at PO) / Fee you bore".
+- **Accessibility**: Semantics on rows/tiles/checkboxes, tooltips everywhere, ≥44dp write buttons, distinct container colour per status. Tests: 73 passing.
+- **Deferred by decision**: household lump-sum split, one-tap collect without sheet, Today dashboard, arrears screen, receipts.
+
+**Previous: RD Ledger — Sequential Ledger (Phase 7 Complete, on top of Phase 6)** — rules confirmed with agents (`rd_ledger_usecases_agreed.md`):
 - **Both ledgers are sequential.** Customer money fills months in order (a partial sits on the earliest open month, overpayment becomes `customerCredit`); PO deposits are events "deposited the next N installments on <date>" (`rd_po_deposits(id, deposited_on, installment_count, fee_paid, amount, batch_id)`), exactly as the DOP agent portal records them. Only the latest PO event can be undone.
 - **One due amount per month** = installment + default fee − fee absorbed by the agent. No split modes. Two fees are tracked per month: the customer's (fixed when they finished paying) and the PO's (fixed at the deposit date); the gap is `agentDelayCost`.
 - **Fee absorption** (`rd_fee_absorptions`) replaces waivers: the agent pays from pocket, the PO still receives the fee; offered at collection time ("Absorb remaining ₹X").
