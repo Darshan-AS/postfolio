@@ -3,312 +3,294 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
+import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
+import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
+import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_schedule_actions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
-/// Detail panel for the month selected in the heatmap. Owns the primary "Log Payment" CTA.
-class RDMonthInspectorCard extends ConsumerWidget {
+/// Opens the month inspector for installment [installmentNo] of [rdId].
+///
+/// The sheet watches the live projection so a write made from inside it (absorb / clear
+/// fee) is reflected immediately. "Collect" closes the sheet and opens the payment sheet
+/// on the caller's context so the two never stack.
+Future<void> showRDMonthInspectorSheet(
+  BuildContext context, {
+  required String rdId,
+  required int installmentNo,
+}) {
+  return AppAdaptiveSheet.show<void>(
+    context,
+    builder: (sheetContext) => RDMonthInspectorSheet(
+      rdId: rdId,
+      installmentNo: installmentNo,
+      onCollect: (amount) {
+        Navigator.of(sheetContext).pop();
+        if (!context.mounted) return;
+        showRDLogPaymentSheet(context, rdId: rdId, initialAmount: amount);
+      },
+    ),
+  );
+}
+
+/// Body of the month inspector: 3-column metric rows plus the month's actions.
+class RDMonthInspectorSheet extends ConsumerWidget {
+  final String rdId;
+  final int installmentNo;
+  final ValueChanged<double> onCollect;
+
+  const RDMonthInspectorSheet({
+    super.key,
+    required this.rdId,
+    required this.installmentNo,
+    required this.onCollect,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final projectionAsync = ref.watch(rdLedgerProjectionProvider(rdId));
+    final now = ref.watch(clockProvider)();
+    final isBusy = ref.watch(rDLedgerControllerProvider).isLoading;
+
+    Widget loaded(RDInstallment? inst) => inst == null
+        ? ErrorStateView(message: t.recurringDeposits.depositNotFound)
+        : _InspectorBody(
+            rdId: rdId,
+            installment: inst,
+            now: now,
+            isBusy: isBusy,
+            onCollect: onCollect,
+          );
+
+    final body = switch (projectionAsync) {
+      AsyncData(:final value) => loaded(value.byNo(installmentNo)),
+      AsyncLoading(:final value?) => loaded(value.byNo(installmentNo)),
+      AsyncError(:final error) => ErrorStateView(
+          message: error.toString(),
+          onRetry: () => ref.invalidate(rdLedgerProjectionProvider(rdId)),
+        ),
+      AsyncLoading() => const _InspectorSkeleton(),
+    };
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.paddingLg,
+          AppDimensions.paddingSm,
+          AppDimensions.paddingLg,
+          AppDimensions.paddingLg,
+        ),
+        child: body,
+      ),
+    );
+  }
+}
+
+class _InspectorBody extends ConsumerWidget {
   final String rdId;
   final RDInstallment installment;
   final DateTime now;
-  final double customerCredit;
   final bool isBusy;
+  final ValueChanged<double> onCollect;
 
-  const RDMonthInspectorCard({
-    super.key,
+  const _InspectorBody({
     required this.rdId,
     required this.installment,
     required this.now,
-    required this.customerCredit,
     required this.isBusy,
+    required this.onCollect,
   });
+
+  Future<void> _absorbRemainingFee(BuildContext context, WidgetRef ref) async {
+    final inspector = t.recurringDeposits.ledger.inspector;
+    final inst = installment;
+    final amount = inst.outstandingAmount;
+    final monthNo = inst.installmentNo.toString();
+
+    final confirmed = await AppDialogs.confirmAction(
+      context,
+      title: inspector.absorbFeeTitle,
+      content: inspector.absorbFeeContent(amount: amount.toRupeeFormat(), month: monthNo),
+      confirmText: inspector.absorbRemainingFee(amount: amount.toRupeeFormat()),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final result = await ref.read(rDLedgerControllerProvider.notifier).absorbFee(
+          rdId: rdId,
+          installmentNo: inst.installmentNo,
+          amount: amount,
+        );
+    if (!context.mounted) return;
+    AppFeedback.showResult(
+      context,
+      result,
+      successMessage: inspector.absorbFeeSuccess(
+        amount: amount.toRupeeFormat(),
+        month: monthNo,
+      ),
+    );
+  }
+
+  Future<void> _clearAbsorbedFee(BuildContext context, WidgetRef ref) async {
+    final inspector = t.recurringDeposits.ledger.inspector;
+    final result = await ref.read(rDLedgerControllerProvider.notifier).clearAbsorbedFee(
+          rdId: rdId,
+          installmentNo: installment.installmentNo,
+        );
+    if (!context.mounted) return;
+    AppFeedback.showResult(
+      context,
+      result,
+      successMessage: inspector.clearAbsorbedFeeSuccess(
+        month: installment.installmentNo.toString(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final ledger = t.recurringDeposits.ledger;
+    final inspector = t.recurringDeposits.ledger.inspector;
+    final passbook = t.recurringDeposits.ledger.passbook;
     final inst = installment;
     final status = inst.displayStatusAt(now);
     final visual = status.visual(scheme);
     final isBaseline = inst.isOpeningBaseline;
-    final monthNo = inst.installmentNo!;
 
-    final displayedLateFee = isBaseline ? 0.0 : inst.dynamicLateFeeAt(now);
-    final principalPaid = inst.customerPaidAmount.clamp(0.0, inst.installmentAmount);
-    final principalOwed = inst.outstandingPrincipal;
-    final lateFeeOwed = inst.outstandingLateFeeAt(now);
-    final totalOwed = inst.outstandingAmountAt(now);
-    final isFeePaid = inst.paidLateFee >= displayedLateFee;
+    final canCollect = !isBaseline && inst.outstandingAmount > 0;
+    final canAbsorbFee = !isBaseline &&
+        inst.isPartiallyPaid &&
+        inst.outstandingAmount <= inst.customerFeeDue;
+    final canClearAbsorbed = !isBaseline && inst.absorbedFee > 0;
 
-    final hasPendingFee = !isBaseline && !inst.isLateFeeWaived && lateFeeOwed > 0;
-    final canToggleWaiver = !isBaseline && (inst.isLateFeeWaived || hasPendingFee);
-    final showMenu = canToggleWaiver || status.canRevertPo;
-
-    return Card(
-      elevation: 0,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: scheme.primary, width: AppDimensions.borderSm),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-      ),
-      color: scheme.surfaceContainerLow,
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                HugeIcon(
-                  icon: HugeIcons.strokeRoundedCalendar02,
-                  size: AppDimensions.iconSm,
-                  color: scheme.primary,
-                ),
-                AppSpacings.gapXs,
-                Expanded(
-                  child: Text(
-                    ledger.inspector.monthTitle(
-                      month: monthNo.toString(),
-                      date: inst.dueDate.toAppFormat(),
-                    ),
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                AppSpacings.gapSm,
-                _StatusChip(visual: visual),
-                if (showMenu) ...[
-                  AppSpacings.gapXs,
-                  MenuAnchor(
-                    builder: (context, controller, child) => IconButton(
-                      icon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedMoreVertical,
-                        size: AppDimensions.iconSm,
-                      ),
-                      tooltip: t.common.moreOptions,
-                      onPressed: isBusy
-                          ? null
-                          : () => controller.isOpen
-                              ? controller.close()
-                              : controller.open(),
-                    ),
-                    menuChildren: [
-                      if (canToggleWaiver && !inst.isLateFeeWaived)
-                        MenuItemButton(
-                          leadingIcon: HugeIcon(
-                            icon: HugeIcons.strokeRoundedCheckmarkBadge01,
-                            size: AppDimensions.iconSm,
-                            color: scheme.secondary,
-                          ),
-                          child: Text(ledger.actions.forgiveFee),
-                          onPressed: () => RDScheduleActions.setFeeWaiver(
-                            context,
-                            ref,
-                            rdId: rdId,
-                            installment: inst,
-                            waived: true,
-                            pendingFeeAmount: lateFeeOwed,
-                          ),
-                        ),
-                      if (canToggleWaiver && inst.isLateFeeWaived)
-                        MenuItemButton(
-                          leadingIcon: HugeIcon(
-                            icon: HugeIcons.strokeRoundedAlert01,
-                            size: AppDimensions.iconSm,
-                            color: scheme.error,
-                          ),
-                          child: Text(ledger.actions.reinstateFee),
-                          onPressed: () => RDScheduleActions.setFeeWaiver(
-                            context,
-                            ref,
-                            rdId: rdId,
-                            installment: inst,
-                            waived: false,
-                            pendingFeeAmount: 0,
-                          ),
-                        ),
-                      if (status.canRevertPo)
-                        MenuItemButton(
-                          leadingIcon: HugeIcon(
-                            icon: HugeIcons.strokeRoundedArrowTurnBackward,
-                            size: AppDimensions.iconSm,
-                            color: scheme.error,
-                          ),
-                          child: Text(ledger.actions.revertPo),
-                          onPressed: () => RDScheduleActions.confirmAndRevertPo(
-                            context,
-                            ref,
-                            rdId: rdId,
-                            installments: [inst],
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ],
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedCalendar02,
+              size: AppDimensions.iconSm,
+              color: scheme.primary,
             ),
-            AppSpacings.gapMd,
-            Container(
-              padding: const EdgeInsets.all(AppDimensions.paddingMd),
-              decoration: BoxDecoration(
-                color: scheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              ),
-              child: Column(
-                children: [
-                  _MetricRow(
-                    label: ledger.inspector.principal,
-                    value: inst.installmentAmount.toRupeeFormat(),
-                    chipLabel: isBaseline
-                        ? visual.label
-                        : inst.isInstallmentPaid
-                            ? ledger.inspector.paidTag
-                            : principalPaid > 0
-                                ? ledger.inspector.partiallyPaidTag(
-                                    paid: principalPaid.toRupeeFormat(),
-                                  )
-                                : ledger.inspector.amountDue(
-                                    due: principalOwed.toRupeeFormat(),
-                                  ),
-                    chipVisual: isBaseline
-                        ? visual
-                        : inst.isInstallmentPaid
-                            ? RDInstallmentDisplayStatus.settled.visual(scheme)
-                            : principalPaid > 0
-                                ? RDInstallmentDisplayStatus.partiallyPaid.visual(scheme)
-                                : inst.isOverdueAt(now)
-                                    ? RDInstallmentDisplayStatus.overdue.visual(scheme)
-                                    : RDInstallmentDisplayStatus.upcoming.visual(scheme),
-                  ),
-                  if (displayedLateFee > 0 || inst.isLateFeeWaived) ...[
-                    const Divider(height: AppDimensions.dividerHeight),
-                    _MetricRow(
-                      label: ledger.inspector.defaultFee,
-                      value: displayedLateFee.toRupeeFormat(),
-                      chipLabel: inst.isLateFeeWaived
-                          ? ledger.inspector.waivedTag
-                          : isFeePaid
-                              ? ledger.inspector.paidTag
-                              : inst.paidLateFee > 0
-                                  ? ledger.inspector.partiallyPaidTag(
-                                      paid: inst.paidLateFee.toRupeeFormat(),
-                                    )
-                                  : ledger.inspector.pendingTag,
-                      chipVisual: inst.isLateFeeWaived
-                          ? RDInstallmentDisplayStatus.baseline.visual(scheme)
-                          : isFeePaid
-                              ? RDInstallmentDisplayStatus.settled.visual(scheme)
-                              : RDInstallmentDisplayStatus.feePending.visual(scheme),
-                    ),
-                  ],
-                  const Divider(height: AppDimensions.dividerHeight),
-                  _MetricRow(
-                    label: ledger.inspector.poStatus,
-                    value: inst.isPoDeposited
-                        ? (inst.poPaidDate?.toAppFormat() ?? ledger.inspector.depositedTag)
-                        : t.common.notProvided,
-                    chipLabel: isBaseline
-                        ? visual.label
-                        : inst.isPoDeposited
-                            ? ledger.inspector.depositedTag
-                            : ledger.inspector.pendingPoTag,
-                    chipVisual: isBaseline
-                        ? visual
-                        : inst.isPoDeposited
-                            ? RDInstallmentDisplayStatus.settled.visual(scheme)
-                            : RDInstallmentDisplayStatus.collectedPendingPo.visual(scheme),
-                  ),
-                  if (customerCredit > 0) ...[
-                    const Divider(height: AppDimensions.dividerHeight),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppDimensions.paddingXs,
-                      ),
-                      child: Row(
-                        children: [
-                          HugeIcon(
-                            icon: HugeIcons.strokeRoundedWallet02,
-                            size: AppDimensions.iconXs,
-                            color: scheme.primary,
-                          ),
-                          AppSpacings.gapXs,
-                          Expanded(
-                            child: Text(
-                              ledger.statuses.customerCredit(
-                                amount: customerCredit.toRupeeFormat(),
-                              ),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: scheme.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
+            AppSpacings.gapXs,
+            Expanded(
+              child: Text(
+                inspector.monthTitle(
+                  month: inst.installmentNo.toString(),
+                  date: inst.dueDate.toAppFormat(),
+                ),
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (!isBaseline && (totalOwed > 0 || status.canDepositToPo)) ...[
-              AppSpacings.gapMd,
-              Row(
-                children: [
-                  if (totalOwed > 0)
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: isBusy
-                            ? null
-                            : () => showRDLogPaymentSheet(
-                                  context,
-                                  rdId: rdId,
-                                  initialAmount: totalOwed,
-                                  initialSplitMode: lateFeeOwed > 0
-                                      ? PaymentSplitMode.includeFees
-                                      : PaymentSplitMode.installmentsOnly,
-                                ),
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedCoins01,
-                          size: AppDimensions.iconSm,
-                        ),
-                        label: Text(ledger.logPayment),
-                      ),
-                    ),
-                  if (status.canDepositToPo) ...[
-                    if (totalOwed > 0) AppSpacings.gapSm,
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: isBusy
-                            ? null
-                            : () => RDScheduleActions.confirmAndDepositToPo(
-                                  context,
-                                  ref,
-                                  rdId: rdId,
-                                  installments: [inst],
-                                  offerUndo: true,
-                                ),
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedBuilding03,
-                          size: AppDimensions.iconSm,
-                        ),
-                        label: Text(ledger.actions.depositSingle),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ],
+            AppSpacings.gapSm,
+            _StatusChip(visual: visual),
           ],
         ),
-      ),
+        AppSpacings.gapMd,
+        Container(
+          padding: const EdgeInsets.all(AppDimensions.paddingMd),
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          ),
+          child: Column(
+            children: [
+              _MetricRow(
+                label: inspector.installment,
+                value: inst.installmentAmount.toRupeeFormat(),
+                trailing: inst.installmentDate.toMonthYearFormat(),
+              ),
+              const Divider(height: AppDimensions.dividerHeight),
+              _MetricRow(
+                label: inspector.customerFee,
+                value: inst.lateFee.toRupeeFormat(),
+                trailing: inst.customerFeeDue > 0
+                    ? passbook.owes(amount: inst.customerFeeDue.toRupeeFormat())
+                    : t.common.notProvided,
+              ),
+              const Divider(height: AppDimensions.dividerHeight),
+              _MetricRow(
+                label: inspector.poFee,
+                value: inst.poLateFee.toRupeeFormat(),
+                trailing: inst.agentDelayCost > 0
+                    ? passbook.agentDelay(amount: inst.agentDelayCost.toRupeeFormat())
+                    : t.common.notProvided,
+                trailingColor: inst.agentDelayCost > 0 ? scheme.error : null,
+              ),
+              const Divider(height: AppDimensions.dividerHeight),
+              _MetricRow(
+                label: inspector.absorbed,
+                value: inst.absorbedFee.toRupeeFormat(),
+                trailing: t.common.notProvided,
+              ),
+              const Divider(height: AppDimensions.dividerHeight),
+              _MetricRow(
+                label: inspector.paid,
+                value: inst.customerPaidAmount.toRupeeFormat(),
+                trailing: inst.outstandingAmount > 0
+                    ? passbook.owes(amount: inst.outstandingAmount.toRupeeFormat())
+                    : inspector.paid,
+                trailingColor: inst.outstandingAmount > 0 ? visual.foreground : scheme.primary,
+              ),
+              const Divider(height: AppDimensions.dividerHeight),
+              _MetricRow(
+                label: inspector.depositedOn,
+                value: inst.poDepositedOn?.toAppFormat() ?? inspector.notDeposited,
+                trailing: inst.poBatchId ?? t.common.notProvided,
+              ),
+            ],
+          ),
+        ),
+        if (canCollect || canAbsorbFee || canClearAbsorbed) ...[
+          AppSpacings.gapLg,
+          if (canCollect)
+            FilledButton.icon(
+              onPressed: isBusy ? null : () => onCollect(inst.outstandingAmount),
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedCoins01,
+                size: AppDimensions.iconSm,
+              ),
+              label: Text(passbook.collect),
+            ),
+          if (canAbsorbFee) ...[
+            AppSpacings.gapSm,
+            OutlinedButton.icon(
+              onPressed: isBusy ? null : () => _absorbRemainingFee(context, ref),
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedWallet02,
+                size: AppDimensions.iconSm,
+              ),
+              label: Text(
+                inspector.absorbRemainingFee(
+                  amount: inst.outstandingAmount.toRupeeFormat(),
+                ),
+              ),
+            ),
+          ],
+          if (canClearAbsorbed) ...[
+            AppSpacings.gapSm,
+            TextButton.icon(
+              onPressed: isBusy ? null : () => _clearAbsorbedFee(context, ref),
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedArrowTurnBackward,
+                size: AppDimensions.iconSm,
+              ),
+              label: Text(inspector.clearAbsorbedFee),
+            ),
+          ],
+        ],
+      ],
     );
   }
 }
@@ -333,11 +315,7 @@ class _StatusChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          HugeIcon(
-            icon: visual.icon,
-            size: AppDimensions.iconXs,
-            color: visual.foreground,
-          ),
+          HugeIcon(icon: visual.icon, size: AppDimensions.iconXs, color: visual.foreground),
           AppSpacings.gapXs,
           Text(
             visual.label,
@@ -352,18 +330,18 @@ class _StatusChip extends StatelessWidget {
   }
 }
 
-/// Fixed 3-column row: label / value / status chip.
+/// Fixed 3-column row: label / value / trailing note.
 class _MetricRow extends StatelessWidget {
   final String label;
   final String value;
-  final String chipLabel;
-  final RDStatusVisual chipVisual;
+  final String trailing;
+  final Color? trailingColor;
 
   const _MetricRow({
     required this.label,
     required this.value,
-    required this.chipLabel,
-    required this.chipVisual,
+    required this.trailing,
+    this.trailingColor,
   });
 
   @override
@@ -386,36 +364,47 @@ class _MetricRow extends StatelessWidget {
             flex: 3,
             child: Text(
               value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis,
             ),
           ),
           Expanded(
             flex: 4,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingSm,
-                  vertical: AppDimensions.paddingXxs,
-                ),
-                decoration: BoxDecoration(
-                  color: chipVisual.background,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-                ),
-                child: Text(
-                  chipLabel,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: chipVisual.foreground,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+            child: Text(
+              trailing,
+              textAlign: TextAlign.end,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: trailingColor ?? theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InspectorSkeleton extends StatelessWidget {
+  const _InspectorSkeleton();
+
+  static const int _rows = 6;
+
+  @override
+  Widget build(BuildContext context) {
+    final inspector = t.recurringDeposits.ledger.inspector;
+    return Skeletonizer(
+      enabled: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < _rows; i++)
+            ListTile(
+              dense: true,
+              title: Text(inspector.installment),
+              trailing: Text(inspector.paid),
+            ),
         ],
       ),
     );

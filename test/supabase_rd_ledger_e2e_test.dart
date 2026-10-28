@@ -69,8 +69,14 @@ void main() {
     expect(p.installments, hasLength(60));
     expect(p.byNo(12)!.isOpeningBaseline, isTrue);
     expect(p.byNo(13)!.isFullySettled, isTrue);
-    expect(p.byNo(14)!.isLateFeeWaived, isTrue);
-    expect(p.summary.paidThroughNo, greaterThanOrEqualTo(19));
+    expect(p.byNo(14)!.absorbedFee, 50, reason: 'agent paid the one-day-late fee from pocket');
+    expect(p.byNo(14)!.isFullySettled, isTrue);
+    // May (#17) was skipped, so later payments rolled forward with fees: paid through #18,
+    // #19 partially paid, #20–#22 open. Six monthly PO visits covered #13–#18.
+    expect(p.summary.paidThroughNo, 18);
+    expect(p.summary.depositedThroughNo, 18);
+    expect(p.byNo(19)!.isPartiallyPaid, isTrue);
+    expect(p.summary.arrearsCount, greaterThanOrEqualTo(3));
     expect(p.customerCredit, 0);
     expect(p.warnings, isEmpty);
   });
@@ -96,7 +102,8 @@ void main() {
     final rd1Item = items.firstWhere((i) => i.deposit.id == rd1);
     expect(rd1Item.hasSummary, isTrue);
     expect(rd1Item.installment.installmentNo, 22);
-    expect(rd1Item.priorOverdueCount, greaterThan(0), reason: 'Aug/Sep in arrears');
+    expect(rd1Item.priorOverdueCount, 3, reason: '#19 partial, #20, #21 open');
+    expect(rd1Item.readyForPoCount, 0);
 
     final kpi = container.read(monthlyOperationsKpiProvider);
     expect(kpi.totalCount, 3);
@@ -113,9 +120,6 @@ void main() {
       amount: 5000,
       paidDate: DateTime(2026, 10, 27, 9, 30),
       paymentMode: RDPaymentMode.cash,
-      splitMode: PaymentSplitMode.includeFees,
-      installmentComponent: 0,
-      lateFeeComponent: 0,
     ));
     expect(r, isA<Success<void, String>>(), reason: (r as dynamic).toString());
 
@@ -131,5 +135,25 @@ void main() {
     final tx = txRows.single['id'] as String;
     final d = await n.deletePayment(rdId: rd1, transactionId: tx);
     expect(d, isA<Success<void, String>>());
+  });
+
+  test('Write path: PO event quote, insert and undo through the real tables', () async {
+    container.listen(rdLedgerProjectionProvider(rd1), (_, _) {});
+    final n = container.read(rDLedgerControllerProvider.notifier);
+    final before = await container.read(rdLedgerProjectionProvider(rd1).future);
+    final through = before.summary.depositedThroughNo;
+
+    final r = await n.depositNextToPo(rdId: rd1, count: 1, depositedOn: DateTime(2026, 10, 27));
+    expect(r, isA<Success<void, String>>(), reason: (r as dynamic).toString());
+    await Future<void>.delayed(const Duration(seconds: 1));
+    final after = await container.read(rdLedgerProjectionProvider(rd1).future);
+    expect(after.summary.depositedThroughNo, through + 1);
+    expect(after.byNo(through + 1)!.isFrontedByAgent, isTrue, reason: '#19 is only partially paid');
+
+    final u = await n.undoLatestPoDeposit(rd1);
+    expect(u, isA<Success<void, String>>());
+    await Future<void>.delayed(const Duration(seconds: 1));
+    final reverted = await container.read(rdLedgerProjectionProvider(rd1).future);
+    expect(reverted.summary.depositedThroughNo, through);
   });
 }

@@ -351,7 +351,8 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
   }
 }
 
-/// Header subtitle: paid-through progress bar + "x/y paid · ₹z due".
+/// Header subtitle: "Paid through #N · Deposited through #M", the money the customer owes /
+/// has in credit / the agent has fronted, and a paid-through progress bar.
 class _LedgerProgress extends StatelessWidget {
   final AsyncValue<RDLedgerProjection> projectionAsync;
   final int totalMonths;
@@ -361,14 +362,37 @@ class _LedgerProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final tabs = t.recurringDeposits.detailTabs;
     final projection = projectionAsync.value;
     final isFirstLoad = projectionAsync.isLoading && projection == null;
     final summary = projection?.summary;
     final paidThrough = summary?.paidThroughNo ?? 0;
+    final depositedThrough = summary?.depositedThroughNo ?? 0;
     final total = totalMonths > 0 ? totalMonths : (projection?.installments.length ?? 0);
     final progress = total > 0 ? (paidThrough / total).clamp(0.0, 1.0) : 0.0;
-    final isSettled = projection != null && projection.nextDue == null;
+
+    final owed = summary?.owedByCustomer ?? 0.0;
+    final credit = summary?.customerCredit ?? 0.0;
+    final receivable = summary?.receivable ?? 0.0;
+    final feeDue = projection == null
+        ? 0.0
+        : projection.customerPending.fold(0.0, (sum, i) => sum + i.customerFeeDue);
+    final isSettled = projection != null && projection.nextDue == null && owed <= 0;
+
+    final moneyLines = <({String text, Color color})>[
+      if (owed > 0)
+        (
+          text: feeDue > 0
+              ? tabs.owesWithFee(amount: owed.toRupeeFormat(), fee: feeDue.toRupeeFormat())
+              : tabs.owes(amount: owed.toRupeeFormat()),
+          color: scheme.error,
+        ),
+      if (credit > 0) (text: tabs.credit(amount: credit.toRupeeFormat()), color: scheme.primary),
+      if (receivable > 0)
+        (text: tabs.receivable(amount: receivable.toRupeeFormat()), color: scheme.secondary),
+      if (isSettled) (text: tabs.allSettled, color: scheme.primary),
+    ];
 
     return Column(
       children: [
@@ -382,21 +406,30 @@ class _LedgerProgress extends StatelessWidget {
         ),
         AppSpacings.gapXs,
         Text(
-          isSettled
-              ? tabs.progressSettled(
-                  paid: paidThrough.toString(),
-                  total: total.toString(),
-                )
-              : tabs.progressSummary(
-                  paid: paidThrough.toString(),
-                  total: total.toString(),
-                  outstanding: (projection?.totalArrears ?? 0.0).toRupeeFormat(),
-                ),
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+          tabs.paidThrough(
+            paid: paidThrough.toString(),
+            deposited: depositedThrough.toString(),
           ),
+          style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           textAlign: TextAlign.center,
         ),
+        if (moneyLines.isNotEmpty) ...[
+          AppSpacings.gapXxs,
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: AppDimensions.paddingSm,
+            children: [
+              for (final line in moneyLines)
+                Text(
+                  line.text,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: line.color,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+            ],
+          ),
+        ],
       ],
     );
   }

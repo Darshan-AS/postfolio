@@ -1,6 +1,6 @@
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_fee_waiver_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -17,7 +17,7 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
 
   static const _transactions = 'rd_transactions';
   static const _poDeposits = 'rd_po_deposits';
-  static const _feeWaivers = 'rd_fee_waivers';
+  static const _feeAbsorptions = 'rd_fee_absorptions';
   static const _summaries = 'rd_ledger_summary';
 
   String get _agentId {
@@ -40,17 +40,17 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
   Stream<Result<List<RDPoDeposit>, String>> watchPoDeposits(String rdId) =>
       _client
           .from(_poDeposits)
-          .stream(primaryKey: ['rd_id', 'installment_no'])
+          .stream(primaryKey: ['id'])
           .eq('rd_id', rdId)
           .map((rows) => _mapRows(rows, RDPoDeposit.fromJson));
 
   @override
-  Stream<Result<List<RDFeeWaiver>, String>> watchFeeWaivers(String rdId) =>
+  Stream<Result<List<RDFeeAbsorption>, String>> watchFeeAbsorptions(String rdId) =>
       _client
-          .from(_feeWaivers)
+          .from(_feeAbsorptions)
           .stream(primaryKey: ['rd_id', 'installment_no'])
           .eq('rd_id', rdId)
-          .map((rows) => _mapRows(rows, RDFeeWaiver.fromJson));
+          .map((rows) => _mapRows(rows, RDFeeAbsorption.fromJson));
 
   @override
   Stream<Result<List<RDLedgerSummary>, String>> watchSummaries() => _client
@@ -92,37 +92,30 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
           .eq('rd_id', rdId));
 
   @override
-  Future<Result<void, String>> addPoDeposits(List<RDPoDeposit> deposits) {
-    if (deposits.isEmpty) return Future.value(const Success(null));
-    return _guard(() => _client.from(_poDeposits).insert([
-          for (final d in deposits) _withAgent(d.toJson()..remove('created_at')),
-        ]));
-  }
+  Future<Result<void, String>> addPoDeposit(RDPoDeposit event) => _guard(() =>
+      _client.from(_poDeposits).insert(_withAgent(event.toJson()..remove('created_at'))));
 
   @override
-  Future<Result<void, String>> removePoDeposits({
+  Future<Result<void, String>> deletePoDeposit({
     required String rdId,
-    required Set<int> installmentNos,
-  }) {
-    if (installmentNos.isEmpty) return Future.value(const Success(null));
-    return _guard(() => _client
-        .from(_poDeposits)
-        .delete()
-        .eq('rd_id', rdId)
-        .inFilter('installment_no', installmentNos.toList()));
-  }
+    required String eventId,
+  }) =>
+      _guard(() => _client.from(_poDeposits).delete().eq('id', eventId).eq('rd_id', rdId));
 
   @override
-  Future<Result<void, String>> addFeeWaiver(RDFeeWaiver waiver) => _guard(
-      () => _client.from(_feeWaivers).insert(_withAgent(waiver.toJson()..remove('created_at'))));
+  Future<Result<void, String>> upsertFeeAbsorption(RDFeeAbsorption absorption) =>
+      _guard(() => _client.from(_feeAbsorptions).upsert(
+            _withAgent(absorption.toJson()..remove('created_at')),
+            onConflict: 'rd_id,installment_no',
+          ));
 
   @override
-  Future<Result<void, String>> removeFeeWaiver({
+  Future<Result<void, String>> removeFeeAbsorption({
     required String rdId,
     required int installmentNo,
   }) =>
       _guard(() => _client
-          .from(_feeWaivers)
+          .from(_feeAbsorptions)
           .delete()
           .eq('rd_id', rdId)
           .eq('installment_no', installmentNo));
@@ -166,7 +159,7 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
     if (e is PostgrestException) {
       switch (e.code) {
         case '23505':
-          return 'This month has already been recorded.';
+          return 'This entry has already been recorded.';
         case '23514':
           return 'The entry does not satisfy the ledger rules.';
         case '42501':

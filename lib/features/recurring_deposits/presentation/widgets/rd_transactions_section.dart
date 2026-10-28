@@ -9,7 +9,8 @@ import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_payment_allocation_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
@@ -77,13 +78,15 @@ class RDTransactionsSection extends HookConsumerWidget {
                       icon: HugeIcons.strokeRoundedCoins01,
                       size: AppDimensions.iconXs,
                     ),
-                    label: Text(ledger.logPayment),
+                    label: Text(ledger.passbook.collect),
                   ),
                 ],
               ),
             ),
             const Divider(height: AppDimensions.dividerHeight),
             _RDTransactionsContent(rdId: deposit.id, isBusy: isBusy),
+            const Divider(height: AppDimensions.dividerHeight),
+            _RDPoVisitsList(rdId: deposit.id, isBusy: isBusy),
           ],
         ),
       );
@@ -104,7 +107,11 @@ class RDTransactionsSection extends HookConsumerWidget {
         ),
         onExpansionChanged: (value) => isExpanded.value = value,
         children: [
-          if (isExpanded.value) _RDTransactionsContent(rdId: deposit.id, isBusy: isBusy),
+          if (isExpanded.value) ...[
+            _RDTransactionsContent(rdId: deposit.id, isBusy: isBusy),
+            const Divider(height: AppDimensions.dividerHeight),
+            _RDPoVisitsList(rdId: deposit.id, isBusy: isBusy),
+          ],
         ],
       ),
     );
@@ -151,7 +158,7 @@ class _RDTransactionsContent extends ConsumerWidget {
 class _TransactionList extends StatelessWidget {
   final String rdId;
   final List<RDTransaction> transactions;
-  final Map<String, List<RDPaymentAllocation>> allocationsByTx;
+  final Map<String, List<RDAllocationSlice>> allocationsByTx;
   final bool isBusy;
 
   const _TransactionList({
@@ -191,7 +198,7 @@ class _TransactionList extends StatelessWidget {
                 icon: HugeIcons.strokeRoundedCoins01,
                 size: AppDimensions.iconSm,
               ),
-              label: Text(ledger.logPayment),
+              label: Text(ledger.passbook.collect),
             ),
           ],
         ),
@@ -249,7 +256,7 @@ class _MonthHeader extends StatelessWidget {
 class RDTransactionTile extends ConsumerWidget {
   final String rdId;
   final RDTransaction transaction;
-  final List<RDPaymentAllocation> allocations;
+  final List<RDAllocationSlice> allocations;
   final bool isBusy;
 
   const RDTransactionTile({
@@ -330,34 +337,32 @@ class RDTransactionTile extends ConsumerWidget {
             spacing: AppDimensions.paddingXs,
             runSpacing: AppDimensions.paddingXs,
             children: [
-              for (final alloc in allocations) ...[
-                if (alloc.principalAmount > 0)
+              for (final slice in allocations)
+                if (slice.isCredit)
+                  _AllocationChip(
+                    label: ledger.allocations.creditPill(
+                      amount: slice.amount.toRupeeFormat(),
+                    ),
+                    backgroundColor: scheme.surfaceContainerHighest,
+                    foregroundColor: scheme.onSurfaceVariant,
+                  )
+                else if (slice.isOpeningReceivable)
+                  _AllocationChip(
+                    label: ledger.allocations.openingDuesPill(
+                      amount: slice.amount.toRupeeFormat(),
+                    ),
+                    backgroundColor: scheme.secondaryContainer,
+                    foregroundColor: scheme.onSecondaryContainer,
+                  )
+                else
                   _AllocationChip(
                     label: ledger.allocations.installmentPill(
-                      month: alloc.installmentNo,
-                      amount: alloc.principalAmount.toRupeeFormat(),
+                      month: slice.installmentNo.toString(),
+                      amount: slice.amount.toRupeeFormat(),
                     ),
                     backgroundColor: scheme.primaryContainer,
                     foregroundColor: scheme.onPrimaryContainer,
                   ),
-                if (alloc.lateFeeAmount > 0)
-                  _AllocationChip(
-                    label: ledger.allocations.feePill(
-                      month: alloc.installmentNo,
-                      amount: alloc.lateFeeAmount.toRupeeFormat(),
-                    ),
-                    backgroundColor: scheme.errorContainer,
-                    foregroundColor: scheme.onErrorContainer,
-                  ),
-              ],
-              if (allocations.isEmpty)
-                _AllocationChip(
-                  label: ledger.allocations.creditPill(
-                    amount: tx.amount.toRupeeFormat(),
-                  ),
-                  backgroundColor: scheme.surfaceContainerHighest,
-                  foregroundColor: scheme.onSurfaceVariant,
-                ),
             ],
           ),
         ],
@@ -451,6 +456,124 @@ class _AllocationChip extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
+    );
+  }
+}
+
+/// Post Office visits for this account in the order the PO applied them. Only the last
+/// one can be undone because the PO ledger is sequential.
+class _RDPoVisitsList extends ConsumerWidget {
+  final String rdId;
+  final bool isBusy;
+
+  const _RDPoVisitsList({required this.rdId, required this.isBusy});
+
+  Future<void> _undoLatest(
+    BuildContext context,
+    WidgetRef ref,
+    RDPoDeposit latest,
+  ) async {
+    final passbook = t.recurringDeposits.ledger.passbook;
+    final scheme = Theme.of(context).colorScheme;
+
+    final confirmed = await AppDialogs.confirmAction(
+      context,
+      title: passbook.undoLastDepositTitle,
+      content: passbook.undoLastDepositContent(
+        count: latest.installmentCount.toString(),
+        date: latest.depositedOn.toAppFormat(),
+        amount: latest.amount.toRupeeFormat(),
+      ),
+      confirmText: passbook.undoLastDeposit,
+      confirmBackgroundColor: scheme.errorContainer,
+      confirmForegroundColor: scheme.onErrorContainer,
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final result =
+        await ref.read(rDLedgerControllerProvider.notifier).undoLatestPoDeposit(rdId);
+    if (!context.mounted) return;
+    AppFeedback.showResult(context, result, successMessage: passbook.undoLastDepositSuccess);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final passbook = t.recurringDeposits.ledger.passbook;
+    final factsAsync = ref.watch(rdLedgerFactsProvider(rdId));
+
+    final visits = switch (factsAsync) {
+      AsyncData(:final value) => value.poDepositsInOrder,
+      AsyncLoading(:final value?) => value.poDepositsInOrder,
+      // Facts errors already surface in the passbook/transactions list; stay quiet here.
+      AsyncError() || AsyncLoading() => const <RDPoDeposit>[],
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.paddingLg,
+            AppDimensions.paddingMd,
+            AppDimensions.paddingLg,
+            AppDimensions.paddingXs,
+          ),
+          child: Row(
+            children: [
+              HugeIcon(
+                icon: HugeIcons.strokeRoundedBuilding03,
+                size: AppDimensions.iconSm,
+                color: scheme.onSurfaceVariant,
+              ),
+              AppSpacings.gapSm,
+              Text(
+                passbook.poVisitsTitle,
+                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+        if (visits.isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimensions.paddingLg,
+              AppDimensions.paddingXs,
+              AppDimensions.paddingLg,
+              AppDimensions.paddingLg,
+            ),
+            child: Text(
+              passbook.noPoVisits,
+              style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          )
+        else
+          for (final (i, visit) in visits.indexed)
+            ListTile(
+              dense: true,
+              leading: HugeIcon(
+                icon: HugeIcons.strokeRoundedCheckmarkBadge01,
+                size: AppDimensions.iconSm,
+                color: scheme.primary,
+              ),
+              title: Text(
+                passbook.poVisit(
+                  date: visit.depositedOn.toAppFormat(),
+                  count: visit.installmentCount.toString(),
+                  amount: visit.amount.toRupeeFormat(),
+                  fee: visit.feePaid.toRupeeFormat(),
+                ),
+                style: theme.textTheme.bodySmall,
+              ),
+              trailing: i == visits.length - 1
+                  ? TextButton(
+                      onPressed: isBusy ? null : () => _undoLatest(context, ref, visit),
+                      child: Text(t.recurringDeposits.ledger.actions.undo),
+                    )
+                  : null,
+            ),
+      ],
     );
   }
 }

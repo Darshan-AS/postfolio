@@ -104,6 +104,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
           'p_start_date': deposit.startDate.toIso8601String().split('T').first,
           'p_nominees': deposit.nominees.map((n) => n.toJson()).toList(),
           'p_initial_paid_installments': deposit.initialPaidInstallments,
+          'p_opening_receivable': deposit.openingReceivable,
         },
       );
       return const Success(null);

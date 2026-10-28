@@ -5,8 +5,16 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dar
 part 'rd_transaction_model.freezed.dart';
 part 'rd_transaction_model.g.dart';
 
+/// Fact: the customer handed [amount] to the agent on [paidDate].
+///
+/// A payment is just money. How it is applied (which months, how much of it is default
+/// fee) is derived by `RDLedgerProjector` — the Post Office treats installment + fee as one
+/// inseparable due amount, so there is nothing for the agent to "split".
+///
+/// [collectionId] groups several per-account transactions recorded from one household
+/// hand-over (future feature; nullable today).
 @freezed
-abstract class RDTransaction with _$RDTransaction {
+sealed class RDTransaction with _$RDTransaction {
   const RDTransaction._();
 
   const factory RDTransaction({
@@ -15,21 +23,11 @@ abstract class RDTransaction with _$RDTransaction {
     @TimestampConverter() required DateTime paidDate,
     required double amount,
     required RDPaymentMode paymentMode,
-    @Default(PaymentSplitMode.includeFees) PaymentSplitMode splitMode,
-    @Default(0.0) double installmentAmount,
-    @Default(0.0) double lateFeeAmount,
+    String? collectionId,
     @TimestampConverter() DateTime? createdAt,
     @TimestampConverter() DateTime? updatedAt,
   }) = _RDTransaction;
 
   factory RDTransaction.fromJson(Map<String, dynamic> json) =>
       _$RDTransactionFromJson(json);
-
-  /// Effective component allocated to base installment principal.
-  /// Defaults to total [amount] if both split components are 0.0 (backward compatibility).
-  double get effectiveInstallmentAmount =>
-      (installmentAmount == 0.0 && lateFeeAmount == 0.0) ? amount : installmentAmount;
-
-  /// Effective component allocated to default late fees.
-  double get effectiveLateFeeAmount => lateFeeAmount;
 }

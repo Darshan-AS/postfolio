@@ -6,7 +6,7 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/supabase_rd_ledger_repository.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_fee_waiver_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -48,7 +48,7 @@ class UnsupportedRDLedgerRepository implements RDLedgerRepository {
   Stream<Result<List<RDPoDeposit>, String>> watchPoDeposits(String rdId) =>
       Stream.value(const Failure(_message));
   @override
-  Stream<Result<List<RDFeeWaiver>, String>> watchFeeWaivers(String rdId) =>
+  Stream<Result<List<RDFeeAbsorption>, String>> watchFeeAbsorptions(String rdId) =>
       Stream.value(const Failure(_message));
   @override
   Stream<Result<List<RDLedgerSummary>, String>> watchSummaries() =>
@@ -66,17 +66,17 @@ class UnsupportedRDLedgerRepository implements RDLedgerRepository {
   }) async =>
       _failure;
   @override
-  Future<Result<void, String>> addPoDeposits(List<RDPoDeposit> deposits) async => _failure;
+  Future<Result<void, String>> addPoDeposit(RDPoDeposit event) async => _failure;
   @override
-  Future<Result<void, String>> removePoDeposits({
+  Future<Result<void, String>> deletePoDeposit({
     required String rdId,
-    required Set<int> installmentNos,
+    required String eventId,
   }) async =>
       _failure;
   @override
-  Future<Result<void, String>> addFeeWaiver(RDFeeWaiver waiver) async => _failure;
+  Future<Result<void, String>> upsertFeeAbsorption(RDFeeAbsorption absorption) async => _failure;
   @override
-  Future<Result<void, String>> removeFeeWaiver({
+  Future<Result<void, String>> removeFeeAbsorption({
     required String rdId,
     required int installmentNo,
   }) async =>

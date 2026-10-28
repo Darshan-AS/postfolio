@@ -17,9 +17,6 @@ import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_pay
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-export 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart'
-    show PaymentSplitMode;
-
 /// Single source of truth for the payment-mode glyphs used across the sheets.
 extension RDPaymentModeIcon on RDPaymentMode {
   List<List<dynamic>> get icon => switch (this) {
@@ -30,20 +27,15 @@ extension RDPaymentModeIcon on RDPaymentMode {
       };
 }
 
-/// Opens the "log customer payment" sheet. Resolves `true` when a payment was recorded.
+/// Opens the "collect customer payment" sheet. Resolves `true` when a payment was recorded.
 Future<bool?> showRDLogPaymentSheet(
   BuildContext context, {
   required String rdId,
   double? initialAmount,
-  PaymentSplitMode? initialSplitMode,
 }) =>
     AppAdaptiveSheet.show<bool>(
       context,
-      builder: (_) => _PaymentForm(
-        rdId: rdId,
-        initialAmount: initialAmount,
-        initialSplitMode: initialSplitMode,
-      ),
+      builder: (_) => _PaymentForm(rdId: rdId, initialAmount: initialAmount),
     );
 
 /// Opens the "edit customer payment" sheet. Resolves `true` when the payment was updated.
@@ -60,17 +52,11 @@ Future<bool?> showRDEditPaymentSheet(
 // --- Form ---------------------------------------------------------------------------------
 
 class _PaymentForm extends HookConsumerWidget {
-  const _PaymentForm({
-    required this.rdId,
-    this.existing,
-    this.initialAmount,
-    this.initialSplitMode,
-  });
+  const _PaymentForm({required this.rdId, this.existing, this.initialAmount});
 
   final String rdId;
   final RDTransaction? existing;
   final double? initialAmount;
-  final PaymentSplitMode? initialSplitMode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -79,21 +65,31 @@ class _PaymentForm extends HookConsumerWidget {
       rdId: rdId,
       existing: existing,
       initialAmount: initialAmount,
-      initialSplitMode: initialSplitMode,
     );
     final theme = Theme.of(context);
     final ledger = t.recurringDeposits.ledger;
     final isEditing = draft.isEditing;
 
     Future<void> handleSubmit() async {
-      final result = await draft.submit();
+      final outcome = await draft.submit();
       if (!context.mounted) return;
       AppFeedback.showResult(
         context,
-        result,
+        outcome.payment,
         successMessage: isEditing ? ledger.paymentUpdated : ledger.paymentRecorded,
       );
-      if (result is Success<void, String>) {
+      final absorption = outcome.absorption;
+      if (absorption != null && outcome.absorbedInstallmentNo != null) {
+        AppFeedback.showResult(
+          context,
+          absorption,
+          successMessage: ledger.feeAbsorbed(
+            amount: outcome.absorbedAmount.toRupeeFormat(),
+            month: outcome.absorbedInstallmentNo.toString(),
+          ),
+        );
+      }
+      if (outcome.payment is Success<void, String>) {
         Navigator.of(context).pop(true);
       }
     }
@@ -274,16 +270,19 @@ class _FormBody extends StatelessWidget {
         ),
         AppSpacings.gapLg,
         _PaidDateButton(draft: draft),
-        AppSpacings.gapSm,
-        _SplitSection(draft: draft),
+        if (draft.canAbsorbFee) ...[
+          AppSpacings.gapSm,
+          _AbsorbFeeTile(draft: draft),
+        ],
         AppSpacings.gapLg,
         RDAllocationPreviewCard(
-          isRecalculation: draft.isEditing,
           amount: draft.amount,
           baseline: draft.baseline,
           preview: draft.preview,
           delta: draft.previewDelta,
           asOf: draft.lastDate,
+          transactionId: draft.previewTransactionId,
+          isRecalculation: draft.isEditing,
         ),
       ],
     );
@@ -343,129 +342,35 @@ class _PaidDateButton extends StatelessWidget {
   }
 }
 
-class _SplitSection extends StatelessWidget {
-  const _SplitSection({required this.draft});
+/// "Absorb remaining fee ₹X from pocket" — offered only when, after this payment, the
+/// earliest open month is short by no more than its default fee.
+class _AbsorbFeeTile extends StatelessWidget {
+  const _AbsorbFeeTile({required this.draft});
 
   final PaymentDraftState draft;
 
   @override
   Widget build(BuildContext context) {
-    final ledger = t.recurringDeposits.ledger;
-    final expanded = draft.showAdvancedSplit.value;
-    final isCustom = draft.splitMode.value == PaymentSplitMode.custom;
-    final showMismatch = isCustom &&
-        draft.validationError != null &&
-        draft.validationError != ledger.amountRequired &&
-        draft.validationError != ledger.enterValidAmount;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextButton.icon(
-          onPressed: () => draft.showAdvancedSplit.value = !expanded,
-          icon: HugeIcon(
-            icon: expanded
-                ? HugeIcons.strokeRoundedArrowUp01
-                : HugeIcons.strokeRoundedArrowDown01,
-            size: AppDimensions.iconSm,
-          ),
-          label: Text(expanded ? ledger.hideSplit : ledger.adjustSplit),
-        ),
-        if (expanded) ...[
-          _SectionLabel(text: ledger.allocationPriority),
-          AppSpacings.gapSm,
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SegmentedButton<PaymentSplitMode>(
-              showSelectedIcon: false,
-              selected: {draft.splitMode.value},
-              onSelectionChanged: (selection) => draft.setSplitMode(selection.first),
-              segments: [
-                ButtonSegment(
-                  value: PaymentSplitMode.installmentsOnly,
-                  label: Text(ledger.splitModes.installmentsOnly),
-                  tooltip: ledger.splitModes.installmentsOnlyTooltip,
-                ),
-                ButtonSegment(
-                  value: PaymentSplitMode.includeFees,
-                  label: Text(ledger.splitModes.includeFees),
-                  tooltip: ledger.splitModes.includeFeesTooltip,
-                ),
-                ButtonSegment(
-                  value: PaymentSplitMode.feesOnly,
-                  label: Text(ledger.splitModes.feesOnly),
-                  tooltip: ledger.splitModes.feesOnlyTooltip,
-                ),
-                ButtonSegment(
-                  value: PaymentSplitMode.custom,
-                  label: Text(ledger.splitModes.custom),
-                  tooltip: ledger.splitModes.customTooltip,
-                ),
-              ],
-            ),
-          ),
-        ],
-        if (isCustom) ...[
-          AppSpacings.gapMd,
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: draft.installmentComponentController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-                  decoration: AppInputDecoration.m3(
-                    context,
-                    labelText: ledger.toInstallment,
-                    prefixText: t.format.currencySymbol,
-                  ),
-                ),
-              ),
-              AppSpacings.gapMd,
-              Expanded(
-                child: TextFormField(
-                  controller: draft.lateFeeComponentController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-                  decoration: AppInputDecoration.m3(
-                    context,
-                    labelText: ledger.toDefaultFee,
-                    prefixText: t.format.currencySymbol,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          AppSpacings.gapXs,
-          _SplitHelperText(
-            text: showMismatch
-                ? draft.validationError!
-                : ledger.customSplitHint(total: draft.amount.toRupeeFormat()),
-            isError: showMismatch,
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _SplitHelperText extends StatelessWidget {
-  const _SplitHelperText({required this.text, required this.isError});
-
-  final String text;
-  final bool isError;
-
-  @override
-  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
-      child: Text(
-        text,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: isError ? theme.colorScheme.error : theme.colorScheme.onSurfaceVariant,
-        ),
+    final ledger = t.recurringDeposits.ledger;
+    return CheckboxListTile(
+      value: draft.absorbFeeChecked.value,
+      onChanged: (v) => draft.absorbFeeChecked.value = v ?? false,
+      controlAffinity: ListTileControlAffinity.leading,
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+      title: Text(
+        ledger.absorbFee(amount: draft.absorbableFee.toRupeeFormat()),
+        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        ledger.absorbFeeHint,
+        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+      ),
+      secondary: HugeIcon(
+        icon: HugeIcons.strokeRoundedWallet02,
+        size: AppDimensions.iconSm,
+        color: theme.colorScheme.secondary,
       ),
     );
   }
@@ -473,25 +378,31 @@ class _SplitHelperText extends StatelessWidget {
 
 // --- Preview ------------------------------------------------------------------------------
 
-/// Shows how the draft payment lands on the schedule: a one-line summary, then every month
-/// whose collected principal or fee changes, each with its projected status chip.
+/// Shows how the draft payment lands on the schedule: a one-line summary built from the
+/// draft transaction's allocation slices, then every month whose collected amount changes,
+/// each with its projected status chip.
 class RDAllocationPreviewCard extends StatelessWidget {
   const RDAllocationPreviewCard({
     super.key,
-    required this.isRecalculation,
     required this.amount,
     required this.baseline,
     required this.preview,
     required this.delta,
     required this.asOf,
+    this.transactionId,
+    this.isRecalculation = false,
   });
 
-  final bool isRecalculation;
   final double amount;
   final RDLedgerProjection? baseline;
   final RDLedgerProjection? preview;
   final List<RDPreviewMonthDelta> delta;
   final DateTime asOf;
+
+  /// Key of the draft transaction in `preview.allocationsByTransaction`
+  /// (defaults to the unsaved-draft id used by `usePaymentDraft`).
+  final String? transactionId;
+  final bool isRecalculation;
 
   @override
   Widget build(BuildContext context) {
@@ -559,9 +470,7 @@ class RDAllocationPreviewCard extends StatelessWidget {
                   AppSpacings.gapXs,
                   Expanded(
                     child: Text(
-                      strings.advanceCredit(
-                        amount: previewValue.customerCredit.toRupeeFormat(),
-                      ),
+                      strings.credit(amount: previewValue.customerCredit.toRupeeFormat()),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: scheme.primary,
                         fontWeight: FontWeight.bold,
@@ -579,27 +488,30 @@ class RDAllocationPreviewCard extends StatelessWidget {
 
   String _summaryLine(RDLedgerProjection previewValue) {
     final strings = t.recurringDeposits.ledger.preview;
-    if (delta.isEmpty) return strings.summaryNoChange;
+    final slices = previewValue
+            .allocationsByTransaction[transactionId ?? rdDraftPreviewTransactionId] ??
+        const [];
+    if (slices.isEmpty) return strings.summaryNoChange;
+
     final parts = <String>[];
-    var feeDelta = 0.0;
-    for (final month in delta) {
-      final principal = month.after.customerPaidAmount - month.before.customerPaidAmount;
-      if (principal != 0) {
-        parts.add(strings.summaryPrincipalPart(
-          month: month.after.installmentNo.toString(),
-          amount: principal.toRupeeFormat(),
+    var credit = 0.0;
+    for (final slice in slices) {
+      if (slice.isCredit) {
+        credit += slice.amount;
+      } else if (slice.isOpeningReceivable) {
+        parts.add(strings.summaryOpeningPart(amount: slice.amount.toRupeeFormat()));
+      } else {
+        parts.add(strings.summaryMonthPart(
+          month: slice.installmentNo.toString(),
+          amount: slice.amount.toRupeeFormat(),
         ));
       }
-      feeDelta += month.after.paidLateFee - month.before.paidLateFee;
     }
-    if (feeDelta != 0) {
-      parts.add(strings.summaryFeePart(amount: feeDelta.toRupeeFormat()));
-    }
-    final left = previewValue.customerCredit - (baseline?.customerCredit ?? 0.0);
+    if (credit > 0) parts.add(strings.summaryCreditPart(amount: credit.toRupeeFormat()));
     return strings.summaryLine(
       amount: amount.toRupeeFormat(),
       parts: parts.join(', '),
-      left: left.toRupeeFormat(),
+      left: credit.toRupeeFormat(),
     );
   }
 }
@@ -617,36 +529,6 @@ class _PreviewMonthRow extends StatelessWidget {
     final strings = t.recurringDeposits.ledger.preview;
     final after = month.after;
     final visual = after.displayStatusAt(asOf).visual(scheme);
-
-    final principalText = after.isInstallmentPaid
-        ? strings.principalCovered(amount: after.installmentAmount.toRupeeFormat())
-        : strings.principalAllocated(
-            paid: after.customerPaidAmount.toRupeeFormat(),
-            total: after.installmentAmount.toRupeeFormat(),
-          );
-
-    final fee = after.dynamicLateFeeAt(asOf);
-    final String? feeText;
-    final Color feeColor;
-    if (after.isLateFeeWaived) {
-      feeText = strings.feeWaived;
-      feeColor = scheme.secondary;
-    } else if (fee <= 0) {
-      feeText = null;
-      feeColor = scheme.onSurfaceVariant;
-    } else if (after.paidLateFee >= fee) {
-      feeText = strings.feePaid(amount: fee.toRupeeFormat());
-      feeColor = scheme.primary;
-    } else if (after.paidLateFee > 0) {
-      feeText = strings.feePartial(
-        paid: after.paidLateFee.toRupeeFormat(),
-        pending: (fee - after.paidLateFee).toRupeeFormat(),
-      );
-      feeColor = scheme.error;
-    } else {
-      feeText = strings.feePending(amount: fee.toRupeeFormat());
-      feeColor = scheme.error;
-    }
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -685,13 +567,16 @@ class _PreviewMonthRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                principalText,
+                strings.monthPaid(
+                  paid: after.customerPaidAmount.toRupeeFormat(),
+                  due: after.dueAmount.toRupeeFormat(),
+                ),
                 style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
               ),
-              if (feeText != null)
+              if (after.customerFeeDue > 0)
                 Text(
-                  feeText,
-                  style: theme.textTheme.bodySmall?.copyWith(color: feeColor),
+                  strings.monthFee(fee: after.customerFeeDue.toRupeeFormat()),
+                  style: theme.textTheme.bodySmall?.copyWith(color: scheme.error),
                 ),
               Text(
                 visual.label,

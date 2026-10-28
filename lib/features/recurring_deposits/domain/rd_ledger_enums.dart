@@ -1,44 +1,15 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-@JsonEnum()
-enum RDInstallmentStatus {
-  unpaid,
-  partiallyPaid,
-  fullyPaid;
-
-  String get displayName {
-    switch (this) {
-      case RDInstallmentStatus.unpaid:
-        return 'Unpaid';
-      case RDInstallmentStatus.partiallyPaid:
-        return 'Partially Paid';
-      case RDInstallmentStatus.fullyPaid:
-        return 'Fully Paid';
-    }
-  }
-}
-
-@JsonEnum()
-enum RDPoStatus {
-  unpaid,
-  paid;
-
-  String get displayName {
-    switch (this) {
-      case RDPoStatus.unpaid:
-        return 'Not Deposited';
-      case RDPoStatus.paid:
-        return 'Deposited';
-    }
-  }
-}
-
+/// How the customer handed money to the agent. Only cash counts against the ₹20,000
+/// per-lot cash cap at the Post Office, so the agent float is split by [isCash].
 @JsonEnum()
 enum RDPaymentMode {
   cash,
   upi,
   cheque,
   bankTransfer;
+
+  bool get isCash => this == RDPaymentMode.cash;
 
   String get displayName {
     switch (this) {
@@ -52,12 +23,4 @@ enum RDPaymentMode {
         return 'Bank Transfer';
     }
   }
-}
-
-@JsonEnum()
-enum PaymentSplitMode {
-  installmentsOnly,
-  includeFees,
-  feesOnly,
-  custom,
 }

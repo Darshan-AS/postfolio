@@ -6,25 +6,26 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_installment_mode
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_tile.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-/// Yearly List mode: one `ExpansionTile` per schedule year.
+/// Passbook month list: one `ExpansionTile` per schedule year in chronological order.
+///
+/// The year holding the next due month starts expanded; years made only of opening
+/// baseline months (and fully settled/upcoming years) start collapsed.
 class RDYearlyAccordion extends StatelessWidget {
   final String rdId;
   final List<RDInstallment> installments;
   final DateTime now;
-  final bool isSelectionMode;
-  final Set<int> selectedNos;
-  final bool isBusy;
-  final ValueChanged<int> onToggleSelection;
+
+  /// The month the customer owes on next (`null` when everything is paid).
+  final int? nextDueNo;
+  final ValueChanged<RDInstallment> onTapMonth;
 
   const RDYearlyAccordion({
     super.key,
     required this.rdId,
     required this.installments,
     required this.now,
-    required this.isSelectionMode,
-    required this.selectedNos,
-    required this.isBusy,
-    required this.onToggleSelection,
+    required this.nextDueNo,
+    required this.onTapMonth,
   });
 
   static const int _monthsPerYear = 12;
@@ -33,6 +34,10 @@ class RDYearlyAccordion extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final numYears = (installments.length / _monthsPerYear).ceil();
+    // With nothing due, the final year (where the last activity sits) is the "current" one.
+    final currentYearIndex = nextDueNo == null
+        ? numYears - 1
+        : ((nextDueNo! - 1) ~/ _monthsPerYear).clamp(0, numYears - 1);
 
     return Card(
       elevation: 0,
@@ -52,10 +57,8 @@ class RDYearlyAccordion extends StatelessWidget {
                 ((y + 1) * _monthsPerYear).clamp(0, installments.length),
               ),
               now: now,
-              isSelectionMode: isSelectionMode,
-              selectedNos: selectedNos,
-              isBusy: isBusy,
-              onToggleSelection: onToggleSelection,
+              initiallyExpanded: y == currentYearIndex,
+              onTapMonth: onTapMonth,
             ),
             if (y < numYears - 1) const Divider(height: AppDimensions.dividerHeight),
           ],
@@ -70,20 +73,16 @@ class _YearSection extends StatelessWidget {
   final int yearIndex;
   final List<RDInstallment> installments;
   final DateTime now;
-  final bool isSelectionMode;
-  final Set<int> selectedNos;
-  final bool isBusy;
-  final ValueChanged<int> onToggleSelection;
+  final bool initiallyExpanded;
+  final ValueChanged<RDInstallment> onTapMonth;
 
   const _YearSection({
     required this.rdId,
     required this.yearIndex,
     required this.installments,
     required this.now,
-    required this.isSelectionMode,
-    required this.selectedNos,
-    required this.isBusy,
-    required this.onToggleSelection,
+    required this.initiallyExpanded,
+    required this.onTapMonth,
   });
 
   @override
@@ -101,7 +100,7 @@ class _YearSection extends StatelessWidget {
 
     return ExpansionTile(
       key: PageStorageKey<String>('rd_${rdId}_year_$yearIndex'),
-      initiallyExpanded: isSelectionMode || !isYearSettled,
+      initiallyExpanded: initiallyExpanded,
       leading: HugeIcon(
         icon: isYearSettled
             ? HugeIcons.strokeRoundedCheckmarkBadge01
@@ -123,15 +122,9 @@ class _YearSection extends StatelessWidget {
       children: [
         for (final (i, inst) in installments.indexed) ...[
           RDInstallmentTile(
-            rdId: rdId,
             installment: inst,
             now: now,
-            isSelectionMode: isSelectionMode,
-            isSelected: selectedNos.contains(inst.installmentNo),
-            isBusy: isBusy,
-            onSelectionChanged: inst.isOpeningBaseline
-                ? null
-                : (_) => onToggleSelection(inst.installmentNo!),
+            onTap: () => onTapMonth(inst),
           ),
           if (i < installments.length - 1)
             const Divider(height: AppDimensions.dividerHeight),

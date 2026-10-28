@@ -7,7 +7,6 @@ import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_monthly_operation_item.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
@@ -158,21 +157,16 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> monthlyOperationItems(Ref r
     if (no < 1 || no > deposit.totalMonths) continue;
 
     final summary = summaries[deposit.id] ?? RDLedgerSummary.pristine(deposit, now);
-    final installment = summary.installmentFor(deposit, no);
-
+    final installment = summary.installmentFor(deposit, no, now);
     final priors = isFutureMonth
         ? const <RDInstallment>[]
-        : summary
-            .priorOpenInstallments(deposit, no, now)
-            .where((p) => p.isOverdueAt(now) || p.outstandingLateFeeAt(now) > 0)
-            .toList(growable: false);
+        : summary.priorOpenInstallments(deposit, no, now);
 
     items.add(RDMonthlyOperationItem(
       deposit: deposit,
       installment: installment,
-      priorOverdueCount: priors.length,
-      priorOverdueAmount: priors.fold(0.0, (s, p) => s + p.outstandingAmountAt(now)),
-      priorOverdueFee: priors.fold(0.0, (s, p) => s + p.outstandingLateFeeAt(now)),
+      summary: summary,
+      priorOpen: priors,
       hasSummary: summaries.containsKey(deposit.id),
     ));
   }
@@ -220,23 +214,23 @@ RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
     );
     if (item.isSettled) {
       s = s.copyWith(
-        settledAmount: s.settledAmount + item.installment.installmentAmount,
+        settledAmount: s.settledAmount + item.installment.dueAmount,
         settledCount: s.settledCount + 1,
       );
     } else if (item.isReadyForPo) {
       s = s.copyWith(
-        readyForPoAmount: s.readyForPoAmount + item.installment.installmentAmount,
+        readyForPoAmount: s.readyForPoAmount + item.installment.dueAmount,
         readyForPoCount: s.readyForPoCount + 1,
       );
     } else if (item.isCustomerPending) {
       s = s.copyWith(
-        toCollectAmount: s.toCollectAmount + item.totalPayable(now),
+        toCollectAmount: s.toCollectAmount + item.totalOutstanding,
         toCollectCount: s.toCollectCount + 1,
       );
     }
     if (!isFutureMonth && item.hasOverdueDebt(now)) {
       s = s.copyWith(
-        overdueAmount: s.overdueAmount + item.totalOutstandingPayable(now),
+        overdueAmount: s.overdueAmount + item.totalOutstanding,
         overdueCount: s.overdueCount + 1,
       );
     }
@@ -253,18 +247,26 @@ RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
 @freezed
 sealed class RDAgentFloatSummary with _$RDAgentFloatSummary {
   const factory RDAgentFloatSummary({
-    @Default(0.0) double undepositedCashAmount,
-    @Default(0) int undepositedCashCount,
-    @Default(0.0) double pocketAdvancesAmount,
-    @Default(0) int pocketAdvancesCount,
+    /// Collected but not yet deposited — physical cash (capped at ₹20k per PO lot).
+    @Default(0.0) double cashInHandCash,
+    /// Collected but not yet deposited — UPI / bank / cheque.
+    @Default(0.0) double cashInHandDigital,
+    @Default(0) int cashInHandAccounts,
+    /// Fronted at the PO and not yet recovered from customers.
+    @Default(0.0) double receivableAmount,
+    @Default(0) int receivableAccounts,
+    @Default(0.0) double absorbedFeesTotal,
+    /// Accounts with 2+ unsettled past-due months.
+    @Default(0) int arrearsAccounts,
   }) = _RDAgentFloatSummary;
 
   const RDAgentFloatSummary._();
 
-  bool get hasFloat => undepositedCashCount > 0 || pocketAdvancesCount > 0;
+  double get cashInHandTotal => cashInHandCash + cashInHandDigital;
+  bool get hasFloat => cashInHandAccounts > 0 || receivableAccounts > 0;
 }
 
-/// Cross-month agent float straight from the summary cache (cash in hand vs pocket advances).
+/// Cross-month agent float straight from the summary cache.
 @riverpod
 RDAgentFloatSummary globalAgentFloat(Ref ref) {
   final summaries = ref.watch(rdLedgerSummariesProvider).value ?? const {};
@@ -279,15 +281,20 @@ RDAgentFloatSummary globalAgentFloat(Ref ref) {
     if (closed.contains(summary.rdId)) continue;
     if (summary.cashInHand > 0) {
       s = s.copyWith(
-        undepositedCashAmount: s.undepositedCashAmount + summary.cashInHand,
-        undepositedCashCount: s.undepositedCashCount + 1,
+        cashInHandCash: s.cashInHandCash + summary.cashInHandCash,
+        cashInHandDigital: s.cashInHandDigital + summary.cashInHandDigital,
+        cashInHandAccounts: s.cashInHandAccounts + 1,
       );
     }
-    if (summary.pocketAdvance > 0) {
+    if (summary.receivable > 0) {
       s = s.copyWith(
-        pocketAdvancesAmount: s.pocketAdvancesAmount + summary.pocketAdvance,
-        pocketAdvancesCount: s.pocketAdvancesCount + 1,
+        receivableAmount: s.receivableAmount + summary.receivable,
+        receivableAccounts: s.receivableAccounts + 1,
       );
+    }
+    s = s.copyWith(absorbedFeesTotal: s.absorbedFeesTotal + summary.absorbedTotal);
+    if (summary.arrearsCount >= 2) {
+      s = s.copyWith(arrearsAccounts: s.arrearsAccounts + 1);
     }
   }
   return s;
@@ -379,29 +386,25 @@ Future<List<RDCustomerGroup>> groupedMonthlyOperations(Ref ref) async {
 }
 
 /// Selected rows resolved against the current month's items.
+///
+/// A PO visit deposits the *next contiguous ready months* of each selected account; fronting
+/// (depositing a month the customer has not paid) is a separate, explicit per-account action.
 @freezed
 sealed class RDBatchSelectionSummary with _$RDBatchSelectionSummary {
   const factory RDBatchSelectionSummary({
     @Default(<RDMonthlyOperationItem>[]) List<RDMonthlyOperationItem> items,
+    /// Accounts with at least one collected-but-undeposited month.
     @Default(<RDMonthlyOperationItem>[]) List<RDMonthlyOperationItem> depositable,
+    /// Accounts whose selected month is the latest deposited one (undo-able).
     @Default(<RDMonthlyOperationItem>[]) List<RDMonthlyOperationItem> revertible,
   }) = _RDBatchSelectionSummary;
 
   const RDBatchSelectionSummary._();
 
   int get count => items.length;
-  double get totalAmount =>
-      items.fold(0.0, (s, i) => s + i.installment.installmentAmount);
-  double get collectedAmount => depositable
-      .where((i) => i.installment.isInstallmentPaid)
-      .fold(0.0, (s, i) => s + i.installment.installmentAmount);
-  double get fromPocketAmount => depositable
-      .where((i) => !i.installment.isInstallmentPaid)
-      .fold(0.0, (s, i) => s + i.installment.outstandingPrincipal);
-  int get collectedCount =>
-      depositable.where((i) => i.installment.isInstallmentPaid).length;
-  int get fromPocketCount =>
-      depositable.where((i) => !i.installment.isInstallmentPaid).length;
+  int get readyInstallments =>
+      depositable.fold(0, (s, i) => s + i.readyForPoCount);
+  double get totalAmount => items.fold(0.0, (s, i) => s + i.installment.dueAmount);
 }
 
 @riverpod
@@ -414,8 +417,8 @@ RDBatchSelectionSummary batchSelectionSummary(Ref ref) {
   ];
   return RDBatchSelectionSummary(
     items: selected,
-    depositable: [for (final i in selected) if (i.canDepositToPo) i],
-    revertible: [for (final i in selected) if (i.canRevertPo) i],
+    depositable: [for (final i in selected) if (i.readyForPoCount > 0) i],
+    revertible: [for (final i in selected) if (i.isLatestDeposited) i],
   );
 }
 
@@ -429,45 +432,78 @@ class RDMonthlyOperationsActions extends _$RDMonthlyOperationsActions {
   @override
   void build() {}
 
-  Future<Result<void, String>> depositToPo(Iterable<RDMonthlyOperationItem> items) =>
-      _perRd(items.where((i) => i.canDepositToPo), (rdId, nos) =>
-          ref.read(rDLedgerControllerProvider.notifier).depositToPo(rdId: rdId, installmentNos: nos));
+  RDLedgerController get _ledger => ref.read(rDLedgerControllerProvider.notifier);
 
-  Future<Result<void, String>> revertPo(Iterable<RDMonthlyOperationItem> items) =>
-      _perRd(items.where((i) => i.canRevertPo), (rdId, nos) =>
-          ref.read(rDLedgerControllerProvider.notifier).revertPoDeposit(rdId: rdId, installmentNos: nos));
+  /// Deposits every collected-but-undeposited month of each account (one PO event per account).
+  Future<Result<void, String>> depositReady(
+    Iterable<RDMonthlyOperationItem> items, {
+    DateTime? depositedOn,
+  }) async {
+    for (final item in items) {
+      final count = item.readyForPoCount;
+      if (count == 0) continue;
+      final r = await _ledger.depositNextToPo(
+        rdId: item.deposit.id,
+        count: count,
+        depositedOn: depositedOn,
+      );
+      if (r case Failure()) return r;
+    }
+    return const Success(null);
+  }
 
-  Future<Result<void, String>> depositSelectedToPo() async {
-    final result = await depositToPo(ref.read(batchSelectionSummaryProvider).depositable);
+  /// Fronts the account from the agent's pocket: deposits every ready month **plus** the
+  /// selected (unpaid or partial) month.
+  Future<Result<void, String>> frontFromPocket(RDMonthlyOperationItem item, {DateTime? depositedOn}) {
+    final through = item.summary.depositedThroughNo;
+    final target = item.installment.installmentNo;
+    if (target <= through) return Future.value(const Success(null));
+    return _ledger.depositNextToPo(
+      rdId: item.deposit.id,
+      count: target - through,
+      depositedOn: depositedOn,
+    );
+  }
+
+  Future<Result<void, String>> undoLatestDeposit(RDMonthlyOperationItem item) =>
+      _ledger.undoLatestPoDeposit(item.deposit.id);
+
+  Future<Result<void, String>> depositSelectedReady({DateTime? depositedOn}) async {
+    final result = await depositReady(
+      ref.read(batchSelectionSummaryProvider).depositable,
+      depositedOn: depositedOn,
+    );
     if (result case Success()) ref.read(rDHubSelectionProvider.notifier).exit();
     return result;
   }
 
-  Future<Result<void, String>> revertSelectedPo() async {
-    final result = await revertPo(ref.read(batchSelectionSummaryProvider).revertible);
-    if (result case Success()) ref.read(rDHubSelectionProvider.notifier).exit();
-    return result;
+  /// Every account in the current month with ready months (the "Deposit all ready" strip).
+  Future<Result<void, String>> depositAllReady({DateTime? depositedOn}) async {
+    final items = ref.read(monthlyOperationItemsProvider).value ??
+        UnmodifiableListView(const <RDMonthlyOperationItem>[]);
+    return depositReady(items.where((i) => i.readyForPoCount > 0), depositedOn: depositedOn);
   }
 
-  Future<Result<void, String>> forgiveFee(RDMonthlyOperationItem item) =>
-      ref.read(rDLedgerControllerProvider.notifier).setFeeWaiver(
-            rdId: item.deposit.id,
-            installmentNo: item.installment.installmentNo!,
-            waived: true,
-          );
+  /// Agent pays the remaining fee of [item]'s month from pocket.
+  Future<Result<void, String>> absorbRemainingFee(RDMonthlyOperationItem item) =>
+      _ledger.absorbFee(
+        rdId: item.deposit.id,
+        installmentNo: item.installment.installmentNo,
+        amount: item.installment.customerFeeDue,
+      );
 
   /// Everything the payment sheet needs to open pre-filled for [item].
-  Future<Result<({List<RDInstallment> schedule, double initialAmount, PaymentSplitMode? splitMode}), String>>
+  Future<Result<({List<RDInstallment> schedule, double initialAmount}), String>>
       prepareLogPayment(RDMonthlyOperationItem item) async {
     final provider = rdLedgerProjectionProvider(item.deposit.id);
     final sub = ref.listen(provider, (_, _) {});
     try {
       final projection = await ref.read(provider.future);
-      final now = ref.read(clockProvider)().toDateOnly();
       return Success((
         schedule: projection.installments,
-        initialAmount: item.initialPaymentAmount(now),
-        splitMode: item.initialPaymentSplitMode(now),
+        initialAmount: projection.summary.owedByCustomer > 0
+            ? projection.summary.owedByCustomer
+            : item.installment.outstandingAmount,
       ));
     } on RDLedgerException catch (e) {
       return Failure(e.message);
@@ -488,21 +524,5 @@ class RDMonthlyOperationsActions extends _$RDMonthlyOperationsActions {
     for (final id in ids) {
       await ledger.rebuildSummary(id);
     }
-  }
-
-  Future<Result<void, String>> _perRd(
-    Iterable<RDMonthlyOperationItem> items,
-    Future<Result<void, String>> Function(String rdId, Set<int> nos) op,
-  ) async {
-    final byRd = <String, Set<int>>{};
-    for (final i in items) {
-      byRd.putIfAbsent(i.deposit.id, () => {}).add(i.installment.installmentNo!);
-    }
-    if (byRd.isEmpty) return const Success(null);
-    for (final e in byRd.entries) {
-      final r = await op(e.key, e.value);
-      if (r case Failure()) return r;
-    }
-    return const Success(null);
   }
 }

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_fee_waiver_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -15,30 +15,30 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   FakeRDLedgerRepository({
     Map<String, List<RDTransaction>>? transactions,
     Map<String, List<RDPoDeposit>>? poDeposits,
-    Map<String, List<RDFeeWaiver>>? waivers,
+    Map<String, List<RDFeeAbsorption>>? absorptions,
     this.failWith,
   })  : _transactions = {for (final e in (transactions ?? {}).entries) e.key: [...e.value]},
         _poDeposits = {for (final e in (poDeposits ?? {}).entries) e.key: [...e.value]},
-        _waivers = {for (final e in (waivers ?? {}).entries) e.key: [...e.value]};
+        _absorptions = {for (final e in (absorptions ?? {}).entries) e.key: [...e.value]};
 
   /// When set, every write fails with this message (for error-path tests).
   String? failWith;
 
   final Map<String, List<RDTransaction>> _transactions;
   final Map<String, List<RDPoDeposit>> _poDeposits;
-  final Map<String, List<RDFeeWaiver>> _waivers;
+  final Map<String, List<RDFeeAbsorption>> _absorptions;
   final Map<String, RDLedgerSummary> _summaries = {};
 
   final _txControllers = <String, StreamController<Result<List<RDTransaction>, String>>>{};
   final _poControllers = <String, StreamController<Result<List<RDPoDeposit>, String>>>{};
-  final _waiverControllers = <String, StreamController<Result<List<RDFeeWaiver>, String>>>{};
+  final _absorptionControllers = <String, StreamController<Result<List<RDFeeAbsorption>, String>>>{};
   final _summaryController =
       StreamController<Result<List<RDLedgerSummary>, String>>.broadcast();
 
   // --- Test inspection ----------------------------------------------------------------------
   List<RDTransaction> transactionsOf(String rdId) => List.unmodifiable(_transactions[rdId] ?? const []);
   List<RDPoDeposit> poDepositsOf(String rdId) => List.unmodifiable(_poDeposits[rdId] ?? const []);
-  List<RDFeeWaiver> waiversOf(String rdId) => List.unmodifiable(_waivers[rdId] ?? const []);
+  List<RDFeeAbsorption> absorptionsOf(String rdId) => List.unmodifiable(_absorptions[rdId] ?? const []);
   RDLedgerSummary? summaryOf(String rdId) => _summaries[rdId];
 
   // --- Reads --------------------------------------------------------------------------------
@@ -52,8 +52,8 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
       _watch(_poControllers, rdId, () => _poDeposits[rdId] ?? const []);
 
   @override
-  Stream<Result<List<RDFeeWaiver>, String>> watchFeeWaivers(String rdId) =>
-      _watch(_waiverControllers, rdId, () => _waivers[rdId] ?? const []);
+  Stream<Result<List<RDFeeAbsorption>, String>> watchFeeAbsorptions(String rdId) =>
+      _watch(_absorptionControllers, rdId, () => _absorptions[rdId] ?? const []);
 
   @override
   Stream<Result<List<RDLedgerSummary>, String>> watchSummaries() async* {
@@ -110,55 +110,50 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   }
 
   @override
-  Future<Result<void, String>> addPoDeposits(List<RDPoDeposit> deposits) async {
+  Future<Result<void, String>> addPoDeposit(RDPoDeposit event) async {
     if (failWith != null) return Failure(failWith!);
-    if (deposits.isEmpty) return const Success(null);
-    final touched = <String>{};
-    for (final d in deposits) {
-      final list = _poDeposits.putIfAbsent(d.rdId, () => []);
-      if (list.any((e) => e.installmentNo == d.installmentNo)) {
-        return const Failure('This month has already been recorded.');
-      }
-      list.add(d);
-      touched.add(d.rdId);
+    final list = _poDeposits.putIfAbsent(event.rdId, () => []);
+    if (list.any((e) => e.id == event.id)) {
+      return const Failure('This entry has already been recorded.');
     }
-    for (final rdId in touched) {
-      _poControllers[rdId]?.add(Success(List.unmodifiable(_poDeposits[rdId]!)));
-    }
+    list.add(event.copyWith(createdAt: event.createdAt ?? DateTime.now()));
+    _poControllers[event.rdId]?.add(Success(List.unmodifiable(list)));
     return const Success(null);
   }
 
   @override
-  Future<Result<void, String>> removePoDeposits({
+  Future<Result<void, String>> deletePoDeposit({
     required String rdId,
-    required Set<int> installmentNos,
+    required String eventId,
   }) async {
     if (failWith != null) return Failure(failWith!);
-    _poDeposits[rdId]?.removeWhere((d) => installmentNos.contains(d.installmentNo));
-    _poControllers[rdId]?.add(Success(List.unmodifiable(_poDeposits[rdId] ?? const [])));
-    return const Success(null);
-  }
-
-  @override
-  Future<Result<void, String>> addFeeWaiver(RDFeeWaiver waiver) async {
-    if (failWith != null) return Failure(failWith!);
-    final list = _waivers.putIfAbsent(waiver.rdId, () => []);
-    if (list.any((w) => w.installmentNo == waiver.installmentNo)) {
-      return const Failure('This month has already been recorded.');
+    final list = _poDeposits[rdId];
+    if (list == null || !list.any((e) => e.id == eventId)) {
+      return const Failure('Deposit not found.');
     }
-    list.add(waiver);
-    _waiverControllers[waiver.rdId]?.add(Success(List.unmodifiable(list)));
+    list.removeWhere((e) => e.id == eventId);
+    _poControllers[rdId]?.add(Success(List.unmodifiable(list)));
     return const Success(null);
   }
 
   @override
-  Future<Result<void, String>> removeFeeWaiver({
+  Future<Result<void, String>> upsertFeeAbsorption(RDFeeAbsorption absorption) async {
+    if (failWith != null) return Failure(failWith!);
+    final list = _absorptions.putIfAbsent(absorption.rdId, () => []);
+    list.removeWhere((a) => a.installmentNo == absorption.installmentNo);
+    list.add(absorption);
+    _absorptionControllers[absorption.rdId]?.add(Success(List.unmodifiable(list)));
+    return const Success(null);
+  }
+
+  @override
+  Future<Result<void, String>> removeFeeAbsorption({
     required String rdId,
     required int installmentNo,
   }) async {
     if (failWith != null) return Failure(failWith!);
-    _waivers[rdId]?.removeWhere((w) => w.installmentNo == installmentNo);
-    _waiverControllers[rdId]?.add(Success(List.unmodifiable(_waivers[rdId] ?? const [])));
+    _absorptions[rdId]?.removeWhere((a) => a.installmentNo == installmentNo);
+    _absorptionControllers[rdId]?.add(Success(List.unmodifiable(_absorptions[rdId] ?? const [])));
     return const Success(null);
   }
 
@@ -169,7 +164,7 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
     for (final c in _poControllers.values) {
       c.close();
     }
-    for (final c in _waiverControllers.values) {
+    for (final c in _absorptionControllers.values) {
       c.close();
     }
     _summaryController.close();

@@ -32,6 +32,9 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     @Default([]) List<Nominee> nominees,
     @Default(DepositStatus.active) DepositStatus status,
     @Default(0) int initialPaidInstallments,
+    /// Amount the customer already owed the agent at onboarding (months the agent had
+    /// fronted before the app existed). Repaid first out of subsequent customer payments.
+    @Default(0.0) double openingReceivable,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? createdAt,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? updatedAt,
     @JsonKey(includeIfNull: false) String? migrationSource,
@@ -129,6 +132,14 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     return null;
   }
 
+  /// Opening receivable is optional; when given it must be a non-negative amount.
+  static String? validateOpeningReceivable(String? val) {
+    if (val == null || val.trim().isEmpty) return null;
+    final num = double.tryParse(val.trim());
+    if (num == null || num < 0) return t.errors.invalidPositiveNumber;
+    return null;
+  }
+
   static Result<RecurringDeposit, String> create({
     required String id,
     String? serialNo,
@@ -144,6 +155,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     DepositStatus status = DepositStatus.active,
     PostalRateService postalRateService = const PostalRateService(),
     int initialPaidInstallments = 0,
+    double openingReceivable = 0.0,
   }) {
     final postalTerms = postalRateService.resolveRecurringSchemeTerms(
       schemeType: schemeType,
@@ -172,6 +184,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
           resolvedTermYears,
           resolvedTermMonths,
         ) ??
+        validateOpeningReceivable(openingReceivable.toString()) ??
         Nominee.validateNominees(nominees);
 
     if (validationError != null) return Failure(validationError);
@@ -205,6 +218,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
         nominees: List.unmodifiable(nominees),
         status: status,
         initialPaidInstallments: initialPaidInstallments,
+        openingReceivable: openingReceivable,
       ),
     );
   }
@@ -216,6 +230,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   }) {
     if (hasPayments) {
       if (existing.installmentAmount != updated.installmentAmount ||
+          existing.openingReceivable != updated.openingReceivable ||
           existing.startDate.year != updated.startDate.year ||
           existing.startDate.month != updated.startDate.month ||
           existing.startDate.day != updated.startDate.day) {
@@ -240,6 +255,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     List<Nominee> nominees = const [],
     DepositStatus status = DepositStatus.active,
     int initialPaidInstallments = 0,
+    double openingReceivable = 0.0,
   }) {
     final tempRes = create(
       id: existing.id,
@@ -255,6 +271,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
       nominees: nominees,
       status: status,
       initialPaidInstallments: initialPaidInstallments,
+      openingReceivable: openingReceivable,
     );
 
     switch (tempRes) {

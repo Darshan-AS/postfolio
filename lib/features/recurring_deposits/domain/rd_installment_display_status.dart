@@ -1,26 +1,25 @@
 /// Exhaustive display state of a single schedule month.
 ///
 /// Every widget that colours, labels or icons an installment MUST derive from this enum via
-/// `RDInstallment.displayStatusAt(now)` so the heatmap, tiles, inspector and hub cards can never
+/// `RDInstallment.displayStatusAt(now)` so the passbook, tiles and hub cards can never
 /// disagree about what a month means.
+///
+/// Both ledgers are sequential, so a month is in exactly one of these states.
 enum RDInstallmentDisplayStatus {
-  /// Paid and deposited before the account was onboarded; immutable.
+  /// Deposited before the account was onboarded; immutable.
   baseline,
 
-  /// Customer paid in full, deposited at PO, no fee outstanding.
+  /// Customer paid the full due (installment + fee) and it is deposited at the PO.
   settled,
 
-  /// Customer paid in full and PO deposit is done, but a default fee is still owed.
-  feePending,
-
-  /// Customer paid in full; cash is with the agent awaiting PO deposit.
+  /// Customer paid the full due; cash is with the agent awaiting the PO visit.
   collectedPendingPo,
 
-  /// Customer has paid part of the installment; nothing deposited yet.
+  /// Customer has paid part of the due; nothing deposited yet.
   partiallyPaid,
 
-  /// Agent deposited at PO from their own pocket; customer still owes.
-  pocketAdvanced,
+  /// Deposited at the PO from the agent's pocket; the customer still owes (all or part).
+  frontedByAgent,
 
   /// Unpaid and past the statutory due date.
   overdue,
@@ -31,41 +30,18 @@ enum RDInstallmentDisplayStatus {
   /// Unpaid and not yet due.
   upcoming;
 
-  /// Customer still owes principal and/or fee.
+  /// Customer still owes money on this month.
   bool get isCustomerPending => switch (this) {
         baseline || settled || collectedPendingPo => false,
-        feePending ||
-        partiallyPaid ||
-        pocketAdvanced ||
-        overdue ||
-        dueToday ||
-        upcoming =>
-          true,
+        partiallyPaid || frontedByAgent || overdue || dueToday || upcoming => true,
       };
 
-  /// Cash collected from the customer is physically with the agent.
-  bool get isCashWithAgent => this == collectedPendingPo;
+  /// Collected money for this month is physically with the agent.
+  bool get isCashWithAgent => this == collectedPendingPo || this == partiallyPaid;
 
-  /// The month can be deposited at the PO.
-  bool get canDepositToPo => switch (this) {
-        baseline || settled || feePending || pocketAdvanced => false,
-        collectedPendingPo ||
-        partiallyPaid ||
-        overdue ||
-        dueToday ||
-        upcoming =>
-          true,
-      };
-
-  /// The PO deposit can be reverted.
-  bool get canRevertPo => switch (this) {
-        settled || feePending || pocketAdvanced => true,
-        baseline ||
-        collectedPendingPo ||
-        partiallyPaid ||
-        overdue ||
-        dueToday ||
-        upcoming =>
-          false,
+  /// Already at the Post Office.
+  bool get isDeposited => switch (this) {
+        baseline || settled || frontedByAgent => true,
+        collectedPendingPo || partiallyPaid || overdue || dueToday || upcoming => false,
       };
 }

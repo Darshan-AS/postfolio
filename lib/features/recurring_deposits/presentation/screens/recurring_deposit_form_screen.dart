@@ -355,6 +355,31 @@ List<Widget> _buildInvestmentDetails(
       ),
       textInputAction: TextInputAction.next,
     ),
+    AppSpacings.gapLg,
+    AppTextField(
+      controller: state.openingReceivableController,
+      labelText: t.recurringDeposits.fields.openingReceivable,
+      enabled: !state.isUpdating && !state.isFinancialTermsLocked,
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedWallet02,
+        size: AppDimensions.iconMd,
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: RecurringDeposit.validateOpeningReceivable,
+      textInputAction: TextInputAction.next,
+    ),
+    Padding(
+      padding: const EdgeInsets.only(
+        top: AppDimensions.paddingXs,
+        left: AppDimensions.paddingSm,
+      ),
+      child: Text(
+        t.recurringDeposits.fields.openingReceivableHelper,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    ),
     InvestmentProjectionCard(projection: projection),
   ];
 }

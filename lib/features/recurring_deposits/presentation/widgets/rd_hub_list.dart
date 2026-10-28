@@ -5,13 +5,13 @@ import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_monthly_operation_item.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_deposit_sheet.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operation_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -240,97 +240,83 @@ class _RDHubRow extends ConsumerWidget {
     final selection = ref.read(rDHubSelectionProvider.notifier);
     final actions = ref.read(rDMonthlyOperationsActionsProvider.notifier);
 
-    Future<void> revert() async {
-      final result = await actions.revertPo([item]);
+    Future<void> undoLatest() async {
+      final result = await actions.undoLatestDeposit(item);
       if (!context.mounted) return;
       AppFeedback.showResult(
         context,
         result,
-        successMessage: card.revertSuccess(installment: installmentNo),
+        successMessage: card.undoLatestDepositSuccess,
       );
     }
 
-    Future<void> onLogPayment() async {
-      final prepared = await actions.prepareLogPayment(item);
-      if (!context.mounted) return;
-      switch (prepared) {
-        case Success(:final value):
-          await showRDLogPaymentSheet(
-            context,
-            rdId: item.deposit.id,
-            initialAmount: value.initialAmount,
-            initialSplitMode: value.splitMode,
-          );
-        case Failure(:final error):
-          AppFeedback.showError(context, error);
-      }
+    Future<void> onCollect() async {
+      await showRDLogPaymentSheet(
+        context,
+        rdId: item.deposit.id,
+        initialAmount: item.initialPaymentAmount,
+      );
     }
 
-    Future<void> onDepositToPo() async {
-      final result = await actions.depositToPo([item]);
-      if (!context.mounted) return;
-      AppFeedback.showResult(
+    Future<void> onDeposit() async {
+      await showRDDepositSheet(
         context,
-        result,
-        successMessage: card.depositSuccess(installment: installmentNo),
-        undoLabel: t.recurringDeposits.monthlyOperations.undo,
-        onUndo: revert,
+        rdId: item.deposit.id,
+        initialCount: item.readyForPoCount,
       );
     }
 
     Future<void> onDepositFromPocket() async {
       final confirmed = await AppDialogs.confirmAction(
         context,
-        title: card.advanceToPoConfirmTitle,
-        content: card.advanceToPoConfirmMessage(
+        title: card.depositFromPocketConfirmTitle,
+        content: card.depositFromPocketConfirmMessage(
           installment: installmentNo,
-          amount: item.installment.outstandingPrincipal.toRupeeFormat(),
+          amount: item.installment.outstandingAmount.toRupeeFormat(),
         ),
         confirmText: t.common.confirm,
       );
       if (confirmed != true || !context.mounted) return;
-      final result = await actions.depositToPo([item]);
+      final result = await actions.frontFromPocket(item);
       if (!context.mounted) return;
       AppFeedback.showResult(
         context,
         result,
-        successMessage: card.advanceSuccess(installment: installmentNo),
+        successMessage: card.depositFromPocketSuccess(installment: installmentNo),
         undoLabel: t.recurringDeposits.monthlyOperations.undo,
-        onUndo: revert,
+        onUndo: undoLatest,
       );
     }
 
-    Future<void> onRevertPo() async {
+    Future<void> onUndoLatestDeposit() async {
       final scheme = Theme.of(context).colorScheme;
       final confirmed = await AppDialogs.confirmAction(
         context,
-        title: card.revertPoConfirmTitle,
-        content: card.revertPoConfirmMessage(installment: installmentNo),
+        title: card.undoLatestDepositConfirmTitle,
+        content: card.undoLatestDepositConfirmMessage,
         confirmText: t.common.confirm,
         confirmBackgroundColor: scheme.error,
         confirmForegroundColor: scheme.onError,
       );
       if (confirmed != true || !context.mounted) return;
-      await revert();
+      await undoLatest();
     }
 
-    Future<void> onForgiveFee() async {
+    Future<void> onAbsorbFee() async {
+      final fee = item.installment.customerFeeDue.toRupeeFormat();
       final confirmed = await AppDialogs.confirmAction(
         context,
-        title: card.forgiveFeeConfirmTitle,
-        content: card.forgiveFeeConfirmMessage(
-          installment: installmentNo,
-          amount: item.totalDefaultFee(now).toRupeeFormat(),
-        ),
-        confirmText: card.forgiveFee,
+        title: card.absorbFeeConfirmTitle,
+        content: card.absorbFeeConfirmMessage(installment: installmentNo, amount: fee),
+        confirmText: t.common.confirm,
       );
       if (confirmed != true || !context.mounted) return;
-      final result = await actions.forgiveFee(item);
+      final result = await actions.absorbRemainingFee(item);
       if (!context.mounted) return;
       AppFeedback.showResult(
         context,
         result,
-        successMessage: card.forgiveFeeSuccess(installment: installmentNo),
+        successMessage: card.absorbFeeSuccess(installment: installmentNo, amount: fee),
       );
     }
 
@@ -345,11 +331,11 @@ class _RDHubRow extends ConsumerWidget {
       onLongPress: () {
         if (!isSelectionMode) selection.toggle(id);
       },
-      onLogPayment: onLogPayment,
-      onDepositToPo: onDepositToPo,
+      onCollect: onCollect,
+      onDeposit: onDeposit,
       onDepositFromPocket: isBusy ? null : onDepositFromPocket,
-      onRevertPo: isBusy ? null : onRevertPo,
-      onForgiveFee: isBusy ? null : onForgiveFee,
+      onUndoLatestDeposit: isBusy ? null : onUndoLatestDeposit,
+      onAbsorbFee: isBusy ? null : onAbsorbFee,
     );
   }
 }

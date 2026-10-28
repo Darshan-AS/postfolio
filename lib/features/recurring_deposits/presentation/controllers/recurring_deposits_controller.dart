@@ -212,6 +212,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     DepositStatus status = DepositStatus.active,
     List<Nominee> nominees = const [],
     String initialPaidInstallments = '0',
+    String openingReceivable = '0',
   }) async {
     final depositId = id ?? const Uuid().v4();
     final postalRateService = ref.read(postalRateServiceProvider);
@@ -221,6 +222,8 @@ class RecurringDepositsController extends _$RecurringDepositsController {
         ? double.tryParse(interestRate.trim())
         : null;
     final initialPaid = int.tryParse(initialPaidInstallments.trim()) ?? 0;
+    final openingReceivableAmount =
+        double.tryParse(openingReceivable.trim()) ?? 0.0;
 
     final createResult = RecurringDeposit.create(
       id: depositId,
@@ -237,6 +240,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
       nominees: nominees,
       postalRateService: postalRateService,
       initialPaidInstallments: initialPaid,
+      openingReceivable: openingReceivableAmount,
     );
 
     final RecurringDeposit deposit;

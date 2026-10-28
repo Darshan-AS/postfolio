@@ -1,12 +1,13 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
+import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 
 part 'rd_monthly_operation_item.freezed.dart';
 
+/// One row of the Monthly Hub: an account's installment for the selected month plus the
+/// account-level counters the agent needs to act on it. Built from `RDLedgerSummary`.
 @freezed
 sealed class RDMonthlyOperationItem with _$RDMonthlyOperationItem {
   const RDMonthlyOperationItem._();
@@ -14,128 +15,60 @@ sealed class RDMonthlyOperationItem with _$RDMonthlyOperationItem {
   const factory RDMonthlyOperationItem({
     required RecurringDeposit deposit,
     required RDInstallment installment,
-    @Default(0) int priorOverdueCount,
-    @Default(0.0) double priorOverdueAmount,
-    @Default(0.0) double priorOverdueFee,
+    required RDLedgerSummary summary,
+    /// Months before this one the customer still owes on (arrears carried into this month).
+    @Default(<RDInstallment>[]) List<RDInstallment> priorOpen,
     @Default(true) bool hasSummary,
   }) = _RDMonthlyOperationItem;
 
-  /// Total default fee owed across current installment and any prior overdue installments.
-  double totalDefaultFee(DateTime now) {
-    if (isUpcoming(now)) return 0.0;
-    final currentFee = installment.outstandingLateFeeAt(now);
-    return priorOverdueFee + currentFee;
-  }
+  int get installmentNumber => installment.installmentNo;
 
-  /// Whether this installment is overdue evaluated at [now].
-  bool isOverdue(DateTime now) => installment.isOverdueAt(now);
-
-  /// Whether customer has paid the installment, but it has not yet been deposited to the Post Office.
-  bool get isReadyForPo =>
-      installment.isInstallmentPaid && installment.poStatus != RDPoStatus.paid;
-
-  /// Whether agent has advanced payment to Post Office from pocket, but customer has not yet paid.
-  bool get isPoAdvanced =>
-      !installment.isInstallmentPaid && installment.poStatus == RDPoStatus.paid;
-
-  /// Whether Post Office deposit is complete (either from customer funds or agent advance).
-  bool get isPoPaid => installment.poStatus == RDPoStatus.paid;
-
-  /// Whether this installment can be deposited to the Post Office (not yet deposited, not baseline).
-  bool get canDepositToPo =>
-      !installment.isOpeningBaseline && installment.poStatus != RDPoStatus.paid;
-
-  /// Whether this installment's Post Office deposit can be reverted (already deposited, not baseline).
-  bool get canRevertPo =>
-      !installment.isOpeningBaseline && installment.poStatus == RDPoStatus.paid;
-
-  /// Installment sequence number (1 to 60) relative to deposit start date.
-  int get installmentNumber =>
-      installment.installmentNo ??
-      RDScheduleFactory.installmentNoFor(deposit.startDate, installment.installmentDate);
-
-  /// Single source of truth for colour/label of this row.
   RDInstallmentDisplayStatus displayStatus(DateTime now) =>
       installment.displayStatusAt(now);
 
-  /// Whether installment principal is paid and PO is deposited, but a default fee remains unresolved.
-  bool get isFeePending =>
-      installment.isInstallmentPaid &&
-      isPoPaid &&
-      !installment.isLateFeeResolved;
+  bool get isSettled => installment.isFullySettled;
+  bool get isReadyForPo => installment.isReadyForPo;
+  bool get isFrontedByAgent => installment.isFrontedByAgent;
+  bool get isCustomerPending => !installment.isCustomerSettled && !installment.isOpeningBaseline;
+  bool isOverdue(DateTime now) => installment.isOverdueAt(now);
 
-  /// Whether both customer has paid, Post Office deposit is complete, and any default fees are resolved.
-  bool get isSettled =>
-      installment.isInstallmentPaid &&
-      installment.poStatus == RDPoStatus.paid &&
-      installment.isLateFeeResolved;
+  int get priorOverdueCount => priorOpen.length;
+  double get priorOverdueAmount => priorOpen.fold(0.0, (s, p) => s + p.outstandingAmount);
+  bool get hasPriorArrears => priorOpen.isNotEmpty;
 
-  /// Whether customer payment is pending (unpaid principal, partial principal, or unresolved default fee).
-  bool get isCustomerPending => !installment.isInstallmentPaid || isFeePending;
+  /// What the customer must pay to bring the account up to date through this month.
+  double get totalOutstanding =>
+      priorOverdueAmount + installment.outstandingAmount + summary.openingReceivableLeft;
 
-  /// Total payable amount at [now] for this specific installment (outstanding principal + dynamic late fee if overdue).
-  double totalPayable(DateTime now) => installment.outstandingAmountAt(now);
+  /// Fee component of [totalOutstanding] (informational).
+  double get totalFeeDue =>
+      priorOpen.fold(0.0, (s, p) => s + p.customerFeeDue) + installment.customerFeeDue;
 
-  /// Total outstanding amount to bring this account completely up to date (prior arrears + this month's payable).
-  double totalOutstandingPayable(DateTime now) =>
-      priorOverdueAmount + totalPayable(now);
-
-  /// Whether this account has any overdue debt (either carryover arrears from prior months or this month is overdue).
-  /// In future months, installments are upcoming and not overdue.
   bool hasOverdueDebt(DateTime now) =>
-      !isUpcoming(now) &&
-      (priorOverdueCount > 0 || (isOverdue(now) && isCustomerPending));
+      hasPriorArrears || (installment.isOverdueAt(now) && isCustomerPending);
 
-  /// Whether this installment is upcoming in a future month relative to [now].
   bool isUpcoming(DateTime now) {
-    final currentMonthStart = DateTime(now.year, now.month);
-    final targetMonthStart = DateTime(
-      installment.installmentDate.year,
-      installment.installmentDate.month,
-    );
-    return targetMonthStart.isAfter(currentMonthStart);
+    final m = DateTime(now.year, now.month);
+    final t = DateTime(installment.installmentDate.year, installment.installmentDate.month);
+    return t.isAfter(m);
   }
-
-  /// Whether any default fee exists for this item (pending, paid, or waived).
-  /// Hidden when there is no default fee at all.
-  bool hasDefaultFee(DateTime now) {
-    if (isUpcoming(now)) return false;
-    return installment.isLateFeeWaived ||
-        installment.paidLateFee > 0 ||
-        totalDefaultFee(now) > 0 ||
-        installment.lateFee > 0;
-  }
-
-  /// Whether this specific month's installment is currently overdue and pending from customer.
-  bool isCurrentMonthOverdue(DateTime now) =>
-      !isUpcoming(now) && isOverdue(now) && isCustomerPending;
-
-  /// Whether there are prior unpaid overdue installments carried over into this active month.
-  bool hasPriorArrears(DateTime now) =>
-      !isUpcoming(now) && priorOverdueCount > 0;
-
-  /// Effective total payable displayed on the operation card (includes prior arrears when active).
-  double effectiveTotalPayable(DateTime now) =>
-      hasPriorArrears(now) ? totalOutstandingPayable(now) : totalPayable(now);
-
-  /// Whether the pending customer balance diverges from the standard monthly installment amount.
-  bool hasDivergentPending(DateTime now) =>
-      isCustomerPending &&
-      (effectiveTotalPayable(now) != deposit.installmentAmount ||
-          hasPriorArrears(now) ||
-          totalDefaultFee(now) > 0);
 
   /// Whether this account falls into the 1st-to-15th India Post statutory deadline window.
   bool get isFirstHalfDue => installment.dueDate.day <= 15;
 
-  /// Prefilled payment amount when logging a customer payment from the Monthly Hub.
-  double initialPaymentAmount(DateTime now) =>
-      isFeePending ? totalDefaultFee(now) : totalOutstandingPayable(now);
+  /// Number of contiguous months that can be deposited on the next PO visit.
+  int get readyForPoCount => summary.readyForPoCount;
 
-  /// Prefilled payment split mode when logging a customer payment from the Monthly Hub.
-  PaymentSplitMode? initialPaymentSplitMode(DateTime now) => isFeePending
-      ? PaymentSplitMode.feesOnly
-      : (hasOverdueDebt(now) && totalDefaultFee(now) > 0
-            ? PaymentSplitMode.includeFees
-            : null);
+  /// Can deposit something at the PO: ready months, or front this month from pocket.
+  bool get canDepositToPo =>
+      !installment.isOpeningBaseline && !installment.isPoDeposited;
+
+  /// Can undo the latest PO event only if this month is the most recently deposited one.
+  bool get isLatestDeposited =>
+      installment.isPoDeposited &&
+      !installment.isOpeningBaseline &&
+      installment.installmentNo == summary.depositedThroughNo;
+
+  /// Prefilled payment amount when logging a customer payment from the Monthly Hub.
+  double get initialPaymentAmount => totalOutstanding;
 }

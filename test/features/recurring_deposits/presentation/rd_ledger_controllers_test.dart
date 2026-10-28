@@ -101,9 +101,6 @@ void main() {
         amount: 2000,
         paidDate: DateTime(2026, 2, 10, 15, 45),
         paymentMode: RDPaymentMode.upi,
-        splitMode: PaymentSplitMode.includeFees,
-        installmentComponent: 0,
-        lateFeeComponent: 0,
       ));
       expect(result, isA<Success<void, String>>());
       await _settle();
@@ -113,27 +110,27 @@ void main() {
 
       final summary = h.ledger.summaryOf('rd1');
       expect(summary, isNotNull);
-      expect(summary!.paidThroughNo, 2);
-      expect(summary.cashInHand, 2000);
+      // 10 Feb: #1 (due 15 Jan) is 1 month late → ₹1,010; #2 (due 15 Feb) on time → ₹1,000 → ₹10 short.
+      expect(summary!.paidThroughNo, 1);
+      expect(summary.cashInHandDigital, 2000);
+      expect(summary.cashInHandCash, 0);
 
       final projection = await c.read(rdLedgerProjectionProvider('rd1').future);
       expect(projection.byNo(1)!.displayStatusAt(_today), RDInstallmentDisplayStatus.collectedPendingPo);
+      expect(projection.byNo(2)!.displayStatusAt(_today), RDInstallmentDisplayStatus.partiallyPaid);
       expect(projection.byNo(3)!.displayStatusAt(_today), RDInstallmentDisplayStatus.overdue);
       expect(c.read(rDLedgerControllerProvider).isLoading, isFalse);
     });
 
-    test('a custom split that does not balance is rejected before any write', () async {
+    test('a non-positive amount is rejected before any write', () async {
       final h = _harness(deposits: [_deposit('rd1')]);
       _keep(h.container, 'rd1');
       final result = await h.container.read(rDLedgerControllerProvider.notifier).recordPayment((
         rdId: 'rd1',
         transactionId: null,
-        amount: 1000,
+        amount: 0,
         paidDate: DateTime(2026, 2, 10),
         paymentMode: RDPaymentMode.cash,
-        splitMode: PaymentSplitMode.custom,
-        installmentComponent: 900,
-        lateFeeComponent: 50,
       ));
       expect(result, isA<Failure<void, String>>());
       expect(h.ledger.transactionsOf('rd1'), isEmpty);
@@ -143,14 +140,15 @@ void main() {
       final h = _harness(deposits: [_deposit('rd1')]);
       _keep(h.container, 'rd1');
       h.ledger.failWith = 'offline';
+      await h.container.read(rdLedgerFactsProvider('rd1').future);
       final r = await h.container
           .read(rDLedgerControllerProvider.notifier)
-          .depositToPo(rdId: 'rd1', installmentNos: {1});
+          .depositNextToPo(rdId: 'rd1', count: 1);
       expect((r as Failure).error, 'offline');
       expect(h.container.read(rDLedgerControllerProvider).isLoading, isFalse);
     });
 
-    test('depositToPo and revertPoDeposit round-trip through facts', () async {
+    test('depositNextToPo quotes the counter amount and undoLatest reverts it', () async {
       final h = _harness(
         deposits: [_deposit('rd1')],
         transactions: {'rd1': [_tx('rd1', 't', 1000, DateTime(2026, 1, 12))]},
@@ -159,16 +157,28 @@ void main() {
       final n = h.container.read(rDLedgerControllerProvider.notifier);
       await h.container.read(rdLedgerFactsProvider('rd1').future);
 
-      expect(await n.depositToPo(rdId: 'rd1', installmentNos: {1}), isA<Success<void, String>>());
+      // Deposit the next 2 months on 20 Apr: #1 paid on time (fee at PO: 3 months late = 30),
+      // #2 unpaid (fronted; 2 months late = 20).
+      expect(await n.depositNextToPo(rdId: 'rd1', count: 2), isA<Success<void, String>>());
       await _settle();
+      final event = h.ledger.poDepositsOf('rd1').single;
+      expect(event.depositedOn, DateTime(2026, 4, 20));
+      expect(event.installmentCount, 2);
+      expect(event.feePaid, 50);
+      expect(event.amount, 2050);
+
       var p = await h.container.read(rdLedgerProjectionProvider('rd1').future);
       expect(p.byNo(1)!.displayStatusAt(_today), RDInstallmentDisplayStatus.settled);
-      expect(h.ledger.poDepositsOf('rd1').single.depositedOn, DateTime(2026, 4, 20));
+      expect(p.byNo(1)!.agentDelayCost, 30, reason: 'customer paid on time; agent deposited late');
+      expect(p.byNo(2)!.displayStatusAt(_today), RDInstallmentDisplayStatus.frontedByAgent);
+      expect(p.summary.receivable, 1020);
 
-      expect(await n.revertPoDeposit(rdId: 'rd1', installmentNos: {1}), isA<Success<void, String>>());
+      expect(await n.undoLatestPoDeposit('rd1'), isA<Success<void, String>>());
       await _settle();
       p = await h.container.read(rdLedgerProjectionProvider('rd1').future);
       expect(p.byNo(1)!.displayStatusAt(_today), RDInstallmentDisplayStatus.collectedPendingPo);
+      expect(h.ledger.poDepositsOf('rd1'), isEmpty);
+      expect(await n.undoLatestPoDeposit('rd1'), isA<Failure<void, String>>());
     });
 
     test('financial terms lock follows facts', () async {
@@ -202,11 +212,12 @@ void main() {
       items = await c.read(monthlyOperationItemsProvider.future);
       final rd1 = items.firstWhere((i) => i.deposit.id == 'rd1');
       expect(rd1.installment.installmentNo, 4);
-      expect(rd1.installment.isInstallmentPaid, isTrue);
+      expect(rd1.installment.isCustomerSettled, isTrue);
       expect(rd1.priorOverdueCount, 0);
+      expect(rd1.readyForPoCount, 4);
 
       final rd2 = items.firstWhere((i) => i.deposit.id == 'rd2');
-      expect(rd2.installment.isInstallmentPaid, isFalse);
+      expect(rd2.installment.isCustomerSettled, isFalse);
       // #1..#3 are unpaid and overdue as of 20 Apr.
       expect(rd2.priorOverdueCount, 3);
       expect(rd2.priorOverdueAmount, greaterThan(3000));
@@ -217,7 +228,7 @@ void main() {
       final h = _harness(
         deposits: [_deposit('rd1'), _deposit('rd2', customer: 'c2')],
         transactions: {'rd1': [_tx('rd1', 't', 4000, DateTime(2026, 1, 12))]},
-        poDeposits: {'rd1': [RDPoDeposit(rdId: 'rd1', installmentNo: 1, depositedOn: DateTime(2026, 1, 13))]},
+        poDeposits: {'rd1': [RDPoDeposit(id: 'e1', rdId: 'rd1', depositedOn: DateTime(2026, 1, 13), installmentCount: 1)]},
       );
       final c = h.container;
       _keepHub(c);
@@ -234,9 +245,10 @@ void main() {
       expect(kpi.priorArrearsAccountsCount, 1);
 
       final float = c.read(globalAgentFloatProvider);
-      expect(float.undepositedCashCount, 1);
-      expect(float.undepositedCashAmount, 3000, reason: '#2,#3,#4 collected; #1 deposited');
-      expect(float.pocketAdvancesCount, 0);
+      expect(float.cashInHandAccounts, 1);
+      expect(float.cashInHandCash, 3000, reason: '#2,#3,#4 collected; #1 deposited');
+      expect(float.receivableAccounts, 0);
+      expect(float.arrearsAccounts, 1, reason: 'rd2 has 4 unpaid past-due months');
     });
 
     test('selection unions and only exits via clear; batch summary splits collected vs pocket', () async {
@@ -264,16 +276,15 @@ void main() {
 
       final batch = c.read(batchSelectionSummaryProvider);
       expect(batch.count, 2);
-      expect(batch.totalAmount, 2000);
-      expect(batch.collectedCount, 1);
-      expect(batch.fromPocketCount, 1);
-      expect(batch.fromPocketAmount, 1000);
+      expect(batch.depositable.map((i) => i.deposit.id), ['rd1'], reason: 'rd2 has nothing collected');
+      expect(batch.readyInstallments, 4);
 
-      final r = await c.read(rDMonthlyOperationsActionsProvider.notifier).depositSelectedToPo();
+      final r = await c.read(rDMonthlyOperationsActionsProvider.notifier).depositSelectedReady();
       expect(r, isA<Success<void, String>>());
       expect(c.read(rDHubSelectionProvider).isSelectionMode, isFalse);
-      expect(h.ledger.poDepositsOf('rd1').map((d) => d.installmentNo), [4]);
-      expect(h.ledger.poDepositsOf('rd2').map((d) => d.installmentNo), [4]);
+      final event = h.ledger.poDepositsOf('rd1').single;
+      expect(event.installmentCount, 4);
+      expect(h.ledger.poDepositsOf('rd2'), isEmpty, reason: 'sequential: nothing to deposit for an unpaid account');
     });
 
     test('filters: search by name, status, and due window; month change clears selection', () async {
@@ -300,7 +311,7 @@ void main() {
       expect(c.read(rDHubMonthProvider), DateTime(2026, 5, 1));
     });
 
-    test('prepareLogPayment pre-fills arrears + fee from the projection', () async {
+    test('prepareLogPayment pre-fills everything the customer owes today', () async {
       final h = _harness(deposits: [_deposit('rd1')]);
       final c = h.container;
       _keepHub(c);
@@ -312,8 +323,49 @@ void main() {
       final prepared = (r as Success).value;
       // #1 (3 months late: 30), #2 (2: 20), #3 (1: 10) + #4 (1: 10, due 15 Apr, now 20 Apr) = 4000 + 70
       expect(prepared.initialAmount, 4070);
-      expect(prepared.splitMode, PaymentSplitMode.includeFees);
       expect(prepared.schedule, hasLength(12));
+    });
+
+    test('frontFromPocket deposits through the selected month; absorbRemainingFee closes a fee-only gap', () async {
+      final h = _harness(
+        deposits: [_deposit('rd1')],
+        transactions: {'rd1': [_tx('rd1', 't', 1000, DateTime(2026, 2, 20))]},
+      );
+      final c = h.container;
+      _keepHub(c);
+      _keep(c, 'rd1');
+      c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 1, 1));
+      await c.read(rDMonthlyOperationsActionsProvider.notifier).ensureSummaries();
+      await _settle();
+      var item = (await c.read(monthlyOperationItemsProvider.future)).single;
+      // #1: due 1010 as of 20 Apr?? no — customer fee is dynamic until settled: 3 months late → 30 → owes 30.
+      // Customer paid ₹1,000 on 20 Feb; still open, so the fee keeps accruing: 3 months → owes ₹30 today.
+      expect(item.installment.isPartiallyPaid, isTrue);
+      expect(item.installment.outstandingAmount, 30);
+
+      final actions = c.read(rDMonthlyOperationsActionsProvider.notifier);
+      expect(await actions.absorbRemainingFee(item), isA<Success<void, String>>());
+      await _settle();
+      c.invalidate(monthlyOperationItemsProvider);
+      item = (await c.read(monthlyOperationItemsProvider.future)).single;
+      // Absorbing the fee lets the 20 Feb payment settle the month *as of 20 Feb* (1 month late),
+      // so only ₹10 of fee ever existed for the customer — the projector caps the absorption there.
+      expect(item.installment.isCustomerSettled, isTrue);
+      expect(item.installment.lateFee, 10);
+      expect(item.installment.absorbedFee, 10);
+      expect(item.readyForPoCount, 1);
+
+      // Front through #3 from pocket (deposits #1 ready + #2, #3 unpaid).
+      c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 3, 1));
+      item = (await c.read(monthlyOperationItemsProvider.future)).single;
+      expect(await actions.frontFromPocket(item), isA<Success<void, String>>());
+      await _settle();
+      final event = h.ledger.poDepositsOf('rd1').single;
+      expect(event.installmentCount, 3);
+      final p = await c.read(rdLedgerProjectionProvider('rd1').future);
+      expect(p.summary.depositedThroughNo, 3);
+      expect(p.byNo(2)!.isFrontedByAgent, isTrue);
+      expect(p.summary.receivable, p.byNo(2)!.outstandingAmount + p.byNo(3)!.outstandingAmount);
     });
   });
 }

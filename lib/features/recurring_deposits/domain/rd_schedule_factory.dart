@@ -1,7 +1,6 @@
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_rules.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:uuid/uuid.dart';
@@ -53,11 +52,7 @@ abstract final class RDScheduleFactory {
       installmentAmount: deposit.installmentAmount,
       isOpeningBaseline: isOpeningBaseline,
       customerPaidAmount: isOpeningBaseline ? deposit.installmentAmount : 0.0,
-      customerStatus: isOpeningBaseline
-          ? RDInstallmentStatus.fullyPaid
-          : RDInstallmentStatus.unpaid,
-      poStatus: isOpeningBaseline ? RDPoStatus.paid : RDPoStatus.unpaid,
-      poPaidDate: isOpeningBaseline ? dueDate : null,
+      poDepositedOn: isOpeningBaseline ? dueDate : null,
     );
   }
 

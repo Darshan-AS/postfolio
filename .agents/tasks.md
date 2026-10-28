@@ -46,7 +46,7 @@
   - [x] **Step 7 (Docs)**: Update `progress.md`, `docs/setup_guide.md`, session log.
 - [ ] **Phase 7: Sequential Ledger (ground-truth rules from `rd_ledger_usecases_agreed.md`)** — both ledgers sequential, one due amount per month, agent-absorbed fees:
   - [x] **Step 1 (Schema)**: `20261028000000_sequential_rd_ledger.sql` — `rd_po_deposits` as count-on-date events (legacy rows collapsed), `rd_fee_waivers` → `rd_fee_absorptions(amount)`, split columns dropped from `rd_transactions`, `collection_id`/`batch_id` hooks, `opening_receivable`, `save_recurring_deposit` updated; seed + RLS test updated and verified on the local stack.
-  - [ ] **Step 2 (Dart switchover)**: v2 domain (`RDLedgerProjector` single due amount, customer-vs-PO fee, `RDPoReadiness`, `quoteNextDeposit`), repositories, controllers (`depositNextToPo`, `undoLatestPoDeposit`, `absorbFee`), widgets (passbook view, "Deposit next N", simplified payment sheet, cash/digital float), tests.
+  - [x] **Step 2 (Dart switchover)**: v2 domain (`RDLedgerProjector` single due amount, customer-vs-PO fee, `RDPoReadiness`, `quoteNextDeposit`), repositories, controllers (`depositNextToPo`, `undoLatestPoDeposit`, `absorbFee`), widgets (passbook view, "Deposit next N", simplified payment sheet, cash/digital float), tests.
   - [ ] **Step 3 (Docs)**: progress, setup guide, session log.
 
 ## ⚡ Supabase Query Optimizations (Prioritized)

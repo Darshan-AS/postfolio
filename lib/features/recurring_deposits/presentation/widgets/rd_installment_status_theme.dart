@@ -7,11 +7,11 @@ import 'package:postfolio/i18n/strings.g.dart';
 /// hub pill derives colour/icon/label from here so they can never disagree.
 ///
 /// Colour semantics:
-/// * primary  — money is with the agent / collected (`collectedPendingPo`)
-/// * tertiary — settled at the PO (`settled`)
-/// * secondary — partial progress (`partiallyPaid`, `pocketAdvanced`)
-/// * error    — customer is in default (`overdue`, `feePending`)
-/// * outline  — nothing to do yet (`upcoming`, `dueToday`, `baseline`)
+/// * primary   — money is with the agent / collected (`collectedPendingPo`)
+/// * tertiary  — settled at the PO (`settled`)
+/// * secondary — partial progress (`partiallyPaid`, `frontedByAgent`)
+/// * error     — customer is in default (`overdue`)
+/// * outline   — nothing to do yet (`upcoming`, `dueToday`, `baseline`)
 typedef RDStatusVisual = ({
   Color foreground,
   Color background,
@@ -35,12 +35,6 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
           icon: HugeIcons.strokeRoundedCheckmarkBadge01,
           label: s.settled,
         ),
-      RDInstallmentDisplayStatus.feePending => (
-          foreground: scheme.onErrorContainer,
-          background: scheme.errorContainer,
-          icon: HugeIcons.strokeRoundedAlert01,
-          label: s.collectedFeePending,
-        ),
       RDInstallmentDisplayStatus.collectedPendingPo => (
           foreground: scheme.onPrimaryContainer,
           background: scheme.primaryContainer,
@@ -53,11 +47,11 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
           icon: HugeIcons.strokeRoundedChartRing,
           label: s.partiallyPaid,
         ),
-      RDInstallmentDisplayStatus.pocketAdvanced => (
+      RDInstallmentDisplayStatus.frontedByAgent => (
           foreground: scheme.onSecondaryContainer,
           background: scheme.secondaryContainer,
           icon: HugeIcons.strokeRoundedWallet02,
-          label: s.advancedToPo,
+          label: s.frontedByAgent,
         ),
       RDInstallmentDisplayStatus.overdue => (
           foreground: scheme.onErrorContainer,

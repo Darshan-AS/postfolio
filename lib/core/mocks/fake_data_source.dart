@@ -171,8 +171,9 @@ class FakeDataSource {
     });
 
     // Ledger facts for demo mode: most due months are paid a few days before/after the due
-    // date, a few are skipped (so arrears and default fees appear), and all but the most
-    // recent couple of paid months have been deposited at the Post Office.
+    // date (as several small amounts now and then), a few are skipped so arrears and default
+    // fees appear, and everything collected except the last couple of months has been
+    // deposited at the Post Office as sequential events (one visit per month).
     final today = DateTime.now();
     rdTransactions = {};
     rdPoDeposits = {};
@@ -182,6 +183,7 @@ class FakeDataSource {
       final deposits = <RDPoDeposit>[];
       final total = rd.totalMonths;
       var paidCount = 0;
+      var depositedThrough = rd.initialPaidInstallments;
       for (var no = rd.initialPaidInstallments + 1; no <= total; no++) {
         final month = RDScheduleFactory.installmentDateFor(rd.startDate, no);
         final due = RDLedgerRules.standard.dueDateFor(rd.startDate, month);
@@ -189,22 +191,59 @@ class FakeDataSource {
         // ~1 in 6 months is skipped to create realistic arrears.
         if (random.integer(6) == 0) continue;
         final paidOn = due.add(Duration(days: random.integer(9, min: -4)));
-        txs.add(RDTransaction(
-          id: faker.guid.guid(),
-          rdId: rd.id,
-          paidDate: DateTime(paidOn.year, paidOn.month, paidOn.day),
-          amount: rd.installmentAmount,
-          paymentMode: random.element(RDPaymentMode.values),
-          createdAt: paidOn,
-        ));
-        paidCount++;
-        if (paidCount > 2 && random.integer(5) != 0) {
-          deposits.add(RDPoDeposit(
+        final paidDay = DateTime(paidOn.year, paidOn.month, paidOn.day);
+        final lateMonths = RDLedgerRules.standard.defaultedMonths(due, paidDay);
+        final fee = RDLedgerRules.standard.defaultFeeFor(rd.installmentAmount, lateMonths);
+        if (random.integer(4) == 0) {
+          // Two part-payments in the same month.
+          final first = (rd.installmentAmount * 0.6).roundToDouble();
+          txs.add(RDTransaction(
+            id: faker.guid.guid(),
             rdId: rd.id,
-            installmentNo: no,
-            depositedOn: DateTime(paidOn.year, paidOn.month, paidOn.day)
-                .add(Duration(days: random.integer(4, min: 1))),
+            paidDate: paidDay.subtract(const Duration(days: 6)),
+            amount: first,
+            paymentMode: RDPaymentMode.cash,
+            createdAt: paidOn,
           ));
+          txs.add(RDTransaction(
+            id: faker.guid.guid(),
+            rdId: rd.id,
+            paidDate: paidDay,
+            amount: rd.installmentAmount - first + fee,
+            paymentMode: random.element(RDPaymentMode.values),
+            createdAt: paidOn,
+          ));
+        } else {
+          txs.add(RDTransaction(
+            id: faker.guid.guid(),
+            rdId: rd.id,
+            paidDate: paidDay,
+            amount: rd.installmentAmount + fee,
+            paymentMode: random.element(RDPaymentMode.values),
+            createdAt: paidOn,
+          ));
+        }
+        paidCount++;
+        // Deposit everything collected so far at the PO, except the most recent couple of months.
+        if (paidCount > 2 && random.integer(5) != 0 && depositedThrough < no) {
+          final count = no - depositedThrough;
+          final depositedOn = paidDay.add(Duration(days: random.integer(4, min: 1)));
+          var feePaid = 0.0;
+          for (var k = depositedThrough + 1; k <= no; k++) {
+            final kDue = RDLedgerRules.standard.dueDateFor(
+                rd.startDate, RDScheduleFactory.installmentDateFor(rd.startDate, k));
+            feePaid += RDLedgerRules.standard.defaultFeeFor(
+                rd.installmentAmount, RDLedgerRules.standard.defaultedMonths(kDue, depositedOn));
+          }
+          deposits.add(RDPoDeposit(
+            id: faker.guid.guid(),
+            rdId: rd.id,
+            depositedOn: depositedOn,
+            installmentCount: count,
+            feePaid: feePaid,
+            amount: count * rd.installmentAmount + feePaid,
+          ));
+          depositedThrough = no;
         }
       }
       rdTransactions[rd.id] = txs;
