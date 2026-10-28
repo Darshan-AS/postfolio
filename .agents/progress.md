@@ -1,7 +1,17 @@
 # Project Progress
 
 ## Current State
-**RD Ledger — Facts-Only Redesign (Phase 6, Steps 1–7 Complete)** — supersedes the sparse `rd_installments` / allocation-lineage design described in the sections below:
+**RD Ledger — Sequential Ledger (Phase 7 Complete, on top of Phase 6)** — rules confirmed with agents (`rd_ledger_usecases_agreed.md`):
+- **Both ledgers are sequential.** Customer money fills months in order (a partial sits on the earliest open month, overpayment becomes `customerCredit`); PO deposits are events "deposited the next N installments on <date>" (`rd_po_deposits(id, deposited_on, installment_count, fee_paid, amount, batch_id)`), exactly as the DOP agent portal records them. Only the latest PO event can be undone.
+- **One due amount per month** = installment + default fee − fee absorbed by the agent. No split modes. Two fees are tracked per month: the customer's (fixed when they finished paying) and the PO's (fixed at the deposit date); the gap is `agentDelayCost`.
+- **Fee absorption** (`rd_fee_absorptions`) replaces waivers: the agent pays from pocket, the PO still receives the fee; offered at collection time ("Absorb remaining ₹X").
+- **Opening receivable** on onboarding; repaid first from subsequent payments.
+- **Summary cache** = counters (`paidThroughNo`, `depositedThroughNo`), `owedByCustomer`, `receivable` (fronted), cash in hand split cash/digital, `absorbedTotal`, `delayCostTotal`, `arrearsCount`.
+- **UI**: Hub row has a single action (Collect / Deposit (N)); float strip = to collect, cash in hand (cash/digital), receivable, arrears accounts; "Deposit all ready" strip with date picker. Detail is a passbook (next-due line, PO strip, yearly month list, inspector sheet, PO visit history). Payment sheet = amount + mode + date; deposit sheet quotes the counter amount for the next N months.
+- **Extensibility hooks only**: `collection_id` on transactions (household lump sums), `batch_id` + `amount` on PO events (lots / C-number, commission), rebate and discontinuation deferred.
+- **Tests**: 71 passing (domain tables, fake repo, controllers, screen smoke, e2e on the local stack).
+
+**Previous: RD Ledger — Facts-Only Redesign (Phase 6, Steps 1–7 Complete)** — supersedes the sparse `rd_installments` / allocation-lineage design described in the sections below:
 - **Truth = facts.** The only persisted ledger data are `rd_transactions` (customer payments), `rd_po_deposits` (PK `rd_id, installment_no`) and `rd_fee_waivers`. `rd_installments`, `rd_payment_allocations`, the monthly-operations SQL view and all ledger RPCs were dropped in `supabase/migrations/20261027000000_facts_only_rd_ledger.sql` (CHECK constraints + ownership-checked RLS on every fact table; verified by `supabase/tests/rd_ledger_facts_rls.sql`).
 - **One projection.** `RDLedgerProjector.project(facts, asOf)` (`lib/features/recurring_deposits/domain/`) derives the 60-month schedule, per-transaction allocations, accrued default fees (grow until principal is settled, then freeze), `customerCredit` (overflow is never dropped) and the hub `RDLedgerSummary`. Preview, record, edit and delete all use the same function. Money is integer paise; dates are calendar days (`RDLedgerRules`, `Money`, `DateOnlyConverter`).
 - **Read model.** `RDInstallment` is a projected value (never written). `RDInstallmentDisplayStatus` + `rd_installment_status_theme.dart` are the single source of colour/icon/label for every widget.

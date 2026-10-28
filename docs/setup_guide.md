@@ -153,8 +153,8 @@ Because we use **Google Play App Signing**, you can recover:
 
 ## 🛠️ 4. Common Troubleshooting
 
-### RD Ledger schema (facts-only, migration `20261027000000_facts_only_rd_ledger.sql`)
-- The ledger persists **facts only**: `rd_transactions`, `rd_po_deposits`, `rd_fee_waivers`. Installment status, default fees and arrears are projected on the client by `RDLedgerProjector`; `rd_ledger_summary` is a per-RD cache the app rebuilds itself (pull-to-refresh on the Monthly Hub, or automatically for RDs that have no row yet).
+### RD Ledger schema (facts-only + sequential, migrations `20261027000000` and `20261028000000`)
+- The ledger persists **facts only**: `rd_transactions` (a payment is just money), `rd_po_deposits` (events: "next N installments deposited on <date>"), `rd_fee_absorptions` (fee the agent paid from pocket). Installment status, default fees and arrears are projected on the client by `RDLedgerProjector`; `rd_ledger_summary` is a per-RD cache the app rebuilds itself (pull-to-refresh on the Monthly Hub, or automatically for RDs that have no row yet).
 - Apply locally with `supabase db reset` (replays all migrations; the legacy `rd_installments` rows are backfilled into the fact tables, then dropped).
 - Verify RLS + constraints at any time (every case rolls back):
   `docker exec -i supabase_db_postfolio psql -U postgres -d postgres < supabase/tests/rd_ledger_facts_rls.sql`
