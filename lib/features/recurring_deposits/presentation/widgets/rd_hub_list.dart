@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -120,6 +121,10 @@ class _LoadingSliver extends StatelessWidget {
   }
 }
 
+/// Three empty states, told apart so the agent knows whether to relax or re-filter:
+/// * no rows at all in the month → "No installments due in `Month`"
+/// * a status filter hides every row but nothing is left to collect → "All settled for `Month`"
+/// * anything else with active filters → "No accounts match" + clear filters
 class _EmptySliver extends ConsumerWidget {
   const _EmptySliver();
 
@@ -127,7 +132,27 @@ class _EmptySliver extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final ops = t.recurringDeposits.monthlyOperations;
-    final hasFilters = ref.watch(rDHubFiltersProvider.select((s) => s.hasActiveFilters));
+    final filters = ref.watch(rDHubFiltersProvider);
+    final month = ref.watch(rDHubMonthProvider);
+    final totalCount = ref.watch(monthlyOperationsKpiProvider.select((k) => k.totalCount));
+    final toCollectCount =
+        ref.watch(monthlyOperationsKpiProvider.select((k) => k.toCollectCount));
+    final locale = LocaleSettings.currentLocale.languageTag;
+    final monthLabel = DateFormat.yMMM(locale).format(month);
+
+    final hasFilters = filters.hasActiveFilters;
+    final isCollectFilter = filters.status == RDMonthlyFilter.toCollect ||
+        filters.status == RDMonthlyFilter.overdue;
+    final onlyStatusFilter =
+        filters.searchQuery.isEmpty && filters.dueWindow == RDDueWindowFilter.all;
+    final allSettled =
+        totalCount > 0 && toCollectCount == 0 && isCollectFilter && onlyStatusFilter;
+
+    final message = totalCount == 0
+        ? ops.noInstallmentsIn(month: monthLabel)
+        : allSettled
+            ? ops.allSettledFor(month: monthLabel)
+            : ops.noFilterResults;
 
     return SliverFillRemaining(
       hasScrollBody: false,
@@ -137,8 +162,16 @@ class _EmptySliver extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if (allSettled) ...[
+                HugeIcon(
+                  icon: HugeIcons.strokeRoundedCheckmarkBadge01,
+                  size: AppDimensions.iconLg,
+                  color: theme.colorScheme.primary,
+                ),
+                AppSpacings.gapSm,
+              ],
               Text(
-                hasFilters ? ops.noFilterResults : ops.noInstallments,
+                message,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

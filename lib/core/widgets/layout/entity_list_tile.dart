@@ -62,6 +62,10 @@ class EntityListTile extends StatelessWidget {
   final String title;
   final Widget? subtitle;
   final Widget? trailing;
+
+  /// Optional full-width block rendered below the main row (e.g. a primary action button).
+  /// It shares the tile's tap surface and horizontal padding.
+  final Widget? footer;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final List<EntityAction> actions;
@@ -79,6 +83,7 @@ class EntityListTile extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.trailing,
+    this.footer,
     this.onTap,
     this.onLongPress,
     this.actions = const [],
@@ -111,7 +116,11 @@ class EntityListTile extends StatelessWidget {
             top: AppDimensions.paddingMd,
             bottom: AppDimensions.paddingMd,
           ),
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               leading ?? _buildLeading(theme),
@@ -209,9 +218,22 @@ class EntityListTile extends StatelessWidget {
               ),
           ],
         ),
+              if (footer != null)
+                Padding(
+                  // Keep the footer clear of the overflow-menu gutter on the right.
+                  padding: EdgeInsets.only(
+                    top: AppDimensions.paddingSm,
+                    right: hasActionButtons
+                        ? AppDimensions.paddingLg
+                        : AppDimensions.paddingNone,
+                  ),
+                  child: footer,
+                ),
+            ],
+          ),
+        ),
       ),
-    ),
-  );
+    );
 
     if (indicatorColor != null) {
       tile = DecoratedBox(

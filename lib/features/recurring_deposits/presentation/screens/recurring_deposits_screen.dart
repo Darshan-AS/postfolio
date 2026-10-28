@@ -48,55 +48,53 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     final showFab = viewMode == RDViewMode.accounts;
 
     return Scaffold(
-      appBar: ShellAppBar(title: t.recurringDeposits.title),
-      body: Column(
-        children: [
+      appBar: ShellAppBar(
+        title: t.recurringDeposits.title,
+        // The Accounts ⇄ Hub toggle lives in the app bar so it never eats list height.
+        actions: [
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingLg,
-              vertical: AppDimensions.paddingXs,
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<RDViewMode>(
-                segments: [
-                  ButtonSegment(
-                    value: RDViewMode.accounts,
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedFolder01,
-                      size: AppDimensions.iconSm,
-                    ),
-                    label: Text(t.recurringDeposits.views.accounts),
-                  ),
-                  ButtonSegment(
-                    value: RDViewMode.monthlyHub,
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedCalendar03,
-                      size: AppDimensions.iconSm,
-                    ),
-                    label: Text(t.recurringDeposits.views.monthlyHub),
-                  ),
-                ],
-                selected: {viewMode},
-                onSelectionChanged: (set) => ref
-                    .read(rDViewModeControllerProvider.notifier)
-                    .setMode(set.first),
+            padding: const EdgeInsets.only(right: AppDimensions.paddingSm),
+            child: SegmentedButton<RDViewMode>(
+              showSelectedIcon: false,
+              style: const ButtonStyle(
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
+              segments: [
+                ButtonSegment(
+                  value: RDViewMode.accounts,
+                  tooltip: t.recurringDeposits.views.accounts,
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedFolder01,
+                    size: AppDimensions.iconSm,
+                  ),
+                ),
+                ButtonSegment(
+                  value: RDViewMode.monthlyHub,
+                  tooltip: t.recurringDeposits.views.monthlyHub,
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedCalendar03,
+                    size: AppDimensions.iconSm,
+                  ),
+                ),
+              ],
+              selected: {viewMode},
+              onSelectionChanged: (set) => ref
+                  .read(rDViewModeControllerProvider.notifier)
+                  .setMode(set.first),
             ),
-          ),
-          Expanded(
-            child: viewMode == RDViewMode.accounts
-                ? _buildAccountsView(
-                    context,
-                    ref,
-                    depositsState,
-                    criteria,
-                    activeFilterCount,
-                  )
-                : const RDMonthlyOperationsView(),
           ),
         ],
       ),
+      body: viewMode == RDViewMode.accounts
+          ? _buildAccountsView(
+              context,
+              ref,
+              depositsState,
+              criteria,
+              activeFilterCount,
+            )
+          : const RDMonthlyOperationsView(),
       floatingActionButton: showFab
           ? FloatingActionButton.extended(
               heroTag: null,

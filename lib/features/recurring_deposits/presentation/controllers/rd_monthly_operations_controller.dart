@@ -20,7 +20,7 @@ part 'rd_monthly_operations_controller.g.dart';
 
 enum RDViewMode { accounts, monthlyHub }
 
-enum RDMonthlyFilter { all, toCollect, readyForPo, settled, overdue }
+enum RDMonthlyFilter { all, toCollect, readyForPo, settled, overdue, fronted }
 
 enum RDDueWindowFilter { all, firstHalf, secondHalf }
 
@@ -57,7 +57,7 @@ sealed class RDHubFiltersState with _$RDHubFiltersState {
   const factory RDHubFiltersState({
     @Default(RDMonthlyFilter.all) RDMonthlyFilter status,
     @Default(RDDueWindowFilter.all) RDDueWindowFilter dueWindow,
-    @Default(false) bool groupByCustomer,
+    @Default(true) bool groupByCustomer,
     @Default('') String searchQuery,
   }) = _RDHubFiltersState;
 
@@ -318,6 +318,7 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> filteredMonthlyOperations(R
       RDMonthlyFilter.readyForPo => item.isReadyForPo,
       RDMonthlyFilter.settled => item.isSettled,
       RDMonthlyFilter.overdue => !isFutureMonth && item.hasOverdueDebt(now),
+      RDMonthlyFilter.fronted => item.isFrontedByAgent || item.summary.receivable > 0,
     };
     if (!matchesStatus) return false;
     return switch (filters.dueWindow) {
@@ -329,11 +330,12 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> filteredMonthlyOperations(R
 
   final q = filters.searchQuery.toLowerCase().trim();
   if (q.isNotEmpty) {
+    // Serial first (cheapest, most common at the counter), then account digits, then name.
     filtered = filtered.where((item) {
       final d = item.deposit;
-      return (d.customerName?.toLowerCase().contains(q) ?? false) ||
+      return (d.serialNo?.toLowerCase().contains(q) ?? false) ||
           (d.accountNo?.toLowerCase().contains(q) ?? false) ||
-          (d.serialNo?.toLowerCase().contains(q) ?? false);
+          (d.customerName?.toLowerCase().contains(q) ?? false);
     });
   }
 

@@ -1,6 +1,6 @@
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
@@ -21,12 +21,23 @@ typedef RDOperationActionSpec = ({
   VoidCallback? onPressed,
 });
 
+/// The money a row should headline, resolved once per row.
+typedef _RowMoney = ({String headline, Color color, List<String> captionParts});
+
+/// Last digits of the account number shown on a row (`A/c …7890`).
+const int _accountTailLength = 4;
+
+/// Day + short month, e.g. "15 Mar" (the hub already says which year).
+const String _dueDatePattern = 'd MMM';
+
 /// One row of the Monthly Hub. Strictly declarative — every colour/label is derived from
 /// `item.displayStatus(evaluationDate).visual(scheme)`; every write goes through a callback.
 ///
-/// One primary action per row, following the sequential ledger:
-/// * customer still owes → **Collect**
-/// * collected months waiting → **Deposit (N)**
+/// Hierarchy (top → bottom): customer **name** · `Sl · A/c · due` · status pill with the
+/// money that matters on its right (`owes ₹X` / `₹X paid` / `collected ₹X`) · one
+/// full-width primary action:
+/// * customer still owes → **Collect ₹X**
+/// * collected months waiting → **Deposit N**
 /// * settled → nothing
 class RDMonthlyOperationCard extends StatelessWidget {
   final RDMonthlyOperationItem item;
@@ -64,31 +75,70 @@ class RDMonthlyOperationCard extends StatelessWidget {
 
   static Widget skeleton() {
     final dummy = RecurringDeposit.dummy;
+    final card = t.recurringDeposits.monthlyOperations.card;
     return EntityListTile(
       leadingIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedCalendar03,
         size: AppDimensions.iconMd,
       ),
       title: dummy.customerName ?? BoneMock.name,
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(BoneMock.words(3)),
-          AppSpacings.gapXs,
-          Text(BoneMock.date),
-        ],
-      ),
-      trailing: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      subtitle: Text(BoneMock.words(4)),
+      footer: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(dummy.installmentAmount.toRupeeFormat()),
-          Text(BoneMock.words(2)),
-          AppSpacings.gapXs,
-          Text(t.recurringDeposits.monthlyOperations.card.collect),
+          Row(
+            children: [
+              Text(BoneMock.words(2)),
+              const Spacer(),
+              Text(card.owes(amount: dummy.installmentAmount.toRupeeFormat())),
+            ],
+          ),
+          AppSpacings.gapSm,
+          FilledButton(
+            onPressed: null,
+            child: Text(
+              card.collect(amount: dummy.installmentAmount.toRupeeFormat()),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  _RowMoney? _money(ColorScheme scheme) {
+    final card = t.recurringDeposits.monthlyOperations.card;
+    final now = evaluationDate;
+    if (item.isCustomerPending && item.totalOutstanding > 0) {
+      return (
+        headline: card.owes(amount: item.totalOutstanding.toRupeeFormat()),
+        color: item.hasOverdueDebt(now) ? scheme.error : scheme.onSurface,
+        captionParts: [
+          if (item.totalFeeDue > 0)
+            card.inclFee(amount: item.totalFeeDue.toRupeeFormat()),
+          if (item.hasPriorArrears) card.arrears(n: item.priorOverdueCount),
+        ],
+      );
+    }
+    if (item.isSettled) {
+      return (
+        headline: card.paid(
+          amount: item.installment.customerPaidAmount.toRupeeFormat(),
+        ),
+        color: scheme.onSurfaceVariant,
+        captionParts: const [],
+      );
+    }
+    if (item.readyForPoCount > 0) {
+      return (
+        headline: card.collected(
+          amount: item.summary.cashInHand.toRupeeFormat(),
+        ),
+        color: scheme.onSurface,
+        captionParts: const [],
+      );
+    }
+    return null;
   }
 
   @override
@@ -102,23 +152,36 @@ class RDMonthlyOperationCard extends StatelessWidget {
     final deposit = item.deposit;
     final status = item.displayStatus(now);
     final visual = status.visual(scheme);
+    final money = _money(scheme);
 
     // Nothing has happened yet this month → no indicator bar, just the status pill.
-    final isDefaultState = !item.hasPriorArrears &&
+    final isDefaultState =
+        !item.hasPriorArrears &&
         (status == RDInstallmentDisplayStatus.upcoming ||
             status == RDInstallmentDisplayStatus.dueToday);
 
-    final serialAccount = (deposit.serialNo?.isNotEmpty ?? false)
-        ? '(${deposit.serialNo}) ${deposit.accountNo ?? t.common.notProvided}'
-        : (deposit.accountNo ?? t.common.notProvided);
-
     final canFrontFromPocket =
-        item.canDepositToPo && item.isCustomerPending && onDepositFromPocket != null;
+        item.canDepositToPo &&
+        item.isCustomerPending &&
+        onDepositFromPocket != null;
     final canAbsorbFee = inst.absorbableFee > 0 && onAbsorbFee != null;
     final canUndoLatest = item.isLatestDeposited && onUndoLatestDeposit != null;
 
+    final caption = money == null || money.captionParts.isEmpty
+        ? null
+        : money.captionParts.join(t.format.bulletSeparator);
+
+    final action = RDOperationActionButton(
+      item: item,
+      evaluationDate: now,
+      isBusy: isBusy,
+      onCollect: onCollect,
+      onDeposit: onDeposit,
+    );
+    final hasAction = action.resolve(context) != null;
+
     return EntityListTile(
-      indicatorColor: isDefaultState ? null : visual.background,
+      indicatorColor: isDefaultState ? null : status.accent(scheme),
       isSelected: isSelected,
       leading: isSelectionMode
           ? SizedBox(
@@ -139,92 +202,62 @@ class RDMonthlyOperationCard extends StatelessWidget {
             ),
       title: deposit.customerName ?? t.recurringDeposits.depositNotFound,
       subtitle: Padding(
-        padding: const EdgeInsets.only(top: AppDimensions.paddingXs),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              spacing: AppDimensions.paddingXs,
-              runSpacing: AppDimensions.paddingXxs,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(
-                  serialAccount,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  t.format.bulletSeparator.trim(),
-                  style: theme.textTheme.bodySmall?.copyWith(color: scheme.outline),
-                ),
-                _DueDateText(installment: inst, status: status, now: now),
-              ],
-            ),
-            AppSpacings.gapXs,
-            Wrap(
-              spacing: AppDimensions.paddingXs,
-              runSpacing: AppDimensions.paddingXs,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                _StatusPill(visual: visual),
-                if (item.isCustomerPending && item.totalOutstanding > 0)
-                  _InfoBadge(
-                    icon: HugeIcons.strokeRoundedCoins01,
-                    label: card.owes(amount: item.totalOutstanding.toRupeeFormat()),
-                    color: item.hasOverdueDebt(now) ? scheme.error : scheme.onSurfaceVariant,
-                  ),
-                if (item.readyForPoCount > 0)
-                  _InfoBadge(
-                    icon: HugeIcons.strokeRoundedBuilding03,
-                    label: card.ready(count: item.readyForPoCount),
-                    color: scheme.primary,
-                  ),
-                if (item.hasPriorArrears)
-                  _InfoBadge(
-                    icon: HugeIcons.strokeRoundedAlert02,
-                    label: card.arrears(n: item.priorOverdueCount),
-                    color: scheme.error,
-                    isFilled: true,
-                  ),
-              ],
-            ),
-          ],
+        padding: const EdgeInsets.only(top: AppDimensions.paddingXxs),
+        child: _IdentityLine(
+          deposit: deposit,
+          installment: inst,
+          status: status,
+          now: now,
         ),
       ),
-      trailing: Column(
+      footer: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Status on the left; the money that matters on the right (never ellipsised —
+          // it shrinks), with its caption underneath.
           Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                deposit.installmentAmount.toRupeeFormat(),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: scheme.secondary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              AppSpacings.gapXxs,
-              Text(
-                card.monthlySuffix,
-                style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              _StatusPill(visual: visual),
+              AppSpacings.gapSm,
+              Expanded(
+                child: money == null
+                    ? const SizedBox.shrink()
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              money.headline,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: money.color,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ),
+                          if (caption != null)
+                            Text(
+                              caption,
+                              textAlign: TextAlign.end,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: item.hasOverdueDebt(now)
+                                    ? scheme.error
+                                    : scheme.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
+                      ),
               ),
             ],
           ),
-          AppSpacings.gapXs,
-          RDOperationActionButton(
-            item: item,
-            evaluationDate: now,
-            isBusy: isBusy,
-            onCollect: onCollect,
-            onDeposit: onDeposit,
-          ),
+          if (hasAction) ...[AppSpacings.gapSm, action],
         ],
       ),
       actions: [
@@ -285,13 +318,21 @@ class _InstallmentAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final showIcon = status == RDInstallmentDisplayStatus.settled ||
+    final showIcon =
+        status == RDInstallmentDisplayStatus.settled ||
         status == RDInstallmentDisplayStatus.baseline;
 
-    return CircleAvatar(
-      radius: AppDimensions.radiusXxl,
-      backgroundColor: visual.background,
-      foregroundColor: visual.foreground,
+    return Container(
+      width: AppDimensions.radiusXxl * 2,
+      height: AppDimensions.radiusXxl * 2,
+      decoration: BoxDecoration(
+        color: visual.background,
+        shape: BoxShape.circle,
+        border: visual.outline == null
+            ? null
+            : Border.all(color: visual.outline!, width: AppDimensions.borderSm),
+      ),
+      alignment: Alignment.center,
       child: showIcon
           ? HugeIcon(
               icon: visual.icon,
@@ -305,6 +346,99 @@ class _InstallmentAvatar extends StatelessWidget {
                 color: visual.foreground,
               ),
             ),
+    );
+  }
+}
+
+/// `Sl 12 · A/c …7890 · due 15 Mar` on one line; only the account may be ellipsised.
+class _IdentityLine extends StatelessWidget {
+  final RecurringDeposit deposit;
+  final RDInstallment installment;
+  final RDInstallmentDisplayStatus status;
+  final DateTime now;
+
+  const _IdentityLine({
+    required this.deposit,
+    required this.installment,
+    required this.status,
+    required this.now,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final card = t.recurringDeposits.monthlyOperations.card;
+    final separator = t.format.bulletSeparator;
+
+    final muted = theme.textTheme.bodySmall?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
+
+    final accountNo = deposit.accountNo ?? '';
+    final last4 = accountNo.length > _accountTailLength
+        ? accountNo.substring(accountNo.length - _accountTailLength)
+        : (accountNo.isEmpty ? t.common.notProvided : accountNo);
+    final serial = (deposit.serialNo?.isNotEmpty ?? false)
+        ? card.serial(serialNo: deposit.serialNo!)
+        : null;
+
+    final (dueText, dueStyle) = _dueText(theme);
+
+    // Serial + account share one flexible span so, when space runs out, the ellipsis eats the
+    // account tail first; the due date is never cut.
+    final identity = serial == null
+        ? card.accountTail(last4: last4)
+        : '$serial$separator${card.accountTail(last4: last4)}';
+
+    return Row(
+      children: [
+        Flexible(
+          child: Text(
+            identity,
+            style: muted,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        Text(separator, style: muted, maxLines: 1),
+        Text(dueText, style: dueStyle, maxLines: 1),
+      ],
+    );
+  }
+
+  (String, TextStyle?) _dueText(ThemeData theme) {
+    final card = t.recurringDeposits.monthlyOperations.card;
+    final locale = LocaleSettings.currentLocale.languageTag;
+    final due = card.due(
+      date: DateFormat(_dueDatePattern, locale).format(installment.dueDate),
+    );
+    final alert = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.error,
+      fontWeight: FontWeight.bold,
+    );
+
+    if (status == RDInstallmentDisplayStatus.overdue) {
+      final days = installment.overdueDaysAt(now);
+      return (
+        '$due${t.format.bulletSeparator}${card.overdueDays(days: days < 1 ? 1 : days)}',
+        alert,
+      );
+    }
+    if (installment.isDueOn(now) && status.isCustomerPending) {
+      return (
+        card.dueToday,
+        theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+    }
+    return (
+      due,
+      theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
     );
   }
 }
@@ -325,6 +459,9 @@ class _StatusPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: visual.background,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
+        border: visual.outline == null
+            ? null
+            : Border.all(color: visual.outline!, width: AppDimensions.borderSm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -339,7 +476,7 @@ class _StatusPill extends StatelessWidget {
             visual.label,
             style: theme.textTheme.labelSmall?.copyWith(
               color: visual.foreground,
-              fontWeight: FontWeight.bold,
+              fontWeight: visual.emphasized ? FontWeight.w800 : FontWeight.w600,
             ),
           ),
         ],
@@ -348,118 +485,8 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
-/// Small secondary fact next to the status pill ("owes ₹X", "ready: 2", "+2 months arrears").
-class _InfoBadge extends StatelessWidget {
-  final List<List<dynamic>> icon;
-  final String label;
-  final Color color;
-  final bool isFilled;
-
-  const _InfoBadge({
-    required this.icon,
-    required this.label,
-    required this.color,
-    this.isFilled = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final background = isFilled ? scheme.errorContainer : Colors.transparent;
-    final foreground = isFilled ? scheme.onErrorContainer : color;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingSm,
-        vertical: AppDimensions.paddingXxs,
-      ),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
-        border: isFilled ? null : Border.all(color: color, width: AppDimensions.borderSm),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          HugeIcon(icon: icon, size: AppDimensions.iconXs, color: foreground),
-          AppSpacings.gapXs,
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: foreground,
-              fontWeight: isFilled ? FontWeight.bold : FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DueDateText extends StatelessWidget {
-  final RDInstallment installment;
-  final RDInstallmentDisplayStatus status;
-  final DateTime now;
-
-  const _DueDateText({
-    required this.installment,
-    required this.status,
-    required this.now,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final card = t.recurringDeposits.monthlyOperations.card;
-    final dueDate = installment.dueDate;
-
-    if (status == RDInstallmentDisplayStatus.overdue) {
-      final days = installment.overdueDaysAt(now);
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          HugeIcon(
-            icon: HugeIcons.strokeRoundedAlert02,
-            size: AppDimensions.iconXs,
-            color: theme.colorScheme.error,
-          ),
-          AppSpacings.gapXs,
-          Text(
-            '${card.due(date: dueDate.toCompactFormat())} (${card.overdueDays(days: days < 1 ? 1 : days)})',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.error,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      );
-    }
-
-    if (installment.isDueOn(now)) {
-      return Text(
-        card.dueToday,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.error,
-          fontWeight: FontWeight.bold,
-        ),
-      );
-    }
-
-    final daysUntil = installment.daysUntilDueAt(now);
-    final label = (status == RDInstallmentDisplayStatus.upcoming && daysUntil > 0)
-        ? '${card.due(date: dueDate.toCompactFormat())} (${card.dueInDays(days: daysUntil)})'
-        : card.due(date: dueDate.toCompactFormat());
-
-    return Text(
-      label,
-      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-    );
-  }
-}
-
-/// The single primary action for a row. Vocabulary: customer side = "Collect",
-/// PO side = "Deposit". Settled rows have no action.
+/// The single primary action for a row. Vocabulary: customer side = "Collect ₹X",
+/// PO side = "Deposit N". Settled rows have no action.
 class RDOperationActionButton extends StatelessWidget {
   final RDMonthlyOperationItem item;
   final DateTime evaluationDate;
@@ -476,7 +503,7 @@ class RDOperationActionButton extends StatelessWidget {
     required this.onDeposit,
   });
 
-  RDOperationActionSpec? _resolve(BuildContext context) {
+  RDOperationActionSpec? resolve(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final card = t.recurringDeposits.monthlyOperations.card;
     final status = item.displayStatus(evaluationDate);
@@ -485,7 +512,7 @@ class RDOperationActionButton extends StatelessWidget {
     if (item.isCustomerPending) {
       final urgent = item.hasOverdueDebt(evaluationDate);
       return (
-        label: card.collect,
+        label: card.collect(amount: item.totalOutstanding.toRupeeFormat()),
         icon: HugeIcons.strokeRoundedCoins01,
         background: urgent ? scheme.error : scheme.primary,
         foreground: urgent ? scheme.onError : scheme.onPrimary,
@@ -507,7 +534,7 @@ class RDOperationActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final spec = _resolve(context);
+    final spec = resolve(context);
     if (spec == null) return const SizedBox.shrink();
 
     return FilledButton.icon(
@@ -519,24 +546,26 @@ class RDOperationActionButton extends StatelessWidget {
         ),
         disabledForegroundColor: spec.foreground,
         padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingSm,
+          horizontal: AppDimensions.paddingMd,
           vertical: AppDimensions.paddingXs,
         ),
         // Primary row action must stay a comfortable tap target.
-        minimumSize: const Size(0, AppDimensions.minTapTarget),
+        minimumSize: const Size(double.infinity, AppDimensions.minTapTarget),
       ),
       onPressed: isBusy ? null : spec.onPressed,
       icon: HugeIcon(
         icon: spec.icon,
-        size: AppDimensions.iconXs,
+        size: AppDimensions.iconSm,
         color: spec.foreground,
       ),
       label: Text(
         spec.label,
-        style: theme.textTheme.labelSmall?.copyWith(
+        style: theme.textTheme.labelLarge?.copyWith(
           color: spec.foreground,
           fontWeight: FontWeight.bold,
         ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }

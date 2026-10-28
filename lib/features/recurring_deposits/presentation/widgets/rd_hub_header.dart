@@ -5,18 +5,20 @@ import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_month_switcher.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_kpi_row.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_po_visit_sheet.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-/// Scroll-away header of the Monthly Hub: month switcher, KPI pipeline, agent float strip,
-/// prior-arrears banner and the "ready to deposit" strip. Rebuilds only on month / KPI
-/// changes — never on a search keystroke.
+/// Scroll-away header of the Monthly Hub: the month switcher and one compact 2×2 block of
+/// KPI tiles (To collect · In hand · Receivable · Arrears). Three tiles set a list filter;
+/// "In hand" opens the Post Office visit planner. Rebuilds only on month / KPI changes —
+/// never on a search keystroke.
 class RDHubHeader extends ConsumerWidget {
   const RDHubHeader({super.key});
 
@@ -25,16 +27,14 @@ class RDHubHeader extends ConsumerWidget {
     final month = ref.watch(rDHubMonthProvider);
     final now = ref.watch(clockProvider)();
     final monthNotifier = ref.read(rDHubMonthProvider.notifier);
-    final filtersNotifier = ref.read(rDHubFiltersProvider.notifier);
-    final statusFilter = ref.watch(rDHubFiltersProvider.select((s) => s.status));
-    final kpis = ref.watch(monthlyOperationsKpiProvider);
-    final floatSummary = ref.watch(globalAgentFloatProvider);
-    final isLoading = ref.watch(monthlyOperationItemsProvider.select((a) => a.isLoading));
+    final isLoading = ref.watch(
+      monthlyOperationItemsProvider.select((a) => a.isLoading),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppSpacings.gapSm,
+        AppSpacings.gapXs,
         RDMonthSwitcher(
           selectedMonth: month,
           isCurrentMonth: month == now.toMonthStart(),
@@ -43,311 +43,258 @@ class RDHubHeader extends ConsumerWidget {
           onResetToCurrent: monthNotifier.resetToCurrentMonth,
           onPickMonth: monthNotifier.setMonth,
         ),
-        AppSpacings.gapSm,
-        Skeletonizer(
-          enabled: isLoading,
-          child: RDMonthlyKpiRow(
-            summary: kpis,
-            selectedFilter: statusFilter,
-            onFilterSelected: filtersNotifier.setStatus,
-          ),
-        ),
-        if (floatSummary.hasFloat ||
-            floatSummary.arrearsAccounts > 0 ||
-            kpis.toCollectCount > 0) ...[
-          AppSpacings.gapSm,
-          _AgentFloatStrip(
-            summary: floatSummary,
-            kpis: kpis,
-            onFilterSelected: filtersNotifier.setStatus,
-          ),
-        ],
-        if (kpis.priorArrearsAccountsCount > 0) ...[
-          AppSpacings.gapSm,
-          _PriorArrearsBanner(
-            kpis: kpis,
-            onReview: () => filtersNotifier.setStatus(RDMonthlyFilter.overdue),
-          ),
-        ],
-        if (kpis.readyForPoCount > 0) ...[
-          AppSpacings.gapSm,
-          const _PoQueueReadyStrip(),
-        ],
+        AppSpacings.gapXs,
+        Skeletonizer(enabled: isLoading, child: const _KpiGrid()),
         AppSpacings.gapSm,
       ],
     );
   }
 }
 
-class _PriorArrearsBanner extends StatelessWidget {
-  final RDMonthlyKpiSummary kpis;
-  final VoidCallback onReview;
-
-  const _PriorArrearsBanner({required this.kpis, required this.onReview});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final ops = t.recurringDeposits.monthlyOperations;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
-      child: Material(
-        color: theme.colorScheme.errorContainer.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        child: InkWell(
-          onTap: onReview,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingMd,
-              vertical: AppDimensions.paddingXs,
-            ),
-            child: Row(
-              children: [
-                HugeIcon(
-                  icon: HugeIcons.strokeRoundedAlert02,
-                  size: AppDimensions.iconSm,
-                  color: theme.colorScheme.error,
-                ),
-                AppSpacings.gapSm,
-                Expanded(
-                  child: Text(
-                    ops.priorArrearsBanner.message(
-                      n: kpis.priorArrearsAccountsCount,
-                      count: kpis.priorArrearsAccountsCount,
-                      amount: kpis.priorArrearsAmount.toRupeeFormat(),
-                    ),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onErrorContainer,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.paddingSm,
-                    ),
-                  ),
-                  onPressed: onReview,
-                  child: Text(
-                    ops.priorArrearsBanner.action,
-                    style: TextStyle(
-                      color: theme.colorScheme.error,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// "N ready to deposit (₹X)" strip with a one-tap "Deposit all" that opens the Post Office
-/// visit planner seeded with every row that has collected months.
-class _PoQueueReadyStrip extends ConsumerWidget {
-  const _PoQueueReadyStrip();
+/// 2×2 grid: every tile's colours come from the matching `RDStatusVisual`, so the header
+/// can never contradict the row pills.
+class _KpiGrid extends ConsumerWidget {
+  const _KpiGrid();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final scheme = Theme.of(context).colorScheme;
     final ops = t.recurringDeposits.monthlyOperations;
-    final banner = ops.poQueueBanner;
-    final kpis = ref.watch(monthlyOperationsKpiProvider);
-    final isBusy = ref.watch(rDLedgerControllerProvider.select((a) => a.isLoading));
+    final strings = ops.kpis;
 
-    final accountsText = ops.kpis.accountsCount(n: kpis.readyForPoCount);
+    final kpis = ref.watch(monthlyOperationsKpiProvider);
+    final float = ref.watch(globalAgentFloatProvider);
+    final statusFilter = ref.watch(
+      rDHubFiltersProvider.select((s) => s.status),
+    );
+    final isBusy = ref.watch(
+      rDLedgerControllerProvider.select((a) => a.isLoading),
+    );
+    final filters = ref.read(rDHubFiltersProvider.notifier);
+
+    void toggle(RDMonthlyFilter filter) => filters.setStatus(
+      statusFilter == filter ? RDMonthlyFilter.all : filter,
+    );
 
     void planVisit() {
       ref.read(rDPoVisitPlannerProvider.notifier).start();
       showRDPoVisitPlanner(context);
     }
 
+    final RDStatusVisual neutral = (
+      foreground: scheme.onSurfaceVariant,
+      background: scheme.surfaceContainerLow,
+      outline: null,
+      emphasized: false,
+      icon: HugeIcons.strokeRoundedCoins01,
+      label: '',
+    );
+
+    // To collect: red only when something is actually overdue; otherwise the "upcoming"
+    // tone, exactly like the rows below.
+    final toCollectVisual = kpis.toCollectCount == 0
+        ? neutral
+        : (kpis.overdueCount > 0
+                  ? RDInstallmentDisplayStatus.overdue
+                  : RDInstallmentDisplayStatus.upcoming)
+              .visual(scheme);
+    final inHandVisual = float.cashInHandAccounts > 0
+        ? RDInstallmentDisplayStatus.collectedPendingPo.visual(scheme)
+        : neutral;
+    final receivableVisual = float.receivableAccounts > 0
+        ? RDInstallmentDisplayStatus.frontedByAgent.visual(scheme)
+        : neutral;
+    final arrearsVisual = float.arrearsAccounts > 0
+        ? RDInstallmentDisplayStatus.overdue.visual(scheme)
+        : neutral;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
-      child: Material(
-        color: scheme.secondaryContainer.withValues(alpha: AppDimensions.opacityMuted),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingMd,
-            vertical: AppDimensions.paddingXs,
-          ),
-          child: Row(
-            children: [
-              HugeIcon(
-                icon: HugeIcons.strokeRoundedBuilding03,
-                size: AppDimensions.iconSm,
-                color: scheme.onSecondaryContainer,
-              ),
-              AppSpacings.gapSm,
-              Expanded(
-                child: Text(
-                  banner.readyMessage(
-                    count: accountsText,
-                    amount: kpis.readyForPoAmount.toRupeeFormat(),
-                  ),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSecondaryContainer,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              TextButton.icon(
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingSm),
-                ),
-                onPressed: isBusy ? null : planVisit,
-                icon: HugeIcon(
-                  icon: HugeIcons.strokeRoundedCheckList,
-                  size: AppDimensions.iconXs,
-                  color: scheme.secondary,
-                ),
-                label: Text(
-                  banner.depositAll,
-                  style: TextStyle(color: scheme.secondary, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The agent's four at-a-glance numbers: still to collect in this month, cash in hand
-/// (cash vs digital), receivable (fronted from pocket) and accounts in arrears.
-class _AgentFloatStrip extends StatelessWidget {
-  final RDAgentFloatSummary summary;
-  final RDMonthlyKpiSummary kpis;
-  final ValueChanged<RDMonthlyFilter> onFilterSelected;
-
-  const _AgentFloatStrip({
-    required this.summary,
-    required this.kpis,
-    required this.onFilterSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final ops = t.recurringDeposits.monthlyOperations;
-    final floatStrings = ops.agentFloat;
-
-    final chips = <Widget>[
-      if (kpis.toCollectCount > 0)
-        _FloatChip(
-          icon: HugeIcons.strokeRoundedCoins01,
-          label: floatStrings.toCollect(
-            amount: kpis.toCollectAmount.toRupeeFormat(),
-            count: ops.kpis.accountsCount(n: kpis.toCollectCount),
-          ),
-          background: scheme.primaryContainer,
-          foreground: scheme.onPrimaryContainer,
-          onTap: () => onFilterSelected(RDMonthlyFilter.toCollect),
-        ),
-      if (summary.cashInHandAccounts > 0)
-        _FloatChip(
-          icon: HugeIcons.strokeRoundedBuilding03,
-          label: floatStrings.cashInHand(
-            total: summary.cashInHandTotal.toRupeeFormat(),
-            cash: summary.cashInHandCash.toRupeeFormat(),
-            digital: summary.cashInHandDigital.toRupeeFormat(),
-          ),
-          background: scheme.secondaryContainer,
-          foreground: scheme.onSecondaryContainer,
-          onTap: () => onFilterSelected(RDMonthlyFilter.readyForPo),
-        ),
-      if (summary.receivableAccounts > 0)
-        _FloatChip(
-          icon: HugeIcons.strokeRoundedWallet02,
-          label: floatStrings.receivable(
-            amount: summary.receivableAmount.toRupeeFormat(),
-            count: ops.kpis.accountsCount(n: summary.receivableAccounts),
-          ),
-          background: scheme.tertiaryContainer,
-          foreground: scheme.onTertiaryContainer,
-          onTap: () => onFilterSelected(RDMonthlyFilter.toCollect),
-        ),
-      if (summary.arrearsAccounts > 0)
-        _FloatChip(
-          icon: HugeIcons.strokeRoundedAlert02,
-          label: floatStrings.arrears(
-            count: ops.kpis.accountsCount(n: summary.arrearsAccounts),
-          ),
-          background: scheme.errorContainer,
-          foreground: scheme.onErrorContainer,
-          onTap: () => onFilterSelected(RDMonthlyFilter.overdue),
-        ),
-    ];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
-      child: Row(
+      child: Column(
         children: [
-          for (var i = 0; i < chips.length; i++) ...[
-            if (i > 0) AppSpacings.gapSm,
-            chips[i],
-          ],
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _KpiTile(
+                    label: strings.toCollect,
+                    amount: kpis.toCollectAmount.toRupeeFormat(),
+                    caption: strings.accountsCount(n: kpis.toCollectCount),
+                    icon: HugeIcons.strokeRoundedCoins01,
+                    visual: toCollectVisual,
+                    isSelected: statusFilter == RDMonthlyFilter.toCollect,
+                    onTap: () => toggle(RDMonthlyFilter.toCollect),
+                  ),
+                ),
+                AppSpacings.gapSm,
+                Expanded(
+                  child: _KpiTile(
+                    label: strings.inHand,
+                    amount: float.cashInHandTotal.toRupeeFormat(),
+                    caption: float.cashInHandAccounts > 0
+                        ? strings.accountsReady(n: float.cashInHandAccounts)
+                        : strings.nothingToDeposit,
+                    detail: float.cashInHandAccounts > 0
+                        ? ops.visit.byMode(
+                            cash: float.cashInHandCash.toRupeeFormat(),
+                            digital: float.cashInHandDigital.toRupeeFormat(),
+                          )
+                        : null,
+                    icon: HugeIcons.strokeRoundedBuilding03,
+                    visual: inHandVisual,
+                    isSelected: false,
+                    onTap: isBusy || float.cashInHandAccounts == 0
+                        ? null
+                        : planVisit,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          AppSpacings.gapSm,
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _KpiTile(
+                    label: strings.receivable,
+                    amount: float.receivableAmount.toRupeeFormat(),
+                    caption: strings.accountsCount(n: float.receivableAccounts),
+                    icon: HugeIcons.strokeRoundedWallet02,
+                    visual: receivableVisual,
+                    isSelected: statusFilter == RDMonthlyFilter.fronted,
+                    onTap: () => toggle(RDMonthlyFilter.fronted),
+                  ),
+                ),
+                AppSpacings.gapSm,
+                Expanded(
+                  child: _KpiTile(
+                    label: strings.arrears,
+                    amount: strings.accountsCount(n: float.arrearsAccounts),
+                    caption: strings.arrearsCaption,
+                    icon: HugeIcons.strokeRoundedAlert02,
+                    visual: arrearsVisual,
+                    isSelected: statusFilter == RDMonthlyFilter.overdue,
+                    onTap: () => toggle(RDMonthlyFilter.overdue),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _FloatChip extends StatelessWidget {
-  final List<List<dynamic>> icon;
+/// One tappable KPI tile. Money is never ellipsised — it shrinks to fit.
+class _KpiTile extends StatelessWidget {
   final String label;
-  final Color background;
-  final Color foreground;
-  final VoidCallback onTap;
+  final String amount;
+  final String caption;
+  final String? detail;
+  final List<List<dynamic>> icon;
+  final RDStatusVisual visual;
+  final bool isSelected;
+  final VoidCallback? onTap;
 
-  const _FloatChip({
-    required this.icon,
+  const _KpiTile({
     required this.label,
-    required this.background,
-    required this.foreground,
+    required this.amount,
+    required this.caption,
+    this.detail,
+    required this.icon,
+    required this.visual,
+    required this.isSelected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingSm,
-          vertical: AppDimensions.paddingXs,
+    final scheme = theme.colorScheme;
+    final borderColor = isSelected
+        ? scheme.primary
+        : (visual.outline ?? scheme.outlineVariant);
+
+    return Material(
+      color: visual.background,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        side: BorderSide(
+          color: borderColor,
+          width: isSelected ? AppDimensions.borderMd : AppDimensions.borderSm,
         ),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            HugeIcon(icon: icon, size: AppDimensions.iconXs, color: foreground),
-            AppSpacings.gapXs,
-            Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: foreground,
-                fontWeight: FontWeight.bold,
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.paddingSm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  HugeIcon(
+                    icon: icon,
+                    size: AppDimensions.iconXs,
+                    color: visual.foreground,
+                  ),
+                  AppSpacings.gapXs,
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: visual.foreground,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              AppSpacings.gapXs,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  amount,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: visual.foreground,
+                  ),
+                  maxLines: 1,
+                ),
+              ),
+              if (detail != null)
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    detail!,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: visual.foreground,
+                    ),
+                    maxLines: 1,
+                  ),
+                ),
+              Text(
+                caption,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: visual.foreground.withValues(
+                    alpha: AppDimensions.opacityMuted,
+                  ),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );
