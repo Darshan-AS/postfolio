@@ -163,7 +163,8 @@ ALTER TABLE public.rd_ledger_summary
   ADD COLUMN IF NOT EXISTS cash_in_hand_digital NUMERIC NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS absorbed_total NUMERIC NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS delay_cost_total NUMERIC NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS arrears_count INTEGER NOT NULL DEFAULT 0;
+  ADD COLUMN IF NOT EXISTS arrears_count INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS fee_due NUMERIC NOT NULL DEFAULT 0;
 
 -- ------------------------------------------------------------------------------------------
 -- 6. save_recurring_deposit: accept opening_receivable; terms lock uses the event table

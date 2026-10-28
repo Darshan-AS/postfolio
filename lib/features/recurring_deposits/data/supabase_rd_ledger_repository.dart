@@ -103,6 +103,10 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
       _guard(() => _client.from(_poDeposits).delete().eq('id', eventId).eq('rd_id', rdId));
 
   @override
+  Future<Result<void, String>> deletePoDepositBatch(String batchId) =>
+      _guard(() => _client.from(_poDeposits).delete().eq('batch_id', batchId));
+
+  @override
   Future<Result<void, String>> upsertFeeAbsorption(RDFeeAbsorption absorption) =>
       _guard(() => _client.from(_feeAbsorptions).upsert(
             _withAgent(absorption.toJson()..remove('created_at')),

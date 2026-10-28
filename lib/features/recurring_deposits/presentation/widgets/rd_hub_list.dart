@@ -266,25 +266,15 @@ class _RDHubRow extends ConsumerWidget {
       );
     }
 
+    /// Front from pocket: open the deposit sheet pre-set to carry the PO ledger through this
+    /// row's month (the quote shows exactly how much comes from the agent's pocket).
     Future<void> onDepositFromPocket() async {
-      final confirmed = await AppDialogs.confirmAction(
+      final through = item.summary.depositedThroughNo;
+      final target = item.installment.installmentNo;
+      await showRDDepositSheet(
         context,
-        title: card.depositFromPocketConfirmTitle,
-        content: card.depositFromPocketConfirmMessage(
-          installment: installmentNo,
-          amount: item.installment.outstandingAmount.toRupeeFormat(),
-        ),
-        confirmText: t.common.confirm,
-      );
-      if (confirmed != true || !context.mounted) return;
-      final result = await actions.frontFromPocket(item);
-      if (!context.mounted) return;
-      AppFeedback.showResult(
-        context,
-        result,
-        successMessage: card.depositFromPocketSuccess(installment: installmentNo),
-        undoLabel: t.recurringDeposits.monthlyOperations.undo,
-        onUndo: undoLatest,
+        rdId: item.deposit.id,
+        initialCount: through < target ? target - through : 1,
       );
     }
 
@@ -303,7 +293,8 @@ class _RDHubRow extends ConsumerWidget {
     }
 
     Future<void> onAbsorbFee() async {
-      final fee = item.installment.customerFeeDue.toRupeeFormat();
+      // The one absorb rule: exactly `absorbableFee`, offered only when it closes the month.
+      final fee = item.installment.absorbableFee.toRupeeFormat();
       final confirmed = await AppDialogs.confirmAction(
         context,
         title: card.absorbFeeConfirmTitle,

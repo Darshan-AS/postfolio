@@ -64,6 +64,8 @@ sealed class RDLedgerSummary with _$RDLedgerSummary {
     @Default(0.0) double delayCostTotal,
     /// Months past their due date on which the customer has not settled.
     @Default(0) int arrearsCount,
+    /// Fee component of [owedByCustomer] (informational).
+    @Default(0.0) double feeDue,
     @Default(<RDOpenItem>[]) List<RDOpenItem> openItems,
     @TimestampConverter() DateTime? updatedAt,
   }) = _RDLedgerSummary;

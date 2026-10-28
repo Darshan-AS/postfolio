@@ -114,7 +114,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
 
     final canFrontFromPocket =
         item.canDepositToPo && item.isCustomerPending && onDepositFromPocket != null;
-    final canAbsorbFee = inst.isPartiallyPaid && inst.customerFeeDue > 0 && onAbsorbFee != null;
+    final canAbsorbFee = inst.absorbableFee > 0 && onAbsorbFee != null;
     final canUndoLatest = item.isLatestDeposited && onUndoLatestDeposit != null;
 
     return EntityListTile(
@@ -239,7 +239,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
           ),
         if (canAbsorbFee)
           EntityAction(
-            label: card.absorbFee(amount: inst.customerFeeDue.toRupeeFormat()),
+            label: card.absorbFee(amount: inst.absorbableFee.toRupeeFormat()),
             icon: const HugeIcon(
               icon: HugeIcons.strokeRoundedCheckmarkBadge01,
               size: AppDimensions.iconMd,
@@ -522,8 +522,8 @@ class RDOperationActionButton extends StatelessWidget {
           horizontal: AppDimensions.paddingSm,
           vertical: AppDimensions.paddingXs,
         ),
-        visualDensity: VisualDensity.compact,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        // Primary row action must stay a comfortable tap target.
+        minimumSize: const Size(0, AppDimensions.minTapTarget),
       ),
       onPressed: isBusy ? null : spec.onPressed,
       icon: HugeIcon(

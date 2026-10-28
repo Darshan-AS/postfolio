@@ -13,6 +13,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projectio
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:uuid/uuid.dart';
 
 /// A one-tap amount suggestion shown as a chip above the amount field.
 typedef RDQuickAmount = ({String label, double amount});
@@ -50,6 +51,7 @@ class PaymentDraftState {
     required this.lastDate,
     required this.applyQuickAmount,
     required this.submit,
+    required this.undo,
   });
 
   final String rdId;
@@ -98,9 +100,27 @@ class PaymentDraftState {
   /// after a successful record and returns the combined outcome (first failure wins).
   final Future<PaymentSubmitOutcome> Function() submit;
 
+  /// Deletes the transaction this draft recorded (the id is minted up front, so the sheet
+  /// can offer Undo on the success toast without waiting for a round-trip).
+  final Future<Result<void, String>> Function() undo;
+
   bool get isEditing => existing != null;
   bool get canSubmit => !isSubmitting && validationError == null && preview != null;
   bool get canAbsorbFee => !isEditing && absorbableFee > 0 && absorbableInstallmentNo != null;
+
+  /// Allocation slices of the draft transaction inside [preview] (empty until previewable).
+  List<RDAllocationSlice> get previewSlices =>
+      preview?.allocationsByTransaction[previewTransactionId] ?? const [];
+
+  /// First month the draft lands on (`null` when it only repays opening dues / credit).
+  RDInstallment? get firstAllocatedMonth {
+    for (final slice in previewSlices) {
+      if (!slice.isCredit && !slice.isOpeningReceivable) {
+        return preview?.byNo(slice.installmentNo);
+      }
+    }
+    return null;
+  }
 
   /// Whether [quick] matches the current amount (for chip selection).
   bool isQuickAmountSelected(RDQuickAmount quick) => Money.equals(amount, quick.amount);
@@ -115,7 +135,8 @@ typedef PaymentSubmitOutcome = ({
   int? absorbedInstallmentNo,
 });
 
-/// Id of the not-yet-saved draft transaction inside the preview projection.
+/// Fallback key for a draft transaction inside a preview projection when the caller did not
+/// supply one (`usePaymentDraft` mints a real UUID per draft and passes it explicitly).
 const String rdDraftPreviewTransactionId = '__draft_preview__';
 const int _maxQuickMonths = 3;
 
@@ -179,14 +200,17 @@ PaymentDraftState usePaymentDraft(
     [factsWithoutExisting, projector, today],
   );
 
+  // The id is minted once per draft so the sheet knows which transaction to delete on Undo.
+  final draftId = useMemoized(() => const Uuid().v4());
+  final previewTxId = existing?.id ?? draftId;
+
   final RDPaymentDraft draft = (
     rdId: rdId,
-    transactionId: existing?.id,
+    transactionId: previewTxId,
     amount: amount,
     paidDate: paidDate.value,
     paymentMode: paymentMode.value,
   );
-  final previewTxId = existing?.id ?? rdDraftPreviewTransactionId;
   final draftTx = draft.toTransaction(id: previewTxId);
 
   // --- Validation -----------------------------------------------------------------------
@@ -241,19 +265,15 @@ PaymentDraftState usePaymentDraft(
   );
 
   // --- Absorbable fee ---------------------------------------------------------------------
-  // After the draft, if the earliest open month is partially paid and what is left is no
-  // more than its customer fee, the agent may cover that remainder from pocket.
+  // The one absorb rule lives on the installment: after the draft, the earliest open month
+  // tells us exactly how much fee (never principal) the agent could cover to close it.
   final ({double amount, int? installmentNo}) absorbable = useMemoized(
     () {
-      if (preview == null) return (amount: 0.0, installmentNo: null);
-      final next = preview.nextDue;
-      if (next == null || !next.isPartiallyPaid) return (amount: 0.0, installmentNo: null);
-      final remaining = next.outstandingAmount;
-      if (Money.toPaise(remaining) <= 0 ||
-          Money.toPaise(remaining) > Money.toPaise(next.customerFeeDue)) {
-        return (amount: 0.0, installmentNo: null);
-      }
-      return (amount: remaining, installmentNo: next.installmentNo);
+      final next = preview?.nextDue;
+      if (next == null) return (amount: 0.0, installmentNo: null);
+      final fee = next.absorbableFee;
+      if (Money.toPaise(fee) <= 0) return (amount: 0.0, installmentNo: null);
+      return (amount: fee, installmentNo: next.installmentNo);
     },
     [preview],
   );
@@ -300,12 +320,15 @@ PaymentDraftState usePaymentDraft(
     amountController.text = _formatAmount(quick.amount);
   }
 
+  // Resolved eagerly: the controller is kept alive, so Undo can still run from a snackbar
+  // after the sheet itself has been popped and its `ref` disposed.
+  final notifier = ref.read(rDLedgerControllerProvider.notifier);
+
   Future<PaymentSubmitOutcome> submit() async {
     PaymentSubmitOutcome only(Result<void, String> payment) =>
         (payment: payment, absorption: null, absorbedAmount: 0.0, absorbedInstallmentNo: null);
 
     if (validationError != null) return only(Failure(validationError));
-    final notifier = ref.read(rDLedgerControllerProvider.notifier);
 
     if (existing != null) {
       final updated = existing.copyWith(
@@ -336,6 +359,9 @@ PaymentDraftState usePaymentDraft(
     );
   }
 
+  Future<Result<void, String>> undo() =>
+      notifier.deletePayment(rdId: rdId, transactionId: previewTxId);
+
   return PaymentDraftState(
     rdId: rdId,
     existing: existing,
@@ -359,5 +385,6 @@ PaymentDraftState usePaymentDraft(
     lastDate: today,
     applyQuickAmount: applyQuickAmount,
     submit: submit,
+    undo: undo,
   );
 }

@@ -137,6 +137,19 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   }
 
   @override
+  Future<Result<void, String>> deletePoDepositBatch(String batchId) async {
+    if (failWith != null) return Failure(failWith!);
+    for (final e in _poDeposits.entries) {
+      final before = e.value.length;
+      e.value.removeWhere((d) => d.batchId == batchId);
+      if (e.value.length != before) {
+        _poControllers[e.key]?.add(Success(List.unmodifiable(e.value)));
+      }
+    }
+    return const Success(null);
+  }
+
+  @override
   Future<Result<void, String>> upsertFeeAbsorption(RDFeeAbsorption absorption) async {
     if (failWith != null) return Failure(failWith!);
     final list = _absorptions.putIfAbsent(absorption.rdId, () => []);

@@ -3,13 +3,14 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
-import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_po_visit_sheet.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-/// Floating bar shown while rows are selected: summary + "deposit ready for selected".
+/// Floating bar shown while rows are selected: summary + "Deposit N" which opens the Post
+/// Office visit planner seeded with the selected depositable accounts.
 ///
 /// A PO visit deposits the *next contiguous collected months* of each selected account;
 /// there is no per-month revert — only the latest visit of an account can be undone, from
@@ -24,27 +25,13 @@ class RDHubBatchBar extends ConsumerWidget {
     final strings = ops.batchPo;
     final summary = ref.watch(batchSelectionSummaryProvider);
     final isBusy = ref.watch(rDLedgerControllerProvider).isLoading;
-    final actions = ref.read(rDMonthlyOperationsActionsProvider.notifier);
     final selection = ref.read(rDHubSelectionProvider.notifier);
 
     final readyInstallments = summary.readyInstallments;
-    final accountsText = ops.kpis.accountsCount(n: summary.depositable.length);
 
-    Future<void> onDeposit() async {
-      final confirmed = await AppDialogs.confirmAction(
-        context,
-        title: strings.confirmTitle,
-        content: strings.confirmMessage(ready: readyInstallments, count: accountsText),
-        confirmText: strings.confirmButton,
-      );
-      if (confirmed != true || !context.mounted) return;
-      final result = await actions.depositSelectedReady();
-      if (!context.mounted) return;
-      AppFeedback.showResult(
-        context,
-        result,
-        successMessage: strings.success(ready: readyInstallments),
-      );
+    void planVisit() {
+      ref.read(rDPoVisitPlannerProvider.notifier).start(items: summary.depositable);
+      showRDPoVisitPlanner(context);
     }
 
     return Card.filled(
@@ -74,18 +61,22 @@ class RDHubBatchBar extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    strings.selectedSummary(
-                      count: summary.count,
-                      ready: readyInstallments,
-                      amount: summary.totalAmount.toRupeeFormat(),
+                  // Money is never ellipsised: shrink to fit instead.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      strings.selectedSummary(
+                        count: summary.count,
+                        ready: readyInstallments,
+                        amount: summary.totalAmount.toRupeeFormat(),
+                      ),
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      maxLines: 1,
                     ),
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   if (readyInstallments == 0)
                     Text(
@@ -106,9 +97,9 @@ class RDHubBatchBar extends ConsumerWidget {
                     horizontal: AppDimensions.paddingSm,
                     vertical: AppDimensions.paddingXs,
                   ),
-                  visualDensity: VisualDensity.compact,
+                  minimumSize: const Size(0, AppDimensions.minTapTarget),
                 ),
-                onPressed: isBusy ? null : onDeposit,
+                onPressed: isBusy ? null : planVisit,
                 icon: HugeIcon(
                   icon: HugeIcons.strokeRoundedBuilding03,
                   size: AppDimensions.iconSm,

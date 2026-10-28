@@ -171,6 +171,7 @@ final class RDLedgerProjector {
     int? nextDueNo;
     var receivableP = openingLeft;
     var owedP = openingLeft;
+    var feeDueP = 0;
     var absorbedTotal = 0;
     var delayCost = 0;
     var arrears = 0;
@@ -203,7 +204,11 @@ final class RDLedgerProjector {
       final isDeposited = depositedOn[no] != null;
       final isPastDue = base.dueDate.isBefore(asOfDay);
       if (!settled && isDeposited) receivableP += outstanding;
-      if (!settled && (isDeposited || isPastDue)) owedP += outstanding;
+      if (!settled && (isDeposited || isPastDue)) {
+        owedP += outstanding;
+        final feePart = customerFeeP[no] - absorbedP[no];
+        feeDueP += feePart < outstanding ? feePart : outstanding;
+      }
       if (!settled && isPastDue) arrears++;
       absorbedTotal += absorbedP[no];
       if (isDeposited && poFeeP[no] > customerFeeP[no]) {
@@ -256,6 +261,7 @@ final class RDLedgerProjector {
       absorbedTotal: Money.toRupees(absorbedTotal),
       delayCostTotal: Money.toRupees(delayCost),
       arrearsCount: arrears,
+      feeDue: Money.toRupees(feeDueP),
       openItems: openItems,
     );
 

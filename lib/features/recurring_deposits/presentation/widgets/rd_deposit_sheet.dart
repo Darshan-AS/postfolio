@@ -7,6 +7,8 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
+import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_deposit_draft.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -48,29 +50,61 @@ class _DepositForm extends HookConsumerWidget {
     final draft = useDepositDraft(ref, rdId: rdId, initialCount: initialCount);
     final theme = Theme.of(context);
     final ledger = t.recurringDeposits.ledger;
+    final deposit = draft.facts.value?.deposit;
+    final customer = deposit?.customerName;
+
+    final title = (customer != null && customer.isNotEmpty)
+        ? ledger.depositTitleFor(
+            customer: customer,
+            serial: deposit?.serialNo ?? t.common.notProvided,
+          )
+        : ledger.depositTitle;
 
     Future<void> handleSubmit() async {
+      // Resolve the toast copy before the write: the quote is derived from facts that change
+      // the moment the deposit lands.
       final count = draft.count;
+      final quote = draft.quote;
+      final who = customer ?? t.recurringDeposits.depositNotFound;
+      final installments = ledger.installmentsCount(n: count);
+      final successMessage = quote == null
+          ? ledger.depositDone(installments: installments, customer: who, amount: t.common.notProvided)
+          : quote.fee > 0
+              ? ledger.depositDoneWithFee(
+                  installments: installments,
+                  customer: who,
+                  amount: quote.amount.toRupeeFormat(),
+                  fee: quote.fee.toRupeeFormat(),
+                )
+              : ledger.depositDone(
+                  installments: installments,
+                  customer: who,
+                  amount: quote.amount.toRupeeFormat(),
+                );
+
       final result = await draft.submit();
       if (!context.mounted) return;
-      AppFeedback.showResult(
-        context,
-        result,
-        successMessage: ledger.depositRecorded(n: count),
-        undoLabel: t.recurringDeposits.monthlyOperations.undo,
-        onUndo: () async {
-          final undone = await draft.undo();
-          if (!hostContext.mounted) return;
-          AppFeedback.showResult(
-            hostContext,
-            undone,
-            successMessage: ledger.depositUndone,
-          );
-        },
-      );
       if (result is Success<void, String>) {
         Navigator.of(context).pop(true);
+        if (!hostContext.mounted) return;
+        AppFeedback.showResult(
+          hostContext,
+          result,
+          successMessage: successMessage,
+          undoLabel: t.recurringDeposits.monthlyOperations.undo,
+          onUndo: () async {
+            final undone = await draft.undo();
+            if (!hostContext.mounted) return;
+            AppFeedback.showResult(
+              hostContext,
+              undone,
+              successMessage: ledger.depositUndone,
+            );
+          },
+        );
+        return;
       }
+      AppFeedback.showResult(context, result, successMessage: successMessage);
     }
 
     final Widget body;
@@ -84,9 +118,9 @@ class _DepositForm extends HookConsumerWidget {
             )
           : _DepositBody(draft: draft);
     } else if (draft.facts.hasError || draft.projection.hasError) {
-      body = Text(
-        (draft.facts.error ?? draft.projection.error).toString(),
-        style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error),
+      body = ErrorStateView(
+        message: (draft.facts.error ?? draft.projection.error).toString(),
+        onRetry: () => ref.invalidate(rdLedgerFactsProvider(rdId)),
       );
     } else {
       body = const Padding(
@@ -110,8 +144,10 @@ class _DepositForm extends HookConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  ledger.depositTitle,
+                  title,
                   style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               IconButton(

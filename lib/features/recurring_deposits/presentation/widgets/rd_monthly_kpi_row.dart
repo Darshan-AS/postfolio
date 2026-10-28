@@ -168,16 +168,20 @@ class _PipelineStageCard extends StatelessWidget {
                 ],
               ),
               AppSpacings.gapXs,
-              Text(
-                amount,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
+              // Money is never ellipsised: shrink to fit instead.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  amount,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                  maxLines: 1,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 2),
+              AppSpacings.gapXxs,
               Text(
                 countText,
                 style: theme.textTheme.labelSmall?.copyWith(
@@ -218,7 +222,7 @@ class _OverdueInlineChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingXs,
-          vertical: 2,
+          vertical: AppDimensions.paddingXxs,
         ),
         decoration: BoxDecoration(
           color: isSelected
@@ -236,12 +240,11 @@ class _OverdueInlineChip extends StatelessWidget {
                   ? theme.colorScheme.onError
                   : theme.colorScheme.onErrorContainer,
             ),
-            const SizedBox(width: 2),
+            AppSpacings.gapXxs,
             Flexible(
               child: Text(
                 label,
                 style: theme.textTheme.labelSmall?.copyWith(
-                  fontSize: 10,
                   fontWeight: FontWeight.bold,
                   color: isSelected
                       ? theme.colorScheme.onError

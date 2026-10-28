@@ -74,6 +74,8 @@ class UnsupportedRDLedgerRepository implements RDLedgerRepository {
   }) async =>
       _failure;
   @override
+  Future<Result<void, String>> deletePoDepositBatch(String batchId) async => _failure;
+  @override
   Future<Result<void, String>> upsertFeeAbsorption(RDFeeAbsorption absorption) async => _failure;
   @override
   Future<Result<void, String>> removeFeeAbsorption({

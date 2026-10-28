@@ -208,10 +208,13 @@ RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
 
   var s = const RDMonthlyKpiSummary();
   for (final item in items) {
-    s = s.copyWith(
-      firstHalfCount: s.firstHalfCount + (item.isFirstHalfDue ? 1 : 0),
-      secondHalfCount: s.secondHalfCount + (item.isFirstHalfDue ? 0 : 1),
-    );
+    // Window counters show what is still to collect in each window, not every row.
+    if (item.isCustomerPending) {
+      s = s.copyWith(
+        firstHalfCount: s.firstHalfCount + (item.isFirstHalfDue ? 1 : 0),
+        secondHalfCount: s.secondHalfCount + (item.isFirstHalfDue ? 0 : 1),
+      );
+    }
     if (item.isSettled) {
       s = s.copyWith(
         settledAmount: s.settledAmount + item.installment.dueAmount,
@@ -434,63 +437,19 @@ class RDMonthlyOperationsActions extends _$RDMonthlyOperationsActions {
 
   RDLedgerController get _ledger => ref.read(rDLedgerControllerProvider.notifier);
 
-  /// Deposits every collected-but-undeposited month of each account (one PO event per account).
-  Future<Result<void, String>> depositReady(
-    Iterable<RDMonthlyOperationItem> items, {
-    DateTime? depositedOn,
-  }) async {
-    for (final item in items) {
-      final count = item.readyForPoCount;
-      if (count == 0) continue;
-      final r = await _ledger.depositNextToPo(
-        rdId: item.deposit.id,
-        count: count,
-        depositedOn: depositedOn,
-      );
-      if (r case Failure()) return r;
-    }
-    return const Success(null);
-  }
-
-  /// Fronts the account from the agent's pocket: deposits every ready month **plus** the
-  /// selected (unpaid or partial) month.
-  Future<Result<void, String>> frontFromPocket(RDMonthlyOperationItem item, {DateTime? depositedOn}) {
-    final through = item.summary.depositedThroughNo;
-    final target = item.installment.installmentNo;
-    if (target <= through) return Future.value(const Success(null));
-    return _ledger.depositNextToPo(
-      rdId: item.deposit.id,
-      count: target - through,
-      depositedOn: depositedOn,
-    );
-  }
-
   Future<Result<void, String>> undoLatestDeposit(RDMonthlyOperationItem item) =>
       _ledger.undoLatestPoDeposit(item.deposit.id);
 
-  Future<Result<void, String>> depositSelectedReady({DateTime? depositedOn}) async {
-    final result = await depositReady(
-      ref.read(batchSelectionSummaryProvider).depositable,
-      depositedOn: depositedOn,
+  /// Agent pays the remaining fee of [item]'s month from pocket (only when that closes the month).
+  Future<Result<void, String>> absorbRemainingFee(RDMonthlyOperationItem item) {
+    final amount = item.installment.absorbableFee;
+    if (amount <= 0) return Future.value(const Failure('Nothing to absorb on this month.'));
+    return _ledger.absorbFee(
+      rdId: item.deposit.id,
+      installmentNo: item.installment.installmentNo,
+      amount: amount,
     );
-    if (result case Success()) ref.read(rDHubSelectionProvider.notifier).exit();
-    return result;
   }
-
-  /// Every account in the current month with ready months (the "Deposit all ready" strip).
-  Future<Result<void, String>> depositAllReady({DateTime? depositedOn}) async {
-    final items = ref.read(monthlyOperationItemsProvider).value ??
-        UnmodifiableListView(const <RDMonthlyOperationItem>[]);
-    return depositReady(items.where((i) => i.readyForPoCount > 0), depositedOn: depositedOn);
-  }
-
-  /// Agent pays the remaining fee of [item]'s month from pocket.
-  Future<Result<void, String>> absorbRemainingFee(RDMonthlyOperationItem item) =>
-      _ledger.absorbFee(
-        rdId: item.deposit.id,
-        installmentNo: item.installment.installmentNo,
-        amount: item.installment.customerFeeDue,
-      );
 
   /// Everything the payment sheet needs to open pre-filled for [item].
   Future<Result<({List<RDInstallment> schedule, double initialAmount}), String>>

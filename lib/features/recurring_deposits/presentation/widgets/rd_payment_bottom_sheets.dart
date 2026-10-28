@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
@@ -10,9 +11,11 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
+import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_payment_draft.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -35,7 +38,11 @@ Future<bool?> showRDLogPaymentSheet(
 }) =>
     AppAdaptiveSheet.show<bool>(
       context,
-      builder: (_) => _PaymentForm(rdId: rdId, initialAmount: initialAmount),
+      builder: (_) => _PaymentForm(
+        rdId: rdId,
+        initialAmount: initialAmount,
+        hostContext: context,
+      ),
     );
 
 /// Opens the "edit customer payment" sheet. Resolves `true` when the payment was updated.
@@ -46,17 +53,30 @@ Future<bool?> showRDEditPaymentSheet(
 }) =>
     AppAdaptiveSheet.show<bool>(
       context,
-      builder: (_) => _PaymentForm(rdId: rdId, existing: transaction),
+      builder: (_) => _PaymentForm(
+        rdId: rdId,
+        existing: transaction,
+        hostContext: context,
+      ),
     );
 
 // --- Form ---------------------------------------------------------------------------------
 
 class _PaymentForm extends HookConsumerWidget {
-  const _PaymentForm({required this.rdId, this.existing, this.initialAmount});
+  const _PaymentForm({
+    required this.rdId,
+    required this.hostContext,
+    this.existing,
+    this.initialAmount,
+  });
 
   final String rdId;
   final RDTransaction? existing;
   final double? initialAmount;
+
+  /// The caller's context — still mounted after this sheet pops, so the toast (and its
+  /// Undo) outlive the sheet.
+  final BuildContext hostContext;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -69,29 +89,70 @@ class _PaymentForm extends HookConsumerWidget {
     final theme = Theme.of(context);
     final ledger = t.recurringDeposits.ledger;
     final isEditing = draft.isEditing;
+    final deposit = draft.facts.value?.deposit;
+    final customer = deposit?.customerName;
+    final serial = deposit?.serialNo;
+
+    final title = isEditing
+        ? ledger.editPaymentTitle
+        : (customer != null && customer.isNotEmpty)
+            ? ledger.collectTitle(customer: customer, serial: serial ?? t.common.notProvided)
+            : ledger.logPaymentTitle;
+
+    String collectedMessage() {
+      final who = customer ?? t.recurringDeposits.depositNotFound;
+      final amount = draft.amount.toRupeeFormat();
+      final month = draft.firstAllocatedMonth;
+      if (month == null) return ledger.collectedNoMonth(amount: amount, customer: who);
+      final locale = LocaleSettings.currentLocale.languageTag;
+      return ledger.collected(
+        amount: amount,
+        customer: who,
+        month: month.installmentNo.toString(),
+        monthName: DateFormat.MMM(locale).format(month.installmentDate),
+      );
+    }
 
     Future<void> handleSubmit() async {
+      // Resolve the toast copy before the write: the preview is derived from facts that
+      // change the moment the payment lands.
+      final successMessage = isEditing ? ledger.paymentUpdated : collectedMessage();
       final outcome = await draft.submit();
       if (!context.mounted) return;
-      AppFeedback.showResult(
-        context,
-        outcome.payment,
-        successMessage: isEditing ? ledger.paymentUpdated : ledger.paymentRecorded,
-      );
-      final absorption = outcome.absorption;
-      if (absorption != null && outcome.absorbedInstallmentNo != null) {
-        AppFeedback.showResult(
-          context,
-          absorption,
-          successMessage: ledger.feeAbsorbed(
-            amount: outcome.absorbedAmount.toRupeeFormat(),
-            month: outcome.absorbedInstallmentNo.toString(),
-          ),
-        );
-      }
       if (outcome.payment is Success<void, String>) {
         Navigator.of(context).pop(true);
+        if (!hostContext.mounted) return;
+        AppFeedback.showResult(
+          hostContext,
+          outcome.payment,
+          successMessage: successMessage,
+          undoLabel: isEditing ? null : t.recurringDeposits.monthlyOperations.undo,
+          onUndo: isEditing
+              ? null
+              : () async {
+                  final undone = await draft.undo();
+                  if (!hostContext.mounted) return;
+                  AppFeedback.showResult(
+                    hostContext,
+                    undone,
+                    successMessage: ledger.paymentUndone,
+                  );
+                },
+        );
+        final absorption = outcome.absorption;
+        if (absorption != null && outcome.absorbedInstallmentNo != null) {
+          AppFeedback.showResult(
+            hostContext,
+            absorption,
+            successMessage: ledger.feeAbsorbed(
+              amount: outcome.absorbedAmount.toRupeeFormat(),
+              month: outcome.absorbedInstallmentNo.toString(),
+            ),
+          );
+        }
+        return;
       }
+      AppFeedback.showResult(context, outcome.payment, successMessage: successMessage);
     }
 
     Future<void> handlePopAttempt(bool didPop, bool? _) async {
@@ -111,12 +172,9 @@ class _PaymentForm extends HookConsumerWidget {
     if (draft.facts.hasValue) {
       body = _FormBody(draft: draft);
     } else if (draft.facts.hasError) {
-      body = Padding(
-        padding: const EdgeInsets.all(AppDimensions.paddingXl),
-        child: Text(
-          draft.facts.error.toString(),
-          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error),
-        ),
+      body = ErrorStateView(
+        message: draft.facts.error.toString(),
+        onRetry: () => ref.invalidate(rdLedgerFactsProvider(rdId)),
       );
     } else {
       body = const Padding(
@@ -124,6 +182,12 @@ class _PaymentForm extends HookConsumerWidget {
         child: Center(child: CircularProgressIndicator()),
       );
     }
+
+    final submitLabel = isEditing
+        ? ledger.saveChanges
+        : draft.amount > 0
+            ? ledger.collectSubmit(amount: draft.amount.toRupeeFormat())
+            : ledger.recordPayment;
 
     return PopScope<bool>(
       canPop: !isEditing || !draft.isDirty,
@@ -143,10 +207,12 @@ class _PaymentForm extends HookConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    isEditing ? ledger.editPaymentTitle : ledger.logPaymentTitle,
+                    title,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 IconButton(
@@ -189,7 +255,7 @@ class _PaymentForm extends HookConsumerWidget {
                       icon: HugeIcons.strokeRoundedCheckmarkCircle02,
                       size: AppDimensions.iconSm,
                     ),
-              label: Text(isEditing ? ledger.saveChanges : ledger.recordPayment),
+              label: Text(submitLabel),
             ),
           ),
         ],

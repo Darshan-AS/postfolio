@@ -10,6 +10,7 @@ import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
@@ -59,19 +60,23 @@ class RDMonthInspectorSheet extends ConsumerWidget {
     final now = ref.watch(clockProvider)();
     final isBusy = ref.watch(rDLedgerControllerProvider).isLoading;
 
-    Widget loaded(RDInstallment? inst) => inst == null
-        ? ErrorStateView(message: t.recurringDeposits.depositNotFound)
-        : _InspectorBody(
-            rdId: rdId,
-            installment: inst,
-            now: now,
-            isBusy: isBusy,
-            onCollect: onCollect,
-          );
+    Widget loaded(RDLedgerProjection projection) {
+      final inst = projection.byNo(installmentNo);
+      return inst == null
+          ? ErrorStateView(message: t.recurringDeposits.depositNotFound)
+          : _InspectorBody(
+              rdId: rdId,
+              installment: inst,
+              nextDueNo: projection.summary.nextDueNo,
+              now: now,
+              isBusy: isBusy,
+              onCollect: onCollect,
+            );
+    }
 
     final body = switch (projectionAsync) {
-      AsyncData(:final value) => loaded(value.byNo(installmentNo)),
-      AsyncLoading(:final value?) => loaded(value.byNo(installmentNo)),
+      AsyncData(:final value) => loaded(value),
+      AsyncLoading(:final value?) => loaded(value),
       AsyncError(:final error) => ErrorStateView(
           message: error.toString(),
           onRetry: () => ref.invalidate(rdLedgerProjectionProvider(rdId)),
@@ -96,6 +101,10 @@ class RDMonthInspectorSheet extends ConsumerWidget {
 class _InspectorBody extends ConsumerWidget {
   final String rdId;
   final RDInstallment installment;
+
+  /// Earliest open month of the account — the only month "Collect" may target, because
+  /// payments are applied sequentially by the projector.
+  final int? nextDueNo;
   final DateTime now;
   final bool isBusy;
   final ValueChanged<double> onCollect;
@@ -103,6 +112,7 @@ class _InspectorBody extends ConsumerWidget {
   const _InspectorBody({
     required this.rdId,
     required this.installment,
+    required this.nextDueNo,
     required this.now,
     required this.isBusy,
     required this.onCollect,
@@ -111,7 +121,8 @@ class _InspectorBody extends ConsumerWidget {
   Future<void> _absorbRemainingFee(BuildContext context, WidgetRef ref) async {
     final inspector = t.recurringDeposits.ledger.inspector;
     final inst = installment;
-    final amount = inst.outstandingAmount;
+    // The one absorb rule: exactly `absorbableFee`, never principal.
+    final amount = inst.absorbableFee;
     final monthNo = inst.installmentNo.toString();
 
     final confirmed = await AppDialogs.confirmAction(
@@ -165,11 +176,59 @@ class _InspectorBody extends ConsumerWidget {
     final visual = status.visual(scheme);
     final isBaseline = inst.isOpeningBaseline;
 
-    final canCollect = !isBaseline && inst.outstandingAmount > 0;
-    final canAbsorbFee = !isBaseline &&
-        inst.isPartiallyPaid &&
-        inst.outstandingAmount <= inst.customerFeeDue;
+    final isOpen = !isBaseline && inst.outstandingAmount > 0;
+    final isNextDue = nextDueNo != null && inst.installmentNo == nextDueNo;
+    final canCollect = isOpen && isNextDue;
+    final showCollectHint = isOpen && !isNextDue;
+    final canAbsorbFee = !isBaseline && inst.absorbableFee > 0;
     final canClearAbsorbed = !isBaseline && inst.absorbedFee > 0;
+    final depositedOn = inst.poDepositedOn;
+
+    final metricRows = <Widget>[
+      _MetricRow(
+        label: inspector.installment,
+        value: inst.installmentAmount.toRupeeFormat(),
+        trailing: inst.installmentDate.toMonthYearFormat(),
+      ),
+      if (inst.lateFee > 0)
+        _MetricRow(
+          label: inspector.customerFee,
+          value: inst.lateFee.toRupeeFormat(),
+          trailing: inst.customerFeeDue > 0
+              ? passbook.owes(amount: inst.customerFeeDue.toRupeeFormat())
+              : t.common.notProvided,
+        ),
+      if (inst.poLateFee > 0)
+        _MetricRow(
+          label: inspector.poFee,
+          value: inst.poLateFee.toRupeeFormat(),
+          trailing: inst.agentDelayCost > 0
+              ? passbook.agentDelay(amount: inst.agentDelayCost.toRupeeFormat())
+              : t.common.notProvided,
+          trailingColor: inst.agentDelayCost > 0 ? scheme.error : null,
+        ),
+      if (inst.absorbedFee > 0)
+        _MetricRow(
+          label: inspector.absorbed,
+          value: inst.absorbedFee.toRupeeFormat(),
+          trailing: t.common.notProvided,
+        ),
+      _MetricRow(
+        label: inspector.paid,
+        value: inst.customerPaidAmount.toRupeeFormat(),
+        trailing: inst.outstandingAmount > 0
+            ? passbook.owes(amount: inst.outstandingAmount.toRupeeFormat())
+            : inspector.paid,
+        trailingColor: inst.outstandingAmount > 0 ? visual.foreground : scheme.primary,
+      ),
+      // No "deposited on" row when there is no date — the status chip already says so.
+      if (depositedOn != null)
+        _MetricRow(
+          label: inspector.depositedOn,
+          value: depositedOn.toAppFormat(),
+          trailing: inst.poBatchId ?? t.common.notProvided,
+        ),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -206,52 +265,20 @@ class _InspectorBody extends ConsumerWidget {
           ),
           child: Column(
             children: [
-              _MetricRow(
-                label: inspector.installment,
-                value: inst.installmentAmount.toRupeeFormat(),
-                trailing: inst.installmentDate.toMonthYearFormat(),
-              ),
-              const Divider(height: AppDimensions.dividerHeight),
-              _MetricRow(
-                label: inspector.customerFee,
-                value: inst.lateFee.toRupeeFormat(),
-                trailing: inst.customerFeeDue > 0
-                    ? passbook.owes(amount: inst.customerFeeDue.toRupeeFormat())
-                    : t.common.notProvided,
-              ),
-              const Divider(height: AppDimensions.dividerHeight),
-              _MetricRow(
-                label: inspector.poFee,
-                value: inst.poLateFee.toRupeeFormat(),
-                trailing: inst.agentDelayCost > 0
-                    ? passbook.agentDelay(amount: inst.agentDelayCost.toRupeeFormat())
-                    : t.common.notProvided,
-                trailingColor: inst.agentDelayCost > 0 ? scheme.error : null,
-              ),
-              const Divider(height: AppDimensions.dividerHeight),
-              _MetricRow(
-                label: inspector.absorbed,
-                value: inst.absorbedFee.toRupeeFormat(),
-                trailing: t.common.notProvided,
-              ),
-              const Divider(height: AppDimensions.dividerHeight),
-              _MetricRow(
-                label: inspector.paid,
-                value: inst.customerPaidAmount.toRupeeFormat(),
-                trailing: inst.outstandingAmount > 0
-                    ? passbook.owes(amount: inst.outstandingAmount.toRupeeFormat())
-                    : inspector.paid,
-                trailingColor: inst.outstandingAmount > 0 ? visual.foreground : scheme.primary,
-              ),
-              const Divider(height: AppDimensions.dividerHeight),
-              _MetricRow(
-                label: inspector.depositedOn,
-                value: inst.poDepositedOn?.toAppFormat() ?? inspector.notDeposited,
-                trailing: inst.poBatchId ?? t.common.notProvided,
-              ),
+              for (var i = 0; i < metricRows.length; i++) ...[
+                if (i > 0) const Divider(height: AppDimensions.dividerHeight),
+                metricRows[i],
+              ],
             ],
           ),
         ),
+        if (showCollectHint) ...[
+          AppSpacings.gapSm,
+          Text(
+            inspector.collectHint(month: nextDueNo.toString()),
+            style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ],
         if (canCollect || canAbsorbFee || canClearAbsorbed) ...[
           AppSpacings.gapLg,
           if (canCollect)
@@ -272,9 +299,7 @@ class _InspectorBody extends ConsumerWidget {
                 size: AppDimensions.iconSm,
               ),
               label: Text(
-                inspector.absorbRemainingFee(
-                  amount: inst.outstandingAmount.toRupeeFormat(),
-                ),
+                inspector.absorbRemainingFee(amount: inst.absorbableFee.toRupeeFormat()),
               ),
             ),
           ],

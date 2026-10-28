@@ -35,6 +35,9 @@ abstract interface class RDLedgerRepository {
     required String eventId,
   });
 
+  /// Deletes every event recorded under one PO visit (`batch_id`), across accounts.
+  Future<Result<void, String>> deletePoDepositBatch(String batchId);
+
   // --- Fee absorptions --------------------------------------------------------------------
   Future<Result<void, String>> upsertFeeAbsorption(RDFeeAbsorption absorption);
   Future<Result<void, String>> removeFeeAbsorption({

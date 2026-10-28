@@ -14,6 +14,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_mode
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
 
 // ---------------------------------------------------------------------------------------------
 // Fixtures
@@ -278,13 +279,65 @@ void main() {
       expect(batch.count, 2);
       expect(batch.depositable.map((i) => i.deposit.id), ['rd1'], reason: 'rd2 has nothing collected');
       expect(batch.readyInstallments, 4);
+    });
 
-      final r = await c.read(rDMonthlyOperationsActionsProvider.notifier).depositSelectedReady();
-      expect(r, isA<Success<void, String>>());
-      expect(c.read(rDHubSelectionProvider).isSelectionMode, isFalse);
-      final event = h.ledger.poDepositsOf('rd1').single;
-      expect(event.installmentCount, 4);
-      expect(h.ledger.poDepositsOf('rd2'), isEmpty, reason: 'sequential: nothing to deposit for an unpaid account');
+    test('PO visit planner quotes the counter amount, groups cash lots, records one batch and undoes it', () async {
+      final h = _harness(
+        deposits: [_deposit('rd1'), _deposit('rd2', customer: 'c2')],
+        transactions: {
+          'rd1': [_tx('rd1', 't', 4000, DateTime(2026, 1, 12))],
+          'rd2': [
+            RDTransaction(id: 'u', rdId: 'rd2', paidDate: DateTime(2026, 1, 12), amount: 1000, paymentMode: RDPaymentMode.upi),
+          ],
+        },
+      );
+      final c = h.container;
+      _keepHub(c);
+      c.listen(rDPoVisitPlannerProvider, (_, _) {});
+      c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
+      await c.read(rDMonthlyOperationsActionsProvider.notifier).ensureSummaries();
+      await _settle();
+      await c.read(monthlyOperationItemsProvider.future);
+
+      final planner = c.read(rDPoVisitPlannerProvider.notifier);
+      planner.start();
+      var plan = c.read(rDPoVisitPlannerProvider);
+      expect(plan.lines.map((l) => l.rdId), ['rd1', 'rd2']);
+      expect(plan.accountCount, 2);
+      expect(plan.installmentCount, 5);
+      // rd1: #1..#4 paid on time; depositing on 20 Apr → fees 30+20+10+10 = 70 → 4070 (all cash).
+      // rd2: #1 paid on time (UPI); deposited 20 Apr → fee 30 → 1030 (digital).
+      expect(plan.totalAmount, 5100);
+      expect(plan.totalFee, 100);
+      expect(plan.totalCash, 4070);
+      expect(plan.totalDigital, 1030);
+      expect(plan.totalFromPocket, 0);
+      expect(plan.cashLots.single.cashAmount, 4070);
+
+      // Front one extra month for rd2 (#2, due 15 Feb, 2 months late → 20) from pocket.
+      planner.setFronted('rd2', 1);
+      plan = c.read(rDPoVisitPlannerProvider);
+      final rd2 = plan.lines.firstWhere((l) => l.rdId == 'rd2');
+      expect(rd2.count, 2);
+      expect(rd2.fromPocket, 1020);
+      expect(plan.totalFromPocket, 1020);
+
+      // Excluding an account removes it from the visit.
+      planner.toggleIncluded('rd1');
+      expect(c.read(rDPoVisitPlannerProvider).accountCount, 1);
+      planner.toggleIncluded('rd1');
+
+      final r = await planner.record();
+      expect(r, isA<Success<String, String>>());
+      final batchId = (r as Success<String, String>).value;
+      expect(h.ledger.poDepositsOf('rd1').single.batchId, batchId);
+      expect(h.ledger.poDepositsOf('rd1').single.installmentCount, 4);
+      expect(h.ledger.poDepositsOf('rd1').single.amount, 4070);
+      expect(h.ledger.poDepositsOf('rd2').single.installmentCount, 2);
+
+      expect(await planner.undoVisit(batchId), isA<Success<void, String>>());
+      expect(h.ledger.poDepositsOf('rd1'), isEmpty);
+      expect(h.ledger.poDepositsOf('rd2'), isEmpty);
     });
 
     test('filters: search by name, status, and due window; month change clears selection', () async {
@@ -326,7 +379,7 @@ void main() {
       expect(prepared.schedule, hasLength(12));
     });
 
-    test('frontFromPocket deposits through the selected month; absorbRemainingFee closes a fee-only gap', () async {
+    test('depositNextToPo fronts through a month; absorbRemainingFee closes a fee-only gap', () async {
       final h = _harness(
         deposits: [_deposit('rd1')],
         transactions: {'rd1': [_tx('rd1', 't', 1000, DateTime(2026, 2, 20))]},
@@ -355,10 +408,11 @@ void main() {
       expect(item.installment.absorbedFee, 10);
       expect(item.readyForPoCount, 1);
 
-      // Front through #3 from pocket (deposits #1 ready + #2, #3 unpaid).
-      c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 3, 1));
-      item = (await c.read(monthlyOperationItemsProvider.future)).single;
-      expect(await actions.frontFromPocket(item), isA<Success<void, String>>());
+      // Front through #3 from pocket (deposits #1 ready + #2, #3 unpaid) via the deposit sheet path.
+      expect(
+        await c.read(rDLedgerControllerProvider.notifier).depositNextToPo(rdId: 'rd1', count: 3),
+        isA<Success<void, String>>(),
+      );
       await _settle();
       final event = h.ledger.poDepositsOf('rd1').single;
       expect(event.installmentCount, 3);

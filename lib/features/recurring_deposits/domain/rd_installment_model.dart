@@ -66,6 +66,15 @@ sealed class RDInstallment with _$RDInstallment {
   double get customerFeeDue =>
       Money.round((lateFee - absorbedFee).clamp(0.0, double.infinity));
 
+  /// How much fee the agent could absorb right now to close this month: the remaining
+  /// balance, but only when it is small enough to be fee (never principal), and only on a
+  /// month the customer has started paying. `0` when absorbing would not settle the month.
+  double get absorbableFee {
+    if (isOpeningBaseline || isCustomerSettled || !isPartiallyPaid) return 0.0;
+    final remaining = outstandingAmount;
+    return Money.toPaise(remaining) <= Money.toPaise(customerFeeDue) ? remaining : 0.0;
+  }
+
   /// Remaining customer balance on this month.
   double get outstandingAmount =>
       Money.round((dueAmount - customerPaidAmount).clamp(0.0, double.infinity));

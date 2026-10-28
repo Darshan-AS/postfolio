@@ -226,6 +226,32 @@ class RDLedgerController extends _$RDLedgerController {
     );
   }
 
+  /// Deletes every PO event recorded under one visit (`batchId`) and refreshes the touched
+  /// accounts' summaries. Used by "Undo visit".
+  Future<Result<void, String>> undoBatch(String batchId) async {
+    if (state.isLoading) {
+      return const Failure('Another ledger operation is still running.');
+    }
+    state = const AsyncLoading();
+    try {
+      final summaries = ref.read(rdLedgerSummariesProvider).value ?? const {};
+      final result = await ref.read(rdLedgerRepositoryProvider).deletePoDepositBatch(batchId);
+      if (result case Success()) {
+        for (final rdId in summaries.keys) {
+          unawaited(_refreshSummary(
+            rdId,
+            (f) => f.copyWith(poDeposits: f.poDeposits.where((e) => e.batchId != batchId).toList()),
+          ));
+        }
+      }
+      if (ref.mounted) state = const AsyncData(null);
+      return result;
+    } catch (e) {
+      if (ref.mounted) state = const AsyncData(null);
+      return Failure(e.toString());
+    }
+  }
+
   /// Records that the agent paid [amount] of month [installmentNo]'s default fee from pocket
   /// (pass `0` / use [clearAbsorbedFee] to revert).
   Future<Result<void, String>> absorbFee({
