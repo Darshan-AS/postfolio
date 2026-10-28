@@ -2,7 +2,7 @@
 BEGIN;
 TRUNCATE TABLE
   public.rd_ledger_summary,
-  public.rd_fee_waivers,
+  public.rd_fee_absorptions,
   public.rd_po_deposits,
   public.rd_transactions,
   public.nominees,
@@ -21,6 +21,6 @@ DELETE FROM auth.identities;
 DELETE FROM auth.users;
 -- Record the facts-only migration as applied (it was executed manually against this DB).
 INSERT INTO supabase_migrations.schema_migrations (version, name)
-VALUES ('20261027000000', 'facts_only_rd_ledger')
+VALUES ('20261027000000', 'facts_only_rd_ledger'), ('20261028000000', 'sequential_rd_ledger')
 ON CONFLICT (version) DO NOTHING;
 COMMIT;

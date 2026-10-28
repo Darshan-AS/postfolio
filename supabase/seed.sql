@@ -84,50 +84,55 @@ ON CONFLICT (id) DO NOTHING;
 --    d111…: opened 15 Jan 2025 (due on the 15th), onboarded with 12 months paid → ledger starts at #13 (Jan 2026).
 --    f222…: opened 1 Jun 2024 (due on the 15th), onboarded with 24 months paid → ledger starts at #25 (Jun 2026).
 --    f555…: opened 20 Aug 2026 (due end-of-month), brand new account.
-INSERT INTO public.recurring_deposits (id, status, scheme_type, account_no, serial_no, installment_amount, interest_rate, term_years, term_months, start_date, initial_paid_installments)
+INSERT INTO public.recurring_deposits (id, status, scheme_type, account_no, serial_no, installment_amount, interest_rate, term_years, term_months, start_date, initial_paid_installments, opening_receivable)
 VALUES
-  ('d1111111-1111-1111-1111-111111111111', 'active', 'recurringDeposit', '100200300', '1', 5000.00, 6.7, 5, 0, '2025-01-15', 12),
-  ('f2222222-2222-2222-2222-222222222222', 'active', 'recurringDeposit', '100200400', '2', 10000.00, 6.7, 5, 0, '2024-06-01', 24),
-  ('f5555555-5555-5555-5555-555555555555', 'active', 'recurringDeposit', '100200500', '3', 2000.00, 6.7, 5, 0, '2026-08-20', 0)
+  ('d1111111-1111-1111-1111-111111111111', 'active', 'recurringDeposit', '100200300', '1', 5000.00, 6.7, 5, 0, '2025-01-15', 12, 0),
+  ('f2222222-2222-2222-2222-222222222222', 'active', 'recurringDeposit', '100200400', '2', 10000.00, 6.7, 5, 0, '2024-06-01', 24, 0),
+  ('f5555555-5555-5555-5555-555555555555', 'active', 'recurringDeposit', '100200500', '3', 2000.00, 6.7, 5, 0, '2026-08-20', 0, 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- 4b. RD ledger facts (facts-only ledger: payments, PO deposits, waivers; everything else is projected)
---     d111…: #13–#16 paid on time, #17 (May) skipped, Jun/Jul/Aug payments roll forward chronologically
---            (so Aug's payment clears Jul's month and Aug itself is in arrears), one fees-only top-up, #14 fee waived.
+--     d111…: #13–#16 paid on time (#14 one day late, fee absorbed by the agent), #17 (May) skipped, so the
+--            Jun/Jul/Aug payments roll forward chronologically and Aug/Sep/Oct are in arrears; a ₹100 top-up in Sep.
 --     f222…: #25, #26 on time, #27 paid late (default fee), #28 and #29 unpaid.
 --     f555…: #1 paid, #2 unpaid (overdue), #3 due end of October.
-INSERT INTO public.rd_transactions (id, rd_id, agent_id, paid_date, amount, payment_mode, split_mode, installment_amount, late_fee_amount)
+INSERT INTO public.rd_transactions (id, rd_id, agent_id, paid_date, amount, payment_mode)
 VALUES
-  ('aa000000-0000-4000-8000-000000000101', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-01-14', 5000.00, 'cash', 'includeFees', 0, 0),
-  ('aa000000-0000-4000-8000-000000000102', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-02-16', 5000.00, 'upi',  'includeFees', 0, 0),
-  ('aa000000-0000-4000-8000-000000000103', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-03-12', 5000.00, 'cash', 'includeFees', 0, 0),
-  ('aa000000-0000-4000-8000-000000000104', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-04-15', 5000.00, 'cash', 'includeFees', 0, 0),
-  ('aa000000-0000-4000-8000-000000000105', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-06-20', 5000.00, 'cash', 'includeFees', 0, 0),
-  ('aa000000-0000-4000-8000-000000000106', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-07-14', 5000.00, 'upi',  'includeFees', 0, 0),
-  ('aa000000-0000-4000-8000-000000000107', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-08-14', 5000.00, 'cash', 'includeFees', 0, 0),
-  ('aa000000-0000-4000-8000-000000000108', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-09-16', 100.00,  'cash', 'feesOnly',    0, 0),
-  ('aa000000-0000-4000-8000-000000000201', 'f2222222-2222-2222-2222-222222222222', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-06-10', 10000.00, 'bankTransfer', 'includeFees', 0, 0),
-  ('aa000000-0000-4000-8000-000000000202', 'f2222222-2222-2222-2222-222222222222', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-07-13', 10000.00, 'cash', 'includeFees', 0, 0),
-  ('aa000000-0000-4000-8000-000000000203', 'f2222222-2222-2222-2222-222222222222', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-08-30', 10100.00, 'cash', 'includeFees', 0, 0),
-  ('aa000000-0000-4000-8000-000000000301', 'f5555555-5555-5555-5555-555555555555', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-08-28', 2000.00, 'cash', 'includeFees', 0, 0)
+  ('aa000000-0000-4000-8000-000000000101', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-01-14', 5000.00, 'cash'),
+  ('aa000000-0000-4000-8000-000000000102', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-02-16', 5000.00, 'upi'),
+  ('aa000000-0000-4000-8000-000000000103', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-03-12', 5000.00, 'cash'),
+  ('aa000000-0000-4000-8000-000000000104', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-04-15', 5000.00, 'cash'),
+  ('aa000000-0000-4000-8000-000000000105', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-06-20', 5000.00, 'cash'),
+  ('aa000000-0000-4000-8000-000000000106', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-07-14', 5000.00, 'upi'),
+  ('aa000000-0000-4000-8000-000000000107', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-08-14', 5000.00, 'cash'),
+  ('aa000000-0000-4000-8000-000000000108', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-09-16', 100.00,  'cash'),
+  ('aa000000-0000-4000-8000-000000000201', 'f2222222-2222-2222-2222-222222222222', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-06-10', 10000.00, 'bankTransfer'),
+  ('aa000000-0000-4000-8000-000000000202', 'f2222222-2222-2222-2222-222222222222', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-07-13', 10000.00, 'cash'),
+  ('aa000000-0000-4000-8000-000000000203', 'f2222222-2222-2222-2222-222222222222', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-08-30', 10100.00, 'cash'),
+  ('aa000000-0000-4000-8000-000000000301', 'f5555555-5555-5555-5555-555555555555', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-08-28', 2000.00, 'cash')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.rd_po_deposits (rd_id, agent_id, installment_no, deposited_on)
+-- PO visits are sequential events: "deposited the next N installments on <date>".
+--   d111…: six monthly visits covering #13–#18 (one month each), nothing since July.
+--   f222…: #25 and #26 deposited; #27 collected late and still with the agent.
+--   f555…: #1 deposited.
+INSERT INTO public.rd_po_deposits (id, rd_id, agent_id, deposited_on, installment_count, fee_paid, amount)
 VALUES
-  ('d1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', 13, '2026-01-16'),
-  ('d1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', 14, '2026-02-18'),
-  ('d1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', 15, '2026-03-14'),
-  ('d1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', 16, '2026-04-17'),
-  ('d1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', 17, '2026-06-22'),
-  ('d1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', 18, '2026-07-16'),
-  ('f2222222-2222-2222-2222-222222222222', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', 25, '2026-06-12'),
-  ('f2222222-2222-2222-2222-222222222222', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', 26, '2026-07-15'),
-  ('f5555555-5555-5555-5555-555555555555', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', 1,  '2026-08-29')
-ON CONFLICT (rd_id, installment_no) DO NOTHING;
+  ('bb000000-0000-4000-8000-000000000101', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-01-16', 1, 0,  5000.00),
+  ('bb000000-0000-4000-8000-000000000102', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-02-18', 1, 50, 5050.00),
+  ('bb000000-0000-4000-8000-000000000103', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-03-14', 1, 0,  5000.00),
+  ('bb000000-0000-4000-8000-000000000104', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-04-17', 1, 50, 5050.00),
+  ('bb000000-0000-4000-8000-000000000105', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-06-22', 1, 50, 5050.00),
+  ('bb000000-0000-4000-8000-000000000106', 'd1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-07-16', 1, 50, 5050.00),
+  ('bb000000-0000-4000-8000-000000000201', 'f2222222-2222-2222-2222-222222222222', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-06-12', 1, 0,  10000.00),
+  ('bb000000-0000-4000-8000-000000000202', 'f2222222-2222-2222-2222-222222222222', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-07-15', 1, 0,  10000.00),
+  ('bb000000-0000-4000-8000-000000000301', 'f5555555-5555-5555-5555-555555555555', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', '2026-08-29', 1, 0,  2000.00)
+ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.rd_fee_waivers (rd_id, agent_id, installment_no, waived_on, note)
+-- The agent paid #14's ₹50 default fee from pocket for a good customer.
+INSERT INTO public.rd_fee_absorptions (rd_id, agent_id, installment_no, amount, absorbed_on, note)
 VALUES
-  ('d1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', 14, '2026-02-18', 'Customer travelling; one-day delay')
+  ('d1111111-1111-1111-1111-111111111111', '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d', 14, 50, '2026-02-18', 'Customer travelling; one-day delay')
 ON CONFLICT (rd_id, installment_no) DO NOTHING;
 
 -- 5. Add one time deposits
@@ -167,7 +172,7 @@ BEGIN
   UPDATE public.account_identities SET agent_id = v_target WHERE agent_id = v_seed;
   UPDATE public.rd_transactions    SET agent_id = v_target WHERE agent_id = v_seed;
   UPDATE public.rd_po_deposits     SET agent_id = v_target WHERE agent_id = v_seed;
-  UPDATE public.rd_fee_waivers     SET agent_id = v_target WHERE agent_id = v_seed;
+  UPDATE public.rd_fee_absorptions SET agent_id = v_target WHERE agent_id = v_seed;
   DELETE FROM public.rd_ledger_summary WHERE agent_id = v_seed; -- cache; rebuilt by the app
   RETURN 'Seed data now belongs to ' || v_target::text;
 END;
