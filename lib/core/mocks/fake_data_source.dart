@@ -4,6 +4,11 @@ import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_rules.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/models/savings_account.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
@@ -18,6 +23,8 @@ class FakeDataSource {
   late final List<Customer> customers;
   late final List<OneTimeDeposit> oneTimeDeposits;
   late final List<RecurringDeposit> recurringDeposits;
+  late final Map<String, List<RDTransaction>> rdTransactions;
+  late final Map<String, List<RDPoDeposit>> rdPoDeposits;
 
   FakeDataSource._internal() {
     _generateData();
@@ -162,5 +169,85 @@ class FakeDataSource {
         ),
       );
     });
+
+    // Ledger facts for demo mode: most due months are paid a few days before/after the due
+    // date (as several small amounts now and then), a few are skipped so arrears and default
+    // fees appear, and everything collected except the last couple of months has been
+    // deposited at the Post Office as sequential events (one visit per month).
+    final today = DateTime.now();
+    rdTransactions = {};
+    rdPoDeposits = {};
+    for (final rd in recurringDeposits) {
+      if (rd.status != DepositStatus.active) continue;
+      final txs = <RDTransaction>[];
+      final deposits = <RDPoDeposit>[];
+      final total = rd.totalMonths;
+      var paidCount = 0;
+      var depositedThrough = rd.initialPaidInstallments;
+      for (var no = rd.initialPaidInstallments + 1; no <= total; no++) {
+        final month = RDScheduleFactory.installmentDateFor(rd.startDate, no);
+        final due = RDLedgerRules.standard.dueDateFor(rd.startDate, month);
+        if (!due.isBefore(today)) break;
+        // ~1 in 6 months is skipped to create realistic arrears.
+        if (random.integer(6) == 0) continue;
+        final paidOn = due.add(Duration(days: random.integer(9, min: -4)));
+        final paidDay = DateTime(paidOn.year, paidOn.month, paidOn.day);
+        final lateMonths = RDLedgerRules.standard.defaultedMonths(due, paidDay);
+        final fee = RDLedgerRules.standard.defaultFeeFor(rd.installmentAmount, lateMonths);
+        if (random.integer(4) == 0) {
+          // Two part-payments in the same month.
+          final first = (rd.installmentAmount * 0.6).roundToDouble();
+          txs.add(RDTransaction(
+            id: faker.guid.guid(),
+            rdId: rd.id,
+            paidDate: paidDay.subtract(const Duration(days: 6)),
+            amount: first,
+            paymentMode: RDPaymentMode.cash,
+            createdAt: paidOn,
+          ));
+          txs.add(RDTransaction(
+            id: faker.guid.guid(),
+            rdId: rd.id,
+            paidDate: paidDay,
+            amount: rd.installmentAmount - first + fee,
+            paymentMode: random.element(RDPaymentMode.values),
+            createdAt: paidOn,
+          ));
+        } else {
+          txs.add(RDTransaction(
+            id: faker.guid.guid(),
+            rdId: rd.id,
+            paidDate: paidDay,
+            amount: rd.installmentAmount + fee,
+            paymentMode: random.element(RDPaymentMode.values),
+            createdAt: paidOn,
+          ));
+        }
+        paidCount++;
+        // Deposit everything collected so far at the PO, except the most recent couple of months.
+        if (paidCount > 2 && random.integer(5) != 0 && depositedThrough < no) {
+          final count = no - depositedThrough;
+          final depositedOn = paidDay.add(Duration(days: random.integer(4, min: 1)));
+          var feePaid = 0.0;
+          for (var k = depositedThrough + 1; k <= no; k++) {
+            final kDue = RDLedgerRules.standard.dueDateFor(
+                rd.startDate, RDScheduleFactory.installmentDateFor(rd.startDate, k));
+            feePaid += RDLedgerRules.standard.defaultFeeFor(
+                rd.installmentAmount, RDLedgerRules.standard.defaultedMonths(kDue, depositedOn));
+          }
+          deposits.add(RDPoDeposit(
+            id: faker.guid.guid(),
+            rdId: rd.id,
+            depositedOn: depositedOn,
+            installmentCount: count,
+            feePaid: feePaid,
+            amount: count * rd.installmentAmount + feePaid,
+          ));
+          depositedThrough = no;
+        }
+      }
+      rdTransactions[rd.id] = txs;
+      rdPoDeposits[rd.id] = deposits;
+    }
   }
 }
