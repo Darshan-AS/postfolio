@@ -6,6 +6,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_monthly_operation_item.dart';
@@ -148,11 +149,22 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> monthlyOperationItems(Ref r
   final deposits = await ref.watch(recurringDepositsControllerProvider.future);
   final summaries = await ref.watch(rdLedgerSummariesProvider.future);
 
+  // The Supabase list view already carries customer_name; demo/Firestore deposits do not.
+  // Join lazily so a missing name never shows up as an id or a placeholder error.
+  Map<String, String> customerNames = const {};
+  if (deposits.any((d) => d.customerName == null)) {
+    final customers = await ref.watch(customersControllerProvider.future);
+    customerNames = {for (final c in customers) c.id: c.name};
+  }
+
   final isFutureMonth = month.isAfter(now.toMonthStart());
   final items = <RDMonthlyOperationItem>[];
 
-  for (final deposit in deposits) {
+  for (var deposit in deposits) {
     if (deposit.status == DepositStatus.closed) continue;
+    if (deposit.customerName == null && customerNames.containsKey(deposit.customerId)) {
+      deposit = deposit.copyWith(customerName: customerNames[deposit.customerId]);
+    }
     final no = RDScheduleFactory.installmentNoFor(deposit.startDate, month);
     if (no < 1 || no > deposit.totalMonths) continue;
 
@@ -274,14 +286,13 @@ sealed class RDAgentFloatSummary with _$RDAgentFloatSummary {
 RDAgentFloatSummary globalAgentFloat(Ref ref) {
   final summaries = ref.watch(rdLedgerSummariesProvider).value ?? const {};
   final deposits = ref.watch(recurringDepositsControllerProvider).value;
-  final closed = {
-    for (final d in deposits ?? const <RecurringDeposit>[])
-      if (d.status == DepositStatus.closed) d.id,
-  };
+  final now = ref.watch(clockProvider)().toDateOnly();
+  final byId = {for (final d in deposits ?? const <RecurringDeposit>[]) d.id: d};
 
   var s = const RDAgentFloatSummary();
   for (final summary in summaries.values) {
-    if (closed.contains(summary.rdId)) continue;
+    final deposit = byId[summary.rdId];
+    if (deposit == null || deposit.status == DepositStatus.closed) continue;
     if (summary.cashInHand > 0) {
       s = s.copyWith(
         cashInHandCash: s.cashInHandCash + summary.cashInHandCash,
@@ -296,7 +307,8 @@ RDAgentFloatSummary globalAgentFloat(Ref ref) {
       );
     }
     s = s.copyWith(absorbedFeesTotal: s.absorbedFeesTotal + summary.absorbedTotal);
-    if (summary.arrearsCount >= 2) {
+    // Evaluate arrears as of today: the cached count is only as fresh as the last write.
+    if (summary.arrearsCountAsOf(deposit, now) >= 2) {
       s = s.copyWith(arrearsAccounts: s.arrearsAccounts + 1);
     }
   }

@@ -155,7 +155,24 @@ class RDMonthlyOperationCard extends StatelessWidget {
     final inst = item.installment;
     final deposit = item.deposit;
     final status = item.displayStatus(now);
-    final visual = status.visual(scheme);
+    // The pill describes the *account* the agent is standing in front of, not just this
+    // month: carried-over arrears outrank "Upcoming" / "Due today".
+    final arrearsMonths =
+        item.priorOverdueCount + (item.isOverdue(now) && item.isCustomerPending ? 1 : 0);
+    final RDStatusVisual visual;
+    if (item.hasPriorArrears && status.isCustomerPending) {
+      final overdue = RDInstallmentDisplayStatus.overdue.visual(scheme);
+      visual = (
+        foreground: overdue.foreground,
+        background: overdue.background,
+        icon: overdue.icon,
+        label: t.recurringDeposits.monthlyOperations.card.arrearsPill(n: arrearsMonths),
+        outline: overdue.outline,
+        emphasized: true,
+      );
+    } else {
+      visual = status.visual(scheme);
+    }
     final money = _money(scheme);
 
     // Nothing has happened yet this month → no indicator bar, just the status pill.
@@ -204,7 +221,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
               status: status,
               visual: visual,
             ),
-      title: deposit.customerName ?? t.recurringDeposits.depositNotFound,
+      title: deposit.customerName ?? t.recurringDeposits.unnamedCustomer,
       subtitle: Padding(
         padding: const EdgeInsets.only(top: AppDimensions.paddingXxs),
         child: _IdentityLine(

@@ -91,6 +91,16 @@ sealed class RDLedgerSummary with _$RDLedgerSummary {
 
   double get cashInHand => Money.round(cashInHandCash + cashInHandDigital);
 
+  /// Date of the most recent Post Office visit recorded after onboarding, if any.
+  DateTime? get lastPoVisitOn {
+    DateTime? latest;
+    for (final item in openItems) {
+      final d = item.poDepositedOn;
+      if (d != null && (latest == null || d.isAfter(latest))) latest = d;
+    }
+    return latest;
+  }
+
   /// Months collected in full but not yet deposited (contiguous after [depositedThroughNo]).
   int get readyForPoCount =>
       paidThroughNo > depositedThroughNo ? paidThroughNo - depositedThroughNo : 0;
@@ -135,6 +145,25 @@ sealed class RDLedgerSummary with _$RDLedgerSummary {
       poDepositedOn: deposited,
       poBatchId: item?.poBatchId,
     );
+  }
+
+  /// Unsettled months whose due date has passed by [asOf], evaluated now rather than at
+  /// [projectedOn] — the stored [arrearsCount] goes stale across month boundaries for
+  /// accounts with no recent writes.
+  int arrearsCountAsOf(
+    RecurringDeposit deposit,
+    DateTime asOf, {
+    RDLedgerRules rules = RDLedgerRules.standard,
+  }) {
+    final day = asOf.toDateOnly();
+    var count = 0;
+    for (var no = paidThroughNo + 1; no <= deposit.totalMonths; no++) {
+      if (no <= deposit.initialPaidInstallments) continue;
+      final inst = installmentFor(deposit, no, day, rules: rules);
+      if (!inst.dueDate.isBefore(day)) break;
+      if (!inst.isCustomerSettled) count++;
+    }
+    return count;
   }
 
   /// Months strictly before [installmentNo] that the customer still owes on at [asOf].

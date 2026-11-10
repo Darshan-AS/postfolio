@@ -91,6 +91,17 @@ sealed class RDPoVisitPlan with _$RDPoVisitPlan {
   }
 
   bool get exceedsSingleCashLot => Money.toPaise(totalCash) > Money.toPaise(kPoCashLotLimit);
+
+  /// Earliest date this visit may carry: the Post Office ledger is sequential, so a visit
+  /// cannot be dated before any included account's last recorded visit.
+  DateTime? get earliestAllowedDate {
+    DateTime? latest;
+    for (final l in lines) {
+      final d = l.item.summary.lastPoVisitOn;
+      if (d != null && (latest == null || d.isAfter(latest))) latest = d;
+    }
+    return latest;
+  }
 }
 
 /// Plans and records a Post Office visit for the accounts currently in the Hub.

@@ -182,6 +182,21 @@ void main() {
       expect(await n.undoLatestPoDeposit('rd1'), isA<Failure<void, String>>());
     });
 
+    test('a PO visit cannot be dated before the last recorded visit', () async {
+      final h = _harness(
+        deposits: [_deposit('rd1')],
+        transactions: {'rd1': [_tx('rd1', 't', 3000, DateTime(2026, 1, 12))]},
+        poDeposits: {'rd1': [RDPoDeposit(id: 'e1', rdId: 'rd1', depositedOn: DateTime(2026, 3, 10), installmentCount: 1)]},
+      );
+      _keep(h.container, 'rd1');
+      final n = h.container.read(rDLedgerControllerProvider.notifier);
+      final back = await n.depositNextToPo(rdId: 'rd1', count: 1, depositedOn: DateTime(2026, 2, 1));
+      expect(back, isA<Failure<void, String>>());
+      expect(h.ledger.poDepositsOf('rd1'), hasLength(1));
+      final same = await n.depositNextToPo(rdId: 'rd1', count: 1, depositedOn: DateTime(2026, 3, 10));
+      expect(same, isA<Success<void, String>>(), reason: 'same day as the last visit is fine');
+    });
+
     test('financial terms lock follows facts', () async {
       final h = _harness(deposits: [_deposit('rd1')]);
       _keep(h.container, 'rd1');

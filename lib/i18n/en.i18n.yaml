@@ -238,6 +238,7 @@ recurringDeposits:
   editDeposit: "Edit RD"
   noDepositsFound: "No recurring deposits found. Add one!"
   depositNotFound: "RD not found"
+  unnamedCustomer: "Unnamed customer"
   searchHint: "Search by account, serial, customer or scheme..."
   deleteDeposit: "Delete RD"
   deleteDepositConfirmation: "Are you sure you want to delete this RD?"
@@ -343,7 +344,9 @@ recurringDeposits:
       exitSelectMode: "Done selecting"
       pickMonth: "Jump to month"
     customerGroup:
-      header: "${name} • ${count} accounts • ${amount}/mo"
+      header:
+        one: "${name} • 1 account • ${amount}/mo"
+        other: "${name} • ${n} accounts • ${amount}/mo"
       selectGroup: "Select All"
       selectGroupFor: "Select all accounts of ${name}"
     card:
@@ -362,6 +365,9 @@ recurringDeposits:
       arrears:
         one: "+1 month arrears"
         other: "+${n} months arrears"
+      arrearsPill:
+        one: "In arrears · 1 month"
+        other: "In arrears · ${n} months"
       collect: "Collect ${amount}"
       deposit: "Deposit ${count}"
       viewLedger: "View Full Ledger"
@@ -393,7 +399,7 @@ recurringDeposits:
     paymentModes:
       cash: "Cash"
       upi: "UPI"
-      cheque: "Cheque"
+      cheque: "Chq"
       bankTransfer: "Bank"
     paymentDate: "Payment Date"
     paymentDateValue: "Payment Date: ${date}"

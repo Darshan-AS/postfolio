@@ -187,6 +187,14 @@ class RDLedgerController extends _$RDLedgerController {
     if (count > remaining) {
       return Failure('Only $remaining installment(s) remain on this account.');
     }
+    // The Post Office ledger is sequential: a visit dated before an already-recorded visit
+    // would re-assign which months earlier visits covered (and break "undo latest").
+    final latest = facts.latestPoDeposit;
+    if (latest != null && day.isBefore(latest.depositedOn.toDateOnly())) {
+      return Failure(
+        'Deposit date cannot be before the last recorded visit (${latest.depositedOn.toDateOnlyString()}).',
+      );
+    }
     final quote = ref
         .read(rdLedgerProjectorProvider)
         .quoteNextDeposit(facts, count: count, depositedOn: day);

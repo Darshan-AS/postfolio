@@ -225,7 +225,7 @@ class _CustomerGroupHeader extends ConsumerWidget {
             child: Text(
               groupStrings.header(
                 name: group.customerName,
-                count: group.items.length,
+                n: group.items.length,
                 amount: group.monthlyTotal.toRupeeFormat(),
               ),
               style: theme.textTheme.labelMedium?.copyWith(
@@ -354,7 +354,7 @@ class _RDHubRow extends ConsumerWidget {
 
     final status = item.displayStatus(now);
     final statusLabel = status.visual(Theme.of(context).colorScheme).label;
-    final customerName = item.deposit.customerName ?? t.recurringDeposits.depositNotFound;
+    final customerName = item.deposit.customerName ?? t.recurringDeposits.unnamedCustomer;
     final serial = item.deposit.serialNo ?? t.common.notProvided;
     final overdueDays = item.installment.overdueDaysAt(now);
     // One sentence per row for screen readers: who, which account, where it stands.

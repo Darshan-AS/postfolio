@@ -145,9 +145,9 @@ class _KpiGrid extends ConsumerWidget {
                     icon: HugeIcons.strokeRoundedBuilding03,
                     visual: inHandVisual,
                     isSelected: false,
-                    onTap: isBusy || float.cashInHandAccounts == 0
-                        ? null
-                        : planVisit,
+                    // Always reachable: fronting from pocket is planned here even when
+                    // nothing has been collected yet.
+                    onTap: isBusy ? null : planVisit,
                     hint: strings.plannerHint,
                   ),
                 ),

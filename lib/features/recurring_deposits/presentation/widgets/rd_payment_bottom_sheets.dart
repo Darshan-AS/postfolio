@@ -348,7 +348,10 @@ class _FormBody extends StatelessWidget {
                   value: mode,
                   tooltip: mode.displayName,
                   icon: HugeIcon(icon: mode.icon, size: AppDimensions.iconSm),
-                  label: Text(mode.shortLabel, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  label: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(mode.shortLabel, maxLines: 1, softWrap: false),
+                  ),
                 ),
             ],
           ),

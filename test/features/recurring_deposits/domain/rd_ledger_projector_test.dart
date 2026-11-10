@@ -383,6 +383,15 @@ void main() {
       }
     });
 
+    test('arrearsCountAsOf is evaluated at the asked date, not when the summary was built', () {
+      final facts = RDLedgerFacts(deposit: deposit(), transactions: [tx('a', 1000, DateTime(2026, 1, 10))]);
+      final summary = projector.project(facts, asOf: DateTime(2026, 2, 1)).summary;
+      expect(summary.arrearsCount, 0, reason: '#2 not yet due on 1 Feb');
+      expect(summary.arrearsCountAsOf(facts.deposit, DateTime(2026, 2, 1)), 0);
+      expect(summary.arrearsCountAsOf(facts.deposit, DateTime(2026, 4, 20)), 3,
+          reason: 'same cached row, two months later: #2 #3 #4 are past due');
+    });
+
     test('priorOpenInstallments lists arrears before the selected month', () {
       final facts = RDLedgerFacts(deposit: deposit(), transactions: [tx('a', 1000, DateTime(2026, 1, 10))]);
       final now = DateTime(2026, 4, 20);

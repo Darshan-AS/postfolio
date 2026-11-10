@@ -52,10 +52,13 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
     final canRecord = installmentCount > 0 && !isBusy;
 
     Future<void> pickDate() async {
+      final lookback = DateTime(today.year - _lookbackYears, today.month);
+      final floor = plan.earliestAllowedDate;
+      final firstDate = floor != null && floor.isAfter(lookback) ? floor : lookback;
       final selected = await showDatePicker(
         context: context,
-        initialDate: plan.depositedOn,
-        firstDate: DateTime(today.year - _lookbackYears, today.month),
+        initialDate: plan.depositedOn.isBefore(firstDate) ? firstDate : plan.depositedOn,
+        firstDate: firstDate.isAfter(today) ? today : firstDate,
         lastDate: today,
       );
       if (selected == null || !context.mounted) return;
