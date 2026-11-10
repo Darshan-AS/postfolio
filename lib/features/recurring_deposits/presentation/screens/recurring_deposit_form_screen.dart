@@ -342,7 +342,7 @@ List<Widget> _buildInvestmentDetails(
     AppTextField(
       controller: state.initialPaidInstallmentsController,
       labelText: t.recurringDeposits.fields.initialPaidInstallments,
-      enabled: !state.isUpdating && !state.isFinancialTermsLocked,
+      enabled: !state.isFinancialTermsLocked,
       prefixIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedCheckmarkCircle02,
         size: AppDimensions.iconMd,
@@ -360,7 +360,7 @@ List<Widget> _buildInvestmentDetails(
     AppTextField(
       controller: state.openingReceivableController,
       labelText: t.recurringDeposits.fields.openingReceivable,
-      enabled: !state.isUpdating && !state.isFinancialTermsLocked,
+      enabled: !state.isFinancialTermsLocked,
       prefixIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedWallet02,
         size: AppDimensions.iconMd,
