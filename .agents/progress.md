@@ -1,6 +1,296 @@
 # Project Progress
 
 ## Current State
+**Schema note (2026-11-10):** the RD ledger ships as a single migration, `supabase/migrations/20261110000000_rd_ledger.sql`, which creates only the final facts-only sequential schema. The intermediate migrations referenced in the historical sections below (`20260903…`, `20260905…`, `20260912…`, `20261025…`, `20261027…`, `20261028…`) were never applied to a remote project and no longer exist on the branch; they survive only under git tag `ledger-history-pre-rewrite`.
+
+**RD Ledger UI (Phase 8 Complete)** — driven by the agent-workflow interview in `docs/rd_ledger_ui_improvement_plan.md`:
+- **Hub row**: customer name first; `Sl N · A/c …last4 · due`; the primary figure is `owes ₹X` (+ fee/arrears caption); full-width `Collect ₹X` (opens the prefilled sheet) or `Deposit N` footer button; overflow: Front from pocket (deposit sheet), Absorb remaining fee (single `absorbableFee` rule), Undo last PO deposit.
+- **Hub header**: 2×2 grid of the four agreed numbers — To collect, In hand (cash/UPI; opens the PO visit planner), Receivable, Arrears — each a filter, skeletonised as one block; one-line month switcher; Accounts⇄Hub toggle in the app bar; group-by-customer on by default; serial-first search.
+- **PO visit planner** (`RDPoVisitPlanner`, `rd_po_visit_sheet.dart`): what gets keyed into the DOP portal — per account N installments · ₹ incl. fee on the chosen date, cash vs UPI totals, >₹20k cash-lot grouping, per-line "+ front" from pocket with a pocket subtotal, one `batch_id` per visit and "Undo visit" (`undoBatch`).
+- **Sheets**: identity in titles ("Collect from Ramesh · 12", "Deposit 2 · Ramesh · 12"), toasts with Undo, Retry on errors, payment modes labelled.
+- **Passbook/detail**: "Collected through #N / At PO #M (+ months fronted)", 56dp-safe tiles, inspector rows named "Default fee (customer) / (charged at PO) / Fee you bore".
+- **Accessibility**: Semantics on rows/tiles/checkboxes, tooltips everywhere, ≥44dp write buttons, distinct container colour per status. Tests: 73 passing.
+- **Deferred by decision**: household lump-sum split, one-tap collect without sheet, Today dashboard, arrears screen, receipts.
+
+**Previous: RD Ledger — Sequential Ledger (Phase 7 Complete, on top of Phase 6)** — rules confirmed with agents (`rd_ledger_usecases_agreed.md`):
+- **Both ledgers are sequential.** Customer money fills months in order (a partial sits on the earliest open month, overpayment becomes `customerCredit`); PO deposits are events "deposited the next N installments on <date>" (`rd_po_deposits(id, deposited_on, installment_count, fee_paid, amount, batch_id)`), exactly as the DOP agent portal records them. Only the latest PO event can be undone.
+- **One due amount per month** = installment + default fee − fee absorbed by the agent. No split modes. Two fees are tracked per month: the customer's (fixed when they finished paying) and the PO's (fixed at the deposit date); the gap is `agentDelayCost`.
+- **Fee absorption** (`rd_fee_absorptions`) replaces waivers: the agent pays from pocket, the PO still receives the fee; offered at collection time ("Absorb remaining ₹X").
+- **Opening receivable** on onboarding; repaid first from subsequent payments.
+- **Summary cache** = counters (`paidThroughNo`, `depositedThroughNo`), `owedByCustomer`, `receivable` (fronted), cash in hand split cash/digital, `absorbedTotal`, `delayCostTotal`, `arrearsCount`.
+- **UI**: Hub row has a single action (Collect / Deposit (N)); float strip = to collect, cash in hand (cash/digital), receivable, arrears accounts; "Deposit all ready" strip with date picker. Detail is a passbook (next-due line, PO strip, yearly month list, inspector sheet, PO visit history). Payment sheet = amount + mode + date; deposit sheet quotes the counter amount for the next N months.
+- **Extensibility hooks only**: `collection_id` on transactions (household lump sums), `batch_id` + `amount` on PO events (lots / C-number, commission), rebate and discontinuation deferred.
+- **Tests**: 71 passing (domain tables, fake repo, controllers, screen smoke, e2e on the local stack).
+
+**Previous: RD Ledger — Facts-Only Redesign (Phase 6, Steps 1–7 Complete)** — supersedes the sparse `rd_installments` / allocation-lineage design described in the sections below:
+- **Truth = facts.** The only persisted ledger data are `rd_transactions` (customer payments), `rd_po_deposits` (PK `rd_id, installment_no`) and `rd_fee_waivers`. `rd_installments`, `rd_payment_allocations`, the monthly-operations SQL view and all ledger RPCs were dropped in `supabase/migrations/20261027000000_facts_only_rd_ledger.sql` (CHECK constraints + ownership-checked RLS on every fact table; verified by `supabase/tests/rd_ledger_facts_rls.sql`).
+- **One projection.** `RDLedgerProjector.project(facts, asOf)` (`lib/features/recurring_deposits/domain/`) derives the 60-month schedule, per-transaction allocations, accrued default fees (grow until principal is settled, then freeze), `customerCredit` (overflow is never dropped) and the hub `RDLedgerSummary`. Preview, record, edit and delete all use the same function. Money is integer paise; dates are calendar days (`RDLedgerRules`, `Money`, `DateOnlyConverter`).
+- **Read model.** `RDInstallment` is a projected value (never written). `RDInstallmentDisplayStatus` + `rd_installment_status_theme.dart` are the single source of colour/icon/label for every widget.
+- **Data.** `RDLedgerRepository` (Supabase / Fake / explicit Unsupported) exposes bounded per-RD fact streams, an agent-wide `rd_ledger_summary` stream (1 row per RD, rebuildable cache) and plain writes. `RecurringDepositRepository` is back to deposit CRUD.
+- **State.** `rdLedgerFacts/Projection(rdId)`, keepAlive `RDLedgerController` (busy flag, `Result` returns, summary refresh after each write, `rebuildSummary`), hub split into `RDHubMonth` / `RDHubFilters` / `RDHubSelection` (union select) with `select()`-friendly derived providers; rows come from summaries, `ensureSummaries()` backfills missing rows on first load.
+- **UI.** Payment sheets on `usePaymentDraft` (live projection preview, quick amounts, hidden split selector, inline validation, `AppAdaptiveSheet`); hub decomposed into header/toolbar/list/batch bar with undo on PO deposit and a real batch total; detail screen on the projection with 44dp accessible heatmap, route-driven tabs, Manage PO in both modes, swipe-to-delete receipts; `AppFeedback.showResult` on every write.
+- **Tests.** `test/features/recurring_deposits/{domain,data,presentation}` — 58 passing (projector table tests, fake repo, controller + hub providers). Legacy `RDLedgerService` tests removed with the service.
+- **Known follow-ups.** Historic-month status in the hub is "as of today" (summary-based); fee rule versioning (`effectiveFrom`) not yet modelled; summary write happens client-side after the fact write (stale-badge-until-next-write under concurrent devices, never wrong money).
+
+---
+
+## Previous State (superseded by Phase 6)
+**RD Ledger & Monthly Hub UI/UX Redesign (Phase 4.7 — Stages 1–4 Complete)**:
+- **Stage 1 (Macro Hub Sliver Layout & 3-Stage Pipeline)**:
+  - Refactored `RDMonthlyOperationsView` from a static `Column` into a `CustomScrollView` with a collapsible header (`SliverToBoxAdapter`) and a pinned sticky toolbar (`PinnedHeaderSliver`), reclaiming ~85% of viewport height when scrolling without fixed-extent layout overflow.
+  - Redesigned `RDMonthlyKpiRow` into a full-width 3-Stage Interactive Pipeline (`1. Collect` with inline `Overdue` badge $\rightarrow$ `2. PO Queue` $\rightarrow$ `3. Settled`), removed duplicate status filter chips from the toolbar, and added a contextual `PO Queue` ready banner with 1-tap `Select Ready`.
+- **Stage 2 (Smart 2-Step Pipeline Card)**:
+  - Streamlined `RDMonthlyOperationCard` and `RDCheckpointsRow` into a compact 2-line subtitle with a directional `Customer -> PO` 2-step status pill (`Customer -> PO Ready` / `PO`), displaying fraction amounts (`Customer: ₹X/₹Y` or `Fee: ₹X/₹Y`) only when an installment or fee is partially paid.
+- **Stage 3 (Tabbed RD Detail Screen & Matrix/List Toggle)**:
+  - Upgraded `RecurringDepositDetailScreen` with an interactive customer link & maturity summary in `EntityDetailHeader` and a 3-tab `SegmentedButton<RDDetailTab>` (`Schedule`, `Transactions`, `Account Info`) so the active RD ledger is front-and-center without scrolling past 6 static metadata cards.
+  - Added a `[ Matrix | Yearly List ]` `SegmentedButton` in `RDInstallmentsSection` (with direct `Year 1`–`Year 5` accordions that auto-expand unsettled years and all years during `Manage PO`) so the 60-month Heatmap + Month Inspector and the 60-row Yearly Accordion + PO Multi-Select coexist cleanly without vertical duplication.
+- **Stage 4 (Per-Month Allocation Chips on Transaction Receipts)**:
+  - Added `RDLedgerService.computeAllocationsByTransaction` and rendered per-month principal and fee allocation chips (`Inst #N: ₹X`, `Fee #N: ₹Y`) directly on each `RDTransactionTile` in `RDTransactionsSection`.
+
+**RD Ledger Architecture Redesign (Option 1+ — Stages 1–4 & Phase 5 Complete)**:
+- **Phase 5 Migration Script Backfill (`run_supabase_migration.dart` & `RDLedgerService`)**:
+  - Added `RDLedgerService.calculateInitialPaidInstallments` to compute the chronological `initial_paid_installments` onboarding baseline for legacy/migrated RD accounts (preserving explicit overrides, settling all months for closed RDs, and counting elapsed prior calendar months for active RDs).
+  - Updated `lib/run_supabase_migration.dart` to backfill `'initial_paid_installments'` on `recurring_deposits` during Firestore-to-Supabase migration, leveraging Option 1+ sparse hydration so zero dummy rows need to be inserted into `rd_installments`.
+- **Post Office Agent Workflow Enhancements (Stage 4)**:
+  - Added India Post statutory deadline window filtering (`RDDueWindowFilter`: `Due 15th` vs `Due EOM`) with live counters in `RDMonthlyOperationsController` and `RDMonthlyOperationsView`.
+  - Added Household / Customer Grouping (`groupByCustomer` toggle) in the Monthly Hub with customer summary headers (`N accounts • ₹X/mo`) and 1-tap `Select All` per household.
+  - Added Cross-Month Global Agent Float (`globalAgentFloatProvider` & `RDAgentFloatSummary`) computing `undepositedCashAmount` (`Cash in Hand`) and `pocketAdvancesAmount` (`PO Advances`) across all sparse installments.
+- **Dumb Widgets & Presentation Decomposition (Stage 3)**:
+  - Added pure domain getters (`isCurrentMonthOverdue`, `hasPriorArrears`, `effectiveTotalPayable`, `hasDivergentPending`, `isFirstHalfDue`, `initialPaymentAmount`, `initialPaymentSplitMode`) to `RDMonthlyOperationItem`.
+  - Moved `prepareLogPayment(RDMonthlyOperationItem)` into `RDMonthlyOperationsController` with zero-latency in-memory hydration fallback.
+  - Extracted `RDCheckpointsRow` and `RDOperationActionButton` in `RDMonthlyOperationCard` and consolidated 5 confirmation dialogs in `RDMonthlyOperationsView` using `AppDialogs.confirmAction`.
+- **Zero-Latency Monthly Hub Hydration & Deterministic Clock (Stage 2)**:
+  - Created injectable `clockProvider` (`lib/core/providers/clock_provider.dart`) replacing scattered `DateTime.now()` calls across `RDMonthlyOperationsController`, `RDMonthlyOperationsView`, and `RDMonthlyOperationCard` (`evaluationDate`).
+  - Refactored `rawMonthlyOperationsStream` in `RDMonthlyOperationsController` to hydrate monthly operations and prior carryover arrears in memory using `RDLedgerService.hydrateSchedule` over `rdAllSparseInstallmentsStreamProvider` and `recurringDepositsControllerProvider`, eliminating network roundtrips and skeleton loading flashes when switching months (`< Prev | Next >`).
+- **Sparse `rd_installments` + Normalized `rd_payment_allocations` (`20261025000000_sparse_rd_ledger_and_allocations.sql`)**:
+  - Created `public.rd_payment_allocations` (`transaction_id REFERENCES rd_transactions(id) ON DELETE CASCADE`, `rd_id`, `installment_no`, `principal_amount`, `late_fee_amount`) and added `split_mode` to `rd_transactions` plus `installment_no` and `po_batch_id` to `rd_installments`.
+  - Replaced procedural `FOR v_elem IN ... LOOP` updates in Postgres RPCs with set-based `upsert_and_prune_rd_installments`, automatically pruning untouched post-onboarding baseline rows and eliminating 60-row upfront insertions on RD creation/update.
+- **Deterministic Schedule Hydration & Replay Pool Overflow (`RDLedgerService`)**:
+  - Added deterministic UUIDv5 installment IDs (`deterministicInstallmentId`), `hydrateSchedule`, `hydrateInstallmentForMonth`, `extractSparseInstallments`, and `diffSchedules`.
+  - Fixed replay pool overflow in `allocateCustomerPayment` / `recomputeScheduleFromTransactions` so unused fee/principal pools automatically overflow into remaining obligations when earlier transactions are edited or deleted.
+
+**RD Ledger Feature Rebased onto `main` (`v2.2.1+20`)**:
+- Rebased all 16 commits of `feature/rd-ledger-domain-modeling` cleanly onto `main` (`b61c427`, `v2.2.1+20`), preserving 100% of `main`'s performance optimizations, domain enhancements, and UI changes alongside the RD Ledger & Macro Monthly Operations Hub:
+  - **Single-Entity Watchers & List Column Projections**: Preserved `watchRecurringDepositById(id)`, `recurringDepositByIdProvider`, `AsyncSingleEntityBuilder`, and lightweight `_listColumns` (including `initial_paid_installments`) alongside unified `saveRecurringDeposit(deposit, {schedule})` and all RD ledger repository methods.
+  - **Official Post Office Rate Schedule (`PostalRateService`)**: Integrated `postalRateService` and `initialPaidInstallments` in `RecurringDeposit.create` / `RecurringDeposit.update`, `RecurringDepositsController`, and `useRecurringDepositForm` (keeping `Start Date -> Duration -> Interest Rate -> Initial Paid Installments` field ordering with `isFinancialTermsLocked` protection).
+  - **`AppDurationInput` & `EntityListTile`**: Preserved `main`'s editable `yearsController` + `monthsController` Row for `TenureInputType.derived` (KVP) with `enabled` support across all inputs, and merged `EntityListTile`'s `leadingSubtext` optical spacing with `leading`, `onLongPress`, and `isSelected`.
+  - **Avatar Convention**: Kept `#<serialNo>` (`deposit.avatarLabel`) on the Accounts tab (`RecurringDepositCard`) and `RecurringDepositDetailScreen`, while retaining the installment sequence badge (`#N`) in the avatar and `(${serialNo}) ${accountNo}` in the subtitle on `RDMonthlyOperationCard` in the Monthly Operations Hub.
+  - **Slang 4.19.0 & Test Suite**: Removed duplicate keys in `lib/i18n/en.i18n.yaml`, regenerated Slang and `build_runner` artifacts, updated date-relative fixtures in `test/rd_monthly_operations_test.dart`, and verified `dart analyze --fatal-infos` (0 issues) and all 68 unit/widget tests pass.
+
+**RD Ledger Feature - Macro Monthly Operations Hub (Phase 4.5)**:
+- **Top Navigation Switcher (`SegmentedButton`)**: Added `SegmentedButton<RDViewMode>` (`[ Accounts | Monthly Hub ]`) into `RecurringDepositsScreen`, toggling between the accounts list and the macro monthly operational command center.
+- **Calendar Month Switcher (`RDMonthSwitcher`)**: Month navigation with prev/next buttons, formatted display ("September 2026"), and a dynamic quick-reset chip (`[ ↺ Current Month ]`) that appears whenever viewing past or future months.
+- **Monthly Operations KPI Row (`RDMonthlyKpiRow`)**: Real-time aggregated cards calculating *To Collect* (with customer counts), *Ready for PO* (with deposit count), *Settled* (fully collected and deposited), and *Overdue* (overdue counts). Tapping any KPI card instantly activates its corresponding filter.
+- **Filter Chips**: Horizontal scrollable chips (`All`, `To Collect`, `Ready for PO`, `Settled`, `Overdue`) with dynamic counts.
+- **High-Density Operation Card (`RDMonthlyOperationCard`)**:
+  - Customer name, account number, serial number, and installment number (#N).
+  - Urgency badge for overdue accounts (`Overdue (X prior months)` in bold error styling).
+  - Contextual status badges: `Customer Paid`, `Ready for PO`, `Settled`, `PO Advanced`, `Pending`.
+  - Contextual 1-tap **"Log Payment"** button that pre-fills `RDLogPaymentSheet` with the exact installment amount + pending default fees.
+  - Contextual 1-tap **"Deposit to PO"** button.
+  - Multi-select mode with checkboxes and floating/bottom batch action button (`Deposit to PO (N)`).
+  - Tapping the card body routes to `RecurringDepositDetailRoute` for full 60-month micro-view drill-down.
+- **Harmonized Operation Tile (`RDMonthlyOperationCard` & `EntityListTile`)**:
+  - Re-architected using `EntityListTile` to follow the exact visual rhythm of the Accounts tab (`RecurringDepositCard`), preserving muscle memory.
+  - Enhanced `EntityListTile` with `leading` override and `isSelected` background state while maintaining 100% backward compatibility.
+  - Structure:
+    - **Leading**: Installment sequence badge (`#N`) in a `CircleAvatar` (or checkmark for settled), which seamlessly morphs into a `Checkbox` when an account is `Ready for PO` or in selection mode.
+    - **Title**: Customer name (bold, identical to Accounts tab).
+    - **Subtitle**: Line 1 shows `(SerialNo) AccountNo` (exact same string format as `RecurringDepositCard`); Line 2 shows Due date, overdue days urgency, prior overdue badge, and default fee.
+    - **Indicator Color**: Color-coded left edge bar (Red for overdue, Yellow for Ready for PO, Green for Settled).
+    - **Trailing**: Total payable amount (bold titleMedium) + compact 1-tap action button (`[ ⚡ Log ]` prefilling payment sheet, `[ 🏢 PO ]` depositing to PO, or `[ ✓ Settled ]` badge).
+  - High density: 2x screen density (~80px vs ~160px), displaying 6–7 accounts per screen on mobile without scrolling.
+  - Switched `RDMonthlyOperationsView` to `ListView.separated` with `Divider(height: AppDimensions.dividerHeight)` and `RDMonthlyOperationCard.skeleton()`.
+- **Database & CDC Streaming**:
+  - Added migration `20260912000000_rd_monthly_operations_view.sql` creating `rd_monthly_operations_view` with subqueries for prior overdue counts and amounts.
+  - Streamed `rd_installments` CDC in `SupabaseRecurringDepositRepository` and added `watchInstallmentsForMonth` to `RecurringDepositRepository`.
+  - Added full reactive mock broadcasting for monthly schedules in `FakeRecurringDepositRepository`.
+- **Domain & State Architecture**:
+  - Built `RDMonthlyOperationItem` Freezed domain model with pure status/payable getters.
+  - Built `RDMonthlyOperationsController` Riverpod notifier managing selected month, view mode, active filter, and multi-selection state.
+  - Added localized keys in `en.i18n.yaml` under `recurringDeposits.views` and `recurringDeposits.monthlyOperations`.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues) and 100% passing Chrome test suite (25/25 tests across all test suites, including dedicated `rd_monthly_operations_test.dart`).
+- **Prior Arrears & Carryover Overdue Flow Complete**:
+  - Enhanced repository contract with `getUnpaidInstallmentsBefore(DateTime date)` implemented across `SupabaseRecurringDepositRepository` and `FakeRecurringDepositRepository`.
+  - Updated `rawMonthlyOperationsStream` in `RDMonthlyOperationsController` to query prior unpaid installments before the selected month, compute `priorOverdueCount` and `priorOverdueAmount`, and supply them to `RDMonthlyOperationItem`.
+  - Fully lights up carryover overdue indicators when navigating to any month with previous unpaid installments: top alert banner (`Review Overdue`), card red indicator, subtitle `+N Past Due (₹X)` badge, `Total Due` amount, and contextual `[ ⚡ Pay All (₹X) ]` button.
+- **Button High-Contrast Polish**:
+  - Explicitly assigned high-contrast foreground and background colors to `HugeIcon` and `Text` on action buttons in `RDMonthlyOperationCard` and `RDMonthlyOperationsView`, resolving low-contrast text on error and primary button backgrounds.
+- **Future Months Advance Planning Mode**:
+  - Differentiated between active operations (current month) and advance planning (future months).
+  - Gated prior unpaid installments and overdue debt in domain (`RDMonthlyOperationItem.isUpcoming(now)` and `hasOverdueDebt(now)`), controllers, and KPI cards when viewing future calendar months.
+  - Future months suppress false red overdue flags, zero out overdue count in KPIs, display an informational planning banner (`🗓️ Upcoming schedule & advance planning for [Month Year]`), and render calm tonal `[ 🪙 Advance Pay ]` buttons on pending accounts.
+- **Log Payment Debug Freeze Fix**:
+  - Resolved unhandled `StateError` where `ref.read(rdInstallmentsStreamProvider.future)` in `RDMonthlyOperationsView` was disposed by Riverpod during loading state because no active widget listened to the autoDispose provider.
+  - Added dedicated one-shot `getRDInstallments(rdId)` method on `RecurringDepositRepository` implemented across Supabase, Fake, and Firestore repositories, decoupling ephemeral UI sheet opening from autoDispose streaming.
+- **Option 1 Layout (Monthly Amount, Total Pending, and Default Fees)**:
+  - Anchored baseline monthly installment amount (`₹X /mo`) in trailing top-right to preserve visual parity and muscle memory with the Accounts tab (`RecurringDepositCard`).
+  - Conditionally displays `Total Due: ₹X` right beneath the monthly amount whenever pending balance diverges (prior arrears, default fees, partial payments), and avoids redundant clutter for normal on-time installments.
+  - Subtitle surfaces due date, `+N Past Due` chip, and a prominent `Fee: ₹X` badge whenever default fees exist.
+  - Extended domain model `RDMonthlyOperationItem` with `priorOverdueFee` and `totalDefaultFee(DateTime now)`.
+- **Post Office Agent Workflow & UX Polish (Avatar Uniformity, Advance to PO, and PO Reversal)**:
+  - **Strict Avatar Uniformity**: Eliminated spontaneous checkboxes on Ready for PO cards; browse mode strictly displays circular `#N` avatar or checkmark across all cards. Checkbox is rendered exclusively when selection mode is active.
+  - **Dedicated Selection Mode**: Added `[ ◩ Select ]` action chip in filter header and wired long-press on cards to activate selection.
+  - **Advance to PO from Pocket**: Contextual 3-dot overflow menu allows agents to advance payments to the Post Office from pocket before customer collection. Renders purple `[ PO Advanced ]` badge with tertiary edge indicator and primary action becomes `[ ⚡ Collect (₹X) ]`. Batch PO deposit transparently displays breakdown between customer collections and pocket advances.
+  - **PO Reversal**: Single-card "Revert PO Deposit" action in overflow menu and "Revert PO (N)" batch action bar button with confirmation dialogs.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 22 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+- **Checkpoints Strip ("Filled vs. Hollow" Visual Hierarchy - Option 1)**:
+  - Added a glanceable, 3-entity checkpoint strip (`_buildCheckpointsRow`) to `RDMonthlyOperationCard`:
+    - **Entity Consistency**: Words stay fixed as `Cash` and `PO` (rather than changing between "Paid" vs "Pending"), completely eliminating the need to read text.
+    - **Completed / Actionable**: Solid filled pills with bold icons (`[ ✓ Cash ]`, `[ ✓ PO ]`, `[ ⚡ PO Adv ]`, `[ ! Cash ]`).
+    - **Pending / Waiting**: Hollow / outlined ghost pills (`color: Colors.transparent`, `border: Border.all(color: outlineVariant)`), light clock icons, muted text (`[ ○ Cash ]`, `[ ○ PO ]`).
+    - **Default Fee (Conditional)**: Only shown when relevant (solid error fill for owed `[ ⚠️ Fee: ₹X ]`, solid primary fill for paid `[ ✓ Fee ]`, muted for waived `[ Fee Waived ]`, and completely hidden when 0/none).
+  - Fixed "Collect Fee" button prefill to default to `PaymentSplitMode.feesOnly` when principal is settled and fees are pending.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 50/50 tests pass across the entire repository, including 29 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+- **Checkpoints Strip ("True Literal" Option 1: Strict Lifecycle + Fraction Split Everywhere)**:
+  - Implemented a unified, glanceable 3-entity checkpoint strip (`_buildCheckpointsRow`) in `RDMonthlyOperationCard`:
+    - **Strict Lifecycle Rule**: Solid fill = 100% Settled / Resolved; Hollow / Outlined = Incomplete / Action Required.
+    - **True Literal Fraction Split**: ALWAYS displays `${paid}/${total}` for BOTH Cash and Fee across ALL lifecycle states:
+      - **Cash Checkpoint**:
+        - 100% Settled: Solid Primary `[ ✓ Cash: ₹1,000/₹1,000 ]`
+        - Partial (On-Time): Hollow Primary `[ 🪙 Cash: ₹400/₹1,000 ]`
+        - Partial (Overdue): Hollow Error `[ 🪙 Cash: ₹400/₹1,000 ]`
+        - 0% Paid (Overdue): Hollow Error `[ ! Cash: ₹0/₹1,000 ]`
+        - 0% Paid (On-Time Pending): Hollow Neutral `[ ○ Cash: ₹0/₹1,000 ]`
+      - **PO Checkpoint**:
+        - 0% Deposited: Hollow Neutral `[ ○ PO ]`
+        - 100% Deposited: Solid Primary `[ ✓ PO ]`
+        - 100% Pocket Advanced: Solid Tertiary `[ ⚡ PO Adv ]`
+      - **Fee Checkpoint (Conditional)**:
+        - Only shown when `item.hasDefaultFee(now)` is true (completely suppressed if 0 fee accrued).
+        - Waived: Solid Neutral `[ Fee Waived ]`
+        - 100% Paid: Solid Primary `[ ✓ Fee: ₹20/₹20 ]`
+        - Partial Paid: Hollow Error `[ ⚠️ Fee: ₹10/₹20 ]`
+        - 0% Paid (Owed): Hollow Error `[ ⚠️ Fee: ₹0/₹20 ]`
+    - **Localization (`en.i18n.yaml`)**: Centralized into `checkpoints` map (`cash: "Cash: ${paid}/${total}"`, `po: "PO"`, `poAdvanced: "PO Adv"`, `fee: "Fee: ${paid}/${total}"`, `feeWaived: "Fee Waived"`).
+    - Fixed "Collect Fee" button prefill to default to `PaymentSplitMode.feesOnly` when principal is settled and fees are pending.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 56/56 tests pass across the entire repository, including 35 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+- **Verification**: 100% clean static analysis (`flutter analyze --fatal-infos` returns 0 issues), standard `dart format` applied, 100% passing Chrome test suite (all 56/56 tests pass across the entire repository, including 35 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`, exit code 0).
+- **Default Fee Pending Surfacing & Operational Partitioning**:
+  - Accounts with customer principal and PO deposited but an unresolved default fee (`isFeePending`) are surfaced under the **`To Collect`** operational filter and counter.
+  - Symmetrical partition: `To Collect` (unpaid customer principal, PO advanced, and pending fees) + `Ready for PO` (customer paid, PO pending) + `Settled` (100% reconciled) sums to total accounts.
+  - High-density card (`RDMonthlyOperationCard`):
+    - Subtitle shows `Fee: ₹X` badge.
+    - Trailing column shows `Fee Due: ₹X`.
+    - Primary action button renders contextual **`[ ⚡ Collect Fee (₹X) ]`** prefilling payment sheet.
+    - 3-dot overflow menu features **`Forgive Default Fee`** with confirmation dialog calling `toggleLateFeeWaiver`.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 45 tests across all test suites, including 24 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+- **Glanceable Checkpoints Bar & Conditional Default Fee (Option A Implementation)**:
+  - Addressed card glanceability by introducing a structured 3-tier subtitle hierarchy and a dedicated Checkpoint Strip (`_buildCheckpointsRow`) in `RDMonthlyOperationCard`:
+    - **Tier 1**: Serial and account number (`(Sl #01) 1234567890`).
+    - **Tier 2**: Due date and prior arrears badge (if any).
+    - **Tier 3 (The Checkpoint Strip)**:
+      - **Customer Checkpoint**: `[ ✓ Cust Paid ]` (primaryContainer / checkmark), `[ ! Cust Overdue ]` (errorContainer / alert), `[ 🪙 Cust: ₹X ]` (tonal primary / coins for partial payments), or `[ ⏳ Cust Pending ]` (surfaceContainerHighest / clock).
+      - **Post Office Checkpoint**: `[ ⚡ Advanced to PO ]` (tertiaryContainer / flash), `[ ✓ PO Deposited ]` (primaryContainer / checkmark), or `[ ⏳ PO Pending ]` (surfaceContainerHighest / clock).
+      - **Default Fee Checkpoint (Conditional)**:
+        - Completely suppressed when no default fee exists (preserving clean, noise-free cards for on-time accounts).
+        - `[ ⚠️ Fee: ₹X ]`: Prominent errorContainer badge when fee is owed.
+        - `[ ✓ Fee Paid ]`: Primary container badge when default fee was paid by customer.
+        - `[ Fee Waived ]`: Surface container highest badge when forgiven by agent.
+  - Added pure domain helper `hasDefaultFee(DateTime now)` on `RDMonthlyOperationItem`.
+  - Added localized Slang keys under `recurringDeposits.monthlyOperations.card.checkpoints`.
+  - Verification: 100% clean static analysis (`dart analyze --fatal-infos` 0 issues), all 49 Chrome tests passing (28 tests in `rd_monthly_operations_test.dart` + 21 across other suites), and clean Flutter web release build.
+  - Fixed "Collect Fee" button prefill: `RDLogPaymentSheet` now accepts optional `initialSplitMode`, and automatically defaults to `PaymentSplitMode.feesOnly` when only default fees are pending. `RDMonthlyOperationsView` now explicitly pre-fills the fee amount and selects `feesOnly` split mode when tapping "Collect Fee".
+  - Verification: 100% clean static analysis (`dart analyze --fatal-infos` 0 issues), all 50 Chrome tests passing (29 tests in `rd_monthly_operations_test.dart` + 21 across other suites), and clean Flutter web release build.
+
+**RD Ledger Feature - Micro-View Overhaul: Heatmap, Hero Card, Inspector & Yearly Accordion (Phase 4.4)**:
+- **`RDNextDueHeroCard`**: Anchored at the top of the RD ledger. Chronologically pinpoints the next pending installment, urgency badge (overdue days/due in days), total payable, and 1-tap "Log Next Payment" button pre-filling `RDLogPaymentSheet`. Displays congratulatory completion card when all 60 installments are settled.
+- **`RDInstallmentHeatmap`**: Built custom pure Flutter 60-month tenure matrix (Years 1 to 5 x Months 1 to 12) with 0 third-party packages. Color codes discrete domain states: Settled (primary), Ready for PO (secondary), Advanced to PO (tertiary), Overdue / Fee Pending (error), Upcoming (surfaceContainerHighest). Responsive across all mobile viewports without horizontal scrolling. Features tactile active selection ring and tooltip.
+- **`RDMonthInspectorCard`**: Directly beneath the heatmap. Noise-Free Guarantee: completely suppresses fee row when default fee is ₹0. Surfaces principal, default fee (if applicable), and PO deposit status. Embeds 1-tap payment, PO deposit action, and fee waiver toggle menu.
+- **`_RDYearlyScheduleAccordion`**: Replaced 60-row uncollapsed list with expandable yearly accordion (`Year 1 (12/12 Settled)`, etc.), preserving selection mode and PO deposit controls intact.
+- **`_RDYearlyScheduleAccordion`**: Replaced 60-row uncollapsed list with expandable yearly accordion (`Year 1 (12/12 Settled)`, etc.), preserving selection mode and PO deposit controls intact. Fixed horizontal overflow on narrow cards by wrapping `RDInstallmentTile` badges in responsive `Wrap`, wrapping subtitle texts in `Expanded`, adding stable `PageStorageKey`s, and guarding Crashlytics against web execution in `lib/main.dart`.
+- **Verification**: `dart analyze` passes with 0 issues. Slang translations compiled with 100% success.
+
+**RD Ledger Feature - Fee Waivers, Dual Tracking & Split Allocations (Phase 4.2)**:
+- **Dual-Track Balance Modeling**: Decoupled monthly installment principal from default fees. Extended `rd_installments` with `paid_late_fee` and `is_late_fee_waived`, and `rd_transactions` with `installment_amount` and `late_fee_amount`.
+- **Domain Model Computations (`RDInstallment`)**: Implemented pure domain getters (`outstandingPrincipal`, `effectiveLateFee`, `outstandingLateFee`, `outstandingAmount`, `isInstallmentPaid`, `isLateFeeResolved`, and `isFullySettled`).
+- **Two-Pass Chronological Allocation (`RDLedgerService.allocateCustomerPayment`)**:
+  - Dynamically assesses 1% per defaulted month on overdue installments.
+  - Automatically checks `totalPendingLateFees` before splitting pools: whole installments allocate to base principal, leaving default fees pending when round amounts are collected.
+  - Explicit split support: `installmentComponent` and `lateFeeComponent`.
+- **Recomputation & Fee Waiver Persistence (`RDLedgerService.recomputeScheduleFromTransactions`)**: Preserves `isLateFeeWaived` across transaction deletions/edits, and deterministically replays transactions respecting split components.
+- **Database Migrations (In-Place Updates)**:
+  - `supabase/migrations/20260903000000_rd_ledger_feature.sql`: Added columns to tables and updated RPCs `save_recurring_deposit`, `record_rd_customer_payment_allocated`; added `toggle_rd_late_fee_waiver` RPC.
+  - `supabase/migrations/20260905000000_rd_transaction_mutations.sql`: Updated `delete_rd_transaction` and `update_rd_transaction` to handle split components, `paid_late_fee`, and `is_late_fee_waived`.
+- **Repository & Riverpod Controllers**:
+  - Added `toggleLateFeeWaiver` to `RecurringDepositRepository`, `SupabaseRecurringDepositRepository`, and `FakeRecurringDepositRepository`.
+  - Exposed `toggleLateFeeWaiver` in `RDLedgerController`.
+- **Material 3 UI Polish (`RecurringDepositDetailScreen`)**:
+  - Installment rows show `Collected (Fee Pending)` status, separate paid/pending breakdown for principal vs default fee, and `MenuAnchor` action to "Forgive Default Fee" / "Reinstate Default Fee".
+  - `_LogPaymentBottomSheet` and `_EditPaymentBottomSheet` feature split selector (`Installments Only`, `Include Fees`, `Fees Only`, `Custom`), quick preset chips, and detailed multi-line allocation preview.
+- **Verification**: `dart analyze` passes with 0 issues. Both test suites (`test/rd_ledger_service_recalculation_test.dart` and `test/recurring_deposit_ledger_update_test.dart`) pass 100% (14/14 tests).
+- **Domain Refactoring (`RDLedgerService`)**:
+  - Decomposed monolithic procedural methods into pure, focused single-responsibility helper functions (`_assessOverdueLateFees`, `_calculatePendingLateFees`, `_resolveSplitPools`, `_allocatePrincipalPool`, `_allocateLateFeePool`, `_buildBaselineSchedule`, and `_chronologicalTxOrder`).
+  - Refactored `recomputeScheduleFromTransactions` to an elegant, declarative functional `fold` pattern over chronological transactions.
+- **Material 3 UI Polish, Localization & Modularization (`RecurringDepositDetailScreen`)**:
+  - Full Slang localization via `t.recurringDeposits.ledger`: eliminated all hardcoded/raw strings across dialogs, snackbars, split modes, preset chips, preview rows, and installment badges.
+  - Complete `HugeIcons` compliance: replaced all Material `Icons.*` with corresponding `HugeIcons.*` exclusively.
+  - No Magic Numbers: standardized all paddings, margins, gaps, and micro-icons using `AppDimensions` (including new `iconXs: 12.0`) and `AppSpacings`.
+  - Standardized all paddings, margins, gaps, and micro-icons using `AppDimensions` (including `iconXs: 12.0`) and `AppSpacings`.
+  - Decomposed 2,068-line screen into modular presentation widgets: `RDInstallmentsSection`, `RDInstallmentTile`, `RDInstallmentKpiRow`, `RDInstallmentActionBar`, `RDTransactionsSection`, `RDTransactionTile`, `RDLogPaymentSheet`, `RDEditPaymentSheet`, `PaymentSplitSelector`, `CustomSplitFields`, and `RDAllocationPreviewCard`.
+- **Ledger UX Polish & Dynamic Fee Assessment**:
+  - Future installment subtitle text color now uses neutral theme color (`theme.colorScheme.onSurfaceVariant`, regular weight); only overdue installments are highlighted in red (`theme.colorScheme.error`, bold).
+  - Added `dynamicLateFeeAt`, `outstandingLateFeeAt`, and `outstandingAmountAt` to `RDInstallment` to dynamically compute overdue penalties before payment transactions exist.
+  - Subtitle explicitly reflects waived default fee status (`customerOwesPrincipalWaived`: "Customer owes: ₹X (Default Fee Waived)").
+  - Overdue installments without previous payments now surface the 3-dot fee forgiveness action menu and pending fee badges dynamically.
+- **Option 2 Enforcement (Restricting Forgiveness to Unpaid Default Fees)**:
+  - UI 3-dot menu conditionally hides "Forgive Default Fee" when `paidLateFee >= displayedLateFee && displayedLateFee > 0`.
+  - Both repository (`FakeRecurringDepositRepository`) and database RPC (`toggle_rd_late_fee_waiver` in PostgreSQL migration `20260903000000_rd_ledger_feature.sql`) strictly guard against waiving paid fees, rejecting with descriptive error to edit the payment transaction.
+- **Already Paid Installments / Baseline Safety (Option A)**:
+  - Guaranteed that installments settled prior to onboarding (`initialPaidInstallments`) never incur default fees when subsequent payments are made (`_assessOverdueLateFees` checks `inst.isOverdueAt(paidDate)`).
+  - Opening baseline installments are immutable against PO reversal: checkboxes are disabled (`onChanged: null`) with explanatory tooltip (`t.recurringDeposits.ledger.actions.baselineImmutableTooltip`), and excluded from selection pools.
+- **Verification**: `dart analyze` passes with 0 issues. Local database reset with `npx supabase db reset` completed with exit code 0. Chrome test suite passes 100% (21/21 tests across all test suites).
+
+
+
+**RD Ledger Feature - Transaction Mutations & PO Settlement Reversals (Phase 4.1)**:
+- **Domain Allocation Replay Engine (`RDLedgerService.recomputeScheduleFromTransactions`)**: Engineered a pure, testable recalculation engine that resets installment customer payment states (respecting opening baseline and preserving PO settlement state) and sequentially replays all surviving transactions to recalculate customer paid amounts, statuses, and late fees deterministically.
+- **Atomic Database RPCs (`20260905000000_rd_transaction_mutations.sql`)**: Created PostgreSQL stored procedures `delete_rd_transaction` and `update_rd_transaction` enforcing agent ownership (`assert_account_owner`), row-level security, and atomic multi-table updates across `rd_transactions` and `rd_installments`.
+- **Repository Signatures & Fake Persistence**: Added `deleteCustomerPayment` and `updateCustomerPayment` to `RecurringDepositRepository`, fully implemented in `SupabaseRecurringDepositRepository` and `FakeRecurringDepositRepository` with reactive stream broadcasting.
+- **Application Orchestration (`RDLedgerController`)**: Added `deleteCustomerPayment`, `updateCustomerPayment`, and `revertPoPayments` to orchestrate domain recalculations and repository persistence cleanly.
+- **Material 3 UI Polish (`RecurringDepositDetailScreen`)**:
+  - Payment History: Added `MenuAnchor` actions on each transaction row for "Edit Payment" (opening `_EditPaymentBottomSheet` with live reactive allocation preview) and "Delete Payment" (with confirmation dialog).
+  - Installment Ledger: Reused the selection mode UI to provide dual action controls: `Deposit (N)` for pending installments and `Revert (N)` with confirmation dialog for mistakenly marked PO deposits, allowing any installment row to be selected.
+- **Unit & Domain Tests**: Created comprehensive unit tests in `test/rd_ledger_service_recalculation_test.dart` and integration tests in `test/recurring_deposit_ledger_update_test.dart`.
+
+**RD Ledger Feature - Installment Schedule Update Fix & Clean DDD Save Unification**:
+- **Resolved Stale Installment Schedule on Update**: Fixed the issue where editing start date, amount, tenure, or initial paid installments on an RD without payment transactions left `rd_installments` referring to old dates/amounts.
+- **Unified Repository Write Pipeline (`saveRecurringDeposit`)**: Replaced split `createRecurringDeposit` and `updateRecurringDeposit` methods across all repository implementations (`RecurringDepositRepository`, `SupabaseRecurringDepositRepository`, `FakeRecurringDepositRepository`, `FirestoreRecurringDepositRepository`) with a single, atomic `saveRecurringDeposit(deposit, {schedule})` method, aligning with the idempotent Postgres `save_recurring_deposit` RPC.
+- **Clean Application Orchestration (`RecurringDepositsController`)**: Simplified controller logic to eliminate branching: whenever `hasTransactions` is false (for new deposits or edits without recorded payments), `RDLedgerService.generateInitialSchedule` is invoked and the resulting schedule is passed to `repository.saveRecurringDeposit`.
+- **Decoupled Repositories from Domain Logic**: Pre-seeded all mock installments directly in `FakeDataSource` at bootstrap, completely removing lazy runtime `RDLedgerService` calls and unused imports from `FakeRecurringDepositRepository`.
+- **Database Safety Guard**: Enhanced `save_recurring_deposit` RPC in PostgreSQL migration `20260903000000_rd_ledger_feature.sql` to execute `DELETE FROM public.rd_installments WHERE rd_id = p_id;` when `NOT EXISTS (SELECT 1 FROM public.rd_transactions WHERE rd_id = p_id)` before inserting the updated schedule, preventing orphaned calendar dates.
+
+**RD Ledger Feature - Robust Financial Guardrails & Validation Complete (Phase 4 Polish & Architecture Safeguards)**:
+- **Form Screen Guard (`RecurringDepositFormScreen`)**: Implemented robust UI locking in `useRecurringDepositForm` and `_RecurringDepositForm` by checking for existing payment transactions (`hasTransactions`). When payments exist, financial terms are completely disabled/greyed out (`installmentAmount`, `startDate`, `term (years/months)`, `initialPaidInstallments`), keeping administrative fields like `accountNumber`, `serialNumber`, `nominees`, and `status` editable.
+- **Helpful Alert Badge**: Added a visually prominent error-container themed notice banner at the top of the Investment Details section in the form screen: *"Financial terms cannot be modified after payments have been recorded."*
+- **Domain Validation**: Created a pure, centralized validation rule `RecurringDeposit.validateUpdate` in the domain model to prevent any save or update operations from changing financial parameters if active payments have been recorded.
+- **Backend RPC Safety**: Modified the database procedural function `save_recurring_deposit` inside PostgreSQL migration `20260903000000_rd_ledger_feature.sql` to explicitly assert that no updates can touch `installment_amount` and `start_date` if `rd_transactions` records are linked to the deposit, throwing a robust, human-friendly exception if violated.
+- **Unified Clean Architecture Enforcement**: Integrated the validation flow consistently across presentation (form hooks, alert banner), application (controllers), domain models, and repositories (fake and Supabase) to guarantee comprehensive coverage against accidental edits or direct API manipulation.
+- **Verified Stability**: Achieved 100% clean static analysis (`flutter analyze` returns 0 issues) and 100% passing test suite.
+
+**RD Ledger Feature - Phase 4 Complete (Interactive Inline Collapsible Ledger UI, Onboarding Baseline, & Domain/Constraint Alignment)**:
+- Designed and built standard Material 3 collapsible ledger segments in `RecurringDepositDetailScreen` for monthly schedules, raw transaction logs, and interactive chronological payment log sheets.
+- Added support for onboarding baseline via `initialPaidInstallments`: payments before the specified threshold are automatically marked settled prior to onboarding.
+- Standardized domain modeling with `validateInitialPaidInstallments` integrated directly with the central Slang localization system (`en.i18n.yaml` translation files).
+- Decoupled `RDLedgerService` and `isNew` boolean flags from repositories; orchestrated ledger schedule generation cleanly in `RecurringDepositsController` to respect Clean Architecture boundaries.
+- Standardized enums (`RDInstallmentStatus`, `RDPoStatus`, and `RDPaymentMode`) on default camelCase `@JsonEnum()` to maintain parity across the codebase, and removed database-level `CHECK` and `DEFAULT` constraints from the PostgreSQL migration to match, resolving any check constraint violations cleanly.
+- Implemented full 3x2 state matrix handling agent pre-payments to the Post Office: enabled PO deposit selection for all unpaid PO installments, added purple `Advanced to PO` & `Advance Partially Repaid` badges with comprehensive breakdown indicators (`Customer owes: ₹X (Balance: ₹Y + Default Fee: ₹Z)`), and added summary KPI cards for `Pending at PO` and `Advanced (Receivable)`.
+- Updated default/late fee calculation in `RDInstallment` and `RDLedgerService` to compute cumulative $1\% \times \text{months defaulted}$ dynamically in accordance with Post Office rules.
+- Verified 100% clean static analysis (`flutter analyze` - 0 issues) and 100% passing tests (`flutter test`).
+
+**RD Ledger Feature - Phase 1, 2 & 3 Complete (Relational Muscle, Pure Dart Domain Modeling, Repository Signatures, & Riverpod State Providers)**:
+- Designed and built a high-performance relational database migration in `supabase/migrations/20260903000000_rd_ledger_feature.sql` implementing `rd_installments` monthly schedules and adding payment mode tracking to `rd_transactions`.
+- Structured constraints to enforce data integrity: set up foreign keys with cascades, and standard indexes.
+- Adopted a pure **"Brain & Muscle"** architecture: decoupled trigger-based business rules from the DB. Built lightweight, versatile database RPC functions (`save_recurring_deposit`, `record_rd_customer_payment_allocated`, `record_rd_po_payments`) supporting transaction logging and bulk schedule updates, ensuring calculations can be run client-side for immediate user previews while preserving atomic, single-roundtrip server writes.
+- Defined Freezed domain models (`RDInstallment`, `RDTransaction`) as well as type-safe ledger enums (`RDInstallmentStatus`, `RDPoStatus`, `RDPaymentMode`) in Dart, cleanly compiling them via `build_runner`.
+- Engineered a calendar-drift-safe chronological allocation service (`RDLedgerService`) in Dart (the "Brain") that handles 1% PO late-fee capping and calculation dynamically.
+- Integrated the new `initialPaidInstallments` onboarding/backfill parameter into the parent `RecurringDeposit` domain model, updated `SupabaseRecurringDepositRepository` to generate initial ledger schedules automatically on creation/saves, resolved function overloading via `DROP FUNCTION` on schema reset, and verified that 100% of integration and unit tests pass cleanly.
+- Fully implemented concrete ledger repository methods in `SupabaseRecurringDepositRepository` utilizing real-time CDC streams and Postgres RPC parameters (`record_rd_customer_payment_allocated`, `record_rd_po_payments`).
+- Implemented robust in-memory ledger state and CDC-mocking stream providers in `FakeRecurringDepositRepository` for flawless offline Demo Mode functionality.
+- Created `rdInstallmentsStreamProvider` and `rdTransactionsStreamProvider` to stream real-time ledger data reactively down to the UI.
+- Built a unified `RDLedgerController` to handle side-effects such as logging customer payments and PO deposits, automatically computing payment allocations and triggering atomic DB writes.
+- Verified local schema compilation with 100% success via local emulator reset (`npx supabase db reset`).
+
 **Release v2.2.1+20 Prepared**:
 - Bumped application version in `pubspec.yaml` from `2.2.0+19` to `2.2.1+20` and updated `CHANGELOG.md` summarizing the deposit list & detail avatar overhaul (`TD` + tenure sublabel, `MIS`, `NSC`, `KVP`, and RD `#<serialNo>`), optical spacing improvements, and polished scheme display names.
 - Validated zero analysis issues (`flutter analyze`) and passing unit/widget test suites (`16/16` passed).
