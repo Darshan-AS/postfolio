@@ -355,6 +355,7 @@ List<Widget> _buildInvestmentDetails(
       ),
       textInputAction: TextInputAction.next,
     ),
+    _FieldHelper(text: t.recurringDeposits.fields.initialPaidInstallmentsHelper),
     AppSpacings.gapLg,
     AppTextField(
       controller: state.openingReceivableController,
@@ -368,20 +369,31 @@ List<Widget> _buildInvestmentDetails(
       validator: RecurringDeposit.validateOpeningReceivable,
       textInputAction: TextInputAction.next,
     ),
-    Padding(
+    _FieldHelper(text: t.recurringDeposits.fields.openingReceivableHelper),
+    InvestmentProjectionCard(projection: projection),
+  ];
+}
+
+class _FieldHelper extends StatelessWidget {
+  const _FieldHelper({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
       padding: const EdgeInsets.only(
         top: AppDimensions.paddingXs,
         left: AppDimensions.paddingSm,
       ),
       child: Text(
-        t.recurringDeposits.fields.openingReceivableHelper,
+        text,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
-    ),
-    InvestmentProjectionCard(projection: projection),
-  ];
+    );
+  }
 }
 
 List<Widget> _buildNomineesSection({
