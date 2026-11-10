@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0+21] - 2026-11-10
+
+### Added
+- **RD Ledger (facts-only, sequential)**: Recurring deposits now carry a full collection ledger. Truth is three fact tables — customer payments (`rd_transactions`), Post Office deposit events (`rd_po_deposits`: "next N installments on <date>", as the DOP agent portal records them) and default fees the agent absorbed (`rd_fee_absorptions`). Installment status, default fees, arrears, customer credit and cash in hand are projected on the client by `RDLedgerProjector`; `rd_ledger_summary` is a rebuildable per-RD cache. Single migration `20261110000000_rd_ledger.sql` (ownership-checked RLS, CHECK constraints, terms lock in `save_recurring_deposit`) with an RLS smoke test and a seeded local portfolio.
+- **Monthly Hub**: Accounts ⇄ Hub toggle on the RD tab. Header shows To collect, In hand (cash / UPI), Receivable and Arrears as tap-to-filter tiles; month switcher; group-by-customer rows with one primary action (`Collect ₹X` / `Deposit N`) and overflow for fronting from pocket, absorbing a fee and undoing the last PO deposit; serial-first search.
+- **PO visit planner**: From the In-hand tile — per account installments and counter amount incl. fee on a chosen date, cash vs UPI totals, >₹20k cash-lot grouping, per-line fronting with a pocket subtotal, one batch per visit with "Undo visit".
+- **Passbook detail**: Next-due line, PO strip ("Collected through #N / At PO #M"), yearly accordion of months, month inspector (customer fee, PO fee, fee you bore), PO visit history.
+- **Onboarding terms**: "Installments deposited at PO so far" (months up to it are treated as settled on both sides) and "Opening receivable" (money the customer already owes). Both lock once the first payment or PO deposit is recorded.
+- **Collection & deposit sheets**: Amount + payment mode (cash / UPI / Chq / bank transfer) + date; deposit sheet quotes the counter amount for the next N months; toasts with Undo and Retry on errors.
+
+### Changed
+- **Demo mode** ships seeded payments, PO visits and absorptions so the Hub and passbook are populated offline.
+- **Presentation purity**: widgets read the clock from `clockProvider`; no `DateTime.now()` in UI code.
+- **Local-stack test suites** run serially (`dart_test.yaml`) to avoid races on the shared GoTrue/realtime containers.
+
+### Notes
+- The ledger requires the Supabase backend; the migration must be applied to the hosted project before this build is released. Existing RDs start with `initial_paid_installments = 0` and should be reconciled against the DOP portal before their first payment is recorded.
+
 ## [2.2.1+20] - 2026-10-10
 
 ### Changed

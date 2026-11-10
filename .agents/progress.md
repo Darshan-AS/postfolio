@@ -1,6 +1,8 @@
 # Project Progress
 
 ## Current State
+**Release 2.3.0+21 prepared (2026-11-10), not yet tagged.** PR #17 (RD ledger) merged into `main` as 8 linear commits. Before tagging: apply `20261110000000_rd_ledger.sql` to the hosted Supabase project (`supabase link` → `migration list` must show `20260902000000` as the latest → `db push`), decide the `initial_paid_installments` baseline for existing RDs, and do one Android device pass. The `v*` tag triggers Android build + App Distribution + Firebase Hosting deploy in one workflow, so the hosted DB must be migrated first.
+
 **Schema note (2026-11-10):** the RD ledger ships as a single migration, `supabase/migrations/20261110000000_rd_ledger.sql`, which creates only the final facts-only sequential schema. The intermediate migrations referenced in the historical sections below (`20260903…`, `20260905…`, `20260912…`, `20261025…`, `20261027…`, `20261028…`) were never applied to a remote project and no longer exist on the branch; they survive only under git tag `ledger-history-pre-rewrite`.
 
 **RD Ledger UI (Phase 8 Complete)** — driven by the agent-workflow interview in `docs/rd_ledger_ui_improvement_plan.md`:
