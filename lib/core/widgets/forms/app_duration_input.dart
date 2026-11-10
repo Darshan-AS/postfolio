@@ -14,6 +14,7 @@ class AppDurationInput extends HookWidget {
   final int selectedMonths;
   final String? derivedString;
   final void Function(int years, int months) onChanged;
+  final bool enabled;
 
   const AppDurationInput({
     super.key,
@@ -23,6 +24,7 @@ class AppDurationInput extends HookWidget {
     required this.selectedMonths,
     this.derivedString,
     required this.onChanged,
+    this.enabled = true,
   });
 
   @override
@@ -79,6 +81,7 @@ class AppDurationInput extends HookWidget {
         ),
         isRequired: true,
         readOnly: true,
+        enabled: enabled,
       );
     }
 
@@ -100,6 +103,7 @@ class AppDurationInput extends HookWidget {
       onChanged: (int newSelection) {
         onChanged(newSelection, 0);
       },
+      enabled: enabled,
     );
   }
 
@@ -120,6 +124,7 @@ class AppDurationInput extends HookWidget {
               size: AppDimensions.iconMd,
             ),
             isRequired: true,
+            enabled: enabled,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             onChanged: (val) {
@@ -139,6 +144,7 @@ class AppDurationInput extends HookWidget {
               size: AppDimensions.iconMd,
             ),
             isRequired: true,
+            enabled: enabled,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             onChanged: (val) {

@@ -7,11 +7,13 @@ import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/models/postal_scheme_terms.dart';
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:number_to_indian_words/number_to_indian_words.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
@@ -25,6 +27,8 @@ class RecurringDepositFormState {
   final TextEditingController installmentAmountController;
   final TextEditingController interestRateController;
   final TextEditingController startDateController;
+  final TextEditingController initialPaidInstallmentsController;
+  final TextEditingController openingReceivableController;
   final ValueNotifier<String?> selectedCustomerId;
   final ValueNotifier<RecurringSchemeType> selectedScheme;
   final ValueNotifier<int> selectedTermYears;
@@ -40,6 +44,10 @@ class RecurringDepositFormState {
   final void Function(DateTime pickedDate) onStartDateChanged;
   final VoidCallback save;
   final bool isUpdating;
+  final bool isFinancialTermsLocked;
+
+  /// True while the lock state is still being resolved (terms are treated as locked).
+  final bool isFinancialTermsLockLoading;
 
   RecurringDepositFormState({
     required this.formKey,
@@ -48,6 +56,8 @@ class RecurringDepositFormState {
     required this.installmentAmountController,
     required this.interestRateController,
     required this.startDateController,
+    required this.initialPaidInstallmentsController,
+    required this.openingReceivableController,
     required this.selectedCustomerId,
     required this.selectedScheme,
     required this.selectedTermYears,
@@ -63,6 +73,8 @@ class RecurringDepositFormState {
     required this.onStartDateChanged,
     required this.save,
     required this.isUpdating,
+    required this.isFinancialTermsLocked,
+    this.isFinancialTermsLockLoading = false,
   });
 }
 
@@ -76,6 +88,18 @@ RecurringDepositFormState useRecurringDepositForm({
   final isUpdating = deposit != null;
   final postalRateService = ref.watch(postalRateServiceProvider);
 
+  final isLockedAsync = deposit != null
+      ? ref.watch(rdIsFinancialTermsLockedProvider(deposit.id))
+      : const AsyncValue<bool>.data(false);
+  // Fail safe: until the ledger facts have loaded, treat the terms as locked so a
+  // half-loaded form can never edit an account that already has activity.
+  final isFinancialTermsLockLoading = isLockedAsync.isLoading && !isLockedAsync.hasValue;
+  final isFinancialTermsLocked = switch (isLockedAsync) {
+    AsyncData(:final value) => value,
+    AsyncLoading(:final value?) => value,
+    AsyncError() || AsyncLoading() => true,
+  };
+
   final amountFormatter = useMemoized(
     () => CurrencyTextInputFormatter.currency(
       locale: AppConstants.defaultLocale,
@@ -86,7 +110,7 @@ RecurringDepositFormState useRecurringDepositForm({
 
   final initialScheme =
       deposit?.schemeType ?? RecurringSchemeType.recurringDeposit;
-  final initialStartDate = deposit?.startDate ?? DateTime.now();
+  final initialStartDate = deposit?.startDate ?? ref.read(clockProvider)();
   final initialTerms = postalRateService.resolveRecurringSchemeTerms(
     schemeType: initialScheme,
     startDate: initialStartDate,
@@ -105,6 +129,14 @@ RecurringDepositFormState useRecurringDepositForm({
     text: (deposit?.interestRate ?? initialTerms.interestRate).toStringAsFixed(
       2,
     ),
+  );
+  final initialPaidInstallmentsController = useTextEditingController(
+    text: deposit?.initialPaidInstallments.toString() ?? '0',
+  );
+  final openingReceivableController = useTextEditingController(
+    text: deposit != null
+        ? deposit.openingReceivable.toStringAsFixed(0)
+        : '',
   );
 
   final selectedCustomerId = useState<String?>(
@@ -235,6 +267,8 @@ RecurringDepositFormState useRecurringDepositForm({
             status: selectedStatus.value,
             startDate: startDate.value,
             nominees: nominees.value,
+            initialPaidInstallments: initialPaidInstallmentsController.text,
+            openingReceivable: openingReceivableController.text,
           );
 
       if (!context.mounted) return;
@@ -262,6 +296,8 @@ RecurringDepositFormState useRecurringDepositForm({
     installmentAmountController: installmentAmountController,
     interestRateController: interestRateController,
     startDateController: startDateController,
+    initialPaidInstallmentsController: initialPaidInstallmentsController,
+    openingReceivableController: openingReceivableController,
     selectedCustomerId: selectedCustomerId,
     selectedScheme: selectedScheme,
     selectedTermYears: selectedTermYears,
@@ -277,5 +313,7 @@ RecurringDepositFormState useRecurringDepositForm({
     onStartDateChanged: onStartDateChanged,
     save: save,
     isUpdating: isUpdating,
+    isFinancialTermsLocked: isFinancialTermsLocked,
+    isFinancialTermsLockLoading: isFinancialTermsLockLoading,
   );
 }
