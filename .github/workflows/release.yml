@@ -112,3 +112,8 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_CREDENTIAL_FILE_CONTENT }}
           channelId: live
           projectId: postfolio-app
+          # Pinned: the action defaults to firebase-tools@latest, and an upstream change
+          # (a Service Usage pre-check) broke the v2.3.0+21 deploy without any repo change.
+          # Bump deliberately; the CI service account needs Firebase Hosting Admin +
+          # Service Usage Consumer.
+          firebaseToolsVersion: 15.35.0
