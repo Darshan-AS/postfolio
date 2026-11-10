@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "dart-code.dart-code",
+    "dart-code.flutter",
+    "toba.vsfire",
+    "supabase.vscode-supabase-extension",
+    "mechatroner.rainbow-csv",
+    "redhat.vscode-yaml"
+  ]
+}
