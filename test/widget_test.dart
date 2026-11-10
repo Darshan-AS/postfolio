@@ -193,7 +193,11 @@ void main() {
       expect(find.text('TD'), findsOneWidget);
       expect(find.text('5Y'), findsOneWidget);
       expect(find.text('Time Deposit'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('Shivanand A B'), 200);
+      await tester.scrollUntilVisible(
+        find.text('Shivanand A B'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
       expect(find.text('Shivanand A B'), findsOneWidget);
@@ -233,10 +237,9 @@ void main() {
       expect(find.text('RD987654'), findsOneWidget);
       expect(find.text('#14'), findsOneWidget);
       expect(find.text('Recurring Deposit'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('Shivanand A B'), 200);
-      await tester.pump(const Duration(seconds: 1));
-      await tester.pumpAndSettle();
-      expect(find.text('Shivanand A B'), findsOneWidget);
+      // Account Info is the default tab: the customer appears in the header link and
+      // again in the Account Information section.
+      expect(find.text('Shivanand A B'), findsNWidgets(2));
     },
   );
 }

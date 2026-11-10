@@ -27,9 +27,9 @@ import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_tr
 import 'package:postfolio/i18n/strings.g.dart';
 
 enum RDDetailTab {
+  info('info'),
   ledger('schedule'),
-  transactions('transactions'),
-  info('info');
+  transactions('transactions');
 
   const RDDetailTab(this.queryValue);
 
@@ -51,12 +51,12 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Deep link (`?tab=schedule|transactions|info`) wins on first build; the hook keeps
+    // Deep link (`?tab=info|schedule|transactions`) wins on first build; the hook keeps
     // the user's subsequent choice. `maybeOf` keeps the screen usable outside a router.
     final tabFromRoute = RDDetailTab.fromQuery(
       GoRouter.maybeOf(context)?.state.uri.queryParameters['tab'],
     );
-    final activeTab = useState(tabFromRoute ?? RDDetailTab.ledger);
+    final activeTab = useState(tabFromRoute ?? RDDetailTab.info);
     final projectionAsync = ref.watch(rdLedgerProjectionProvider(depositId));
 
     return AsyncSingleEntityBuilder<RecurringDeposit>(
@@ -187,6 +187,14 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
               child: SegmentedButton<RDDetailTab>(
                 segments: [
                   ButtonSegment(
+                    value: RDDetailTab.info,
+                    label: Text(tabs.info),
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedInformationCircle,
+                      size: AppDimensions.iconSm,
+                    ),
+                  ),
+                  ButtonSegment(
                     value: RDDetailTab.ledger,
                     label: Text(tabs.ledger),
                     icon: const HugeIcon(
@@ -199,14 +207,6 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                     label: Text(tabs.transactions),
                     icon: const HugeIcon(
                       icon: HugeIcons.strokeRoundedInvoice01,
-                      size: AppDimensions.iconSm,
-                    ),
-                  ),
-                  ButtonSegment(
-                    value: RDDetailTab.info,
-                    label: Text(tabs.info),
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedInformationCircle,
                       size: AppDimensions.iconSm,
                     ),
                   ),
