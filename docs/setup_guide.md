@@ -153,6 +153,24 @@ Because we use **Google Play App Signing**, you can recover:
 
 ## 🛠️ 4. Common Troubleshooting
 
+### RD Ledger schema (facts-only + sequential, migration `20261110000000_rd_ledger.sql`)
+- The ledger persists **facts only**: `rd_transactions` (a payment is just money), `rd_po_deposits` (events: "next N installments deposited on <date>"), `rd_fee_absorptions` (fee the agent paid from pocket). Installment status, default fees and arrears are projected on the client by `RDLedgerProjector`; `rd_ledger_summary` is a per-RD cache the app rebuilds itself (pull-to-refresh on the Monthly Hub, or automatically for RDs that have no row yet).
+- Apply locally with `supabase db reset` (replays all migrations from scratch).
+- Verify RLS + constraints at any time (every case rolls back):
+  `docker exec -i supabase_db_postfolio psql -U postgres -d postgres < supabase/tests/rd_ledger_facts_rls.sql`
+- End-to-end provider check against the seeded data: `flutter test test/supabase_rd_ledger_e2e_test.dart`
+- If the Monthly Hub shows stale badges after editing data directly in SQL, pull-to-refresh on the Hub — it re-projects every visible RD from facts and rewrites the summary cache.
+
+### Local seed data & your Google account
+- `supabase/seed.sql` creates a dummy agent (`agent@postfolio.com` / `password123`) with 3 customers, 3 RDs (with payments, PO deposits, a waiver and real arrears), 3 OTDs and nominees. Enum columns (`scheme_type`, `status`, `relationship`, `payment_mode`) **must** use the app's serialised names (`recurringDeposit`, `monthlyIncomeScheme`, `Son`, `bankTransfer`, …) — a raw short code like `'RD'` makes `fromJson` throw and the RD tab fail to load.
+- The **first non-`@example.com` agent to sign in** on the emulator (e.g. your Google account) automatically adopts the seeded portfolio via the `trigger_seed_adoption` trigger. To hand it to a specific account manually:
+  `docker exec supabase_db_postfolio psql -U postgres -d postgres -c "SELECT public.adopt_seed_data('you@example.com');"`
+- Without the Supabase CLI on PATH you can wipe + reseed the running container with:
+  ```
+  docker exec -i supabase_db_postfolio psql -U postgres -d postgres < supabase/tests/wipe_emulator_data.sql
+  docker exec -i supabase_db_postfolio psql -U postgres -d postgres < supabase/seed.sql
+  ```
+
 -   **"Developer Error" on Google Sign-In**: Usually means the SHA-1 in Firebase doesn't match the key used to sign the app (Debug vs Release).
 -   **"Keystore file not found"**: Check the path in `android/key.properties`. It is relative to the `android/app` directory.
 -   **"Snapshot generator failed (exit code -9)"**: This is an Out-Of-Memory error. Close heavy applications and try building for a single architecture:
