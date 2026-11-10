@@ -20,6 +20,7 @@ import 'package:postfolio/core/models/nominee.dart';
 
 import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_recurring_deposit_form.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class RecurringDepositFormScreen extends ConsumerWidget {
   final String? depositId;
@@ -84,17 +85,25 @@ class _RecurringDepositForm extends HookConsumerWidget {
               accountNoController: state.accountNoController,
               selectedStatus: state.selectedStatus,
             ),
-            ..._buildInvestmentDetails(
-              context,
-              selectedScheme: state.selectedScheme,
-              selectedTermYears: state.selectedTermYears,
-              selectedTermMonths: state.selectedTermMonths,
-              installmentAmountController: state.installmentAmountController,
-              interestRateController: state.interestRateController,
-              startDate: state.startDate,
-              startDateController: state.startDateController,
-              projection: state.projection,
-              state: state,
+            // While the ledger lock state resolves the terms are treated as locked
+            // (fail safe) and the section is skeletonized so it never looks editable.
+            Skeletonizer(
+              enabled: state.isFinancialTermsLockLoading,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: _buildInvestmentDetails(
+                  context,
+                  selectedScheme: state.selectedScheme,
+                  selectedTermYears: state.selectedTermYears,
+                  selectedTermMonths: state.selectedTermMonths,
+                  installmentAmountController: state.installmentAmountController,
+                  interestRateController: state.interestRateController,
+                  startDate: state.startDate,
+                  startDateController: state.startDateController,
+                  projection: state.projection,
+                  state: state,
+                ),
+              ),
             ),
             ..._buildNomineesSection(nominees: state.nominees),
           ],
@@ -178,9 +187,42 @@ List<Widget> _buildInvestmentDetails(
 }) {
   return [
     FormSectionHeader(title: t.recurringDeposits.sections.investmentDetails),
+    if (state.isFinancialTermsLocked && !state.isFinancialTermsLockLoading) ...[
+      Container(
+        padding: const EdgeInsets.all(AppDimensions.paddingMd),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.error.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedAlertCircle,
+              color: Theme.of(context).colorScheme.error,
+              size: AppDimensions.iconMd,
+            ),
+            AppSpacings.gapMd,
+            Expanded(
+              child: Text(
+                t.recurringDeposits.fields.financialTermsLocked,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      AppSpacings.gapLg,
+    ],
     AppSegmentedButtonField<RecurringSchemeType>(
       value: selectedScheme.value,
       labelText: t.recurringDeposits.fields.schemeType,
+      enabled: !state.isFinancialTermsLocked,
       segments: RecurringSchemeType.values
           .map(
             (scheme) =>
@@ -212,6 +254,7 @@ List<Widget> _buildInvestmentDetails(
         AppTextField(
           controller: installmentAmountController,
           labelText: t.recurringDeposits.fields.installmentAmount,
+          enabled: !state.isFinancialTermsLocked,
           prefixIcon: const HugeIcon(
             icon: HugeIcons.strokeRoundedCoins01,
             size: AppDimensions.iconMd,
@@ -253,6 +296,7 @@ List<Widget> _buildInvestmentDetails(
       controller: startDateController,
       labelText: t.recurringDeposits.fields.startDate,
       isRequired: true,
+      enabled: !state.isFinancialTermsLocked,
       onTap: () async {
         final picked = await showDatePicker(
           context: context,
@@ -271,6 +315,7 @@ List<Widget> _buildInvestmentDetails(
       allowedTenuresInYears: selectedScheme.value.allowedTenuresInYears,
       selectedYears: selectedTermYears.value,
       selectedMonths: selectedTermMonths.value,
+      enabled: !state.isFinancialTermsLocked,
       onChanged: (years, months) {
         selectedTermYears.value = years;
         selectedTermMonths.value = months;
@@ -280,6 +325,7 @@ List<Widget> _buildInvestmentDetails(
     AppTextField(
       controller: interestRateController,
       labelText: t.recurringDeposits.fields.interestRate,
+      enabled: !state.isFinancialTermsLocked,
       prefixIcon: const HugeIcon(
         icon: HugeIcons.strokeRoundedPercent,
         size: AppDimensions.iconMd,
@@ -291,6 +337,48 @@ List<Widget> _buildInvestmentDetails(
         t.recurringDeposits.fields.interestRate,
       ),
       textInputAction: TextInputAction.next,
+    ),
+    AppSpacings.gapLg,
+    AppTextField(
+      controller: state.initialPaidInstallmentsController,
+      labelText: t.recurringDeposits.fields.initialPaidInstallments,
+      enabled: !state.isUpdating && !state.isFinancialTermsLocked,
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+        size: AppDimensions.iconMd,
+      ),
+      keyboardType: TextInputType.number,
+      validator: (val) => RecurringDeposit.validateInitialPaidInstallments(
+        val,
+        selectedTermYears.value,
+        selectedTermMonths.value,
+      ),
+      textInputAction: TextInputAction.next,
+    ),
+    AppSpacings.gapLg,
+    AppTextField(
+      controller: state.openingReceivableController,
+      labelText: t.recurringDeposits.fields.openingReceivable,
+      enabled: !state.isUpdating && !state.isFinancialTermsLocked,
+      prefixIcon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedWallet02,
+        size: AppDimensions.iconMd,
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: RecurringDeposit.validateOpeningReceivable,
+      textInputAction: TextInputAction.next,
+    ),
+    Padding(
+      padding: const EdgeInsets.only(
+        top: AppDimensions.paddingXs,
+        left: AppDimensions.paddingSm,
+      ),
+      child: Text(
+        t.recurringDeposits.fields.openingReceivableHelper,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
     ),
     InvestmentProjectionCard(projection: projection),
   ];
