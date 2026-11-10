@@ -31,6 +31,10 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required DateTime startDate,
     @Default([]) List<Nominee> nominees,
     @Default(DepositStatus.active) DepositStatus status,
+    @Default(0) int initialPaidInstallments,
+    /// Amount the customer already owed the agent at onboarding (months the agent had
+    /// fronted before the app existed). Repaid first out of subsequent customer payments.
+    @Default(0.0) double openingReceivable,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? createdAt,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? updatedAt,
     @JsonKey(includeIfNull: false) String? migrationSource,
@@ -61,6 +65,9 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     }
     return schemeType.shortName;
   }
+
+  /// Total tenure in months derived from termYears and termMonths.
+  int get totalMonths => (termYears * 12) + termMonths;
 
   /// Default sorting logic for Recurring Deposits (ascending by serial no).
   static int defaultCompare(RecurringDeposit a, RecurringDeposit b) {
@@ -105,6 +112,34 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   static String? validateInterestRate(double? rate, String fieldName) =>
       BaseDeposit.validateInterestRate(rate, fieldName);
 
+  static String? validateInitialPaidInstallments(
+    String? val,
+    int termYears,
+    int termMonths,
+  ) {
+    if (val == null || val.trim().isEmpty) return null;
+    final num = int.tryParse(val.trim());
+    if (num == null || num < 0) {
+      return t.errors.invalidPositiveNumber;
+    }
+    final totalMonths = termYears * 12 + termMonths;
+    if (num > totalMonths) {
+      return t.errors.invalidInitialPaidInstallments(
+        paid: num,
+        total: totalMonths,
+      );
+    }
+    return null;
+  }
+
+  /// Opening receivable is optional; when given it must be a non-negative amount.
+  static String? validateOpeningReceivable(String? val) {
+    if (val == null || val.trim().isEmpty) return null;
+    final num = double.tryParse(val.trim());
+    if (num == null || num < 0) return t.errors.invalidPositiveNumber;
+    return null;
+  }
+
   static Result<RecurringDeposit, String> create({
     required String id,
     String? serialNo,
@@ -119,6 +154,8 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     List<Nominee> nominees = const [],
     DepositStatus status = DepositStatus.active,
     PostalRateService postalRateService = const PostalRateService(),
+    int initialPaidInstallments = 0,
+    double openingReceivable = 0.0,
   }) {
     final postalTerms = postalRateService.resolveRecurringSchemeTerms(
       schemeType: schemeType,
@@ -142,6 +179,12 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
           resolvedInterestRate,
           t.recurringDeposits.fields.interestRate,
         ) ??
+        validateInitialPaidInstallments(
+          initialPaidInstallments.toString(),
+          resolvedTermYears,
+          resolvedTermMonths,
+        ) ??
+        validateOpeningReceivable(openingReceivable.toString()) ??
         Nominee.validateNominees(nominees);
 
     if (validationError != null) return Failure(validationError);
@@ -174,7 +217,76 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
         startDate: startDate,
         nominees: List.unmodifiable(nominees),
         status: status,
+        initialPaidInstallments: initialPaidInstallments,
+        openingReceivable: openingReceivable,
       ),
     );
+  }
+
+  static Result<void, String> validateUpdate({
+    required RecurringDeposit existing,
+    required RecurringDeposit updated,
+    required bool hasPayments,
+  }) {
+    if (hasPayments) {
+      if (existing.installmentAmount != updated.installmentAmount ||
+          existing.openingReceivable != updated.openingReceivable ||
+          existing.startDate.year != updated.startDate.year ||
+          existing.startDate.month != updated.startDate.month ||
+          existing.startDate.day != updated.startDate.day) {
+        return Failure(t.recurringDeposits.fields.financialTermsLocked);
+      }
+    }
+    return const Success(null);
+  }
+
+  static Result<RecurringDeposit, String> update({
+    required RecurringDeposit existing,
+    String? serialNo,
+    String? accountNo,
+    required double installmentAmount,
+    required int termYears,
+    required int termMonths,
+    required double interestRate,
+    required String customerId,
+    required RecurringSchemeType schemeType,
+    required DateTime startDate,
+    required bool hasPayments,
+    List<Nominee> nominees = const [],
+    DepositStatus status = DepositStatus.active,
+    int initialPaidInstallments = 0,
+    double openingReceivable = 0.0,
+  }) {
+    final tempRes = create(
+      id: existing.id,
+      serialNo: serialNo,
+      accountNo: accountNo,
+      installmentAmount: installmentAmount,
+      termYears: termYears,
+      termMonths: termMonths,
+      interestRate: interestRate,
+      customerId: customerId,
+      schemeType: schemeType,
+      startDate: startDate,
+      nominees: nominees,
+      status: status,
+      initialPaidInstallments: initialPaidInstallments,
+      openingReceivable: openingReceivable,
+    );
+
+    switch (tempRes) {
+      case Failure(error: final err):
+        return Failure(err);
+      case Success(value: final updated):
+        final validation = validateUpdate(
+          existing: existing,
+          updated: updated,
+          hasPayments: hasPayments,
+        );
+        if (validation case Failure(error: final err)) {
+          return Failure(err);
+        }
+        return Success(updated);
+    }
   }
 }

@@ -11,6 +11,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/constants/firestore_keys.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 
 // --- Migration Constants ---
@@ -528,6 +529,19 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
               'updated_at': rd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
             });
 
+            // Compute chronological onboarding baseline for legacy RD schedules.
+            // The facts-only ledger projects every pre-onboarding month from
+            // initial_paid_installments, so no installment rows are inserted.
+            final initialPaidInstallments =
+                RDScheduleFactory.calculateInitialPaidInstallments(
+                  startDate: rd.startDate,
+                  termYears: rd.termYears,
+                  termMonths: rd.termMonths,
+                  asOf: DateTime.now(),
+                  status: rd.status,
+                  explicitInitialPaid: rd.initialPaidInstallments,
+                );
+
             // Create RD details
             rdsBatch.add({
               'id': rdUuid,
@@ -540,6 +554,7 @@ class _SupabaseMigrationRunnerScreenState extends State<SupabaseMigrationRunnerS
               'term_years': rd.termYears,
               'term_months': rd.termMonths,
               'start_date': rd.startDate.toIso8601String().split('T').first,
+              'initial_paid_installments': initialPaidInstallments,
               'created_at': rd.createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
               'updated_at': rd.updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
             });
