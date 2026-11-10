@@ -20,8 +20,7 @@ part 'recurring_deposit_repository.g.dart';
 abstract class RecurringDepositRepository {
   Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits();
   Stream<Result<RecurringDeposit, String>> watchRecurringDepositById(String id);
-  Future<Result<void, String>> createRecurringDeposit(RecurringDeposit deposit);
-  Future<Result<void, String>> updateRecurringDeposit(RecurringDeposit deposit);
+  Future<Result<void, String>> saveRecurringDeposit(RecurringDeposit deposit);
   Future<Result<void, String>> deleteRecurringDeposit(String id);
 }
 
@@ -84,21 +83,7 @@ class FirestoreRecurringDepositRepository
   }
 
   @override
-  Future<Result<void, String>> createRecurringDeposit(
-    RecurringDeposit deposit,
-  ) async {
-    try {
-      _deposits.doc(deposit.id).set(deposit);
-      return const Success(null);
-    } catch (e) {
-      return Failure(e.toString());
-    }
-  }
-
-  @override
-  Future<Result<void, String>> updateRecurringDeposit(
-    RecurringDeposit deposit,
-  ) async {
+  Future<Result<void, String>> saveRecurringDeposit(RecurringDeposit deposit) async {
     try {
       _deposits.doc(deposit.id).set(deposit, firestore.SetOptions(merge: true));
       return const Success(null);
@@ -118,94 +103,76 @@ class FirestoreRecurringDepositRepository
   }
 }
 
+/// In-memory deposits store for demo mode and tests. Ledger facts live in
+/// `FakeRDLedgerRepository`; this class only knows about deposits.
 class FakeRecurringDepositRepository implements RecurringDepositRepository {
+  FakeRecurringDepositRepository({List<RecurringDeposit>? deposits})
+      : _deposits = [...(deposits ?? FakeDataSource().recurringDeposits)];
+
+  final List<RecurringDeposit> _deposits;
   final _controller =
       StreamController<Result<List<RecurringDeposit>, String>>.broadcast();
 
-  final List<RecurringDeposit> _deposits = FakeDataSource().recurringDeposits
-      .toList();
+  /// Hook for tests that need the "financial terms locked" rule to apply.
+  bool Function(String rdId) hasLedgerActivity = (_) => false;
+
+  List<RecurringDeposit> get deposits => List.unmodifiable(_deposits);
 
   void _emit() {
-    if (!_controller.isClosed) {
-      _controller.add(Success([..._deposits]));
-    }
+    if (!_controller.isClosed) _controller.add(Success([..._deposits]));
   }
 
+  void dispose() => _controller.close();
+
   @override
-  Stream<Result<List<RecurringDeposit>, String>>
-  watchRecurringDeposits() async* {
+  Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits() async* {
     yield Success([..._deposits]);
     yield* _controller.stream;
   }
 
   @override
-  Stream<Result<RecurringDeposit, String>> watchRecurringDepositById(
-    String id,
-  ) async* {
-    final deposit = _deposits.where((d) => d.id == id).firstOrNull;
-    if (deposit != null) {
-      yield Success(deposit);
-    } else {
-      yield const Failure('Recurring Deposit not found');
+  Stream<Result<RecurringDeposit, String>> watchRecurringDepositById(String id) async* {
+    Result<RecurringDeposit, String> lookup(List<RecurringDeposit> list) {
+      final d = list.where((d) => d.id == id).firstOrNull;
+      return d == null ? const Failure('Recurring Deposit not found') : Success(d);
     }
 
-    yield* _controller.stream.map((result) {
-      return switch (result) {
-        Success(value: final deposits) => () {
-          final d = deposits.where((d) => d.id == id).firstOrNull;
-          if (d != null) {
-            return Success<RecurringDeposit, String>(d);
-          }
-          return const Failure<RecurringDeposit, String>(
-            'Recurring Deposit not found',
-          );
-        }(),
-        Failure(error: final error) => Failure(error),
-      };
-    });
+    yield lookup(_deposits);
+    yield* _controller.stream.map(
+      (r) => switch (r) {
+        Success(value: final list) => lookup(list),
+        Failure(error: final e) => Failure<RecurringDeposit, String>(e),
+      },
+    );
   }
 
   @override
-  Future<Result<void, String>> createRecurringDeposit(
-    RecurringDeposit deposit,
-  ) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    final newDeposit = deposit.copyWith(
-      id: deposit.id.isEmpty ? const Uuid().v4() : deposit.id,
-    );
-    _deposits.add(newDeposit);
+  Future<Result<void, String>> saveRecurringDeposit(RecurringDeposit deposit) async {
+    final index = _deposits.indexWhere((d) => d.id == deposit.id);
+    if (index == -1) {
+      _deposits.add(
+        deposit.copyWith(id: deposit.id.isEmpty ? const Uuid().v4() : deposit.id),
+      );
+    } else {
+      final validation = RecurringDeposit.validateUpdate(
+        existing: _deposits[index],
+        updated: deposit,
+        hasPayments: hasLedgerActivity(deposit.id),
+      );
+      if (validation case Failure(error: final err)) return Failure(err);
+      _deposits[index] = deposit;
+    }
     _emit();
     return const Success(null);
   }
 
   @override
-  Future<Result<void, String>> updateRecurringDeposit(
-    RecurringDeposit deposit,
-  ) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    final index = _deposits.indexWhere((d) => d.id == deposit.id);
-    if (index != -1) {
-      _deposits[index] = deposit;
-      _emit();
-      return const Success(null);
-    }
-    return const Failure('Recurring Deposit not found');
-  }
-
-  @override
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    final initialLength = _deposits.length;
+    final before = _deposits.length;
     _deposits.removeWhere((d) => d.id == id);
-    if (_deposits.length < initialLength) {
-      _emit();
-      return const Success(null);
-    }
-    return const Failure('Recurring Deposit not found');
-  }
-
-  void dispose() {
-    _controller.close();
+    if (_deposits.length == before) return const Failure('Recurring Deposit not found');
+    _emit();
+    return const Success(null);
   }
 }
 

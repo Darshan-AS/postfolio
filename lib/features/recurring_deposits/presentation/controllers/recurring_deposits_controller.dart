@@ -211,6 +211,8 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     String? interestRate,
     DepositStatus status = DepositStatus.active,
     List<Nominee> nominees = const [],
+    String initialPaidInstallments = '0',
+    String openingReceivable = '0',
   }) async {
     final depositId = id ?? const Uuid().v4();
     final postalRateService = ref.read(postalRateServiceProvider);
@@ -219,6 +221,9 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     final rate = interestRate != null
         ? double.tryParse(interestRate.trim())
         : null;
+    final initialPaid = int.tryParse(initialPaidInstallments.trim()) ?? 0;
+    final openingReceivableAmount =
+        double.tryParse(openingReceivable.trim()) ?? 0.0;
 
     final createResult = RecurringDeposit.create(
       id: depositId,
@@ -234,6 +239,8 @@ class RecurringDepositsController extends _$RecurringDepositsController {
       startDate: startDate,
       nominees: nominees,
       postalRateService: postalRateService,
+      initialPaidInstallments: initialPaid,
+      openingReceivable: openingReceivableAmount,
     );
 
     final RecurringDeposit deposit;
@@ -245,14 +252,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     }
 
     final repository = ref.read(recurringDepositRepositoryProvider);
-    final Result<void, String> result = id != null
-        ? await repository.updateRecurringDeposit(deposit)
-        : await repository.createRecurringDeposit(deposit);
-
-    return switch (result) {
-      Success() => const Success<void, String>(null),
-      Failure(error: final err) => Failure<void, String>(err),
-    };
+    return await repository.saveRecurringDeposit(deposit);
   }
 
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {
@@ -282,14 +282,14 @@ class RecurringDepositsController extends _$RecurringDepositsController {
           await repository.watchRecurringDepositById(id).first;
       return switch (singleResult) {
         Success(value: final d) =>
-          await repository.updateRecurringDeposit(d.copyWith(status: newStatus)),
+          await repository.saveRecurringDeposit(d.copyWith(status: newStatus)),
         Failure(error: final err) => Failure(err),
       };
     }
 
     final updatedDeposit = targetDeposit.copyWith(status: newStatus);
     final repository = ref.read(recurringDepositRepositoryProvider);
-    return await repository.updateRecurringDeposit(updatedDeposit);
+    return await repository.saveRecurringDeposit(updatedDeposit);
   }
 }
 

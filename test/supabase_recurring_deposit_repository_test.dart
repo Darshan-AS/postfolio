@@ -71,7 +71,7 @@ void main() {
     expect(rdCreateRes, isA<Success<RecurringDeposit, String>>());
     final rd = (rdCreateRes as Success<RecurringDeposit, String>).value;
 
-    final createResult = await rdRepo.createRecurringDeposit(rd);
+    final createResult = await rdRepo.saveRecurringDeposit(rd);
     expect(createResult, isA<Success<void, String>>());
 
     // Verify initial RD in DB
@@ -99,7 +99,7 @@ void main() {
     );
     final updatedRd = (rdUpdateRes as Success<RecurringDeposit, String>).value;
 
-    final updateResult = await rdRepo.updateRecurringDeposit(updatedRd);
+    final updateResult = await rdRepo.saveRecurringDeposit(updatedRd);
     expect(updateResult, isA<Success<void, String>>());
 
     // Verify updated RD in DB directly
