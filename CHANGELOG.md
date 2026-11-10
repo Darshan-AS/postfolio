@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1+22] - 2026-11-10
+
+### Fixed
+- **Onboarding terms editable on existing RDs**: "Installments deposited at PO so far" and "Opening receivable" were disabled on every edit, so a migrated baseline could not be corrected per account. They now lock only once the RD has a recorded payment or PO deposit, like the other financial terms.
+
+### Changed
+- **RD detail tab order**: opens on **Account Info**, then **Passbook**, then **Transactions**. `?tab=` deep links are unchanged.
+
 ## [2.3.0+21] - 2026-11-10
 
 ### Added
