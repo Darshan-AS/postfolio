@@ -390,6 +390,24 @@ void main() {
           reason: 'the message says how many months remain');
     });
 
+    test('planPoDeposit returns the stored event when that id is already in the ledger', () {
+      final stored = po('e1', 1, DateTime(2026, 1, 12));
+      final facts = RDLedgerFacts(deposit: deposit(), poDeposits: [stored]);
+
+      // A retry may arrive with a draft that has since changed, or that no longer validates.
+      for (final count in [1, 3, 0]) {
+        final planned = projector.planPoDeposit(
+          facts,
+          id: 'e1',
+          count: count,
+          depositedOn: DateTime(2026, 1, 1),
+        );
+        expect(planned, isA<Success<RDPoDeposit, String>>());
+        expect((planned as Success<RDPoDeposit, String>).value, same(stored),
+            reason: 'recording a deposit that is already recorded changes nothing');
+      }
+    });
+
     test('events beyond the schedule are warnings, and the latest event is identifiable', () {
       final facts = RDLedgerFacts(
         deposit: deposit(termYears: 0, termMonths: 2),

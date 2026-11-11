@@ -203,6 +203,32 @@ void main() {
       expect(same, isA<Success<void, String>>(), reason: 'same day as the last visit is fine');
     });
 
+    test('a deposit re-sent under the same id after a lost response is stored once and reported as saved',
+        () async {
+      final h = _harness(
+        deposits: [_deposit('rd1')],
+        transactions: {'rd1': [_tx('rd1', 't', 3000, DateTime(2026, 1, 12))]},
+      );
+      final n = h.container.read(rDLedgerControllerProvider.notifier);
+      h.ledger.failApplyAfterCommitOnce = 'response lost';
+
+      final first = await n.depositNextToPo(rdId: 'rd1', count: 2, eventId: 'attempt-1');
+      expect(first, isA<Failure<RDPoDeposit, String>>());
+      expect(h.ledger.poDepositsOf('rd1'), hasLength(1), reason: 'the write itself went through');
+
+      // By the time of the retry the sheet has refreshed and may ask for something else.
+      final retry = await n.depositNextToPo(rdId: 'rd1', count: 1, eventId: 'attempt-1');
+
+      final reported = (retry as Success<RDPoDeposit, String>).value;
+      expect(reported.installmentCount, 2, reason: 'the caller is told what is actually stored');
+      expect(h.ledger.poDepositsOf('rd1'), hasLength(1), reason: 'the retry must not deposit month 3');
+      expect(h.ledger.summaryOf('rd1')!.depositedThroughNo, 2);
+
+      final another = await n.depositNextToPo(rdId: 'rd1', count: 1, eventId: 'attempt-2');
+      expect(another, isA<Success<RDPoDeposit, String>>());
+      expect(h.ledger.poDepositsOf('rd1'), hasLength(2), reason: 'a new id is a new deposit');
+    });
+
     test('recordPayment with cold rdLedgerFactsProvider does not double-count hub summary', () async {
       final h = _harness(deposits: [_deposit('rd1')]);
       final c = h.container;

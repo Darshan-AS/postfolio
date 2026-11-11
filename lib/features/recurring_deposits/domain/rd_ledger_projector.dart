@@ -372,6 +372,10 @@ final class RDLedgerProjector {
   /// * the counter fee, when given, is not negative;
   /// * the visit is not dated before the account's last recorded visit (the PO ledger is
   ///   sequential, and an earlier date would re-assign which months earlier visits covered).
+  ///
+  /// [id] is the deposit's identity. If the ledger already holds an event with that id, that
+  /// stored event is returned as it is and nothing above is checked: recording a deposit
+  /// that is already recorded changes nothing.
   Result<RDPoDeposit, String> planPoDeposit(
     RDLedgerFacts facts, {
     required String id,
@@ -380,6 +384,12 @@ final class RDLedgerProjector {
     double? feeOverride,
     String? batchId,
   }) {
+    // The id is the deposit's identity. A request to record one the ledger already holds
+    // (a retry after a lost response) is answered with what is stored; it is not planned
+    // again on top of itself, whatever the retried draft now says.
+    for (final stored in facts.poDeposits) {
+      if (stored.id == id) return Success(stored);
+    }
     if (count <= 0) return const Failure('Nothing to deposit.');
     if (feeOverride != null && Money.toPaise(feeOverride) < 0) {
       return const Failure('Counter fee cannot be negative.');

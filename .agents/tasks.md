@@ -41,7 +41,7 @@
 *From the independent audit in `.agents/session_logs/2026-11-11_session_2.md`; fix log in `.agents/session_logs/2026-11-12_session_1.md`.*
 - [x] **A1 (Visit selection)**: Keep the selected rows as the planner's seed set so toggling "include unready" in `RDPoVisitSheet` never widens the plan to every Hub row.
 - [x] **A2 (Visit write path)**: Stop `depositBatchToPo` / `undoBatch` returning Failure after the facts are committed; read facts with `fetchRawFactsForRds` instead of per-RD streams; make a retried visit a no-op (unique client batch ID).
-  - [ ] Follow-up (tracked as B3): the deposit sheet creates a new event id per attempt, so a retry after a lost response can record twice. Correction to the earlier note: the collect sheet was never affected — `usePaymentDraft` already holds one id per sheet, so a retry used to hit a duplicate-key error and now succeeds as an upsert.
+  - [x] Follow-up (done as B3): the deposit sheet created a new event id per attempt, so a retry after a lost response recorded twice. Correction to the earlier note: the collect sheet was never affected — `usePaymentDraft` already holds one id per sheet, so a retry used to hit a duplicate-key error and now succeeds as an upsert.
   - Decided (B2): the single busy flag stays and rejects rather than queues. Queueing would turn a double-tapped Undo into two undos; with each write now one read plus one request the window is short.
 - [x] **A3 (Lock fails closed)**: `saveRecurringDeposit` must refuse a terms change when ledger facts cannot be read.
 - [x] **A4 (Backup workflow)**: Pass `$SUPABASE_DB_SESSION_URL` to `pg_dump` in `backup.yml`.
@@ -57,7 +57,7 @@
 ### Ledger-write group (approved 2026-11-12)
 - [x] **B1 (Atomic customer delete)**: `public.delete_customer(p_id)` removes the customer and its savings account in one transaction; `SupabaseCustomerRepository.deleteCustomer` is one request.
 - [x] **B2 (Atomic ledger change)**: one RPC writes ledger facts and their summaries together; every `RDLedgerController` write goes through it.
-- [ ] **B3 (Retry-safe single-account deposit)**: the deposit sheet keeps one event id per attempt so a retry after a lost response stores one event.
+- [x] **B3 (Retry-safe single-account deposit)**: the deposit sheet keeps one event id per attempt so a retry after a lost response stores one event.
 - [ ] **B4 (Incremental summary stream)**: apply Realtime summary rows to an in-memory map instead of refetching every summary after each write.
 
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)

@@ -67,52 +67,45 @@ class _DepositForm extends HookConsumerWidget {
         : ledger.depositTitle(n: count);
 
     Future<void> handleSubmit() async {
-      final count = draft.count;
-      final quote = draft.quote;
       final who = customer ?? t.recurringDeposits.depositNotFound;
-      final installments = ledger.installmentsCount(n: count);
-      final successMessage = quote == null
-          ? ledger.depositDone(
-              installments: installments,
-              customer: who,
-              amount: t.common.notProvided,
-            )
-          : quote.fee > 0
+      final result = await draft.submit();
+      if (!context.mounted) return;
+      switch (result) {
+        case Failure(:final error):
+          AppFeedback.showError(context, error);
+        case Success(value: final saved):
+          // The toast describes the deposit as stored. After a retry that is what the first
+          // attempt saved, even if the sheet has since moved on to the following months.
+          final installments = ledger.installmentsCount(n: saved.installmentCount);
+          final successMessage = saved.feePaid > 0
               ? ledger.depositDoneWithFee(
                   installments: installments,
                   customer: who,
-                  amount: quote.amount.toRupeeFormat(),
-                  fee: quote.fee.toRupeeFormat(),
+                  amount: saved.amount.toRupeeFormat(),
+                  fee: saved.feePaid.toRupeeFormat(),
                 )
               : ledger.depositDone(
                   installments: installments,
                   customer: who,
-                  amount: quote.amount.toRupeeFormat(),
+                  amount: saved.amount.toRupeeFormat(),
                 );
-
-      final result = await draft.submit();
-      if (!context.mounted) return;
-      if (result is Success<void, String>) {
-        Navigator.of(context).pop(true);
-        if (!hostContext.mounted) return;
-        AppFeedback.showResult(
-          hostContext,
-          result,
-          successMessage: successMessage,
-          undoLabel: t.recurringDeposits.monthlyOperations.undo,
-          onUndo: () async {
-            final undone = await draft.undo();
-            if (!hostContext.mounted) return;
-            AppFeedback.showResult(
-              hostContext,
-              undone,
-              successMessage: ledger.depositUndone,
-            );
-          },
-        );
-        return;
+          Navigator.of(context).pop(true);
+          if (!hostContext.mounted) return;
+          AppFeedback.showSuccess(
+            hostContext,
+            successMessage,
+            undoLabel: t.recurringDeposits.monthlyOperations.undo,
+            onUndo: () async {
+              final undone = await draft.undo();
+              if (!hostContext.mounted) return;
+              AppFeedback.showResult(
+                hostContext,
+                undone,
+                successMessage: ledger.depositUndone,
+              );
+            },
+          );
       }
-      AppFeedback.showResult(context, result, successMessage: successMessage);
     }
 
     final Widget body;

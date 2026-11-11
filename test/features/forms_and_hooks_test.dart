@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
@@ -490,6 +491,76 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(container.read(rDPoVisitPlannerProvider).totalFee, 15.0);
+    });
+
+    testWidgets('RDDepositSheet retried after a lost response records one deposit and reports the saved one', (tester) async {
+      final ledger = t.recurringDeposits.ledger;
+      // Month #1 (due 15 Jan) is collected; depositing it on 20 Apr costs ₹30 at the counter.
+      final ledgerRepo = FakeRDLedgerRepository(
+        transactions: {
+          rd.id: [
+            RDTransaction(
+              id: 'tx-1',
+              rdId: rd.id,
+              amount: 1030,
+              paidDate: DateTime(2026, 4, 18),
+              paymentMode: RDPaymentMode.cash,
+            ),
+          ],
+        },
+      );
+      final container = makeContainer(ledgerRepo);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: ElevatedButton(
+                  onPressed: () => showRDDepositSheet(context, rdId: rd.id, initialCount: 1),
+                  child: const Text('Open Deposit Sheet'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open Deposit Sheet'));
+      await tester.pumpAndSettle();
+
+      // The write is stored but its response never arrives, so the sheet reports a failure.
+      ledgerRepo.failApplyAfterCommitOnce = 'response lost';
+      final submit = find.text(ledger.depositSubmit(n: '1'));
+      await tester.tap(submit);
+      await tester.pumpAndSettle();
+      expect(find.text('response lost'), findsOneWidget);
+      expect(submit, findsOneWidget, reason: 'the sheet stays open so the agent can retry');
+      expect(ledgerRepo.poDepositsOf(rd.id), hasLength(1));
+
+      await tester.tap(submit, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(ledgerRepo.poDepositsOf(rd.id), hasLength(1),
+          reason: 'the retry must not deposit month #2 on top of the saved month #1');
+      expect(submit, findsNothing, reason: 'the sheet closes once the deposit is known to be saved');
+      // Toasts queue: the success message follows the earlier failure message.
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          ledger.depositDoneWithFee(
+            installments: ledger.installmentsCount(n: 1),
+            customer: 'Anita Sharma',
+            amount: 1030.0.toRupeeFormat(),
+            fee: 30.0.toRupeeFormat(),
+          ),
+        ),
+        findsOneWidget,
+        reason: 'the toast describes the stored deposit (month #1), not the refreshed draft (month #2: ₹1,020)',
+      );
     });
 
     testWidgets('RDMonthInspectorSheet hides raw poBatchId UUID; EntityDetailScaffold puts Delete in overflow menu; DetailItem copies to clipboard', (tester) async {

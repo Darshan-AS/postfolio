@@ -9,7 +9,9 @@ import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
+import 'package:uuid/uuid.dart';
 
 /// Everything the "Deposit next N at the Post Office" sheet needs. The sheet is a pure
 /// layout over this object; every number comes from the projector.
@@ -71,7 +73,9 @@ class DepositDraftState {
 
   final void Function(int value) setCount;
   final void Function(double? value) setFeeOverride;
-  final Future<Result<void, String>> Function() submit;
+  /// Records the deposit and returns it as stored. Calling it again re-sends the same
+  /// deposit; it never records a second one.
+  final Future<Result<RDPoDeposit, String>> Function() submit;
   final Future<Result<void, String>> Function() undo;
 
   bool get isLoaded => facts.hasValue && projection.hasValue;
@@ -165,11 +169,17 @@ DepositDraftState useDepositDraft(
 
   final ledger = ref.read(rDLedgerControllerProvider.notifier);
 
-  Future<Result<void, String>> submit() => ledger.depositNextToPo(
+  // One id for the one deposit this sheet records. A retry after a failed or lost response
+  // sends the same id, so it can never deposit a second set of months. The sheet closes on
+  // success, so the id is never reused for another deposit.
+  final eventId = useMemoized(() => const Uuid().v7());
+
+  Future<Result<RDPoDeposit, String>> submit() => ledger.depositNextToPo(
         rdId: rdId,
         count: count,
         depositedOn: depositedOn.value,
         feeOverride: feeOverrideState.value,
+        eventId: eventId,
       );
 
   Future<Result<void, String>> undo() => ledger.undoLatestPoDeposit(rdId);

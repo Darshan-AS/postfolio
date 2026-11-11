@@ -190,7 +190,10 @@ class RDLedgerController extends _$RDLedgerController {
   /// [eventId] identifies this deposit. A caller that may retry (a sheet with a Retry
   /// button) passes the same id each time: if that event is already stored, nothing more is
   /// deposited.
-  Future<Result<void, String>> depositNextToPo({
+  ///
+  /// Returns the event as it is stored. After a retry that is the deposit the first attempt
+  /// saved, which can differ from what the retried draft asked for.
+  Future<Result<RDPoDeposit, String>> depositNextToPo({
     required String rdId,
     required int count,
     DateTime? depositedOn,
@@ -198,24 +201,29 @@ class RDLedgerController extends _$RDLedgerController {
     double? feeOverride,
     String? eventId,
   }) =>
-      _commitFor(rdId, (facts) {
-        final id = eventId ?? const Uuid().v7();
-        if (facts.poDeposits.any((e) => e.id == id)) {
-          // Already saved by an earlier attempt; only the summary is refreshed.
-          return const Success(RDLedgerChange());
-        }
+      _exclusive(() async {
+        final facts = (await _fetchFactsFor({rdId}))[rdId];
+        if (facts == null) return const Failure('This account no longer exists.');
         final planned = ref.read(rdLedgerProjectorProvider).planPoDeposit(
               facts,
-              id: id,
+              id: eventId ?? const Uuid().v7(),
               count: count,
               depositedOn: depositedOn ?? ref.read(clockProvider)(),
               feeOverride: feeOverride,
               batchId: batchId,
             );
-        return switch (planned) {
-          Failure(:final error) => Failure(error),
-          Success(value: final event) => Success(RDLedgerChange(insertPoDeposits: [event])),
-        };
+        switch (planned) {
+          case Failure():
+            return planned;
+          case Success(value: final event):
+            // Inserting an event that is already stored changes nothing, so a retry only
+            // rewrites the summary.
+            final written = await _commit(RDLedgerChange(insertPoDeposits: [event]), [facts]);
+            return switch (written) {
+              Failure(:final error) => Failure(error),
+              Success() => Success(event),
+            };
+        }
       });
 
   /// The id of the PO event that visit [batchId] records on account [rdId]. Deterministic,
@@ -253,11 +261,11 @@ class RDLedgerController extends _$RDLedgerController {
         if (facts == null) {
           return const Failure('An account in this visit no longer exists.');
         }
-        final eventId = poVisitEventId(resolvedBatchId, line.rdId);
-        if (facts.poDeposits.any((e) => e.id == eventId)) continue; // saved by an earlier attempt
+        // An account this visit already covers (an earlier attempt was saved) gets its
+        // stored event back from the planner; inserting it again changes nothing.
         final planned = projector.planPoDeposit(
           facts,
-          id: eventId,
+          id: poVisitEventId(resolvedBatchId, line.rdId),
           count: line.count,
           depositedOn: day,
           feeOverride: line.feeOverride,
