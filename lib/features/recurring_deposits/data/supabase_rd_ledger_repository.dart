@@ -6,7 +6,7 @@ import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:postfolio/core/utils/supabase_paginated_query.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_change.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -14,8 +14,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Supabase implementation: three fact tables + one cache table, all under RLS.
 ///
-/// Every stream is a direct realtime subscription on a single table filtered server-side,
-/// so a payment on one RD never triggers a refetch for another.
+/// Per-account fact streams are realtime subscriptions filtered server-side, so a payment on
+/// one RD never triggers a refetch for another. Every fact write goes through one database
+/// function ([applyChange]).
 class SupabaseRDLedgerRepository implements RDLedgerRepository {
   SupabaseRDLedgerRepository(this._client);
 
@@ -199,11 +200,27 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
     );
   }
 
-  // --- Writes -----------------------------------------------------------------------------
-
   @override
-  Future<Result<void, String>> upsertSummary(RDLedgerSummary summary) =>
-      upsertSummaries([summary]);
+  Future<Result<List<RDPoDeposit>, String>> fetchPoDepositsByBatch(String batchId) async {
+    try {
+      final agentId = _agentId;
+      final events = await SupabasePaginatedQuery.fetchAllPages<RDPoDeposit>(
+        fetchPage: (from, to) => _client
+            .from(_poDeposits)
+            .select()
+            .eq('batch_id', batchId)
+            .eq('agent_id', agentId)
+            .order('id', ascending: true)
+            .range(from, to),
+        fromJson: RDPoDeposit.fromJson,
+      );
+      return Success(events);
+    } catch (e) {
+      return Failure(SupabaseErrorMapper.describe(e));
+    }
+  }
+
+  // --- Writes -----------------------------------------------------------------------------
 
   @override
   Future<Result<void, String>> upsertSummaries(List<RDLedgerSummary> summaries) =>
@@ -212,139 +229,68 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
           : _guard(() async {
               await _client.from(_summaries).upsert(
                 [
-                  for (final s in summaries)
-                    _withAgent(s.toJson()..remove('updated_at')),
+                  for (final s in summaries) _summaryRow(s)..['agent_id'] = _agentId,
                 ],
                 onConflict: 'rd_id',
               );
               _localSummaryMutations.add(null);
             });
 
+  /// One request, one database transaction (`public.apply_rd_ledger_change`): the facts in
+  /// [change] and the [summaries] projected from them are stored together or not at all.
+  /// The function runs with the caller's privileges, so row-level security applies to every
+  /// statement, and it stamps `agent_id` from the session rather than trusting the payload.
   @override
-  Future<Result<void, String>> addTransaction(RDTransaction transaction) =>
-      _guard(() => _client.from(_transactions).insert(_transactionRow(transaction)));
-
-  @override
-  Future<Result<void, String>> updateTransaction(RDTransaction transaction) =>
-      _guard(() => _client
-          .from(_transactions)
-          .update(_transactionRow(transaction)..remove('id')..remove('rd_id'))
-          .eq('id', transaction.id)
-          .eq('rd_id', transaction.rdId));
-
-  @override
-  Future<Result<void, String>> deleteTransaction({
-    required String rdId,
-    required String transactionId,
-  }) =>
-      _guard(() => _client
-          .from(_transactions)
-          .delete()
-          .eq('id', transactionId)
-          .eq('rd_id', rdId));
-
-  @override
-  Future<Result<void, String>> addPoDeposit(RDPoDeposit event) =>
-      addPoDeposits([event]);
-
-  @override
-  Future<Result<void, String>> addPoDeposits(List<RDPoDeposit> events) =>
-      events.isEmpty
-          ? Future.value(const Success(null))
-          : _guard(
-              () => _client.from(_poDeposits).insert([
-                for (final e in events)
-                  _withAgent(e.toJson()..remove('created_at')),
-              ]),
-            );
-
-  @override
-  Future<Result<void, String>> deletePoDeposit({
-    required String rdId,
-    required String eventId,
-  }) =>
-      _guard(() => _client.from(_poDeposits).delete().eq('id', eventId).eq('rd_id', rdId));
-
-  @override
-  Future<Result<List<String>, String>> deletePoDepositBatch(String batchId) async {
-    try {
-      final agentId = _agentId;
-      final batchRows = await SupabasePaginatedQuery.fetchAllRawPages(
-        fetchPage: (from, to) => _client
-            .from(_poDeposits)
-            .select('rd_id')
-            .eq('batch_id', batchId)
-            .eq('agent_id', agentId)
-            .order('id', ascending: true)
-            .range(from, to),
-      );
-      final affectedSet = {
-        for (final row in batchRows)
-          if (row['rd_id'] is String) row['rd_id'] as String,
-      };
-      final affectedRdIds = affectedSet.toList(growable: false);
-      if (affectedRdIds.isEmpty) return const Success(<String>[]);
-
-      final allDeposits = await _fetchByRdIds<RDPoDeposit>(
-        table: _poDeposits,
-        agentId: agentId,
-        rdIds: affectedRdIds,
-        orderBy: const ['deposited_on', 'id'],
-        fromJson: RDPoDeposit.fromJson,
-      );
-      final error = RDLedgerFacts.validateBatchUndo(
-        batchId: batchId,
-        deposits: allDeposits,
-      );
-      if (error != null) return Failure(error);
-
-      await _client
-          .from(_poDeposits)
-          .delete()
-          .eq('batch_id', batchId)
-          .eq('agent_id', agentId);
-      return Success(affectedRdIds);
-    } catch (e) {
-      return Failure(
-        SupabaseErrorMapper.describe(
-          e,
-          fallback: 'The ledger could not be updated. Please try again.',
-        ),
-      );
+  Future<Result<void, String>> applyChange(
+    RDLedgerChange change, {
+    List<RDLedgerSummary> summaries = const [],
+  }) {
+    if (change.isEmpty && summaries.isEmpty) {
+      return Future.value(const Success(null));
     }
+    return _guard(() async {
+      await _client.rpc(
+        'apply_rd_ledger_change',
+        params: {
+          'p_upsert_transactions': [
+            for (final t in change.upsertTransactions) _transactionRow(t),
+          ],
+          'p_delete_transaction_ids': [
+            for (final d in change.deleteTransactions) d.transactionId,
+          ],
+          'p_insert_po_deposits': [
+            for (final e in change.insertPoDeposits) e.toJson()..remove('created_at'),
+          ],
+          'p_delete_po_deposit_ids': [
+            for (final d in change.deletePoDeposits) d.eventId,
+          ],
+          'p_upsert_fee_absorptions': [
+            for (final a in change.upsertFeeAbsorptions) a.toJson()..remove('created_at'),
+          ],
+          'p_delete_fee_absorptions': [
+            for (final d in change.deleteFeeAbsorptions)
+              {'rd_id': d.rdId, 'installment_no': d.installmentNo},
+          ],
+          'p_summaries': [for (final s in summaries) _summaryRow(s)],
+        },
+      );
+      if (summaries.isNotEmpty) _localSummaryMutations.add(null);
+    });
   }
-
-  @override
-  Future<Result<void, String>> upsertFeeAbsorption(RDFeeAbsorption absorption) =>
-      _guard(() => _client.from(_feeAbsorptions).upsert(
-            _withAgent(absorption.toJson()..remove('created_at')),
-            onConflict: 'rd_id,installment_no',
-          ));
-
-  @override
-  Future<Result<void, String>> removeFeeAbsorption({
-    required String rdId,
-    required int installmentNo,
-  }) =>
-      _guard(() => _client
-          .from(_feeAbsorptions)
-          .delete()
-          .eq('rd_id', rdId)
-          .eq('installment_no', installmentNo));
 
   // --- Helpers ----------------------------------------------------------------------------
 
-  Map<String, dynamic> _transactionRow(RDTransaction tx) {
+  static Map<String, dynamic> _transactionRow(RDTransaction tx) {
     final json = tx.toJson()
       ..remove('created_at')
       ..remove('updated_at');
     // DATE column: strip any time component the generic converter may have produced.
     json['paid_date'] = tx.paidDate.toIso8601String().split('T').first;
-    return _withAgent(json);
+    return json;
   }
 
-  Map<String, dynamic> _withAgent(Map<String, dynamic> json) =>
-      json..['agent_id'] = _agentId;
+  static Map<String, dynamic> _summaryRow(RDLedgerSummary summary) =>
+      summary.toJson()..remove('updated_at');
 
   static Result<List<T>, String> _mapRows<T>(
     List<Map<String, dynamic>> rows,

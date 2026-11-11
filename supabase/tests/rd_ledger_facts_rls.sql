@@ -667,8 +667,8 @@ BEGIN
   FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
   WHERE n.nspname = 'public' AND has_function_privilege('authenticated', p.oid, 'execute');
   ASSERT v_authenticated =
-    'delete_customer, is_admin, log_client_error, owns_account, save_customer_with_sb_account, '
-    'save_one_time_deposit, save_recurring_deposit, set_deposit_status',
+    'apply_rd_ledger_change, delete_customer, is_admin, log_client_error, owns_account, '
+    'save_customer_with_sb_account, save_one_time_deposit, save_recurring_deposit, set_deposit_status',
     format('CASE 19b FAILED: unexpected functions executable by authenticated: %s', v_authenticated);
 END $$;
 
@@ -743,4 +743,137 @@ BEGIN
 END $$;
 ROLLBACK;
 
-\echo '== ALL 20 SQL CONTRACT ASSERTIONS PASSED =='
+\echo '== CASE 21: apply_rd_ledger_change stores facts and summaries together, or nothing'
+BEGIN;
+INSERT INTO auth.users (instance_id,id,aud,role,email,raw_user_meta_data,confirmation_token,recovery_token,email_change_token_new,email_change)
+VALUES ('00000000-0000-0000-0000-000000000000','dddddddd-0000-4000-8000-000000000002','authenticated','authenticated','other-agent@example.com','{}','','','','')
+ON CONFLICT (id) DO NOTHING;
+SELECT set_config('test.target_rd', :'rd_id', true) \gset junk
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'owner', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+DECLARE
+  v_rd UUID := current_setting('test.target_rd')::uuid;
+  v_tx UUID := 'aaaaaaaa-0000-4000-8000-000000000021';
+  v_po UUID := 'bbbbbbbb-0000-4000-8000-000000000021';
+  v_tx_before BIGINT;
+  v_caught BOOLEAN;
+  v_amount NUMERIC;
+  v_through INTEGER;
+BEGIN
+  SELECT count(*) INTO v_tx_before FROM public.rd_transactions WHERE rd_id = v_rd;
+
+  -- 21a. One call stores a payment, a PO event, an absorbed fee and the summary.
+  PERFORM public.apply_rd_ledger_change(
+    p_upsert_transactions => jsonb_build_array(jsonb_build_object(
+      'id', v_tx, 'rd_id', v_rd, 'paid_date', '2026-09-01', 'amount', 700, 'payment_mode', 'upi')),
+    p_insert_po_deposits => jsonb_build_array(jsonb_build_object(
+      'id', v_po, 'rd_id', v_rd, 'deposited_on', '2026-09-02', 'installment_count', 2,
+      'fee_paid', 20, 'amount', 2020, 'batch_id', 'cccccccc-0000-4000-8000-000000000021')),
+    p_upsert_fee_absorptions => jsonb_build_array(jsonb_build_object(
+      'rd_id', v_rd, 'installment_no', 59, 'amount', 5, 'absorbed_on', '2026-09-02')),
+    p_summaries => jsonb_build_array(jsonb_build_object(
+      'rd_id', v_rd, 'facts_version', 777, 'projected_on', '2026-09-02',
+      'deposited_through_no', 41, 'open_items', '[{"installment_no":41}]'::jsonb))
+  );
+  ASSERT EXISTS (SELECT 1 FROM public.rd_transactions WHERE id = v_tx AND agent_id = auth.uid()),
+    'CASE 21a FAILED: payment was not stored with the session agent_id';
+  ASSERT EXISTS (SELECT 1 FROM public.rd_po_deposits WHERE id = v_po AND installment_count = 2),
+    'CASE 21a FAILED: PO event was not stored';
+  ASSERT EXISTS (SELECT 1 FROM public.rd_fee_absorptions WHERE rd_id = v_rd AND installment_no = 59),
+    'CASE 21a FAILED: fee absorption was not stored';
+  SELECT deposited_through_no INTO v_through FROM public.rd_ledger_summary WHERE rd_id = v_rd AND facts_version = 777;
+  ASSERT v_through = 41, 'CASE 21a FAILED: summary was not stored';
+
+  -- 21b. Sending the same change again changes nothing; a re-sent payment is an update and a
+  --      re-sent PO event with different content is ignored (events are facts).
+  PERFORM public.apply_rd_ledger_change(
+    p_upsert_transactions => jsonb_build_array(jsonb_build_object(
+      'id', v_tx, 'rd_id', v_rd, 'paid_date', '2026-09-01', 'amount', 900, 'payment_mode', 'cash')),
+    p_insert_po_deposits => jsonb_build_array(jsonb_build_object(
+      'id', v_po, 'rd_id', v_rd, 'deposited_on', '2026-09-03', 'installment_count', 5, 'amount', 5000))
+  );
+  ASSERT (SELECT count(*) FROM public.rd_transactions WHERE rd_id = v_rd) = v_tx_before + 1,
+    'CASE 21b FAILED: a re-sent payment created a second row';
+  SELECT amount INTO v_amount FROM public.rd_transactions WHERE id = v_tx;
+  ASSERT v_amount = 900, 'CASE 21b FAILED: a re-sent payment did not update the stored one';
+  ASSERT (SELECT installment_count FROM public.rd_po_deposits WHERE id = v_po) = 2,
+    'CASE 21b FAILED: a re-sent PO event overwrote the stored fact';
+
+  -- 21c. If any part is invalid, nothing from that call is stored.
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.apply_rd_ledger_change(
+      p_upsert_transactions => jsonb_build_array(jsonb_build_object(
+        'id', 'aaaaaaaa-0000-4000-8000-0000000000ff', 'rd_id', v_rd,
+        'paid_date', '2026-09-05', 'amount', 100, 'payment_mode', 'cash')),
+      p_insert_po_deposits => jsonb_build_array(jsonb_build_object(
+        'id', 'bbbbbbbb-0000-4000-8000-0000000000ff', 'rd_id', v_rd,
+        'deposited_on', '2026-09-05', 'installment_count', 0, 'amount', 0))
+    );
+  EXCEPTION WHEN check_violation THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 21c FAILED: expected the zero-installment PO event to be rejected';
+  ASSERT NOT EXISTS (SELECT 1 FROM public.rd_transactions WHERE id = 'aaaaaaaa-0000-4000-8000-0000000000ff'),
+    'CASE 21c FAILED: the payment was stored although the same call failed';
+
+  -- 21d. Deletes and the summary rewrite are one unit too.
+  PERFORM public.apply_rd_ledger_change(
+    p_delete_transaction_ids => ARRAY[v_tx],
+    p_delete_po_deposit_ids => ARRAY[v_po],
+    p_delete_fee_absorptions => jsonb_build_array(jsonb_build_object('rd_id', v_rd, 'installment_no', 59)),
+    p_summaries => jsonb_build_array(jsonb_build_object(
+      'rd_id', v_rd, 'facts_version', 778, 'projected_on', '2026-09-06'))
+  );
+  ASSERT NOT EXISTS (SELECT 1 FROM public.rd_transactions WHERE id = v_tx),
+    'CASE 21d FAILED: payment was not deleted';
+  ASSERT NOT EXISTS (SELECT 1 FROM public.rd_po_deposits WHERE id = v_po),
+    'CASE 21d FAILED: PO event was not deleted';
+  ASSERT NOT EXISTS (SELECT 1 FROM public.rd_fee_absorptions WHERE rd_id = v_rd AND installment_no = 59),
+    'CASE 21d FAILED: fee absorption was not deleted';
+  ASSERT (SELECT facts_version FROM public.rd_ledger_summary WHERE rd_id = v_rd) = 778,
+    'CASE 21d FAILED: summary was not rewritten';
+END $$;
+
+-- 21e. Another agent cannot write facts on this account through the function, and nothing
+--      from the refused call is stored (row-level security applies: SECURITY INVOKER).
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'other', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+DECLARE
+  v_rd UUID := current_setting('test.target_rd')::uuid;
+  v_caught BOOLEAN := FALSE;
+BEGIN
+  BEGIN
+    PERFORM public.apply_rd_ledger_change(
+      p_upsert_transactions => jsonb_build_array(jsonb_build_object(
+        'id', 'aaaaaaaa-0000-4000-8000-0000000000ee', 'rd_id', v_rd,
+        'paid_date', '2026-09-05', 'amount', 100, 'payment_mode', 'cash'))
+    );
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 21e FAILED: another agent wrote a payment on this account';
+END $$;
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'owner', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+BEGIN
+  ASSERT NOT EXISTS (SELECT 1 FROM public.rd_transactions WHERE id = 'aaaaaaaa-0000-4000-8000-0000000000ee'),
+    'CASE 21e FAILED: the refused payment is visible to the owner';
+END $$;
+ROLLBACK;
+
+-- 21f. anon cannot call it at all.
+BEGIN;
+SET LOCAL ROLE anon;
+DO $$
+DECLARE
+  v_caught BOOLEAN := FALSE;
+BEGIN
+  BEGIN
+    PERFORM public.apply_rd_ledger_change();
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 21f FAILED: anon executed apply_rd_ledger_change';
+END $$;
+ROLLBACK;
+
+\echo '== ALL 21 SQL CONTRACT ASSERTIONS PASSED =='

@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
+import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_change.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
@@ -115,39 +118,42 @@ extension RDPaymentDraftX on RDPaymentDraft {
       );
 }
 
+
 // --- Mutations --------------------------------------------------------------------------------
 
 /// All ledger writes. `state` is the busy flag for the currently running operation so
-/// buttons can disable themselves and a double-tap can never record a payment twice.
+/// buttons can disable themselves and a double-tap can never run an action twice.
 /// Kept alive: it is a stateless façade and in-flight writes must outlive any one screen.
+///
+/// Every write follows the same shape:
+/// 1. read the facts of the accounts involved, once, in one batch;
+/// 2. decide the [RDLedgerChange] in Dart (all rules live in the domain);
+/// 3. project the summaries of the facts *as they will be* after the change;
+/// 4. send the change and those summaries in a single transaction.
+/// Nothing is read after the write, and the Monthly Hub cache cannot be left behind the
+/// facts: either both are stored or neither is.
 @Riverpod(keepAlive: true)
 class RDLedgerController extends _$RDLedgerController {
-  final Set<String> _dirtySummaryRdIds = <String>{};
-
   @override
   AsyncValue<void> build() {
     ref.watch(activeSessionKeyProvider);
-    _dirtySummaryRdIds.clear();
     return const AsyncData(null);
   }
 
   bool get isBusy => state.isLoading;
-  Set<String> get dirtySummaryRdIds => Set.unmodifiable(_dirtySummaryRdIds);
 
+  // --- Customer payments -------------------------------------------------------------------
+
+  /// Records a payment. The draft's `transactionId` identifies the payment: sending the same
+  /// draft again (a retry after a lost response) updates that payment instead of adding one.
   Future<Result<void, String>> recordPayment(RDPaymentDraft draft) {
     if (Money.toPaise(draft.amount) <= 0) {
       return Future.value(const Failure('Amount must be greater than zero.'));
     }
     final tx = draft.toTransaction();
-    return _mutate(
+    return _commitFor(
       tx.rdId,
-      () => ref.read(rdLedgerRepositoryProvider).addTransaction(tx),
-      (f) => f.copyWith(
-        transactions: [
-          ...f.transactions.where((t) => t.id != tx.id),
-          tx,
-        ],
-      ),
+      (_) => Success(RDLedgerChange(upsertTransactions: [tx])),
     );
   }
 
@@ -156,12 +162,9 @@ class RDLedgerController extends _$RDLedgerController {
       return Future.value(const Failure('Amount must be greater than zero.'));
     }
     final normalised = tx.copyWith(paidDate: tx.paidDate.toDateOnly());
-    return _mutate(
+    return _commitFor(
       tx.rdId,
-      () => ref.read(rdLedgerRepositoryProvider).updateTransaction(normalised),
-      (f) => f.copyWith(
-        transactions: [for (final t in f.transactions) t.id == tx.id ? normalised : t],
-      ),
+      (_) => Success(RDLedgerChange(upsertTransactions: [normalised])),
     );
   }
 
@@ -169,58 +172,51 @@ class RDLedgerController extends _$RDLedgerController {
     required String rdId,
     required String transactionId,
   }) =>
-      _mutate(
+      _commitFor(
         rdId,
-        () => ref
-            .read(rdLedgerRepositoryProvider)
-            .deleteTransaction(rdId: rdId, transactionId: transactionId),
-        (f) => f.copyWith(
-          transactions: f.transactions.where((t) => t.id != transactionId).toList(),
+        (_) => Success(
+          RDLedgerChange(
+            deleteTransactions: [(rdId: rdId, transactionId: transactionId)],
+          ),
         ),
       );
+
+  // --- Post Office deposits ----------------------------------------------------------------
 
   /// Records a Post Office visit: the next [count] installments of [rdId] deposited on
   /// [depositedOn] (default today). Pass [feeOverride] when the counter charged a different
   /// fee than the statutory formula (e.g. `0` when a Sunday/holiday due date was extended).
+  ///
+  /// [eventId] identifies this deposit. A caller that may retry (a sheet with a Retry
+  /// button) passes the same id each time: if that event is already stored, nothing more is
+  /// deposited.
   Future<Result<void, String>> depositNextToPo({
     required String rdId,
     required int count,
     DateTime? depositedOn,
     String? batchId,
     double? feeOverride,
-  }) async {
-    final RDLedgerFacts facts;
-    try {
-      facts = await _readFacts(rdId);
-    } on RDLedgerException catch (e) {
-      return Failure(e.message);
-    }
-    final planned = ref.read(rdLedgerProjectorProvider).planPoDeposit(
-          facts,
-          id: const Uuid().v7(),
-          count: count,
-          depositedOn: depositedOn ?? ref.read(clockProvider)(),
-          feeOverride: feeOverride,
-          batchId: batchId,
-        );
-    final RDPoDeposit event;
-    switch (planned) {
-      case Failure(:final error):
-        return Failure(error);
-      case Success(:final value):
-        event = value;
-    }
-    return _mutate(
-      rdId,
-      () => ref.read(rdLedgerRepositoryProvider).addPoDeposit(event),
-      (f) => f.copyWith(
-        poDeposits: [
-          ...f.poDeposits.where((e) => e.id != event.id),
-          event,
-        ],
-      ),
-    );
-  }
+    String? eventId,
+  }) =>
+      _commitFor(rdId, (facts) {
+        final id = eventId ?? const Uuid().v7();
+        if (facts.poDeposits.any((e) => e.id == id)) {
+          // Already saved by an earlier attempt; only the summary is refreshed.
+          return const Success(RDLedgerChange());
+        }
+        final planned = ref.read(rdLedgerProjectorProvider).planPoDeposit(
+              facts,
+              id: id,
+              count: count,
+              depositedOn: depositedOn ?? ref.read(clockProvider)(),
+              feeOverride: feeOverride,
+              batchId: batchId,
+            );
+        return switch (planned) {
+          Failure(:final error) => Failure(error),
+          Success(value: final event) => Success(RDLedgerChange(insertPoDeposits: [event])),
+        };
+      });
 
   /// The id of the PO event that visit [batchId] records on account [rdId]. Deterministic,
   /// so re-sending the same visit targets the same rows instead of creating new ones.
@@ -229,48 +225,36 @@ class RDLedgerController extends _$RDLedgerController {
 
   /// Records one Post Office visit across several accounts.
   ///
-  /// * Facts for every account are read once, in one batch, and every line is validated in
-  ///   Dart **before** anything is written; all events then go in one atomic insert.
-  /// * After the insert nothing is read again: summaries are projected from the facts already
-  ///   in hand, and a failed summary write only marks those accounts dirty. A saved visit is
-  ///   therefore never reported as failed.
-  /// * Re-sending the same [batchId] is safe: an account whose event for this visit already
-  ///   exists is skipped, so a retry after a lost response deposits nothing twice.
+  /// Every line is validated in Dart before anything is written, and all events and their
+  /// summaries go in one transaction. Re-sending the same [batchId] is safe: an account whose
+  /// event for this visit already exists is skipped, so a retry after a lost response
+  /// deposits nothing twice.
   Future<Result<String, String>> depositBatchToPo({
     required List<({String rdId, int count, double? feeOverride})> lines,
     DateTime? depositedOn,
     String? batchId,
-  }) async {
-    if (lines.isEmpty) return const Failure('Nothing to deposit.');
-    if (state.isLoading) {
-      return const Failure('Another ledger operation is still running.');
-    }
+  }) {
+    if (lines.isEmpty) return Future.value(const Failure('Nothing to deposit.'));
     final rdIds = {for (final line in lines) line.rdId};
     if (rdIds.length != lines.length) {
-      return const Failure('An account appears more than once in this visit.');
+      return Future.value(
+        const Failure('An account appears more than once in this visit.'),
+      );
     }
-    final day = (depositedOn ?? ref.read(clockProvider)()).toDateOnly();
-    final resolvedBatchId = batchId ?? const Uuid().v7();
-
-    state = const AsyncLoading();
-    try {
+    return _exclusive(() async {
+      final day = (depositedOn ?? ref.read(clockProvider)()).toDateOnly();
+      final resolvedBatchId = batchId ?? const Uuid().v7();
       final projector = ref.read(rdLedgerProjectorProvider);
       final factsByRd = await _fetchFactsFor(rdIds);
 
-      // Plan every line before writing anything.
       final events = <RDPoDeposit>[];
-      final factsAfter = <RDLedgerFacts>[];
       for (final line in lines) {
         final facts = factsByRd[line.rdId];
         if (facts == null) {
           return const Failure('An account in this visit no longer exists.');
         }
         final eventId = poVisitEventId(resolvedBatchId, line.rdId);
-        if (facts.poDeposits.any((e) => e.id == eventId)) {
-          // Already saved by an earlier attempt of this same visit.
-          factsAfter.add(facts);
-          continue;
-        }
+        if (facts.poDeposits.any((e) => e.id == eventId)) continue; // saved by an earlier attempt
         final planned = projector.planPoDeposit(
           facts,
           id: eventId,
@@ -285,76 +269,62 @@ class RDLedgerController extends _$RDLedgerController {
             return Failure(label == null ? error : 'Account $label: $error');
           case Success(value: final event):
             events.add(event);
-            factsAfter.add(facts.copyWith(poDeposits: [...facts.poDeposits, event]));
         }
       }
 
-      if (events.isNotEmpty) {
-        final written =
-            await ref.read(rdLedgerRepositoryProvider).addPoDeposits(events);
-        if (written case Failure(:final error)) return Failure(error);
-      }
-
-      // The visit is saved. From here on nothing may turn it into a Failure.
-      final asOf = ref.read(clockProvider)().toDateOnly();
-      await _upsertSummariesWithRetryTrack([
-        for (final facts in factsAfter) projector.project(facts, asOf: asOf).summary,
-      ]);
-      return Success(resolvedBatchId);
-    } on RDLedgerException catch (e) {
-      return Failure(e.message);
-    } catch (e) {
-      return Failure(e.toString());
-    } finally {
-      if (ref.mounted) state = const AsyncData(null);
-    }
+      final written = await _commit(
+        RDLedgerChange(insertPoDeposits: events),
+        factsByRd.values,
+      );
+      return switch (written) {
+        Failure(:final error) => Failure(error),
+        Success() => Success(resolvedBatchId),
+      };
+    });
   }
 
   /// Undoes the most recent PO visit for [rdId]. Earlier visits are immutable because the
   /// Post Office ledger is sequential.
-  Future<Result<void, String>> undoLatestPoDeposit(String rdId) async {
-    final RDLedgerFacts facts;
-    try {
-      facts = await _readFacts(rdId);
-    } on RDLedgerException catch (e) {
-      return Failure(e.message);
-    }
-    final latest = facts.latestPoDeposit;
-    if (latest == null) return const Failure('No Post Office deposit to undo.');
-    return _mutate(
-      rdId,
-      () => ref
-          .read(rdLedgerRepositoryProvider)
-          .deletePoDeposit(rdId: rdId, eventId: latest.id),
-      (f) => f.copyWith(poDeposits: f.poDeposits.where((e) => e.id != latest.id).toList()),
-    );
-  }
+  Future<Result<void, String>> undoLatestPoDeposit(String rdId) => _commitFor(rdId, (facts) {
+        final latest = facts.latestPoDeposit;
+        if (latest == null) return const Failure('No Post Office deposit to undo.');
+        return Success(
+          RDLedgerChange(deletePoDeposits: [(rdId: rdId, eventId: latest.id)]),
+        );
+      });
 
-  /// Deletes every PO event recorded under one visit (`batchId`) and refreshes only the
-  /// touched accounts' summaries. Used by "Undo visit".
+  /// Deletes every PO event recorded under one visit (`batchId`) and rewrites the touched
+  /// accounts' summaries, in one transaction. Used by "Undo visit".
   ///
-  /// Once the delete has gone through, the undo is done: a summary refresh that cannot read
-  /// marks those accounts dirty (healed by [flushDirtySummaries]) instead of failing the undo.
-  Future<Result<void, String>> undoBatch(String batchId) async {
-    if (state.isLoading) {
-      return const Failure('Another ledger operation is still running.');
-    }
-    state = const AsyncLoading();
-    try {
-      final result = await ref.read(rdLedgerRepositoryProvider).deletePoDepositBatch(batchId);
-      switch (result) {
-        case Failure(:final error):
-          return Failure(error);
-        case Success(value: final affectedRdIds):
-          await _refreshSummariesFromFacts(affectedRdIds.toSet());
-          return const Success(null);
-      }
-    } catch (e) {
-      return Failure(e.toString());
-    } finally {
-      if (ref.mounted) state = const AsyncData(null);
-    }
-  }
+  /// The visit can only be undone while it is still the latest deposit on every account it
+  /// covers ([RDLedgerFacts.validateBatchUndo]). Undoing a visit that is already gone is a
+  /// success.
+  Future<Result<void, String>> undoBatch(String batchId) => _exclusive(() async {
+        final events = _unwrap(
+          await ref.read(rdLedgerRepositoryProvider).fetchPoDepositsByBatch(batchId),
+        );
+        if (events.isEmpty) return const Success(null);
+
+        final rdIds = {for (final e in events) e.rdId};
+        final factsByRd = await _fetchFactsFor(rdIds);
+        if (factsByRd.length != rdIds.length) {
+          return const Failure('An account in this visit could not be loaded. Please try again.');
+        }
+        final error = RDLedgerFacts.validateBatchUndo(
+          batchId: batchId,
+          deposits: [for (final facts in factsByRd.values) ...facts.poDeposits],
+        );
+        if (error != null) return Failure(error);
+
+        return _commit(
+          RDLedgerChange(
+            deletePoDeposits: [for (final e in events) (rdId: e.rdId, eventId: e.id)],
+          ),
+          factsByRd.values,
+        );
+      });
+
+  // --- Absorbed fees -----------------------------------------------------------------------
 
   /// Records that the agent paid [amount] of month [installmentNo]'s default fee from pocket
   /// (pass `0` / use [clearAbsorbedFee] to revert).
@@ -372,13 +342,9 @@ class RDLedgerController extends _$RDLedgerController {
       amount: amount,
       absorbedOn: ref.read(clockProvider)().toDateOnly(),
     );
-    return _mutate(
+    return _commitFor(
       rdId,
-      () => ref.read(rdLedgerRepositoryProvider).upsertFeeAbsorption(absorption),
-      (f) => f.copyWith(absorptions: [
-        ...f.absorptions.where((a) => a.installmentNo != installmentNo),
-        absorption,
-      ]),
+      (_) => Success(RDLedgerChange(upsertFeeAbsorptions: [absorption])),
     );
   }
 
@@ -386,22 +352,24 @@ class RDLedgerController extends _$RDLedgerController {
     required String rdId,
     required int installmentNo,
   }) =>
-      _mutate(
+      _commitFor(
         rdId,
-        () => ref
-            .read(rdLedgerRepositoryProvider)
-            .removeFeeAbsorption(rdId: rdId, installmentNo: installmentNo),
-        (f) => f.copyWith(
-          absorptions: f.absorptions.where((a) => a.installmentNo != installmentNo).toList(),
+        (_) => Success(
+          RDLedgerChange(
+            deleteFeeAbsorptions: [(rdId: rdId, installmentNo: installmentNo)],
+          ),
         ),
       );
 
-  /// Re-projects from the live facts and refreshes the hub cache (e.g. single-account update).
+  // --- Summary cache rebuilds (no fact changes) --------------------------------------------
+
+  /// Re-projects one account from freshly read facts and rewrites its cached summary
+  /// (e.g. after its financial terms changed).
   Future<Result<void, String>> rebuildSummary(String rdId) async {
     try {
-      final facts = await _readFacts(rdId);
-      await _writeSummary(facts);
-      return const Success(null);
+      final facts = (await _fetchFactsFor({rdId}))[rdId];
+      if (facts == null) return const Failure('This account no longer exists.');
+      return await ref.read(rdLedgerRepositoryProvider).upsertSummaries([_summaryOf(facts)]);
     } on RDLedgerException catch (e) {
       return Failure(e.message);
     }
@@ -421,55 +389,92 @@ class RDLedgerController extends _$RDLedgerController {
       case Failure(:final error):
         return Failure(error);
       case Success(value: final bundles):
-        final asOf = ref.read(clockProvider)().toDateOnly();
-        final projector = ref.read(rdLedgerProjectorProvider);
-        final summaries = <RDLedgerSummary>[];
-        for (final deposit in deposits) {
-          final raw = bundles[deposit.id];
-          final facts = RDLedgerFacts(
-            deposit: deposit,
-            transactions: raw?.transactions ?? const [],
-            poDeposits: raw?.poDeposits ?? const [],
-            absorptions: raw?.absorptions ?? const [],
-          );
-          summaries.add(projector.project(facts, asOf: asOf).summary);
+        return repo.upsertSummaries([
+          for (final deposit in deposits)
+            _summaryOf(
+              RDLedgerFacts(
+                deposit: deposit,
+                transactions: bundles[deposit.id]?.transactions ?? const [],
+                poDeposits: bundles[deposit.id]?.poDeposits ?? const [],
+                absorptions: bundles[deposit.id]?.absorptions ?? const [],
+              ),
+            ),
+        ]);
+    }
+  }
+
+  // --- internals --------------------------------------------------------------------------
+
+  RDLedgerSummary _summaryOf(RDLedgerFacts facts) => ref
+      .read(rdLedgerProjectorProvider)
+      .project(facts, asOf: ref.read(clockProvider)().toDateOnly())
+      .summary;
+
+  /// A write on one account: read its facts, let [plan] decide the change (or refuse), and
+  /// commit it with the account's new summary.
+  Future<Result<void, String>> _commitFor(
+    String rdId,
+    Result<RDLedgerChange, String> Function(RDLedgerFacts facts) plan,
+  ) =>
+      _exclusive(() async {
+        final facts = (await _fetchFactsFor({rdId}))[rdId];
+        if (facts == null) return const Failure('This account no longer exists.');
+        switch (plan(facts)) {
+          case Failure(:final error):
+            return Failure(error);
+          case Success(value: final change):
+            return _commit(change, [facts]);
         }
-        await _upsertSummariesWithRetryTrack(summaries);
-        return const Success(null);
-    }
-  }
+      });
 
-  /// Reads the latest facts for [rdId] while holding a subscription, so an autoDispose
-  /// family that nobody is watching is not torn down mid-load and rebuilding streams settle.
-  Future<RDLedgerFacts> _readFacts(String rdId) async {
-    final sub = ref.listen(rdLedgerFactsProvider(rdId), (_, _) {});
+  /// Stores [change] together with the summaries of [factsBefore] as they will be once the
+  /// change is applied. An empty change still rewrites the summaries, which is how a retry
+  /// of an already-saved write repairs a summary nobody got to see.
+  Future<Result<void, String>> _commit(
+    RDLedgerChange change,
+    Iterable<RDLedgerFacts> factsBefore,
+  ) =>
+      ref.read(rdLedgerRepositoryProvider).applyChange(
+        change,
+        summaries: [for (final facts in factsBefore) _summaryOf(change.applyTo(facts))],
+      );
+
+  /// Runs [operation] as the one ledger write in flight. A second write started meanwhile is
+  /// refused rather than queued: queueing would turn a double-tapped "Undo" into two undos.
+  Future<Result<T, String>> _exclusive<T>(
+    Future<Result<T, String>> Function() operation,
+  ) async {
+    if (state.isLoading) {
+      return const Failure('Another ledger operation is still running.');
+    }
+    state = const AsyncLoading();
     try {
-      return await ref.read(rdLedgerFactsProvider(rdId).future);
+      return await operation();
+    } on RDLedgerException catch (e) {
+      return Failure(e.message);
+    } catch (error, stackTrace) {
+      // A bug, not an expected failure: report it, and still give the caller a Result so the
+      // sheet can show an error and offer a retry.
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'RD ledger',
+          context: ErrorDescription('while writing to the RD ledger'),
+        ),
+      );
+      return const Failure('The ledger could not be updated. Please try again.');
     } finally {
-      sub.close();
+      if (ref.mounted) state = const AsyncData(null);
     }
   }
 
-  /// Facts for many accounts in one batch read (one request per fact table, not a set of
-  /// live streams per account). Accounts that no longer exist are absent from the result.
-  /// Throws [RDLedgerException] when either the deposits or the facts cannot be read.
+  /// Facts for [rdIds] from one batch read (one request per fact table, not a set of live
+  /// streams per account). Accounts that no longer exist are absent from the result.
+  /// Throws [RDLedgerException] when the accounts or their facts cannot be read.
   Future<Map<String, RDLedgerFacts>> _fetchFactsFor(Set<String> rdIds) async {
     if (rdIds.isEmpty) return const {};
-    final List<RecurringDeposit> deposits;
-    final sub = ref.listen(recurringDepositsControllerProvider, (_, _) {});
-    try {
-      deposits = await ref.read(recurringDepositsControllerProvider.future);
-    } catch (_) {
-      throw const RDLedgerException(
-        'Accounts could not be loaded. Check your connection and try again.',
-      );
-    } finally {
-      sub.close();
-    }
-    final depositById = {
-      for (final d in deposits)
-        if (rdIds.contains(d.id)) d.id: d,
-    };
+    final depositById = await _depositsFor(rdIds);
     final raw = _unwrap(
       await ref
           .read(rdLedgerRepositoryProvider)
@@ -486,91 +491,34 @@ class RDLedgerController extends _$RDLedgerController {
     };
   }
 
-  /// Re-projects [rdIds] from freshly read facts and writes their summaries. Never throws:
-  /// if the facts cannot be read or the write fails, the accounts are marked dirty.
-  Future<void> _refreshSummariesFromFacts(Set<String> rdIds) async {
-    if (rdIds.isEmpty) return;
+  /// The accounts themselves. Uses the deposits list when a screen already has it loaded;
+  /// otherwise reads the single account, or loads the list for a multi-account write.
+  Future<Map<String, RecurringDeposit>> _depositsFor(Set<String> rdIds) async {
+    Map<String, RecurringDeposit> pick(Iterable<RecurringDeposit> deposits) => {
+          for (final d in deposits)
+            if (rdIds.contains(d.id)) d.id: d,
+        };
+
+    if (ref.exists(recurringDepositsControllerProvider)) {
+      final loaded = ref.read(recurringDepositsControllerProvider).value;
+      if (loaded != null) return pick(loaded);
+    }
+    if (rdIds.length == 1) {
+      final result = await ref
+          .read(recurringDepositRepositoryProvider)
+          .watchRecurringDepositById(rdIds.single)
+          .first;
+      return pick([_unwrap(result)]);
+    }
+    final sub = ref.listen(recurringDepositsControllerProvider, (_, _) {});
     try {
-      final factsByRd = await _fetchFactsFor(rdIds);
-      final asOf = ref.read(clockProvider)().toDateOnly();
-      final projector = ref.read(rdLedgerProjectorProvider);
-      await _upsertSummariesWithRetryTrack([
-        for (final facts in factsByRd.values) projector.project(facts, asOf: asOf).summary,
-      ]);
-      // An account that no longer exists has no summary left to repair.
-      _dirtySummaryRdIds.removeWhere(
-        (id) => rdIds.contains(id) && !factsByRd.containsKey(id),
+      return pick(await ref.read(recurringDepositsControllerProvider.future));
+    } catch (_) {
+      throw const RDLedgerException(
+        'Accounts could not be loaded. Check your connection and try again.',
       );
-    } catch (_) {
-      _dirtySummaryRdIds.addAll(rdIds);
-    }
-  }
-
-  // --- internals --------------------------------------------------------------------------
-
-  /// Runs a fact write, then (best-effort) re-projects with the optimistic fact change applied
-  /// and upserts the hub summary. The summary is a cache: if it fails, the write still stands.
-  Future<Result<void, String>> _mutate(
-    String rdId,
-    Future<Result<void, String>> Function() write,
-    RDLedgerFacts Function(RDLedgerFacts) apply,
-  ) async {
-    if (state.isLoading) {
-      return const Failure('Another ledger operation is still running.');
-    }
-    state = const AsyncLoading();
-    try {
-      final result = await write();
-      if (result case Success()) {
-        await _refreshSummary(rdId, apply);
-      }
-      if (ref.mounted) state = const AsyncData(null);
-      return result;
-    } catch (e) {
-      if (ref.mounted) state = const AsyncData(null);
-      return Failure(e.toString());
-    }
-  }
-
-  /// Re-projects and flushes any summaries whose earlier refresh failed, from one batch read.
-  Future<void> flushDirtySummaries() async {
-    if (_dirtySummaryRdIds.isEmpty) return;
-    await _refreshSummariesFromFacts({..._dirtySummaryRdIds});
-  }
-
-  Future<void> _refreshSummary(
-    String rdId,
-    RDLedgerFacts Function(RDLedgerFacts) apply,
-  ) async {
-    final hadOtherDirty = _dirtySummaryRdIds.any((id) => id != rdId);
-    try {
-      await _writeSummary(apply(await _readFacts(rdId)));
-      if (hadOtherDirty && !_dirtySummaryRdIds.contains(rdId)) {
-        await flushDirtySummaries();
-      }
-    } catch (_) {
-      _dirtySummaryRdIds.add(rdId);
-    }
-  }
-
-  Future<void> _writeSummary(RDLedgerFacts facts) async {
-    final asOf = ref.read(clockProvider)().toDateOnly();
-    final projection = ref.read(rdLedgerProjectorProvider).project(facts, asOf: asOf);
-    await _upsertSummariesWithRetryTrack([projection.summary]);
-  }
-
-  Future<void> _upsertSummariesWithRetryTrack(List<RDLedgerSummary> summaries) async {
-    if (summaries.isEmpty) return;
-    final res = await ref.read(rdLedgerRepositoryProvider).upsertSummaries(summaries);
-    switch (res) {
-      case Success():
-        for (final s in summaries) {
-          _dirtySummaryRdIds.remove(s.rdId);
-        }
-      case Failure():
-        for (final s in summaries) {
-          _dirtySummaryRdIds.add(s.rdId);
-        }
+    } finally {
+      sub.close();
     }
   }
 }

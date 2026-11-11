@@ -689,7 +689,7 @@ void main() {
       expect(healthyItem.hasOverdueDebt(_today), isFalse);
     });
 
-    test('RecurringDepositsController enforces financial-terms lock in Dart and RDLedgerController retries dirty summaries', () async {
+    test('RecurringDepositsController enforces financial-terms lock in Dart; a payment and its summary are stored together or not at all', () async {
       final h = _harness(
         deposits: [_deposit('rd1')],
         transactions: {'rd1': [_tx('rd1', 't1', 1000, DateTime(2026, 1, 10))]},
@@ -707,22 +707,28 @@ void main() {
       );
       expect(lockedEdit, isA<Failure<void, String>>());
 
-      // Simulate transient summary-cache failure during recordPayment, then self-healing flush.
-      h.ledger.failSummaryWith = 'transient network drop';
+      // The summary cannot be stored: the payment must not be stored on its own, or the
+      // Monthly Hub would keep showing the customer as owing money already collected.
+      h.ledger.failSummaryWith = 'summary rejected';
       final ledger = c.read(rDLedgerControllerProvider.notifier);
-      final txRes = await ledger.recordPayment((
-        rdId: 'rd1',
-        transactionId: null,
-        amount: 1000,
-        paidDate: DateTime(2026, 2, 10),
-        paymentMode: RDPaymentMode.cash,
-      ));
-      expect(txRes, isA<Success<void, String>>(), reason: 'fact write still succeeds');
-      expect(ledger.dirtySummaryRdIds, contains('rd1'));
+      RDPaymentDraft payment() => (
+            rdId: 'rd1',
+            transactionId: 'pay-2',
+            amount: 1000.0,
+            paidDate: DateTime(2026, 2, 10),
+            paymentMode: RDPaymentMode.cash,
+          );
+      expect(await ledger.recordPayment(payment()), isA<Failure<void, String>>());
+      expect(h.ledger.transactionsOf('rd1').map((t) => t.id), ['t1'],
+          reason: 'nothing from the failed write is stored');
+      expect(h.ledger.summaryOf('rd1'), isNull);
+      expect(c.read(rDLedgerControllerProvider).isLoading, isFalse);
 
+      // The same payment sent again once the server accepts it is stored exactly once.
       h.ledger.failSummaryWith = null;
-      await ledger.flushDirtySummaries();
-      expect(ledger.dirtySummaryRdIds, isEmpty);
+      expect(await ledger.recordPayment(payment()), isA<Success<void, String>>());
+      expect(await ledger.recordPayment(payment()), isA<Success<void, String>>());
+      expect(h.ledger.transactionsOf('rd1').map((t) => t.id), ['t1', 'pay-2']);
       expect(h.ledger.summaryOf('rd1')!.paidThroughNo, 2);
     });
   });
@@ -848,12 +854,12 @@ void main() {
 
     test('a saved visit is reported as saved even if nothing can be read afterwards', () async {
       final v = await openVisit();
-      v.ledger.onPoDepositsAdded = () => v.ledger.failReadsWith = 'offline';
+      v.ledger.onChangeApplied = () => v.ledger.failReadsWith = 'offline';
 
       final r = await v.planner.record();
 
       expect(r, isA<Success<String, String>>(),
-          reason: 'the deposits are in the database; a failed summary refresh is not a failed visit');
+          reason: 'the visit and its summaries are one write; nothing is read after it');
       expect(v.ledger.poDepositsOf('rd1').single.installmentCount, 2);
       expect(v.ledger.poDepositsOf('rd2').single.installmentCount, 1);
       expect(v.ledger.summaryOf('rd1')!.depositedThroughNo, 2,
@@ -861,10 +867,25 @@ void main() {
       expect(v.ledger.summaryOf('rd2')!.depositedThroughNo, 1);
     });
 
+    test('a visit and its summaries are stored together or not at all', () async {
+      final v = await openVisit();
+      v.ledger.failSummaryWith = 'summary rejected';
+
+      expect(await v.planner.record(), isA<Failure<String, String>>());
+      expect(v.ledger.poDepositsOf('rd1'), isEmpty,
+          reason: 'deposits must not be stored while the Hub still shows them as pending');
+      expect(v.ledger.poDepositsOf('rd2'), isEmpty);
+
+      v.ledger.failSummaryWith = null;
+      expect(await v.planner.record(), isA<Success<String, String>>());
+      expect(v.ledger.poDepositsOf('rd1'), hasLength(1));
+      expect(v.ledger.summaryOf('rd1')!.depositedThroughNo, 2);
+    });
+
     test('retrying a visit whose first attempt was saved but reported as failed deposits nothing twice',
         () async {
       final v = await openVisit();
-      v.ledger.failAddPoDepositsAfterCommitOnce = 'response lost';
+      v.ledger.failApplyAfterCommitOnce = 'response lost';
 
       expect(await v.planner.record(), isA<Failure<String, String>>());
       final retry = await v.planner.record();
@@ -879,34 +900,39 @@ void main() {
           reason: 'the returned id must undo the visit that was actually saved');
     });
 
-    test('a visit reads the facts of all its accounts in one request, not per account', () async {
+    test('a visit is one batch read and one write, however many accounts it covers', () async {
       final v = await openVisit();
       final streamsBefore = v.ledger.streamOpenCount;
       final batchReadsBefore = v.ledger.batchFactFetchCount;
+      final writesBefore = v.ledger.applyChangeCallCount;
 
       expect(await v.planner.record(), isA<Success<String, String>>());
 
       expect(v.ledger.streamOpenCount, streamsBefore, reason: 'no per-account fact streams');
       expect(v.ledger.batchFactFetchCount, batchReadsBefore + 1);
+      expect(v.ledger.applyChangeCallCount, writesBefore + 1);
     });
 
-    test('undoing a visit is reported as done even if its summary refresh cannot read, and heals later',
-        () async {
+    test('undoing a visit removes it and rewrites the summaries, or changes nothing', () async {
       final v = await openVisit();
       final batchId = (await v.planner.record() as Success<String, String>).value;
-      final controller = v.c.read(rDLedgerControllerProvider.notifier);
 
+      // The visit cannot be checked while offline, so nothing is deleted.
       v.ledger.failReadsWith = 'offline';
+      expect(await v.planner.undoVisit(batchId), isA<Failure<void, String>>());
+      expect(v.ledger.poDepositsOf('rd1'), hasLength(1));
+      expect(v.ledger.poDepositsOf('rd2'), hasLength(1));
+      expect(v.ledger.summaryOf('rd1')!.depositedThroughNo, 2);
+
+      v.ledger.failReadsWith = null;
       expect(await v.planner.undoVisit(batchId), isA<Success<void, String>>());
       expect(v.ledger.poDepositsOf('rd1'), isEmpty);
       expect(v.ledger.poDepositsOf('rd2'), isEmpty);
-      expect(controller.dirtySummaryRdIds, containsAll(['rd1', 'rd2']));
-
-      v.ledger.failReadsWith = null;
-      await controller.flushDirtySummaries();
-      expect(controller.dirtySummaryRdIds, isEmpty);
       expect(v.ledger.summaryOf('rd1')!.depositedThroughNo, 0);
       expect(v.ledger.summaryOf('rd2')!.depositedThroughNo, 0);
+
+      // Undoing it again (a retry after a lost response) is a success, not an error.
+      expect(await v.planner.undoVisit(batchId), isA<Success<void, String>>());
     });
   });
 }

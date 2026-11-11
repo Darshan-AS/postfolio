@@ -18,6 +18,7 @@ import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_rep
 import 'package:postfolio/features/recurring_deposits/data/supabase_rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/supabase_recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_change.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -243,6 +244,55 @@ void main() {
     expect(bundles[rd1]!.poDeposits, hasLength(6));
     expect(bundles[rd1]!.absorptions, hasLength(1));
     expect(bundles[ids.first]!.transactions, isEmpty);
+  });
+
+  test('Atomic write: a change with one invalid part stores nothing, and a re-sent payment is one row', () async {
+    final repo = SupabaseRDLedgerRepository(client);
+    Future<int> txCount() async =>
+        (await client.from('rd_transactions').select('id').eq('rd_id', rd1)).length;
+    final before = await txCount();
+
+    // A valid payment together with a PO event the database rejects (zero installments).
+    final refused = await repo.applyChange(
+      RDLedgerChange(
+        upsertTransactions: [
+          RDTransaction(
+            id: const Uuid().v7(),
+            rdId: rd1,
+            paidDate: DateTime(2026, 10, 27),
+            amount: 100,
+            paymentMode: RDPaymentMode.cash,
+          ),
+        ],
+        insertPoDeposits: [
+          RDPoDeposit(
+            id: const Uuid().v7(),
+            rdId: rd1,
+            depositedOn: DateTime(2026, 10, 27),
+            installmentCount: 0,
+          ),
+        ],
+      ),
+    );
+    expect(refused, isA<Failure<void, String>>());
+    expect(await txCount(), before, reason: 'the payment must not be stored when the same call fails');
+
+    // The same payment recorded twice through the controller (a retry) is one row.
+    final n = container.read(rDLedgerControllerProvider.notifier);
+    final txId = const Uuid().v7();
+    RDPaymentDraft draft() => (
+          rdId: rd1,
+          transactionId: txId,
+          amount: 5000.0,
+          paidDate: DateTime(2026, 10, 27),
+          paymentMode: RDPaymentMode.upi,
+        );
+    expect(await n.recordPayment(draft()), isA<Success<void, String>>());
+    expect(await n.recordPayment(draft()), isA<Success<void, String>>());
+    expect(await txCount(), before + 1);
+
+    expect(await n.deletePayment(rdId: rd1, transactionId: txId), isA<Success<void, String>>());
+    expect(await txCount(), before);
   });
 
   test('Write path: re-sending the same PO visit stores it once; undo restores the ledger', () async {

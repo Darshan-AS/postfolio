@@ -729,6 +729,118 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY INVOKER SET search_path = public;
 
+-- One RD-ledger change, stored as a unit: the facts and the Monthly Hub summaries projected
+-- from them commit together or not at all. PostgREST has no client-held transaction, so this
+-- envelope is the only way to get that. It contains no ledger rule: the client decides what
+-- changes and computes the summaries; this function only persists them.
+--   * SECURITY INVOKER: every statement runs under the caller's row-level security, so facts
+--     on another agent's account are refused (42501) and roll the whole call back.
+--   * `agent_id` is stamped from the session, never read from the payload.
+--   * Safe to send twice: payments and absorptions are upserts, a PO event whose id exists is
+--     left untouched, and deleting something already gone matches nothing.
+CREATE OR REPLACE FUNCTION public.apply_rd_ledger_change(
+  p_upsert_transactions JSONB DEFAULT '[]'::jsonb,
+  p_delete_transaction_ids UUID[] DEFAULT '{}'::uuid[],
+  p_insert_po_deposits JSONB DEFAULT '[]'::jsonb,
+  p_delete_po_deposit_ids UUID[] DEFAULT '{}'::uuid[],
+  p_upsert_fee_absorptions JSONB DEFAULT '[]'::jsonb,
+  p_delete_fee_absorptions JSONB DEFAULT '[]'::jsonb,
+  p_summaries JSONB DEFAULT '[]'::jsonb
+) RETURNS VOID AS $$
+DECLARE
+  v_agent_id UUID := auth.uid();
+BEGIN
+  IF v_agent_id IS NULL THEN
+    RAISE EXCEPTION 'Unauthenticated'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  DELETE FROM public.rd_transactions
+  WHERE id = ANY (COALESCE(p_delete_transaction_ids, '{}'::uuid[]));
+
+  DELETE FROM public.rd_po_deposits
+  WHERE id = ANY (COALESCE(p_delete_po_deposit_ids, '{}'::uuid[]));
+
+  DELETE FROM public.rd_fee_absorptions a
+  USING jsonb_to_recordset(COALESCE(p_delete_fee_absorptions, '[]'::jsonb))
+    AS d(rd_id UUID, installment_no INTEGER)
+  WHERE a.rd_id = d.rd_id AND a.installment_no = d.installment_no;
+
+  INSERT INTO public.rd_transactions (
+    id, rd_id, agent_id, paid_date, amount, payment_mode, collection_id
+  )
+  SELECT t.id, t.rd_id, v_agent_id, t.paid_date, t.amount, t.payment_mode, t.collection_id
+  FROM jsonb_to_recordset(COALESCE(p_upsert_transactions, '[]'::jsonb))
+    AS t(id UUID, rd_id UUID, paid_date DATE, amount NUMERIC, payment_mode TEXT, collection_id UUID)
+  ON CONFLICT (id) DO UPDATE SET
+    paid_date = EXCLUDED.paid_date,
+    amount = EXCLUDED.amount,
+    payment_mode = EXCLUDED.payment_mode,
+    collection_id = EXCLUDED.collection_id;
+
+  INSERT INTO public.rd_po_deposits (
+    id, rd_id, agent_id, deposited_on, installment_count, fee_paid, amount, batch_id
+  )
+  SELECT e.id, e.rd_id, v_agent_id, e.deposited_on, e.installment_count,
+         COALESCE(e.fee_paid, 0), COALESCE(e.amount, 0), e.batch_id
+  FROM jsonb_to_recordset(COALESCE(p_insert_po_deposits, '[]'::jsonb))
+    AS e(id UUID, rd_id UUID, deposited_on DATE, installment_count INTEGER,
+         fee_paid NUMERIC, amount NUMERIC, batch_id UUID)
+  ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO public.rd_fee_absorptions (
+    rd_id, agent_id, installment_no, amount, absorbed_on, note
+  )
+  SELECT a.rd_id, v_agent_id, a.installment_no, a.amount, a.absorbed_on, a.note
+  FROM jsonb_to_recordset(COALESCE(p_upsert_fee_absorptions, '[]'::jsonb))
+    AS a(rd_id UUID, installment_no INTEGER, amount NUMERIC, absorbed_on DATE, note TEXT)
+  ON CONFLICT (rd_id, installment_no) DO UPDATE SET
+    amount = EXCLUDED.amount,
+    absorbed_on = EXCLUDED.absorbed_on,
+    note = EXCLUDED.note;
+
+  INSERT INTO public.rd_ledger_summary (
+    rd_id, agent_id, facts_version, projected_on, paid_through_no, deposited_through_no,
+    next_due_no, customer_credit, opening_receivable_left, owed_by_customer, receivable,
+    cash_in_hand_cash, cash_in_hand_digital, absorbed_total, delay_cost_total,
+    arrears_count, fee_due, open_items
+  )
+  SELECT
+    s.rd_id, v_agent_id, COALESCE(s.facts_version, 0), s.projected_on,
+    COALESCE(s.paid_through_no, 0), COALESCE(s.deposited_through_no, 0), s.next_due_no,
+    COALESCE(s.customer_credit, 0), COALESCE(s.opening_receivable_left, 0),
+    COALESCE(s.owed_by_customer, 0), COALESCE(s.receivable, 0),
+    COALESCE(s.cash_in_hand_cash, 0), COALESCE(s.cash_in_hand_digital, 0),
+    COALESCE(s.absorbed_total, 0), COALESCE(s.delay_cost_total, 0),
+    COALESCE(s.arrears_count, 0), COALESCE(s.fee_due, 0),
+    COALESCE(s.open_items, '[]'::jsonb)
+  FROM jsonb_to_recordset(COALESCE(p_summaries, '[]'::jsonb)) AS s(
+    rd_id UUID, facts_version BIGINT, projected_on DATE, paid_through_no INTEGER,
+    deposited_through_no INTEGER, next_due_no INTEGER, customer_credit NUMERIC,
+    opening_receivable_left NUMERIC, owed_by_customer NUMERIC, receivable NUMERIC,
+    cash_in_hand_cash NUMERIC, cash_in_hand_digital NUMERIC, absorbed_total NUMERIC,
+    delay_cost_total NUMERIC, arrears_count INTEGER, fee_due NUMERIC, open_items JSONB
+  )
+  ON CONFLICT (rd_id) DO UPDATE SET
+    facts_version = EXCLUDED.facts_version,
+    projected_on = EXCLUDED.projected_on,
+    paid_through_no = EXCLUDED.paid_through_no,
+    deposited_through_no = EXCLUDED.deposited_through_no,
+    next_due_no = EXCLUDED.next_due_no,
+    customer_credit = EXCLUDED.customer_credit,
+    opening_receivable_left = EXCLUDED.opening_receivable_left,
+    owed_by_customer = EXCLUDED.owed_by_customer,
+    receivable = EXCLUDED.receivable,
+    cash_in_hand_cash = EXCLUDED.cash_in_hand_cash,
+    cash_in_hand_digital = EXCLUDED.cash_in_hand_digital,
+    absorbed_total = EXCLUDED.absorbed_total,
+    delay_cost_total = EXCLUDED.delay_cost_total,
+    arrears_count = EXCLUDED.arrears_count,
+    fee_due = EXCLUDED.fee_due,
+    open_items = EXCLUDED.open_items;
+END;
+$$ LANGUAGE plpgsql SECURITY INVOKER SET search_path = public;
+
 -- ------------------------------------------------------------------------------------------
 -- 6. Bounded Web/Client Crash Telemetry (`app_error_logs` + `log_client_error`)
 -- ------------------------------------------------------------------------------------------
@@ -843,6 +955,10 @@ GRANT EXECUTE ON FUNCTION public.set_deposit_status(UUID, TEXT)
 
 GRANT EXECUTE ON FUNCTION public.delete_customer(UUID)
   TO authenticated, service_role;
+
+GRANT EXECUTE ON FUNCTION public.apply_rd_ledger_change(
+  JSONB, UUID[], JSONB, UUID[], JSONB, JSONB, JSONB
+) TO authenticated, service_role;
 
 GRANT EXECUTE ON FUNCTION public.log_client_error(TEXT, TEXT, TEXT, TEXT)
   TO authenticated, service_role;

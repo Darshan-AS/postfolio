@@ -1,5 +1,6 @@
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_change.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -13,10 +14,14 @@ typedef RDRawFactsBundle = ({
 /// Persistence boundary for RD ledger **facts**.
 ///
 /// Reads are bounded per RD except [watchSummaries] (one row per RD, feeds the Monthly Hub)
-/// and [fetchRawFactsForRds] (batch backfill / pull-to-refresh).
-/// Writes are plain inserts/updates/deletes guarded by RLS — no server-side business logic.
+/// and the batch reads [fetchRawFactsForRds] / [fetchPoDepositsByBatch].
+///
+/// There is exactly one way to write facts: [applyChange]. It stores a change and the
+/// summaries projected from it in a single database transaction, so the Monthly Hub cache
+/// can never disagree with the facts it was computed from. No business rule runs on the
+/// server; the change is computed and validated in Dart.
 abstract interface class RDLedgerRepository {
-  // --- Facts (per RD & batch backfill) ----------------------------------------------------
+  // --- Facts (per RD & batch reads) -------------------------------------------------------
   Stream<Result<List<RDTransaction>, String>> watchTransactions(String rdId);
   Stream<Result<List<RDPoDeposit>, String>> watchPoDeposits(String rdId);
   Stream<Result<List<RDFeeAbsorption>, String>> watchFeeAbsorptions(String rdId);
@@ -24,38 +29,34 @@ abstract interface class RDLedgerRepository {
     List<String> rdIds,
   );
 
+  /// Every PO event recorded under one visit (`batch_id`), across accounts.
+  Future<Result<List<RDPoDeposit>, String>> fetchPoDepositsByBatch(String batchId);
+
   // --- Cache (agent-wide, one row per RD) -------------------------------------------------
   Stream<Result<List<RDLedgerSummary>, String>> watchSummaries();
-  Future<Result<void, String>> upsertSummary(RDLedgerSummary summary);
+
+  /// Rewrites cached summaries without changing any fact (first-run backfill, rebuild).
   Future<Result<void, String>> upsertSummaries(List<RDLedgerSummary> summaries);
 
-  // --- Customer payments ------------------------------------------------------------------
-  Future<Result<void, String>> addTransaction(RDTransaction transaction);
-  Future<Result<void, String>> updateTransaction(RDTransaction transaction);
-  Future<Result<void, String>> deleteTransaction({
-    required String rdId,
-    required String transactionId,
+  // --- The single fact write --------------------------------------------------------------
+
+  /// Stores [change] and [summaries] together: either every fact and every summary is
+  /// written, or nothing is. Safe to call again with the same change (see [RDLedgerChange]).
+  Future<Result<void, String>> applyChange(
+    RDLedgerChange change, {
+    List<RDLedgerSummary> summaries = const [],
   });
+}
 
-  // --- Post Office deposits (sequential events) -------------------------------------------
-  Future<Result<void, String>> addPoDeposit(RDPoDeposit event);
-  Future<Result<void, String>> addPoDeposits(List<RDPoDeposit> events);
+/// Single-fact shorthands over [RDLedgerRepository.applyChange], for seeding and tests.
+/// They write the fact only; the caller is responsible for the summary.
+extension RDLedgerRepositoryShorthands on RDLedgerRepository {
+  Future<Result<void, String>> addTransaction(RDTransaction transaction) =>
+      applyChange(RDLedgerChange(upsertTransactions: [transaction]));
 
-  /// Deletes one event. Callers must only pass the latest event for the RD.
-  Future<Result<void, String>> deletePoDeposit({
-    required String rdId,
-    required String eventId,
-  });
+  Future<Result<void, String>> addPoDeposit(RDPoDeposit event) =>
+      applyChange(RDLedgerChange(insertPoDeposits: [event]));
 
-  /// Deletes every event recorded under one PO visit (`batch_id`), across accounts,
-  /// provided each event is still the latest PO deposit on its account.
-  /// Returns the distinct `rdId`s whose events were removed.
-  Future<Result<List<String>, String>> deletePoDepositBatch(String batchId);
-
-  // --- Fee absorptions --------------------------------------------------------------------
-  Future<Result<void, String>> upsertFeeAbsorption(RDFeeAbsorption absorption);
-  Future<Result<void, String>> removeFeeAbsorption({
-    required String rdId,
-    required int installmentNo,
-  });
+  Future<Result<void, String>> upsertFeeAbsorption(RDFeeAbsorption absorption) =>
+      applyChange(RDLedgerChange(upsertFeeAbsorptions: [absorption]));
 }
