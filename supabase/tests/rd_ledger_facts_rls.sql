@@ -667,7 +667,7 @@ BEGIN
   FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
   WHERE n.nspname = 'public' AND has_function_privilege('authenticated', p.oid, 'execute');
   ASSERT v_authenticated =
-    'is_admin, log_client_error, owns_account, save_customer_with_sb_account, '
+    'delete_customer, is_admin, log_client_error, owns_account, save_customer_with_sb_account, '
     'save_one_time_deposit, save_recurring_deposit, set_deposit_status',
     format('CASE 19b FAILED: unexpected functions executable by authenticated: %s', v_authenticated);
 END $$;
@@ -684,4 +684,63 @@ BEGIN
     format('CASE 19c FAILED: tables in public without RLS: %s', v_without_rls);
 END $$;
 
-\echo '== ALL 19 SQL CONTRACT ASSERTIONS PASSED =='
+\echo '== CASE 20: delete_customer removes a customer with its savings account, or nothing at all'
+\set lonely 'cccccccc-0000-4000-8000-000000000020'
+BEGIN;
+INSERT INTO auth.users (instance_id,id,aud,role,email,raw_user_meta_data,confirmation_token,recovery_token,email_change_token_new,email_change)
+VALUES ('00000000-0000-0000-0000-000000000000','dddddddd-0000-4000-8000-000000000002','authenticated','authenticated','other-agent@example.com','{}','','','','')
+ON CONFLICT (id) DO NOTHING;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'owner', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+DECLARE
+  v_with_deposit UUID := (
+    SELECT ai.customer_id FROM public.account_identities ai
+    WHERE ai.agent_id = auth.uid() AND ai.account_type IN ('OTD', 'RD')
+    LIMIT 1
+  );
+  v_caught BOOLEAN := FALSE;
+BEGIN
+  -- 20a. A customer with deposits is refused, and the savings account is still there.
+  INSERT INTO public.account_identities (id, customer_id, agent_id, account_type)
+    VALUES (gen_random_uuid(), v_with_deposit, auth.uid(), 'SB')
+    ON CONFLICT DO NOTHING;
+  BEGIN
+    PERFORM public.delete_customer(v_with_deposit);
+  EXCEPTION WHEN foreign_key_violation THEN
+    v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 20a FAILED: expected 23503 when deleting a customer who has deposits';
+  ASSERT EXISTS (
+    SELECT 1 FROM public.account_identities
+    WHERE customer_id = v_with_deposit AND account_type = 'SB'
+  ), 'CASE 20a FAILED: a refused delete removed the savings account';
+
+  -- A customer with only a savings account and a nominee, used by 20b and 20c.
+  PERFORM public.save_customer_with_sb_account(
+    'cccccccc-0000-4000-8000-000000000020', 'Lonely Customer', '9876543210',
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SB-LONELY-1',
+    '[{"name":"Only Nominee","relationship":"Son","percentage":100}]'::jsonb
+  );
+END $$;
+
+-- 20b. Another agent calling it on this customer deletes nothing (RLS applies: SECURITY INVOKER).
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'other', 'role', 'authenticated')::text, true) \gset junk
+SELECT public.delete_customer(:'lonely') \gset junk
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'owner', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+BEGIN
+  ASSERT EXISTS (SELECT 1 FROM public.customers WHERE id = 'cccccccc-0000-4000-8000-000000000020'),
+    'CASE 20b FAILED: another agent deleted this customer';
+
+  -- 20c. The owner deletes the customer, its savings account and nominees in one call.
+  PERFORM public.delete_customer('cccccccc-0000-4000-8000-000000000020');
+  ASSERT NOT EXISTS (SELECT 1 FROM public.customers WHERE id = 'cccccccc-0000-4000-8000-000000000020'),
+    'CASE 20c FAILED: customer was not deleted';
+  ASSERT NOT EXISTS (
+    SELECT 1 FROM public.account_identities WHERE customer_id = 'cccccccc-0000-4000-8000-000000000020'
+  ), 'CASE 20c FAILED: savings account identity was left behind';
+END $$;
+ROLLBACK;
+
+\echo '== ALL 20 SQL CONTRACT ASSERTIONS PASSED =='

@@ -79,24 +79,10 @@ class SupabaseCustomerRepository implements CustomerRepository {
   @override
   Future<Result<void, String>> deleteCustomer(String id) async {
     try {
-      final agentId = _agentId;
-      // Remove any subordinate SB account first; OTD/RD accounts still block via ON DELETE NO ACTION.
-      final hasDeposits = await _supabaseClient
-          .from('account_identities')
-          .select('id')
-          .eq('customer_id', id)
-          .eq('agent_id', agentId)
-          .neq('account_type', 'SB')
-          .limit(1);
-      if (hasDeposits.isEmpty) {
-        await _supabaseClient
-            .from('account_identities')
-            .delete()
-            .eq('customer_id', id)
-            .eq('agent_id', agentId)
-            .eq('account_type', 'SB');
-      }
-      await _supabaseClient.from('customers').delete().eq('id', id);
+      // One request, one transaction: the customer and its savings account go together.
+      // A customer who still owns an OTD/RD is refused by the database (23503) and nothing
+      // is removed.
+      await _supabaseClient.rpc('delete_customer', params: {'p_id': id});
       _localMutations.add(null);
       return const Success(null);
     } catch (e) {

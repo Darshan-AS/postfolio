@@ -54,6 +54,12 @@
 - [x] **A8 (Realtime staleness)**: Refetch on resubscribe, retry failed loads, and keep a queued refetch when the in-flight fetch throws.
   - [ ] Follow-up (not started): every ledger write still refetches the whole `rd_ledger_summary` list; apply Realtime payloads to an in-memory map instead.
 
+### Ledger-write group (approved 2026-11-12)
+- [x] **B1 (Atomic customer delete)**: `public.delete_customer(p_id)` removes the customer and its savings account in one transaction; `SupabaseCustomerRepository.deleteCustomer` is one request.
+- [ ] **B2 (Atomic ledger change)**: one RPC writes ledger facts and their summaries together; every `RDLedgerController` write goes through it.
+- [ ] **B3 (Retry-safe single-account deposit)**: the deposit sheet keeps one event id per attempt so a retry after a lost response stores one event.
+- [ ] **B4 (Incremental summary stream)**: apply Realtime summary rows to an in-memory map instead of refetching every summary after each write.
+
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)
 - [ ] **1. Statutory Rulebook & Circular Reference Docs (`docs/india_post_schemes_policy.md`)**: Compile authoritative citations across `G.S.R. 916(E)`–`922(E)` (National Savings RD, TD, MIS, KVP, NSC Rules 2019 & subsequent Gazette amendments), DOP SB Orders, Finacle CBS / DOP Agent Portal behavior, and MPKBY / SAS agency rules.
 - [ ] **2. RD Default-Fee & Discontinuation Verification (`G.S.R. 916(E)`)**: Verify ₹1 per ₹100 denomination default-fee calculation on ₹10-multiple installments (`₹250` RD -> exact `₹2.50` paise vs whole-rupee ceiling at Finacle CBS / DOP Agent Portal), maximum 4-default discontinuation threshold + 2-month revival window, and 6-month / 12-month advance deposit rebates.

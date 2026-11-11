@@ -714,6 +714,21 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, private;
 
+-- Deletes a customer together with its subordinate savings account (and that account's
+-- nominees, by cascade) in one statement, so the pair is removed together or not at all.
+-- A customer who still owns an OTD/RD is refused by the `ON DELETE NO ACTION` foreign key,
+-- which rolls the savings-account delete back too. SECURITY INVOKER: every statement runs
+-- under the caller's RLS, so another agent's customer is simply not matched.
+CREATE OR REPLACE FUNCTION public.delete_customer(p_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  DELETE FROM public.account_identities
+  WHERE customer_id = p_id AND account_type = 'SB';
+
+  DELETE FROM public.customers WHERE id = p_id;
+END;
+$$ LANGUAGE plpgsql SECURITY INVOKER SET search_path = public;
+
 -- ------------------------------------------------------------------------------------------
 -- 6. Bounded Web/Client Crash Telemetry (`app_error_logs` + `log_client_error`)
 -- ------------------------------------------------------------------------------------------
@@ -824,6 +839,9 @@ GRANT EXECUTE ON FUNCTION public.save_recurring_deposit(
 ) TO authenticated, service_role;
 
 GRANT EXECUTE ON FUNCTION public.set_deposit_status(UUID, TEXT)
+  TO authenticated, service_role;
+
+GRANT EXECUTE ON FUNCTION public.delete_customer(UUID)
   TO authenticated, service_role;
 
 GRANT EXECUTE ON FUNCTION public.log_client_error(TEXT, TEXT, TEXT, TEXT)

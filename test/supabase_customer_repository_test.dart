@@ -121,12 +121,14 @@ void main() {
     final deleteSbOnlyCustomer = await repository.deleteCustomer(customerId);
     expect(deleteSbOnlyCustomer, isA<Success<void, String>>());
 
-    // Deleting a customer who owns an OTD/RD deposit must fail cleanly via ON DELETE NO ACTION (23503).
+    // Deleting a customer who owns an OTD/RD deposit must fail cleanly via ON DELETE NO ACTION (23503),
+    // and the refusal must leave their savings account in place.
     final custWithDepositId = const Uuid().v7();
     final custWithDeposit = (Customer.create(
       id: custWithDepositId,
       name: 'Protected Customer',
       phone: '9876500000',
+      savingsAccountNumber: 'SB-PROTECT-1',
     ) as Success<Customer, String>).value;
     expect(await repository.createCustomer(custWithDeposit), isA<Success<void, String>>());
     await client.rpc('save_one_time_deposit', params: {
@@ -145,6 +147,17 @@ void main() {
 
     final blockedDelete = await repository.deleteCustomer(custWithDepositId);
     expect(blockedDelete, isA<Failure<void, String>>());
+    final sbAfterRefusal = await client
+        .from('account_identities')
+        .select('id')
+        .eq('customer_id', custWithDepositId)
+        .eq('account_type', 'SB');
+    expect(sbAfterRefusal, hasLength(1), reason: 'a refused delete must not remove the savings account');
+
+    // The SB-only customer deleted above left nothing behind.
+    final leftovers =
+        await client.from('account_identities').select('id').eq('customer_id', customerId);
+    expect(leftovers, isEmpty);
   });
 }
 
