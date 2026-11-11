@@ -49,4 +49,31 @@ sealed class RDLedgerFacts with _$RDLedgerFacts {
     }
     return a.id.compareTo(b.id);
   }
+
+  /// Pure-Dart domain invariant: a PO visit (`batchId`) can only be undone if no account
+  /// in that batch has a newer Post Office deposit recorded afterward.
+  static String? validateBatchUndo({
+    required String batchId,
+    required Iterable<RDPoDeposit> deposits,
+  }) {
+    final byRd = <String, List<RDPoDeposit>>{};
+    for (final d in deposits) {
+      byRd.putIfAbsent(d.rdId, () => []).add(d);
+    }
+    for (final list in byRd.values) {
+      final batchEvents = list.where((d) => d.batchId == batchId).toList();
+      if (batchEvents.isEmpty) continue;
+      for (final batchEvent in batchEvents) {
+        final hasNewer = list.any(
+          (other) =>
+              other.batchId != batchId &&
+              comparePoDeposits(other, batchEvent) > 0,
+        );
+        if (hasNewer) {
+          return 'Cannot undo this visit because a newer Post Office deposit was recorded afterward.';
+        }
+      }
+    }
+    return null;
+  }
 }

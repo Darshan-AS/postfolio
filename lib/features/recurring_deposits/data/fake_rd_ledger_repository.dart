@@ -25,6 +25,9 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   /// When set, every write fails with this message (for error-path tests).
   String? failWith;
 
+  /// When set, only summary-cache upserts fail (simulates transient drop after fact write).
+  String? failSummaryWith;
+
   final Map<String, List<RDTransaction>> _transactions;
   final Map<String, List<RDPoDeposit>> _poDeposits;
   final Map<String, List<RDFeeAbsorption>> _absorptions;
@@ -65,9 +68,17 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   // --- Writes -------------------------------------------------------------------------------
 
   @override
-  Future<Result<void, String>> upsertSummary(RDLedgerSummary summary) async {
+  Future<Result<void, String>> upsertSummary(RDLedgerSummary summary) =>
+      upsertSummaries([summary]);
+
+  @override
+  Future<Result<void, String>> upsertSummaries(List<RDLedgerSummary> summaries) async {
     if (failWith != null) return Failure(failWith!);
-    _summaries[summary.rdId] = summary;
+    if (failSummaryWith != null) return Failure(failSummaryWith!);
+    if (summaries.isEmpty) return const Success(null);
+    for (final summary in summaries) {
+      _summaries[summary.rdId] = summary;
+    }
     _summaryController.add(Success(_summaries.values.toList(growable: false)));
     return const Success(null);
   }
@@ -111,14 +122,33 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   }
 
   @override
-  Future<Result<void, String>> addPoDeposit(RDPoDeposit event) async {
+  Future<Result<void, String>> addPoDeposit(RDPoDeposit event) =>
+      addPoDeposits([event]);
+
+  @override
+  Future<Result<void, String>> addPoDeposits(List<RDPoDeposit> events) async {
     if (failWith != null) return Failure(failWith!);
-    final list = _poDeposits.putIfAbsent(event.rdId, () => []);
-    if (list.any((e) => e.id == event.id)) {
-      return const Failure('This entry has already been recorded.');
+    if (events.isEmpty) return const Success(null);
+
+    // Validate full batch upfront so partial writes never occur.
+    final seenIds = <String>{};
+    for (final event in events) {
+      if (!seenIds.add(event.id) ||
+          (_poDeposits[event.rdId]?.any((e) => e.id == event.id) ?? false)) {
+        return const Failure('This entry has already been recorded.');
+      }
     }
-    list.add(event.copyWith(createdAt: event.createdAt ?? DateTime.now()));
-    _poControllers[event.rdId]?.add(Success(List.unmodifiable(list)));
+
+    final now = DateTime.now();
+    final touched = <String>{};
+    for (final event in events) {
+      final list = _poDeposits.putIfAbsent(event.rdId, () => []);
+      list.add(event.copyWith(createdAt: event.createdAt ?? now));
+      touched.add(event.rdId);
+    }
+    for (final rdId in touched) {
+      _poControllers[rdId]?.add(Success(List.unmodifiable(_poDeposits[rdId]!)));
+    }
     return const Success(null);
   }
 
@@ -141,23 +171,12 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   Future<Result<List<String>, String>> deletePoDepositBatch(String batchId) async {
     if (failWith != null) return Failure(failWith!);
 
-    // First pass: verify every event in `batchId` is still the latest PO deposit on its RD.
-    for (final entry in _poDeposits.entries) {
-      final batchEvents = entry.value.where((d) => d.batchId == batchId).toList();
-      if (batchEvents.isEmpty) continue;
-      for (final batchEvent in batchEvents) {
-        final hasNewer = entry.value.any(
-          (other) =>
-              other.batchId != batchId &&
-              RDLedgerFacts.comparePoDeposits(other, batchEvent) > 0,
-        );
-        if (hasNewer) {
-          return const Failure(
-            'Cannot undo this visit because a newer Post Office deposit was recorded afterward.',
-          );
-        }
-      }
-    }
+    final allDeposits = _poDeposits.values.expand((e) => e);
+    final error = RDLedgerFacts.validateBatchUndo(
+      batchId: batchId,
+      deposits: allDeposits,
+    );
+    if (error != null) return Failure(error);
 
     final affectedRdIds = <String>[];
     for (final e in _poDeposits.entries) {

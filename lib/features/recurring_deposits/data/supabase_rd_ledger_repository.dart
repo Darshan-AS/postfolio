@@ -2,6 +2,7 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -64,10 +65,21 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
 
   @override
   Future<Result<void, String>> upsertSummary(RDLedgerSummary summary) =>
-      _guard(() => _client.from(_summaries).upsert(
-            _withAgent(summary.toJson()..remove('updated_at')),
-            onConflict: 'rd_id',
-          ));
+      upsertSummaries([summary]);
+
+  @override
+  Future<Result<void, String>> upsertSummaries(List<RDLedgerSummary> summaries) =>
+      summaries.isEmpty
+          ? Future.value(const Success(null))
+          : _guard(
+              () => _client.from(_summaries).upsert(
+                    [
+                      for (final s in summaries)
+                        _withAgent(s.toJson()..remove('updated_at')),
+                    ],
+                    onConflict: 'rd_id',
+                  ),
+            );
 
   @override
   Future<Result<void, String>> addTransaction(RDTransaction transaction) =>
@@ -93,8 +105,19 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
           .eq('rd_id', rdId));
 
   @override
-  Future<Result<void, String>> addPoDeposit(RDPoDeposit event) => _guard(() =>
-      _client.from(_poDeposits).insert(_withAgent(event.toJson()..remove('created_at'))));
+  Future<Result<void, String>> addPoDeposit(RDPoDeposit event) =>
+      addPoDeposits([event]);
+
+  @override
+  Future<Result<void, String>> addPoDeposits(List<RDPoDeposit> events) =>
+      events.isEmpty
+          ? Future.value(const Success(null))
+          : _guard(
+              () => _client.from(_poDeposits).insert([
+                for (final e in events)
+                  _withAgent(e.toJson()..remove('created_at')),
+              ]),
+            );
 
   @override
   Future<Result<void, String>> deletePoDeposit({
@@ -106,18 +129,36 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
   @override
   Future<Result<List<String>, String>> deletePoDepositBatch(String batchId) async {
     try {
-      final dynamic rows = await _client.rpc(
-        'undo_rd_po_deposit_batch',
-        params: {'p_batch_id': batchId},
+      final agentId = _agentId;
+      final batchRows = await _client
+          .from(_poDeposits)
+          .select('rd_id')
+          .eq('batch_id', batchId)
+          .eq('agent_id', agentId);
+      final affectedRdIds = {
+        for (final row in batchRows)
+          if (row['rd_id'] is String) row['rd_id'] as String,
+      }.toList(growable: false);
+      if (affectedRdIds.isEmpty) return const Success(<String>[]);
+
+      final allRows = await _client
+          .from(_poDeposits)
+          .select()
+          .inFilter('rd_id', affectedRdIds)
+          .eq('agent_id', agentId);
+      final allDeposits = allRows.map(RDPoDeposit.fromJson).toList(growable: false);
+      final error = RDLedgerFacts.validateBatchUndo(
+        batchId: batchId,
+        deposits: allDeposits,
       );
-      final rdIds = switch (rows) {
-        final List<dynamic> list => [
-          for (final item in list)
-            if (item is String) item,
-        ],
-        _ => const <String>[],
-      };
-      return Success(rdIds);
+      if (error != null) return Failure(error);
+
+      await _client
+          .from(_poDeposits)
+          .delete()
+          .eq('batch_id', batchId)
+          .eq('agent_id', agentId);
+      return Success(affectedRdIds);
     } catch (e) {
       return Failure(
         SupabaseErrorMapper.describe(

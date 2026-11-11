@@ -17,6 +17,7 @@ abstract interface class RDLedgerRepository {
   // --- Cache (agent-wide, one row per RD) -------------------------------------------------
   Stream<Result<List<RDLedgerSummary>, String>> watchSummaries();
   Future<Result<void, String>> upsertSummary(RDLedgerSummary summary);
+  Future<Result<void, String>> upsertSummaries(List<RDLedgerSummary> summaries);
 
   // --- Customer payments ------------------------------------------------------------------
   Future<Result<void, String>> addTransaction(RDTransaction transaction);
@@ -28,6 +29,7 @@ abstract interface class RDLedgerRepository {
 
   // --- Post Office deposits (sequential events) -------------------------------------------
   Future<Result<void, String>> addPoDeposit(RDPoDeposit event);
+  Future<Result<void, String>> addPoDeposits(List<RDPoDeposit> events);
 
   /// Deletes one event. Callers must only pass the latest event for the RD.
   Future<Result<void, String>> deletePoDeposit({

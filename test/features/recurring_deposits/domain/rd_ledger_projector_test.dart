@@ -409,5 +409,33 @@ void main() {
       final back = RDLedgerSummary.fromJson(s.toJson());
       expect(back, s.copyWith(updatedAt: back.updatedAt));
     });
+
+    test('honors explicit PO counter fee overrides (Sunday waiver ₹0 and custom portal fee) across projection and summary', () {
+      // Case 1: #1 due 15 Jan; deposited on 16 Jan (1 day late -> formula ₹10), but counter
+      // charged ₹0 (holiday extension). Fronted by agent, then customer pays ₹1,000 on 20 Jan.
+      final holidayWaived = RDLedgerFacts(
+        deposit: deposit(),
+        poDeposits: [po('e-waived', 1, DateTime(2026, 1, 16), fee: 0)],
+        transactions: [tx('t1', 1000, DateTime(2026, 1, 20))],
+      );
+      final p1 = projector.project(holidayWaived, asOf: DateTime(2026, 2, 1));
+      expect(p1.byNo(1)!.poLateFee, 0);
+      expect(p1.byNo(1)!.lateFee, 0);
+      expect(p1.byNo(1)!.isFullySettled, isTrue);
+      expect(p1.summary.installmentFor(holidayWaived.deposit, 1, DateTime(2026, 2, 1)), p1.byNo(1));
+
+      // Case 2: #1 and #2 deposited together on 25 Mar (formula fees: 20 + 10 = 30),
+      // counter actually charged ₹15 total -> distributes exact paise (10 + 5 = 15).
+      final customFee = RDLedgerFacts(
+        deposit: deposit(),
+        poDeposits: [po('e-custom', 2, DateTime(2026, 3, 25), fee: 15)],
+      );
+      final p2 = projector.project(customFee, asOf: DateTime(2026, 4, 1));
+      expect(p2.byNo(1)!.poLateFee + p2.byNo(2)!.poLateFee, 15);
+      expect(p2.summary.receivable, 2015);
+      for (var no = 1; no <= 2; no++) {
+        expect(p2.summary.installmentFor(customFee.deposit, no, DateTime(2026, 4, 1)), p2.byNo(no));
+      }
+    });
   });
 }

@@ -30,6 +30,8 @@ sealed class RDPoVisitLine with _$RDPoVisitLine {
     /// Extra months the agent chose to front from pocket (0 or more).
     @Default(0) int frontedCount,
     @Default(true) bool included,
+    /// Optional explicit fee charged at the PO counter (e.g. `0` when a holiday extended due date).
+    double? feeOverride,
     /// Counter quote for `readyCount + frontedCount` months on the chosen date.
     @Default(0.0) double amount,
     @Default(0.0) double fee,
@@ -105,10 +107,6 @@ sealed class RDPoVisitPlan with _$RDPoVisitPlan {
 }
 
 /// Plans and records a Post Office visit for the accounts currently in the Hub.
-///
-/// The plan is quoted from each account's summary + the fee rule on the chosen date, so the
-/// numbers shown are the numbers the counter will charge. Recording writes one PO event per
-/// account under a single `batch_id`, which is what "Undo visit" deletes.
 @Riverpod(keepAlive: true)
 class RDPoVisitPlanner extends _$RDPoVisitPlanner {
   @override
@@ -119,19 +117,35 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
 
   static const _rules = RDLedgerRules.standard;
 
-  /// (Re)builds the plan from [items] (defaults to every Hub row with ready months, or every
-  /// row when [includeUnready] so the agent can choose to front).
-  void start({Iterable<RDMonthlyOperationItem>? items, bool includeUnready = false}) {
+  /// (Re)builds the plan from [items]. When [preserveEdits] is true (e.g. toggling
+  /// `includeUnready` inside the open sheet), existing user choices (`included`, `frontedCount`,
+  /// `feeOverride`) are retained for matching accounts.
+  void start({
+    Iterable<RDMonthlyOperationItem>? items,
+    bool includeUnready = false,
+    bool preserveEdits = false,
+  }) {
     final source = items ??
         (ref.read(monthlyOperationItemsProvider).value ?? const <RDMonthlyOperationItem>[]);
+    final previousByRd = preserveEdits
+        ? {for (final l in state.lines) l.rdId: l}
+        : const <String, RDPoVisitLine>{};
+
     final lines = <RDPoVisitLine>[
       for (final item in source)
         if (item.readyForPoCount > 0 || includeUnready)
-          _quote(RDPoVisitLine(
-            item: item,
-            readyCount: item.readyForPoCount,
-            included: item.readyForPoCount > 0,
-          )),
+          _quote(
+            () {
+              final prev = previousByRd[item.deposit.id];
+              return RDPoVisitLine(
+                item: item,
+                readyCount: item.readyForPoCount,
+                frontedCount: prev?.frontedCount ?? 0,
+                included: prev?.included ?? (item.readyForPoCount > 0),
+                feeOverride: prev?.feeOverride,
+              );
+            }(),
+          ),
     ];
     state = state.copyWith(lines: lines);
   }
@@ -151,28 +165,29 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
         (l) => _quote(l.copyWith(frontedCount: frontedCount < 0 ? 0 : frontedCount, included: true)),
       );
 
-  /// Writes one PO event per included account under a single batch id.
-  /// Returns the batch id so the caller can offer "Undo visit".
-  Future<Result<String, String>> record() async {
+  void setFeeOverride(String rdId, double? feeOverride) => _update(
+        rdId,
+        (l) => _quote(
+          l.copyWith(
+            feeOverride:
+                feeOverride == null ? null : (feeOverride < 0 ? 0.0 : Money.round(feeOverride)),
+          ),
+        ),
+      );
+
+  /// Validates every included account upfront and commits the entire PO visit batch atomically.
+  Future<Result<String, String>> record() {
     final plan = state;
     final batchId = const Uuid().v4();
     final ledger = ref.read(rDLedgerControllerProvider.notifier);
-    var done = 0;
-    for (final line in plan.included) {
-      final r = await ledger.depositNextToPo(
-        rdId: line.rdId,
-        count: line.count,
-        depositedOn: plan.depositedOn,
-        batchId: batchId,
-      );
-      if (r case Failure(:final error)) {
-        return Failure(
-          done == 0 ? error : '$error (deposited $done of ${plan.accountCount} accounts — undo the visit to roll back)',
-        );
-      }
-      done++;
-    }
-    return Success(batchId);
+    return ledger.depositBatchToPo(
+      lines: [
+        for (final line in plan.included)
+          (rdId: line.rdId, count: line.count, feeOverride: line.feeOverride),
+      ],
+      depositedOn: plan.depositedOn,
+      batchId: batchId,
+    );
   }
 
   Future<Result<void, String>> undoVisit(String batchId) =>
@@ -193,33 +208,71 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
     final n = deposit.totalMonths;
     final through = summary.depositedThroughNo;
     final amountP = Money.toPaise(deposit.installmentAmount);
-    var amount = 0;
-    var fee = 0;
-    var pocket = 0;
-    for (var k = 1; k <= line.count && through + k <= n; k++) {
+
+    final coveredCount =
+        (through + line.count <= n) ? line.count : (n - through).clamp(0, n);
+    final ruleFees = <int>[];
+    for (var k = 1; k <= coveredCount; k++) {
       final no = through + k;
       final due = _rules.dueDateFor(
-          deposit.startDate, RDScheduleFactory.installmentDateFor(deposit.startDate, no));
-      final f = Money.toPaise(
-          _rules.defaultFeeFor(deposit.installmentAmount, _rules.defaultedMonths(due, day)));
-      amount += amountP + f;
-      fee += f;
-      if (k > line.readyCount) {
-        // Fronted month: customer money (if any partial) reduces what comes from pocket.
-        final inst = summary.installmentFor(deposit, no, day);
-        pocket += (amountP + f) - Money.toPaise(inst.customerPaidAmount);
+        deposit.startDate,
+        RDScheduleFactory.installmentDateFor(deposit.startDate, no),
+      );
+      ruleFees.add(
+        Money.toPaise(
+          _rules.defaultFeeFor(deposit.installmentAmount, _rules.defaultedMonths(due, day)),
+        ),
+      );
+    }
+
+    final ruleFeeSum = ruleFees.fold<int>(0, (s, f) => s + f);
+    final fee = line.feeOverride != null
+        ? Money.toPaise(line.feeOverride!)
+        : ruleFeeSum;
+    final amount = coveredCount * amountP + fee;
+
+    // Distribute effective counter fee across covered months (matching RDLedgerProjector) so
+    // `fromPocket` and `cashPortion` reflect counter fee overrides accurately.
+    final monthFees = List<int>.filled(coveredCount, 0);
+    if (coveredCount > 0 && fee > 0) {
+      if (fee == ruleFeeSum) {
+        for (var i = 0; i < coveredCount; i++) {
+          monthFees[i] = ruleFees[i];
+        }
+      } else if (ruleFeeSum == 0) {
+        monthFees[0] = fee;
+      } else {
+        var assigned = 0;
+        var lastIdx = 0;
+        for (var i = 0; i < coveredCount; i++) {
+          if (ruleFees[i] > 0) lastIdx = i;
+          final share = fee * ruleFees[i] ~/ ruleFeeSum;
+          monthFees[i] = share;
+          assigned += share;
+        }
+        monthFees[lastIdx] += fee - assigned;
       }
     }
-    // Customer money held for the ready months, by mode, from the summary cache.
+
+    var pocket = 0;
+    for (var k = 1; k <= coveredCount; k++) {
+      if (k > line.readyCount) {
+        final no = through + k;
+        final inst = summary.installmentFor(deposit, no, day);
+        pocket += (amountP + monthFees[k - 1]) - Money.toPaise(inst.customerPaidAmount);
+      }
+    }
+    if (pocket < 0) pocket = 0;
+
     final heldCash = Money.toPaise(summary.cashInHandCash);
     final heldDigital = Money.toPaise(summary.cashInHandDigital);
-    final readyAmount = amount - pocket;
+    final readyAmount = (amount - pocket).clamp(0, amount);
     final held = heldCash + heldDigital;
     final cashShare = held == 0 ? readyAmount : (readyAmount * heldCash ~/ held);
     return line.copyWith(
       amount: Money.toRupees(amount),
       fee: Money.toRupees(fee),
-      fromPocket: Money.toRupees(pocket < 0 ? 0 : pocket),
+      fromPocket: Money.toRupees(pocket),
       cashPortion: Money.toRupees(cashShare),
       digitalPortion: Money.toRupees(readyAmount - cashShare),
     );

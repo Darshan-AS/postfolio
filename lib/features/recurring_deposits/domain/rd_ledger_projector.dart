@@ -47,28 +47,70 @@ final class RDLedgerProjector {
     final schedule = RDScheduleFactory.baselineSchedule(deposit, rules: rules);
     final amountP = Money.toPaise(deposit.installmentAmount);
 
-    // --- PO side: sequential events ------------------------------------------------------
+    // --- PO side: sequential events & counter-receipt fees -------------------------------
+    // poFee: what the counter actually charged (from ev.feePaid when recorded on a counter
+    //        receipt, otherwise rule-estimated at deposit date / asOf).
+    // customerFee: what the customer owes — fixed on the day they finish paying the month,
+    //              or at the PO counter's fee if the agent deposited it first.
     final depositedOn = List<DateTime?>.filled(n + 1, null);
     final batchOf = List<String?>.filled(n + 1, null);
+    final poFeeP = List<int>.filled(n + 1, 0);
+    final absorbedP = List<int>.filled(n + 1, 0);
+
+    int feeAt(int no, DateTime day) => Money.toPaise(rules.defaultFeeFor(
+        deposit.installmentAmount, rules.defaultedMonths(schedule[no - 1].dueDate, day)));
+
     var depositedThrough = baselineCount;
     for (final ev in facts.poDepositsInOrder) {
+      final evDay = ev.depositedOn.toDateOnly();
+      final covered = <int>[];
       for (var k = 0; k < ev.installmentCount; k++) {
         if (depositedThrough >= n) {
           warnings.add('PO deposit ${ev.id} exceeds the schedule; extra installments ignored');
           break;
         }
         depositedThrough++;
-        depositedOn[depositedThrough] = ev.depositedOn.toDateOnly();
+        depositedOn[depositedThrough] = evDay;
         batchOf[depositedThrough] = ev.batchId;
+        covered.add(depositedThrough);
+      }
+      if (covered.isEmpty) continue;
+
+      final ruleFees = [for (final no in covered) feeAt(no, evDay)];
+      final hasExplicitReceipt =
+          Money.toPaise(ev.amount) > 0 || Money.toPaise(ev.feePaid) > 0;
+      if (!hasExplicitReceipt) {
+        for (var i = 0; i < covered.length; i++) {
+          poFeeP[covered[i]] = ruleFees[i];
+        }
+        continue;
+      }
+
+      final actualFeeP = Money.toPaise(ev.feePaid);
+      final ruleSum = ruleFees.fold<int>(0, (s, f) => s + f);
+      if (actualFeeP <= 0) {
+        for (final no in covered) {
+          poFeeP[no] = 0;
+        }
+      } else if (actualFeeP == ruleSum) {
+        for (var i = 0; i < covered.length; i++) {
+          poFeeP[covered[i]] = ruleFees[i];
+        }
+      } else if (ruleSum == 0) {
+        poFeeP[covered.first] = actualFeeP;
+      } else {
+        var assigned = 0;
+        var lastFeeIdx = 0;
+        for (var i = 0; i < covered.length; i++) {
+          if (ruleFees[i] > 0) lastFeeIdx = i;
+          final share = actualFeeP * ruleFees[i] ~/ ruleSum;
+          poFeeP[covered[i]] = share;
+          assigned += share;
+        }
+        poFeeP[covered[lastFeeIdx]] += actualFeeP - assigned;
       }
     }
 
-    // --- Per-month fees ---------------------------------------------------------------------
-    // poFee: what the counter charges (fixed at deposit date, else estimated as of asOf).
-    // customerFee: what the customer owes — fixed on the day they finish paying the month,
-    //              or at the PO deposit date if the agent fronted it first.
-    final poFeeP = List<int>.filled(n + 1, 0);
-    final absorbedP = List<int>.filled(n + 1, 0);
     for (final a in facts.absorptions) {
       if (a.installmentNo >= 1 && a.installmentNo <= n) {
         absorbedP[a.installmentNo] += Money.toPaise(a.amount);
@@ -76,10 +118,9 @@ final class RDLedgerProjector {
         warnings.add('Fee absorption for #${a.installmentNo} is outside the schedule');
       }
     }
-    int feeAt(int no, DateTime day) => Money.toPaise(rules.defaultFeeFor(
-        deposit.installmentAmount, rules.defaultedMonths(schedule[no - 1].dueDate, day)));
-    for (var no = baselineCount + 1; no <= n; no++) {
-      poFeeP[no] = feeAt(no, depositedOn[no] ?? asOfDay);
+    for (var no = depositedThrough + 1; no <= n; no++) {
+      if (no <= baselineCount) continue;
+      poFeeP[no] = feeAt(no, asOfDay);
     }
 
     // --- Customer side: sequential allocation ---------------------------------------------
@@ -97,10 +138,16 @@ final class RDLedgerProjector {
     var pointer = baselineCount + 1;
     final allocations = <String, List<RDAllocationSlice>>{};
 
-    int customerDueAt(int no, DateTime day) {
+    int effectiveCustomerFeeAt(int no, DateTime day) {
       final d = depositedOn[no];
-      final feeDay = (d != null && d.isBefore(day)) ? d : day;
-      final fee = feeAt(no, feeDay);
+      if (d != null && !day.isBefore(d)) {
+        return poFeeP[no];
+      }
+      return feeAt(no, day);
+    }
+
+    int customerDueAt(int no, DateTime day) {
+      final fee = effectiveCustomerFeeAt(no, day);
       final absorbed = absorbedP[no] > fee ? fee : absorbedP[no];
       return amountP + fee - absorbed;
     }
@@ -138,8 +185,7 @@ final class RDLedgerProjector {
         }
         if (paidP[pointer] >= due) {
           settledAt[pointer] = true;
-          final d = depositedOn[pointer];
-          customerFeeP[pointer] = feeAt(pointer, (d != null && d.isBefore(day)) ? d : day);
+          customerFeeP[pointer] = effectiveCustomerFeeAt(pointer, day);
           pointer++;
         }
       }
@@ -156,9 +202,13 @@ final class RDLedgerProjector {
       allocations[tx.id] = slices;
     }
 
-    // Unsettled months keep accruing until the PO deposit date (or today).
+    // Unsettled months keep accruing until the PO deposit date (where the counter fee fixes it)
+    // or asOfDay when still undeposited.
     for (var no = baselineCount + 1; no <= n; no++) {
-      if (!settledAt[no]) customerFeeP[no] = feeAt(no, depositedOn[no] ?? asOfDay);
+      if (!settledAt[no]) {
+        customerFeeP[no] =
+            depositedOn[no] != null ? poFeeP[no] : feeAt(no, asOfDay);
+      }
       if (absorbedP[no] > customerFeeP[no]) absorbedP[no] = customerFeeP[no];
     }
     int dueOf(int no) => amountP + customerFeeP[no] - absorbedP[no];

@@ -104,7 +104,7 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
 
     void toggleIncludeUnready(bool value) {
       includeUnready.value = value;
-      planner.start(includeUnready: value);
+      planner.start(includeUnready: value, preserveEdits: true);
     }
 
     return SizedBox.expand(

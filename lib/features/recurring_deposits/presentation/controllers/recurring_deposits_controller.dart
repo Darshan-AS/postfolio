@@ -11,6 +11,7 @@ import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
 import 'package:uuid/uuid.dart';
@@ -214,45 +215,95 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     String initialPaidInstallments = '0',
     String openingReceivable = '0',
   }) async {
-    final depositId = id ?? const Uuid().v4();
-    final postalRateService = ref.read(postalRateServiceProvider);
+    final link = ref.keepAlive();
+    try {
+      final depositId = id ?? const Uuid().v4();
+      final postalRateService = ref.read(postalRateServiceProvider);
 
-    final amount = double.tryParse(installmentAmount.trim()) ?? 0.0;
-    final rate = interestRate != null
-        ? double.tryParse(interestRate.trim())
-        : null;
-    final initialPaid = int.tryParse(initialPaidInstallments.trim()) ?? 0;
-    final openingReceivableAmount =
-        double.tryParse(openingReceivable.trim()) ?? 0.0;
+      final amount = double.tryParse(installmentAmount.trim()) ?? 0.0;
+      final rate = interestRate != null
+          ? double.tryParse(interestRate.trim())
+          : null;
+      final initialPaid = int.tryParse(initialPaidInstallments.trim()) ?? 0;
+      final openingReceivableAmount =
+          double.tryParse(openingReceivable.trim()) ?? 0.0;
 
-    final createResult = RecurringDeposit.create(
-      id: depositId,
-      serialNo: serialNo,
-      accountNo: accountNo,
-      installmentAmount: amount,
-      termYears: termYears,
-      termMonths: termMonths,
-      interestRate: rate,
-      customerId: customerId,
-      schemeType: schemeType,
-      status: status,
-      startDate: startDate,
-      nominees: nominees,
-      postalRateService: postalRateService,
-      initialPaidInstallments: initialPaid,
-      openingReceivable: openingReceivableAmount,
-    );
+      final createResult = RecurringDeposit.create(
+        id: depositId,
+        serialNo: serialNo,
+        accountNo: accountNo,
+        installmentAmount: amount,
+        termYears: termYears,
+        termMonths: termMonths,
+        interestRate: rate,
+        customerId: customerId,
+        schemeType: schemeType,
+        status: status,
+        startDate: startDate,
+        nominees: nominees,
+        postalRateService: postalRateService,
+        initialPaidInstallments: initialPaid,
+        openingReceivable: openingReceivableAmount,
+      );
 
-    final RecurringDeposit deposit;
-    switch (createResult) {
-      case Failure(error: final err):
-        return Failure(err);
-      case Success(value: final d):
-        deposit = d;
+      final RecurringDeposit deposit;
+      switch (createResult) {
+        case Failure(error: final err):
+          return Failure(err);
+        case Success(value: final d):
+          deposit = d;
+      }
+
+      final repository = ref.read(recurringDepositRepositoryProvider);
+
+      RecurringDeposit? existing;
+      var termsChangedOnExisting = false;
+      if (id != null) {
+        existing = state.value?.where((d) => d.id == id).firstOrNull;
+        if (existing == null) {
+          final existingResult =
+              await repository.watchRecurringDepositById(id).first;
+          if (existingResult case Success(value: final found)) {
+            existing = found;
+          }
+        }
+        if (existing != null) {
+          final sub = ref.listen(rdIsFinancialTermsLockedProvider(id), (_, _) {});
+          bool isLocked = false;
+          try {
+            isLocked = await ref.read(rdIsFinancialTermsLockedProvider(id).future);
+          } catch (_) {
+            isLocked = false;
+          } finally {
+            sub.close();
+          }
+
+          final lockCheck = RecurringDeposit.validateUpdate(
+            existing: existing,
+            updated: deposit,
+            hasPayments: isLocked,
+          );
+          if (lockCheck case Failure(error: final err)) {
+            return Failure(err);
+          }
+          termsChangedOnExisting = RecurringDeposit.validateUpdate(
+            existing: existing,
+            updated: deposit,
+            hasPayments: true,
+          ) is Failure;
+        }
+      }
+
+      final saveResult = await repository.saveRecurringDeposit(deposit);
+      if (saveResult case Success() when termsChangedOnExisting) {
+        await ref
+            .read(rDLedgerControllerProvider.notifier)
+            .rebuildSummary(deposit.id);
+      }
+      return saveResult;
+    } finally {
+      link.close();
     }
-
-    final repository = ref.read(recurringDepositRepositoryProvider);
-    return await repository.saveRecurringDeposit(deposit);
   }
 
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {

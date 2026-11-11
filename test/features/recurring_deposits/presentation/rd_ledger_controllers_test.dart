@@ -15,6 +15,7 @@ import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_m
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 
 // ---------------------------------------------------------------------------------------------
 // Fixtures
@@ -543,6 +544,122 @@ void main() {
       expect(p.summary.depositedThroughNo, 3);
       expect(p.byNo(2)!.isFrontedByAgent, isTrue);
       expect(p.summary.receivable, p.byNo(2)!.outstandingAmount + p.byNo(3)!.outstandingAmount);
+    });
+
+    test('PO visit planner supports counter fee override, preserves edits on includeUnready, and validates batches atomically', () async {
+      final h = _harness(
+        deposits: [_deposit('rd1'), _deposit('rd2')],
+        transactions: {
+          'rd1': [_tx('rd1', 't1', 2000, DateTime(2026, 1, 10))],
+        },
+        // rd2 already has a PO deposit on 20 Apr, so a backdated 18 Apr batch must fail upfront!
+        poDeposits: {
+          'rd2': [
+            RDPoDeposit(
+              id: 'e-rd2',
+              rdId: 'rd2',
+              depositedOn: DateTime(2026, 4, 20),
+              installmentCount: 1,
+              feePaid: 30,
+              amount: 1030,
+            ),
+          ],
+        },
+      );
+      final c = h.container;
+      _keepHub(c);
+      c.listen(rDPoVisitPlannerProvider, (_, _) {});
+      c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
+      await c.read(rDMonthlyOperationsActionsProvider.notifier).ensureSummaries();
+      await _settle();
+      await c.read(monthlyOperationItemsProvider.future);
+
+      final planner = c.read(rDPoVisitPlannerProvider.notifier);
+      planner.start();
+      // Override counter fee on rd1 (#1 & #2 late on 20 Apr -> formula ₹50, counter waived to ₹0).
+      planner.setFeeOverride('rd1', 0);
+      expect(c.read(rDPoVisitPlannerProvider).totalFee, 0);
+      expect(c.read(rDPoVisitPlannerProvider).totalAmount, 2000);
+      expect(c.read(rDPoVisitPlannerProvider).cashLots.single.cashAmount, 2000);
+
+      // Toggling includeUnready with preserveEdits keeps rd1's ₹0 fee override intact.
+      planner.start(includeUnready: true, preserveEdits: true);
+      final rd1Line = c.read(rDPoVisitPlannerProvider).lines.firstWhere((l) => l.rdId == 'rd1');
+      expect(rd1Line.feeOverride, 0);
+      expect(rd1Line.amount, 2000);
+
+      // Front 1 month on rd2 and set visit date to 18 Apr (before rd2's existing 20 Apr PO visit).
+      // All-or-nothing upfront validation must reject BEFORE writing rd1!
+      planner.setFronted('rd2', 1);
+      planner.setDate(DateTime(2026, 4, 18));
+      final rejected = await planner.record();
+      expect(rejected, isA<Failure<String, String>>());
+      expect(h.ledger.poDepositsOf('rd1'), isEmpty, reason: 'atomic batch: rd1 not written when rd2 fails');
+    });
+
+    test('future-month Hub surfaces genuine past-due arrears while keeping healthy accounts calm', () async {
+      // now is 20 Apr 2026 (_today).
+      // rdArrears: unpaid since Jan (#1 due 15 Jan, #2 due 15 Feb, #3 due 15 Mar, #4 due 15 Apr — all 4 past due!).
+      // rdHealthy: opened 25 Jan (due EOM!), paid #1..#3 (Jan..Mar); #4 (Apr) is due 30 Apr (NOT yet past due on 20 Apr!).
+      final rdArrears = _deposit('rd-arrears');
+      final rdHealthy = _deposit('rd-healthy', start: DateTime(2026, 1, 25));
+      final h = _harness(
+        deposits: [rdArrears, rdHealthy],
+        transactions: {
+          'rd-healthy': [_tx('rd-healthy', 't-ok', 3000, DateTime(2026, 1, 26))],
+        },
+      );
+      final c = h.container;
+      _keepHub(c);
+      c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 5, 1)); // Future month: May 2026
+      await c.read(rDMonthlyOperationsActionsProvider.notifier).ensureSummaries();
+      await _settle();
+
+      final items = await c.read(monthlyOperationItemsProvider.future);
+      final arrearsItem = items.firstWhere((i) => i.deposit.id == 'rd-arrears');
+      final healthyItem = items.firstWhere((i) => i.deposit.id == 'rd-healthy');
+
+      expect(arrearsItem.priorOverdueCount, 4, reason: 'Jan..Apr are genuinely past due on 20 Apr');
+      expect(arrearsItem.hasPriorArrears, isTrue);
+      expect(healthyItem.priorOverdueCount, 0, reason: 'Apr due 30 Apr is not overdue on 20 Apr');
+      expect(healthyItem.hasOverdueDebt(_today), isFalse);
+    });
+
+    test('RecurringDepositsController enforces financial-terms lock in Dart and RDLedgerController retries dirty summaries', () async {
+      final h = _harness(
+        deposits: [_deposit('rd1')],
+        transactions: {'rd1': [_tx('rd1', 't1', 1000, DateTime(2026, 1, 10))]},
+      );
+      // Intentionally leave h.deposits.hasLedgerActivity = (_) => false AND keep
+      // recurringDepositsControllerProvider cold/unlistened (like editing from a deep link).
+      final c = h.container;
+
+      final lockedEdit = await c.read(recurringDepositsControllerProvider.notifier).saveRecurringDeposit(
+        id: 'rd1',
+        installmentAmount: '2000', // Attempt to change financial term while locked!
+        customerId: 'cust-1',
+        schemeType: RecurringSchemeType.recurringDeposit,
+        startDate: DateTime(2026, 1, 10),
+      );
+      expect(lockedEdit, isA<Failure<void, String>>());
+
+      // Simulate transient summary-cache failure during recordPayment, then self-healing flush.
+      h.ledger.failSummaryWith = 'transient network drop';
+      final ledger = c.read(rDLedgerControllerProvider.notifier);
+      final txRes = await ledger.recordPayment((
+        rdId: 'rd1',
+        transactionId: null,
+        amount: 1000,
+        paidDate: DateTime(2026, 2, 10),
+        paymentMode: RDPaymentMode.cash,
+      ));
+      expect(txRes, isA<Success<void, String>>(), reason: 'fact write still succeeds');
+      expect(ledger.dirtySummaryRdIds, contains('rd1'));
+
+      h.ledger.failSummaryWith = null;
+      await ledger.flushDirtySummaries();
+      expect(ledger.dirtySummaryRdIds, isEmpty);
+      expect(h.ledger.summaryOf('rd1')!.paidThroughNo, 2);
     });
   });
 }

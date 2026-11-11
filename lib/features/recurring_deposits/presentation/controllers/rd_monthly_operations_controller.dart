@@ -170,9 +170,12 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> monthlyOperationItems(Ref r
 
     final summary = summaries[deposit.id] ?? RDLedgerSummary.pristine(deposit, now);
     final installment = summary.installmentFor(deposit, no, now);
+    final allPriors = summary.priorOpenInstallments(deposit, no, now);
+    // On future-month planning views, suppress un-matured current/upcoming months so healthy
+    // accounts stay calm, while keeping genuinely past-due arrears (`dueDate < now`) visible.
     final priors = isFutureMonth
-        ? const <RDInstallment>[]
-        : summary.priorOpenInstallments(deposit, no, now);
+        ? [for (final p in allPriors) if (p.dueDate.isBefore(now)) p]
+        : allPriors;
 
     items.add(RDMonthlyOperationItem(
       deposit: deposit,
@@ -244,13 +247,14 @@ RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
         toCollectCount: s.toCollectCount + 1,
       );
     }
-    if (!isFutureMonth && item.hasOverdueDebt(now)) {
+    if (item.hasOverdueDebt(now)) {
       s = s.copyWith(
-        overdueAmount: s.overdueAmount + item.totalOutstanding,
+        overdueAmount: s.overdueAmount +
+            (isFutureMonth ? item.priorOverdueAmount : item.totalOutstanding),
         overdueCount: s.overdueCount + 1,
       );
     }
-    if (!isFutureMonth && item.priorOverdueCount > 0) {
+    if (item.priorOverdueCount > 0) {
       s = s.copyWith(
         priorArrearsAccountsCount: s.priorArrearsAccountsCount + 1,
         priorArrearsAmount: s.priorArrearsAmount + item.priorOverdueAmount,

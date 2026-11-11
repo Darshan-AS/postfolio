@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
+import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
@@ -17,6 +18,7 @@ class DepositDraftState {
     required this.projection,
     required this.count,
     required this.depositedOn,
+    required this.feeOverride,
     required this.depositedThroughNo,
     required this.readyCount,
     required this.remaining,
@@ -26,6 +28,7 @@ class DepositDraftState {
     required this.lastDate,
     required this.isSubmitting,
     required this.setCount,
+    required this.setFeeOverride,
     required this.submit,
     required this.undo,
   });
@@ -37,6 +40,9 @@ class DepositDraftState {
   /// Effective installment count (already clamped to `1..remaining`).
   final int count;
   final ValueNotifier<DateTime> depositedOn;
+
+  /// Optional explicit counter fee override (`null` uses statutory formula quote).
+  final double? feeOverride;
 
   /// Last month already at the Post Office (baseline + all events).
   final int depositedThroughNo;
@@ -58,6 +64,7 @@ class DepositDraftState {
   final bool isSubmitting;
 
   final void Function(int value) setCount;
+  final void Function(double? value) setFeeOverride;
   final Future<Result<void, String>> Function() submit;
   final Future<Result<void, String>> Function() undo;
 
@@ -86,6 +93,7 @@ DepositDraftState useDepositDraft(
 
   final countInput = useState<int?>(initialCount);
   final depositedOn = useState<DateTime>(today);
+  final feeOverrideState = useState<double?>(null);
 
   final factsValue = facts.value;
   final projectionValue = projection.value;
@@ -101,13 +109,18 @@ DepositDraftState useDepositDraft(
   final quote = useMemoized<({double amount, double fee})?>(
     () {
       if (factsValue == null || count == 0) return null;
-      return projector.quoteNextDeposit(
+      final base = projector.quoteNextDeposit(
         factsValue,
         count: count,
         depositedOn: depositedOn.value,
       );
+      final override = feeOverrideState.value;
+      if (override == null) return base;
+      final fee = Money.round(override < 0 ? 0.0 : override);
+      final amount = Money.round(count * factsValue.deposit.installmentAmount + fee);
+      return (amount: amount, fee: fee);
     },
-    [factsValue, projector, count, depositedOn.value],
+    [factsValue, projector, count, depositedOn.value, feeOverrideState.value],
   );
 
   final fromPocket = useMemoized<double>(
@@ -129,13 +142,18 @@ DepositDraftState useDepositDraft(
   if (firstDate.isAfter(today)) firstDate = today;
 
   void setCount(int value) => countInput.value = value;
+  void setFeeOverride(double? value) => feeOverrideState.value = value;
 
   // Resolved eagerly: the controller is kept alive, so Undo can still run from a snackbar
   // after the sheet itself has been popped and its `ref` disposed.
   final ledger = ref.read(rDLedgerControllerProvider.notifier);
 
-  Future<Result<void, String>> submit() =>
-      ledger.depositNextToPo(rdId: rdId, count: count, depositedOn: depositedOn.value);
+  Future<Result<void, String>> submit() => ledger.depositNextToPo(
+        rdId: rdId,
+        count: count,
+        depositedOn: depositedOn.value,
+        feeOverride: feeOverrideState.value,
+      );
 
   Future<Result<void, String>> undo() => ledger.undoLatestPoDeposit(rdId);
 
@@ -145,6 +163,7 @@ DepositDraftState useDepositDraft(
     projection: projection,
     count: count,
     depositedOn: depositedOn,
+    feeOverride: feeOverrideState.value,
     depositedThroughNo: depositedThroughNo,
     readyCount: readyCount,
     remaining: remaining,
@@ -154,6 +173,7 @@ DepositDraftState useDepositDraft(
     lastDate: today,
     isSubmitting: isSubmitting,
     setCount: setCount,
+    setFeeOverride: setFeeOverride,
     submit: submit,
     undo: undo,
   );

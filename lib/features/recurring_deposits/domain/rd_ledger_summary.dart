@@ -25,8 +25,10 @@ sealed class RDOpenItem with _$RDOpenItem {
     /// PO fee fixed at the deposit date; `0` while undeposited (computed dynamically).
     @Default(0.0) double poFee,
     @Default(0.0) double absorbedFee,
-    @NullableDateOnlyConverter() DateTime? poDepositedOn,
-    String? poBatchId,
+    @NullableDateOnlyConverter()
+    @JsonKey(includeIfNull: false)
+    DateTime? poDepositedOn,
+    @JsonKey(includeIfNull: false) String? poBatchId,
   }) = _RDOpenItem;
 
   factory RDOpenItem.fromJson(Map<String, dynamic> json) =>
@@ -135,7 +137,7 @@ sealed class RDLedgerSummary with _$RDLedgerSummary {
     final poFee = deposited != null ? item!.poFee : feeAt(asOf);
     final customerFee = (item?.isSettled ?? false)
         ? item!.customerFee
-        : feeAt(deposited ?? asOf);
+        : (deposited != null ? item!.poFee : feeAt(asOf));
 
     return base.copyWith(
       lateFee: customerFee,

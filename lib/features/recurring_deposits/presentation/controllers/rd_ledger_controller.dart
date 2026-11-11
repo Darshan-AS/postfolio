@@ -118,10 +118,13 @@ extension RDPaymentDraftX on RDPaymentDraft {
 /// Kept alive: it is a stateless façade and in-flight writes must outlive any one screen.
 @Riverpod(keepAlive: true)
 class RDLedgerController extends _$RDLedgerController {
+  final Set<String> _dirtySummaryRdIds = <String>{};
+
   @override
   AsyncValue<void> build() => const AsyncData(null);
 
   bool get isBusy => state.isLoading;
+  Set<String> get dirtySummaryRdIds => Set.unmodifiable(_dirtySummaryRdIds);
 
   Future<Result<void, String>> recordPayment(RDPaymentDraft draft) {
     if (Money.toPaise(draft.amount) <= 0) {
@@ -169,15 +172,19 @@ class RDLedgerController extends _$RDLedgerController {
       );
 
   /// Records a Post Office visit: the next [count] installments of [rdId] deposited on
-  /// [depositedOn] (default today). The amount/fee are quoted from the current facts so the
-  /// event carries exactly what the counter charged.
+  /// [depositedOn] (default today). Pass [feeOverride] when the counter charged a different
+  /// fee than the statutory formula (e.g. `0` when a Sunday/holiday due date was extended).
   Future<Result<void, String>> depositNextToPo({
     required String rdId,
     required int count,
     DateTime? depositedOn,
     String? batchId,
+    double? feeOverride,
   }) async {
     if (count <= 0) return const Failure('Nothing to deposit.');
+    if (feeOverride != null && Paise.fromRupees(feeOverride).isNegative) {
+      return const Failure('Counter fee cannot be negative.');
+    }
     final day = (depositedOn ?? ref.read(clockProvider)()).toDateOnly();
     final RDLedgerFacts facts;
     try {
@@ -201,13 +208,18 @@ class RDLedgerController extends _$RDLedgerController {
     final quote = ref
         .read(rdLedgerProjectorProvider)
         .quoteNextDeposit(facts, count: count, depositedOn: day);
+    final effectiveFee =
+        feeOverride != null ? Money.round(feeOverride) : quote.fee;
+    final effectiveAmount = feeOverride != null
+        ? Money.round(count * facts.deposit.installmentAmount + effectiveFee)
+        : quote.amount;
     final event = RDPoDeposit(
       id: const Uuid().v4(),
       rdId: rdId,
       depositedOn: day,
       installmentCount: count,
-      feePaid: quote.fee,
-      amount: quote.amount,
+      feePaid: effectiveFee,
+      amount: effectiveAmount,
       batchId: batchId,
     );
     return _mutate(
@@ -220,6 +232,112 @@ class RDLedgerController extends _$RDLedgerController {
         ],
       ),
     );
+  }
+
+  /// Validates every account upfront in Dart, inserts all PO events in a single atomic batch
+  /// write, and bulk-upserts all updated Monthly Hub summaries in one roundtrip.
+  Future<Result<String, String>> depositBatchToPo({
+    required List<({String rdId, int count, double? feeOverride})> lines,
+    DateTime? depositedOn,
+    String? batchId,
+  }) async {
+    if (lines.isEmpty) return const Failure('Nothing to deposit.');
+    if (state.isLoading) {
+      return const Failure('Another ledger operation is still running.');
+    }
+    final day = (depositedOn ?? ref.read(clockProvider)()).toDateOnly();
+    final resolvedBatchId = batchId ?? const Uuid().v4();
+
+    state = const AsyncLoading();
+    try {
+      final projector = ref.read(rdLedgerProjectorProvider);
+      final factsByRd = <String, RDLedgerFacts>{};
+      final events = <RDPoDeposit>[];
+
+      for (final line in lines) {
+        if (line.count <= 0) {
+          if (ref.mounted) state = const AsyncData(null);
+          return const Failure('Nothing to deposit.');
+        }
+        if (line.feeOverride != null &&
+            Paise.fromRupees(line.feeOverride!).isNegative) {
+          if (ref.mounted) state = const AsyncData(null);
+          return const Failure('Counter fee cannot be negative.');
+        }
+        final facts = await _readFacts(line.rdId);
+        factsByRd[line.rdId] = facts;
+        final remaining =
+            facts.deposit.totalMonths - projectedDepositedThrough(facts);
+        if (line.count > remaining) {
+          if (ref.mounted) state = const AsyncData(null);
+          return Failure(
+            'Only $remaining installment(s) remain on account ${facts.deposit.serialNo ?? facts.deposit.accountNo ?? line.rdId}.',
+          );
+        }
+        final latest = facts.latestPoDeposit;
+        if (latest != null && day.isBefore(latest.depositedOn.toDateOnly())) {
+          if (ref.mounted) state = const AsyncData(null);
+          return Failure(
+            'Deposit date cannot be before the last recorded visit (${latest.depositedOn.toDateOnlyString()}).',
+          );
+        }
+
+        final quote = projector.quoteNextDeposit(
+          facts,
+          count: line.count,
+          depositedOn: day,
+        );
+        final effectiveFee = line.feeOverride != null
+            ? Money.round(line.feeOverride!)
+            : quote.fee;
+        final effectiveAmount = line.feeOverride != null
+            ? Money.round(
+                line.count * facts.deposit.installmentAmount + effectiveFee,
+              )
+            : quote.amount;
+        events.add(
+          RDPoDeposit(
+            id: const Uuid().v4(),
+            rdId: line.rdId,
+            depositedOn: day,
+            installmentCount: line.count,
+            feePaid: effectiveFee,
+            amount: effectiveAmount,
+            batchId: resolvedBatchId,
+          ),
+        );
+      }
+
+      final repo = ref.read(rdLedgerRepositoryProvider);
+      final writeResult = await repo.addPoDeposits(events);
+      if (writeResult case Failure(:final error)) {
+        if (ref.mounted) state = const AsyncData(null);
+        return Failure(error);
+      }
+
+      final asOf = ref.read(clockProvider)().toDateOnly();
+      final summaries = <RDLedgerSummary>[];
+      for (final event in events) {
+        final baseFacts = await _readFacts(event.rdId);
+        final nextFacts = baseFacts.copyWith(
+          poDeposits: [
+            ...baseFacts.poDeposits.where((e) => e.id != event.id),
+            event,
+          ],
+        );
+        summaries.add(projector.project(nextFacts, asOf: asOf).summary);
+      }
+      await _upsertSummariesWithRetryTrack(summaries);
+
+      if (ref.mounted) state = const AsyncData(null);
+      return Success(resolvedBatchId);
+    } on RDLedgerException catch (e) {
+      if (ref.mounted) state = const AsyncData(null);
+      return Failure(e.message);
+    } catch (e) {
+      if (ref.mounted) state = const AsyncData(null);
+      return Failure(e.toString());
+    }
   }
 
   /// Undoes the most recent PO visit for [rdId]. Earlier visits are immutable because the
@@ -253,14 +371,19 @@ class RDLedgerController extends _$RDLedgerController {
       final result = await ref.read(rdLedgerRepositoryProvider).deletePoDepositBatch(batchId);
       switch (result) {
         case Success(value: final affectedRdIds):
+          final asOf = ref.read(clockProvider)().toDateOnly();
+          final projector = ref.read(rdLedgerProjectorProvider);
+          final summaries = <RDLedgerSummary>[];
           for (final rdId in affectedRdIds) {
-            await _refreshSummary(
-              rdId,
-              (f) => f.copyWith(
-                poDeposits: f.poDeposits.where((e) => e.batchId != batchId).toList(),
-              ),
+            final baseFacts = await _readFacts(rdId);
+            final nextFacts = baseFacts.copyWith(
+              poDeposits: baseFacts.poDeposits
+                  .where((e) => e.batchId != batchId)
+                  .toList(),
             );
+            summaries.add(projector.project(nextFacts, asOf: asOf).summary);
           }
+          await _upsertSummariesWithRetryTrack(summaries);
           if (ref.mounted) state = const AsyncData(null);
           return const Success(null);
         case Failure(:final error):
@@ -371,20 +494,63 @@ class RDLedgerController extends _$RDLedgerController {
     }
   }
 
+  /// Re-projects and flushes any summaries whose earlier upsert failed transiently.
+  Future<void> flushDirtySummaries() async {
+    if (_dirtySummaryRdIds.isEmpty) return;
+    final pending = [..._dirtySummaryRdIds];
+    final asOf = ref.read(clockProvider)().toDateOnly();
+    final projector = ref.read(rdLedgerProjectorProvider);
+    final summaries = <RDLedgerSummary>[];
+    for (final rdId in pending) {
+      try {
+        final facts = await _readFacts(rdId);
+        summaries.add(projector.project(facts, asOf: asOf).summary);
+      } catch (_) {
+        // Leave in _dirtySummaryRdIds if facts couldn't be read yet.
+      }
+    }
+    if (summaries.isEmpty) return;
+    final res = await ref.read(rdLedgerRepositoryProvider).upsertSummaries(summaries);
+    if (res case Success()) {
+      for (final s in summaries) {
+        _dirtySummaryRdIds.remove(s.rdId);
+      }
+    }
+  }
+
   Future<void> _refreshSummary(
     String rdId,
     RDLedgerFacts Function(RDLedgerFacts) apply,
   ) async {
+    final hadOtherDirty = _dirtySummaryRdIds.any((id) => id != rdId);
     try {
       await _writeSummary(apply(await _readFacts(rdId)));
+      if (hadOtherDirty && !_dirtySummaryRdIds.contains(rdId)) {
+        await flushDirtySummaries();
+      }
     } catch (_) {
-      // Cache refresh is best-effort; the next successful write or rebuild will repair it.
+      _dirtySummaryRdIds.add(rdId);
     }
   }
 
   Future<void> _writeSummary(RDLedgerFacts facts) async {
     final asOf = ref.read(clockProvider)().toDateOnly();
     final projection = ref.read(rdLedgerProjectorProvider).project(facts, asOf: asOf);
-    await ref.read(rdLedgerRepositoryProvider).upsertSummary(projection.summary);
+    await _upsertSummariesWithRetryTrack([projection.summary]);
+  }
+
+  Future<void> _upsertSummariesWithRetryTrack(List<RDLedgerSummary> summaries) async {
+    if (summaries.isEmpty) return;
+    final res = await ref.read(rdLedgerRepositoryProvider).upsertSummaries(summaries);
+    switch (res) {
+      case Success():
+        for (final s in summaries) {
+          _dirtySummaryRdIds.remove(s.rdId);
+        }
+      case Failure():
+        for (final s in summaries) {
+          _dirtySummaryRdIds.add(s.rdId);
+        }
+    }
   }
 }
