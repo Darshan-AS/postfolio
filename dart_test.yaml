@@ -1,4 +1,13 @@
 # Several suites (supabase_*_test.dart) talk to the shared local Supabase stack
 # (one GoTrue, one realtime server). Run suites serially so their sign-ups and channel
 # subscriptions never race; the whole suite still finishes in ~12s.
+#
+# Fast unit/controller/widget loop (no Docker required):
+#   flutter test --exclude-tags integration
+# Real Supabase stack integration & E2E suites only:
+#   flutter test --tags integration
 concurrency: 1
+
+tags:
+  integration:
+    description: Requires the local Docker Supabase stack (http://127.0.0.1:54321).
