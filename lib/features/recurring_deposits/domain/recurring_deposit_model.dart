@@ -225,20 +225,26 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     );
   }
 
+  /// Whether [updated] differs from [existing] in any term the ledger is projected from:
+  /// installment amount, tenure, start date, onboarding baseline or opening receivable.
+  static bool financialTermsChanged({
+    required RecurringDeposit existing,
+    required RecurringDeposit updated,
+  }) =>
+      !Money.equals(existing.installmentAmount, updated.installmentAmount) ||
+      existing.termYears != updated.termYears ||
+      existing.termMonths != updated.termMonths ||
+      existing.initialPaidInstallments != updated.initialPaidInstallments ||
+      !Money.equals(existing.openingReceivable, updated.openingReceivable) ||
+      existing.startDate.toLocalDate() != updated.startDate.toLocalDate();
+
   static Result<void, String> validateUpdate({
     required RecurringDeposit existing,
     required RecurringDeposit updated,
     required bool hasPayments,
   }) {
-    if (hasPayments) {
-      if (!Money.equals(existing.installmentAmount, updated.installmentAmount) ||
-          existing.termYears != updated.termYears ||
-          existing.termMonths != updated.termMonths ||
-          existing.initialPaidInstallments != updated.initialPaidInstallments ||
-          !Money.equals(existing.openingReceivable, updated.openingReceivable) ||
-          existing.startDate.toLocalDate() != updated.startDate.toLocalDate()) {
-        return Failure(t.recurringDeposits.fields.financialTermsLocked);
-      }
+    if (hasPayments && financialTermsChanged(existing: existing, updated: updated)) {
+      return Failure(t.recurringDeposits.fields.financialTermsLocked);
     }
     return const Success(null);
   }

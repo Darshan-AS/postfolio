@@ -272,6 +272,7 @@ recurringDeposits:
     openingReceivable: "Opening receivable (₹)"
     openingReceivableHelper: "Amount the customer already owes you at onboarding"
     financialTermsLocked: "Financial terms are locked because installments/payments are already recorded."
+    financialTermsUnverified: "Could not check whether this account has recorded payments, so its financial terms were not changed. Check your connection and try again."
   monthlyOperations:
     searchHint: "Serial, account or name"
     currentMonth: "Current month"

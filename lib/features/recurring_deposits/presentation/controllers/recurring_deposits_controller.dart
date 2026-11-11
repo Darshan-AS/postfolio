@@ -11,7 +11,10 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
@@ -265,28 +268,32 @@ class RecurringDepositsController extends _$RecurringDepositsController {
 
       final repository = ref.read(recurringDepositRepositoryProvider);
 
-      RecurringDeposit? existing;
+      // An edit must be checked against the stored account. Every branch that cannot
+      // establish "this change is allowed" refuses the save rather than letting it through.
       var termsChangedOnExisting = false;
       if (id != null) {
-        existing = state.value?.where((d) => d.id == id).firstOrNull;
+        var existing = state.value?.where((d) => d.id == id).firstOrNull;
         if (existing == null) {
-          final existingResult =
-              await repository.watchRecurringDepositById(id).first;
-          if (existingResult case Success(value: final found)) {
-            existing = found;
+          switch (await repository.watchRecurringDepositById(id).first) {
+            case Success(value: final found):
+              existing = found;
+            case Failure(:final error):
+              return Failure(error);
           }
         }
-        if (existing != null) {
-          final sub = ref.listen(rdIsFinancialTermsLockedProvider(id), (_, _) {});
-          bool isLocked = false;
-          try {
-            isLocked = await ref.read(rdIsFinancialTermsLockedProvider(id).future);
-          } catch (_) {
-            isLocked = false;
-          } finally {
-            sub.close();
+        termsChangedOnExisting = RecurringDeposit.financialTermsChanged(
+          existing: existing,
+          updated: deposit,
+        );
+        // Only a terms change needs the ledger; metadata edits never depend on reading it.
+        if (termsChangedOnExisting) {
+          final bool isLocked;
+          switch (await _hasLedgerActivity(existing)) {
+            case Success(:final value):
+              isLocked = value;
+            case Failure():
+              return Failure(t.recurringDeposits.fields.financialTermsUnverified);
           }
-
           final lockCheck = RecurringDeposit.validateUpdate(
             existing: existing,
             updated: deposit,
@@ -295,11 +302,6 @@ class RecurringDepositsController extends _$RecurringDepositsController {
           if (lockCheck case Failure(error: final err)) {
             return Failure(err);
           }
-          termsChangedOnExisting = RecurringDeposit.validateUpdate(
-            existing: existing,
-            updated: deposit,
-            hasPayments: true,
-          ) is Failure;
         }
       }
 
@@ -313,6 +315,25 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     } finally {
       link.close();
     }
+  }
+
+  /// Whether [deposit] has any ledger fact, from one direct read. A failed read is returned
+  /// as a `Failure` — the caller must not treat "unknown" as "no activity".
+  Future<Result<bool, String>> _hasLedgerActivity(RecurringDeposit deposit) async {
+    final raw = await ref
+        .read(rdLedgerRepositoryProvider)
+        .fetchRawFactsForRds([deposit.id]);
+    return switch (raw) {
+      Failure(:final error) => Failure(error),
+      Success(value: final bundles) => Success(
+          RDLedgerFacts(
+            deposit: deposit,
+            transactions: bundles[deposit.id]?.transactions ?? const [],
+            poDeposits: bundles[deposit.id]?.poDeposits ?? const [],
+            absorptions: bundles[deposit.id]?.absorptions ?? const [],
+          ).isFinancialTermsLocked,
+        ),
+    };
   }
 
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {

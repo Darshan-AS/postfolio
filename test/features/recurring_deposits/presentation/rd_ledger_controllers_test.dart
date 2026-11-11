@@ -16,6 +16,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/controllers/r
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 // ---------------------------------------------------------------------------------------------
 // Fixtures
@@ -723,6 +724,96 @@ void main() {
       await ledger.flushDirtySummaries();
       expect(ledger.dirtySummaryRdIds, isEmpty);
       expect(h.ledger.summaryOf('rd1')!.paidThroughNo, 2);
+    });
+  });
+
+  group('Financial-terms lock on edit', () {
+    // Five-year accounts (the only tenure `RecurringDeposit.create` accepts for an RD).
+    // rd1 has a recorded payment (locked); rd2 has no ledger activity.
+    ({
+      ProviderContainer c,
+      FakeRDLedgerRepository ledger,
+      FakeRecurringDepositRepository deposits,
+    }) harness() {
+      final h = _harness(
+        deposits: [
+          _deposit('rd1').copyWith(termYears: 5),
+          _deposit('rd2', customer: 'c2').copyWith(termYears: 5),
+        ],
+        transactions: {'rd1': [_tx('rd1', 't1', 1000, DateTime(2026, 1, 10))]},
+        retryFailedProviders: false,
+      );
+      return (c: h.container, ledger: h.ledger, deposits: h.deposits);
+    }
+
+    Future<Result<void, String>> save(
+      ProviderContainer c,
+      String id, {
+      String amount = '1000',
+      String? serialNo,
+      String customerId = 'c1',
+    }) =>
+        c.read(recurringDepositsControllerProvider.notifier).saveRecurringDeposit(
+              id: id,
+              serialNo: serialNo,
+              installmentAmount: amount,
+              customerId: customerId,
+              schemeType: RecurringSchemeType.recurringDeposit,
+              startDate: DateTime(2026, 1, 10),
+              termYears: 5,
+              termMonths: 0,
+              interestRate: '6.7',
+            );
+
+    RecurringDeposit stored(FakeRecurringDepositRepository repo, String id) =>
+        repo.deposits.firstWhere((d) => d.id == id);
+
+    String errorOf(Result<void, String> r) => (r as Failure<void, String>).error;
+
+    test('a terms change is refused when the ledger cannot be checked', () async {
+      final h = harness();
+      h.ledger.failReadsWith = 'offline';
+
+      final r = await save(h.c, 'rd1', amount: '2000');
+
+      expect(r, isA<Failure<void, String>>(),
+          reason: 'not knowing whether the account has history must not unlock it');
+      expect(errorOf(r), t.recurringDeposits.fields.financialTermsUnverified);
+      expect(stored(h.deposits, 'rd1').installmentAmount, 1000);
+    });
+
+    test('a locked account refuses a terms change and an unlocked one accepts it', () async {
+      final h = harness();
+
+      final locked = await save(h.c, 'rd1', amount: '2000');
+      expect(locked, isA<Failure<void, String>>());
+      expect(errorOf(locked), t.recurringDeposits.fields.financialTermsLocked);
+      expect(stored(h.deposits, 'rd1').installmentAmount, 1000);
+
+      expect(await save(h.c, 'rd2', amount: '2000', customerId: 'c2'), isA<Success<void, String>>());
+      expect(stored(h.deposits, 'rd2').installmentAmount, 2000);
+    });
+
+    test('an edit that leaves the terms alone does not depend on the ledger being readable', () async {
+      final h = harness();
+      h.ledger.failReadsWith = 'offline';
+
+      final r = await save(h.c, 'rd1', serialNo: '77');
+
+      expect(r, isA<Success<void, String>>());
+      expect(stored(h.deposits, 'rd1').serialNo, '77');
+      expect(stored(h.deposits, 'rd1').installmentAmount, 1000);
+    });
+
+    test('editing an account that cannot be loaded is refused instead of saved blind', () async {
+      final h = harness();
+
+      final r = await save(h.c, 'no-such-account', amount: '2000');
+
+      expect(r, isA<Failure<void, String>>());
+      expect(errorOf(r), 'Recurring Deposit not found');
+      expect(h.deposits.deposits.map((d) => d.id), ['rd1', 'rd2'],
+          reason: 'an edit must never create a new account');
     });
   });
 

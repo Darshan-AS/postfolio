@@ -43,7 +43,7 @@
 - [x] **A2 (Visit write path)**: Stop `depositBatchToPo` / `undoBatch` returning Failure after the facts are committed; read facts with `fetchRawFactsForRds` instead of per-RD streams; make a retried visit a no-op (unique client batch ID).
   - [ ] Follow-up (not started): the single-account writes (`recordPayment`, `depositNextToPo`) still create a new id per attempt, so a retry after a lost response can record twice. Hold the id in the sheet draft.
   - [ ] Follow-up (not started): one global busy flag still serialises every ledger write.
-- [ ] **A3 (Lock fails closed)**: `saveRecurringDeposit` must refuse a terms change when ledger facts cannot be read.
+- [x] **A3 (Lock fails closed)**: `saveRecurringDeposit` must refuse a terms change when ledger facts cannot be read.
 - [ ] **A4 (Backup workflow)**: Pass `$SUPABASE_DB_SESSION_URL` to `pg_dump` in `backup.yml`; run it once and restore one archive.
 - [ ] **A5 (Default privileges)**: Revoke PUBLIC's default EXECUTE on functions globally and add a SQL contract that fails if any `public` function is executable by `anon`.
 - [ ] **A6 (Enum guard)**: Decide the SQL boundary (restore enum CHECKs and/or tolerant decoding); decode list rows individually and log the original error instead of discarding it.
