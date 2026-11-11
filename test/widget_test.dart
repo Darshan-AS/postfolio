@@ -189,7 +189,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('TD123456'), findsOneWidget);
+      // Account No appears in the EntityDetailHeader title and the copyable
+      // Account Information row.
+      expect(find.text('TD123456'), findsNWidgets(2));
       expect(find.text('TD'), findsOneWidget);
       expect(find.text('5Y'), findsOneWidget);
       expect(find.text('Time Deposit'), findsOneWidget);
@@ -234,11 +236,11 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('RD987654'), findsOneWidget);
+      // Account Info is the default tab: Account No and Customer both appear in
+      // the EntityDetailHeader and again in the Account Information section.
+      expect(find.text('RD987654'), findsNWidgets(2));
       expect(find.text('#14'), findsOneWidget);
       expect(find.text('Recurring Deposit'), findsOneWidget);
-      // Account Info is the default tab: the customer appears in the header link and
-      // again in the Account Information section.
       expect(find.text('Shivanand A B'), findsNWidgets(2));
     },
   );

@@ -6,7 +6,6 @@ errors:
   negativeTerm: "Term cannot be negative"
   invalidTenure: "Invalid tenure of ${years} years for ${scheme}"
   fixedTenureNoMonths: "Months are not applicable for fixed tenure schemes"
-  invalidMaturityDate: "Maturity date cannot be before start date"
   minLength: "${field} must be at least ${count} characters"
   invalidEmail: "Invalid email format"
   invalidPhone: "Invalid phone number (7-15 digits)"
@@ -52,7 +51,6 @@ common:
   clear: "Clear"
   clearFilters: "Clear Filters"
   reset: "Reset"
-  details: "Details"
   depositDetails: "Deposit Details"
   error: "Error"
   retry: "Retry"
@@ -124,7 +122,6 @@ filters:
     status: "Status"
     urgency: "Urgency"
     scheme: "Scheme Type"
-  status: "Status"
 
 projection:
   title: "Live Projection"
@@ -147,7 +144,6 @@ customers:
   customerDetails: "Customer Details"
   newCustomer: "New Customer"
   editCustomer: "Edit Customer"
-  saveCustomer: "Save Customer"
   noCustomersFound: "No customers found. Add one!"
   selectCustomer: "Select Customer"
   searchHint: "Search by name, phone, CIF, Aadhaar or PAN..."
@@ -160,7 +156,6 @@ customers:
     call: "Call"
     sms: "SMS"
     whatsapp: "WhatsApp"
-    location: "Location"
   sections:
     personalInfo: "Personal Information"
     identityDocuments: "Identity Documents"
@@ -174,16 +169,8 @@ customers:
     aadhaarNumber: "Aadhaar Number"
     panNumber: "PAN Number"
     sbAccountNumber: "SB Account No."
-    sbNomineeName: "SB Nominee Name"
-    sbNomineeRelationship: "SB Nominee Relationship"
     dateOfBirth: "Date of Birth"
-    nominees: "Nominees"
-    addNominee: "Add Nominee"
-    nomineeName: "Nominee Name"
-    relationship: "Relationship"
-    percentage: "Percentage (%)"
     notes: "Notes"
-  customRelationship: "Custom Relationship"
 
 dashboard:
   overview: "Overview"
@@ -200,13 +187,11 @@ dashboard:
     customers: "Customers"
     rds: "RDs"
     otds: "OTDs"
-  charts: "Dashboard Charts Go Here"
 
 oneTimeDeposits:
   title: "One-Time Deposits"
   newDeposit: "New Deposit"
   editDeposit: "Edit Deposit"
-  saveDeposit: "Save Deposit"
   noDepositsFound: "No one-time deposits found. Add one!"
   depositNotFound: "Deposit not found"
   searchHint: "Search by account, customer or scheme..."
@@ -226,16 +211,9 @@ oneTimeDeposits:
     accountNo: "Account No."
     principalAmount: "Principal Amount"
     termYears: "Term (Years)"
-    termMonths: "Term (Months)"
-    yearAbbreviation:
-      one: "1 Yr"
-      other: "${n} Yrs"
     customerId: "Customer"
     schemeType: "Scheme Type"
     interestRate: "Interest Rate (%)"
-    maturityAmount: "Maturity Amount"
-    periodicPayoutAmount: "Periodic Payout"
-    payoutFrequency: "Payout Frequency"
     startDate: "Start Date"
     maturityDate: "Maturity Date"
     depositDate: "Deposit Date"
@@ -555,7 +533,6 @@ nominees:
   title: "Nominees"
   singularTitle: "Nominee"
   addNominee: "Add Nominee"
-  editNominee: "Edit Nominee"
   deleteNominee: "Delete Nominee"
   name: "Nominee Name"
   relationship: "Relationship"
@@ -614,6 +591,11 @@ enums:
     aunt: "Aunt"
     cousin: "Cousin"
     other: "Other"
+  rdPaymentMode(map):
+    cash: "Cash"
+    upi: "UPI"
+    cheque: "Cheque"
+    bankTransfer: "Bank Transfer"
 
 auth:
   welcome: "Welcome to Postfolio"
@@ -622,23 +604,9 @@ auth:
   tryDemoMode: "Try Demo Mode"
   signOut: "Sign Out"
 
-migration:
-  title: "Emulator Migration Test"
-  signIn: "Sign In"
-  migrateBatch: "Migrate Batch"
-  migrateAll: "Migrate All"
-  deleteAll: "Delete All"
-  summaryBatch: "Batch: ${processed}/${total}, Migrated: ${migrated}, Duplicates: ${duplicates}, Empty Accs: ${emptyAccounts}, Errors: ${errors}"
-  summaryAll: "Total: ${total}, Migrated: ${migrated}, Missing Cust: ${missingCust}, Duplicates: ${duplicates}, Empty Accs: ${emptyAccounts}, Errors: ${errors}"
-  targetUid: "Target User ID (UID)"
-  targetUidHelper: "Enter your Firebase Auth UID to migrate data into your account."
-  batchSize: "Batch Size"
-
-
 projections:
   totalInvested: "Total Invested"
   estInterest: "Est. Interest"
-  maturityAmount: "Maturity Amount"
   totalReturnMaturity: "Total Return (Maturity)"
   lockedPrincipal: "Locked Principal"
   payoutTitle: "${frequency} Payout"

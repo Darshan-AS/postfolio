@@ -110,7 +110,13 @@ class RDHubToolbar extends HookConsumerWidget {
                 IconButton(
                   tooltip: toolbar.groupByCustomer,
                   isSelected: groupByCustomer,
-                  visualDensity: VisualDensity.compact,
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size(
+                      AppDimensions.minTapTarget,
+                      AppDimensions.minTapTarget,
+                    ),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   onPressed: () => filtersNotifier.toggleGroupByCustomer(),
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedUserGroup,
@@ -125,7 +131,13 @@ class RDHubToolbar extends HookConsumerWidget {
                 IconButton(
                   tooltip: isSelectionMode ? toolbar.exitSelectMode : toolbar.selectMode,
                   isSelected: isSelectionMode,
-                  visualDensity: VisualDensity.compact,
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size(
+                      AppDimensions.minTapTarget,
+                      AppDimensions.minTapTarget,
+                    ),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   onPressed: isSelectionMode ? selectionNotifier.exit : selectionNotifier.enter,
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedCheckList,

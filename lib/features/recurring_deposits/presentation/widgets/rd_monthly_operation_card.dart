@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_financial_colors.dart';
@@ -94,9 +95,21 @@ class RDMonthlyOperationCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(BoneMock.words(2)),
-              const Spacer(),
-              Text(card.owes(amount: dummy.installmentAmount.toRupeeFormat())),
+              Expanded(
+                child: Text(
+                  BoneMock.words(2),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              AppSpacings.gapSm,
+              Flexible(
+                child: Text(
+                  card.owes(amount: dummy.installmentAmount.toRupeeFormat()),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           AppSpacings.gapSm,
@@ -247,7 +260,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _StatusPill(visual: visual),
+              Flexible(fit: FlexFit.loose, child: _StatusPill(visual: visual)),
               AppSpacings.gapSm,
               Expanded(
                 child: money == null
@@ -397,7 +410,6 @@ class _IdentityLine extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final card = t.recurringDeposits.monthlyOperations.card;
-    final separator = t.format.bulletSeparator;
 
     final muted = theme.textTheme.bodySmall?.copyWith(
       color: scheme.onSurfaceVariant,
@@ -418,27 +430,31 @@ class _IdentityLine extends StatelessWidget {
     final account = card.accountTail(last4: last4);
     final identity = serial == null ? account : card.identity(serial: serial, account: account);
 
-    return Row(
+    return Wrap(
+      spacing: AppDimensions.paddingXs,
+      runSpacing: AppDimensions.paddingXxs,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Flexible(
-          child: Text(
-            identity,
-            style: muted,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+        Text(
+          identity,
+          style: muted,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-        Text(separator, style: muted, maxLines: 1),
-        Text(dueText, style: dueStyle, maxLines: 1),
+        Text(
+          dueText,
+          style: dueStyle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ],
     );
   }
 
   (String, TextStyle?) _dueText(ThemeData theme) {
     final card = t.recurringDeposits.monthlyOperations.card;
-    final locale = LocaleSettings.currentLocale.languageTag;
     final due = card.due(
-      date: DateFormat(_dueDatePattern, locale).format(installment.dueDate),
+      date: DateFormat(_dueDatePattern, resolvedDateLocale()).format(installment.dueDate),
     );
     final alert = theme.textTheme.bodySmall?.copyWith(
       color: theme.colorScheme.error,
@@ -499,11 +515,15 @@ class _StatusPill extends StatelessWidget {
             color: visual.foreground,
           ),
           AppSpacings.gapXs,
-          Text(
-            visual.label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: visual.foreground,
-              fontWeight: visual.emphasized ? FontWeight.w800 : FontWeight.w600,
+          Flexible(
+            child: Text(
+              visual.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: visual.foreground,
+                fontWeight: visual.emphasized ? FontWeight.w800 : FontWeight.w600,
+              ),
             ),
           ),
         ],

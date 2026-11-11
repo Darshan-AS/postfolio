@@ -56,6 +56,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                 .updateSearch(val),
             trailing: [
               IconButton(
+                tooltip: t.sorting.title,
                 icon: Badge(
                   isLabelVisible:
                       criteria.sortField != OTDSortField.maturityDate ||
@@ -97,6 +98,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                 },
               ),
               IconButton(
+                tooltip: t.filters.title,
                 icon: Badge(
                   isLabelVisible: activeFilterCount > 0,
                   label: Text('$activeFilterCount'),

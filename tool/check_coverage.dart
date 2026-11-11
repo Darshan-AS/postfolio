@@ -12,6 +12,7 @@ void main(List<String> args) {
   var minDomain = 0.0;
   var minControllers = 0.0;
   var minData = 0.0;
+  var minUi = 0.0;
 
   for (final arg in args) {
     if (arg.startsWith('--min=') || arg.startsWith('--min-total=')) {
@@ -22,6 +23,8 @@ void main(List<String> args) {
       minControllers = double.parse(arg.split('=').last);
     } else if (arg.startsWith('--min-data=')) {
       minData = double.parse(arg.split('=').last);
+    } else if (arg.startsWith('--min-ui=')) {
+      minUi = double.parse(arg.split('=').last);
     } else if (arg.startsWith('--file=')) {
       lcovPath = arg.split('=').last;
     }
@@ -104,6 +107,7 @@ void main(List<String> args) {
   final domainPct = pctOf(buckets[domainKey]!);
   final controllersPct = pctOf(buckets[controllersKey]!);
   final dataPct = pctOf(buckets[dataKey]!);
+  final uiPct = pctOf(buckets[uiKey]!);
 
   if (domainPct < minDomain) {
     failures.add(
@@ -118,6 +122,11 @@ void main(List<String> args) {
   if (dataPct < minData) {
     failures.add(
       '$dataKey ${dataPct.toStringAsFixed(1)}% < ${minData.toStringAsFixed(1)}%',
+    );
+  }
+  if (uiPct < minUi) {
+    failures.add(
+      '$uiKey ${uiPct.toStringAsFixed(1)}% < ${minUi.toStringAsFixed(1)}%',
     );
   }
   if (totalPct < minTotal) {

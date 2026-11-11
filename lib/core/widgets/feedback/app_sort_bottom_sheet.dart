@@ -106,6 +106,7 @@ class AppSortBottomSheet<T> extends StatelessWidget {
           if (onReset != null)
             TextButton(onPressed: onReset!, child: Text(t.common.clear)),
           IconButton(
+            tooltip: t.common.close,
             onPressed: () => Navigator.pop(context),
             icon: const HugeIcon(
               icon: HugeIcons.strokeRoundedCancel01,

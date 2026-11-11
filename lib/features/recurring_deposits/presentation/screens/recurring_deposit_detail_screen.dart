@@ -166,11 +166,14 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                           color: theme.colorScheme.primary,
                         ),
                         AppSpacings.gapXs,
-                        Text(
-                          resolvedCustomerName,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.bold,
+                        Flexible(
+                          child: Text(
+                            resolvedCustomerName,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],

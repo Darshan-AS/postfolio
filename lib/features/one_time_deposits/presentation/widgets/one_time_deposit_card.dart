@@ -94,13 +94,16 @@ class _OneTimeDepositCardView extends StatelessWidget {
                         : Theme.of(context).colorScheme.tertiary,
                   ),
                   AppSpacings.gapXs,
-                  Text(
-                    relativeTimeText,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: urgency == MaturityUrgency.matured
-                          ? Theme.of(context).colorScheme.error
-                          : Theme.of(context).colorScheme.tertiary,
-                      fontWeight: FontWeight.w600,
+                  Flexible(
+                    child: Text(
+                      relativeTimeText,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: urgency == MaturityUrgency.matured
+                            ? Theme.of(context).colorScheme.error
+                            : Theme.of(context).colorScheme.tertiary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],

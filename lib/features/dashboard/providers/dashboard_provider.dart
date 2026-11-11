@@ -10,7 +10,6 @@ import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_mod
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
-import 'package:postfolio/i18n/strings.g.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'dashboard_provider.freezed.dart';
@@ -185,8 +184,7 @@ List<ChartDataPoint> dashboardChartSeries(Ref ref) {
     return data;
   } else {
     final List<ChartDataPoint> data = [];
-    final locale = LocaleSettings.currentLocale.languageTag;
-    final formatter = DateFormat('MMM yy', locale);
+    final formatter = DateFormat('MMM yy', resolvedDateLocale());
 
     // Generate the 12 months for the selected financial year starting from April
     final List<DateTime> fyMonths = List.generate(

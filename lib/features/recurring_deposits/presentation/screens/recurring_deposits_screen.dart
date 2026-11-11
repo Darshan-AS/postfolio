@@ -160,6 +160,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
               .updateSearch(val),
           trailing: [
               IconButton(
+                tooltip: t.sorting.title,
                 icon: Badge(
                   isLabelVisible:
                       criteria.sortField != RDSortField.serialNo ||
@@ -203,6 +204,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
                 },
               ),
               IconButton(
+                tooltip: t.filters.title,
                 icon: Badge(
                   isLabelVisible: activeFilterCount > 0,
                   label: Text('$activeFilterCount'),

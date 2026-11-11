@@ -87,13 +87,20 @@ class RDInstallmentTile extends StatelessWidget {
             ),
           ),
           AppSpacings.gapSm,
-          Text(
-            amountLabel,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: amountColor,
+          Flexible(
+            fit: FlexFit.loose,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                amountLabel,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: amountColor,
+                ),
+                maxLines: 1,
+              ),
             ),
-            maxLines: 1,
           ),
         ],
       ),
@@ -147,11 +154,14 @@ class _StatusChip extends StatelessWidget {
         children: [
           HugeIcon(icon: visual.icon, size: AppDimensions.iconXs, color: visual.foreground),
           AppSpacings.gapXxs,
-          Text(
-            visual.label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: visual.foreground,
-              fontWeight: FontWeight.bold,
+          Flexible(
+            child: Text(
+              visual.label,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: visual.foreground,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

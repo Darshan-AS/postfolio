@@ -142,7 +142,8 @@ class EntityListTile extends StatelessWidget {
                 ),
               ),
               if (trailing != null || hasActionButtons) AppSpacings.gapSm,
-              ?trailing,
+              if (trailing != null)
+                Flexible(fit: FlexFit.loose, child: trailing!),
               if (trailing != null && hasActionButtons) AppSpacings.gapXs,
               for (final action in inlineActions)
               IconButton(
@@ -283,9 +284,7 @@ class EntityListTile extends StatelessWidget {
                           ),
                           style: textStyle?.copyWith(
                             fontWeight: FontWeight.bold,
-                            height: hasSubtext
-                                ? AppDimensions.lineHeightTight
-                                : null,
+                            height: hasSubtext ? 1.15 : null,
                             color: fgColor,
                           ),
                         ),

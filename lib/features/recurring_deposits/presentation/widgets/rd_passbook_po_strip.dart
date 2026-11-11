@@ -110,22 +110,28 @@ class RDPassbookPoStrip extends ConsumerWidget {
               ),
             ),
             AppSpacings.gapSm,
-            FilledButton.tonalIcon(
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, AppDimensions.minTapTarget),
+            Flexible(
+              fit: FlexFit.loose,
+              child: FilledButton.tonalIcon(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, AppDimensions.minTapTarget),
+                ),
+                onPressed: isBusy || !hasReady
+                    ? null
+                    : () => showRDDepositSheet(
+                          context,
+                          rdId: rdId,
+                          initialCount: readiness.readyCount,
+                        ),
+                icon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedBuilding03,
+                  size: AppDimensions.iconXs,
+                ),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(passbook.deposit, maxLines: 1),
+                ),
               ),
-              onPressed: isBusy || !hasReady
-                  ? null
-                  : () => showRDDepositSheet(
-                        context,
-                        rdId: rdId,
-                        initialCount: readiness.readyCount,
-                      ),
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedBuilding03,
-                size: AppDimensions.iconXs,
-              ),
-              label: Text(passbook.deposit),
             ),
             MenuAnchor(
               builder: (context, controller, child) => IconButton(

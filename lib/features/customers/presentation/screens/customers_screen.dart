@@ -40,6 +40,7 @@ class CustomersScreen extends HookConsumerWidget {
                 .updateSearch(val),
             trailing: [
               IconButton(
+                tooltip: t.sorting.title,
                 icon: Badge(
                   isLabelVisible:
                       criteria.sortField != CustomerSortField.name ||

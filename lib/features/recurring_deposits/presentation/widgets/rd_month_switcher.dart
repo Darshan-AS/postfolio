@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -51,8 +52,7 @@ class RDMonthSwitcher extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final ops = t.recurringDeposits.monthlyOperations;
-    final locale = LocaleSettings.currentLocale.languageTag;
-    final monthLabel = DateFormat.yMMM(locale).format(selectedMonth);
+    final monthLabel = DateFormat.yMMM(resolvedDateLocale()).format(selectedMonth);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingSm),
@@ -81,13 +81,16 @@ class RDMonthSwitcher extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          monthLabel,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: scheme.onSurface,
+                        Flexible(
+                          child: Text(
+                            monthLabel,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: scheme.onSurface,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
                         ),
                         AppSpacings.gapXs,
                         HugeIcon(

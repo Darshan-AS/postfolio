@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/routing/app_router.dart';
@@ -138,8 +139,7 @@ class _EmptySliver extends ConsumerWidget {
     final totalCount = ref.watch(monthlyOperationsKpiProvider.select((k) => k.totalCount));
     final toCollectCount =
         ref.watch(monthlyOperationsKpiProvider.select((k) => k.toCollectCount));
-    final locale = LocaleSettings.currentLocale.languageTag;
-    final monthLabel = DateFormat.yMMM(locale).format(month);
+    final monthLabel = DateFormat.yMMM(resolvedDateLocale()).format(month);
 
     final hasFilters = filters.hasActiveFilters;
     final isCollectFilter = filters.status == RDMonthlyFilter.toCollect ||
