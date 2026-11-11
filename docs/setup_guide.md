@@ -76,6 +76,19 @@ To build the production version (`.aab`) for the Play Store, you need the signin
 flutter build appbundle
 ```
 
+### D. Release order when a migration is included
+`release.yml` does not run migrations, and pushing a `v*` tag deploys the web build at once. When a release contains a new file under `supabase/migrations/`, do these in order:
+
+1. **Back up** the hosted database (manual dump below, or a verified nightly archive).
+2. **Rehearse** the migration on a copy of production if it alters or deletes existing data: restore the dump into a scratch database, apply the migration, compare row counts.
+3. **Apply it**: `supabase db push`.
+4. **Then** tag and release the client.
+
+For `20261111000000_v2_4_storage_hardening.sql` specifically:
+- It was rehearsed on the 10 Nov 2026 production copy (757 customers, 766 RDs, 730 OTDs): it applied cleanly and no row counts changed. That copy predates the hosted RD-ledger migration, so the ledger tables were empty in the rehearsal.
+- The v2.4 client needs it first: it calls `set_deposit_status` and `log_client_error`, which do not exist before the migration.
+- The installed v2.3.1 client is expected to keep working after it: it uses only tables, views and the three `save_*` RPCs that the migration keeps. This comes from reading that client's code; it has not been run against the migrated schema. One known difference: deleting a customer who has a savings account fails until that client is updated.
+
 ---
 
 ## 🛡️ 3. Disaster Recovery & Security

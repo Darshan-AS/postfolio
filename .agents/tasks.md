@@ -49,7 +49,8 @@
 - [x] **A5 (Default privileges)**: Revoke PUBLIC's default EXECUTE on functions globally and add a SQL contract that fails if any `public` function is executable by `anon`.
 - [x] **A6 (Enum guard)**: Decide the SQL boundary (restore enum CHECKs and/or tolerant decoding); decode list rows individually and log the original error instead of discarding it.
   - Decision: enum CHECKs in SQL mirroring the Dart enums, plus per-row decoding that names the failing row and reports the cause. Lists remain all-or-nothing.
-- [ ] **A7 (Migration rehearsal)**: Apply `20261111000000_v2_4_storage_hardening.sql` to a copy of production data before `supabase db push`; define release ordering.
+- [x] **A7 (Migration rehearsal)**: Apply `20261111000000_v2_4_storage_hardening.sql` to a copy of production data before `supabase db push`; define release ordering.
+  - [ ] Owner action: back up hosted, then `supabase db push`, then tag. The rehearsal copy was from 10 Nov and had no ledger rows; hosted has since had the RD-ledger migration, baselining and new entries.
 - [ ] **A8 (Realtime staleness)**: Refetch on resubscribe and app resume, retry failed loads, and keep a queued refetch when the in-flight fetch throws.
 
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)
