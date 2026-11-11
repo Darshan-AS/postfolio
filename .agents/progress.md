@@ -1,7 +1,23 @@
 # Project Progress
 
 ## Current State
-**Stage 0 Complete (2026-11-11, on top of Release 2.3.1+22).** Resolved all emergency P0 security, data-loss, summary double-count/race, and PII asset bundling defects uncovered during the full-stack audit:
+**Stage 1 Complete (2026-11-11, on top of Stage 0).** Established the automated CI quality & database contract gate, nightly `age`-encrypted Google Drive backups, strict static typing/async lints, R8/Hosting release hardening, and the repo-wide DDD baseline test suite:
+- **Self-Asserting SQL Contract Suite & Tag Split (`dart_test.yaml`, `supabase/tests/rd_ledger_facts_rls.sql`)**:
+  - Converted all 14 SQL RLS/privilege/constraint/cascade cases into `\set ON_ERROR_STOP on` PL/pgSQL assertions checking exact `SQLSTATE`s (`check_violation` `23514`, `insufficient_privilege` `42501`), exiting non-zero if any positive or negative security invariant regresses.
+  - Tagged the 4 live-Supabase suites with `@Tags(['integration'])` so `flutter test --exclude-tags integration` runs 81 fast unit/controller/widget tests without Docker.
+- **DDD Baseline Test Backfill & Layer Coverage Ratchet (`tool/check_coverage.dart`)**:
+  - Added table-driven domain specs (`test/core/domain_validation_and_projection_test.dart`) covering `Customer.create`, `Nominee`, `OneTimeDeposit.create`, Indian FY `Mar 31`/`Apr 1` boundaries, and 5-scheme `ProjectionCalculator` math (`TD`, `MIS`, `NSC`, `RD`, `KVP`).
+  - Added `ProviderContainer` + `Fake*Repository` baseline specs (`test/features/controllers_and_dashboard_baseline_test.dart`) covering `CustomersController`, `OneTimeDepositsController`, `RecurringDepositsController` (numeric `serialNo` ordering, lazy `customerName` resolution, filters), and `dashboardMetricsDataProvider` / `dashboardChartSeriesProvider` FY drill-down.
+  - Added `tool/check_coverage.dart` stripping `*.g.dart` / `*.freezed.dart` and enforcing per-layer ratchets (`domain & core: 73.0% >= 72%`, `controllers & providers: 69.4% >= 68%`, `total hand-written: 44.8% >= 44%`).
+- **Strict Static Analysis (`analysis_options.yaml`)**:
+  - Enabled `strict-casts`, `strict-raw-types`, `unawaited_futures`, `cancel_subscriptions`, and `only_throw_errors` (excluding generated files); fixed unawaited `LocaleSettings.useDeviceLocale()` in `lib/main.dart` and untyped `dynamic` list fallbacks in `RDMonthlyOperationsController`.
+- **CI, Encrypted Backups & Release/Hosting Hardening (`.github/workflows/{ci,backup,release}.yml`, `firebase.json`, `android/`)**:
+  - Added PR/push CI (`ci.yml`) running strict analysis, fast unit/widget tests + coverage ratchet, and clean-room `supabase start` migration replay + SQL contracts + Dart integration suites.
+  - Added nightly `backup.yml` (`01:30 IST`) streaming `postgres:17 pg_dump -Fc` directly into `age` ciphertext (zero plaintext on disk) and uploading via `rclone` (`drive.file` OAuth2 token) to Google Drive with 30-day retention; documented 2-minute setup & 1-command `age -d | pg_restore` in `docs/setup_guide.md`.
+  - Hardened `release.yml` (tag/input-gated live deploys, analyzer+test gate, `UPLOAD_KEYSTORE_BASE64` + `KEY_PROPERTIES` support), enabled Android R8 + Crashlytics `proguard-rules.pro` (`-Xmx4G`), and added `nosniff`/`SAMEORIGIN`/cache-control headers in `firebase.json`.
+- **Verification**: `dart analyze --fatal-infos` clean (0 issues), 14/14 SQL contracts passing, **91/91 Flutter tests passing**, and DDD coverage ratchet green.
+
+**Previous: Stage 0 Complete (2026-11-11, on top of Release 2.3.1+22).** Resolved all emergency P0 security, data-loss, summary double-count/race, and PII asset bundling defects uncovered during the full-stack audit:
 - **Database Security & Privilege Lockdown (`supabase/migrations/20261111000000_p0_security_and_status_hotfix.sql`)**:
   - Moved internal `SECURITY DEFINER` helpers (`assert_authenticated`, `assert_customer_owner`, `assert_account_owner`, `upsert_account_identity`, `replace_account_nominees`) into an unexposed `private` schema (`REVOKE ALL ON SCHEMA private FROM PUBLIC, anon, authenticated`).
   - Inlined nominee JSON aggregation directly into `customer_details_view`, `one_time_deposit_details_view`, and `recurring_deposit_details_view` (`security_invoker = true`), dropping `public.get_account_nominees` so `nominees` RLS enforces tenant isolation natively.
