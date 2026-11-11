@@ -135,12 +135,62 @@ grep -m 5 "^COPY public\." full_backup_*.sql
 - **Store Off-Site**: Upload the generated `.sql` file to your private Google Drive folder, encrypted volume, or password manager vault.
 - **Git Safety**: Local dump files (`*.dump`, `full_backup*.sql`, `postfolio_backup*.sql`) are excluded in `.gitignore`. **NEVER commit raw database dumps to GitHub**, as this repository is public.
 
-#### 5. Restoring from a Backup
-To restore the complete dump into a target database:
+#### 5. Restoring from a Manual Plaintext SQL Backup
+To restore a plain `.sql` dump into a target database:
 
 ```bash
 docker run --rm -v $(pwd):/backup postgres:17 psql "TARGET_DATABASE_URL" -f /backup/full_backup_YYYY_MM_DD.sql
 ```
+
+---
+
+### Automated Nightly Encrypted Backups (`.github/workflows/backup.yml`)
+
+Because this repository is public, nightly backups (`01:30 IST` daily) stream `postgres:17 pg_dump -Fc` directly into an **`age` public-key encrypted archive** (`postfolio_YYYY_MM_DDTHHMMSSZ.dump.age` — zero plaintext ever touches the runner disk) and upload it to your Google Drive via `rclone` (`drive.file` scope), pruning snapshots older than 30 days.
+
+#### One-Time Setup (~2 Minutes on macOS)
+
+1. **Generate a Dedicated `age` Backup Keypair**:
+   ```bash
+   brew install age rclone
+   age-keygen -o ~/postfolio-backup-age-key.txt
+   ```
+   - Store the entire contents of `~/postfolio-backup-age-key.txt` (`AGE-SECRET-KEY-1...`) in your **Password Manager** immediately, then delete the local file (`rm ~/postfolio-backup-age-key.txt`).
+   - Copy the printed `age1...` public key for the `AGE_PUBLIC_KEY` GitHub Secret.
+
+2. **Create a Non-Expiring `drive.file` OAuth Token With `rclone`**:
+   - In Google Cloud Console (`postfolio-app` -> **Google Auth Platform / OAuth consent screen**), ensure **Google Drive API** is enabled in **APIs & Services -> Library**, create an OAuth 2.0 **Desktop app** client ID (if not already present), and set Publishing status to **"In production"** *(because `drive.file` is a non-sensitive scope, Google requires zero app verification review, and publishing prevents Google's 7-day "Testing" refresh-token expiry)*.
+   - Run locally:
+     ```bash
+     rclone config
+     ```
+     - `n` (New remote) -> name: `gdrive` -> Storage: `drive` (Google Drive)
+     - Enter your Desktop `client_id` and `client_secret`
+     - Scope: select **`drive.file`** (*Access only to files created by rclone*)
+     - Complete the browser login, leave `service_account_file` blank, decline Team Drive (`n`), and save (`y`).
+   - Print the generated config block and copy it for the `RCLONE_CONFIG` GitHub Secret:
+     ```bash
+     cat ~/.config/rclone/rclone.conf
+     ```
+
+3. **Add GitHub Repository Secrets** (`Settings -> Secrets and variables -> Actions`):
+
+   | Secret Name | Required | Value |
+   | :--- | :---: | :--- |
+   | `SUPABASE_DB_SESSION_URL` | Yes | Supabase Session Pooler URI (`postgresql://postgres.<ref>:<pw>@aws-0-<region>.pooler.supabase.com:5432/postgres`) |
+   | `AGE_PUBLIC_KEY` | Yes | Recipient public key (`age1...`) |
+   | `RCLONE_CONFIG` | Yes | Contents of `~/.config/rclone/rclone.conf` (`[gdrive]` section) |
+   | `GDRIVE_BACKUP_REMOTE` | Optional | Defaults to `gdrive:postfolio-backups` |
+   | `AGE_VERIFY_SECRET_KEY` | Optional | If set, workflow verifies `pg_restore --list` TOC in memory after every dump |
+
+4. **One-Command Disaster Recovery (Decrypt + Restore `pg_dump -Fc` Archive)**:
+   Download `postfolio_YYYY_MM_DDTHHMMSSZ.dump.age` from your Google Drive `postfolio-backups` folder, place your `age` secret key in `key.txt`, and run:
+   ```bash
+   age -d -i key.txt postfolio_YYYY_MM_DDTHHMMSSZ.dump.age \
+     | docker run --rm -i postgres:17 pg_restore \
+         --clean --if-exists --no-owner --no-privileges \
+         -d "TARGET_SESSION_POOLER_DATABASE_URL"
+   ```
 
 ### If you lose your Upload Key (.jks):
 Because we use **Google Play App Signing**, you can recover:

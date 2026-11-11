@@ -1,0 +1,107 @@
+name: Nightly Encrypted Database Backup
+
+on:
+  schedule:
+    # Runs daily at 20:00 UTC (01:30 IST)
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: postfolio-db-backup
+  cancel-in-progress: false
+
+jobs:
+  encrypted-backup:
+    name: Dump, Encrypt (age) & Upload to Google Drive
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Install age and rclone
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y age rclone
+
+      - name: Validate Required Backup Secrets
+        env:
+          SUPABASE_DB_SESSION_URL: ${{ secrets.SUPABASE_DB_SESSION_URL }}
+          AGE_PUBLIC_KEY: ${{ secrets.AGE_PUBLIC_KEY }}
+          RCLONE_CONFIG_CONTENT: ${{ secrets.RCLONE_CONFIG }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [ -z "$SUPABASE_DB_SESSION_URL" ] && missing+=("SUPABASE_DB_SESSION_URL")
+          [ -z "$AGE_PUBLIC_KEY" ] && missing+=("AGE_PUBLIC_KEY")
+          [ -z "$RCLONE_CONFIG_CONTENT" ] && missing+=("RCLONE_CONFIG")
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Missing required GitHub Secrets: ${missing[*]} (see docs/setup_guide.md)"
+            exit 1
+          fi
+
+      - name: Stream PostgreSQL 17 Dump Directly Into age Ciphertext
+        id: dump
+        env:
+          SUPABASE_DB_SESSION_URL: ${{ secrets.SUPABASE_DB_SESSION_URL }}
+          AGE_PUBLIC_KEY: ${{ secrets.AGE_PUBLIC_KEY }}
+          AGE_VERIFY_SECRET_KEY: ${{ secrets.AGE_VERIFY_SECRET_KEY }}
+        run: |
+          set -euo pipefail
+          STAMP="$(date -u +%Y_%m_%dT%H%M%SZ)"
+          ARCHIVE="postfolio_${STAMP}.dump.age"
+
+          # Plaintext SQL/custom archive never touches runner disk: pg_dump streams straight into age.
+          docker run --rm \
+            -e DATABASE_URL="$SUPABASE_DB_SESSION_URL" \
+            postgres:17 \
+            pg_dump "$DATABASE_URL" -Fc --no-owner --no-privileges \
+            | age -r "$AGE_PUBLIC_KEY" -o "$ARCHIVE"
+
+          # Sanity-check header & non-trivial archive size (>= 1 KB).
+          head -n 1 "$ARCHIVE" | grep -q '^age-encryption.org/v1$'
+          BYTES="$(stat -c%s "$ARCHIVE")"
+          if [ "$BYTES" -lt 1024 ]; then
+            echo "::error::Encrypted backup archive is unexpectedly small (${BYTES} bytes)."
+            exit 1
+          fi
+
+          # Optional cryptographic TOC check when AGE_VERIFY_SECRET_KEY is configured.
+          if [ -n "$AGE_VERIFY_SECRET_KEY" ]; then
+            KEY_FILE="$(mktemp)"
+            chmod 600 "$KEY_FILE"
+            trap 'shred -u "$KEY_FILE" 2>/dev/null || rm -f "$KEY_FILE"' EXIT
+            printf '%s\n' "$AGE_VERIFY_SECRET_KEY" > "$KEY_FILE"
+            TOC_LINES="$(age -d -i "$KEY_FILE" "$ARCHIVE" | docker run --rm -i postgres:17 pg_restore --list | wc -l)"
+            if [ "$TOC_LINES" -lt 10 ]; then
+              echo "::error::pg_restore --list returned too few TOC entries (${TOC_LINES})."
+              exit 1
+            fi
+            echo "Verified encrypted archive TOC (${TOC_LINES} entries, ${BYTES} bytes)."
+          else
+            echo "Created encrypted archive ${ARCHIVE} (${BYTES} bytes)."
+          fi
+
+          echo "archive=$ARCHIVE" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Encrypted Archive to Google Drive & Prune >30d Backups
+        env:
+          RCLONE_CONFIG_CONTENT: ${{ secrets.RCLONE_CONFIG }}
+          GDRIVE_BACKUP_REMOTE: ${{ secrets.GDRIVE_BACKUP_REMOTE }}
+          ARCHIVE: ${{ steps.dump.outputs.archive }}
+        run: |
+          set -euo pipefail
+          CONF_FILE="$(mktemp)"
+          chmod 600 "$CONF_FILE"
+          trap 'shred -u "$CONF_FILE" 2>/dev/null || rm -f "$CONF_FILE" "$ARCHIVE"' EXIT
+          printf '%s\n' "$RCLONE_CONFIG_CONTENT" > "$CONF_FILE"
+
+          DEST="${GDRIVE_BACKUP_REMOTE:-gdrive:postfolio-backups}"
+          rclone --config "$CONF_FILE" copyto "$ARCHIVE" "${DEST}/${ARCHIVE}"
+          rclone --config "$CONF_FILE" lsjson "${DEST}/${ARCHIVE}" | grep -q "$ARCHIVE"
+
+          # Retain rolling 30 days of daily encrypted snapshots.
+          rclone --config "$CONF_FILE" delete "$DEST" \
+            --min-age 30d \
+            --include "postfolio_*.dump.age"

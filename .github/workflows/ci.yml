@@ -1,0 +1,100 @@
+name: CI Quality & Database Contract Gate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-and-unit-tests:
+    name: Analyze, Unit/Widget Tests & Coverage Ratchet
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Generate Local CI Environment Stub
+        run: |
+          cat <<'EOF' > .env
+          SUPABASE_URL=http://127.0.0.1:54321
+          SUPABASE_PUBLISHABLE_KEY=ci-anon-stub-key
+          USE_SUPABASE=true
+          GOOGLE_WEB_CLIENT_ID=ci-google-web-client-id.apps.googleusercontent.com
+          GOOGLE_IOS_CLIENT_ID=ci-google-ios-client-id.apps.googleusercontent.com
+          EOF
+
+      - name: Run Code Generation (Slang & Build Runner)
+        run: |
+          dart run slang
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Run Strict Static Analysis
+        run: dart analyze --fatal-infos
+
+      - name: Run Fast Unit, Controller & Widget Tests With Coverage
+        run: flutter test --exclude-tags integration --coverage
+
+      - name: Enforce DDD Layer & Total Coverage Ratchet
+        run: dart run tool/check_coverage.dart --min-domain=72 --min-controllers=68 --min-total=44
+
+  supabase-contracts-and-e2e:
+    name: Supabase Migrations, SQL Contracts & E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Local Supabase Stack (Clean Migration + Seed Replay)
+        run: supabase start -x studio,vector
+
+      - name: Run Self-Asserting SQL RLS & RPC Contract Suite
+        run: |
+          docker exec -i supabase_db_postfolio \
+            psql -v ON_ERROR_STOP=1 -U postgres -d postgres -f - \
+            < supabase/tests/rd_ledger_facts_rls.sql
+
+      - name: Install Dependencies & Generate Code
+        run: |
+          flutter pub get
+          cat <<'EOF' > .env
+          SUPABASE_URL=http://127.0.0.1:54321
+          SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+          USE_SUPABASE=true
+          GOOGLE_WEB_CLIENT_ID=ci-google-web-client-id.apps.googleusercontent.com
+          GOOGLE_IOS_CLIENT_ID=ci-google-ios-client-id.apps.googleusercontent.com
+          EOF
+          dart run slang
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Run Dart Supabase Integration & E2E Suites
+        run: flutter test --tags integration
