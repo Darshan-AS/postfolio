@@ -5,7 +5,7 @@ This document provides a high-level overview of Postfolio's **Presentation ↔ D
 ## 1. Feature-First Layered Architecture
 
 The codebase inside `lib/` is organized into two top-level directories:
-1. **`core/`**: Shared design tokens (`core/theme/`), reusable widgets (`core/widgets/`), routing (`core/routing/`), environment/flavor safety (`core/env/`), error sanitization (`core/utils/supabase_error_mapper.dart`), Web telemetry (`core/services/app_error_reporter.dart`), and deterministic demo fixtures (`core/mocks/fake_data_source.dart`).
+1. **`core/`**: Shared design tokens (`core/theme/`), reusable widgets (`core/widgets/`), routing (`core/routing/`), environment/flavor safety (`core/env/`), exact money/calendar primitives (`core/utils/money.dart`, `core/utils/date_only_converter.dart`), paginated query & Realtime coalescing (`core/utils/supabase_paginated_query.dart`), error sanitization (`core/utils/supabase_error_mapper.dart`), Web telemetry (`core/services/app_error_reporter.dart`), and deterministic demo fixtures (`core/mocks/fake_data_source.dart`).
 2. **`features/`**: Self-contained vertical business slices (`auth`, `customers`, `one_time_deposits`, `recurring_deposits`, `dashboard`).
 
 Inside each feature, layers are strictly isolated:
@@ -33,12 +33,13 @@ lib/features/<feature>/
   - Persists only atomic facts: customer collections (`rd_transactions`), Post Office counter deposits (`rd_po_deposits`), and agent fee absorptions (`rd_fee_absorptions`).
   - `RDLedgerProjector.project(facts, asOf)` deterministically derives the 60-month passbook, accrued vs settled India Post default fees, `customerCredit`, and the `RDLedgerSummary` Monthly Hub cache.
 
-### C. Data Layer (Supabase PostgreSQL 17 — "The Muscle")
-- **Single Source of Truth**: Supabase Auth (Google Sign-In / OAuth PKCE on Web, native ID token on mobile) + PostgreSQL 17 with Row-Level Security (`RLS`) on every table.
-- **Reads**: Pre-joined `security_invoker = true` SQL views (`customer_details_view`, `one_time_deposit_details_view`, `recurring_deposit_details_view`) paired with agent-scoped Realtime CDC streams.
-- **Writes**: Multi-table writes execute atomically inside PL/pgSQL RPCs (`save_customer_with_sb_account`, `save_one_time_deposit`, `save_recurring_deposit`, `set_deposit_status`, `undo_rd_po_deposit_batch`). Internal privileged helpers reside in the unexposed `private` schema.
+### C. Data Layer (Supabase PostgreSQL 17 — "Pure Storage Physics")
+- **Single Source of Truth**: Supabase Auth (Google Sign-In / OAuth PKCE on Web, native ID token on mobile) + PostgreSQL 17 with Row-Level Security (`RLS`) on every table and time-ordered RFC 9562 `UUIDv7` primary keys (`const Uuid().v7()`).
+- **Strict Pure-DDD Persistence Boundary**: All business invariants (RD financial-terms lock, latest-visit PO batch undo ordering, counter-fee overrides, nominee 100% basis-point checks) and enum vocabularies (`SchemeType`, `DepositStatus`, `Relationship`, `RDPaymentMode`) live 100% in Dart. PostgreSQL enforces universal storage physics only: `NUMERIC(12,2)` monetary columns, `NUMERIC(5,2)` rates/shares, physical sign bounds (`> 0` / `>= 0`), `ON DELETE NO ACTION` parent-account protection (`customers` with OTD/RD accounts, `recurring_deposits` with ledger facts), case-insensitive `UNIQUE (lower(email))` on `agent_profiles`, and `UNIQUE (customer_id) WHERE account_type = 'SB'`.
+- **Paginated Reads (`>1k`-Row Safe)**: Pre-joined `security_invoker = true` SQL views (`customer_details_view`, `one_time_deposit_details_view`, `recurring_deposit_details_view`) queried in deterministic `.range()` pages via `SupabasePaginatedQuery` (bypassing PostgREST's 1,000-row ceiling) and refreshed by debounced, agent/type-scoped Realtime CDC channels + immediate local-mutation notifications.
+- **Dumb Multi-Table ACID Envelopes**: Multi-table Aggregate Root writes execute atomically inside thin PL/pgSQL persistence envelopes (`save_customer_with_sb_account`, `save_one_time_deposit`, `save_recurring_deposit`, `set_deposit_status`), while RD ledger facts and bulk PO visits use standard ANSI bulk table CRUD (`.insert` / `.upsert` / `.delete`). Internal privileged helpers reside in the unexposed `private` schema.
 - **Sanitized Error Boundary**: All `Supabase*Repository` implementations map `PostgrestException` and `AuthException` through `SupabaseErrorMapper` so raw SQL constraint names never leak to the UI.
-- **Demo Mode & Unit Testing**: Toggling `demoModeProvider` (or overriding providers in `ProviderContainer` tests) binds repositories to deterministic in-memory `Fake*Repository` implementations backed by `FakeDataSource` (zero `Mockito`, zero network calls).
+- **Demo Mode & Unit Testing**: Toggling `demoModeProvider` (or overriding providers in `ProviderContainer` tests) binds repositories to deterministic in-memory `Fake*Repository` implementations backed by `FakeDataSource` (zero `Mockito`, zero network calls, full delete-protection parity).
 
 ---
 
