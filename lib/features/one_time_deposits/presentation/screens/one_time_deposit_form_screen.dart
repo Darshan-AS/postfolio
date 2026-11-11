@@ -104,28 +104,56 @@ class _OneTimeDepositForm extends HookConsumerWidget {
         ),
         body: Form(
           key: state.formKey,
-          child: ListView(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppDimensions.paddingLg),
-            children: [
-              ..._buildAccountInformation(
-                selectedCustomerId: state.selectedCustomerId,
-                accountNoController: state.accountNoController,
-                selectedStatus: state.selectedStatus,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppDimensions.maxFormWidth,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ..._buildAccountInformation(
+                      selectedCustomerId: state.selectedCustomerId,
+                      accountNoController: state.accountNoController,
+                      selectedStatus: state.selectedStatus,
+                    ),
+                    ..._buildInvestmentDetails(
+                      context,
+                      selectedScheme: state.selectedScheme,
+                      selectedTermYears: state.selectedTermYears,
+                      selectedTermMonths: state.selectedTermMonths,
+                      principalAmountController: state.principalAmountController,
+                      interestRateController: state.interestRateController,
+                      startDate: state.startDate,
+                      startDateController: state.startDateController,
+                      projection: state.projection,
+                      state: state,
+                    ),
+                    ..._buildNomineesSection(nominees: state.nominees),
+                    FilledButton.icon(
+                      onPressed: state.isSaving.value ? null : state.save,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(
+                          AppDimensions.buttonHeight,
+                        ),
+                      ),
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedTick01,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: Text(
+                        state.isSaving.value
+                            ? t.common.saving
+                            : t.common.confirm,
+                      ),
+                    ),
+                    AppSpacings.gapXl,
+                  ],
+                ),
               ),
-              ..._buildInvestmentDetails(
-                context,
-                selectedScheme: state.selectedScheme,
-                selectedTermYears: state.selectedTermYears,
-                selectedTermMonths: state.selectedTermMonths,
-                principalAmountController: state.principalAmountController,
-                interestRateController: state.interestRateController,
-                startDate: state.startDate,
-                startDateController: state.startDateController,
-                projection: state.projection,
-                state: state,
-              ),
-              ..._buildNomineesSection(nominees: state.nominees),
-            ],
+            ),
           ),
         ),
       ),

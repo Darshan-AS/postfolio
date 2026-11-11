@@ -175,7 +175,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
         customerId: customerId,
         schemeType: schemeType,
         startDate: startDate,
-        nominees: List.unmodifiable(nominees),
+        nominees: Nominee.sanitizeAll(nominees),
         status: status,
       ),
     );

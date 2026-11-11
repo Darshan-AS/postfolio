@@ -33,6 +33,7 @@ class CustomersScreen extends HookConsumerWidget {
         children: [
           AppSpacings.gapSm,
           AppSearchBar(
+            query: criteria.searchQuery,
             hintText: t.customers.searchHint,
             onChanged: (val) => ref
                 .read(customerListCriteriaProvider.notifier)

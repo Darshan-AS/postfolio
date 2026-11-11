@@ -49,6 +49,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
         children: [
           AppSpacings.gapSm,
           AppSearchBar(
+            query: criteria.searchQuery,
             hintText: t.oneTimeDeposits.searchHint,
             onChanged: (val) => ref
                 .read(oneTimeListCriteriaProvider.notifier)

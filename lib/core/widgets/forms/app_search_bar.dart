@@ -1,12 +1,14 @@
-import 'package:material_ui/material_ui.dart';
+import 'dart:async';
+
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
-import 'dart:async';
 
 class AppSearchBar extends HookWidget {
+  final String? query;
   final String? hintText;
   final ValueChanged<String> onChanged;
   final VoidCallback? onClose;
@@ -14,6 +16,7 @@ class AppSearchBar extends HookWidget {
 
   const AppSearchBar({
     super.key,
+    this.query,
     this.hintText,
     required this.onChanged,
     this.onClose,
@@ -22,16 +25,36 @@ class AppSearchBar extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = useMemoized(() => SearchController());
+    final controller = useMemoized(() {
+      final c = SearchController();
+      if (query != null && query!.isNotEmpty) {
+        c.text = query!;
+      }
+      return c;
+    });
     final focusNode = useFocusNode();
     final debounceTimer = useRef<Timer?>(null);
+    final syncingExternalRef = useRef<bool>(false);
 
-    // Dispose controller
     useEffect(() => controller.dispose, [controller]);
 
-    // Listen to text changes with debouncing
+    // Sync external query resets (e.g. "Clear Filters" or state initialization)
+    // without re-triggering a debounced write.
+    useEffect(() {
+      if (query != null && controller.text != query) {
+        if (query!.isEmpty || !focusNode.hasFocus) {
+          debounceTimer.value?.cancel();
+          syncingExternalRef.value = true;
+          controller.text = query!;
+          syncingExternalRef.value = false;
+        }
+      }
+      return null;
+    }, [query]);
+
     useEffect(() {
       void listener() {
+        if (syncingExternalRef.value) return;
         debounceTimer.value?.cancel();
         debounceTimer.value = Timer(AppAnimations.debounce, () {
           onChanged(controller.text);
@@ -45,7 +68,6 @@ class AppSearchBar extends HookWidget {
       };
     }, [controller]);
 
-    // Rebuild when text changes to update trailing icons
     useListenable(controller);
 
     useEffect(() {
@@ -72,8 +94,11 @@ class AppSearchBar extends HookWidget {
               trailing: [
                 if (controller.text.isNotEmpty)
                   IconButton(
+                    tooltip: t.common.clear,
                     onPressed: () {
+                      debounceTimer.value?.cancel();
                       controller.clear();
+                      onChanged('');
                     },
                     icon: HugeIcon(
                       icon: HugeIcons.strokeRoundedCancel01,

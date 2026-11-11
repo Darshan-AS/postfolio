@@ -87,6 +87,17 @@ sealed class Nominee with _$Nominee {
   static String? validateNominees(List<Nominee> nominees) {
     if (nominees.isEmpty) return null; // Valid if empty
 
+    for (final nominee in nominees) {
+      final fieldError =
+          validateName(nominee.name) ??
+          validateCustomRelationship(
+            nominee.relationship,
+            nominee.customRelationship,
+          ) ??
+          validatePercentage(nominee.percentage);
+      if (fieldError != null) return fieldError;
+    }
+
     final totalBps = nominees.fold<BasisPoints>(
       BasisPoints.zero,
       (sum, nominee) => sum + BasisPoints.fromPercent(nominee.percentage),
@@ -97,6 +108,18 @@ sealed class Nominee with _$Nominee {
     }
     return null;
   }
+
+  /// Trims whitespace on nominee fields at save boundaries so typing spaces in UI inputs
+  /// stays natural without persisting trailing spaces.
+  static List<Nominee> sanitizeAll(List<Nominee> nominees) => List.unmodifiable([
+    for (final n in nominees)
+      n.copyWith(
+        name: n.name.trim(),
+        customRelationship: n.relationship == NomineeRelationship.other
+            ? n.customRelationship?.trim()
+            : null,
+      ),
+  ]);
 
   static Result<Nominee, String> create({
     required String name,

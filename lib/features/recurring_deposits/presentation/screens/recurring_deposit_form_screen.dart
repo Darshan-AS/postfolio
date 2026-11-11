@@ -105,37 +105,66 @@ class _RecurringDepositForm extends HookConsumerWidget {
         ),
         body: Form(
           key: state.formKey,
-          child: ListView(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppDimensions.paddingLg),
-            children: [
-              ..._buildAccountInformation(
-                selectedCustomerId: state.selectedCustomerId,
-                serialNoController: state.serialNoController,
-                accountNoController: state.accountNoController,
-                selectedStatus: state.selectedStatus,
-              ),
-              // While the ledger lock state resolves the terms are treated as locked
-              // (fail safe) and the section is skeletonized so it never looks editable.
-              Skeletonizer(
-                enabled: state.isFinancialTermsLockLoading,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppDimensions.maxFormWidth,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: _buildInvestmentDetails(
-                    context,
-                    selectedScheme: state.selectedScheme,
-                    selectedTermYears: state.selectedTermYears,
-                    selectedTermMonths: state.selectedTermMonths,
-                    installmentAmountController: state.installmentAmountController,
-                    interestRateController: state.interestRateController,
-                    startDate: state.startDate,
-                    startDateController: state.startDateController,
-                    projection: state.projection,
-                    state: state,
-                  ),
+                  children: [
+                    ..._buildAccountInformation(
+                      selectedCustomerId: state.selectedCustomerId,
+                      serialNoController: state.serialNoController,
+                      accountNoController: state.accountNoController,
+                      selectedStatus: state.selectedStatus,
+                    ),
+                    // While the ledger lock state resolves the terms are treated as locked
+                    // (fail safe) and the section is skeletonized so it never looks editable.
+                    Skeletonizer(
+                      enabled: state.isFinancialTermsLockLoading,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: _buildInvestmentDetails(
+                          context,
+                          selectedScheme: state.selectedScheme,
+                          selectedTermYears: state.selectedTermYears,
+                          selectedTermMonths: state.selectedTermMonths,
+                          installmentAmountController:
+                              state.installmentAmountController,
+                          interestRateController: state.interestRateController,
+                          startDate: state.startDate,
+                          startDateController: state.startDateController,
+                          projection: state.projection,
+                          state: state,
+                        ),
+                      ),
+                    ),
+                    ..._buildNomineesSection(nominees: state.nominees),
+                    FilledButton.icon(
+                      onPressed: state.isSaving.value ? null : state.save,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(
+                          AppDimensions.buttonHeight,
+                        ),
+                      ),
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedTick01,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: Text(
+                        state.isSaving.value
+                            ? t.common.saving
+                            : t.common.confirm,
+                      ),
+                    ),
+                    AppSpacings.gapXl,
+                  ],
                 ),
               ),
-              ..._buildNomineesSection(nominees: state.nominees),
-            ],
+            ),
           ),
         ),
       ),
@@ -249,35 +278,6 @@ List<Widget> _buildInvestmentDetails(
       ),
       AppSpacings.gapLg,
     ],
-    AppSegmentedButtonField<RecurringSchemeType>(
-      value: selectedScheme.value,
-      labelText: t.recurringDeposits.fields.schemeType,
-      enabled: !state.isFinancialTermsLocked,
-      segments: RecurringSchemeType.values
-          .map(
-            (scheme) =>
-                ButtonSegment(value: scheme, label: Text(scheme.shortName)),
-          )
-          .toList(),
-      onChanged: state.onSchemeChanged,
-      prefixIcon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedLayers01,
-        size: AppDimensions.iconMd,
-      ),
-    ),
-    Padding(
-      padding: const EdgeInsets.only(
-        top: AppDimensions.paddingXs,
-        left: AppDimensions.paddingSm,
-      ),
-      child: Text(
-        selectedScheme.value.displayName,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-        ),
-      ),
-    ),
-    AppSpacings.gapLg,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

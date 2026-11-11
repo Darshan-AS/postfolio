@@ -69,6 +69,7 @@ sealed class Customer with _$Customer {
 
   static String? validatePhone(String? phone) {
     if (phone == null || phone.trim().isEmpty) return null; // Optional field
+    final normalized = phone.trim().replaceAll(RegExp(r'[\s\-()]'), '');
     final regex = RegExp(
       r'^\+?[0-9]{'
       '${AppConstants.phoneMinLength}'
@@ -76,7 +77,7 @@ sealed class Customer with _$Customer {
       '${AppConstants.phoneMaxLength}'
       r'}$',
     );
-    if (!regex.hasMatch(phone.trim())) {
+    if (!regex.hasMatch(normalized)) {
       return t.errors.invalidPhone;
     }
     return null;
@@ -176,12 +177,12 @@ sealed class Customer with _$Customer {
         id: id,
         name: name.trim(),
         email: clean(email),
-        phone: clean(phone),
+        phone: clean(phone)?.replaceAll(RegExp(r'[\s\-()]'), ''),
         address: clean(address),
         cifNumber: clean(cifNumber),
         dateOfBirth: dateOfBirth,
-        aadhaarNumber: clean(aadhaarNumber),
-        panNumber: clean(panNumber),
+        aadhaarNumber: clean(aadhaarNumber)?.replaceAll(RegExp(r'\s+'), ''),
+        panNumber: clean(panNumber)?.toUpperCase(),
         savingsAccount: savingsAccount,
         notes: clean(notes),
       ),

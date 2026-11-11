@@ -16,12 +16,9 @@ class AppInputDecoration {
     Widget? label;
     if (labelText != null) {
       label = isRequired
-          ? RichText(
-              text: TextSpan(
+          ? Text.rich(
+              TextSpan(
                 text: labelText,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
                 children: [
                   TextSpan(
                     text: ' *',

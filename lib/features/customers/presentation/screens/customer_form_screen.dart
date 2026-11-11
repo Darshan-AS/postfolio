@@ -84,33 +84,58 @@ class _CustomerForm extends HookConsumerWidget {
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
-          child: Form(
-            key: state.formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ..._buildPersonalInfo(
-                  nameController: state.nameController,
-                  phoneController: state.phoneController,
-                  emailController: state.emailController,
-                  dateOfBirthController: state.dateOfBirthController,
-                  addressController: state.addressController,
-                  onSelectDate: () => state.selectDate(context),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: AppDimensions.maxFormWidth,
+              ),
+              child: Form(
+                key: state.formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ..._buildPersonalInfo(
+                      nameController: state.nameController,
+                      phoneController: state.phoneController,
+                      emailController: state.emailController,
+                      dateOfBirthController: state.dateOfBirthController,
+                      addressController: state.addressController,
+                      onSelectDate: () => state.selectDate(context),
+                    ),
+                    ..._buildIdentityDocuments(
+                      cifNumberController: state.cifNumberController,
+                      aadhaarNumberController: state.aadhaarNumberController,
+                      panNumberController: state.panNumberController,
+                    ),
+                    ..._buildSavingsBank(
+                      savingsAccountNumberController:
+                          state.savingsAccountNumberController,
+                      nominees: state.nominees,
+                    ),
+                    ..._buildNotes(
+                      notesController: state.notesController,
+                    ),
+                    FilledButton.icon(
+                      onPressed: state.isSaving.value
+                          ? null
+                          : () => state.save(context),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(
+                          AppDimensions.buttonHeight,
+                        ),
+                      ),
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedTick01,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: Text(
+                        state.isSaving.value ? t.common.saving : t.common.confirm,
+                      ),
+                    ),
+                    AppSpacings.gapXl,
+                  ],
                 ),
-                ..._buildIdentityDocuments(
-                  cifNumberController: state.cifNumberController,
-                  aadhaarNumberController: state.aadhaarNumberController,
-                  panNumberController: state.panNumberController,
-                ),
-                ..._buildSavingsBank(
-                  savingsAccountNumberController:
-                      state.savingsAccountNumberController,
-                  nominees: state.nominees,
-                ),
-                ..._buildNotes(
-                  notesController: state.notesController,
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -201,6 +226,7 @@ List<Widget> _buildIdentityDocuments({
         icon: HugeIcons.strokeRoundedTicket01,
         size: AppDimensions.iconMd,
       ),
+      validator: Customer.validateCif,
       textInputAction: TextInputAction.next,
     ),
     AppSpacings.gapMd,
@@ -211,6 +237,7 @@ List<Widget> _buildIdentityDocuments({
         icon: HugeIcons.strokeRoundedId,
         size: AppDimensions.iconMd,
       ),
+      validator: Customer.validateAadhaar,
       keyboardType: TextInputType.number,
       textInputAction: TextInputAction.next,
     ),
@@ -222,6 +249,9 @@ List<Widget> _buildIdentityDocuments({
         icon: HugeIcons.strokeRoundedCreditCard,
         size: AppDimensions.iconMd,
       ),
+      validator: Customer.validatePan,
+      textCapitalization: TextCapitalization.characters,
+      inputFormatters: const [UpperCaseTextFormatter()],
       textInputAction: TextInputAction.next,
     ),
   ];

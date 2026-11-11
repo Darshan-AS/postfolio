@@ -1,13 +1,16 @@
-import 'package:material_ui/material_ui.dart';
-import 'package:hugeicons/hugeicons.dart';
+import 'dart:math' as math;
 
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
-import 'package:postfolio/core/constants/app_constants.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
+import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/core/widgets/domain/nominee_form_hook.dart';
+import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:uuid/uuid.dart';
 
 class NomineesInputSection extends HookWidget {
   final List<Nominee> nominees;
@@ -19,61 +22,143 @@ class NomineesInputSection extends HookWidget {
     required this.onChanged,
   });
 
-  void _addNominee() {
-    onChanged([
-      ...nominees,
-      const Nominee(
-        name: '',
-        relationship: NomineeRelationship.other,
-        percentage: AppConstants.maxPercentage,
-      ),
-    ]);
-  }
-
-  void _removeNominee(int index) {
-    final list = List.of(nominees);
-    list.removeAt(index);
-    onChanged(list);
-  }
-
   @override
   Widget build(BuildContext context) {
+    final rowKeysRef = useRef<List<String>>(<String>[]);
+    const uuid = Uuid();
+
+    // Ensure every nominee entry has a stable key across rebuilds and external loads.
+    while (rowKeysRef.value.length < nominees.length) {
+      rowKeysRef.value.add(uuid.v4());
+    }
+    if (rowKeysRef.value.length > nominees.length) {
+      rowKeysRef.value = rowKeysRef.value.sublist(0, nominees.length);
+    }
+
+    final totalBps = nominees.fold<BasisPoints>(
+      BasisPoints.zero,
+      (sum, n) => sum + BasisPoints.fromPercent(n.percentage),
+    );
+    final remainingBps = math.max(
+      0,
+      BasisPoints.hundredPercent.value - totalBps.value,
+    );
+
+    void addNominee() {
+      rowKeysRef.value = [...rowKeysRef.value, uuid.v4()];
+      final defaultRel = nominees.isEmpty
+          ? NomineeRelationship.wife
+          : NomineeRelationship.son;
+      final defaultPct = nominees.isEmpty ? 100.0 : remainingBps / 100.0;
+      onChanged([
+        ...nominees,
+        Nominee(
+          name: '',
+          relationship: defaultRel,
+          percentage: defaultPct,
+        ),
+      ]);
+    }
+
+    void removeNominee(int index) {
+      final nextKeys = List<String>.of(rowKeysRef.value)..removeAt(index);
+      rowKeysRef.value = nextKeys;
+      final nextList = List<Nominee>.of(nominees)..removeAt(index);
+      onChanged(nextList);
+    }
+
+    void splitEvenly() {
+      if (nominees.isEmpty) return;
+      final n = nominees.length;
+      final baseBps = BasisPoints.hundredPercent.value ~/ n;
+      final remainder = BasisPoints.hundredPercent.value % n;
+      onChanged([
+        for (var i = 0; i < n; i++)
+          nominees[i].copyWith(
+            percentage: (baseBps + (i < remainder ? 1 : 0)) / 100.0,
+          ),
+      ]);
+    }
+
+    final theme = Theme.of(context);
+    final financial = AppFinancialColors.of(context);
+    final isExactHundred = totalBps == BasisPoints.hundredPercent;
+    final allocatedPctLabel = formatNomineePercentage(totalBps.value / 100.0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FormSectionHeader(title: t.nominees.title),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(child: FormSectionHeader(title: t.nominees.title)),
+            if (nominees.length >= 2)
+              ActionChip(
+                key: const ValueKey('split_nominees_evenly_chip'),
+                avatar: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedPercent,
+                  size: AppDimensions.iconSm,
+                ),
+                label: Text(t.nominees.splitEvenly),
+                onPressed: splitEvenly,
+              ),
+          ],
+        ),
+        if (nominees.isNotEmpty) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingMd,
+              vertical: AppDimensions.paddingXs,
+            ),
+            decoration: BoxDecoration(
+              color: isExactHundred
+                  ? financial.settled.container
+                  : financial.warning.container,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            ),
+            child: Text(
+              t.nominees.allocatedSummary(allocated: allocatedPctLabel),
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: isExactHundred
+                    ? financial.settled.onContainer
+                    : financial.warning.onContainer,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
         if (nominees.isEmpty)
           Padding(
             padding: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
             child: Text(
               t.nominees.noNominees,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.outline,
               ),
             ),
           )
         else
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: nominees.length,
-            itemBuilder: (context, index) {
-              return _NomineeItemForm(
-                index: index,
-                nominee: nominees[index],
-                onRemove: () => _removeNominee(index),
-                onChanged: (updated) {
-                  final list = List.of(nominees);
-                  list[index] = updated;
-                  onChanged(list);
-                },
-              );
-            },
+          Column(
+            children: [
+              for (var index = 0; index < nominees.length; index++)
+                _NomineeItemForm(
+                  key: ValueKey(rowKeysRef.value[index]),
+                  index: index,
+                  nominee: nominees[index],
+                  onRemove: () => removeNominee(index),
+                  onChanged: (updated) {
+                    final list = List<Nominee>.of(nominees);
+                    list[index] = updated;
+                    onChanged(list);
+                  },
+                ),
+            ],
           ),
         Align(
           alignment: Alignment.centerLeft,
           child: FilledButton.tonalIcon(
-            onPressed: _addNominee,
+            onPressed: addNominee,
             icon: const HugeIcon(
               icon: HugeIcons.strokeRoundedAdd01,
               size: AppDimensions.iconSm,
@@ -93,6 +178,7 @@ class _NomineeItemForm extends HookWidget {
   final ValueChanged<Nominee> onChanged;
 
   const _NomineeItemForm({
+    super.key,
     required this.index,
     required this.nominee,
     required this.onRemove,
@@ -161,16 +247,20 @@ Widget _buildNomineeHeader(
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Text(
-        '${t.nominees.singularTitle} ${index + 1}',
-        style: Theme.of(context).textTheme.titleSmall,
+      Flexible(
+        child: Text(
+          '${t.nominees.singularTitle} ${index + 1}',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
       ),
       IconButton(
-        icon: const HugeIcon(
+        key: ValueKey('delete_nominee_$index'),
+        tooltip: t.nominees.deleteNominee,
+        icon: HugeIcon(
           icon: HugeIcons.strokeRoundedDelete02,
           size: AppDimensions.iconMd,
+          color: Theme.of(context).colorScheme.error,
         ),
-        color: Theme.of(context).colorScheme.error,
         onPressed: onRemove,
       ),
     ],
@@ -226,7 +316,7 @@ Widget _buildCustomRelationshipField({
 }) {
   return AppTextField(
     controller: customRelationshipController,
-    labelText: t.nominees.relationship,
+    labelText: t.nominees.customRelationship,
     prefixIcon: const HugeIcon(
       icon: HugeIcons.strokeRoundedUserMultiple,
       size: AppDimensions.iconMd,
@@ -234,12 +324,8 @@ Widget _buildCustomRelationshipField({
     isRequired: true,
     textInputAction: TextInputAction.next,
     onChanged: (_) => onChanged(),
-    validator: (val) {
-      if (val == null || val.trim().isEmpty) {
-        return t.errors.requiredField(field: t.nominees.relationship);
-      }
-      return null;
-    },
+    validator: (val) =>
+        Nominee.validateCustomRelationship(NomineeRelationship.other, val),
   );
 }
 

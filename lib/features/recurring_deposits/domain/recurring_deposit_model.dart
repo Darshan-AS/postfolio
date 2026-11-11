@@ -217,7 +217,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
         customerId: customerId,
         schemeType: schemeType,
         startDate: startDate,
-        nominees: List.unmodifiable(nominees),
+        nominees: Nominee.sanitizeAll(nominees),
         status: status,
         initialPaidInstallments: initialPaidInstallments,
         openingReceivable: openingReceivable,

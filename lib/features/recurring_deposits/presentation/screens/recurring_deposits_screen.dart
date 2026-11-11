@@ -153,6 +153,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     return Column(
       children: [
         AppSearchBar(
+          query: criteria.searchQuery,
           hintText: t.recurringDeposits.searchHint,
           onChanged: (val) => ref
               .read(recurringListCriteriaProvider.notifier)

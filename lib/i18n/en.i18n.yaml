@@ -554,6 +554,8 @@ nominees:
   percentage: "Percentage (%)"
   customRelationship: "Custom Relationship"
   noNominees: "No nominees added yet."
+  allocatedSummary: "Allocated: ${allocated}% / 100%"
+  splitEvenly: "Split Evenly"
 
 enums:
   payoutFrequency(map):
