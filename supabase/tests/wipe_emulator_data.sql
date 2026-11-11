@@ -19,8 +19,10 @@ DELETE FROM auth.refresh_tokens;
 DELETE FROM auth.sessions;
 DELETE FROM auth.identities;
 DELETE FROM auth.users;
--- Record the ledger migration as applied (if it was executed manually against this DB).
+-- Record the ledger + Stage 0 hotfix migrations as applied (if executed manually against this DB).
 INSERT INTO supabase_migrations.schema_migrations (version, name)
-VALUES ('20261110000000', 'rd_ledger')
+VALUES
+  ('20261110000000', 'rd_ledger'),
+  ('20261111000000', 'p0_security_and_status_hotfix')
 ON CONFLICT (version) DO NOTHING;
 COMMIT;
