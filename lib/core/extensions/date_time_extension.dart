@@ -1,29 +1,34 @@
 import 'package:intl/intl.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
+String _resolvedDateLocale() {
+  final locale = LocaleSettings.currentLocale.languageTag;
+  try {
+    return DateFormat.localeExists(locale) ? locale : 'en_US';
+  } catch (_) {
+    return 'en_US';
+  }
+}
+
 extension DateTimeFormatting on DateTime {
   /// Returns date formatted according to slang's `format.date` key
   String toAppFormat() {
-    final locale = LocaleSettings.currentLocale.languageTag;
-    return DateFormat(t.format.date, locale).format(this);
+    return DateFormat(t.format.date, _resolvedDateLocale()).format(this);
   }
 
   /// Returns date formatted according to slang's `format.dateCompact` key
   String toCompactFormat() {
-    final locale = LocaleSettings.currentLocale.languageTag;
-    return DateFormat(t.format.dateCompact, locale).format(this);
+    return DateFormat(t.format.dateCompact, _resolvedDateLocale()).format(this);
   }
 
   /// Returns date formatted according to slang's `format.dateTime` key
   String toDateTimeFormat() {
-    final locale = LocaleSettings.currentLocale.languageTag;
-    return DateFormat(t.format.dateTime, locale).format(this);
+    return DateFormat(t.format.dateTime, _resolvedDateLocale()).format(this);
   }
 
   /// Returns month and year formatted e.g. "September 2026"
   String toMonthYearFormat() {
-    final locale = LocaleSettings.currentLocale.languageTag;
-    return DateFormat.yMMMM(locale).format(this);
+    return DateFormat.yMMMM(_resolvedDateLocale()).format(this);
   }
 
   /// The financial year starts in April.

@@ -113,7 +113,11 @@ class _PaymentForm extends HookConsumerWidget {
       final amount = draft.amount.toRupeeFormat();
       final month = draft.firstAllocatedMonth;
       if (month == null) return ledger.collectedNoMonth(amount: amount, customer: who);
-      final locale = LocaleSettings.currentLocale.languageTag;
+      final rawLocale = LocaleSettings.currentLocale.languageTag;
+      String locale = 'en_US';
+      try {
+        if (DateFormat.localeExists(rawLocale)) locale = rawLocale;
+      } catch (_) {}
       return ledger.collected(
         amount: amount,
         customer: who,
@@ -303,7 +307,7 @@ class _FormBody extends StatelessWidget {
       children: [
         TextFormField(
           controller: draft.amountController,
-          autofocus: true,
+          autofocus: !draft.hasInitialPrefill,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
           textInputAction: TextInputAction.done,

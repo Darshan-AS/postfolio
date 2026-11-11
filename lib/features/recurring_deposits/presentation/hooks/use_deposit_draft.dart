@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -19,6 +21,7 @@ class DepositDraftState {
     required this.count,
     required this.depositedOn,
     required this.feeOverride,
+    required this.statutoryFee,
     required this.depositedThroughNo,
     required this.readyCount,
     required this.remaining,
@@ -43,6 +46,9 @@ class DepositDraftState {
 
   /// Optional explicit counter fee override (`null` uses statutory formula quote).
   final double? feeOverride;
+
+  /// Statutory formula fee before any counter override.
+  final double statutoryFee;
 
   /// Last month already at the Post Office (baseline + all events).
   final int depositedThroughNo;
@@ -79,7 +85,7 @@ class DepositDraftState {
   int get toNo => depositedThroughNo + count;
 }
 
-/// Owns the count / date state of the deposit sheet and derives the live quote.
+/// Owns the count / date / counter-fee state of the deposit sheet and derives the live quote.
 DepositDraftState useDepositDraft(
   WidgetRef ref, {
   required String rdId,
@@ -106,33 +112,43 @@ DepositDraftState useDepositDraft(
   final requested = countInput.value ?? (readyCount > 0 ? readyCount : 1);
   final count = remaining == 0 ? 0 : requested.clamp(1, remaining);
 
-  final quote = useMemoized<({double amount, double fee})?>(
+  final baseQuote = useMemoized<({double amount, double fee})?>(
     () {
       if (factsValue == null || count == 0) return null;
-      final base = projector.quoteNextDeposit(
+      return projector.quoteNextDeposit(
         factsValue,
         count: count,
         depositedOn: depositedOn.value,
       );
+    },
+    [factsValue, projector, count, depositedOn.value],
+  );
+
+  final quote = useMemoized<({double amount, double fee})?>(
+    () {
+      if (factsValue == null || baseQuote == null || count == 0) return null;
       final override = feeOverrideState.value;
-      if (override == null) return base;
+      if (override == null) return baseQuote;
       final fee = Money.round(override < 0 ? 0.0 : override);
       final amount = Money.round(count * factsValue.deposit.installmentAmount + fee);
       return (amount: amount, fee: fee);
     },
-    [factsValue, projector, count, depositedOn.value, feeOverrideState.value],
+    [factsValue, baseQuote, count, feeOverrideState.value],
   );
 
   final fromPocket = useMemoized<double>(
     () {
-      if (projectionValue == null || count == 0) return 0.0;
-      var sum = 0.0;
+      if (projectionValue == null || quote == null || count == 0) return 0.0;
+      var customerPaidPaise = 0;
       for (var no = depositedThroughNo + 1; no <= depositedThroughNo + count; no++) {
-        sum += projectionValue.byNo(no)?.outstandingAmount ?? 0.0;
+        customerPaidPaise += Money.toPaise(
+          projectionValue.byNo(no)?.customerPaidAmount ?? 0.0,
+        );
       }
-      return sum;
+      final pocketPaise = math.max(0, Money.toPaise(quote.amount) - customerPaidPaise);
+      return Money.toRupees(pocketPaise);
     },
-    [projectionValue, depositedThroughNo, count],
+    [projectionValue, depositedThroughNo, count, quote],
   );
 
   // Date range: never before the last PO visit (sequential ledger), never after today.
@@ -144,8 +160,6 @@ DepositDraftState useDepositDraft(
   void setCount(int value) => countInput.value = value;
   void setFeeOverride(double? value) => feeOverrideState.value = value;
 
-  // Resolved eagerly: the controller is kept alive, so Undo can still run from a snackbar
-  // after the sheet itself has been popped and its `ref` disposed.
   final ledger = ref.read(rDLedgerControllerProvider.notifier);
 
   Future<Result<void, String>> submit() => ledger.depositNextToPo(
@@ -164,6 +178,7 @@ DepositDraftState useDepositDraft(
     count: count,
     depositedOn: depositedOn,
     feeOverride: feeOverrideState.value,
+    statutoryFee: baseQuote?.fee ?? 0.0,
     depositedThroughNo: depositedThroughNo,
     readyCount: readyCount,
     remaining: remaining,

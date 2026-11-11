@@ -230,7 +230,9 @@ class _InspectorBody extends ConsumerWidget {
         _MetricRow(
           label: inspector.depositedOn,
           value: depositedOn.toAppFormat(),
-          trailing: inst.poBatchId ?? t.common.notProvided,
+          trailing: inst.poBatchId != null
+              ? inspector.poVisitBadge
+              : t.common.notProvided,
         ),
     ];
 

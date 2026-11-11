@@ -149,8 +149,10 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                     size: AppDimensions.iconMd,
                   ),
                   label: t.oneTimeDeposits.fields.termYears,
-                  value:
-                      '${deposit.termYears} Years, ${deposit.termMonths} Months',
+                  value: t.recurringDeposits.fields.termDisplay(
+                    years: deposit.termYears.toString(),
+                    months: deposit.termMonths.toString(),
+                  ),
                 ),
                 const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
@@ -190,6 +192,18 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
             DetailSection(
               title: t.oneTimeDeposits.sections.accountInformation,
               children: [
+                if (deposit.accountNo != null && deposit.accountNo!.isNotEmpty) ...[
+                  DetailItem(
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedTicket01,
+                      size: AppDimensions.iconMd,
+                    ),
+                    label: t.oneTimeDeposits.fields.accountNo,
+                    value: deposit.accountNo,
+                    copyValue: deposit.accountNo,
+                  ),
+                  const Divider(height: AppDimensions.dividerHeight),
+                ],
                 DetailItem(
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedUser,

@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
@@ -6,6 +7,8 @@ import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
+import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
@@ -15,10 +18,6 @@ import 'package:postfolio/features/recurring_deposits/presentation/controllers/r
 import 'package:postfolio/i18n/strings.g.dart';
 
 /// Opens the Post Office visit planner bound to `rDPoVisitPlannerProvider`.
-///
-/// Callers seed the plan first (`planner.start(...)`) and then open this sheet; the sheet
-/// is a pure layout over the plan and records it with one tap. On success it pops and the
-/// toast on the caller's context offers "Undo visit".
 Future<void> showRDPoVisitPlanner(BuildContext context) => AppAdaptiveSheet.show<void>(
       context,
       builder: (_) => _PoVisitPlannerSheet(hostContext: context),
@@ -27,11 +26,8 @@ Future<void> showRDPoVisitPlanner(BuildContext context) => AppAdaptiveSheet.show
 class _PoVisitPlannerSheet extends HookConsumerWidget {
   const _PoVisitPlannerSheet({required this.hostContext});
 
-  /// The caller's context — still mounted after this sheet pops, so the toast (and its
-  /// Undo) outlive the sheet.
   final BuildContext hostContext;
 
-  /// How far back a (backdated) visit may be recorded.
   static const int _lookbackYears = 1;
 
   @override
@@ -45,7 +41,6 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
     final today = ref.watch(clockProvider)().toDateOnly();
 
     final includeUnready = useState<bool>(false);
-    // Last failure from `record()`. The sheet stays open so the agent can retry.
     final failure = useState<String?>(null);
 
     final installmentCount = plan.installmentCount;
@@ -66,8 +61,6 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
     }
 
     Future<void> record() async {
-      // Resolve the toast copy before the write: the plan is rebuilt from summaries that
-      // change the moment the first event lands.
       final successMessage = visit.success(
         installments: visit.installmentsCount(n: installmentCount),
         accounts: t.recurringDeposits.monthlyOperations.kpis.accountsCount(n: plan.accountCount),
@@ -92,11 +85,6 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
             },
           );
         case Failure(:final error):
-          // Limitation: when `record()` fails after some accounts were written, the batch
-          // id is not returned on the failure path, so the sheet cannot offer "Undo visit"
-          // here. The message already says "deposited k of N — undo the visit to roll
-          // back"; the agent can retry (remaining accounts only, since the plan re-quotes
-          // from the refreshed summaries) or undo per account from the Hub rows.
           failure.value = error;
           AppFeedback.showError(context, error);
       }
@@ -107,7 +95,10 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
       planner.start(includeUnready: value, preserveEdits: true);
     }
 
-    return SizedBox.expand(
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -190,10 +181,13 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
                     separatorBuilder: (_, _) =>
                         const Divider(height: AppDimensions.dividerHeight),
                     itemBuilder: (context, index) => _VisitLineTile(
+                      key: ValueKey(plan.lines[index].rdId),
                       line: plan.lines[index],
                       isBusy: isBusy,
                       onToggle: () => planner.toggleIncluded(plan.lines[index].rdId),
                       onFront: (n) => planner.setFronted(plan.lines[index].rdId, n),
+                      onFeeOverride: (fee) =>
+                          planner.setFeeOverride(plan.lines[index].rdId, fee),
                     ),
                   ),
           ),
@@ -237,7 +231,6 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
   }
 }
 
-/// "N accounts · M installments / Total ₹X (incl. ₹Y fee) / cash ₹C · UPI ₹D / from pocket ₹P".
 class _TotalsCard extends StatelessWidget {
   const _TotalsCard({required this.plan});
 
@@ -273,7 +266,6 @@ class _TotalsCard extends StatelessWidget {
             style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
           AppSpacings.gapXs,
-          // Money is never ellipsised: shrink to fit instead.
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -329,7 +321,6 @@ class _TotalsCard extends StatelessWidget {
   }
 }
 
-/// Portal guidance when the cash portion exceeds one ₹20,000 lot.
 class _CashLotsWarning extends StatelessWidget {
   const _CashLotsWarning({required this.plan});
 
@@ -338,14 +329,14 @@ class _CashLotsWarning extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final warning = AppFinancialColors.of(context).warning;
     final visit = t.recurringDeposits.monthlyOperations.visit;
     final kpis = t.recurringDeposits.monthlyOperations.kpis;
 
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
-        color: scheme.tertiaryContainer,
+        color: warning.container,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       ),
       child: Column(
@@ -356,14 +347,14 @@ class _CashLotsWarning extends StatelessWidget {
               HugeIcon(
                 icon: HugeIcons.strokeRoundedAlert02,
                 size: AppDimensions.iconSm,
-                color: scheme.onTertiaryContainer,
+                color: warning.onContainer,
               ),
               AppSpacings.gapSm,
               Expanded(
                 child: Text(
                   visit.cashLotWarning,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onTertiaryContainer,
+                    color: warning.onContainer,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -378,7 +369,7 @@ class _CashLotsWarning extends StatelessWidget {
                 amount: lot.cashAmount.toRupeeFormat(),
                 count: kpis.accountsCount(n: lot.rdIds.length),
               ),
-              style: theme.textTheme.bodySmall?.copyWith(color: scheme.onTertiaryContainer),
+              style: theme.textTheme.bodySmall?.copyWith(color: warning.onContainer),
             ),
         ],
       ),
@@ -395,11 +386,11 @@ class _FailureTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final overdue = AppFinancialColors.of(context).overdue;
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
-        color: scheme.errorContainer,
+        color: overdue.container,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       ),
       child: Row(
@@ -407,7 +398,7 @@ class _FailureTile extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: theme.textTheme.bodySmall?.copyWith(color: scheme.onErrorContainer),
+              style: theme.textTheme.bodySmall?.copyWith(color: overdue.onContainer),
             ),
           ),
           AppSpacings.gapSm,
@@ -415,7 +406,7 @@ class _FailureTile extends StatelessWidget {
             onPressed: onRetry,
             child: Text(
               t.common.retry,
-              style: theme.textTheme.labelLarge?.copyWith(color: scheme.error),
+              style: theme.textTheme.labelLarge?.copyWith(color: overdue.onContainer),
             ),
           ),
         ],
@@ -424,20 +415,21 @@ class _FailureTile extends StatelessWidget {
   }
 }
 
-/// One account of the visit: include checkbox, customer, serial/account, count + amount,
-/// and a "front from pocket" stepper.
-class _VisitLineTile extends StatelessWidget {
+class _VisitLineTile extends HookWidget {
   const _VisitLineTile({
+    super.key,
     required this.line,
     required this.isBusy,
     required this.onToggle,
     required this.onFront,
+    required this.onFeeOverride,
   });
 
   final RDPoVisitLine line;
   final bool isBusy;
   final VoidCallback onToggle;
   final ValueChanged<int> onFront;
+  final ValueChanged<double?> onFeeOverride;
 
   static const int _accountTailLength = 4;
 
@@ -448,6 +440,11 @@ class _VisitLineTile extends StatelessWidget {
     final visit = t.recurringDeposits.monthlyOperations.visit;
     final card = t.recurringDeposits.monthlyOperations.card;
     final deposit = line.item.deposit;
+
+    final showFeeEditor = useState<bool>(line.feeOverride != null);
+    final feeController = useTextEditingController(
+      text: line.feeOverride != null ? line.feeOverride!.toStringAsFixed(0) : '',
+    );
 
     final accountNo = deposit.accountNo ?? '';
     final last4 = accountNo.length > _accountTailLength
@@ -461,7 +458,6 @@ class _VisitLineTile extends StatelessWidget {
     final titleColor = muted ? scheme.onSurfaceVariant : scheme.onSurface;
     final customerName = deposit.customerName ?? t.recurringDeposits.depositNotFound;
 
-    // Stepper buttons write to the plan; keep them at the minimum tap target.
     final stepperStyle = TextButton.styleFrom(
       minimumSize: const Size(AppDimensions.minTapTarget, AppDimensions.minTapTarget),
       padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingSm),
@@ -470,6 +466,18 @@ class _VisitLineTile extends StatelessWidget {
     final stepper = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        Tooltip(
+          message: visit.counterFeeOverride,
+          child: IconButton(
+            key: ValueKey('visit_fee_override_${line.rdId}'),
+            icon: HugeIcon(
+              icon: HugeIcons.strokeRoundedPercent,
+              size: AppDimensions.iconSm,
+              color: line.feeOverride != null ? scheme.primary : scheme.onSurfaceVariant,
+            ),
+            onPressed: isBusy ? null : () => showFeeEditor.value = !showFeeEditor.value,
+          ),
+        ),
         Tooltip(
           message: visit.frontFewer,
           child: TextButton(
@@ -493,88 +501,137 @@ class _VisitLineTile extends StatelessWidget {
       ],
     );
 
-    // Not a ListTile: the stepper would not fit the 56dp `trailing` cap, so the row is
-    // laid out by hand — name + count·amount on the first line, identity + stepper below.
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.paddingMd,
         vertical: AppDimensions.paddingXs,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Checkbox(
-            value: line.included,
-            semanticLabel: visit.includeLine(name: customerName),
-            onChanged: isBusy ? null : (_) => onToggle(),
-          ),
-          AppSpacings.gapXs,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Checkbox(
+                value: line.included,
+                semanticLabel: visit.includeLine(name: customerName),
+                onChanged: isBusy ? null : (_) => onToggle(),
+              ),
+              AppSpacings.gapXs,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: Text(
-                        customerName,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: titleColor,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    AppSpacings.gapSm,
-                    Text(
-                      visit.lineTrailing(
-                        count: line.count,
-                        amount: line.amount.toRupeeFormat(),
-                      ),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: titleColor,
-                      ),
-                      maxLines: 1,
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            visit.lineSubtitle(serial: serial, last4: last4),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            customerName,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: titleColor,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (line.fromPocket > 0)
-                            Text(
-                              visit.lineFromPocket(
-                                amount: line.fromPocket.toRupeeFormat(),
-                              ),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: scheme.error,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                        ],
-                      ),
+                        ),
+                        AppSpacings.gapSm,
+                        Text(
+                          visit.lineTrailing(
+                            count: line.count,
+                            amount: line.amount.toRupeeFormat(),
+                          ),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: titleColor,
+                          ),
+                          maxLines: 1,
+                        ),
+                      ],
                     ),
-                    stepper,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                visit.lineSubtitle(serial: serial, last4: last4),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (line.fromPocket > 0)
+                                Text(
+                                  visit.lineFromPocket(
+                                    amount: line.fromPocket.toRupeeFormat(),
+                                  ),
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: scheme.error,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        stepper,
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+          if (showFeeEditor.value)
+            Padding(
+              padding: const EdgeInsets.only(
+                left: AppDimensions.paddingXl,
+                right: AppDimensions.paddingSm,
+                bottom: AppDimensions.paddingSm,
+              ),
+              child: TextFormField(
+                key: ValueKey('visit_fee_input_${line.rdId}'),
+                controller: feeController,
+                enabled: !isBusy,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+                decoration: AppInputDecoration.m3(
+                  context,
+                  labelText: visit.counterFeeLabel,
+                  prefixText: t.format.currencySymbol,
+                ).copyWith(
+                  isDense: true,
+                  suffixIcon: line.feeOverride != null
+                      ? IconButton(
+                          tooltip: t.common.clear,
+                          icon: const HugeIcon(
+                            icon: HugeIcons.strokeRoundedCancel01,
+                            size: AppDimensions.iconSm,
+                          ),
+                          onPressed: () {
+                            feeController.clear();
+                            onFeeOverride(null);
+                          },
+                        )
+                      : null,
+                ),
+                onChanged: (raw) {
+                  final trimmed = raw.trim();
+                  if (trimmed.isEmpty) {
+                    onFeeOverride(null);
+                    return;
+                  }
+                  final parsed = double.tryParse(trimmed);
+                  if (parsed != null) {
+                    onFeeOverride(parsed);
+                  }
+                },
+              ),
+            ),
         ],
       ),
     );

@@ -28,6 +28,7 @@ class DashboardChartSection extends HookConsumerWidget {
 
     final chartData = ref.watch(dashboardChartSeriesProvider);
     final currentFilter = ref.watch(dashboardChartFilterProvider);
+    final includeRds = ref.watch(dashboardChartIncludeRdsProvider);
     final selectedYear = ref.watch(dashboardChartSelectedYearProvider);
 
     String title = t.dashboard.depositsOverTime;
@@ -145,6 +146,25 @@ class DashboardChartSection extends HookConsumerWidget {
                                   .setFilter(null);
                             }
                           },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          right: AppDimensions.paddingSm,
+                        ),
+                        child: FilterChip(
+                          label: Text(t.dashboard.includeRecurringDeposits),
+                          selected: includeRds && currentFilter == null,
+                          onSelected: currentFilter == null
+                              ? (_) {
+                                  ref
+                                      .read(
+                                        dashboardChartIncludeRdsProvider
+                                            .notifier,
+                                      )
+                                      .toggle();
+                                }
+                              : null,
                         ),
                       ),
                       ...OneTimeSchemeType.values.map((scheme) {

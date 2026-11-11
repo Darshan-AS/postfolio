@@ -1,4 +1,3 @@
-import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
@@ -24,7 +23,7 @@ class AppDialogs {
         content: Text(content),
         actions: [
           TextButton(
-            onPressed: () => ctx.pop(false),
+            onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(t.common.cancel),
           ),
           FilledButton.tonal(
@@ -32,7 +31,7 @@ class AppDialogs {
               backgroundColor: theme.colorScheme.errorContainer,
               foregroundColor: theme.colorScheme.onErrorContainer,
             ),
-            onPressed: () => ctx.pop(true),
+            onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(t.common.delete),
           ),
         ],
@@ -102,7 +101,10 @@ class AppDialogs {
         title: Text(title),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () => ctx.pop(), child: Text(t.common.ok)),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(t.common.ok),
+          ),
         ],
       ),
     );

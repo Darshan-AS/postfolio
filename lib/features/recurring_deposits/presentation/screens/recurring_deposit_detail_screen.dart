@@ -285,15 +285,6 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                           months: deposit.termMonths.toString(),
                         ),
                       ),
-                      const Divider(height: AppDimensions.dividerHeight),
-                      DetailItem(
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedPercent,
-                          size: AppDimensions.iconMd,
-                        ),
-                        label: t.recurringDeposits.fields.interestRate,
-                        value: rateLabel,
-                      ),
                     ],
                   ),
                   AppSpacings.gapLg,
@@ -323,6 +314,19 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                   DetailSection(
                     title: t.recurringDeposits.sections.accountInformation,
                     children: [
+                      if (deposit.accountNo != null &&
+                          deposit.accountNo!.isNotEmpty) ...[
+                        DetailItem(
+                          icon: const HugeIcon(
+                            icon: HugeIcons.strokeRoundedTicket01,
+                            size: AppDimensions.iconMd,
+                          ),
+                          label: t.recurringDeposits.fields.accountNo,
+                          value: deposit.accountNo,
+                          copyValue: deposit.accountNo,
+                        ),
+                        const Divider(height: AppDimensions.dividerHeight),
+                      ],
                       DetailItem(
                         icon: const HugeIcon(
                           icon: HugeIcons.strokeRoundedTag01,
@@ -330,6 +334,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                         ),
                         label: t.recurringDeposits.fields.serialNo,
                         value: deposit.serialNo ?? t.common.notProvided,
+                        copyValue: deposit.serialNo,
                       ),
                       const Divider(height: AppDimensions.dividerHeight),
                       DetailItem(

@@ -2,11 +2,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 class EntityDetailScaffold extends StatelessWidget {
   final String appBarTitle;
@@ -50,7 +50,7 @@ class EntityDetailScaffold extends StatelessWidget {
       if (onBack != null) {
         onBack!();
       } else {
-        context.pop();
+        Navigator.of(context).maybePop();
       }
     } else {
       AppFeedback.showError(context, error);
@@ -69,7 +69,7 @@ class EntityDetailScaffold extends StatelessWidget {
       },
       child: Scaffold(
         appBar: _buildAppBar(theme, context),
-        body: _buildBody(theme),
+        body: SelectionArea(child: _buildBody(context, theme)),
         floatingActionButton: floatingActionButton,
       ),
     );
@@ -84,25 +84,67 @@ class EntityDetailScaffold extends StatelessWidget {
       actions: [
         ...customActions,
         IconButton(
+          tooltip: t.common.edit,
           icon: const HugeIcon(
             icon: HugeIcons.strokeRoundedEdit02,
             size: AppDimensions.iconMd,
           ),
           onPressed: onEdit,
         ),
-        IconButton(
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedDelete02,
-            size: AppDimensions.iconMd,
+        MenuAnchor(
+          menuChildren: [
+            MenuItemButton(
+              key: const ValueKey('entity_detail_delete_item'),
+              leadingIcon: HugeIcon(
+                icon: HugeIcons.strokeRoundedDelete02,
+                size: AppDimensions.iconSm,
+                color: theme.colorScheme.error,
+              ),
+              onPressed: () => _confirmDelete(context),
+              child: Text(
+                t.common.delete,
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
+            ),
+          ],
+          builder: (context, controller, _) => IconButton(
+            key: const ValueKey('entity_detail_more_button'),
+            tooltip: t.common.moreOptions,
+            icon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedMoreVertical,
+              size: AppDimensions.iconMd,
+            ),
+            onPressed: () {
+              if (controller.isOpen) {
+                controller.close();
+              } else {
+                controller.open();
+              }
+            },
           ),
-          color: theme.colorScheme.error,
-          onPressed: () => _confirmDelete(context),
         ),
       ],
     );
   }
 
-  Widget _buildBody(ThemeData theme) {
+  Widget _buildBody(BuildContext context, ThemeData theme) {
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
+    final items = <Widget>[header, AppSpacings.gapXxl, ...body];
+    final animatedItems = disableAnimations
+        ? items
+        : items
+              .animate(interval: AppAnimations.stagger)
+              .fade(
+                duration: AppAnimations.medium,
+                curve: AppAnimations.defaultCurve,
+              )
+              .slideY(
+                begin: AppAnimations.slideOffset,
+                end: 0,
+                duration: AppAnimations.medium,
+                curve: AppAnimations.defaultCurve,
+              );
+
     return ListView(
       padding: EdgeInsets.fromLTRB(
         AppDimensions.paddingLg,
@@ -112,22 +154,19 @@ class EntityDetailScaffold extends StatelessWidget {
             ? AppDimensions.listBottomPaddingFAB
             : AppDimensions.paddingLg,
       ),
-      children: [header, AppSpacings.gapXxl, ...body]
-          .animate(interval: AppAnimations.stagger)
-          .fade(
-            duration: AppAnimations.medium,
-            curve: AppAnimations.defaultCurve,
-          )
-          .slideY(
-            begin: AppAnimations.slideOffset,
-            end: 0,
-            duration: AppAnimations.medium,
-            curve: AppAnimations.defaultCurve,
-          )
-          .shimmer(
-            duration: AppAnimations.slow,
-            color: theme.colorScheme.surfaceTint.withValues(alpha: 0.1),
+      children: [
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppDimensions.maxFormWidth,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: animatedItems,
+            ),
           ),
+        ),
+      ],
     );
   }
 }

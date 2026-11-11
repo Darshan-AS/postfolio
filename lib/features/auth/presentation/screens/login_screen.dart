@@ -16,49 +16,58 @@ class LoginScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authControllerProvider);
     final theme = Theme.of(context);
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
+
+    final heroItems = <Widget>[
+      HugeIcon(
+        icon: HugeIcons.strokeRoundedShield01,
+        color: theme.colorScheme.primary,
+        size: AppDimensions.iconXl,
+      ),
+      AppSpacings.gapXl,
+      Text(
+        t.auth.welcome,
+        style: theme.textTheme.headlineMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+        ),
+        textAlign: TextAlign.center,
+      ),
+      AppSpacings.gapSm,
+      Text(
+        t.auth.signInSubtitle,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    ];
 
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingLg),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children:
-                    [
-                          HugeIcon(
-                            icon: HugeIcons.strokeRoundedShield01,
-                            color: theme.colorScheme.primary,
-                            size: AppDimensions.iconXl,
-                          ),
-                          AppSpacings.gapXl,
-                          Text(
-                            t.auth.welcome,
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          AppSpacings.gapSm,
-                          Text(
-                            t.auth.signInSubtitle,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ]
-                        .animate(interval: AppAnimations.stagger)
-                        .fadeIn(duration: AppAnimations.medium)
-                        .slideY(
-                          begin: AppAnimations.slideOffset,
-                          curve: AppAnimations.defaultCurve,
-                          duration: AppAnimations.medium,
-                        ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppDimensions.paddingLg),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: AppDimensions.maxLoginWidth,
               ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: disableAnimations
+                        ? heroItems
+                        : heroItems
+                              .animate(interval: AppAnimations.stagger)
+                              .fadeIn(duration: AppAnimations.medium)
+                              .slideY(
+                                begin: AppAnimations.slideOffset,
+                                curve: AppAnimations.defaultCurve,
+                                duration: AppAnimations.medium,
+                              ),
+                  ),
               AppSpacings.gapXxl,
               AppSpacings.gapXxl,
               switch (authState) {
@@ -112,7 +121,9 @@ class LoginScreen extends ConsumerWidget {
                   textAlign: TextAlign.center,
                 ),
               ],
-            ],
+                ],
+              ),
+            ),
           ),
         ),
       ),

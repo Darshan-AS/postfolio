@@ -1,8 +1,6 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:hugeicons/hugeicons.dart';
 
-import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -249,19 +247,7 @@ class EntityListTile extends StatelessWidget {
       );
     }
 
-    return tile
-        .animate()
-        .fade(duration: AppAnimations.medium, curve: AppAnimations.defaultCurve)
-        .slideY(
-          begin: AppAnimations.slideOffset,
-          end: 0,
-          duration: AppAnimations.medium,
-          curve: AppAnimations.defaultCurve,
-        )
-        .shimmer(
-          duration: AppAnimations.slow,
-          color: theme.colorScheme.surfaceTint.withValues(alpha: 0.1),
-        );
+    return tile;
   }
 
   Widget _buildLeading(ThemeData theme) {

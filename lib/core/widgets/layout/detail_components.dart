@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
@@ -5,6 +6,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class DetailSection extends StatelessWidget {
@@ -56,6 +58,7 @@ class DetailSection extends StatelessWidget {
 class DetailItem extends StatelessWidget {
   final String label;
   final String? value;
+  final String? copyValue;
   final bool hideIfNull;
   final Widget? icon;
   final VoidCallback? onTap;
@@ -65,6 +68,7 @@ class DetailItem extends StatelessWidget {
     super.key,
     required this.label,
     this.value,
+    this.copyValue,
     this.hideIfNull = false,
     this.icon,
     this.onTap,
@@ -80,6 +84,9 @@ class DetailItem extends StatelessWidget {
     final displayValue = (value == null || value!.isEmpty)
         ? t.common.notProvided
         : value!;
+    final effectiveCopy = (copyValue != null && copyValue!.trim().isNotEmpty)
+        ? copyValue!.trim()
+        : null;
 
     Widget content = Padding(
       padding: const EdgeInsets.symmetric(
@@ -120,6 +127,20 @@ class DetailItem extends StatelessWidget {
               ],
             ),
           ),
+          if (effectiveCopy != null)
+            IconButton(
+              key: ValueKey('copy_$label'),
+              tooltip: t.common.copy,
+              icon: HugeIcon(
+                icon: HugeIcons.strokeRoundedCopy01,
+                size: AppDimensions.iconSm,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: effectiveCopy));
+                AppFeedback.showSuccess(context, t.common.copiedToClipboard);
+              },
+            ),
           ?trailing,
           if (onTap != null && trailing == null)
             HugeIcon(
