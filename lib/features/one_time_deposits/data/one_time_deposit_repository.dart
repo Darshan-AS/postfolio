@@ -138,11 +138,17 @@ class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
 }
 
 class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
+  FakeOneTimeDepositRepository({
+    List<OneTimeDeposit>? deposits,
+    this.delay = const Duration(milliseconds: 500),
+  }) : _deposits = [...(deposits ?? FakeDataSource().oneTimeDeposits)];
+
+  final Duration delay;
+
   final _controller =
       StreamController<Result<List<OneTimeDeposit>, String>>.broadcast();
 
-  final List<OneTimeDeposit> _deposits = FakeDataSource().oneTimeDeposits
-      .toList();
+  final List<OneTimeDeposit> _deposits;
 
   void _emit() {
     if (!_controller.isClosed) {
@@ -187,7 +193,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
   Future<Result<void, String>> createOneTimeDeposit(
     OneTimeDeposit deposit,
   ) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    if (delay > Duration.zero) await Future.delayed(delay);
     final newDeposit = deposit.copyWith(
       id: deposit.id.isEmpty ? const Uuid().v4() : deposit.id,
     );
@@ -200,7 +206,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
   Future<Result<void, String>> updateOneTimeDeposit(
     OneTimeDeposit deposit,
   ) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    if (delay > Duration.zero) await Future.delayed(delay);
     final index = _deposits.indexWhere((d) => d.id == deposit.id);
     if (index != -1) {
       _deposits[index] = deposit;
@@ -215,7 +221,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
     String id,
     DepositStatus status,
   ) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    if (delay > Duration.zero) await Future.delayed(delay);
     final index = _deposits.indexWhere((d) => d.id == id);
     if (index != -1) {
       _deposits[index] = _deposits[index].copyWith(status: status);
@@ -227,7 +233,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
 
   @override
   Future<Result<void, String>> deleteOneTimeDeposit(String id) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    if (delay > Duration.zero) await Future.delayed(delay);
     final initialLength = _deposits.length;
     _deposits.removeWhere((d) => d.id == id);
     if (_deposits.length < initialLength) {

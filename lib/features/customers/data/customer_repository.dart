@@ -115,10 +115,17 @@ class FirestoreCustomerRepository implements CustomerRepository {
 }
 
 class FakeCustomerRepository implements CustomerRepository {
+  FakeCustomerRepository({
+    List<Customer>? customers,
+    this.delay = const Duration(milliseconds: 500),
+  }) : _customers = [...(customers ?? FakeDataSource().customers)];
+
+  final Duration delay;
+
   final _controller =
       StreamController<Result<List<Customer>, String>>.broadcast();
 
-  final List<Customer> _customers = FakeDataSource().customers.toList();
+  final List<Customer> _customers;
 
   void _emit() {
     if (!_controller.isClosed) {
@@ -159,7 +166,7 @@ class FakeCustomerRepository implements CustomerRepository {
 
   @override
   Future<Result<void, String>> createCustomer(Customer customer) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    if (delay > Duration.zero) await Future.delayed(delay);
     _customers.add(customer);
     _emit();
     return const Success(null);
@@ -167,7 +174,7 @@ class FakeCustomerRepository implements CustomerRepository {
 
   @override
   Future<Result<void, String>> updateCustomer(Customer customer) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    if (delay > Duration.zero) await Future.delayed(delay);
     final index = _customers.indexWhere((u) => u.id == customer.id);
     if (index != -1) {
       _customers[index] = customer;
@@ -179,7 +186,7 @@ class FakeCustomerRepository implements CustomerRepository {
 
   @override
   Future<Result<void, String>> deleteCustomer(String id) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    if (delay > Duration.zero) await Future.delayed(delay);
     final initialLength = _customers.length;
     _customers.removeWhere((u) => u.id == id);
     if (_customers.length < initialLength) {
