@@ -2,6 +2,34 @@
 
 *Note: For a summarized history of past work, see `.agents/historical_summary.md` and `.agents/progress.md`. For the raw chronological task history, see `.agents/historical_tasks_archive.md`.*
 
+## 🛡️ Stabilization & Redesign Roadmap (Stages 0–5)
+### Stage 0: Emergency P0 Security, Data-Loss & Summary Race Hotfixes (Completed)
+- [x] **P0-1 (Supabase RPC & Grant Lockdown)**: Move internal `SECURITY DEFINER` helpers (`assert_authenticated`, `assert_customer_owner`, `assert_account_owner`, `upsert_account_identity`, `replace_account_nominees`) into unexposed `private` schema; inline nominee JSON aggregation into `security_invoker = true` views and drop `public.get_account_nominees`; revoke `SELECT` on `public` tables from `anon` and `EXECUTE` on `public` routines from `PUBLIC`/`anon`/`authenticated`, granting `EXECUTE` strictly to valid client RPCs and RLS boolean helpers (`is_admin`, `owns_account`).
+- [x] **P0-2 (JIT Linking FK Cascade)**: Add missing `ON UPDATE CASCADE` to `agent_id` foreign keys on `rd_po_deposits`, `rd_fee_absorptions`, and `rd_ledger_summary` so `handle_new_user()` profile ID relinking never fails with FK violations.
+- [x] **P0-3 (Deposit Status Toggle Data-Loss Fix)**: Add `opening_receivable` to `SupabaseRecurringDepositRepository._listColumns`; create atomic `public.set_deposit_status(p_id, p_status)` RPC; wire `updateDepositStatus` across OTD/RD repositories and controllers so toggling `active`/`closed` never wipes `nominees`, `opening_receivable`, or `rd_ledger_summary`; preserve `rd_ledger_summary` in `save_recurring_deposit` when financial/schedule terms are unchanged; align `RecurringDeposit.validateUpdate` and `RDLedgerFacts.isFinancialTermsLocked`.
+- [x] **P0-4 (RD Ledger Summary Double-Count, Race & 766-RD `undoBatch` Fix)**: Deduplicate optimistic `apply` closures by ID in `RDLedgerController.recordPayment` and `depositNextToPo`; `await _refreshSummary` inside `_mutate` to prevent sequential `recordPayment` + `absorbFee` clobbering; remove stale `autoDispose` `.value` shortcut in `RDLedgerController._readFacts`; add atomic `public.undo_rd_po_deposit_batch(p_batch_id)` RPC enforcing latest-visit ordering and returning affected `UUID[]` so `undoBatch` refreshes only touched RDs instead of all 766 accounts.
+- [x] **P0-5 (PII Asset Leak & Dead Web Script Removal)**: Remove `- data/` from `pubspec.yaml` `flutter.assets` and remove unused Corbado Passkeys `<script>` from `web/index.html`.
+- [x] **P0-6 (SQL + Dart Verification Suite)**: Extended `supabase/tests/rd_ledger_facts_rls.sql` (14 SQL cases), controller unit tests, and Supabase repository/E2E tests; verified `dart analyze --fatal-infos` (0 issues) and `flutter test` (82/82 passing).
+
+### Upcoming Stages (DDD × Pragmatic TDD — Red -> Green -> Coverage Ratchet)
+- [ ] **Stage 1 (CI Gates, Encrypted GDrive Backups & Repo Baseline Test Backfill — Floor >= 55%)**:
+  - [ ] Convert `supabase/tests/rd_ledger_facts_rls.sql` into self-asserting SQL/pgTAP contract suite (`ON_ERROR_STOP=1` + `SQLSTATE` assertions on negative cases) and split `@Tags(['integration'])` in `dart_test.yaml`.
+  - [ ] Backfill compact table-driven domain tests (`Customer`, `Nominee`, `OneTimeDeposit`, `ProjectionCalculator` 5-scheme math) and `ProviderContainer` + `Fake*Repository` baseline tests (`CustomersController`, `OneTimeDepositsController`, `RecurringDepositsController`, list criteria, `dashboardMetricsProvider` Indian FY math).
+  - [ ] Add `.github/workflows/ci.yml` (analyzer, codegen drift, unit/widget + `lcov` ratchet stripping `*.g.dart`/`*.freezed.dart`, Supabase Docker SQL + integration suites) and `.github/workflows/backup.yml` (nightly `pg_dump -Fc | age` uploaded via `rclone` `drive.file` OAuth2 token to Google Drive + ephemeral container restore check).
+  - [ ] Harden `release.yml` (tag-gated deploys, upload keystore signing, R8, SHA-pinned actions), `firebase.json` security/cache headers, and `analysis_options.yaml` (`strict-*`, `unawaited_futures`, `riverpod_lint`).
+- [ ] **Stage 2 (Legacy Firebase Excision & Flavor Isolation — Floor >= 62%)**:
+  - [ ] TDD first: `AuthController` + `FakeAuthRepository` spec, table-driven `PostgrestException` error-sanitizer spec, `app_error_logs` RLS SQL contract, and deterministic `FakeDataSource` fixtures.
+  - [ ] Remove `cloud_firestore`, `firebase_auth`, `firebase_performance`, `firebase_analytics`, `Firestore*Repository`, and `Env.useSupabase` (retaining `firebase_core` + Android `firebase_crashlytics` + Firebase Hosting); move migration scripts to `tool/`; verify `flutter build web --wasm`; wire `staging` vs `prod` `--dart-define-from-file` configs.
+- [ ] **Stage 3 (Atomic Ledger RPCs, DB Constraints & >1k-Row Scalability — Floor >= 68%)**:
+  - [ ] TDD first: SQL assertions for `ON DELETE RESTRICT`, case-insensitive unique email, enum/numeric `CHECK`s, multi-RD `commit_rd_po_visit_batch` rollback atomicity, `facts_version` optimistic concurrency, `.range()` >1,000-row pagination, and reactive customer rename propagation.
+  - [ ] Implement atomic fact+summary RPCs, `ON DELETE RESTRICT` FKs, DB `CHECK`/unique constraints, `Uuid().v7()`, `one_time_deposit_list_view` & `recurring_deposit_list_view`, `.range()` pagination, and `account_type`-scoped Realtime streams.
+- [ ] **Stage 4 (Domain Math, Session Scoping & GoRouter Overhaul — Floor >= 78%)**:
+  - [ ] TDD first: `Paise`/`LocalDate` boundary & float-sum tables (`16.1+48.2+35.7` nominees, paise formatting, UTC midnight), `ProjectionCalculator` month-end clamping + RD default maturity extension, `RDPoDeposit.feePaid` counter override & cash-lot quote accuracy, auth sign-out cache disposal, and `GoRouter` deep-link/redirect/root-navigator specs.
+  - [ ] Implement exact money/date primitives, counter fee override UI + projector parity, session-scoped providers, reactive midnight clock, synchronous `AuthController` session hydration, `?redirect=` deep links, root-navigator detail/form routes, and `PopScope` dirty-form guards.
+- [ ] **Stage 5 (UI System `material_ui`, Screen Polish, Accessibility & i18n — Floor >= 82%)**:
+  - [ ] TDD first: form/sheet hook interaction specs (`NomineesInputSection` spacebar/share math, `CustomerFormScreen` validators, `RDLogPaymentSheet` prefill focus) and parameterized `360×800` @ `2.0x` text-scale + Light/Dark WCAG AA contrast & `>=44dp` tap-target suite.
+  - [ ] Implement `AppFinancialColors` + 4-mode theme selector, `Skeletonizer` dark shimmer, `AppFeedback` unification, form/sheet UX fixes, desktop width constraints + copy actions, full Slang string extraction, and dead-key pruning.
+
 ## 🚀 Next Up (Supabase Migration - Phase 2 & 3)
 - [x] **Bulk Migration Optimizer**: Redesigned sequential N+1 writes into batch/bulk insertions, reducing network roundtrips by up to 99.5% and accelerating bulk data migrations (e.g., 600+ records) by 100x+.
 - [x] **Environments**: Add `GOOGLE_WEB_CLIENT_ID` and `GOOGLE_IOS_CLIENT_ID` to `.env`.

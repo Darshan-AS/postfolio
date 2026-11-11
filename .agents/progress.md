@@ -1,7 +1,25 @@
 # Project Progress
 
 ## Current State
-**Release 2.3.1+22 (2026-11-10).** v2.3.0+21 shipped the RD ledger (Android via App Distribution + GitHub Release; web deploy initially blocked by a Firebase Hosting IAM error, fixed the same day). Hosted Supabase has `20261110000000_rd_ledger.sql` applied and all 766 RDs baselined (one-off SQL, not a migration). v2.3.1+22 fixes the onboarding-terms fields being disabled on edit and reorders the RD detail tabs (Info → Passbook → Transactions). Web serves 2.3.1+22. Still owed: one Android device pass.
+**Stage 0 Complete (2026-11-11, on top of Release 2.3.1+22).** Resolved all emergency P0 security, data-loss, summary double-count/race, and PII asset bundling defects uncovered during the full-stack audit:
+- **Database Security & Privilege Lockdown (`supabase/migrations/20261111000000_p0_security_and_status_hotfix.sql`)**:
+  - Moved internal `SECURITY DEFINER` helpers (`assert_authenticated`, `assert_customer_owner`, `assert_account_owner`, `upsert_account_identity`, `replace_account_nominees`) into an unexposed `private` schema (`REVOKE ALL ON SCHEMA private FROM PUBLIC, anon, authenticated`).
+  - Inlined nominee JSON aggregation directly into `customer_details_view`, `one_time_deposit_details_view`, and `recurring_deposit_details_view` (`security_invoker = true`), dropping `public.get_account_nominees` so `nominees` RLS enforces tenant isolation natively.
+  - Revoked `SELECT ON ALL TABLES` from `anon` and wildcard `EXECUTE ON ALL ROUTINES` from `PUBLIC`, `anon`, and `authenticated` (plus `ALTER DEFAULT PRIVILEGES`), granting `EXECUTE` strictly to valid client RPCs and RLS boolean helpers (`is_admin`, `owns_account`).
+  - Added missing `ON UPDATE CASCADE` on `agent_id` FKs for `rd_po_deposits`, `rd_fee_absorptions`, and `rd_ledger_summary` so `handle_new_user()` JIT profile relinking cascades cleanly.
+- **Zero-Data-Loss Deposit Status Toggle (`set_deposit_status` & `updateDepositStatus`)**:
+  - Added `opening_receivable` to `SupabaseRecurringDepositRepository._listColumns`.
+  - Added `public.set_deposit_status(p_id, p_status)` RPC and `updateDepositStatus` across OTD and RD repositories/controllers so toggling `active`/`closed` from list cards or detail screens updates status + `account_identities.updated_at` without touching `nominees`, `opening_receivable`, or `rd_ledger_summary`.
+  - Updated `save_recurring_deposit` to include `rd_fee_absorptions` in the financial-terms lock check and to preserve `rd_ledger_summary` when financial/schedule terms are unchanged; aligned `RecurringDeposit.validateUpdate` and `RDLedgerFacts.isFinancialTermsLocked`.
+- **RD Ledger Summary Idempotency, Race Elimination & Scoped `undoBatch`**:
+  - Deduplicated optimistic `apply` closures by ID in `RDLedgerController.recordPayment` and `depositNextToPo` (eliminating 2x summary double-counting when `rdLedgerFactsProvider` is cold).
+  - Awaited `_refreshSummary` inside `_mutate` before releasing the busy flag (eliminating concurrent `recordPayment` + `absorbFee` clobbering) and removed the stale `autoDispose` `.value` shortcut in `RDLedgerController._readFacts`.
+  - Added `public.undo_rd_po_deposit_batch(p_batch_id)` RPC enforcing latest-visit ordering with `FOR UPDATE` row locks and returning affected `UUID[]`, so `undoBatch` refreshes only the batch's RDs instead of iterating all 766 accounts.
+- **Build & Web Hygiene**:
+  - Removed `- data/` from `pubspec.yaml` `flutter.assets` (preventing local migration logs/CSVs from bundling into builds) and removed the unused Corbado Passkeys `<script>` from `web/index.html`.
+- **Verification**: 14/14 SQL RLS/privilege/cascade smoke cases passing on local Postgres 17, `dart analyze --fatal-infos` clean (0 issues), and 82/82 Flutter unit, widget, and local Supabase E2E tests passing. Hosted Supabase still needs `supabase db push` for `20261111000000_p0_security_and_status_hotfix.sql`.
+
+**Previous: Release 2.3.1+22 (2026-11-10).** v2.3.0+21 shipped the RD ledger (Android via App Distribution + GitHub Release; web deploy initially blocked by a Firebase Hosting IAM error, fixed the same day). Hosted Supabase has `20261110000000_rd_ledger.sql` applied and all 766 RDs baselined (one-off SQL, not a migration). v2.3.1+22 fixes the onboarding-terms fields being disabled on edit and reorders the RD detail tabs (Info → Passbook → Transactions). Web serves 2.3.1+22. Still owed: one Android device pass.
 
 **Schema note (2026-11-10):** the RD ledger ships as a single migration, `supabase/migrations/20261110000000_rd_ledger.sql`, which creates only the final facts-only sequential schema. The intermediate migrations referenced in the historical sections below (`20260903…`, `20260905…`, `20260912…`, `20261025…`, `20261027…`, `20261028…`) were never applied to a remote project and no longer exist on the branch; they survive only under git tag `ledger-history-pre-rewrite`.
 
