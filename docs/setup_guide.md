@@ -8,8 +8,9 @@ If you are starting work on a new machine, follow these steps to get fully opera
 
 ### A. Environment Prerequisites
 1.  **Flutter SDK**: Install the latest stable version.
-2.  **Java JDK**: (Required for Android builds and Firebase Emulators). Ensure `JAVA_HOME` is set.
-3.  **Firebase CLI**: Install via `npm install -g firebase-tools` and login using `firebase login`.
+2.  **Java JDK**: Required for Android Gradle builds. Ensure `JAVA_HOME` is set.
+3.  **Docker & Supabase CLI**: Required for running the local PostgreSQL 17 + Auth + Realtime stack (`supabase start`).
+4.  **Firebase CLI**: Install via `npm install -g firebase-tools` and login using `firebase login` (used for Firebase Hosting web deploys).
 
 ### B. Project Initialization
 1.  **Clone the Repository**:
@@ -22,21 +23,22 @@ If you are starting work on a new machine, follow these steps to get fully opera
     flutter pub get
     ```
 
-### C. Environment Configuration (Supabase & Envied)
-Because the codebase uses `envied` to secure and obfuscate project API keys, follow these instructions to configure and switch environments:
-1. **Local Emulator Config**: Copy the `.env.local` template to `.env`:
-   ```bash
-   cp .env.local .env
-   ```
-2. **Production Config**: Copy the `.env.prod` template to `.env`:
-   ```bash
-   cp .env.prod .env
-   ```
-   *(Ensure you update the publishable/secret tokens in `.env` if targeting live production databases)*.
-3. **Compile Configuration**: Whenever you update or switch your `.env` file, you **must** compile the variables into the Dart configuration target:
-   ```bash
-   dart run build_runner build --delete-conflicting-outputs
-   ```
+### C. Environment & Flavor Configuration (`Env`, `--dart-define-from-file` & `envied`)
+`Env` resolves runtime configuration with explicit `--dart-define` / `--dart-define-from-file` precedence and falls back to `.env` values obfuscated via `envied`:
+1. **Default `.env` Setup**:
+   - Local stack: `cp .env.local .env` (or copy `.env.example` to `.env`).
+   - Production build: `cp .env.prod .env`.
+   - Compile `lib/core/env/env.g.dart` whenever `.env` changes:
+     ```bash
+     dart run build_runner build
+     ```
+2. **Flavor Isolation (`staging` vs `prod`)**:
+   - `Env.assertFlavorSafe(flavor: appFlavor)` prevents the Android `staging` flavor (`dev.darshanas.postfolio.staging`) from accidentally connecting to production Supabase.
+   - To run `staging` against local Supabase without rewriting `.env`, pass the tracked `config/local.json` file (already wired in `.vscode/launch.json`):
+     ```bash
+     flutter run --flavor staging --dart-define-from-file=config/local.json
+     ```
+   - For a remote staging Supabase project, copy `config/staging.json.example` to `config/staging.json` (git-ignored) and pass `--dart-define-from-file=config/staging.json`.
 
 ### D. Google Sign-In (Debug)
 Each development machine has a unique debug signature. To make Google Sign-In work locally:

@@ -17,11 +17,13 @@
 - [x] Add `.github/workflows/ci.yml` (analyzer, codegen, unit/widget + `lcov` ratchet stripping `*.g.dart`/`*.freezed.dart`, Supabase Docker SQL + integration suites) and `.github/workflows/backup.yml` (nightly `pg_dump -Fc | age` uploaded via `rclone` `drive.file` OAuth2 token to Google Drive + optional in-memory `pg_restore --list` verification).
 - [x] Harden `release.yml` (tag-gated deploys, analyzer/test gate, `UPLOAD_KEYSTORE_BASE64` + `KEY_PROPERTIES` support with `KEYSTORE_BASE64` fallback), Android R8 (`isMinifyEnabled`, `isShrinkResources`, `proguard-rules.pro`, `-Xmx4G`), `firebase.json` security/cache headers, and `analysis_options.yaml` (`strict-casts`, `strict-raw-types`, `unawaited_futures`, `cancel_subscriptions`, `only_throw_errors`).
 
+### Stage 2: Legacy Firebase Excision, Error Sanitization & Flavor Isolation (Completed)
+- [x] TDD first: `AuthController` + `FakeAuthRepository` spec, table-driven `PostgrestException`/`AuthException` `SupabaseErrorMapper` spec, `app_error_logs` RLS & truncation SQL contract (`CASE 15`), `AppErrorReporter` rate-limiting spec, `Env.assertFlavorSafe` spec, and deterministic `FakeDataSource` domain-invariant spec (fixing the 200%-nominee Demo Mode bug).
+- [x] Remove `cloud_firestore`, `firebase_auth`, `firebase_performance`, `firebase_analytics`, `faker`, `csv`, `Firestore*Repository`, `FirebaseAuthRepository`, `UnsupportedRDLedgerRepository`, `Env.useSupabase`, `firestore_keys.dart`, `firestore.rules`, and retired migration runners (retaining `firebase_core` + native `!kIsWeb` `firebase_crashlytics` + Firebase Hosting + Web `AppErrorReporter` -> `public.app_error_logs`).
+- [x] Wire `--dart-define-from-file` (`config/local.json`, `config/staging.json.example`) + `Env.assertFlavorSafe(flavor: appFlavor)`, verify `flutter build web --wasm`, update architecture docs, and ratchet DDD layer coverage (`domain >= 73%`, `controllers >= 71%`, `data >= 41%`, `total >= 46%`).
+
 ### Upcoming Stages (DDD × Pragmatic TDD — Red -> Green -> Coverage Ratchet)
-- [ ] **Stage 2 (Legacy Firebase Excision & Flavor Isolation — Floor >= 62%)**:
-  - [ ] TDD first: `AuthController` + `FakeAuthRepository` spec, table-driven `PostgrestException` error-sanitizer spec, `app_error_logs` RLS SQL contract, and deterministic `FakeDataSource` fixtures.
-  - [ ] Remove `cloud_firestore`, `firebase_auth`, `firebase_performance`, `firebase_analytics`, `Firestore*Repository`, and `Env.useSupabase` (retaining `firebase_core` + Android `firebase_crashlytics` + Firebase Hosting); move migration scripts to `tool/`; verify `flutter build web --wasm`; wire `staging` vs `prod` `--dart-define-from-file` configs.
-- [ ] **Stage 3 (Atomic Ledger RPCs, DB Constraints & >1k-Row Scalability — Floor >= 68%)**:
+- [ ] **Stage 3 (Atomic Ledger RPCs, DB Constraints & >1k-Row Scalability)**:
   - [ ] TDD first: SQL assertions for `ON DELETE RESTRICT`, case-insensitive unique email, enum/numeric `CHECK`s, multi-RD `commit_rd_po_visit_batch` rollback atomicity, `facts_version` optimistic concurrency, `.range()` >1,000-row pagination, and reactive customer rename propagation.
   - [ ] Implement atomic fact+summary RPCs, `ON DELETE RESTRICT` FKs, DB `CHECK`/unique constraints, `Uuid().v7()`, `one_time_deposit_list_view` & `recurring_deposit_list_view`, `.range()` pagination, and `account_type`-scoped Realtime streams.
 - [ ] **Stage 4 (Domain Math, Session Scoping & GoRouter Overhaul — Floor >= 78%)**:
@@ -41,7 +43,7 @@
 - [x] **Riverpod Toggle**: Implement provider overrides based on `Env.useSupabase`.
 - [x] **SQL Views & RPC Procedures (Option 2 Architecture)**: Create SQL migrations for views (`customer_details_view`, `one_time_deposit_details_view`, `recurring_deposit_details_view`) and stored procedure RPCs (`save_customer_with_sb_account`, `save_one_time_deposit`, `save_recurring_deposit`). Refactor all `Supabase*Repository` implementations to use views for reads and RPCs for 100% atomic writes.
 - [x] **Manual Full Database Backup via Docker**: Documented and verified official PostgreSQL 17 Docker container command to dump complete schema + data to local SQL files for manual cold storage archiving.
-- [ ] **Automated Off-site Database Backups**: Explore zero-cost automated off-site backup solutions (avoiding Firebase Storage due to Blaze pay-as-you-go credit card requirements, and keeping in mind repository is public so GitHub Actions artifacts cannot store unencrypted DB dumps).
+- [x] **Automated Off-site Database Backups**: Implemented `.github/workflows/backup.yml` streaming `postgres:17 pg_dump -Fc | age` to Google Drive via `rclone` (`drive.file` OAuth2 token) with 30-day pruning.
 
 ## 📅 Epic: RD Monthly Ledger & Transaction Tracking
 - [x] **Phase 1: Database Schema & Migration (Muscle Approach)**: Created migration `20260903000000_rd_ledger_feature.sql` defining `rd_installments` schedule, check constraints, indexing, enabling real-time CDC, and designing atomic, lightweight bulk-write RPCs (`save_recurring_deposit`, `record_rd_customer_payment_allocated`, `record_rd_po_payments`). Verified successfully with local database compilation via `supabase db reset`.
@@ -171,9 +173,9 @@
 - [ ] Conditionally render `BottomSheet` as `AlertDialog`/Side Panel on large screens.
 
 ### Epic: Firebase Elimination
-- [ ] Complete codebase cleanup of Firebase dependencies (`firebase_core`, `firebase_auth`, `cloud_firestore`).
-- [ ] Remove legacy `Firebase*Repository` classes and the `Env.useSupabase` toggle strategy.
-- [ ] Clean up redundant fallback `customerMap` logic in `one_time_deposits_controller.dart` and `recurring_deposits_controller.dart` once pre-joined database views are the sole source of truth.
+- [x] Complete codebase cleanup of legacy Firebase data/auth/analytics dependencies (`firebase_auth`, `cloud_firestore`, `firebase_performance`, `firebase_analytics`), retaining only `firebase_core` + native `!kIsWeb` `firebase_crashlytics` and Firebase Hosting.
+- [x] Remove legacy `Firebase*Repository` / `Firestore*Repository` classes and the `Env.useSupabase` toggle strategy.
+- [ ] Clean up redundant fallback `customerMap` logic in `one_time_deposits_controller.dart` and `recurring_deposits_controller.dart` once pre-joined database views + reactive customer name overlay are wired in Stage 3.
 
 ### Epic: Agent Profile
 - [ ] Build `Agent` domain model and mapping logic to rich business profile.

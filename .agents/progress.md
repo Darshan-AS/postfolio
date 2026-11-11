@@ -1,7 +1,20 @@
 # Project Progress
 
 ## Current State
-**Stage 1 Complete (2026-11-11, on top of Stage 0).** Established the automated CI quality & database contract gate, nightly `age`-encrypted Google Drive backups, strict static typing/async lints, R8/Hosting release hardening, and the repo-wide DDD baseline test suite:
+**Stage 2 Complete (2026-11-11, on branch `refactor/v2.4-stabilization`).** Excised all legacy Firestore / Firebase Auth / Firebase Analytics / Firebase Performance code and SDKs, centralized Supabase error sanitization, replaced `faker` with deterministic domain-valid demo fixtures, added bounded Web crash telemetry (`app_error_logs`), isolated `staging` vs `prod` flavors, and verified full Flutter Web Wasm compilation:
+- **Centralized Supabase Error Sanitization & Deterministic Demo Fixtures (`SupabaseErrorMapper`, `FakeDataSource`, `FakeAuthRepository`)**:
+  - Added `lib/core/utils/supabase_error_mapper.dart` mapping `PostgrestException` (`23505`, `23503`, `23514`, `42501`, `P0002`), `AuthException`, and `StateError` to concise user-safe messages across all 5 `Supabase*Repository` classes so raw SQL constraint names never reach UI strings.
+  - Added `FakeAuthRepository` in `lib/features/auth/data/auth_repository.dart` and rewrote `lib/core/mocks/fake_data_source.dart` with zero-`faker` deterministic fixtures (fixing the Demo Mode bug where 2-nominee records summed to `200%` and failed `Nominee.validateNominees` on edit).
+- **Bounded Web Crash Telemetry (`public.app_error_logs` & `AppErrorReporter`)**:
+  - Folded RLS-protected `public.app_error_logs` + `public.log_client_error` (truncates messages/stacks and retains latest 500 rows) into `supabase/migrations/20261111000000_p0_security_and_status_hotfix.sql`, verified by `CASE 15` in `supabase/tests/rd_ledger_facts_rls.sql`.
+  - Added deduplicated, rate-limited `AppErrorReporter` (`lib/core/services/app_error_reporter.dart`) wired on `kIsWeb` in `lib/main.dart`, keeping `Firebase.initializeApp` + `FirebaseCrashlytics` strictly inside `!kIsWeb` native targets.
+- **Legacy Firebase Excision, Wasm Readiness & Flavor Safety (`Env.assertFlavorSafe`)**:
+  - Removed `cloud_firestore`, `firebase_auth`, `firebase_performance` (+ Gradle plugin), `firebase_analytics`, `faker`, and `csv` from `pubspec.yaml`; removed `FirebaseAuthRepository`, `Firestore*Repository`, `UnsupportedRDLedgerRepository`, `Env.useSupabase`, `firestore_keys.dart`, `firestore.rules`, `docs/firestore_optimization_plan.md`, `lib/run_migration.dart`, `lib/run_supabase_migration.dart`, and `dart:io` from `lib/main.dart`.
+  - Upgraded `Env` (`lib/core/env/env.dart`) with `--dart-define` / `--dart-define-from-file` precedence (`config/local.json`, `config/staging.json.example`) + `envied` fallback and `Env.assertFlavorSafe(flavor: appFlavor)` preventing `staging` builds from booting against production Supabase.
+  - Updated `.agents/rules/architecture.md`, `docs/architecture.md`, and `docs/setup_guide.md` to reflect the single-backend Supabase + Riverpod architecture; added `flutter build web --wasm` to `ci.yml` and `release.yml`.
+- **Verification**: `dart analyze --fatal-infos` clean (0 issues), **15/15 SQL contract assertions passing**, **96/96 Flutter tests passing** (86 fast + 10 Supabase integration/E2E), `flutter build web --wasm` bundle verified, and DDD coverage ratcheted (`domain & core: 73.5% >= 73%`, `controllers & providers: 71.6% >= 71%`, `data & repositories: 41.7% >= 41%`, `total hand-written: 46.1% >= 46%`).
+
+**Previous: Stage 1 Complete (2026-11-11, on top of Stage 0).** Established the automated CI quality & database contract gate, nightly `age`-encrypted Google Drive backups, strict static typing/async lints, R8/Hosting release hardening, and the repo-wide DDD baseline test suite:
 - **Self-Asserting SQL Contract Suite & Tag Split (`dart_test.yaml`, `supabase/tests/rd_ledger_facts_rls.sql`)**:
   - Converted all 14 SQL RLS/privilege/constraint/cascade cases into `\set ON_ERROR_STOP on` PL/pgSQL assertions checking exact `SQLSTATE`s (`check_violation` `23514`, `insufficient_privilege` `42501`), exiting non-zero if any positive or negative security invariant regresses.
   - Tagged the 4 live-Supabase suites with `@Tags(['integration'])` so `flutter test --exclude-tags integration` runs 81 fast unit/controller/widget tests without Docker.
