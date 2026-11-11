@@ -12,6 +12,7 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/utils/supabase_paginated_query.dart';
 import 'package:postfolio/features/customers/data/supabase_customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
+import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/supabase_rd_ledger_repository.dart';
@@ -230,6 +231,51 @@ void main() {
     await Future<void>.delayed(const Duration(seconds: 1));
     final after = await container.read(rdLedgerProjectionProvider(rd1).future);
     expect(after.summary.depositedThroughNo, before.summary.depositedThroughNo);
+  });
+
+  test('Batch facts read: more ids than one IN-chunk still returns each account\'s own facts', () async {
+    // 250 ids → three chunks of the `rd_id IN (...)` filter; only rd1 exists.
+    final ids = [for (var i = 0; i < 249; i++) const Uuid().v4(), rd1];
+    final result = await SupabaseRDLedgerRepository(client).fetchRawFactsForRds(ids);
+    final bundles = (result as Success<Map<String, RDRawFactsBundle>, String>).value;
+    expect(bundles, hasLength(250));
+    expect(bundles[rd1]!.transactions, hasLength(8));
+    expect(bundles[rd1]!.poDeposits, hasLength(6));
+    expect(bundles[rd1]!.absorptions, hasLength(1));
+    expect(bundles[ids.first]!.transactions, isEmpty);
+  });
+
+  test('Write path: re-sending the same PO visit stores it once; undo restores the ledger', () async {
+    final n = container.read(rDLedgerControllerProvider.notifier);
+    final batchId = const Uuid().v7();
+    Future<Result<String, String>> send() => n.depositBatchToPo(
+          lines: [(rdId: rd1, count: 1, feeOverride: null)],
+          depositedOn: DateTime(2026, 10, 27),
+          batchId: batchId,
+        );
+    Future<List<Map<String, dynamic>>> visitRows() =>
+        client.from('rd_po_deposits').select('id, installment_count').eq('batch_id', batchId);
+
+    expect(await send(), isA<Success<String, String>>());
+    expect(await send(), isA<Success<String, String>>(), reason: 'a re-sent visit is a no-op');
+    final rows = await visitRows();
+    expect(rows, hasLength(1));
+    expect(rows.single['id'], RDLedgerController.poVisitEventId(batchId, rd1));
+    final summary = await client
+        .from('rd_ledger_summary')
+        .select('deposited_through_no')
+        .eq('rd_id', rd1)
+        .single();
+    expect(summary['deposited_through_no'], 19);
+
+    expect(await n.undoBatch(batchId), isA<Success<void, String>>());
+    expect(await visitRows(), isEmpty);
+    final restored = await client
+        .from('rd_ledger_summary')
+        .select('deposited_through_no')
+        .eq('rd_id', rd1)
+        .single();
+    expect(restored['deposited_through_no'], 18);
   });
 
   test('Stage 0 guards: cold recordPayment never double-counts summary and status toggle keeps summary', () async {

@@ -3,6 +3,12 @@
 ## Current State
 **v2.4 Audit Fixes — In Progress (2026-11-12, on branch `refactor/v2.4-stabilization`).** An independent audit (`.agents/session_logs/2026-11-11_session_2.md`) found the branch not yet mergeable. Fixes are tracked as A1–A8 under "v2.4 Audit Follow-ups" in `.agents/tasks.md`; the Stage 5 entry below describes the branch as audited, before these fixes.
 - **A1 (done)**: A PO visit now has a scope (`RDPoVisitPlan.scopeRdIds`, the rows ticked in the Hub). `RDPoVisitPlanner.setIncludeUnready` only shows unready accounts inside that scope and keeps fronted lines; the batch bar passes the whole selection. Previously the switch rebuilt the plan from every Hub row.
+- **A2 (done)**: PO visit write path.
+  - Domain: `RDLedgerProjector.planPoDeposit` owns every rule for a PO event (count, remaining months, counter fee, date not before the last visit); `quoteNextDeposit` takes `feeOverride`; `RDLedgerFacts.depositedThroughNo` replaces the controller's static helper. The single-account sheet, the visit and `useDepositDraft` all use them.
+  - `RDLedgerController.depositBatchToPo` reads all facts once (`fetchRawFactsForRds`), validates, inserts once, then projects summaries from the facts in hand. Nothing is read after the insert, so a saved visit is never reported as failed.
+  - Retry safety: the plan carries a `visitId` used as the batch id, and event ids are deterministic (`poVisitEventId(batchId, rdId)`), so re-sending a visit skips accounts already saved.
+  - `undoBatch` and `flushDirtySummaries` refresh summaries from one batch read; a failed refresh marks accounts dirty instead of failing the undo.
+  - `SupabaseRDLedgerRepository` reads facts in `rd_id IN (...)` chunks of 100 (4 at a time) instead of scanning the agent's whole history above 100 accounts.
 
 **Previous: Stage 5 Complete — All Stages 0–5 Complete (2026-11-11, on branch `refactor/v2.4-stabilization`).** Consolidated all post-`v2.3.1` database security, telemetry, and storage-physics work into **one** clean SQL migration (`supabase/migrations/20261111000000_v2_4_storage_hardening.sql`), stripped leaked domain rules and enum checks out of PostgreSQL, added `>1,000`-row `.range()` auto-pagination + debounced Realtime/local-mutation collection streams, batched Monthly Hub summary backfills into `O(1)` bulk reads/writes, and upgraded client IDs to RFC 9562 `UUIDv7`:
 - **Single Consolidated `v2.4` Pure-DDD SQL Migration (`supabase/migrations/20261111000000_v2_4_storage_hardening.sql`)**:

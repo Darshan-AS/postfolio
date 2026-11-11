@@ -51,6 +51,7 @@ RDTransaction _tx(String rdId, String id, double amount, DateTime on) => RDTrans
   required List<RecurringDeposit> deposits,
   Map<String, List<RDTransaction>>? transactions,
   Map<String, List<RDPoDeposit>>? poDeposits,
+  bool retryFailedProviders = true,
 }) {
   final ledger = FakeRDLedgerRepository(transactions: transactions, poDeposits: poDeposits);
   final depositRepo = FakeRecurringDepositRepository(deposits: deposits);
@@ -60,6 +61,9 @@ RDTransaction _tx(String rdId, String id, double amount, DateTime on) => RDTrans
       rdLedgerRepositoryProvider.overrideWithValue(ledger),
       recurringDepositRepositoryProvider.overrideWithValue(depositRepo),
     ],
+    // Riverpod retries a failed provider with backoff for ~38s before `.future` rejects.
+    // Tests that exercise read failures turn that off to reach the end state at once.
+    retry: retryFailedProviders ? null : (_, _) => null,
   );
   addTearDown(container.dispose);
   addTearDown(ledger.dispose);
@@ -719,6 +723,99 @@ void main() {
       await ledger.flushDirtySummaries();
       expect(ledger.dirtySummaryRdIds, isEmpty);
       expect(h.ledger.summaryOf('rd1')!.paidThroughNo, 2);
+    });
+  });
+
+  group('PO visit write path', () {
+    // rd1 has two collected months and rd2 one, all paid on time; the visit is on 20 Apr.
+    Future<
+        ({
+          ProviderContainer c,
+          FakeRDLedgerRepository ledger,
+          RDPoVisitPlanner planner,
+        })> openVisit() async {
+      final h = _harness(
+        deposits: [_deposit('rd1'), _deposit('rd2', customer: 'c2')],
+        transactions: {
+          'rd1': [_tx('rd1', 't1', 2000, DateTime(2026, 1, 10))],
+          'rd2': [_tx('rd2', 't2', 1000, DateTime(2026, 1, 10))],
+        },
+        retryFailedProviders: false,
+      );
+      // A real round trip is long enough for unlistened fact providers to be torn down.
+      h.ledger.writeLatency = const Duration(milliseconds: 30);
+      final c = h.container;
+      _keepHub(c);
+      c.listen(rDPoVisitPlannerProvider, (_, _) {});
+      c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
+      await c.read(rDMonthlyOperationsActionsProvider.notifier).ensureSummaries();
+      await _settle();
+      await c.read(monthlyOperationItemsProvider.future);
+      final planner = c.read(rDPoVisitPlannerProvider.notifier)..start();
+      return (c: c, ledger: h.ledger, planner: planner);
+    }
+
+    test('a saved visit is reported as saved even if nothing can be read afterwards', () async {
+      final v = await openVisit();
+      v.ledger.onPoDepositsAdded = () => v.ledger.failReadsWith = 'offline';
+
+      final r = await v.planner.record();
+
+      expect(r, isA<Success<String, String>>(),
+          reason: 'the deposits are in the database; a failed summary refresh is not a failed visit');
+      expect(v.ledger.poDepositsOf('rd1').single.installmentCount, 2);
+      expect(v.ledger.poDepositsOf('rd2').single.installmentCount, 1);
+      expect(v.ledger.summaryOf('rd1')!.depositedThroughNo, 2,
+          reason: 'summaries are projected from the facts already in hand, with no further reads');
+      expect(v.ledger.summaryOf('rd2')!.depositedThroughNo, 1);
+    });
+
+    test('retrying a visit whose first attempt was saved but reported as failed deposits nothing twice',
+        () async {
+      final v = await openVisit();
+      v.ledger.failAddPoDepositsAfterCommitOnce = 'response lost';
+
+      expect(await v.planner.record(), isA<Failure<String, String>>());
+      final retry = await v.planner.record();
+
+      expect(retry, isA<Success<String, String>>());
+      expect(v.ledger.poDepositsOf('rd1'), hasLength(1), reason: 'the retry must not deposit months 3 and 4');
+      expect(v.ledger.poDepositsOf('rd2'), hasLength(1));
+      expect(v.ledger.summaryOf('rd1')!.depositedThroughNo, 2);
+      expect(v.ledger.summaryOf('rd2')!.depositedThroughNo, 1);
+      final batchId = (retry as Success<String, String>).value;
+      expect(v.ledger.poDepositsOf('rd1').single.batchId, batchId,
+          reason: 'the returned id must undo the visit that was actually saved');
+    });
+
+    test('a visit reads the facts of all its accounts in one request, not per account', () async {
+      final v = await openVisit();
+      final streamsBefore = v.ledger.streamOpenCount;
+      final batchReadsBefore = v.ledger.batchFactFetchCount;
+
+      expect(await v.planner.record(), isA<Success<String, String>>());
+
+      expect(v.ledger.streamOpenCount, streamsBefore, reason: 'no per-account fact streams');
+      expect(v.ledger.batchFactFetchCount, batchReadsBefore + 1);
+    });
+
+    test('undoing a visit is reported as done even if its summary refresh cannot read, and heals later',
+        () async {
+      final v = await openVisit();
+      final batchId = (await v.planner.record() as Success<String, String>).value;
+      final controller = v.c.read(rDLedgerControllerProvider.notifier);
+
+      v.ledger.failReadsWith = 'offline';
+      expect(await v.planner.undoVisit(batchId), isA<Success<void, String>>());
+      expect(v.ledger.poDepositsOf('rd1'), isEmpty);
+      expect(v.ledger.poDepositsOf('rd2'), isEmpty);
+      expect(controller.dirtySummaryRdIds, containsAll(['rd1', 'rd2']));
+
+      v.ledger.failReadsWith = null;
+      await controller.flushDirtySummaries();
+      expect(controller.dirtySummaryRdIds, isEmpty);
+      expect(v.ledger.summaryOf('rd1')!.depositedThroughNo, 0);
+      expect(v.ledger.summaryOf('rd2')!.depositedThroughNo, 0);
     });
   });
 }

@@ -1,10 +1,12 @@
 import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/money.dart';
+import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_rules.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 
@@ -333,30 +335,84 @@ final class RDLedgerProjector {
 
   /// Amount (installment + fee) the PO will charge to deposit the next [count] months on
   /// [depositedOn], given the current facts. Used by the "Deposit next N" sheet.
+  ///
+  /// Pass [feeOverride] when the counter charged a different fee than the statutory formula
+  /// (e.g. `0` when a holiday extended the due date); it replaces the rule fee for the visit.
   ({double amount, double fee}) quoteNextDeposit(
     RDLedgerFacts facts, {
     required int count,
     required DateTime depositedOn,
+    double? feeOverride,
   }) {
     final deposit = facts.deposit;
     final n = deposit.totalMonths;
-    var through = deposit.initialPaidInstallments.clamp(0, n);
-    for (final ev in facts.poDepositsInOrder) {
-      through = (through + ev.installmentCount).clamp(0, n);
-    }
-    var amount = 0;
+    final through = facts.depositedThroughNo;
+    var principal = 0;
     var fee = 0;
     final amountP = Money.toPaise(deposit.installmentAmount);
     for (var k = 0; k < count && through + 1 + k <= n; k++) {
       final no = through + 1 + k;
       final due = rules.dueDateFor(
           deposit.startDate, RDScheduleFactory.installmentDateFor(deposit.startDate, no));
-      final f = Money.toPaise(
+      principal += amountP;
+      fee += Money.toPaise(
           rules.defaultFeeFor(deposit.installmentAmount, rules.defaultedMonths(due, depositedOn)));
-      amount += amountP + f;
-      fee += f;
     }
-    return (amount: Money.toRupees(amount), fee: Money.toRupees(fee));
+    if (feeOverride != null) {
+      final overrideP = Money.toPaise(feeOverride);
+      fee = overrideP < 0 ? 0 : overrideP;
+    }
+    return (amount: Money.toRupees(principal + fee), fee: Money.toRupees(fee));
+  }
+
+  /// Validates and builds the Post Office event "the next [count] months of this account were
+  /// deposited on [depositedOn]". Every rule a visit must satisfy lives here, so the single
+  /// account sheet and the multi-account visit cannot disagree:
+  /// * at least one month, and no more than the account still has to deposit;
+  /// * the counter fee, when given, is not negative;
+  /// * the visit is not dated before the account's last recorded visit (the PO ledger is
+  ///   sequential, and an earlier date would re-assign which months earlier visits covered).
+  Result<RDPoDeposit, String> planPoDeposit(
+    RDLedgerFacts facts, {
+    required String id,
+    required int count,
+    required DateTime depositedOn,
+    double? feeOverride,
+    String? batchId,
+  }) {
+    if (count <= 0) return const Failure('Nothing to deposit.');
+    if (feeOverride != null && Money.toPaise(feeOverride) < 0) {
+      return const Failure('Counter fee cannot be negative.');
+    }
+    final remaining = facts.deposit.totalMonths - facts.depositedThroughNo;
+    if (count > remaining) {
+      return Failure('Only $remaining installment(s) remain on this account.');
+    }
+    final day = depositedOn.toDateOnly();
+    final latest = facts.latestPoDeposit;
+    if (latest != null && day.isBefore(latest.depositedOn.toDateOnly())) {
+      return Failure(
+        'Deposit date cannot be before the last recorded visit '
+        '(${latest.depositedOn.toDateOnlyString()}).',
+      );
+    }
+    final quote = quoteNextDeposit(
+      facts,
+      count: count,
+      depositedOn: day,
+      feeOverride: feeOverride,
+    );
+    return Success(
+      RDPoDeposit(
+        id: id,
+        rdId: facts.deposit.id,
+        depositedOn: day,
+        installmentCount: count,
+        feePaid: quote.fee,
+        amount: quote.amount,
+        batchId: batchId,
+      ),
+    );
   }
 
   static int _chronological(RDTransaction a, RDTransaction b) {

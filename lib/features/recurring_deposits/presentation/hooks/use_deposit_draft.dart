@@ -129,11 +129,14 @@ DepositDraftState useDepositDraft(
       if (factsValue == null || baseQuote == null || count == 0) return null;
       final override = feeOverrideState.value;
       if (override == null) return baseQuote;
-      final fee = Money.round(override < 0 ? 0.0 : override);
-      final amount = Money.round(count * factsValue.deposit.installmentAmount + fee);
-      return (amount: amount, fee: fee);
+      return projector.quoteNextDeposit(
+        factsValue,
+        count: count,
+        depositedOn: depositedOn.value,
+        feeOverride: override,
+      );
     },
-    [factsValue, baseQuote, count, feeOverrideState.value],
+    [factsValue, projector, baseQuote, count, depositedOn.value, feeOverrideState.value],
   );
 
   final fromPocket = useMemoized<double>(

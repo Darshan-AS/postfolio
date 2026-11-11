@@ -40,6 +40,17 @@ sealed class RDLedgerFacts with _$RDLedgerFacts {
   RDPoDeposit? get latestPoDeposit =>
       poDeposits.isEmpty ? null : poDepositsInOrder.last;
 
+  /// Last month already at the Post Office: the onboarding baseline plus every recorded
+  /// PO event, never beyond the account's term.
+  int get depositedThroughNo {
+    final n = deposit.totalMonths;
+    var through = deposit.initialPaidInstallments.clamp(0, n);
+    for (final event in poDeposits) {
+      through = (through + event.installmentCount).clamp(0, n);
+    }
+    return through;
+  }
+
   static int comparePoDeposits(RDPoDeposit a, RDPoDeposit b) {
     final byDay = a.depositedOn.compareTo(b.depositedOn);
     if (byDay != 0) return byDay;

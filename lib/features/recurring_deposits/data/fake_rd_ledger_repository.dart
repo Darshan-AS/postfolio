@@ -28,6 +28,21 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   /// When set, only summary-cache upserts fail (simulates transient drop after fact write).
   String? failSummaryWith;
 
+  /// When set, every read fails with this message: fact streams opened from now on emit a
+  /// `Failure` and [fetchRawFactsForRds] returns one (simulates going offline).
+  String? failReadsWith;
+
+  /// When set, the next [addPoDeposits] stores the events and then reports this failure once
+  /// (simulates a response lost after the server committed).
+  String? failAddPoDepositsAfterCommitOnce;
+
+  /// Called right after [addPoDeposits] has stored its events.
+  void Function()? onPoDepositsAdded;
+
+  /// Simulated network round-trip time for [addPoDeposits] (tests only). With real latency,
+  /// unlistened autoDispose providers are torn down while a write is in flight.
+  Duration? writeLatency;
+
   final Map<String, List<RDTransaction>> _transactions;
   final Map<String, List<RDPoDeposit>> _poDeposits;
   final Map<String, List<RDFeeAbsorption>> _absorptions;
@@ -42,6 +57,9 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   /// Test telemetry counters for batch summary backfills.
   int batchFactFetchCount = 0;
   int upsertSummariesCallCount = 0;
+
+  /// Number of per-account fact streams opened so far.
+  int streamOpenCount = 0;
 
   // --- Test inspection ----------------------------------------------------------------------
   List<RDTransaction> transactionsOf(String rdId) => List.unmodifiable(_transactions[rdId] ?? const []);
@@ -68,6 +86,7 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
     List<String> rdIds,
   ) async {
     if (failWith != null) return Failure(failWith!);
+    if (failReadsWith != null) return Failure(failReadsWith!);
     batchFactFetchCount++;
     return Success({
       for (final id in rdIds)
@@ -150,6 +169,8 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   Future<Result<void, String>> addPoDeposits(List<RDPoDeposit> events) async {
     if (failWith != null) return Failure(failWith!);
     if (events.isEmpty) return const Success(null);
+    final latency = writeLatency;
+    if (latency != null) await Future<void>.delayed(latency);
 
     // Validate full batch upfront so partial writes never occur.
     final seenIds = <String>{};
@@ -169,6 +190,12 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
     }
     for (final rdId in touched) {
       _poControllers[rdId]?.add(Success(List.unmodifiable(_poDeposits[rdId]!)));
+    }
+    onPoDepositsAdded?.call();
+    final lostResponse = failAddPoDepositsAfterCommitOnce;
+    if (lostResponse != null) {
+      failAddPoDepositsAfterCommitOnce = null;
+      return Failure(lostResponse);
     }
     return const Success(null);
   }
@@ -256,7 +283,13 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
       rdId,
       () => StreamController<Result<List<T>, String>>.broadcast(),
     );
-    yield Success(List.unmodifiable(current()));
+    streamOpenCount++;
+    final readFailure = failReadsWith;
+    if (readFailure != null) {
+      yield Failure(readFailure);
+    } else {
+      yield Success(List.unmodifiable(current()));
+    }
     yield* controller.stream;
   }
 

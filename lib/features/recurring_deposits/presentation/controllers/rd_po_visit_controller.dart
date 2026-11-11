@@ -57,6 +57,10 @@ sealed class RDPoVisitPlan with _$RDPoVisitPlan {
   const RDPoVisitPlan._();
 
   const factory RDPoVisitPlan({
+    /// Identity of this visit, fixed from the moment the plan is opened until it is saved.
+    /// Recording sends it as the batch id, so tapping "Record" again after a failure re-sends
+    /// the same visit instead of creating a second one.
+    required String visitId,
     required DateTime depositedOn,
     @Default(<RDPoVisitLine>[]) List<RDPoVisitLine> lines,
     /// Whether accounts with nothing collected are listed (so the agent can front them).
@@ -120,7 +124,7 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
   RDPoVisitPlan build() {
     ref.watch(activeSessionKeyProvider);
     final today = ref.watch(currentDateProvider);
-    return RDPoVisitPlan(depositedOn: today);
+    return RDPoVisitPlan(visitId: const Uuid().v7(), depositedOn: today);
   }
 
   static const _rules = RDLedgerRules.standard;
@@ -134,6 +138,7 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
   }) {
     final scoped = items?.toList(growable: false);
     state = RDPoVisitPlan(
+      visitId: const Uuid().v7(),
       depositedOn: state.depositedOn,
       includeUnready: includeUnready,
       scopeRdIds: scoped == null ? null : {for (final i in scoped) i.deposit.id},
@@ -185,18 +190,24 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
       );
 
   /// Validates every included account upfront and commits the entire PO visit batch atomically.
-  Future<Result<String, String>> record() {
+  ///
+  /// The plan's [RDPoVisitPlan.visitId] is the batch id, so recording again after a failure
+  /// re-sends the same visit (accounts already saved are skipped). Once the visit is saved
+  /// the plan gets a fresh identity, so recording the planner again is a new visit.
+  Future<Result<String, String>> record() async {
     final plan = state;
-    final batchId = const Uuid().v7();
-    final ledger = ref.read(rDLedgerControllerProvider.notifier);
-    return ledger.depositBatchToPo(
+    final result = await ref.read(rDLedgerControllerProvider.notifier).depositBatchToPo(
       lines: [
         for (final line in plan.included)
           (rdId: line.rdId, count: line.count, feeOverride: line.feeOverride),
       ],
       depositedOn: plan.depositedOn,
-      batchId: batchId,
+      batchId: plan.visitId,
     );
+    if (result is Success<String, String> && ref.mounted && state.visitId == plan.visitId) {
+      state = state.copyWith(visitId: const Uuid().v7());
+    }
+    return result;
   }
 
   Future<Result<void, String>> undoVisit(String batchId) =>

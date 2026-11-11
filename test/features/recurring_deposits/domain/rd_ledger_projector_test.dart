@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
@@ -296,6 +297,97 @@ void main() {
       // #2 due 15 Feb → 1 month late; #3 due 15 Mar → 1 month late.
       expect(q.fee, 20);
       expect(q.amount, 2020);
+    });
+
+    test('quoteNextDeposit uses the counter fee when one is given, including a full waiver', () {
+      final facts = RDLedgerFacts(deposit: deposit(), poDeposits: [po('e1', 1, DateTime(2026, 1, 12))]);
+      final on = DateTime(2026, 3, 20);
+      final waived = projector.quoteNextDeposit(facts, count: 2, depositedOn: on, feeOverride: 0);
+      expect(waived.fee, 0);
+      expect(waived.amount, 2000);
+      final counter = projector.quoteNextDeposit(facts, count: 2, depositedOn: on, feeOverride: 12.5);
+      expect(counter.fee, 12.5);
+      expect(counter.amount, 2012.5);
+    });
+
+    test('depositedThroughNo is the opening baseline plus every event, capped at the term', () {
+      expect(RDLedgerFacts(deposit: deposit()).depositedThroughNo, 0);
+      expect(
+        RDLedgerFacts(
+          deposit: deposit(initialPaid: 2),
+          poDeposits: [po('e1', 1, DateTime(2026, 3, 12)), po('e2', 3, DateTime(2026, 4, 12))],
+        ).depositedThroughNo,
+        6,
+      );
+      expect(
+        RDLedgerFacts(
+          deposit: deposit(termYears: 0, termMonths: 2),
+          poDeposits: [po('e1', 5, DateTime(2026, 2, 12))],
+        ).depositedThroughNo,
+        2,
+      );
+    });
+
+    test('planPoDeposit builds the next sequential PO event from the counter quote', () {
+      final facts = RDLedgerFacts(deposit: deposit(), poDeposits: [po('e1', 1, DateTime(2026, 1, 12))]);
+
+      final planned = projector.planPoDeposit(
+        facts,
+        id: 'e2',
+        count: 2,
+        depositedOn: DateTime(2026, 3, 20, 9, 30),
+        batchId: 'visit-1',
+      );
+      final event = (planned as Success<RDPoDeposit, String>).value;
+      expect(event.id, 'e2');
+      expect(event.rdId, _rdId);
+      expect(event.depositedOn, DateTime(2026, 3, 20), reason: 'a visit is a calendar day');
+      expect(event.installmentCount, 2);
+      expect(event.feePaid, 20, reason: '#2 and #3 are each one month late on 20 Mar');
+      expect(event.amount, 2020);
+      expect(event.batchId, 'visit-1');
+
+      final waived = projector.planPoDeposit(
+        facts,
+        id: 'e3',
+        count: 2,
+        depositedOn: DateTime(2026, 3, 20),
+        feeOverride: 0,
+      );
+      final waivedEvent = (waived as Success<RDPoDeposit, String>).value;
+      expect(waivedEvent.feePaid, 0);
+      expect(waivedEvent.amount, 2000);
+    });
+
+    test('planPoDeposit refuses a visit the sequential Post Office ledger cannot accept', () {
+      final facts = RDLedgerFacts(
+        deposit: deposit(initialPaid: 10), // 12-month account, 10 on the books at onboarding
+        poDeposits: [po('e1', 1, DateTime(2026, 11, 12))], // #11
+      );
+      Result<RDPoDeposit, String> plan({
+        int count = 1,
+        DateTime? on,
+        double? feeOverride,
+      }) =>
+          projector.planPoDeposit(
+            facts,
+            id: 'next',
+            count: count,
+            depositedOn: on ?? DateTime(2026, 12, 20),
+            feeOverride: feeOverride,
+          );
+
+      expect(plan(), isA<Success<RDPoDeposit, String>>(), reason: '#12 is the one month left');
+      expect(plan(on: DateTime(2026, 11, 12)), isA<Success<RDPoDeposit, String>>(),
+          reason: 'the same day as the last visit is allowed');
+      expect(plan(count: 0), isA<Failure<RDPoDeposit, String>>());
+      expect(plan(feeOverride: -1), isA<Failure<RDPoDeposit, String>>());
+      expect(plan(on: DateTime(2026, 11, 11)), isA<Failure<RDPoDeposit, String>>(),
+          reason: 'a visit cannot be dated before the last recorded visit');
+      final tooMany = plan(count: 2);
+      expect(tooMany, isA<Failure<RDPoDeposit, String>>());
+      expect((tooMany as Failure<RDPoDeposit, String>).error, contains('1'),
+          reason: 'the message says how many months remain');
     });
 
     test('events beyond the schedule are warnings, and the latest event is identifiable', () {
