@@ -58,7 +58,7 @@ void main() async {
 
     // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
     PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true).ignore();
       return true;
     };
   }
@@ -82,7 +82,7 @@ void main() async {
   }
 
   final prefs = await SharedPreferences.getInstance();
-  LocaleSettings.useDeviceLocale();
+  await LocaleSettings.useDeviceLocale();
 
   runApp(
     ProviderScope(

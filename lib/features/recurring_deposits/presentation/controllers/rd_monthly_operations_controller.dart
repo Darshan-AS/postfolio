@@ -213,7 +213,8 @@ sealed class RDMonthlyKpiSummary with _$RDMonthlyKpiSummary {
 
 @riverpod
 RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
-  final items = ref.watch(monthlyOperationItemsProvider).value ?? const [];
+  final items =
+      ref.watch(monthlyOperationItemsProvider).value ?? const <RDMonthlyOperationItem>[];
   final now = ref.watch(clockProvider)().toDateOnly();
   final month = ref.watch(rDHubMonthProvider);
   final isFutureMonth = month.isAfter(now.toMonthStart());
@@ -427,7 +428,8 @@ sealed class RDBatchSelectionSummary with _$RDBatchSelectionSummary {
 @riverpod
 RDBatchSelectionSummary batchSelectionSummary(Ref ref) {
   final ids = ref.watch(rDHubSelectionProvider.select((s) => s.installmentIds));
-  final items = ref.watch(monthlyOperationItemsProvider).value ?? const [];
+  final items =
+      ref.watch(monthlyOperationItemsProvider).value ?? const <RDMonthlyOperationItem>[];
   final selected = <RDMonthlyOperationItem>[
     for (final i in items)
       if (ids.contains(i.installment.id)) i,
@@ -490,7 +492,7 @@ class RDMonthlyOperationsActions extends _$RDMonthlyOperationsActions {
   Future<void> ensureSummaries({bool rebuildAll = false}) async {
     final ledger = ref.read(rDLedgerControllerProvider.notifier);
     final ids = rebuildAll
-        ? (ref.read(monthlyOperationItemsProvider).value ?? const [])
+        ? (ref.read(monthlyOperationItemsProvider).value ?? const <RDMonthlyOperationItem>[])
             .map((i) => i.deposit.id)
             .toList()
         : await ref.read(rdIdsMissingSummaryProvider.future);

@@ -796,7 +796,8 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
 
           if (!isDuplicate) {
             final deposit = parser(row, headers);
-            final data = deposit.toJson();
+            final depositId = deposit.id as String;
+            final data = deposit.toJson() as Map<String, dynamic>;
             data['createdAt'] ??= FieldValue.serverTimestamp();
             data['updatedAt'] ??= FieldValue.serverTimestamp();
 
@@ -805,7 +806,7 @@ ${useFirebaseEmulator ? "Check your Firebase Local Emulator UI." : "Data is now 
                   .collection(FirestoreCollections.users)
                   .doc(uid)
                   .collection(collectionName)
-                  .doc(deposit.id),
+                  .doc(depositId),
               data,
             );
 

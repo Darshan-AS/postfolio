@@ -91,7 +91,7 @@ class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
   ) async {
     try {
       // We use .set() without awaiting the server sync.
-      _deposits.doc(deposit.id).set(deposit);
+      unawaited(_deposits.doc(deposit.id).set(deposit));
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
@@ -103,7 +103,9 @@ class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
     OneTimeDeposit deposit,
   ) async {
     try {
-      _deposits.doc(deposit.id).set(deposit, firestore.SetOptions(merge: true));
+      unawaited(
+        _deposits.doc(deposit.id).set(deposit, firestore.SetOptions(merge: true)),
+      );
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
@@ -116,10 +118,12 @@ class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
     DepositStatus status,
   ) async {
     try {
-      _deposits.doc(id).update({
-        'status': status.name,
-        FirestoreKeys.updatedAt: firestore.FieldValue.serverTimestamp(),
-      });
+      unawaited(
+        _deposits.doc(id).update({
+          'status': status.name,
+          FirestoreKeys.updatedAt: firestore.FieldValue.serverTimestamp(),
+        }),
+      );
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
@@ -129,7 +133,7 @@ class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
   @override
   Future<Result<void, String>> deleteOneTimeDeposit(String id) async {
     try {
-      _deposits.doc(id).delete();
+      unawaited(_deposits.doc(id).delete());
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());

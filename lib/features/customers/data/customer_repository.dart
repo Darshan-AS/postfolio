@@ -84,7 +84,7 @@ class FirestoreCustomerRepository implements CustomerRepository {
       // We use .set() without awaiting the server sync.
       // This allows offline writes to resolve immediately to the UI,
       // relying on Firestore's background syncing.
-      _customers.doc(customer.id).set(customer);
+      unawaited(_customers.doc(customer.id).set(customer));
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
@@ -94,9 +94,11 @@ class FirestoreCustomerRepository implements CustomerRepository {
   @override
   Future<Result<void, String>> updateCustomer(Customer customer) async {
     try {
-      _customers
-          .doc(customer.id)
-          .set(customer, firestore.SetOptions(merge: true));
+      unawaited(
+        _customers
+            .doc(customer.id)
+            .set(customer, firestore.SetOptions(merge: true)),
+      );
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
@@ -106,7 +108,7 @@ class FirestoreCustomerRepository implements CustomerRepository {
   @override
   Future<Result<void, String>> deleteCustomer(String id) async {
     try {
-      _customers.doc(id).delete();
+      unawaited(_customers.doc(id).delete());
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());

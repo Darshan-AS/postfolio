@@ -90,7 +90,9 @@ class FirestoreRecurringDepositRepository
   @override
   Future<Result<void, String>> saveRecurringDeposit(RecurringDeposit deposit) async {
     try {
-      _deposits.doc(deposit.id).set(deposit, firestore.SetOptions(merge: true));
+      unawaited(
+        _deposits.doc(deposit.id).set(deposit, firestore.SetOptions(merge: true)),
+      );
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
@@ -103,10 +105,12 @@ class FirestoreRecurringDepositRepository
     DepositStatus status,
   ) async {
     try {
-      _deposits.doc(id).update({
-        'status': status.name,
-        FirestoreKeys.updatedAt: firestore.FieldValue.serverTimestamp(),
-      });
+      unawaited(
+        _deposits.doc(id).update({
+          'status': status.name,
+          FirestoreKeys.updatedAt: firestore.FieldValue.serverTimestamp(),
+        }),
+      );
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
@@ -116,7 +120,7 @@ class FirestoreRecurringDepositRepository
   @override
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {
     try {
-      _deposits.doc(id).delete();
+      unawaited(_deposits.doc(id).delete());
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
