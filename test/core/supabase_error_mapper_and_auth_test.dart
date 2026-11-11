@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
+import 'package:postfolio/core/services/app_error_reporter.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
@@ -184,6 +185,33 @@ void main() {
         expect(Nominee.validateNominees(rd.nominees), isNull);
         expect(rd.customerName, isNotNull);
       }
+    });
+  });
+
+  group('AppErrorReporter rate-limiting & resilience', () {
+    test('deduplicates repeated errors within cooldown, enforces session cap, and swallows send errors', () async {
+      var now = DateTime(2026, 11, 11, 10, 0);
+      final recorded = <String>[];
+      final reporter = AppErrorReporter(
+        now: () => now,
+        cooldown: const Duration(seconds: 60),
+        maxReportsPerSession: 3,
+        send: ({required platform, required error, stackTrace}) async {
+          if (error == 'boom-network') throw Exception('network down');
+          recorded.add('$platform:$error');
+        },
+      );
+
+      await reporter.report(platform: 'web', error: 'RenderFlex overflow');
+      await reporter.report(platform: 'web', error: 'RenderFlex overflow'); // duplicate in cooldown
+      expect(recorded, ['web:RenderFlex overflow']);
+
+      now = now.add(const Duration(seconds: 61));
+      await reporter.report(platform: 'web', error: 'RenderFlex overflow'); // allowed after cooldown
+      await reporter.report(platform: 'web', error: 'boom-network'); // swallowed, counts toward cap
+      await reporter.report(platform: 'web', error: 'over-cap'); // dropped by maxReportsPerSession=3
+      expect(recorded, ['web:RenderFlex overflow', 'web:RenderFlex overflow']);
+      expect(reporter.sentCount, 3);
     });
   });
 }

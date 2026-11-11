@@ -590,6 +590,62 @@ ALTER TABLE public.rd_ledger_summary
   ON UPDATE CASCADE ON DELETE CASCADE;
 
 -- ------------------------------------------------------------------------------------------
+-- 5b. Bounded Web/Client Crash Telemetry (`app_error_logs` + `log_client_error`)
+-- ------------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.app_error_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id UUID REFERENCES public.agent_profiles(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  platform TEXT NOT NULL CHECK (char_length(platform) <= 32),
+  error_message TEXT NOT NULL CHECK (char_length(error_message) <= 1000),
+  stack_trace TEXT CHECK (stack_trace IS NULL OR char_length(stack_trace) <= 8000),
+  app_version TEXT CHECK (app_version IS NULL OR char_length(app_version) <= 64),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.app_error_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Agents read own error logs" ON public.app_error_logs;
+CREATE POLICY "Agents read own error logs" ON public.app_error_logs
+  FOR SELECT USING (agent_id = auth.uid() OR public.is_admin());
+
+CREATE INDEX IF NOT EXISTS idx_app_error_logs_created_at
+  ON public.app_error_logs(created_at DESC);
+
+CREATE OR REPLACE FUNCTION public.log_client_error(
+  p_platform TEXT,
+  p_error TEXT,
+  p_stack_trace TEXT DEFAULT NULL,
+  p_app_version TEXT DEFAULT NULL
+) RETURNS VOID AS $$
+DECLARE
+  v_agent_id UUID := private.assert_authenticated();
+BEGIN
+  INSERT INTO public.app_error_logs (
+    agent_id,
+    platform,
+    error_message,
+    stack_trace,
+    app_version
+  )
+  VALUES (
+    v_agent_id,
+    LEFT(COALESCE(NULLIF(TRIM(p_platform), ''), 'unknown'), 32),
+    LEFT(COALESCE(NULLIF(TRIM(p_error), ''), 'Unknown error'), 1000),
+    CASE WHEN p_stack_trace IS NULL THEN NULL ELSE LEFT(p_stack_trace, 8000) END,
+    CASE WHEN p_app_version IS NULL THEN NULL ELSE LEFT(TRIM(p_app_version), 64) END
+  );
+
+  DELETE FROM public.app_error_logs
+  WHERE id IN (
+    SELECT id
+    FROM public.app_error_logs
+    ORDER BY created_at DESC
+    OFFSET 500
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, private;
+
+-- ------------------------------------------------------------------------------------------
 -- 6. Least-privilege table & routine grants in `public`
 -- ------------------------------------------------------------------------------------------
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon;
@@ -619,6 +675,9 @@ GRANT EXECUTE ON FUNCTION public.set_deposit_status(UUID, TEXT)
   TO authenticated, service_role;
 
 GRANT EXECUTE ON FUNCTION public.undo_rd_po_deposit_batch(UUID)
+  TO authenticated, service_role;
+
+GRANT EXECUTE ON FUNCTION public.log_client_error(TEXT, TEXT, TEXT, TEXT)
   TO authenticated, service_role;
 
 NOTIFY pgrst, 'reload schema';

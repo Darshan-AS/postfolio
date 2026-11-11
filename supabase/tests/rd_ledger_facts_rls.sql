@@ -379,4 +379,48 @@ BEGIN
 END $$;
 ROLLBACK;
 
-\echo '== ALL 14 SQL CONTRACT ASSERTIONS PASSED =='
+\echo '== CASE 15: log_client_error truncates oversized payloads, enforces RLS, and blocks anon'
+BEGIN;
+INSERT INTO auth.users (instance_id,id,aud,role,email,raw_user_meta_data,confirmation_token,recovery_token,email_change_token_new,email_change)
+VALUES ('00000000-0000-0000-0000-000000000000','dddddddd-0000-4000-8000-000000000002','authenticated','authenticated','other-agent@example.com','{}','','','','')
+ON CONFLICT (id) DO NOTHING;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'owner', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+DECLARE
+  v_err_len INT;
+  v_stack_len INT;
+BEGIN
+  PERFORM public.log_client_error('web', repeat('E', 1500), repeat('S', 9000), '2.4.0');
+  SELECT char_length(error_message), char_length(stack_trace)
+  INTO v_err_len, v_stack_len
+  FROM public.app_error_logs
+  WHERE agent_id = auth.uid()
+  ORDER BY created_at DESC
+  LIMIT 1;
+  ASSERT v_err_len = 1000 AND v_stack_len = 8000,
+    'CASE 15a FAILED: expected log_client_error to truncate oversized error and stack payloads';
+END $$;
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'other', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+DECLARE
+  v_visible BIGINT;
+BEGIN
+  SELECT count(*) INTO v_visible FROM public.app_error_logs;
+  ASSERT v_visible = 0, 'CASE 15b FAILED: other agent must not read owner error logs';
+END $$;
+SET LOCAL ROLE anon;
+DO $$
+DECLARE
+  v_caught BOOLEAN := FALSE;
+BEGIN
+  BEGIN
+    PERFORM public.log_client_error('web', 'anon error', NULL, NULL);
+  EXCEPTION WHEN insufficient_privilege THEN
+    v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 15c FAILED: anon must not execute log_client_error';
+END $$;
+ROLLBACK;
+
+\echo '== ALL 15 SQL CONTRACT ASSERTIONS PASSED =='

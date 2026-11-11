@@ -1,6 +1,7 @@
 -- Wipe every row of app + auth data in the local emulator, keep the schema, then reseed.
 BEGIN;
 TRUNCATE TABLE
+  public.app_error_logs,
   public.rd_ledger_summary,
   public.rd_fee_absorptions,
   public.rd_po_deposits,
