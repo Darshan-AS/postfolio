@@ -52,13 +52,13 @@
 - [x] **A7 (Migration rehearsal)**: Apply `20261111000000_v2_4_storage_hardening.sql` to a copy of production data before `supabase db push`; define release ordering.
   - [ ] Owner action: back up hosted, then `supabase db push`, then tag. The rehearsal copy was from 10 Nov and had no ledger rows; hosted has since had the RD-ledger migration, baselining and new entries.
 - [x] **A8 (Realtime staleness)**: Refetch on resubscribe, retry failed loads, and keep a queued refetch when the in-flight fetch throws.
-  - [ ] Follow-up (not started): every ledger write still refetches the whole `rd_ledger_summary` list; apply Realtime payloads to an in-memory map instead.
+  - [x] Follow-up (done as B4): every ledger write refetched the whole `rd_ledger_summary` list; Realtime rows are now applied to an in-memory map instead.
 
 ### Ledger-write group (approved 2026-11-12)
 - [x] **B1 (Atomic customer delete)**: `public.delete_customer(p_id)` removes the customer and its savings account in one transaction; `SupabaseCustomerRepository.deleteCustomer` is one request.
 - [x] **B2 (Atomic ledger change)**: one RPC writes ledger facts and their summaries together; every `RDLedgerController` write goes through it.
 - [x] **B3 (Retry-safe single-account deposit)**: the deposit sheet keeps one event id per attempt so a retry after a lost response stores one event.
-- [ ] **B4 (Incremental summary stream)**: apply Realtime summary rows to an in-memory map instead of refetching every summary after each write.
+- [x] **B4 (Incremental summary stream)**: apply Realtime summary rows to an in-memory map instead of refetching every summary after each write.
 
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)
 - [ ] **1. Statutory Rulebook & Circular Reference Docs (`docs/india_post_schemes_policy.md`)**: Compile authoritative citations across `G.S.R. 916(E)`–`922(E)` (National Savings RD, TD, MIS, KVP, NSC Rules 2019 & subsequent Gazette amendments), DOP SB Orders, Finacle CBS / DOP Agent Portal behavior, and MPKBY / SAS agency rules.

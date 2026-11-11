@@ -165,6 +165,257 @@ abstract final class SupabasePaginatedQuery {
     return controller.stream;
   }
 
+  /// The whole row carried by a Realtime insert or update, or `null` when the payload cannot
+  /// stand in for the stored row and the caller has to load instead:
+  /// * a delete (it carries no row);
+  /// * a payload flagged with errors;
+  /// * a payload missing any of [columns] — Realtime leaves large values out, and a row with
+  ///   a hole would decode to defaults and be shown as if it were real;
+  /// * [columns] still empty: until a load has shown which columns a row has, completeness
+  ///   cannot be checked;
+  /// * a row [fromJson] cannot decode (the load that follows reports it properly).
+  static T? completeRowOf<T>(
+    PostgresChangePayload payload, {
+    required Set<String> columns,
+    required T Function(Map<String, dynamic>) fromJson,
+  }) {
+    final isUpsert = payload.eventType == PostgresChangeEvent.insert ||
+        payload.eventType == PostgresChangeEvent.update;
+    if (!isUpsert || payload.errors != null || columns.isEmpty) return null;
+    final row = payload.newRecord;
+    if (!columns.every(row.containsKey)) return null;
+    try {
+      return fromJson(row);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// A list kept up to date row by row instead of being loaded again after every change.
+  ///
+  /// [fetchAll] loads the list; after that each row from [upserts] replaces (or adds) the
+  /// row with the same [keyOf] and the list is re-emitted, with bursts merged into one
+  /// emission per [debounce]. Loading again is reserved for the cases where single rows are
+  /// not enough:
+  /// * an event on [invalidations] (a deletion, a re-subscribed channel, a row that could
+  ///   not be read from the change feed);
+  /// * a row arriving while a load is in flight or after one failed. That load may have read
+  ///   the table before or after the change, so the row is not laid over its result;
+  /// * rows from [writes] — what this client has just stored — that the list does not come
+  ///   to show within [confirmWithin]. That covers a change feed that is down or dropped an
+  ///   event: the write is then fetched instead of waited for. A row counts as shown when
+  ///   the list holds one for which [shows] is true (default: equal).
+  ///
+  /// Rows are applied in arrival order with no version check: the change feed delivers them
+  /// in commit order, so the last one applied is the stored one. A row that was already in
+  /// the list when its event arrives is simply applied again.
+  ///
+  /// Loading, retries and failures behave as in [watchDebouncedCollection].
+  static Stream<Result<List<T>, String>> watchKeyedCollection<T>({
+    required Future<List<T>> Function() fetchAll,
+    required String Function(T row) keyOf,
+    Stream<T>? upserts,
+    Stream<void>? invalidations,
+    Stream<List<T>>? writes,
+    bool Function(T held, T written)? shows,
+    Duration confirmWithin = const Duration(seconds: 2),
+    Future<void> Function()? onDispose,
+    Duration debounce = const Duration(milliseconds: 50),
+    List<Duration> retryDelays = defaultRetryDelays,
+  }) {
+    final rows = <String, T>{};
+    final unconfirmed = <String, T>{}; // written here, not yet seen in the list
+    final reloads = StreamController<void>();
+    final sources = <StreamSubscription<void>>[];
+    late final StreamController<Result<List<T>, String>> controller;
+    StreamSubscription<Result<List<T>, String>>? loaded;
+    Timer? emitTimer;
+    Timer? confirmTimer;
+    // True while `rows` is the result of the latest load plus every row that arrived since.
+    var current = false;
+    final same = shows ?? (T held, T written) => held == written;
+
+    void dropPending() {
+      emitTimer?.cancel();
+      emitTimer = null;
+      confirmTimer?.cancel();
+      confirmTimer = null;
+      unconfirmed.clear();
+    }
+
+    void reload() {
+      current = false;
+      dropPending();
+      if (!reloads.isClosed) reloads.add(null);
+    }
+
+    Future<List<T>> load() async {
+      // Anything still waiting is answered by this load: it starts after those writes.
+      current = false;
+      dropPending();
+      final fetched = await fetchAll();
+      rows
+        ..clear()
+        ..addEntries([for (final row in fetched) MapEntry(keyOf(row), row)]);
+      current = true;
+      return fetched;
+    }
+
+    void onUpsert(T row) {
+      if (!current) {
+        reload();
+        return;
+      }
+      final key = keyOf(row);
+      rows[key] = row;
+      final awaited = unconfirmed[key];
+      if (awaited != null && same(row, awaited)) {
+        unconfirmed.remove(key);
+        if (unconfirmed.isEmpty) {
+          confirmTimer?.cancel();
+          confirmTimer = null;
+        }
+      }
+      emitTimer ??= Timer(debounce, () {
+        emitTimer = null;
+        if (current && !controller.isClosed) {
+          controller.add(Success(List<T>.unmodifiable(rows.values)));
+        }
+      });
+    }
+
+    void onWritten(List<T> written) {
+      if (!current) {
+        reload();
+        return;
+      }
+      for (final row in written) {
+        final key = keyOf(row);
+        final held = rows[key];
+        if (held == null || !same(held, row)) unconfirmed[key] = row;
+      }
+      if (unconfirmed.isEmpty) return;
+      confirmTimer?.cancel();
+      confirmTimer = Timer(confirmWithin, () {
+        confirmTimer = null;
+        if (unconfirmed.isNotEmpty) reload();
+      });
+    }
+
+    controller = StreamController<Result<List<T>, String>>(
+      onListen: () {
+        if (upserts != null) sources.add(upserts.listen(onUpsert));
+        if (invalidations != null) sources.add(invalidations.listen((_) => reload()));
+        if (writes != null) sources.add(writes.listen(onWritten));
+        loaded = watchDebouncedCollection<T>(
+          fetchAll: load,
+          invalidations: reloads.stream,
+          debounce: debounce,
+          retryDelays: retryDelays,
+        ).listen(controller.add, onError: controller.addError);
+      },
+      onCancel: () async {
+        current = false;
+        dropPending();
+        for (final source in sources) {
+          await source.cancel();
+        }
+        await loaded?.cancel();
+        await reloads.close();
+        if (onDispose != null) {
+          await onDispose();
+        }
+      },
+    );
+
+    return controller.stream;
+  }
+
+  /// [watchKeyedCollection] over one Supabase table: the list is loaded in pages with
+  /// [fetchPage], then kept current from Realtime rows of [table] where [filterColumn]
+  /// equals [filterValue]. A Realtime event that is not a whole row ([completeRowOf]) and a
+  /// channel that re-subscribes both load the list again.
+  static Stream<Result<List<T>, String>> watchKeyedTable<T>({
+    required SupabaseClient client,
+    required String channelPrefix,
+    required String table,
+    required String filterColumn,
+    required String filterValue,
+    required Future<List<Map<String, dynamic>>> Function(int from, int to) fetchPage,
+    required T Function(Map<String, dynamic>) fromJson,
+    required String keyColumn,
+    required String Function(T row) keyOf,
+    Stream<List<T>>? writes,
+    bool Function(T held, T written)? shows,
+    Duration debounce = const Duration(milliseconds: 50),
+  }) {
+    late final StreamController<T> upserts;
+    final invalidations = StreamController<void>();
+    RealtimeChannel? channel;
+    // The columns a stored row has, learned from the first loaded row.
+    var columns = const <String>{};
+
+    void invalidate() {
+      if (!invalidations.isClosed) invalidations.add(null);
+    }
+
+    upserts = StreamController<T>(
+      onListen: () {
+        final ch = client.channel(
+          '$channelPrefix:$filterValue:${++_channelCounter}',
+        );
+        channel = ch;
+        ch
+            .onPostgresChanges(
+              event: PostgresChangeEvent.all,
+              schema: 'public',
+              table: table,
+              filter: PostgresChangeFilter(
+                type: PostgresChangeFilterType.eq,
+                column: filterColumn,
+                value: filterValue,
+              ),
+              callback: (payload) {
+                final row = completeRowOf<T>(payload, columns: columns, fromJson: fromJson);
+                if (row == null) {
+                  invalidate();
+                } else if (!upserts.isClosed) {
+                  upserts.add(row);
+                }
+              },
+            )
+            .subscribe(refetchOnResubscribe(invalidate));
+      },
+    );
+
+    return watchKeyedCollection<T>(
+      fetchAll: () => fetchAllPages<T>(
+        fetchPage: (from, to) async {
+          final page = await fetchPage(from, to);
+          if (page.isNotEmpty) columns = page.first.keys.toSet();
+          return page;
+        },
+        fromJson: fromJson,
+        idColumn: keyColumn,
+      ),
+      keyOf: keyOf,
+      upserts: upserts.stream,
+      invalidations: invalidations.stream,
+      writes: writes,
+      shows: shows,
+      debounce: debounce,
+      onDispose: () async {
+        final ch = channel;
+        channel = null;
+        if (ch != null) {
+          await client.removeChannel(ch);
+        }
+        await upserts.close();
+        await invalidations.close();
+      },
+    );
+  }
+
   /// Emits an immediate paginated snapshot via [fetchAll] and refreshes on matching
   /// Realtime CDC events from [table] or local repository writes ([localMutations]),
   /// coalescing burst updates within [debounce].

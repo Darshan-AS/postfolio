@@ -21,7 +21,10 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
   SupabaseRDLedgerRepository(this._client);
 
   final SupabaseClient _client;
-  final _localSummaryMutations = StreamController<void>.broadcast();
+
+  /// Summaries this client has just stored. [watchSummaries] expects Realtime to deliver
+  /// them and loads the list itself if it does not.
+  final _localSummaryWrites = StreamController<List<RDLedgerSummary>>.broadcast();
 
   static const _transactions = 'rd_transactions';
   static const _poDeposits = 'rd_po_deposits';
@@ -180,23 +183,27 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
       return Stream.value(const Success(<RDLedgerSummary>[]));
     }
     final agentId = user.id;
-    return SupabasePaginatedQuery.watchPaginatedCollection<RDLedgerSummary>(
+    // One row per account, kept current from Realtime rows: a payment on one account must
+    // not reload every account's summary.
+    return SupabasePaginatedQuery.watchKeyedTable<RDLedgerSummary>(
       client: _client,
       channelPrefix: 'rd-summaries',
       table: _summaries,
       filterColumn: 'agent_id',
       filterValue: agentId,
-      localMutations: _localSummaryMutations.stream,
-      fetchAll: () => SupabasePaginatedQuery.fetchAllPages<RDLedgerSummary>(
-        fetchPage: (from, to) => _client
-            .from(_summaries)
-            .select()
-            .eq('agent_id', agentId)
-            .order('rd_id', ascending: true)
-            .range(from, to),
-        fromJson: RDLedgerSummary.fromJson,
-        idColumn: 'rd_id',
-      ),
+      fetchPage: (from, to) => _client
+          .from(_summaries)
+          .select()
+          .eq('agent_id', agentId)
+          .order('rd_id', ascending: true)
+          .range(from, to),
+      fromJson: RDLedgerSummary.fromJson,
+      keyColumn: 'rd_id',
+      keyOf: (summary) => summary.rdId,
+      writes: _localSummaryWrites.stream,
+      // The server stamps `updated_at`; everything else is what was sent.
+      shows: (held, written) =>
+          held.copyWith(updatedAt: null) == written.copyWith(updatedAt: null),
     );
   }
 
@@ -233,7 +240,7 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
                 ],
                 onConflict: 'rd_id',
               );
-              _localSummaryMutations.add(null);
+              _localSummaryWrites.add(summaries);
             });
 
   /// One request, one database transaction (`public.apply_rd_ledger_change`): the facts in
@@ -274,7 +281,7 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
           'p_summaries': [for (final s in summaries) _summaryRow(s)],
         },
       );
-      if (summaries.isNotEmpty) _localSummaryMutations.add(null);
+      if (summaries.isNotEmpty) _localSummaryWrites.add(summaries);
     });
   }
 

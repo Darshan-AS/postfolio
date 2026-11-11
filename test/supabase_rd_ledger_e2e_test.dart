@@ -1,6 +1,8 @@
 @Tags(['integration'])
 library;
 
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
@@ -20,6 +22,7 @@ import 'package:postfolio/features/recurring_deposits/data/supabase_recurring_de
 import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_change.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
@@ -414,4 +417,79 @@ void main() {
     expect(summaryRows, hasLength(1));
     expect(summaryRows.single['paid_through_no'], 18);
   });
+
+  test('Hub summaries: a Realtime row updates the list without loading the list again', () async {
+    final n = container.read(rDLedgerControllerProvider.notifier);
+    expect(await n.rebuildSummary(rd1), isA<Success<void, String>>());
+
+    // The same wiring as `SupabaseRDLedgerRepository.watchSummaries`, with the page loads
+    // counted.
+    var pageLoads = 0;
+    final writes = StreamController<List<RDLedgerSummary>>();
+    final lists = <List<RDLedgerSummary>>[];
+    final sub = SupabasePaginatedQuery.watchKeyedTable<RDLedgerSummary>(
+      client: client,
+      channelPrefix: 'e2e-summaries',
+      table: 'rd_ledger_summary',
+      filterColumn: 'agent_id',
+      filterValue: agentId,
+      fetchPage: (from, to) {
+        pageLoads++;
+        return client
+            .from('rd_ledger_summary')
+            .select()
+            .eq('agent_id', agentId)
+            .order('rd_id', ascending: true)
+            .range(from, to);
+      },
+      fromJson: RDLedgerSummary.fromJson,
+      keyColumn: 'rd_id',
+      keyOf: (summary) => summary.rdId,
+      writes: writes.stream,
+      shows: (held, written) =>
+          held.copyWith(updatedAt: null) == written.copyWith(updatedAt: null),
+    ).listen((result) {
+      if (result case Success(:final value)) lists.add(value);
+    });
+    addTearDown(sub.cancel);
+    addTearDown(writes.close);
+    RDLedgerSummary shown() => lists.last.firstWhere((s) => s.rdId == rd1);
+
+    await _until(() => lists.isNotEmpty);
+    // Let the channel finish joining: Realtime never delivers a change made before that.
+    await Future<void>.delayed(const Duration(seconds: 2));
+    final loadsBefore = pageLoads;
+
+    final changed = shown().copyWith(customerCredit: shown().customerCredit + 123.45, updatedAt: null);
+    expect(
+      await SupabaseRDLedgerRepository(client).upsertSummaries([changed]),
+      isA<Success<void, String>>(),
+    );
+    writes.add([changed]);
+
+    await _until(() => shown().customerCredit == changed.customerCredit);
+    // Past the confirmation window: a row that was missing, incomplete, undecodable or not
+    // recognised as the one just written would have been fetched by a reload by now.
+    await Future<void>.delayed(const Duration(milliseconds: 2500));
+    expect(pageLoads, loadsBefore, reason: 'the Realtime row was enough; the list was not loaded again');
+
+    final stored = RDLedgerSummary.fromJson(
+      await client.from('rd_ledger_summary').select().eq('rd_id', rd1).single(),
+    );
+    expect(shown(), stored, reason: 'a Realtime row decodes to exactly what a load returns');
+
+    expect(await n.rebuildSummary(rd1), isA<Success<void, String>>());
+  });
+}
+
+/// Waits until [condition] holds, checking every 50 ms; fails after [timeout].
+Future<void> _until(
+  bool Function() condition, {
+  Duration timeout = const Duration(seconds: 10),
+}) async {
+  final deadline = DateTime.now().add(timeout);
+  while (!condition()) {
+    if (DateTime.now().isAfter(deadline)) fail('condition not met within $timeout');
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+  }
 }
