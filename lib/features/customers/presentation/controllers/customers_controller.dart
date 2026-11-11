@@ -135,7 +135,7 @@ class CustomersController extends _$CustomersController {
     List<Nominee>? savingsNominees,
     String? notes,
   }) async {
-    final customerId = id ?? const Uuid().v4();
+    final customerId = id ?? const Uuid().v7();
 
     final createResult = Customer.create(
       id: customerId,

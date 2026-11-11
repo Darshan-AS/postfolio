@@ -5,6 +5,8 @@ import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_repository.dart';
+import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
 import 'package:postfolio/features/recurring_deposits/data/supabase_recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -71,7 +73,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     final index = _deposits.indexWhere((d) => d.id == deposit.id);
     if (index == -1) {
       _deposits.add(
-        deposit.copyWith(id: deposit.id.isEmpty ? const Uuid().v4() : deposit.id),
+        deposit.copyWith(id: deposit.id.isEmpty ? const Uuid().v7() : deposit.id),
       );
     } else {
       final validation = RecurringDeposit.validateUpdate(
@@ -100,6 +102,11 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 
   @override
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {
+    if (hasLedgerActivity(id)) {
+      return const Failure(
+        'Cannot delete this record while linked accounts or transactions exist.',
+      );
+    }
     final before = _deposits.length;
     _deposits.removeWhere((d) => d.id == id);
     if (_deposits.length == before) return const Failure('Recurring Deposit not found');
@@ -111,7 +118,14 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 @riverpod
 RecurringDepositRepository recurringDepositRepository(Ref ref) {
   if (ref.watch(demoModeProvider)) {
-    final repo = FakeRecurringDepositRepository();
+    final repo = FakeRecurringDepositRepository()
+      ..hasLedgerActivity = (rdId) {
+        final ledger = ref.read(rdLedgerRepositoryProvider);
+        return ledger is FakeRDLedgerRepository &&
+            (ledger.transactionsOf(rdId).isNotEmpty ||
+                ledger.poDepositsOf(rdId).isNotEmpty ||
+                ledger.absorptionsOf(rdId).isNotEmpty);
+      };
     ref.onDispose(repo.dispose);
     return repo;
   }

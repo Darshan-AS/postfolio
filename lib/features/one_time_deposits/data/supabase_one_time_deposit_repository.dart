@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
+import 'package:postfolio/core/utils/supabase_paginated_query.dart';
 
 class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
   final SupabaseClient _supabaseClient;
+  final _localMutations = StreamController<void>.broadcast();
 
   SupabaseOneTimeDepositRepository(this._supabaseClient);
 
@@ -23,22 +27,29 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
 
   @override
   Stream<Result<List<OneTimeDeposit>, String>> watchOneTimeDeposits() {
-    return _supabaseClient
-        .from('account_identities')
-        .stream(primaryKey: ['id'])
-        .eq('agent_id', _agentId)
-        .asyncMap((_) async {
-          try {
-            final data = await _supabaseClient
-                .from('one_time_deposit_details_view')
-                .select(_listColumns)
-                .eq('agent_id', _agentId);
-            final deposits = data.map((json) => OneTimeDeposit.fromJson(json)).toList();
-            return Success(deposits);
-          } catch (e) {
-            return Failure(SupabaseErrorMapper.describe(e));
-          }
-        });
+    final agentId = _agentId;
+    return SupabasePaginatedQuery.watchPaginatedCollection<OneTimeDeposit>(
+      client: _supabaseClient,
+      channelPrefix: 'otd-list',
+      table: 'account_identities',
+      filterColumn: 'agent_id',
+      filterValue: agentId,
+      localMutations: _localMutations.stream,
+      shouldRefetch: (payload) {
+        final type =
+            payload.newRecord['account_type'] ?? payload.oldRecord['account_type'];
+        return type == null || type == 'OTD';
+      },
+      fetchAll: () => SupabasePaginatedQuery.fetchAllPages<OneTimeDeposit>(
+        fetchPage: (from, to) => _supabaseClient
+            .from('one_time_deposit_details_view')
+            .select(_listColumns)
+            .eq('agent_id', agentId)
+            .order('id', ascending: true)
+            .range(from, to),
+        fromJson: OneTimeDeposit.fromJson,
+      ),
+    );
   }
 
   @override
@@ -89,6 +100,7 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
         'set_deposit_status',
         params: {'p_id': id, 'p_status': status.name},
       );
+      _localMutations.add(null);
       return const Success(null);
     } catch (e) {
       return Failure(SupabaseErrorMapper.describe(e));
@@ -100,6 +112,7 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
     try {
       // Deleting from account_identities will cascade to one_time_deposits
       await _supabaseClient.from('account_identities').delete().eq('id', id);
+      _localMutations.add(null);
       return const Success(null);
     } catch (e) {
       return Failure(SupabaseErrorMapper.describe(e));
@@ -122,6 +135,7 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
         'p_start_date': deposit.startDate.toIso8601String().split('T').first,
         'p_nominees': deposit.nominees.map((n) => n.toJson()).toList(),
       });
+      _localMutations.add(null);
       return const Success(null);
     } catch (e) {
       return Failure(SupabaseErrorMapper.describe(e));

@@ -24,6 +24,6 @@ DELETE FROM auth.users;
 INSERT INTO supabase_migrations.schema_migrations (version, name)
 VALUES
   ('20261110000000', 'rd_ledger'),
-  ('20261111000000', 'p0_security_and_status_hotfix')
+  ('20261111000000', 'v2_4_storage_hardening')
 ON CONFLICT (version) DO NOTHING;
 COMMIT;

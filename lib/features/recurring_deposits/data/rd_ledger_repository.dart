@@ -4,15 +4,25 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.d
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 
+typedef RDRawFactsBundle = ({
+  List<RDTransaction> transactions,
+  List<RDPoDeposit> poDeposits,
+  List<RDFeeAbsorption> absorptions,
+});
+
 /// Persistence boundary for RD ledger **facts**.
 ///
-/// Reads are bounded per RD except [watchSummaries] (one row per RD, feeds the Monthly Hub).
+/// Reads are bounded per RD except [watchSummaries] (one row per RD, feeds the Monthly Hub)
+/// and [fetchRawFactsForRds] (batch backfill / pull-to-refresh).
 /// Writes are plain inserts/updates/deletes guarded by RLS — no server-side business logic.
 abstract interface class RDLedgerRepository {
-  // --- Facts (per RD) ---------------------------------------------------------------------
+  // --- Facts (per RD & batch backfill) ----------------------------------------------------
   Stream<Result<List<RDTransaction>, String>> watchTransactions(String rdId);
   Stream<Result<List<RDPoDeposit>, String>> watchPoDeposits(String rdId);
   Stream<Result<List<RDFeeAbsorption>, String>> watchFeeAbsorptions(String rdId);
+  Future<Result<Map<String, RDRawFactsBundle>, String>> fetchRawFactsForRds(
+    List<String> rdIds,
+  );
 
   // --- Cache (agent-wide, one row per RD) -------------------------------------------------
   Stream<Result<List<RDLedgerSummary>, String>> watchSummaries();

@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
+import 'package:postfolio/core/utils/supabase_paginated_query.dart';
 
 class SupabaseCustomerRepository implements CustomerRepository {
   final SupabaseClient _supabaseClient;
+  final _localMutations = StreamController<void>.broadcast();
 
   SupabaseCustomerRepository(this._supabaseClient);
 
@@ -17,19 +21,25 @@ class SupabaseCustomerRepository implements CustomerRepository {
 
   @override
   Stream<Result<List<Customer>, String>> watchCustomers() {
-    return _supabaseClient
-        .from('customers')
-        .stream(primaryKey: ['id'])
-        .eq('agent_id', _agentId)
-        .map((data) {
-          try {
-            final customers =
-                data.map((json) => Customer.fromJson(json)).toList();
-            return Success(customers);
-          } catch (e) {
-            return Failure(SupabaseErrorMapper.describe(e));
-          }
-        });
+    final agentId = _agentId;
+    return SupabasePaginatedQuery.watchPaginatedCollection<Customer>(
+      client: _supabaseClient,
+      channelPrefix: 'customers-list',
+      table: 'customers',
+      filterColumn: 'agent_id',
+      filterValue: agentId,
+      localMutations: _localMutations.stream,
+      fetchAll: () => SupabasePaginatedQuery.fetchAllPages<Customer>(
+        fetchPage: (from, to) => _supabaseClient
+            .from('customers')
+            .select()
+            .eq('agent_id', agentId)
+            .order('name', ascending: true)
+            .order('id', ascending: true)
+            .range(from, to),
+        fromJson: Customer.fromJson,
+      ),
+    );
   }
 
   @override
@@ -69,7 +79,25 @@ class SupabaseCustomerRepository implements CustomerRepository {
   @override
   Future<Result<void, String>> deleteCustomer(String id) async {
     try {
+      final agentId = _agentId;
+      // Remove any subordinate SB account first; OTD/RD accounts still block via ON DELETE NO ACTION.
+      final hasDeposits = await _supabaseClient
+          .from('account_identities')
+          .select('id')
+          .eq('customer_id', id)
+          .eq('agent_id', agentId)
+          .neq('account_type', 'SB')
+          .limit(1);
+      if (hasDeposits.isEmpty) {
+        await _supabaseClient
+            .from('account_identities')
+            .delete()
+            .eq('customer_id', id)
+            .eq('agent_id', agentId)
+            .eq('account_type', 'SB');
+      }
       await _supabaseClient.from('customers').delete().eq('id', id);
+      _localMutations.add(null);
       return const Success(null);
     } catch (e) {
       return Failure(SupabaseErrorMapper.describe(e));
@@ -92,6 +120,7 @@ class SupabaseCustomerRepository implements CustomerRepository {
         'p_sb_account_number': customer.savingsAccount?.accountNumber,
         'p_nominees': customer.savingsAccount?.nominees.map((n) => n.toJson()).toList() ?? [],
       });
+      _localMutations.add(null);
       return const Success(null);
     } catch (e) {
       return Failure(SupabaseErrorMapper.describe(e));

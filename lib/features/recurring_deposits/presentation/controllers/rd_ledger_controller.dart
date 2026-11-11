@@ -13,6 +13,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projector
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
@@ -106,7 +107,7 @@ typedef RDPaymentDraft = ({
 
 extension RDPaymentDraftX on RDPaymentDraft {
   RDTransaction toTransaction({String? id}) => RDTransaction(
-        id: id ?? transactionId ?? const Uuid().v4(),
+        id: id ?? transactionId ?? const Uuid().v7(),
         rdId: rdId,
         paidDate: paidDate.toDateOnly(),
         amount: amount,
@@ -221,7 +222,7 @@ class RDLedgerController extends _$RDLedgerController {
         ? Money.round(count * facts.deposit.installmentAmount + effectiveFee)
         : quote.amount;
     final event = RDPoDeposit(
-      id: const Uuid().v4(),
+      id: const Uuid().v7(),
       rdId: rdId,
       depositedOn: day,
       installmentCount: count,
@@ -253,7 +254,7 @@ class RDLedgerController extends _$RDLedgerController {
       return const Failure('Another ledger operation is still running.');
     }
     final day = (depositedOn ?? ref.read(clockProvider)()).toDateOnly();
-    final resolvedBatchId = batchId ?? const Uuid().v4();
+    final resolvedBatchId = batchId ?? const Uuid().v7();
 
     state = const AsyncLoading();
     try {
@@ -304,7 +305,7 @@ class RDLedgerController extends _$RDLedgerController {
             : quote.amount;
         events.add(
           RDPoDeposit(
-            id: const Uuid().v4(),
+            id: const Uuid().v7(),
             rdId: line.rdId,
             depositedOn: day,
             installmentCount: line.count,
@@ -453,7 +454,7 @@ class RDLedgerController extends _$RDLedgerController {
     return through;
   }
 
-  /// Re-projects from the live facts and refreshes the hub cache (e.g. pull-to-refresh).
+  /// Re-projects from the live facts and refreshes the hub cache (e.g. single-account update).
   Future<Result<void, String>> rebuildSummary(String rdId) async {
     try {
       final facts = await _readFacts(rdId);
@@ -461,6 +462,38 @@ class RDLedgerController extends _$RDLedgerController {
       return const Success(null);
     } on RDLedgerException catch (e) {
       return Failure(e.message);
+    }
+  }
+
+  /// Batch-rebuilds hub summaries for [deposits] in 1 batch fact fetch + 1 bulk upsert
+  /// (instead of opening `3 * N` per-RD Realtime streams).
+  Future<Result<void, String>> rebuildSummaries(
+    List<RecurringDeposit> deposits,
+  ) async {
+    if (deposits.isEmpty) return const Success(null);
+    final repo = ref.read(rdLedgerRepositoryProvider);
+    final rawResult = await repo.fetchRawFactsForRds([
+      for (final d in deposits) d.id,
+    ]);
+    switch (rawResult) {
+      case Failure(:final error):
+        return Failure(error);
+      case Success(value: final bundles):
+        final asOf = ref.read(clockProvider)().toDateOnly();
+        final projector = ref.read(rdLedgerProjectorProvider);
+        final summaries = <RDLedgerSummary>[];
+        for (final deposit in deposits) {
+          final raw = bundles[deposit.id];
+          final facts = RDLedgerFacts(
+            deposit: deposit,
+            transactions: raw?.transactions ?? const [],
+            poDeposits: raw?.poDeposits ?? const [],
+            absorptions: raw?.absorptions ?? const [],
+          );
+          summaries.add(projector.project(facts, asOf: asOf).summary);
+        }
+        await _upsertSummariesWithRetryTrack(summaries);
+        return const Success(null);
     }
   }
 

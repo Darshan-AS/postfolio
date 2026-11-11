@@ -144,15 +144,23 @@ BEGIN
 END $$;
 ROLLBACK;
 
-\echo '== CASE 6: save_recurring_deposit changes amount while locked (expect check_violation 23514)'
+\echo '== CASE 6: save_recurring_deposit is a pure persistence envelope & undo_rd_po_deposit_batch is dropped'
 BEGIN;
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims', json_build_object('sub', :'owner', 'role', 'authenticated')::text, true) \gset junk
 DO $$
 DECLARE
   v_rec RECORD;
-  v_caught BOOLEAN := FALSE;
+  v_saved UUID;
+  v_rpc_exists BOOLEAN;
 BEGIN
+  SELECT EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'undo_rd_po_deposit_batch'
+  ) INTO v_rpc_exists;
+  ASSERT NOT v_rpc_exists, 'CASE 6a FAILED: undo_rd_po_deposit_batch RPC should not exist in SQL';
+
   SELECT d.*, ai.customer_id INTO v_rec
   FROM public.recurring_deposits d
   JOIN public.account_identities ai ON ai.id = d.id
@@ -161,17 +169,14 @@ BEGIN
   INSERT INTO public.rd_transactions (rd_id, agent_id, paid_date, amount, payment_mode)
     VALUES (v_rec.id, auth.uid(), '2026-07-20', 1000, 'cash');
 
-  BEGIN
-    PERFORM public.save_recurring_deposit(
-      v_rec.id, v_rec.customer_id, v_rec.status, v_rec.scheme_type,
-      NULL, NULL, v_rec.installment_amount + 1, v_rec.interest_rate,
-      v_rec.term_years, v_rec.term_months, v_rec.start_date, '[]'::jsonb,
-      v_rec.initial_paid_installments, v_rec.opening_receivable
-    );
-  EXCEPTION WHEN check_violation THEN
-    v_caught := TRUE;
-  END;
-  ASSERT v_caught, 'CASE 6 FAILED: expected check_violation when mutating locked financial terms';
+  -- Domain locking lives in Dart (RecurringDepositsController); SQL envelope persists cleanly.
+  v_saved := public.save_recurring_deposit(
+    v_rec.id, v_rec.customer_id, v_rec.status, v_rec.scheme_type,
+    NULL, NULL, v_rec.installment_amount + 100, v_rec.interest_rate,
+    v_rec.term_years, v_rec.term_months, v_rec.start_date, '[]'::jsonb,
+    v_rec.initial_paid_installments, v_rec.opening_receivable
+  );
+  ASSERT v_saved = v_rec.id, 'CASE 6b FAILED: expected save_recurring_deposit envelope to persist';
 END $$;
 ROLLBACK;
 
@@ -327,34 +332,37 @@ BEGIN
 END $$;
 ROLLBACK;
 
-\echo '== CASE 13: undo_rd_po_deposit_batch succeeds when latest, fails when newer PO deposit exists'
+\echo '== CASE 13: Plain TEXT enum columns accept evolved Dart enum values without DDL migrations'
 BEGIN;
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims', json_build_object('sub', :'owner', 'role', 'authenticated')::text, true) \gset junk
 DO $$
 DECLARE
-  v_rd_id UUID := (SELECT ai.id FROM public.account_identities ai WHERE ai.account_type = 'RD' LIMIT 1);
-  v_undone UUID[];
-  v_caught BOOLEAN := FALSE;
+  v_customer_id UUID := (SELECT id FROM public.customers WHERE agent_id = auth.uid() LIMIT 1);
+  v_otd_id UUID := gen_random_uuid();
+  v_rd_id UUID := (SELECT ai.id FROM public.account_identities ai WHERE ai.account_type = 'RD' AND ai.agent_id = auth.uid() LIMIT 1);
+  v_status TEXT;
 BEGIN
-  INSERT INTO public.rd_po_deposits (rd_id, agent_id, deposited_on, installment_count, amount, batch_id)
-    VALUES (v_rd_id, auth.uid(), '2026-10-01', 1, 5000, 'bbbbbbbb-0000-4000-8000-000000000001');
+  PERFORM public.save_one_time_deposit(
+    v_otd_id,
+    v_customer_id,
+    'maturedPendingPayout',
+    'seniorCitizenSavingsScheme',
+    'SCSS-001',
+    100000,
+    8.20,
+    5,
+    0,
+    '2026-01-15',
+    '[{"name":"Legal Guardian","relationship":"legalGuardian","percentage":100}]'::jsonb
+  );
 
-  v_undone := public.undo_rd_po_deposit_batch('bbbbbbbb-0000-4000-8000-000000000001'::uuid);
-  ASSERT array_length(v_undone, 1) = 1 AND v_undone[1] = v_rd_id,
-    'CASE 13a FAILED: expected undo_rd_po_deposit_batch to return [v_rd_id]';
+  PERFORM public.set_deposit_status(v_otd_id, 'prematurelyClosed');
+  SELECT status INTO v_status FROM public.one_time_deposits WHERE id = v_otd_id;
+  ASSERT v_status = 'prematurelyClosed', 'CASE 13a FAILED: set_deposit_status rejected evolved status token';
 
-  INSERT INTO public.rd_po_deposits (rd_id, agent_id, deposited_on, installment_count, amount, batch_id)
-    VALUES (v_rd_id, auth.uid(), '2026-10-01', 1, 5000, 'bbbbbbbb-0000-4000-8000-000000000002');
-  INSERT INTO public.rd_po_deposits (rd_id, agent_id, deposited_on, installment_count, amount)
-    VALUES (v_rd_id, auth.uid(), '2026-10-15', 1, 5000);
-
-  BEGIN
-    PERFORM public.undo_rd_po_deposit_batch('bbbbbbbb-0000-4000-8000-000000000002'::uuid);
-  EXCEPTION WHEN check_violation THEN
-    v_caught := TRUE;
-  END;
-  ASSERT v_caught, 'CASE 13b FAILED: expected check_violation when undoing superseded PO batch';
+  INSERT INTO public.rd_transactions (rd_id, agent_id, paid_date, amount, payment_mode)
+    VALUES (v_rd_id, auth.uid(), '2026-08-01', 500, 'neft');
 END $$;
 ROLLBACK;
 
@@ -423,4 +431,142 @@ BEGIN
 END $$;
 ROLLBACK;
 
-\echo '== ALL 15 SQL CONTRACT ASSERTIONS PASSED =='
+\echo '== CASE 16: ON DELETE RESTRICT (23503) protects Customers with deposits and RDs with ledger facts'
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'owner', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+DECLARE
+  v_customer_with_deposit UUID := (
+    SELECT ai.customer_id FROM public.account_identities ai
+    WHERE ai.agent_id = auth.uid() AND ai.account_type IN ('OTD', 'RD')
+    LIMIT 1
+  );
+  v_rd_with_facts UUID := gen_random_uuid();
+  v_empty_rd UUID := gen_random_uuid();
+  v_caught_customer BOOLEAN := FALSE;
+  v_caught_rd BOOLEAN := FALSE;
+BEGIN
+  -- 16a: Deleting a customer who owns an OTD/RD must fail with 23503 foreign_key_violation.
+  BEGIN
+    DELETE FROM public.customers WHERE id = v_customer_with_deposit;
+  EXCEPTION WHEN foreign_key_violation THEN
+    v_caught_customer := TRUE;
+  END;
+  ASSERT v_caught_customer,
+    'CASE 16a FAILED: expected foreign_key_violation (23503) when deleting customer with deposits';
+
+  -- 16b: Deleting an RD with recorded ledger facts must fail with 23503 foreign_key_violation.
+  PERFORM public.save_recurring_deposit(
+    v_rd_with_facts, v_customer_with_deposit, 'active', 'recurringDeposit',
+    'RD-RESTRICT-1', '901', 1000, 6.70, 5, 0, '2026-01-01', '[]'::jsonb, 0, 0
+  );
+  INSERT INTO public.rd_transactions (rd_id, agent_id, paid_date, amount, payment_mode)
+    VALUES (v_rd_with_facts, auth.uid(), '2026-01-10', 1000, 'cash');
+
+  BEGIN
+    DELETE FROM public.account_identities WHERE id = v_rd_with_facts;
+  EXCEPTION WHEN foreign_key_violation THEN
+    v_caught_rd := TRUE;
+  END;
+  ASSERT v_caught_rd,
+    'CASE 16b FAILED: expected foreign_key_violation (23503) when deleting RD with transactions';
+
+  -- 16c: Deleting an RD with zero facts (even with summary cache + nominees) cascades cleanly.
+  PERFORM public.save_recurring_deposit(
+    v_empty_rd, v_customer_with_deposit, 'active', 'recurringDeposit',
+    'RD-EMPTY-1', '902', 1000, 6.70, 5, 0, '2026-01-01',
+    '[{"name":"Test Nominee","relationship":"wife","percentage":100}]'::jsonb, 0, 0
+  );
+  INSERT INTO public.rd_ledger_summary (rd_id, agent_id, facts_version, projected_on, open_items)
+    VALUES (v_empty_rd, auth.uid(), 1, '2026-01-01', '[]'::jsonb);
+
+  DELETE FROM public.account_identities WHERE id = v_empty_rd;
+  ASSERT NOT EXISTS (SELECT 1 FROM public.recurring_deposits WHERE id = v_empty_rd),
+    'CASE 16c FAILED: expected empty RD (cache + nominees only) to delete cleanly';
+END $$;
+ROLLBACK;
+
+\echo '== CASE 17: Case-insensitive UNIQUE email on agent_profiles & partial UNIQUE SB per customer (23505)'
+BEGIN;
+DO $$
+DECLARE
+  v_existing_email TEXT := (SELECT email FROM public.agent_profiles WHERE email IS NOT NULL LIMIT 1);
+  v_owner UUID := (SELECT id FROM public.agent_profiles WHERE email = v_existing_email LIMIT 1);
+  v_customer_id UUID := (SELECT id FROM public.customers WHERE agent_id = v_owner LIMIT 1);
+  v_caught_email BOOLEAN := FALSE;
+  v_caught_sb BOOLEAN := FALSE;
+BEGIN
+  INSERT INTO auth.users (instance_id,id,aud,role,email,raw_user_meta_data,confirmation_token,recovery_token,email_change_token_new,email_change)
+  VALUES ('00000000-0000-0000-0000-000000000000','ffffffff-0000-4000-8000-000000000077','authenticated','authenticated','unique-probe@example.com','{}','','','','')
+  ON CONFLICT (id) DO NOTHING;
+
+  BEGIN
+    UPDATE public.agent_profiles
+    SET email = upper(v_existing_email)
+    WHERE id = 'ffffffff-0000-4000-8000-000000000077';
+  EXCEPTION WHEN unique_violation THEN
+    v_caught_email := TRUE;
+  END;
+  ASSERT v_caught_email,
+    'CASE 17a FAILED: expected unique_violation (23505) on case-insensitive duplicate agent email';
+
+  INSERT INTO public.account_identities (id, customer_id, agent_id, account_type)
+  VALUES (gen_random_uuid(), v_customer_id, v_owner, 'SB')
+  ON CONFLICT DO NOTHING;
+
+  BEGIN
+    INSERT INTO public.account_identities (id, customer_id, agent_id, account_type)
+    VALUES (gen_random_uuid(), v_customer_id, v_owner, 'SB');
+  EXCEPTION WHEN unique_violation THEN
+    v_caught_sb := TRUE;
+  END;
+  ASSERT v_caught_sb,
+    'CASE 17b FAILED: expected unique_violation (23505) on second SB account for same customer';
+END $$;
+ROLLBACK;
+
+\echo '== CASE 18: NUMERIC(12,2)/NUMERIC(5,2) precision & physical sign bounds (23514)'
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'owner', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+DECLARE
+  v_customer_id UUID := (SELECT id FROM public.customers WHERE agent_id = auth.uid() LIMIT 1);
+  v_rd_id UUID := (SELECT ai.id FROM public.account_identities ai WHERE ai.account_type = 'RD' AND ai.agent_id = auth.uid() LIMIT 1);
+  v_caught_neg_principal BOOLEAN := FALSE;
+  v_caught_bad_pct BOOLEAN := FALSE;
+  v_po_id UUID := gen_random_uuid();
+  v_fee NUMERIC;
+BEGIN
+  BEGIN
+    PERFORM public.save_one_time_deposit(
+      gen_random_uuid(), v_customer_id, 'active', 'timeDeposit',
+      'TD-NEG', 0, 7.50, 5, 0, '2026-01-01', '[]'::jsonb
+    );
+  EXCEPTION WHEN check_violation THEN
+    v_caught_neg_principal := TRUE;
+  END;
+  ASSERT v_caught_neg_principal,
+    'CASE 18a FAILED: expected check_violation (23514) on non-positive principal_amount';
+
+  BEGIN
+    PERFORM public.save_one_time_deposit(
+      gen_random_uuid(), v_customer_id, 'active', 'timeDeposit',
+      'TD-PCT', 10000, 7.50, 5, 0, '2026-01-01',
+      '[{"name":"Bad Share","relationship":"son","percentage":105}]'::jsonb
+    );
+  EXCEPTION WHEN check_violation THEN
+    v_caught_bad_pct := TRUE;
+  END;
+  ASSERT v_caught_bad_pct,
+    'CASE 18b FAILED: expected check_violation (23514) on nominee percentage > 100';
+
+  INSERT INTO public.rd_po_deposits (id, rd_id, agent_id, deposited_on, installment_count, fee_paid, amount)
+    VALUES (v_po_id, v_rd_id, auth.uid(), '2026-09-10', 1, 2.50, 252.50);
+  SELECT fee_paid INTO v_fee FROM public.rd_po_deposits WHERE id = v_po_id;
+  ASSERT v_fee = 2.50, 'CASE 18c FAILED: expected exact paise round-trip (2.50) in NUMERIC(12,2)';
+END $$;
+ROLLBACK;
+
+\echo '== ALL 18 SQL CONTRACT ASSERTIONS PASSED =='

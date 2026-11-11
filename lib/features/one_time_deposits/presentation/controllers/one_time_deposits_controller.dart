@@ -234,7 +234,7 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
     DepositStatus status = DepositStatus.active,
     List<Nominee> nominees = const [],
   }) async {
-    final depositId = id ?? const Uuid().v4();
+    final depositId = id ?? const Uuid().v7();
     final postalRateService = ref.read(postalRateServiceProvider);
 
     final amount = double.tryParse(principalAmount.trim()) ?? 0.0;

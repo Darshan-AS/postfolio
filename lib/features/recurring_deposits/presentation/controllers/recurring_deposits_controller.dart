@@ -226,7 +226,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
   }) async {
     final link = ref.keepAlive();
     try {
-      final depositId = id ?? const Uuid().v4();
+      final depositId = id ?? const Uuid().v7();
       final postalRateService = ref.read(postalRateServiceProvider);
 
       final amount = double.tryParse(installmentAmount.trim()) ?? 0.0;

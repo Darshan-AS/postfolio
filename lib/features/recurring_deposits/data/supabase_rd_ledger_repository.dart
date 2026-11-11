@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
+import 'package:postfolio/core/utils/supabase_paginated_query.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
@@ -16,6 +19,7 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
   SupabaseRDLedgerRepository(this._client);
 
   final SupabaseClient _client;
+  final _localSummaryMutations = StreamController<void>.broadcast();
 
   static const _transactions = 'rd_transactions';
   static const _poDeposits = 'rd_po_deposits';
@@ -55,16 +59,110 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
           .map((rows) => _mapRows(rows, RDFeeAbsorption.fromJson));
 
   @override
+  Future<Result<Map<String, RDRawFactsBundle>, String>> fetchRawFactsForRds(
+    List<String> rdIds,
+  ) async {
+    if (rdIds.isEmpty) {
+      return const Success(<String, RDRawFactsBundle>{});
+    }
+    try {
+      final agentId = _agentId;
+      final targetSet = rdIds.toSet();
+      final useInFilter = targetSet.length <= 100;
+      final idList = useInFilter ? targetSet.toList(growable: false) : const <String>[];
+
+      final results = await Future.wait([
+        SupabasePaginatedQuery.fetchAllPages<RDTransaction>(
+          fetchPage: (from, to) {
+            final q = _client.from(_transactions).select().eq('agent_id', agentId);
+            final filtered = useInFilter ? q.inFilter('rd_id', idList) : q;
+            return filtered
+                .order('paid_date', ascending: true)
+                .order('id', ascending: true)
+                .range(from, to);
+          },
+          fromJson: RDTransaction.fromJson,
+        ),
+        SupabasePaginatedQuery.fetchAllPages<RDPoDeposit>(
+          fetchPage: (from, to) {
+            final q = _client.from(_poDeposits).select().eq('agent_id', agentId);
+            final filtered = useInFilter ? q.inFilter('rd_id', idList) : q;
+            return filtered
+                .order('deposited_on', ascending: true)
+                .order('id', ascending: true)
+                .range(from, to);
+          },
+          fromJson: RDPoDeposit.fromJson,
+        ),
+        SupabasePaginatedQuery.fetchAllPages<RDFeeAbsorption>(
+          fetchPage: (from, to) {
+            final q = _client.from(_feeAbsorptions).select().eq('agent_id', agentId);
+            final filtered = useInFilter ? q.inFilter('rd_id', idList) : q;
+            return filtered
+                .order('rd_id', ascending: true)
+                .order('installment_no', ascending: true)
+                .range(from, to);
+          },
+          fromJson: RDFeeAbsorption.fromJson,
+        ),
+      ]);
+
+      final txsByRd = <String, List<RDTransaction>>{};
+      for (final tx in results[0] as List<RDTransaction>) {
+        if (targetSet.contains(tx.rdId)) {
+          (txsByRd[tx.rdId] ??= <RDTransaction>[]).add(tx);
+        }
+      }
+      final posByRd = <String, List<RDPoDeposit>>{};
+      for (final po in results[1] as List<RDPoDeposit>) {
+        if (targetSet.contains(po.rdId)) {
+          (posByRd[po.rdId] ??= <RDPoDeposit>[]).add(po);
+        }
+      }
+      final absByRd = <String, List<RDFeeAbsorption>>{};
+      for (final abs in results[2] as List<RDFeeAbsorption>) {
+        if (targetSet.contains(abs.rdId)) {
+          (absByRd[abs.rdId] ??= <RDFeeAbsorption>[]).add(abs);
+        }
+      }
+
+      return Success({
+        for (final id in targetSet)
+          id: (
+            transactions: txsByRd[id] ?? const <RDTransaction>[],
+            poDeposits: posByRd[id] ?? const <RDPoDeposit>[],
+            absorptions: absByRd[id] ?? const <RDFeeAbsorption>[],
+          ),
+      });
+    } catch (e) {
+      return Failure(SupabaseErrorMapper.describe(e));
+    }
+  }
+
+  @override
   Stream<Result<List<RDLedgerSummary>, String>> watchSummaries() {
     final user = _client.auth.currentUser;
     if (user == null) {
       return Stream.value(const Success(<RDLedgerSummary>[]));
     }
-    return _client
-        .from(_summaries)
-        .stream(primaryKey: ['rd_id'])
-        .eq('agent_id', user.id)
-        .map((rows) => _mapRows(rows, RDLedgerSummary.fromJson));
+    final agentId = user.id;
+    return SupabasePaginatedQuery.watchPaginatedCollection<RDLedgerSummary>(
+      client: _client,
+      channelPrefix: 'rd-summaries',
+      table: _summaries,
+      filterColumn: 'agent_id',
+      filterValue: agentId,
+      localMutations: _localSummaryMutations.stream,
+      fetchAll: () => SupabasePaginatedQuery.fetchAllPages<RDLedgerSummary>(
+        fetchPage: (from, to) => _client
+            .from(_summaries)
+            .select()
+            .eq('agent_id', agentId)
+            .order('rd_id', ascending: true)
+            .range(from, to),
+        fromJson: RDLedgerSummary.fromJson,
+      ),
+    );
   }
 
   // --- Writes -----------------------------------------------------------------------------
@@ -77,15 +175,16 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
   Future<Result<void, String>> upsertSummaries(List<RDLedgerSummary> summaries) =>
       summaries.isEmpty
           ? Future.value(const Success(null))
-          : _guard(
-              () => _client.from(_summaries).upsert(
-                    [
-                      for (final s in summaries)
-                        _withAgent(s.toJson()..remove('updated_at')),
-                    ],
-                    onConflict: 'rd_id',
-                  ),
-            );
+          : _guard(() async {
+              await _client.from(_summaries).upsert(
+                [
+                  for (final s in summaries)
+                    _withAgent(s.toJson()..remove('updated_at')),
+                ],
+                onConflict: 'rd_id',
+              );
+              _localSummaryMutations.add(null);
+            });
 
   @override
   Future<Result<void, String>> addTransaction(RDTransaction transaction) =>
@@ -136,23 +235,37 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
   Future<Result<List<String>, String>> deletePoDepositBatch(String batchId) async {
     try {
       final agentId = _agentId;
-      final batchRows = await _client
-          .from(_poDeposits)
-          .select('rd_id')
-          .eq('batch_id', batchId)
-          .eq('agent_id', agentId);
-      final affectedRdIds = {
+      final batchRows = await SupabasePaginatedQuery.fetchAllRawPages(
+        fetchPage: (from, to) => _client
+            .from(_poDeposits)
+            .select('rd_id')
+            .eq('batch_id', batchId)
+            .eq('agent_id', agentId)
+            .order('id', ascending: true)
+            .range(from, to),
+      );
+      final affectedSet = {
         for (final row in batchRows)
           if (row['rd_id'] is String) row['rd_id'] as String,
-      }.toList(growable: false);
+      };
+      final affectedRdIds = affectedSet.toList(growable: false);
       if (affectedRdIds.isEmpty) return const Success(<String>[]);
 
-      final allRows = await _client
-          .from(_poDeposits)
-          .select()
-          .inFilter('rd_id', affectedRdIds)
-          .eq('agent_id', agentId);
-      final allDeposits = allRows.map(RDPoDeposit.fromJson).toList(growable: false);
+      final useInFilter = affectedRdIds.length <= 100;
+      final fetchedDeposits = await SupabasePaginatedQuery.fetchAllPages<RDPoDeposit>(
+        fetchPage: (from, to) {
+          final q = _client.from(_poDeposits).select().eq('agent_id', agentId);
+          final filtered = useInFilter ? q.inFilter('rd_id', affectedRdIds) : q;
+          return filtered
+              .order('deposited_on', ascending: true)
+              .order('id', ascending: true)
+              .range(from, to);
+        },
+        fromJson: RDPoDeposit.fromJson,
+      );
+      final allDeposits = useInFilter
+          ? fetchedDeposits
+          : fetchedDeposits.where((d) => affectedSet.contains(d.rdId)).toList(growable: false);
       final error = RDLedgerFacts.validateBatchUndo(
         batchId: batchId,
         deposits: allDeposits,

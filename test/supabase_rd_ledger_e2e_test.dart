@@ -9,6 +9,7 @@ import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/utils/supabase_paginated_query.dart';
 import 'package:postfolio/features/customers/data/supabase_customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
@@ -284,5 +285,37 @@ void main() {
     );
 
     expect(await n.deletePayment(rdId: rd1, transactionId: txId), isA<Success<void, String>>());
+  });
+
+  test('Stage 5 guards: multi-page .range() stitch, batch ensureSummaries, and RD delete protection', () async {
+    // 1. Real PostgREST `.range()` pagination stitches 8 transactions across 2-row pages.
+    final pagedTxs = await SupabasePaginatedQuery.fetchAllPages<RDTransaction>(
+      pageSize: 2,
+      fetchPage: (from, to) => client
+          .from('rd_transactions')
+          .select()
+          .eq('rd_id', rd1)
+          .order('paid_date', ascending: true)
+          .order('id', ascending: true)
+          .range(from, to),
+      fromJson: RDTransaction.fromJson,
+    );
+    expect(pagedTxs, hasLength(8));
+
+    // 2. Deleting an RD with recorded ledger facts fails cleanly with mapped 23503 message.
+    final deleteBlocked =
+        await SupabaseRecurringDepositRepository(client).deleteRecurringDeposit(rd1);
+    expect(deleteBlocked, isA<Failure<void, String>>());
+
+    // 3. Batch ensureSummaries(rebuildAll: true) fetches raw facts + bulk upserts summaries cleanly.
+    container.listen(monthlyOperationItemsProvider, (_, _) {});
+    await container.read(monthlyOperationItemsProvider.future);
+    await container
+        .read(rDMonthlyOperationsActionsProvider.notifier)
+        .ensureSummaries(rebuildAll: true);
+    final summaryRows =
+        await client.from('rd_ledger_summary').select('rd_id, paid_through_no').eq('rd_id', rd1);
+    expect(summaryRows, hasLength(1));
+    expect(summaryRows.single['paid_through_no'], 18);
   });
 }

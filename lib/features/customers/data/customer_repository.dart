@@ -6,6 +6,8 @@ import 'package:postfolio/core/providers/supabase_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/data/supabase_customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
+import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
+import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'customer_repository.g.dart';
@@ -22,9 +24,11 @@ class FakeCustomerRepository implements CustomerRepository {
   FakeCustomerRepository({
     List<Customer>? customers,
     this.delay = const Duration(milliseconds: 500),
+    this.hasLinkedDeposits,
   }) : _customers = [...(customers ?? FakeDataSource().customers)];
 
   final Duration delay;
+  final bool Function(String customerId)? hasLinkedDeposits;
 
   final _controller =
       StreamController<Result<List<Customer>, String>>.broadcast();
@@ -89,6 +93,11 @@ class FakeCustomerRepository implements CustomerRepository {
   @override
   Future<Result<void, String>> deleteCustomer(String id) async {
     if (delay > Duration.zero) await Future.delayed(delay);
+    if (hasLinkedDeposits?.call(id) ?? false) {
+      return const Failure(
+        'Cannot delete this record while linked accounts or transactions exist.',
+      );
+    }
     final initialLength = _customers.length;
     _customers.removeWhere((u) => u.id == id);
     if (_customers.length < initialLength) {
@@ -106,7 +115,16 @@ class FakeCustomerRepository implements CustomerRepository {
 @riverpod
 CustomerRepository customerRepository(Ref ref) {
   if (ref.watch(demoModeProvider)) {
-    final repo = FakeCustomerRepository();
+    final repo = FakeCustomerRepository(
+      hasLinkedDeposits: (customerId) {
+        final otd = ref.read(oneTimeDepositRepositoryProvider);
+        final rd = ref.read(recurringDepositRepositoryProvider);
+        return (otd is FakeOneTimeDepositRepository &&
+                otd.deposits.any((d) => d.customerId == customerId)) ||
+            (rd is FakeRecurringDepositRepository &&
+                rd.deposits.any((d) => d.customerId == customerId));
+      },
+    );
     ref.onDispose(repo.dispose);
     return repo;
   }

@@ -39,6 +39,10 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   final _summaryController =
       StreamController<Result<List<RDLedgerSummary>, String>>.broadcast();
 
+  /// Test telemetry counters for batch summary backfills.
+  int batchFactFetchCount = 0;
+  int upsertSummariesCallCount = 0;
+
   // --- Test inspection ----------------------------------------------------------------------
   List<RDTransaction> transactionsOf(String rdId) => List.unmodifiable(_transactions[rdId] ?? const []);
   List<RDPoDeposit> poDepositsOf(String rdId) => List.unmodifiable(_poDeposits[rdId] ?? const []);
@@ -60,6 +64,22 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
       _watch(_absorptionControllers, rdId, () => _absorptions[rdId] ?? const []);
 
   @override
+  Future<Result<Map<String, RDRawFactsBundle>, String>> fetchRawFactsForRds(
+    List<String> rdIds,
+  ) async {
+    if (failWith != null) return Failure(failWith!);
+    batchFactFetchCount++;
+    return Success({
+      for (final id in rdIds)
+        id: (
+          transactions: List<RDTransaction>.unmodifiable(_transactions[id] ?? const []),
+          poDeposits: List<RDPoDeposit>.unmodifiable(_poDeposits[id] ?? const []),
+          absorptions: List<RDFeeAbsorption>.unmodifiable(_absorptions[id] ?? const []),
+        ),
+    });
+  }
+
+  @override
   Stream<Result<List<RDLedgerSummary>, String>> watchSummaries() async* {
     yield Success(_summaries.values.toList(growable: false));
     yield* _summaryController.stream;
@@ -76,6 +96,7 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
     if (failWith != null) return Failure(failWith!);
     if (failSummaryWith != null) return Failure(failSummaryWith!);
     if (summaries.isEmpty) return const Success(null);
+    upsertSummariesCallCount++;
     for (final summary in summaries) {
       _summaries[summary.rdId] = summary;
     }

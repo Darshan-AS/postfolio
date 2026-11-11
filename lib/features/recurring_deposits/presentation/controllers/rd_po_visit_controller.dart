@@ -180,7 +180,7 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
   /// Validates every included account upfront and commits the entire PO visit batch atomically.
   Future<Result<String, String>> record() {
     final plan = state;
-    final batchId = const Uuid().v4();
+    final batchId = const Uuid().v7();
     final ledger = ref.read(rDLedgerControllerProvider.notifier);
     return ledger.depositBatchToPo(
       lines: [

@@ -37,6 +37,8 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
 
   final List<OneTimeDeposit> _deposits;
 
+  List<OneTimeDeposit> get deposits => List.unmodifiable(_deposits);
+
   void _emit() {
     if (!_controller.isClosed) {
       _controller.add(Success([..._deposits]));
@@ -82,7 +84,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
   ) async {
     if (delay > Duration.zero) await Future.delayed(delay);
     final newDeposit = deposit.copyWith(
-      id: deposit.id.isEmpty ? const Uuid().v4() : deposit.id,
+      id: deposit.id.isEmpty ? const Uuid().v7() : deposit.id,
     );
     _deposits.add(newDeposit);
     _emit();

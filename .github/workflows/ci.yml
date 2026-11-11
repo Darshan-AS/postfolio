@@ -52,7 +52,7 @@ jobs:
         run: flutter test --exclude-tags integration --coverage
 
       - name: Enforce DDD Layer & Total Coverage Ratchet
-        run: dart run tool/check_coverage.dart --min-domain=80 --min-controllers=78 --min-data=40 --min-ui=66 --min-total=68
+        run: dart run tool/check_coverage.dart --min-domain=80 --min-controllers=80 --min-data=42 --min-ui=67 --min-total=69
 
       - name: Verify WebAssembly (Wasm) Build
         run: flutter build web --wasm

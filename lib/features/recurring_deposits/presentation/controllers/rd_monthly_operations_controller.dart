@@ -507,17 +507,15 @@ class RDMonthlyOperationsActions extends _$RDMonthlyOperationsActions {
     }
   }
 
-  /// Builds summaries for RDs that have none yet (first run after migration), then
-  /// optionally re-projects every visible RD (pull-to-refresh).
+  /// Builds summaries for RDs that have none yet (first run after migration), or
+  /// re-projects every visible RD in a single batch read + bulk upsert (pull-to-refresh).
   Future<void> ensureSummaries({bool rebuildAll = false}) async {
-    final ledger = ref.read(rDLedgerControllerProvider.notifier);
-    final ids = rebuildAll
-        ? (ref.read(monthlyOperationItemsProvider).value ?? const <RDMonthlyOperationItem>[])
-            .map((i) => i.deposit.id)
-            .toList()
-        : await ref.read(rdIdsMissingSummaryProvider.future);
-    for (final id in ids) {
-      await ledger.rebuildSummary(id);
-    }
+    final items = await ref.read(monthlyOperationItemsProvider.future);
+    final deposits = <RecurringDeposit>[
+      for (final i in items)
+        if (rebuildAll || !i.hasSummary) i.deposit,
+    ];
+    if (deposits.isEmpty) return;
+    await ref.read(rDLedgerControllerProvider.notifier).rebuildSummaries(deposits);
   }
 }

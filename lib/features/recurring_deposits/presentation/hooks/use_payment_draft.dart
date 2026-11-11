@@ -203,7 +203,7 @@ PaymentDraftState usePaymentDraft(
   );
 
   // The id is minted once per draft so the sheet knows which transaction to delete on Undo.
-  final draftId = useMemoized(() => const Uuid().v4());
+  final draftId = useMemoized(() => const Uuid().v7());
   final previewTxId = existing?.id ?? draftId;
 
   final RDPaymentDraft draft = (
