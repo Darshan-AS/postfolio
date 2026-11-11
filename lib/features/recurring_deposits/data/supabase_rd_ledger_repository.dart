@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/utils/row_decoder.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:postfolio/core/utils/supabase_paginated_query.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository.dart';
@@ -193,6 +194,7 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
             .order('rd_id', ascending: true)
             .range(from, to),
         fromJson: RDLedgerSummary.fromJson,
+        idColumn: 'rd_id',
       ),
     );
   }
@@ -349,7 +351,7 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
     T Function(Map<String, dynamic>) fromJson,
   ) {
     try {
-      return Success(rows.map(fromJson).toList(growable: false));
+      return Success(List<T>.unmodifiable(decodeRows(rows, fromJson)));
     } catch (e) {
       return Failure(SupabaseErrorMapper.describe(e));
     }

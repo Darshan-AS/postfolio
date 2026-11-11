@@ -332,7 +332,10 @@ BEGIN
 END $$;
 ROLLBACK;
 
-\echo '== CASE 13: Plain TEXT enum columns accept evolved Dart enum values without DDL migrations'
+\echo '== CASE 13: enum columns reject tokens no shipped client can decode (check_violation 23514)'
+-- The Dart models decode these columns strictly, and one undecodable row makes a whole list
+-- unloadable. The vocabularies are owned by the Dart enums; the CHECKs mirror them
+-- (test/core/sql_enum_contract_test.dart fails if the two lists drift apart).
 BEGIN;
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims', json_build_object('sub', :'owner', 'role', 'authenticated')::text, true) \gset junk
@@ -341,28 +344,91 @@ DECLARE
   v_customer_id UUID := (SELECT id FROM public.customers WHERE agent_id = auth.uid() LIMIT 1);
   v_otd_id UUID := gen_random_uuid();
   v_rd_id UUID := (SELECT ai.id FROM public.account_identities ai WHERE ai.account_type = 'RD' AND ai.agent_id = auth.uid() LIMIT 1);
-  v_status TEXT;
+  v_caught BOOLEAN;
 BEGIN
+  -- 13a. Known tokens are accepted end to end.
   PERFORM public.save_one_time_deposit(
-    v_otd_id,
-    v_customer_id,
-    'maturedPendingPayout',
-    'seniorCitizenSavingsScheme',
-    'SCSS-001',
-    100000,
-    8.20,
-    5,
-    0,
-    '2026-01-15',
-    '[{"name":"Legal Guardian","relationship":"legalGuardian","percentage":100}]'::jsonb
+    v_otd_id, v_customer_id, 'active', 'timeDeposit', 'TD-ENUM-OK',
+    100000, 7.50, 5, 0, '2026-01-15',
+    '[{"name":"Known Nominee","relationship":"SonInLaw","percentage":100}]'::jsonb
   );
-
-  PERFORM public.set_deposit_status(v_otd_id, 'prematurelyClosed');
-  SELECT status INTO v_status FROM public.one_time_deposits WHERE id = v_otd_id;
-  ASSERT v_status = 'prematurelyClosed', 'CASE 13a FAILED: set_deposit_status rejected evolved status token';
-
+  PERFORM public.set_deposit_status(v_otd_id, 'closed');
   INSERT INTO public.rd_transactions (rd_id, agent_id, paid_date, amount, payment_mode)
-    VALUES (v_rd_id, auth.uid(), '2026-08-01', 500, 'neft');
+    VALUES (v_rd_id, auth.uid(), '2026-08-01', 500, 'bankTransfer');
+
+  -- 13b. Unknown deposit status.
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.set_deposit_status(v_otd_id, 'prematurelyClosed');
+  EXCEPTION WHEN check_violation THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 13b FAILED: an unknown deposit status was stored';
+
+  -- 13c. Unknown scheme type.
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.save_one_time_deposit(
+      gen_random_uuid(), v_customer_id, 'active', 'seniorCitizenSavingsScheme', 'SCSS-001',
+      100000, 8.20, 5, 0, '2026-01-15', '[]'::jsonb
+    );
+  EXCEPTION WHEN check_violation THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 13c FAILED: an unknown one-time scheme type was stored';
+
+  -- 13d. Nominee relationship in the wrong case (`son` instead of `Son`) and an unknown one.
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.save_one_time_deposit(
+      gen_random_uuid(), v_customer_id, 'active', 'timeDeposit', 'TD-REL-CASE',
+      100000, 7.50, 5, 0, '2026-01-15',
+      '[{"name":"Wrong Case","relationship":"son","percentage":100}]'::jsonb
+    );
+  EXCEPTION WHEN check_violation THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 13d FAILED: a wrongly-cased nominee relationship was stored';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.save_one_time_deposit(
+      gen_random_uuid(), v_customer_id, 'active', 'timeDeposit', 'TD-REL-NEW',
+      100000, 7.50, 5, 0, '2026-01-15',
+      '[{"name":"Legal Guardian","relationship":"legalGuardian","percentage":100}]'::jsonb
+    );
+  EXCEPTION WHEN check_violation THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 13d FAILED: an unknown nominee relationship was stored';
+
+  -- 13e. Unknown payment mode.
+  v_caught := FALSE;
+  BEGIN
+    INSERT INTO public.rd_transactions (rd_id, agent_id, paid_date, amount, payment_mode)
+      VALUES (v_rd_id, auth.uid(), '2026-08-01', 500, 'neft');
+  EXCEPTION WHEN check_violation THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 13e FAILED: an unknown payment mode was stored';
+END $$;
+ROLLBACK;
+
+-- 13f. The same holds for recurring deposits (status and scheme type), written directly.
+BEGIN;
+DO $$
+DECLARE
+  v_rd_id UUID := (SELECT id FROM public.recurring_deposits LIMIT 1);
+  v_caught BOOLEAN;
+BEGIN
+  v_caught := FALSE;
+  BEGIN
+    UPDATE public.recurring_deposits SET status = 'discontinued' WHERE id = v_rd_id;
+  EXCEPTION WHEN check_violation THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 13f FAILED: an unknown RD status was stored';
+
+  v_caught := FALSE;
+  BEGIN
+    UPDATE public.recurring_deposits SET scheme_type = 'RD' WHERE id = v_rd_id;
+  EXCEPTION WHEN check_violation THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 13f FAILED: a short-code RD scheme type was stored';
 END $$;
 ROLLBACK;
 
@@ -476,7 +542,7 @@ BEGIN
   PERFORM public.save_recurring_deposit(
     v_empty_rd, v_customer_with_deposit, 'active', 'recurringDeposit',
     'RD-EMPTY-1', '902', 1000, 6.70, 5, 0, '2026-01-01',
-    '[{"name":"Test Nominee","relationship":"wife","percentage":100}]'::jsonb, 0, 0
+    '[{"name":"Test Nominee","relationship":"Wife","percentage":100}]'::jsonb, 0, 0
   );
   INSERT INTO public.rd_ledger_summary (rd_id, agent_id, facts_version, projected_on, open_items)
     VALUES (v_empty_rd, auth.uid(), 1, '2026-01-01', '[]'::jsonb);
@@ -554,7 +620,7 @@ BEGIN
     PERFORM public.save_one_time_deposit(
       gen_random_uuid(), v_customer_id, 'active', 'timeDeposit',
       'TD-PCT', 10000, 7.50, 5, 0, '2026-01-01',
-      '[{"name":"Bad Share","relationship":"son","percentage":105}]'::jsonb
+      '[{"name":"Bad Share","relationship":"Son","percentage":105}]'::jsonb
     );
   EXCEPTION WHEN check_violation THEN
     v_caught_bad_pct := TRUE;

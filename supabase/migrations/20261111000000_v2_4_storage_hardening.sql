@@ -1,13 +1,14 @@
 -- Migration: 20261111000000_v2_4_storage_hardening.sql
--- Goal: Consolidated v2.4 Pure-DDD Storage Hardening & Security Lockdown (post-v2.3.1):
---   1. Pure-DDD Boundary: 100% of business rules, financial-terms locks, batch-undo ordering,
---      and enum vocabularies live in Dart; SQL retains strictly universal storage physics.
+-- Goal: Consolidated v2.4 Storage Hardening & Security Lockdown (post-v2.3.1):
+--   1. Boundary: business rules (financial-terms locks, batch-undo ordering, fee math) live
+--      in Dart. SQL keeps storage integrity only — including the enum vocabularies, which the
+--      Dart enums own and SQL mirrors as CHECKs so a token no client can decode is rejected.
 --   2. Security & Least Privilege: isolate internal SECURITY DEFINER helpers in unexposed
 --      `private` schema, inline RLS-enforced nominee JSON into `security_invoker = true` views,
 --      and revoke `anon` table grants + wildcard `authenticated` routine grants.
 --   3. Storage Physics: exact base-10 `NUMERIC(12,2)` / `NUMERIC(5,2)` scales, universal
---      physical sign bounds (`> 0` / `>= 0`), plain `TEXT` enum columns (dropping hardcoded
---      enum CHECKs), `ON DELETE NO ACTION` parent protection on Customers & RD ledger facts,
+--      physical sign bounds (`> 0` / `>= 0`), enum CHECKs on every strictly-decoded column,
+--      `ON DELETE NO ACTION` parent protection on Customers & RD ledger facts,
 --      `ON UPDATE CASCADE` on all `agent_id` FKs, case-insensitive `UNIQUE (lower(email))`
 --      on `agent_profiles`, partial `UNIQUE` SB account per customer, and composite indexes.
 --   4. Dumb Multi-Table ACID Envelopes (`save_customer_with_sb_account`, `save_one_time_deposit`,
@@ -183,16 +184,12 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, private;
 REVOKE ALL ON ALL ROUTINES IN SCHEMA private FROM PUBLIC, anon, authenticated;
 
 -- ------------------------------------------------------------------------------------------
--- 2. Exact `NUMERIC(12,2)` / `NUMERIC(5,2)` scales, plain TEXT enums & physical sign bounds
+-- 2. Exact `NUMERIC(12,2)` / `NUMERIC(5,2)` scales, enum vocabularies & physical sign bounds
 --    (Drop dependent views before ALTER COLUMN TYPE, then recreate with security_invoker)
 -- ------------------------------------------------------------------------------------------
 DROP VIEW IF EXISTS public.customer_details_view;
 DROP VIEW IF EXISTS public.one_time_deposit_details_view;
 DROP VIEW IF EXISTS public.recurring_deposit_details_view;
-
--- Strip leaked enum CHECK from rd_transactions so payment_mode evolves in pure Dart:
-ALTER TABLE public.rd_transactions
-  DROP CONSTRAINT IF EXISTS rd_transactions_payment_mode_check;
 
 ALTER TABLE public.one_time_deposits
   ALTER COLUMN principal_amount TYPE NUMERIC(12,2) USING ROUND(principal_amount, 2),
@@ -251,6 +248,43 @@ ALTER TABLE public.nominees
   DROP CONSTRAINT IF EXISTS nominees_percentage_bounds;
 ALTER TABLE public.nominees
   ADD CONSTRAINT nominees_percentage_bounds CHECK (percentage > 0 AND percentage <= 100);
+
+-- Enum vocabularies. The Dart enums are the source of truth; these lists mirror their wire
+-- values (test/core/sql_enum_contract_test.dart fails if they drift). The client decodes
+-- these columns strictly, and a single undecodable row makes a whole list unloadable, so the
+-- database refuses any token no shipped client understands. Adding an enum value therefore
+-- takes a one-line migration extending the matching CHECK, shipped before the client.
+-- (`rd_transactions_payment_mode_check` from 20261110000000_rd_ledger.sql is kept as is.)
+ALTER TABLE public.one_time_deposits
+  DROP CONSTRAINT IF EXISTS one_time_deposits_status_check,
+  DROP CONSTRAINT IF EXISTS one_time_deposits_scheme_type_check;
+ALTER TABLE public.one_time_deposits
+  ADD CONSTRAINT one_time_deposits_status_check
+    CHECK (status IN ('active', 'closed')),
+  ADD CONSTRAINT one_time_deposits_scheme_type_check
+    CHECK (scheme_type IN (
+      'timeDeposit', 'monthlyIncomeScheme', 'nationalSavingsCertificate', 'kisanVikasPatra'
+    ));
+
+ALTER TABLE public.recurring_deposits
+  DROP CONSTRAINT IF EXISTS recurring_deposits_status_check,
+  DROP CONSTRAINT IF EXISTS recurring_deposits_scheme_type_check;
+ALTER TABLE public.recurring_deposits
+  ADD CONSTRAINT recurring_deposits_status_check
+    CHECK (status IN ('active', 'closed')),
+  ADD CONSTRAINT recurring_deposits_scheme_type_check
+    CHECK (scheme_type IN ('recurringDeposit'));
+
+ALTER TABLE public.nominees
+  DROP CONSTRAINT IF EXISTS nominees_relationship_check;
+ALTER TABLE public.nominees
+  ADD CONSTRAINT nominees_relationship_check
+    CHECK (relationship IN (
+      'Husband', 'Wife', 'Son', 'Daughter', 'Father', 'Mother', 'Brother', 'Sister',
+      'Grandfather', 'Grandmother', 'Grandson', 'Granddaughter',
+      'FatherInLaw', 'MotherInLaw', 'SonInLaw', 'DaughterInLaw', 'BrotherInLaw', 'SisterInLaw',
+      'Nephew', 'Niece', 'Uncle', 'Aunt', 'Cousin', 'Other'
+    ));
 
 -- Recreate `security_invoker = true` read views with inline RLS-safe nominee JSON:
 CREATE OR REPLACE VIEW public.customer_details_view WITH (security_invoker = true) AS
@@ -634,8 +668,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, private;
 
--- Atomic status-only update envelope (preserves nominees, opening_receivable & rd_ledger_summary,
--- without hardcoding allowed status enum names in SQL):
+-- Atomic status-only update envelope (preserves nominees, opening_receivable & rd_ledger_summary;
+-- the status vocabulary is enforced by the tables' CHECK constraints, not repeated here):
 CREATE OR REPLACE FUNCTION public.set_deposit_status(
   p_id UUID,
   p_status TEXT

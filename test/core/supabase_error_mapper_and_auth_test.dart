@@ -49,20 +49,13 @@ void main() {
           expected: 'This record cannot be deleted while linked accounts or ledger entries exist.',
         ),
         (
-          label: 'locked financial terms 23514',
+          label: 'check constraint 23514 (constraint name stays out of the message)',
           error: const PostgrestException(
-            message: 'Financial terms cannot be modified after ledger activity has been recorded.',
+            message:
+                'new row for relation "rd_transactions" violates check constraint "rd_transactions_payment_mode_check"',
             code: '23514',
           ),
-          expected: 'Financial terms cannot be modified after ledger activity has been recorded.',
-        ),
-        (
-          label: 'superseded PO batch 23514',
-          error: const PostgrestException(
-            message: 'Cannot undo visit: a newer Post Office deposit exists on one or more accounts.',
-            code: '23514',
-          ),
-          expected: 'Cannot undo this visit because a newer Post Office deposit was recorded afterward.',
+          expected: 'The entry does not satisfy the validation rules.',
         ),
         (
           label: 'RLS denial 42501',

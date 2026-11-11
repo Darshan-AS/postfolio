@@ -14,6 +14,7 @@ import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/services/app_error_reporter.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:postfolio/firebase_options.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,8 +45,16 @@ void main() async {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true).ignore();
       return true;
     };
+    // Errors a repository turned into a generic message (unreadable rows, unknown database
+    // codes) are handled, not crashes: record them as non-fatal so the cause is not lost.
+    SupabaseErrorMapper.onUnexpected = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: false).ignore();
+    };
   } else if (kIsWeb) {
     final webReporter = AppErrorReporter.supabase(Supabase.instance.client);
+    SupabaseErrorMapper.onUnexpected = (error, stack) {
+      webReporter.reportUnawaited(platform: 'web', error: error, stackTrace: stack);
+    };
     final previousOnError = FlutterError.onError;
     FlutterError.onError = (details) {
       previousOnError?.call(details);

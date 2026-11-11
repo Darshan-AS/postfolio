@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/utils/row_decoder.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -16,15 +17,14 @@ abstract final class SupabasePaginatedQuery {
     required Future<List<Map<String, dynamic>>> Function(int from, int to) fetchPage,
     required T Function(Map<String, dynamic>) fromJson,
     int pageSize = defaultPageSize,
+    String idColumn = 'id',
   }) async {
     assert(pageSize > 0, 'pageSize must be positive');
     final items = <T>[];
     var offset = 0;
     while (true) {
       final rows = await fetchPage(offset, offset + pageSize - 1);
-      for (final row in rows) {
-        items.add(fromJson(row));
-      }
+      items.addAll(decodeRows(rows, fromJson, idColumn: idColumn));
       if (rows.length < pageSize) break;
       offset += pageSize;
     }
