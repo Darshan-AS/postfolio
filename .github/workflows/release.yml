@@ -44,14 +44,12 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-          USE_SUPABASE: ${{ secrets.USE_SUPABASE }}
           GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
           GOOGLE_IOS_CLIENT_ID: ${{ secrets.GOOGLE_IOS_CLIENT_ID }}
         run: |
           cat <<EOF > .env
           SUPABASE_URL=$SUPABASE_URL
           SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY
-          USE_SUPABASE=$USE_SUPABASE
           GOOGLE_WEB_CLIENT_ID=$GOOGLE_WEB_CLIENT_ID
           GOOGLE_IOS_CLIENT_ID=$GOOGLE_IOS_CLIENT_ID
           EOF
@@ -87,8 +85,8 @@ jobs:
       - name: Build Split APKs (for GitHub Release)
         run: flutter build apk --flavor prod --split-per-abi --release
 
-      - name: Build Web Release
-        run: flutter build web
+      - name: Build Web Release (Wasm + JS Fallback)
+        run: flutter build web --wasm
 
       - name: Extract Release Notes
         id: release_notes

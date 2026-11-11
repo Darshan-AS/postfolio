@@ -149,7 +149,7 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> monthlyOperationItems(Ref r
   final deposits = await ref.watch(recurringDepositsControllerProvider.future);
   final summaries = await ref.watch(rdLedgerSummariesProvider.future);
 
-  // The Supabase list view already carries customer_name; demo/Firestore deposits do not.
+  // The Supabase list view already carries customer_name; unit-test fixtures may omit it.
   // Join lazily so a missing name never shows up as an id or a placeholder error.
   Map<String, String> customerNames = const {};
   if (deposits.any((d) => d.customerName == null)) {

@@ -11,6 +11,7 @@ void main(List<String> args) {
   var minTotal = 0.0;
   var minDomain = 0.0;
   var minControllers = 0.0;
+  var minData = 0.0;
 
   for (final arg in args) {
     if (arg.startsWith('--min=') || arg.startsWith('--min-total=')) {
@@ -19,6 +20,8 @@ void main(List<String> args) {
       minDomain = double.parse(arg.split('=').last);
     } else if (arg.startsWith('--min-controllers=')) {
       minControllers = double.parse(arg.split('=').last);
+    } else if (arg.startsWith('--min-data=')) {
+      minData = double.parse(arg.split('=').last);
     } else if (arg.startsWith('--file=')) {
       lcovPath = arg.split('=').last;
     }
@@ -100,6 +103,7 @@ void main(List<String> args) {
   final failures = <String>[];
   final domainPct = pctOf(buckets[domainKey]!);
   final controllersPct = pctOf(buckets[controllersKey]!);
+  final dataPct = pctOf(buckets[dataKey]!);
 
   if (domainPct < minDomain) {
     failures.add(
@@ -109,6 +113,11 @@ void main(List<String> args) {
   if (controllersPct < minControllers) {
     failures.add(
       '$controllersKey ${controllersPct.toStringAsFixed(1)}% < ${minControllers.toStringAsFixed(1)}%',
+    );
+  }
+  if (dataPct < minData) {
+    failures.add(
+      '$dataKey ${dataPct.toStringAsFixed(1)}% < ${minData.toStringAsFixed(1)}%',
     );
   }
   if (totalPct < minTotal) {
@@ -128,12 +137,11 @@ void main(List<String> args) {
 bool _isExcluded(String path) =>
     path.endsWith('.g.dart') ||
     path.endsWith('.freezed.dart') ||
-    path.endsWith('firebase_options.dart') ||
-    path.endsWith('run_migration.dart') ||
-    path.endsWith('run_supabase_migration.dart');
+    path.endsWith('firebase_options.dart');
 
 String _classify(String path) {
   if (path.contains('/domain/') ||
+      path.contains('/core/env/') ||
       path.contains('/core/models/') ||
       path.contains('/core/services/') ||
       path.contains('/core/enums/') ||
@@ -144,7 +152,7 @@ String _classify(String path) {
   if (path.contains('/controllers/') || path.contains('/providers/')) {
     return 'controllers & providers';
   }
-  if (path.contains('/data/')) {
+  if (path.contains('/data/') || path.contains('/core/mocks/')) {
     return 'data & repositories';
   }
   return 'presentation UI & routing';

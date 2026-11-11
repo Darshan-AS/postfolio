@@ -1,16 +1,11 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
-import 'package:postfolio/core/constants/firestore_keys.dart';
-import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/features/customers/domain/customer_model.dart';
-import 'package:postfolio/features/auth/domain/auth_state.dart';
-import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
-import 'package:postfolio/core/env/env.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
+import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/data/supabase_customer_repository.dart';
+import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'customer_repository.g.dart';
@@ -21,99 +16,6 @@ abstract class CustomerRepository {
   Future<Result<void, String>> createCustomer(Customer customer);
   Future<Result<void, String>> updateCustomer(Customer customer);
   Future<Result<void, String>> deleteCustomer(String id);
-}
-
-class FirestoreCustomerRepository implements CustomerRepository {
-  final firestore.FirebaseFirestore _firestore;
-  final String _agentId;
-
-  FirestoreCustomerRepository(this._firestore, this._agentId);
-
-  firestore.CollectionReference<Customer> get _customers => _firestore
-      .collection(FirestoreCollections.users)
-      .doc(_agentId)
-      .collection(FirestoreCollections.customers)
-      .withConverter<Customer>(
-        fromFirestore: (snapshot, _) {
-          final data = snapshot.data()!;
-          data[FirestoreKeys.id] = snapshot.id;
-          return Customer.fromJson(data);
-        },
-        toFirestore: (customer, _) {
-          final data = customer.toJson();
-          data.remove(FirestoreKeys.id); // ID is part of the doc metadata
-          if (customer.createdAt == null) {
-            data[FirestoreKeys.createdAt] =
-                firestore.FieldValue.serverTimestamp();
-          }
-          data[FirestoreKeys.updatedAt] =
-              firestore.FieldValue.serverTimestamp();
-          return data;
-        },
-      );
-
-  @override
-  Stream<Result<List<Customer>, String>> watchCustomers() {
-    return _customers.snapshots().map((snapshot) {
-      try {
-        final customers = snapshot.docs.map((doc) => doc.data()).toList();
-        return Success(customers);
-      } catch (e) {
-        return Failure(e.toString());
-      }
-    });
-  }
-
-  @override
-  Stream<Result<Customer, String>> watchCustomerById(String id) {
-    return _customers.doc(id).snapshots().map((snapshot) {
-      try {
-        if (!snapshot.exists) {
-          return const Failure('Customer not found');
-        }
-        return Success(snapshot.data()!);
-      } catch (e) {
-        return Failure(e.toString());
-      }
-    });
-  }
-
-  @override
-  Future<Result<void, String>> createCustomer(Customer customer) async {
-    try {
-      // We use .set() without awaiting the server sync.
-      // This allows offline writes to resolve immediately to the UI,
-      // relying on Firestore's background syncing.
-      unawaited(_customers.doc(customer.id).set(customer));
-      return const Success(null);
-    } catch (e) {
-      return Failure(e.toString());
-    }
-  }
-
-  @override
-  Future<Result<void, String>> updateCustomer(Customer customer) async {
-    try {
-      unawaited(
-        _customers
-            .doc(customer.id)
-            .set(customer, firestore.SetOptions(merge: true)),
-      );
-      return const Success(null);
-    } catch (e) {
-      return Failure(e.toString());
-    }
-  }
-
-  @override
-  Future<Result<void, String>> deleteCustomer(String id) async {
-    try {
-      unawaited(_customers.doc(id).delete());
-      return const Success(null);
-    } catch (e) {
-      return Failure(e.toString());
-    }
-  }
 }
 
 class FakeCustomerRepository implements CustomerRepository {
@@ -137,9 +39,7 @@ class FakeCustomerRepository implements CustomerRepository {
 
   @override
   Stream<Result<List<Customer>, String>> watchCustomers() async* {
-    // Yield initial data immediately for new listeners
     yield Success([..._customers]);
-    // Then yield any future updates
     yield* _controller.stream;
   }
 
@@ -203,34 +103,12 @@ class FakeCustomerRepository implements CustomerRepository {
   }
 }
 
-// Global Provider for the Repository.
 @riverpod
 CustomerRepository customerRepository(Ref ref) {
-  final isDemoMode = ref.watch(demoModeProvider);
-  if (isDemoMode) {
+  if (ref.watch(demoModeProvider)) {
     final repo = FakeCustomerRepository();
     ref.onDispose(repo.dispose);
     return repo;
   }
-
-  if (Env.useSupabase) {
-    return SupabaseCustomerRepository(ref.watch(supabaseClientProvider));
-  }
-
-  final authState = ref.watch(authControllerProvider);
-  final agentId = switch (authState) {
-    AuthStateAuthenticated state => state.user.id,
-    _ => null,
-  };
-
-  if (agentId == null) {
-    throw StateError(
-      'Agent is not authenticated. Cannot access CustomerRepository.',
-    );
-  }
-
-  return FirestoreCustomerRepository(
-    firestore.FirebaseFirestore.instance,
-    agentId,
-  );
+  return SupabaseCustomerRepository(ref.watch(supabaseClientProvider));
 }

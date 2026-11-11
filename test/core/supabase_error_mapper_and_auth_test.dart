@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:postfolio/core/env/env.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
@@ -212,6 +213,49 @@ void main() {
       await reporter.report(platform: 'web', error: 'over-cap'); // dropped by maxReportsPerSession=3
       expect(recorded, ['web:RenderFlex overflow', 'web:RenderFlex overflow']);
       expect(reporter.sentCount, 3);
+    });
+  });
+
+  group('Env.assertFlavorSafe', () {
+    test('blocks staging flavor when pointed at remote production URL under prod APP_ENV', () {
+      expect(
+        () => Env.assertFlavorSafe(
+          flavor: 'staging',
+          effectiveEnv: 'prod',
+          emulatorOverride: false,
+          resolvedUrl: 'https://prod-ref.supabase.co',
+        ),
+        throwsStateError,
+      );
+
+      // Staging pointed at local emulator or explicit staging APP_ENV succeeds.
+      expect(
+        () => Env.assertFlavorSafe(
+          flavor: 'staging',
+          effectiveEnv: 'local',
+          emulatorOverride: false,
+          resolvedUrl: 'http://127.0.0.1:54321',
+        ),
+        returnsNormally,
+      );
+      expect(
+        () => Env.assertFlavorSafe(
+          flavor: 'staging',
+          effectiveEnv: 'staging',
+          emulatorOverride: false,
+          resolvedUrl: 'https://staging-ref.supabase.co',
+        ),
+        returnsNormally,
+      );
+      expect(
+        () => Env.assertFlavorSafe(
+          flavor: 'prod',
+          effectiveEnv: 'prod',
+          emulatorOverride: false,
+          resolvedUrl: 'https://prod-ref.supabase.co',
+        ),
+        returnsNormally,
+      );
     });
   });
 }

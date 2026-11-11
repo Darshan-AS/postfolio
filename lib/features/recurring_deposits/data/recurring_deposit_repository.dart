@@ -1,20 +1,14 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
-import 'package:postfolio/core/constants/firestore_keys.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
-import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
-import 'package:uuid/uuid.dart';
-
-import 'package:postfolio/features/auth/domain/auth_state.dart';
-import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
-import 'package:postfolio/core/env/env.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
+import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/data/supabase_recurring_deposit_repository.dart';
+import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:uuid/uuid.dart';
 
 part 'recurring_deposit_repository.g.dart';
 
@@ -27,105 +21,6 @@ abstract class RecurringDepositRepository {
     DepositStatus status,
   );
   Future<Result<void, String>> deleteRecurringDeposit(String id);
-}
-
-class FirestoreRecurringDepositRepository
-    implements RecurringDepositRepository {
-  final firestore.FirebaseFirestore _firestore;
-  final String _agentId;
-
-  FirestoreRecurringDepositRepository(this._firestore, this._agentId);
-
-  firestore.CollectionReference<RecurringDeposit> get _deposits => _firestore
-      .collection(FirestoreCollections.users)
-      .doc(_agentId)
-      .collection(FirestoreCollections.recurringDeposits)
-      .withConverter<RecurringDeposit>(
-        fromFirestore: (snapshot, _) {
-          final data = snapshot.data()!;
-          data[FirestoreKeys.id] = snapshot.id;
-          return RecurringDeposit.fromJson(data);
-        },
-        toFirestore: (deposit, _) {
-          final data = deposit.toJson();
-          data.remove(FirestoreKeys.id);
-          if (deposit.createdAt == null) {
-            data[FirestoreKeys.createdAt] =
-                firestore.FieldValue.serverTimestamp();
-          }
-          data[FirestoreKeys.updatedAt] =
-              firestore.FieldValue.serverTimestamp();
-          return data;
-        },
-      );
-
-  @override
-  Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits() {
-    return _deposits.snapshots().map((snapshot) {
-      try {
-        final deposits = snapshot.docs.map((doc) => doc.data()).toList();
-        return Success(deposits);
-      } catch (e) {
-        return Failure(e.toString());
-      }
-    });
-  }
-
-  @override
-  Stream<Result<RecurringDeposit, String>> watchRecurringDepositById(
-    String id,
-  ) {
-    return _deposits.doc(id).snapshots().map((snapshot) {
-      try {
-        if (!snapshot.exists) {
-          return const Failure('Recurring Deposit not found');
-        }
-        return Success(snapshot.data()!);
-      } catch (e) {
-        return Failure(e.toString());
-      }
-    });
-  }
-
-  @override
-  Future<Result<void, String>> saveRecurringDeposit(RecurringDeposit deposit) async {
-    try {
-      unawaited(
-        _deposits.doc(deposit.id).set(deposit, firestore.SetOptions(merge: true)),
-      );
-      return const Success(null);
-    } catch (e) {
-      return Failure(e.toString());
-    }
-  }
-
-  @override
-  Future<Result<void, String>> updateDepositStatus(
-    String id,
-    DepositStatus status,
-  ) async {
-    try {
-      unawaited(
-        _deposits.doc(id).update({
-          'status': status.name,
-          FirestoreKeys.updatedAt: firestore.FieldValue.serverTimestamp(),
-        }),
-      );
-      return const Success(null);
-    } catch (e) {
-      return Failure(e.toString());
-    }
-  }
-
-  @override
-  Future<Result<void, String>> deleteRecurringDeposit(String id) async {
-    try {
-      unawaited(_deposits.doc(id).delete());
-      return const Success(null);
-    } catch (e) {
-      return Failure(e.toString());
-    }
-  }
 }
 
 /// In-memory deposits store for demo mode and tests. Ledger facts live in
@@ -213,34 +108,12 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   }
 }
 
-// Global Provider for the Repository.
 @riverpod
 RecurringDepositRepository recurringDepositRepository(Ref ref) {
-  final isDemoMode = ref.watch(demoModeProvider);
-  if (isDemoMode) {
+  if (ref.watch(demoModeProvider)) {
     final repo = FakeRecurringDepositRepository();
     ref.onDispose(repo.dispose);
     return repo;
   }
-
-  if (Env.useSupabase) {
-    return SupabaseRecurringDepositRepository(ref.watch(supabaseClientProvider));
-  }
-
-  final authState = ref.watch(authControllerProvider);
-  final agentId = switch (authState) {
-    AuthStateAuthenticated state => state.user.id,
-    _ => null,
-  };
-
-  if (agentId == null) {
-    throw StateError(
-      'Agent is not authenticated. Cannot access RecurringDepositRepository.',
-    );
-  }
-
-  return FirestoreRecurringDepositRepository(
-    firestore.FirebaseFirestore.instance,
-    agentId,
-  );
+  return SupabaseRecurringDepositRepository(ref.watch(supabaseClientProvider));
 }

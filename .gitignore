@@ -70,6 +70,8 @@ data/*
 .env
 .env.*
 !.env.example
+config/staging.json
+config/prod.json
 lib/core/env/env.g.dart
 
 # Generated Dart files
