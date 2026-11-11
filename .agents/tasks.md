@@ -51,7 +51,8 @@
   - Decision: enum CHECKs in SQL mirroring the Dart enums, plus per-row decoding that names the failing row and reports the cause. Lists remain all-or-nothing.
 - [x] **A7 (Migration rehearsal)**: Apply `20261111000000_v2_4_storage_hardening.sql` to a copy of production data before `supabase db push`; define release ordering.
   - [ ] Owner action: back up hosted, then `supabase db push`, then tag. The rehearsal copy was from 10 Nov and had no ledger rows; hosted has since had the RD-ledger migration, baselining and new entries.
-- [ ] **A8 (Realtime staleness)**: Refetch on resubscribe and app resume, retry failed loads, and keep a queued refetch when the in-flight fetch throws.
+- [x] **A8 (Realtime staleness)**: Refetch on resubscribe, retry failed loads, and keep a queued refetch when the in-flight fetch throws.
+  - [ ] Follow-up (not started): every ledger write still refetches the whole `rd_ledger_summary` list; apply Realtime payloads to an in-memory map instead.
 
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)
 - [ ] **1. Statutory Rulebook & Circular Reference Docs (`docs/india_post_schemes_policy.md`)**: Compile authoritative citations across `G.S.R. 916(E)`–`922(E)` (National Savings RD, TD, MIS, KVP, NSC Rules 2019 & subsequent Gazette amendments), DOP SB Orders, Finacle CBS / DOP Agent Portal behavior, and MPKBY / SAS agency rules.

@@ -9,7 +9,33 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// server-filtered Realtime CDC collection streams.
 abstract final class SupabasePaginatedQuery {
   static const int defaultPageSize = 500;
+
+  /// Waits between automatic retries of a failed load. After the last one the stream stops
+  /// retrying on its own; the next change event or channel re-subscribe starts over.
+  static const List<Duration> defaultRetryDelays = [
+    Duration(seconds: 2),
+    Duration(seconds: 5),
+    Duration(seconds: 15),
+    Duration(seconds: 30),
+  ];
   static int _channelCounter = 0;
+
+  /// Builds the status callback for `RealtimeChannel.subscribe`.
+  ///
+  /// Realtime does not replay changes made while a channel was down (phone asleep, network
+  /// switch). Whenever the channel becomes subscribed *again*, [onResubscribed] is called so
+  /// the list is fetched afresh. The first subscribe is skipped: the initial snapshot is
+  /// already on its way.
+  static void Function(RealtimeSubscribeStatus status, [Object? error]) refetchOnResubscribe(
+    void Function() onResubscribed,
+  ) {
+    var wasSubscribed = false;
+    return (status, [error]) {
+      if (status != RealtimeSubscribeStatus.subscribed) return;
+      if (wasSubscribed) onResubscribed();
+      wasSubscribed = true;
+    };
+  }
 
   /// Fetches all pages from a deterministic `.order(...)` + `.range(from, to)` query
   /// so agent collections safely scale past PostgREST's 1,000-row `max-rows` cap.
@@ -45,18 +71,35 @@ abstract final class SupabasePaginatedQuery {
   /// Coordinates an immediate [fetchAll] snapshot plus debounced, coalesced reloads
   /// from [invalidations], guaranteeing that invalidations arriving mid-flight trigger
   /// one follow-up fetch without overlapping requests.
+  ///
+  /// Failure handling:
+  /// * A failed load is retried after each of [retryDelays] in turn.
+  /// * While a good snapshot is on screen, a failed refresh is retried quietly; the
+  ///   `Failure` is emitted only once the retries are used up. With nothing to show yet,
+  ///   the `Failure` is emitted at once (and the retries still run).
+  /// * A change that arrived while the failing fetch was in flight is fetched right away.
+  /// * After the retries are used up, the next invalidation starts over.
   static Stream<Result<List<T>, String>> watchDebouncedCollection<T>({
     required Future<List<T>> Function() fetchAll,
     Stream<void>? invalidations,
     Future<void> Function()? onDispose,
     Duration debounce = const Duration(milliseconds: 50),
+    List<Duration> retryDelays = defaultRetryDelays,
   }) {
     late final StreamController<Result<List<T>, String>> controller;
     StreamSubscription<void>? invalidationSub;
     Timer? debounceTimer;
+    Timer? retryTimer;
     var disposed = false;
     var fetching = false;
     var pendingRefetch = false;
+    var failedAttempts = 0; // consecutive failures since the last success or invalidation
+    var hasData = false; // a snapshot has been delivered
+    var failureShown = false; // the latest emission is a Failure
+
+    void emit(Result<List<T>, String> result) {
+      if (!disposed && !controller.isClosed) controller.add(result);
+    }
 
     Future<void> load() async {
       if (disposed) return;
@@ -65,18 +108,30 @@ abstract final class SupabasePaginatedQuery {
         return;
       }
       fetching = true;
+      retryTimer?.cancel();
       try {
         do {
           pendingRefetch = false;
-          final items = await fetchAll();
-          if (!disposed && !controller.isClosed) {
-            controller.add(Success(items));
+          try {
+            final items = await fetchAll();
+            failedAttempts = 0;
+            hasData = true;
+            failureShown = false;
+            emit(Success(items));
+          } catch (error, stackTrace) {
+            failedAttempts++;
+            final retriesLeft = failedAttempts <= retryDelays.length;
+            if ((!hasData || !retriesLeft) && !failureShown) {
+              failureShown = true;
+              emit(Failure(SupabaseErrorMapper.describe(error, stackTrace: stackTrace)));
+            }
+            if (retriesLeft && !pendingRefetch && !disposed) {
+              retryTimer = Timer(retryDelays[failedAttempts - 1], () {
+                unawaited(load());
+              });
+            }
           }
         } while (pendingRefetch && !disposed);
-      } catch (e) {
-        if (!disposed && !controller.isClosed) {
-          controller.add(Failure(SupabaseErrorMapper.describe(e)));
-        }
       } finally {
         fetching = false;
       }
@@ -84,6 +139,7 @@ abstract final class SupabasePaginatedQuery {
 
     void scheduleReload() {
       if (disposed) return;
+      failedAttempts = 0;
       debounceTimer?.cancel();
       debounceTimer = Timer(debounce, () {
         unawaited(load());
@@ -98,6 +154,7 @@ abstract final class SupabasePaginatedQuery {
       onCancel: () async {
         disposed = true;
         debounceTimer?.cancel();
+        retryTimer?.cancel();
         await invalidationSub?.cancel();
         if (onDispose != null) {
           await onDispose();
@@ -152,7 +209,11 @@ abstract final class SupabasePaginatedQuery {
                 }
               },
             )
-            .subscribe();
+            .subscribe(
+              refetchOnResubscribe(() {
+                if (!triggers.isClosed) triggers.add(null);
+              }),
+            );
       },
     );
 

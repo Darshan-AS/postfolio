@@ -25,6 +25,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/controllers/r
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show RealtimeSubscribeStatus;
 
 void main() {
   group('SupabasePaginatedQuery.fetchAllPages (>1,000-row pagination)', () {
@@ -301,6 +302,8 @@ void main() {
       final sub = SupabasePaginatedQuery.watchDebouncedCollection<int>(
         invalidations: triggers.stream,
         debounce: const Duration(milliseconds: 15),
+        // No automatic retries here: this test is about one failure mapping to one Failure.
+        retryDelays: const [],
         onDispose: () async {
           disposedCount++;
         },
@@ -355,6 +358,126 @@ void main() {
       // 5. Cancel invokes onDispose cleanly.
       await sub.cancel();
       expect(disposedCount, 1);
+    });
+  });
+
+  group('SupabasePaginatedQuery.watchDebouncedCollection recovery', () {
+    const tick = Duration(milliseconds: 10);
+    const retries = [tick, tick, tick];
+
+    // A scripted `fetchAll`: each call takes the next outcome; `null` means "throw".
+    ({
+      Stream<Result<List<int>, String>> stream,
+      StreamController<void> triggers,
+      int Function() calls,
+    }) watch(List<List<int>?> outcomes, {Completer<void>? holdFirstCall}) {
+      final triggers = StreamController<void>.broadcast();
+      addTearDown(triggers.close);
+      var calls = 0;
+      final stream = SupabasePaginatedQuery.watchDebouncedCollection<int>(
+        invalidations: triggers.stream,
+        debounce: const Duration(milliseconds: 5),
+        retryDelays: retries,
+        fetchAll: () async {
+          final index = calls++;
+          if (index == 0 && holdFirstCall != null) await holdFirstCall.future;
+          final outcome = index < outcomes.length ? outcomes[index] : outcomes.last;
+          if (outcome == null) throw Exception('network down');
+          return outcome;
+        },
+      );
+      return (stream: stream, triggers: triggers, calls: () => calls);
+    }
+
+    List<int>? valueOf(Result<List<int>, String> r) =>
+        r is Success<List<int>, String> ? r.value : null;
+
+    test('a failed first load is retried until it succeeds, with no change event needed', () async {
+      final w = watch([null, null, [1]]);
+      final emitted = <Result<List<int>, String>>[];
+      final sub = w.stream.listen(emitted.add);
+      addTearDown(sub.cancel);
+
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+
+      expect(emitted.first, isA<Failure<List<int>, String>>(),
+          reason: 'with nothing to show yet, the failure is surfaced');
+      expect(valueOf(emitted.last), [1]);
+      expect(emitted.whereType<Failure<List<int>, String>>(), hasLength(1),
+          reason: 'repeated failures are not re-emitted');
+      expect(w.calls(), 3);
+    });
+
+    test('a refresh that fails keeps the last good list and recovers by itself', () async {
+      final w = watch([[1], null, [2]]);
+      final emitted = <Result<List<int>, String>>[];
+      final sub = w.stream.listen(emitted.add);
+      addTearDown(sub.cancel);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      w.triggers.add(null);
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+
+      expect(emitted.map(valueOf), [[1], [2]],
+          reason: 'a transient refresh failure must not replace the list with an error');
+    });
+
+    test('a refresh that keeps failing is surfaced once the retries are used up', () async {
+      final w = watch([[1], null]); // every call after the first throws
+      final emitted = <Result<List<int>, String>>[];
+      final sub = w.stream.listen(emitted.add);
+      addTearDown(sub.cancel);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      w.triggers.add(null);
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+
+      expect(valueOf(emitted.first), [1]);
+      expect(emitted.last, isA<Failure<List<int>, String>>());
+      expect(emitted, hasLength(2));
+      expect(w.calls(), 1 + 1 + retries.length, reason: 'first load, the refresh, then each retry');
+
+      // A later change starts over and recovers.
+      final callsBefore = w.calls();
+      w.triggers.add(null);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(w.calls(), greaterThan(callsBefore));
+    });
+
+    test('a change that arrives while a failing fetch is in flight is fetched right after it', () async {
+      final gate = Completer<void>();
+      final w = watch([null, [7]], holdFirstCall: gate);
+      final emitted = <Result<List<int>, String>>[];
+      final sub = w.stream.listen(emitted.add);
+      addTearDown(sub.cancel);
+
+      // The first fetch is in flight; a change arrives and is queued behind it.
+      w.triggers.add(null);
+      await Future<void>.delayed(const Duration(milliseconds: 15));
+      expect(w.calls(), 1);
+
+      gate.complete(); // the in-flight fetch now fails
+      await Future<void>.delayed(const Duration(milliseconds: 8));
+
+      expect(w.calls(), 2, reason: 'the queued refetch runs at once, before any retry delay');
+      expect(valueOf(emitted.last), [7]);
+    });
+
+    test('re-subscribing a Realtime channel asks for a refetch; the first subscribe does not', () {
+      var refetches = 0;
+      final onStatus = SupabasePaginatedQuery.refetchOnResubscribe(() => refetches++);
+
+      onStatus(RealtimeSubscribeStatus.subscribed);
+      expect(refetches, 0, reason: 'the initial snapshot is already being fetched');
+
+      onStatus(RealtimeSubscribeStatus.channelError, Exception('socket dropped'));
+      onStatus(RealtimeSubscribeStatus.timedOut);
+      expect(refetches, 0, reason: 'nothing to fetch while the channel is down');
+
+      onStatus(RealtimeSubscribeStatus.subscribed);
+      expect(refetches, 1, reason: 'changes made while the channel was down were never delivered');
+      onStatus(RealtimeSubscribeStatus.subscribed);
+      expect(refetches, 2);
     });
   });
 
