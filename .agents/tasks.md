@@ -37,9 +37,9 @@
   - [x] TDD first: SQL storage-physics contracts (`ON DELETE NO ACTION` `23503` on customers/RDs with child records while cascading full-agent teardown, case-insensitive `UNIQUE (lower(email))` `23505`, partial `UNIQUE` SB per customer, `NUMERIC(12,2)` / `NUMERIC(5,2)` bounds, and plain `TEXT` enum columns accepting evolved Dart enum values without DDL) + `.range()` `>1,000`-row pagination & debounced reload spec + batch Hub `ensureSummaries` spec + Demo Mode delete-protection parity spec.
   - [x] Consolidate into a single post-`v2.3.1` SQL migration (`supabase/migrations/20261111000000_v2_4_storage_hardening.sql`): strip domain rules & enum `CHECK`s out of SQL (drop `undo_rd_po_deposit_batch`, drop `rd_transactions_payment_mode_check`, remove lock check from `save_recurring_deposit` and status enum check from `set_deposit_status`, leaving dumb multi-table ACID persistence envelopes), add `ON DELETE NO ACTION` FKs, `NUMERIC` types, `UNIQUE` indexes, Realtime publication cleanup, `.range()` pagination, batch `ensureSummaries`, and `Uuid().v7()`.
 
-## 🔎 v2.4 Audit Follow-ups (Proposed — Awaiting Owner Review)
-*From the independent audit in `.agents/session_logs/2026-11-11_session_2.md`. Nothing here is started; order is the proposed fix order.*
-- [ ] **A1 (Visit selection)**: Keep the selected rows as the planner's seed set so toggling "include unready" in `RDPoVisitSheet` never widens the plan to every Hub row.
+## 🔎 v2.4 Audit Follow-ups (Approved 2026-11-12 — In Progress)
+*From the independent audit in `.agents/session_logs/2026-11-11_session_2.md`; fix log in `.agents/session_logs/2026-11-12_session_1.md`.*
+- [x] **A1 (Visit selection)**: Keep the selected rows as the planner's seed set so toggling "include unready" in `RDPoVisitSheet` never widens the plan to every Hub row.
 - [ ] **A2 (Visit write path)**: Stop `depositBatchToPo` / `undoBatch` returning Failure after the facts are committed; read facts with `fetchRawFactsForRds` instead of per-RD streams; make a retried visit a no-op (unique client batch ID).
 - [ ] **A3 (Lock fails closed)**: `saveRecurringDeposit` must refuse a terms change when ledger facts cannot be read.
 - [ ] **A4 (Backup workflow)**: Pass `$SUPABASE_DB_SESSION_URL` to `pg_dump` in `backup.yml`; run it once and restore one archive.

@@ -582,8 +582,8 @@ void main() {
       expect(c.read(rDPoVisitPlannerProvider).totalAmount, 2000);
       expect(c.read(rDPoVisitPlannerProvider).cashLots.single.cashAmount, 2000);
 
-      // Toggling includeUnready with preserveEdits keeps rd1's ₹0 fee override intact.
-      planner.start(includeUnready: true, preserveEdits: true);
+      // Showing unready accounts keeps rd1's ₹0 fee override intact.
+      planner.setIncludeUnready(true);
       final rd1Line = c.read(rDPoVisitPlannerProvider).lines.firstWhere((l) => l.rdId == 'rd1');
       expect(rd1Line.feeOverride, 0);
       expect(rd1Line.amount, 2000);
@@ -595,6 +595,65 @@ void main() {
       final rejected = await planner.record();
       expect(rejected, isA<Failure<String, String>>());
       expect(h.ledger.poDepositsOf('rd1'), isEmpty, reason: 'atomic batch: rd1 not written when rd2 fails');
+    });
+
+    test('PO visit stays within the accounts it was opened for when "include unready" is toggled', () async {
+      // rd1 and rd2 have collected money (ready); rd3 and rd4 have nothing collected (unready).
+      final h = _harness(
+        deposits: [
+          _deposit('rd1'),
+          _deposit('rd2', customer: 'c2'),
+          _deposit('rd3', customer: 'c3'),
+          _deposit('rd4', customer: 'c4'),
+        ],
+        transactions: {
+          'rd1': [_tx('rd1', 't1', 2000, DateTime(2026, 1, 10))],
+          'rd2': [_tx('rd2', 't2', 1000, DateTime(2026, 1, 10))],
+        },
+      );
+      final c = h.container;
+      _keepHub(c);
+      c.listen(rDPoVisitPlannerProvider, (_, _) {});
+      c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
+      await c.read(rDMonthlyOperationsActionsProvider.notifier).ensureSummaries();
+      await _settle();
+      final items = await c.read(monthlyOperationItemsProvider.future);
+      final picked = [
+        for (final i in items)
+          if (i.deposit.id == 'rd1' || i.deposit.id == 'rd3') i,
+      ];
+
+      // The agent ticked rd1 (ready) and rd3 (unready) in the Hub and opened the planner.
+      final planner = c.read(rDPoVisitPlannerProvider.notifier);
+      planner.start(items: picked);
+      List<String> lineIds() => [for (final l in c.read(rDPoVisitPlannerProvider).lines) l.rdId];
+      expect(lineIds(), ['rd1'], reason: 'only the ready account of the selection is listed by default');
+
+      planner.setIncludeUnready(true);
+      expect(lineIds(), ['rd1', 'rd3'],
+          reason: 'unready accounts come from the selection, never from the rest of the Hub');
+      expect(c.read(rDPoVisitPlannerProvider).includeUnready, isTrue);
+
+      planner.setIncludeUnready(false);
+      expect(lineIds(), ['rd1'], reason: 'toggling back must not leave rd2 (never selected) in the visit');
+
+      // An unready account the agent chose to front stays in the visit when the rest are hidden.
+      planner.setIncludeUnready(true);
+      planner.setFronted('rd3', 1);
+      planner.setIncludeUnready(false);
+      expect(lineIds(), ['rd1', 'rd3'], reason: 'hiding unready accounts must not drop a fronted line');
+
+      final r = await planner.record();
+      expect(r, isA<Success<String, String>>());
+      expect(h.ledger.poDepositsOf('rd1'), hasLength(1));
+      expect(h.ledger.poDepositsOf('rd3').single.installmentCount, 1);
+      expect(h.ledger.poDepositsOf('rd2'), isEmpty, reason: 'rd2 was ready but never selected');
+      expect(h.ledger.poDepositsOf('rd4'), isEmpty, reason: 'rd4 was never selected');
+
+      // Opened from the Hub header (no selection) the scope is every account in the Hub.
+      planner.start();
+      planner.setIncludeUnready(true);
+      expect(lineIds().toSet(), {'rd1', 'rd2', 'rd3', 'rd4'});
     });
 
     test('future-month Hub surfaces genuine past-due arrears while keeping healthy accounts calm', () async {

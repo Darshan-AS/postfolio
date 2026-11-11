@@ -40,7 +40,6 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
     final isBusy = ref.watch(rDLedgerControllerProvider).isLoading;
     final today = ref.watch(clockProvider)().toDateOnly();
 
-    final includeUnready = useState<bool>(false);
     final failure = useState<String?>(null);
 
     final installmentCount = plan.installmentCount;
@@ -88,11 +87,6 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
           failure.value = error;
           AppFeedback.showError(context, error);
       }
-    }
-
-    void toggleIncludeUnready(bool value) {
-      includeUnready.value = value;
-      planner.start(includeUnready: value, preserveEdits: true);
     }
 
     final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
@@ -144,8 +138,8 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   dense: true,
-                  value: includeUnready.value,
-                  onChanged: isBusy ? null : toggleIncludeUnready,
+                  value: plan.includeUnready,
+                  onChanged: isBusy ? null : planner.setIncludeUnready,
                   title: Text(visit.includeUnready, style: theme.textTheme.bodySmall),
                 ),
                 _TotalsCard(plan: plan),

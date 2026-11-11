@@ -59,6 +59,12 @@ sealed class RDPoVisitPlan with _$RDPoVisitPlan {
   const factory RDPoVisitPlan({
     required DateTime depositedOn,
     @Default(<RDPoVisitLine>[]) List<RDPoVisitLine> lines,
+    /// Whether accounts with nothing collected are listed (so the agent can front them).
+    @Default(false) bool includeUnready,
+    /// The accounts this visit was opened for (the rows ticked in the Hub). `null` means the
+    /// visit was opened without a selection and covers every account in the Hub.
+    /// [lines] is always a subset of this scope.
+    Set<String>? scopeRdIds,
   }) = _RDPoVisitPlan;
 
   Iterable<RDPoVisitLine> get included => lines.where((l) => l.included && l.count > 0);
@@ -119,37 +125,38 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
 
   static const _rules = RDLedgerRules.standard;
 
-  /// (Re)builds the plan from [items]. When [preserveEdits] is true (e.g. toggling
-  /// `includeUnready` inside the open sheet), existing user choices (`included`, `frontedCount`,
-  /// `feeOverride`) are retained for matching accounts.
+  /// Opens a new plan. [items] is the visit's scope — the rows the agent ticked in the Hub;
+  /// omit it to plan for every account in the Hub. Accounts with collected money are listed
+  /// and included; unready accounts in scope appear once [setIncludeUnready] is on.
   void start({
     Iterable<RDMonthlyOperationItem>? items,
     bool includeUnready = false,
-    bool preserveEdits = false,
   }) {
-    final source = items ??
-        (ref.read(monthlyOperationItemsProvider).value ?? const <RDMonthlyOperationItem>[]);
-    final previousByRd = preserveEdits
-        ? {for (final l in state.lines) l.rdId: l}
-        : const <String, RDPoVisitLine>{};
+    final scoped = items?.toList(growable: false);
+    state = RDPoVisitPlan(
+      depositedOn: state.depositedOn,
+      includeUnready: includeUnready,
+      scopeRdIds: scoped == null ? null : {for (final i in scoped) i.deposit.id},
+      lines: _linesFor(
+        scoped ?? _hubItems(),
+        includeUnready: includeUnready,
+        previous: const {},
+      ),
+    );
+  }
 
-    final lines = <RDPoVisitLine>[
-      for (final item in source)
-        if (item.readyForPoCount > 0 || includeUnready)
-          _quote(
-            () {
-              final prev = previousByRd[item.deposit.id];
-              return RDPoVisitLine(
-                item: item,
-                readyCount: item.readyForPoCount,
-                frontedCount: prev?.frontedCount ?? 0,
-                included: prev?.included ?? (item.readyForPoCount > 0),
-                feeOverride: prev?.feeOverride,
-              );
-            }(),
-          ),
-    ];
-    state = state.copyWith(lines: lines);
+  /// Shows or hides the unready accounts **within the visit's scope**, keeping the agent's
+  /// edits (`included`, `frontedCount`, `feeOverride`). An unready account the agent has
+  /// already fronted stays listed, so hiding the rest never drops money from the visit.
+  void setIncludeUnready(bool value) {
+    state = state.copyWith(
+      includeUnready: value,
+      lines: _linesFor(
+        _itemsInScope(),
+        includeUnready: value,
+        previous: {for (final l in state.lines) l.rdId: l},
+      ),
+    );
   }
 
   void setDate(DateTime date) {
@@ -196,6 +203,41 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
       ref.read(rDLedgerControllerProvider.notifier).undoBatch(batchId);
 
   // --- internals -------------------------------------------------------------------------
+
+  List<RDMonthlyOperationItem> _hubItems() =>
+      ref.read(monthlyOperationItemsProvider).value ?? const <RDMonthlyOperationItem>[];
+
+  /// Fresh Hub rows restricted to the visit's scope. If the Hub is not loaded, falls back to
+  /// the rows already in the plan: the scope can only ever narrow, never widen.
+  List<RDMonthlyOperationItem> _itemsInScope() {
+    final scope = state.scopeRdIds;
+    final hub = ref.read(monthlyOperationItemsProvider).value;
+    if (hub == null) return [for (final l in state.lines) l.item];
+    if (scope == null) return hub;
+    return [for (final i in hub) if (scope.contains(i.deposit.id)) i];
+  }
+
+  List<RDPoVisitLine> _linesFor(
+    List<RDMonthlyOperationItem> candidates, {
+    required bool includeUnready,
+    required Map<String, RDPoVisitLine> previous,
+  }) =>
+      [
+        for (final item in candidates)
+          if (item.readyForPoCount > 0 ||
+              includeUnready ||
+              (previous[item.deposit.id]?.frontedCount ?? 0) > 0)
+            _quote(
+              RDPoVisitLine(
+                item: item,
+                readyCount: item.readyForPoCount,
+                frontedCount: previous[item.deposit.id]?.frontedCount ?? 0,
+                included:
+                    previous[item.deposit.id]?.included ?? (item.readyForPoCount > 0),
+                feeOverride: previous[item.deposit.id]?.feeOverride,
+              ),
+            ),
+      ];
 
   void _update(String rdId, RDPoVisitLine Function(RDPoVisitLine) f) {
     state = state.copyWith(

@@ -30,7 +30,9 @@ class RDHubBatchBar extends ConsumerWidget {
     final readyInstallments = summary.readyInstallments;
 
     void planVisit() {
-      ref.read(rDPoVisitPlannerProvider.notifier).start(items: summary.depositable);
+      // The whole selection is the visit's scope; the planner lists the depositable rows and
+      // only ever offers the selected unready ones for fronting.
+      ref.read(rDPoVisitPlannerProvider.notifier).start(items: summary.items);
       showRDPoVisitPlanner(context);
     }
 
