@@ -53,10 +53,16 @@ jobs:
           ARCHIVE="postfolio_${STAMP}.dump.age"
 
           # Plaintext SQL/custom archive never touches runner disk: pg_dump streams straight into age.
+          # `-e NAME` with no value hands the secret to the container through docker's
+          # environment, and the single-quoted script expands it *inside* the container. The
+          # previous `pg_dump "$DATABASE_URL"` was expanded by this shell, where that variable
+          # does not exist, so the step died under `set -u` before pg_dump started.
+          # Access privileges stay in the archive (no --no-privileges): they can be skipped at
+          # restore time but cannot be recovered if they were never dumped.
           docker run --rm \
-            -e DATABASE_URL="$SUPABASE_DB_SESSION_URL" \
+            -e SUPABASE_DB_SESSION_URL \
             postgres:17 \
-            pg_dump "$DATABASE_URL" -Fc --no-owner --no-privileges \
+            sh -c 'exec pg_dump "$SUPABASE_DB_SESSION_URL" -Fc' \
             | age -r "$AGE_PUBLIC_KEY" -o "$ARCHIVE"
 
           # Sanity-check header & non-trivial archive size (>= 1 KB).

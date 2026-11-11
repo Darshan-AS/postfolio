@@ -44,7 +44,8 @@
   - [ ] Follow-up (not started): the single-account writes (`recordPayment`, `depositNextToPo`) still create a new id per attempt, so a retry after a lost response can record twice. Hold the id in the sheet draft.
   - [ ] Follow-up (not started): one global busy flag still serialises every ledger write.
 - [x] **A3 (Lock fails closed)**: `saveRecurringDeposit` must refuse a terms change when ledger facts cannot be read.
-- [ ] **A4 (Backup workflow)**: Pass `$SUPABASE_DB_SESSION_URL` to `pg_dump` in `backup.yml`; run it once and restore one archive.
+- [x] **A4 (Backup workflow)**: Pass `$SUPABASE_DB_SESSION_URL` to `pg_dump` in `backup.yml`.
+  - [ ] Owner action: configure the backup secrets, trigger the workflow once by hand, and restore that archive into a throwaway project. Neither has been done.
 - [ ] **A5 (Default privileges)**: Revoke PUBLIC's default EXECUTE on functions globally and add a SQL contract that fails if any `public` function is executable by `anon`.
 - [ ] **A6 (Enum guard)**: Decide the SQL boundary (restore enum CHECKs and/or tolerant decoding); decode list rows individually and log the original error instead of discarding it.
 - [ ] **A7 (Migration rehearsal)**: Apply `20261111000000_v2_4_storage_hardening.sql` to a copy of production data before `supabase db push`; define release ordering.

@@ -183,7 +183,10 @@ Because this repository is public, nightly backups (`01:30 IST` daily) stream `p
    | `AGE_PUBLIC_KEY` | Yes | Recipient public key (`age1...`) |
    | `RCLONE_CONFIG` | Yes | Contents of `~/.config/rclone/rclone.conf` (`[gdrive]` section) |
    | `GDRIVE_BACKUP_REMOTE` | Optional | Defaults to `gdrive:postfolio-backups` |
-   | `AGE_VERIFY_SECRET_KEY` | Optional | If set, workflow verifies `pg_restore --list` TOC in memory after every dump |
+   | `AGE_VERIFY_SECRET_KEY` | Optional | If set, the workflow decrypts each archive and checks its `pg_restore --list` table of contents. The key is written to a temporary file that is shredded when the step ends. Storing it here puts the decryption key next to the database URL, so leave it unset if you want a leaked GitHub secret store to be unable to read backups. |
+
+> [!WARNING]
+> **This workflow has not run on GitHub yet, and the restore below has never been rehearsed.** Its dump step was verified only locally (same `docker run … pg_dump -Fc` line against the local Supabase database, without `age`). Before relying on it: configure the secrets, trigger the workflow once by hand, and restore that archive into a throwaway project.
 
 4. **One-Command Disaster Recovery (Decrypt + Restore `pg_dump -Fc` Archive)**:
    Download `postfolio_YYYY_MM_DDTHHMMSSZ.dump.age` from your Google Drive `postfolio-backups` folder, place your `age` secret key in `key.txt`, and run:
@@ -193,6 +196,7 @@ Because this repository is public, nightly backups (`01:30 IST` daily) stream `p
          --clean --if-exists --no-owner --no-privileges \
          -d "TARGET_SESSION_POOLER_DATABASE_URL"
    ```
+   `--no-privileges` skips every `GRANT`/`REVOKE` in the archive, including the lockdown from `20261111000000_v2_4_storage_hardening.sql` (no `anon` table access, RPCs executable only by `authenticated`). After a restore with that flag, re-apply section 8 of that migration, or restore without the flag, before pointing the app at the database.
 
 ### If you lose your Upload Key (.jks):
 Because we use **Google Play App Signing**, you can recover:
