@@ -4,6 +4,7 @@ import 'package:postfolio/core/enums/payout_frequency.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/services/postal_rate_service.dart';
+import 'package:postfolio/core/utils/date_only_converter.dart';
 
 /// Pure utility class to calculate investment projections based on Post Office formulas.
 class ProjectionCalculator {
@@ -60,12 +61,11 @@ class ProjectionCalculator {
     final totalInvested = monthlyInstallment * totalMonths;
     final totalInterestEarned = maturityAmount - totalInvested;
 
-    // RD maturity date is extended by defaults
-    final maturityDate = DateTime(
-      startDate.year,
-      startDate.month + totalMonths + defaultedMonths,
-      startDate.day,
-    );
+    // RD maturity date is extended by defaults and clamped to calendar month-end.
+    final maturityDate = startDate
+        .toLocalDate()
+        .addMonths(totalMonths + defaultedMonths)
+        .toDateTime();
 
     return InvestmentProjection.wealthAccumulation(
       totalInvested: totalInvested,
@@ -104,11 +104,7 @@ class ProjectionCalculator {
         principal * (pow(1 + quarterlyInterestRate, _quartersInYear) - 1);
     final totalInterestEarned = annualPayout * termYears;
 
-    final maturityDate = DateTime(
-      startDate.year + termYears,
-      startDate.month,
-      startDate.day,
-    );
+    final maturityDate = startDate.toLocalDate().addYears(termYears).toDateTime();
 
     return InvestmentProjection.incomeGeneration(
       totalInvested: principal,
@@ -149,11 +145,7 @@ class ProjectionCalculator {
     final totalMonths = resolvedYears * _monthsInYear;
     final totalInterestEarned = monthlyPayout * totalMonths;
 
-    final maturityDate = DateTime(
-      startDate.year + resolvedYears,
-      startDate.month,
-      startDate.day,
-    );
+    final maturityDate = startDate.toLocalDate().addYears(resolvedYears).toDateTime();
 
     return InvestmentProjection.incomeGeneration(
       totalInvested: principal,
@@ -194,11 +186,7 @@ class ProjectionCalculator {
         principal * pow(1 + decimalInterestRate, resolvedYears);
     final totalInterestEarned = maturityAmount - principal;
 
-    final maturityDate = DateTime(
-      startDate.year + resolvedYears,
-      startDate.month,
-      startDate.day,
-    );
+    final maturityDate = startDate.toLocalDate().addYears(resolvedYears).toDateTime();
 
     return InvestmentProjection.wealthAccumulation(
       totalInvested: principal,
@@ -241,11 +229,10 @@ class ProjectionCalculator {
             startDate: startDate,
           );
 
-    final maturityDate = DateTime(
-      startDate.year,
-      startDate.month + timeInMonths,
-      startDate.day,
-    );
+    final maturityDate = startDate
+        .toLocalDate()
+        .addMonths(timeInMonths)
+        .toDateTime();
 
     final years = timeInMonths ~/ _monthsInYear;
     final months = timeInMonths % _monthsInYear;

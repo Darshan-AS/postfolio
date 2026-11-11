@@ -46,13 +46,13 @@ abstract interface class BaseDeposit {
 }
 
 extension BaseDepositMaturityUrgency on BaseDeposit {
-  MaturityUrgency get maturityUrgency {
+  MaturityUrgency get maturityUrgency => maturityUrgencyAt(DateTime.now());
+
+  MaturityUrgency maturityUrgencyAt(DateTime now) {
     if (status == DepositStatus.closed) {
       return MaturityUrgency.closed;
     }
 
-    // Check if maturing within threshold days
-    final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final maturity = DateTime(
       maturityDate.year,
@@ -66,7 +66,6 @@ extension BaseDepositMaturityUrgency on BaseDeposit {
       return MaturityUrgency.maturingSoon;
     }
 
-    // If it's past maturity date
     if (daysUntilMaturity < 0) {
       return MaturityUrgency.matured;
     }
@@ -74,8 +73,9 @@ extension BaseDepositMaturityUrgency on BaseDeposit {
     return MaturityUrgency.normal;
   }
 
-  String get maturityRelativeTime {
-    final now = DateTime.now();
+  String get maturityRelativeTime => maturityRelativeTimeAt(DateTime.now());
+
+  String maturityRelativeTimeAt(DateTime now) {
     final today = DateTime(now.year, now.month, now.day);
     final maturity = DateTime(
       maturityDate.year,

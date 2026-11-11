@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/savings_account.dart';
+import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/timestamp_converter.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/models/nominee.dart';
@@ -20,7 +21,7 @@ sealed class Customer with _$Customer {
     String? phone,
     String? address,
     String? cifNumber,
-    DateTime? dateOfBirth,
+    @NullableDateOnlyConverter() DateTime? dateOfBirth,
     String? aadhaarNumber,
     String? panNumber,
     SavingsAccount? savingsAccount,

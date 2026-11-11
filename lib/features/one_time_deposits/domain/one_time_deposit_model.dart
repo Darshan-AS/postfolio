@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
+import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/timestamp_converter.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
@@ -27,7 +28,7 @@ sealed class OneTimeDeposit with _$OneTimeDeposit implements BaseDeposit {
     required String customerId,
     @JsonKey(includeFromJson: true, includeToJson: false) String? customerName,
     required OneTimeSchemeType schemeType,
-    required DateTime startDate,
+    @DateOnlyConverter() required DateTime startDate,
     @Default([]) List<Nominee> nominees,
     @Default(DepositStatus.active) DepositStatus status,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? createdAt,
