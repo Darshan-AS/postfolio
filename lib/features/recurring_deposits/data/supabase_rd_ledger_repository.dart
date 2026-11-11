@@ -55,11 +55,17 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
           .map((rows) => _mapRows(rows, RDFeeAbsorption.fromJson));
 
   @override
-  Stream<Result<List<RDLedgerSummary>, String>> watchSummaries() => _client
-      .from(_summaries)
-      .stream(primaryKey: ['rd_id'])
-      .eq('agent_id', _agentId)
-      .map((rows) => _mapRows(rows, RDLedgerSummary.fromJson));
+  Stream<Result<List<RDLedgerSummary>, String>> watchSummaries() {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      return Stream.value(const Success(<RDLedgerSummary>[]));
+    }
+    return _client
+        .from(_summaries)
+        .stream(primaryKey: ['rd_id'])
+        .eq('agent_id', user.id)
+        .map((rows) => _mapRows(rows, RDLedgerSummary.fromJson));
+  }
 
   // --- Writes -----------------------------------------------------------------------------
 

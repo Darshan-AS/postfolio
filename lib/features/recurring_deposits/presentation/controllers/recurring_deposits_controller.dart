@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
@@ -74,11 +75,13 @@ class RecurringListCriteria extends _$RecurringListCriteria {
   }
 
   void clearAll() {
-    state = const RDSearchCriteria();
-    ref.read(storageServiceProvider).setRDSortField(RDSortField.startDate);
-    ref.read(storageServiceProvider).setRDSortDirection(SortDirection.desc);
-    ref.read(storageServiceProvider).setRDStatusFilters([]);
-    ref.read(storageServiceProvider).setRDUrgencyFilters([]);
+    const defaults = RDSearchCriteria();
+    state = defaults;
+    final storage = ref.read(storageServiceProvider);
+    storage.setRDSortField(defaults.sortField);
+    storage.setRDSortDirection(defaults.sortDirection);
+    storage.setRDStatusFilters(defaults.statusFilters);
+    storage.setRDUrgencyFilters(defaults.urgencyFilters);
   }
 
   void clearFilters() {
@@ -100,20 +103,25 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
     recurringDepositsControllerProvider.future,
   );
 
-  final hasNullNames = asyncDeposits.any((d) => d.customerName == null);
+  final liveCustomers = ref.watch(customersControllerProvider).value;
   final Map<String, String> customerMap;
-  if (hasNullNames) {
+  if (liveCustomers != null) {
+    customerMap = {for (final c in liveCustomers) c.id: c.name};
+  } else if (asyncDeposits.any((d) => d.customerName == null)) {
     final asyncCustomers = await ref.watch(customersControllerProvider.future);
-    customerMap = {for (var c in asyncCustomers) c.id: c.name};
+    customerMap = {for (final c in asyncCustomers) c.id: c.name};
   } else {
     customerMap = const {};
   }
 
-  var result = hasNullNames
+  var result = customerMap.isNotEmpty
       ? asyncDeposits
-          .map((d) => d.customerName == null
-              ? d.copyWith(customerName: customerMap[d.customerId])
-              : d)
+          .map((d) {
+            final liveName = customerMap[d.customerId];
+            return (liveName != null && liveName != d.customerName)
+                ? d.copyWith(customerName: liveName)
+                : d;
+          })
           .toList()
       : asyncDeposits.toList();
 
@@ -190,6 +198,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
   }
 
   Stream<UnmodifiableListView<RecurringDeposit>> _watchRecurringDeposits() {
+    ref.watch(activeSessionKeyProvider);
     final repository = ref.watch(recurringDepositRepositoryProvider);
     return repository.watchRecurringDeposits().map((result) {
       return switch (result) {

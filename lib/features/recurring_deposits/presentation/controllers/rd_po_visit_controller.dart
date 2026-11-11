@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
+import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -111,7 +112,8 @@ sealed class RDPoVisitPlan with _$RDPoVisitPlan {
 class RDPoVisitPlanner extends _$RDPoVisitPlanner {
   @override
   RDPoVisitPlan build() {
-    final today = ref.watch(clockProvider)().toDateOnly();
+    ref.watch(activeSessionKeyProvider);
+    final today = ref.watch(currentDateProvider);
     return RDPoVisitPlan(depositedOn: today);
   }
 

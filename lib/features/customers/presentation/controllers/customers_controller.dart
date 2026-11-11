@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:postfolio/features/customers/domain/customer_search_criteria.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
 import 'package:postfolio/core/models/nominee.dart';
+import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -110,6 +111,7 @@ class CustomersController extends _$CustomersController {
   }
 
   Stream<UnmodifiableListView<Customer>> _watchCustomers() {
+    ref.watch(activeSessionKeyProvider);
     final repository = ref.watch(customerRepositoryProvider);
     return repository.watchCustomers().map((result) {
       return switch (result) {

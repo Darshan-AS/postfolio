@@ -1,4 +1,5 @@
 import 'package:postfolio/core/providers/clock_provider.dart';
+import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
@@ -65,11 +66,11 @@ Future<RDLedgerFacts> rdLedgerFacts(Ref ref, String rdId) async {
   );
 }
 
-/// The projected ledger for one RD, as of today's date.
+/// The projected ledger for one RD, as of today's reactive calendar date.
 @riverpod
 Future<RDLedgerProjection> rdLedgerProjection(Ref ref, String rdId) async {
   final facts = await ref.watch(rdLedgerFactsProvider(rdId).future);
-  final asOf = ref.watch(clockProvider)().toDateOnly();
+  final asOf = ref.watch(currentDateProvider);
   return ref.watch(rdLedgerProjectorProvider).project(facts, asOf: asOf);
 }
 
@@ -85,10 +86,12 @@ Future<bool> rdIsFinancialTermsLocked(Ref ref, String rdId) async =>
 
 /// Agent-wide summary cache (one row per RD) powering the Monthly Hub.
 @Riverpod(keepAlive: true)
-Stream<Map<String, RDLedgerSummary>> rdLedgerSummaries(Ref ref) =>
-    ref.watch(rdLedgerRepositoryProvider).watchSummaries().map(
-          (r) => {for (final s in _unwrap(r)) s.rdId: s},
-        );
+Stream<Map<String, RDLedgerSummary>> rdLedgerSummaries(Ref ref) {
+  ref.watch(activeSessionKeyProvider);
+  return ref.watch(rdLedgerRepositoryProvider).watchSummaries().map(
+        (r) => {for (final s in _unwrap(r)) s.rdId: s},
+      );
+}
 
 // --- Payment draft ----------------------------------------------------------------------------
 
@@ -121,7 +124,11 @@ class RDLedgerController extends _$RDLedgerController {
   final Set<String> _dirtySummaryRdIds = <String>{};
 
   @override
-  AsyncValue<void> build() => const AsyncData(null);
+  AsyncValue<void> build() {
+    ref.watch(activeSessionKeyProvider);
+    _dirtySummaryRdIds.clear();
+    return const AsyncData(null);
+  }
 
   bool get isBusy => state.isLoading;
   Set<String> get dirtySummaryRdIds => Set.unmodifiable(_dirtySummaryRdIds);
