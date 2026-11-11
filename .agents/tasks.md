@@ -27,10 +27,12 @@
   - [x] TDD first: `Paise`/`BasisPoints`/`LocalDate` boundary & float-sum tables (`16.1+48.2+35.7 == 100%` nominees, `₹2.50` / `₹616.67` paise formatting, `23:45 IST` UTC day-shift), `ProjectionCalculator` month-end clamping + RD default maturity extension + Dec 2011–Nov 2014 KVP boundary, `RDPoDeposit.feePaid` counter override & cash-lot quote accuracy, Dart-owned `RecurringDeposit.validateUpdate` lock check + latest-visit batch undo validation, reactive customer rename overlay, auth sign-out cache disposal, and `GoRouter` deep-link/redirect/root-navigator specs.
   - [x] Implement exact money/date primitives, `RDLedgerProjector` counter-fee parity + trimmed `RDLedgerSummary.openItems` + future-month Hub arrears visibility, controller-level RD financial-terms lock & batch-undo rules (eliminating split-brain with SQL), bulk PO visit batch writes (`addPoDeposits(List)` + `upsertSummaries(List)` + self-healing dirty-summary retry), session-scoped `keepAlive` providers, reactive midnight clock, synchronous `AuthController` session hydration, `?redirect=` deep links, root-navigator detail/form routes, and `PopScope` dirty-form guards.
 
-### Upcoming Stages (Inside-Out Pure DDD × Pragmatic TDD — UI -> Storage)
-- [ ] **Stage 4 (UI System `material_ui`, Screen Polish, Counter-Fee Override UI, Accessibility & i18n)**:
-  - [ ] TDD first: form/sheet hook interaction specs (`NomineesInputSection` spacebar/share math, `CustomerFormScreen` validators, `RDLogPaymentSheet` prefill focus, `RDDepositSheet` / `RDPoVisitSheet` counter-fee override) and parameterized `360×800` @ `2.0x` text-scale + Light/Dark WCAG AA contrast & `>=44dp` tap-target suite.
-  - [ ] Implement `AppFinancialColors` + 4-mode theme selector, `Skeletonizer` dark shimmer, `AppFeedback` unification, form/sheet UX fixes (including counter-fee override inputs), desktop width constraints + copy actions, full Slang string extraction, and dead-key pruning.
+### Stage 4: UI System `material_ui`, Screen Polish, Counter-Fee Override UI, Accessibility & i18n (Completed)
+- [x] **Stage 4 (UI System `material_ui`, Screen Polish, Counter-Fee Override UI, Accessibility & i18n)**:
+  - [x] TDD first: form/sheet hook interaction specs (`NomineesInputSection` spacebar/share math, `CustomerFormScreen` validators, `RDLogPaymentSheet` prefill focus, `RDDepositSheet` / `RDPoVisitSheet` counter-fee override) and parameterized `360×800` @ `2.0x` text-scale + Light/Dark WCAG AA contrast & `>=44dp` tap-target suite.
+  - [x] Implement `AppFinancialColors` + 4-mode theme selector, `Skeletonizer` dark shimmer, `AppFeedback` unification, form/sheet UX fixes (including counter-fee override inputs), desktop width constraints + copy actions, full Slang string extraction, and dead-key pruning.
+
+### Upcoming Stages (Inside-Out Pure DDD × Pragmatic TDD — Final Pre-PR Storage Consolidation)
 - [ ] **Stage 5 (Pure-DDD Database Storage Hardening & Supabase `>1k`-Row Scalability — Final Pre-PR Consolidation)**:
   - [ ] TDD first: SQL storage-physics contracts (`ON DELETE RESTRICT` `23503` on customers/RDs with child records, case-insensitive `UNIQUE (lower(email))` `23505`, partial `UNIQUE` SB per customer, `NUMERIC(12,2)` / `NUMERIC(5,2)` bounds, and plain `TEXT` enum columns accepting evolved Dart enum values without DDL) + `.range()` `>1,000`-row pagination spec + batch Hub `ensureSummaries` spec.
   - [ ] Consolidate into a single post-`v2.3.1` SQL migration: strip domain rules & enum `CHECK`s out of SQL (drop `undo_rd_po_deposit_batch`, drop `rd_transactions_payment_mode_check`, remove lock check from `save_recurring_deposit` and status enum check from `set_deposit_status`, leaving dumb multi-table ACID persistence envelopes), add `ON DELETE RESTRICT` FKs, `NUMERIC` types, `UNIQUE` indexes, Realtime publication cleanup, `.range()` pagination, batch `ensureSummaries`, and `Uuid().v7()`.
@@ -148,11 +150,11 @@
   - [x] Enhance visual prominence of scheme type in detail views and forms (Migrated Dropdowns to Segmented Buttons).
   - [x] Form inputs correctly format currency strings and auto-display localized amount in words.
   - [ ] Add relative time display (`timeago`).
-  - [ ] Implement dark theme support.
+  - [x] Implement dark theme support.
 - [ ] **Media**: Implement image capture and display for customer profiles.
 - [x] **Routing UX**: Re-evaluate context-aware "back" navigation (e.g., Detail -> List vs Detail -> Home).
 - [ ] **Predictive Back Gesture**: Add predictive back gestures. The last trial had issues between customer detail page to customer list page.
-- [ ] **Minor Fixes**: Remove duplicate display of RD interest rate; replace `FilledButton` with `AppButton` (if deemed necessary).
+- [x] **Minor Fixes**: Remove duplicate display of RD interest rate; replace `FilledButton` with `AppButton` (if deemed necessary).
 
 ## ⚙️ Architecture, Tooling & Security
 - [x] **Agent Customization**: Refactored guidelines into a modular rule system in `.agents/rules/` for improved agent compliance and platform-agnosticism.
