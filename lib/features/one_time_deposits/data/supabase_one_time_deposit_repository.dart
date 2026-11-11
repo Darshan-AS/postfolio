@@ -3,6 +3,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 
 class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
   final SupabaseClient _supabaseClient;
@@ -35,7 +36,7 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
             final deposits = data.map((json) => OneTimeDeposit.fromJson(json)).toList();
             return Success(deposits);
           } catch (e) {
-            return Failure(e.toString());
+            return Failure(SupabaseErrorMapper.describe(e));
           }
         });
   }
@@ -63,7 +64,7 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
             }
             return Success(OneTimeDeposit.fromJson(data));
           } catch (e) {
-            return Failure(e.toString());
+            return Failure(SupabaseErrorMapper.describe(e));
           }
         });
   }
@@ -90,7 +91,7 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
       );
       return const Success(null);
     } catch (e) {
-      return Failure(e.toString());
+      return Failure(SupabaseErrorMapper.describe(e));
     }
   }
 
@@ -101,7 +102,7 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
       await _supabaseClient.from('account_identities').delete().eq('id', id);
       return const Success(null);
     } catch (e) {
-      return Failure(e.toString());
+      return Failure(SupabaseErrorMapper.describe(e));
     }
   }
 
@@ -123,7 +124,7 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
       });
       return const Success(null);
     } catch (e) {
-      return Failure(e.toString());
+      return Failure(SupabaseErrorMapper.describe(e));
     }
   }
 }

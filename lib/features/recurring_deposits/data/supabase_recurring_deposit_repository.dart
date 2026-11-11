@@ -3,6 +3,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 
 class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   final SupabaseClient _supabaseClient;
@@ -37,7 +38,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
                 data.map((json) => RecurringDeposit.fromJson(json)).toList();
             return Success(deposits);
           } catch (e) {
-            return Failure(e.toString());
+            return Failure(SupabaseErrorMapper.describe(e));
           }
         });
   }
@@ -67,7 +68,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
             }
             return Success(RecurringDeposit.fromJson(data));
           } catch (e) {
-            return Failure(e.toString());
+            return Failure(SupabaseErrorMapper.describe(e));
           }
         });
   }
@@ -89,7 +90,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
       );
       return const Success(null);
     } catch (e) {
-      return Failure(e.toString());
+      return Failure(SupabaseErrorMapper.describe(e));
     }
   }
 
@@ -99,7 +100,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
       await _supabaseClient.from('account_identities').delete().eq('id', id);
       return const Success(null);
     } catch (e) {
-      return Failure(e.toString());
+      return Failure(SupabaseErrorMapper.describe(e));
     }
   }
 
@@ -127,7 +128,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
       );
       return const Success(null);
     } catch (e) {
-      return Failure(e.toString());
+      return Failure(SupabaseErrorMapper.describe(e));
     }
   }
 }

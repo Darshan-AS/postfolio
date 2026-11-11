@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:postfolio/core/env/env.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
 
@@ -95,7 +96,12 @@ class SupabaseAuthRepository implements AuthRepository {
         ),
       );
     } catch (e) {
-      return Failure('Failed to sign in with Google (Supabase): $e');
+      return Failure(
+        SupabaseErrorMapper.describe(
+          e,
+          fallback: 'Google Sign-In could not be completed. Please try again.',
+        ),
+      );
     }
   }
 
@@ -108,7 +114,12 @@ class SupabaseAuthRepository implements AuthRepository {
       await _supabaseClient.auth.signOut();
       return const Success(null);
     } catch (e) {
-      return Failure('Failed to sign out (Supabase): $e');
+      return Failure(
+        SupabaseErrorMapper.describe(
+          e,
+          fallback: 'Could not sign out cleanly. Please try again.',
+        ),
+      );
     }
   }
 }

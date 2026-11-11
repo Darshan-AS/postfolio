@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 
 class SupabaseCustomerRepository implements CustomerRepository {
   final SupabaseClient _supabaseClient;
@@ -26,7 +27,7 @@ class SupabaseCustomerRepository implements CustomerRepository {
                 data.map((json) => Customer.fromJson(json)).toList();
             return Success(customers);
           } catch (e) {
-            return Failure(e.toString());
+            return Failure(SupabaseErrorMapper.describe(e));
           }
         });
   }
@@ -50,7 +51,7 @@ class SupabaseCustomerRepository implements CustomerRepository {
             }
             return Success(Customer.fromJson(data));
           } catch (e) {
-            return Failure(e.toString());
+            return Failure(SupabaseErrorMapper.describe(e));
           }
         });
   }
@@ -71,7 +72,7 @@ class SupabaseCustomerRepository implements CustomerRepository {
       await _supabaseClient.from('customers').delete().eq('id', id);
       return const Success(null);
     } catch (e) {
-      return Failure(e.toString());
+      return Failure(SupabaseErrorMapper.describe(e));
     }
   }
 
@@ -93,7 +94,7 @@ class SupabaseCustomerRepository implements CustomerRepository {
       });
       return const Success(null);
     } catch (e) {
-      return Failure(e.toString());
+      return Failure(SupabaseErrorMapper.describe(e));
     }
   }
 }

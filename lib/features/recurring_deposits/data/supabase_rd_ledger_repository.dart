@@ -1,4 +1,5 @@
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
@@ -118,7 +119,12 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
       };
       return Success(rdIds);
     } catch (e) {
-      return Failure(_describe(e));
+      return Failure(
+        SupabaseErrorMapper.describe(
+          e,
+          fallback: 'The ledger could not be updated. Please try again.',
+        ),
+      );
     }
   }
 
@@ -161,7 +167,7 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
     try {
       return Success(rows.map(fromJson).toList(growable: false));
     } catch (e) {
-      return Failure(_describe(e));
+      return Failure(SupabaseErrorMapper.describe(e));
     }
   }
 
@@ -170,29 +176,12 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
       await op();
       return const Success(null);
     } catch (e) {
-      return Failure(_describe(e));
+      return Failure(
+        SupabaseErrorMapper.describe(
+          e,
+          fallback: 'The ledger could not be updated. Please try again.',
+        ),
+      );
     }
-  }
-
-  /// Maps database errors to short, non-leaky messages. Raw SQL text never reaches the UI.
-  static String _describe(Object e) {
-    if (e is PostgrestException) {
-      switch (e.code) {
-        case '23505':
-          return 'This entry has already been recorded.';
-        case '23514':
-          if (e.message.contains('newer Post Office deposit')) {
-            return 'Cannot undo this visit because a newer Post Office deposit was recorded afterward.';
-          }
-          return 'The entry does not satisfy the ledger rules.';
-        case '42501':
-          return 'You do not have permission to modify this account.';
-        case '23503':
-          return 'The account no longer exists.';
-      }
-      return 'The ledger could not be updated. Please try again.';
-    }
-    if (e is StateError) return e.message;
-    return 'Something went wrong while talking to the server.';
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -41,6 +43,55 @@ abstract class AuthRepository {
   Stream<AuthUser?> get authStateChanges;
   Future<Result<AuthUser, String>> signInWithGoogle();
   Future<Result<void, String>> signOut();
+}
+
+/// Deterministic in-memory auth repository for unit and router tests (zero Mockito).
+class FakeAuthRepository implements AuthRepository {
+  FakeAuthRepository({AuthUser? initialUser}) : _currentUser = initialUser;
+
+  final _controller = StreamController<AuthUser?>.broadcast();
+  AuthUser? _currentUser;
+  String? signInError;
+  String? signOutError;
+  int signOutCount = 0;
+
+  void emit(AuthUser? user) {
+    _currentUser = user;
+    if (!_controller.isClosed) {
+      _controller.add(user);
+    }
+  }
+
+  @override
+  Stream<AuthUser?> get authStateChanges async* {
+    yield _currentUser;
+    yield* _controller.stream;
+  }
+
+  @override
+  Future<Result<AuthUser, String>> signInWithGoogle() async {
+    if (signInError != null) return Failure(signInError!);
+    final user = _currentUser ??
+        const AuthUser(
+          id: 'fake-agent-1',
+          email: 'agent@postfolio.com',
+          displayName: 'Fake Agent',
+        );
+    _currentUser = user;
+    return Success(user);
+  }
+
+  @override
+  Future<Result<void, String>> signOut() async {
+    if (signOutError != null) return Failure(signOutError!);
+    signOutCount++;
+    emit(null);
+    return const Success(null);
+  }
+
+  void dispose() {
+    _controller.close();
+  }
 }
 
 class FirebaseAuthRepository implements AuthRepository {
