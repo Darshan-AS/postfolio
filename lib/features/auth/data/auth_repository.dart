@@ -21,6 +21,7 @@ AuthRepository authRepository(Ref ref) {
 }
 
 abstract class AuthRepository {
+  AuthUser? get currentUser;
   Stream<AuthUser?> get authStateChanges;
   Future<Result<AuthUser, String>> signInWithGoogle();
   Future<Result<void, String>> signOut();
@@ -35,6 +36,9 @@ class FakeAuthRepository implements AuthRepository {
   String? signInError;
   String? signOutError;
   int signOutCount = 0;
+
+  @override
+  AuthUser? get currentUser => _currentUser;
 
   void emit(AuthUser? user) {
     _currentUser = user;

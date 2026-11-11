@@ -11,6 +11,7 @@ import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/domain/nominees_input_section.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
+import 'package:postfolio/core/widgets/feedback/unsaved_changes_pop_scope.dart';
 import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
 import 'package:postfolio/core/widgets/layout/form_app_bar.dart';
 import 'package:postfolio/core/widgets/forms/app_duration_input.dart';
@@ -64,39 +65,68 @@ class _OneTimeDepositForm extends HookConsumerWidget {
       deposit: existingDeposit,
       initialCustomerId: initialCustomerId,
     );
+    final isDirty = useIsFormDirty(
+      [
+        state.selectedCustomerId,
+        state.accountNoController,
+        state.selectedStatus,
+        state.selectedScheme,
+        state.selectedTermYears,
+        state.selectedTermMonths,
+        state.principalAmountController,
+        state.interestRateController,
+        state.startDate,
+        state.nominees,
+      ],
+      () => [
+        state.selectedCustomerId.value ?? '',
+        state.accountNoController.text,
+        state.selectedStatus.value.name,
+        state.selectedScheme.value.name,
+        state.selectedTermYears.value.toString(),
+        state.selectedTermMonths.value.toString(),
+        state.principalAmountController.text,
+        state.interestRateController.text,
+        state.startDate.value.toIso8601String(),
+        state.nominees.value.toString(),
+      ].join('\u0000'),
+    );
 
-    return Scaffold(
-      appBar: FormAppBar(
-        title: state.isUpdating
-            ? t.oneTimeDeposits.editDeposit
-            : t.oneTimeDeposits.newDeposit,
-        isSaving: state.isSaving.value,
-        onSave: state.save,
-      ),
-      body: Form(
-        key: state.formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(AppDimensions.paddingLg),
-          children: [
-            ..._buildAccountInformation(
-              selectedCustomerId: state.selectedCustomerId,
-              accountNoController: state.accountNoController,
-              selectedStatus: state.selectedStatus,
-            ),
-            ..._buildInvestmentDetails(
-              context,
-              selectedScheme: state.selectedScheme,
-              selectedTermYears: state.selectedTermYears,
-              selectedTermMonths: state.selectedTermMonths,
-              principalAmountController: state.principalAmountController,
-              interestRateController: state.interestRateController,
-              startDate: state.startDate,
-              startDateController: state.startDateController,
-              projection: state.projection,
-              state: state,
-            ),
-            ..._buildNomineesSection(nominees: state.nominees),
-          ],
+    return UnsavedChangesPopScope(
+      isDirty: isDirty && !state.isSaving.value,
+      child: Scaffold(
+        appBar: FormAppBar(
+          title: state.isUpdating
+              ? t.oneTimeDeposits.editDeposit
+              : t.oneTimeDeposits.newDeposit,
+          isSaving: state.isSaving.value,
+          onSave: state.save,
+        ),
+        body: Form(
+          key: state.formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(AppDimensions.paddingLg),
+            children: [
+              ..._buildAccountInformation(
+                selectedCustomerId: state.selectedCustomerId,
+                accountNoController: state.accountNoController,
+                selectedStatus: state.selectedStatus,
+              ),
+              ..._buildInvestmentDetails(
+                context,
+                selectedScheme: state.selectedScheme,
+                selectedTermYears: state.selectedTermYears,
+                selectedTermMonths: state.selectedTermMonths,
+                principalAmountController: state.principalAmountController,
+                interestRateController: state.interestRateController,
+                startDate: state.startDate,
+                startDateController: state.startDateController,
+                projection: state.projection,
+                state: state,
+              ),
+              ..._buildNomineesSection(nominees: state.nominees),
+            ],
+          ),
         ),
       ),
     );

@@ -9,6 +9,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/domain/nominees_input_section.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
+import 'package:postfolio/core/widgets/feedback/unsaved_changes_pop_scope.dart';
 import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
 import 'package:postfolio/core/widgets/layout/form_app_bar.dart';
 
@@ -42,44 +43,75 @@ class _CustomerForm extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = useCustomerForm(ref: ref, customer: existingCustomer);
+    final isDirty = useIsFormDirty(
+      [
+        state.nameController,
+        state.emailController,
+        state.phoneController,
+        state.addressController,
+        state.cifNumberController,
+        state.aadhaarNumberController,
+        state.panNumberController,
+        state.savingsAccountNumberController,
+        state.dateOfBirthController,
+        state.notesController,
+        state.nominees,
+      ],
+      () => [
+        state.nameController.text,
+        state.emailController.text,
+        state.phoneController.text,
+        state.addressController.text,
+        state.cifNumberController.text,
+        state.aadhaarNumberController.text,
+        state.panNumberController.text,
+        state.savingsAccountNumberController.text,
+        state.dateOfBirthController.text,
+        state.notesController.text,
+        state.nominees.value.toString(),
+      ].join('\u0000'),
+    );
 
-    return Scaffold(
-      appBar: FormAppBar(
-        title: state.isUpdating
-            ? t.customers.editCustomer
-            : t.customers.newCustomer,
-        isSaving: state.isSaving.value,
-        onSave: () => state.save(context),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: Form(
-          key: state.formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ..._buildPersonalInfo(
-                nameController: state.nameController,
-                phoneController: state.phoneController,
-                emailController: state.emailController,
-                dateOfBirthController: state.dateOfBirthController,
-                addressController: state.addressController,
-                onSelectDate: () => state.selectDate(context),
-              ),
-              ..._buildIdentityDocuments(
-                cifNumberController: state.cifNumberController,
-                aadhaarNumberController: state.aadhaarNumberController,
-                panNumberController: state.panNumberController,
-              ),
-              ..._buildSavingsBank(
-                savingsAccountNumberController:
-                    state.savingsAccountNumberController,
-                nominees: state.nominees,
-              ),
-              ..._buildNotes(
-                notesController: state.notesController,
-              ),
-            ],
+    return UnsavedChangesPopScope(
+      isDirty: isDirty && !state.isSaving.value,
+      child: Scaffold(
+        appBar: FormAppBar(
+          title: state.isUpdating
+              ? t.customers.editCustomer
+              : t.customers.newCustomer,
+          isSaving: state.isSaving.value,
+          onSave: () => state.save(context),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppDimensions.paddingLg),
+          child: Form(
+            key: state.formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ..._buildPersonalInfo(
+                  nameController: state.nameController,
+                  phoneController: state.phoneController,
+                  emailController: state.emailController,
+                  dateOfBirthController: state.dateOfBirthController,
+                  addressController: state.addressController,
+                  onSelectDate: () => state.selectDate(context),
+                ),
+                ..._buildIdentityDocuments(
+                  cifNumberController: state.cifNumberController,
+                  aadhaarNumberController: state.aadhaarNumberController,
+                  panNumberController: state.panNumberController,
+                ),
+                ..._buildSavingsBank(
+                  savingsAccountNumberController:
+                      state.savingsAccountNumberController,
+                  nominees: state.nominees,
+                ),
+                ..._buildNotes(
+                  notesController: state.notesController,
+                ),
+              ],
+            ),
           ),
         ),
       ),

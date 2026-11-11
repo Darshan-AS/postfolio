@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
@@ -24,10 +25,42 @@ import 'package:postfolio/features/recurring_deposits/presentation/controllers/r
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operations_view.dart';
 
 class RecurringDepositsScreen extends HookConsumerWidget {
-  const RecurringDepositsScreen({super.key});
+  const RecurringDepositsScreen({
+    super.key,
+    this.initialView,
+    this.initialMonth,
+  });
+
+  final String? initialView;
+  final String? initialMonth;
+
+  static final RegExp _yearMonthPattern = RegExp(r'^(\d{4})-(\d{2})$');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    useEffect(() {
+      if (initialView != null || initialMonth != null) {
+        Future.microtask(() {
+          if (initialView == 'hub') {
+            ref.read(rDViewModeControllerProvider.notifier).setMode(RDViewMode.monthlyHub);
+          } else if (initialView == 'accounts') {
+            ref.read(rDViewModeControllerProvider.notifier).setMode(RDViewMode.accounts);
+          }
+          if (initialMonth != null) {
+            final match = _yearMonthPattern.firstMatch(initialMonth!.trim());
+            if (match != null) {
+              final year = int.parse(match.group(1)!);
+              final month = int.parse(match.group(2)!);
+              if (month >= 1 && month <= 12) {
+                ref.read(rDHubMonthProvider.notifier).setMonth(DateTime(year, month));
+              }
+            }
+          }
+        });
+      }
+      return null;
+    }, [initialView, initialMonth]);
+
     final viewMode = ref.watch(rDViewModeControllerProvider);
     final depositsState = ref.watch(filteredRecurringDepositsProvider);
     final criteria = ref.watch(recurringListCriteriaProvider);

@@ -29,7 +29,13 @@ final GlobalKey<NavigatorState> _rdNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _customersNavigatorKey =
     GlobalKey<NavigatorState>();
 
-@riverpod
+bool _isSafeInternalRedirect(String? target) =>
+    target != null &&
+    target.startsWith('/') &&
+    !target.startsWith('//') &&
+    !target.startsWith(AppRoutes.login);
+
+@Riverpod(keepAlive: true)
 GoRouter goRouter(Ref ref) {
   final listenable = ValueNotifier<bool>(false);
 
@@ -37,9 +43,7 @@ GoRouter goRouter(Ref ref) {
     listenable.value = !listenable.value;
   });
 
-  ref.onDispose(() => listenable.dispose());
-
-  return GoRouter(
+  final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: AppRoutes.customers,
     routes: [
@@ -60,30 +64,46 @@ GoRouter goRouter(Ref ref) {
     refreshListenable: listenable,
     redirect: (context, state) {
       final authState = ref.read(authControllerProvider);
-
       final isAuth = authState is AuthStateAuthenticated;
-
       final isLoggingIn = state.matchedLocation == AppRoutes.login;
 
       if (!isAuth && !isLoggingIn) {
-        // If we are redirecting to login, ensure we preserve query parameters 
-        // (like ?code=... from OAuth providers) so Supabase can process them.
-        if (state.uri.queryParameters.isNotEmpty) {
+        final query = state.uri.queryParameters;
+        // Preserve OAuth PKCE callback params (`?code=...` / `?error=...`) directly on /login.
+        if (query.containsKey('code') || query.containsKey('error')) {
           return Uri(
             path: AppRoutes.login,
-            queryParameters: state.uri.queryParameters,
+            queryParameters: query,
+          ).toString();
+        }
+        final requested = state.uri.toString();
+        if (requested != '/' && requested != AppRoutes.customers) {
+          return Uri(
+            path: AppRoutes.login,
+            queryParameters: {'redirect': requested},
           ).toString();
         }
         return AppRoutes.login;
       }
 
       if (isAuth && isLoggingIn) {
+        final target = state.uri.queryParameters['redirect'];
+        if (_isSafeInternalRedirect(target)) {
+          return target;
+        }
         return AppRoutes.customers;
       }
 
       return null;
     },
   );
+
+  ref.onDispose(() {
+    listenable.dispose();
+    router.dispose();
+  });
+
+  return router;
 }
 
 @TypedStatefulShellRoute<MainShellRoute>(
@@ -204,6 +224,8 @@ class OneTimeDepositsRoute extends GoRouteData with $OneTimeDepositsRoute {
 
 class OneTimeDepositCreateRoute extends GoRouteData
     with $OneTimeDepositCreateRoute {
+  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+
   final String? customerId;
   const OneTimeDepositCreateRoute({this.customerId});
 
@@ -215,6 +237,8 @@ class OneTimeDepositCreateRoute extends GoRouteData
 
 class OneTimeDepositDetailRoute extends GoRouteData
     with $OneTimeDepositDetailRoute {
+  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+
   final String otdId;
   const OneTimeDepositDetailRoute(this.otdId);
 
@@ -226,6 +250,8 @@ class OneTimeDepositDetailRoute extends GoRouteData
 
 class OneTimeDepositEditRoute extends GoRouteData
     with $OneTimeDepositEditRoute {
+  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+
   final String otdId;
   const OneTimeDepositEditRoute(this.otdId);
 
@@ -236,16 +262,20 @@ class OneTimeDepositEditRoute extends GoRouteData
 }
 
 class RecurringDepositsRoute extends GoRouteData with $RecurringDepositsRoute {
-  const RecurringDepositsRoute();
+  final String? view;
+  final String? month;
+  const RecurringDepositsRoute({this.view, this.month});
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const RecurringDepositsScreen();
+    return RecurringDepositsScreen(initialView: view, initialMonth: month);
   }
 }
 
 class RecurringDepositCreateRoute extends GoRouteData
     with $RecurringDepositCreateRoute {
+  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+
   final String? customerId;
   const RecurringDepositCreateRoute({this.customerId});
 
@@ -257,17 +287,22 @@ class RecurringDepositCreateRoute extends GoRouteData
 
 class RecurringDepositDetailRoute extends GoRouteData
     with $RecurringDepositDetailRoute {
+  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+
   final String rdId;
-  const RecurringDepositDetailRoute(this.rdId);
+  final String? tab;
+  const RecurringDepositDetailRoute(this.rdId, {this.tab});
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return RecurringDepositDetailScreen(depositId: rdId);
+    return RecurringDepositDetailScreen(depositId: rdId, initialTab: tab);
   }
 }
 
 class RecurringDepositEditRoute extends GoRouteData
     with $RecurringDepositEditRoute {
+  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+
   final String rdId;
   const RecurringDepositEditRoute(this.rdId);
 
@@ -287,6 +322,8 @@ class CustomersRoute extends GoRouteData with $CustomersRoute {
 }
 
 class CustomerCreateRoute extends GoRouteData with $CustomerCreateRoute {
+  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+
   const CustomerCreateRoute();
 
   @override
@@ -296,6 +333,8 @@ class CustomerCreateRoute extends GoRouteData with $CustomerCreateRoute {
 }
 
 class CustomerDetailRoute extends GoRouteData with $CustomerDetailRoute {
+  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+
   final String customerId;
   const CustomerDetailRoute(this.customerId);
 
@@ -306,6 +345,8 @@ class CustomerDetailRoute extends GoRouteData with $CustomerDetailRoute {
 }
 
 class CustomerEditRoute extends GoRouteData with $CustomerEditRoute {
+  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+
   final String customerId;
   const CustomerEditRoute(this.customerId);
 

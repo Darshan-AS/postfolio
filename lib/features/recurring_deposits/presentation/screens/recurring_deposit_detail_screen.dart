@@ -46,15 +46,20 @@ enum RDDetailTab {
 
 class RecurringDepositDetailScreen extends HookConsumerWidget {
   final String depositId;
+  final String? initialTab;
 
-  const RecurringDepositDetailScreen({super.key, required this.depositId});
+  const RecurringDepositDetailScreen({
+    super.key,
+    required this.depositId,
+    this.initialTab,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Deep link (`?tab=info|schedule|transactions`) wins on first build; the hook keeps
     // the user's subsequent choice. `maybeOf` keeps the screen usable outside a router.
     final tabFromRoute = RDDetailTab.fromQuery(
-      GoRouter.maybeOf(context)?.state.uri.queryParameters['tab'],
+      initialTab ?? GoRouter.maybeOf(context)?.state.uri.queryParameters['tab'],
     );
     final activeTab = useState(tabFromRoute ?? RDDetailTab.info);
     final projectionAsync = ref.watch(rdLedgerProjectionProvider(depositId));

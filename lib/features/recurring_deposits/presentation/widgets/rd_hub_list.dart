@@ -389,7 +389,10 @@ class _RDHubRow extends ConsumerWidget {
         isBusy: isBusy,
         selectSemanticLabel: card.selectRow(name: customerName),
         onSelect: (_) => selection.toggle(id),
-        onTap: () => RecurringDepositDetailRoute(item.deposit.id).push(context),
+        onTap: () => RecurringDepositDetailRoute(
+          item.deposit.id,
+          tab: 'schedule',
+        ).push(context),
         onLongPress: () {
           if (!isSelectionMode) selection.toggle(id);
         },
