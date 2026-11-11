@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
@@ -225,5 +226,60 @@ void main() {
     await Future<void>.delayed(const Duration(seconds: 1));
     final after = await container.read(rdLedgerProjectionProvider(rd1).future);
     expect(after.summary.depositedThroughNo, before.summary.depositedThroughNo);
+  });
+
+  test('Stage 0 guards: cold recordPayment never double-counts summary and status toggle keeps summary', () async {
+    // Ensure rdLedgerFactsProvider(rd1) is NOT subscribed before recording payment (cold cache).
+    final n = container.read(rDLedgerControllerProvider.notifier);
+    await n.rebuildSummary(rd1);
+    final summaryBefore = await client
+        .from('rd_ledger_summary')
+        .select('cash_in_hand_cash')
+        .eq('rd_id', rd1)
+        .single();
+    final cashBefore = (summaryBefore['cash_in_hand_cash'] as num).toDouble();
+
+    final txId = const Uuid().v4();
+    expect(
+      await n.recordPayment((
+        rdId: rd1,
+        transactionId: txId,
+        amount: 5000,
+        paidDate: DateTime(2026, 10, 27),
+        paymentMode: RDPaymentMode.cash,
+      )),
+      isA<Success<void, String>>(),
+    );
+
+    final summaryAfter = await client
+        .from('rd_ledger_summary')
+        .select('cash_in_hand_cash')
+        .eq('rd_id', rd1)
+        .single();
+    expect(
+      (summaryAfter['cash_in_hand_cash'] as num).toDouble(),
+      cashBefore + 5000,
+      reason: 'cold-cache recordPayment must add 1x 5000 to summary, never 2x 10000',
+    );
+
+    // Toggling deposit status on a locked RD must succeed and preserve rd_ledger_summary.
+    expect(
+      await container
+          .read(recurringDepositsControllerProvider.notifier)
+          .toggleDepositStatus(rd1, DepositStatus.closed),
+      isA<Success<void, String>>(),
+    );
+    expect(
+      await client.from('rd_ledger_summary').select('rd_id').eq('rd_id', rd1),
+      hasLength(1),
+    );
+    expect(
+      await container
+          .read(recurringDepositsControllerProvider.notifier)
+          .toggleDepositStatus(rd1, DepositStatus.active),
+      isA<Success<void, String>>(),
+    );
+
+    expect(await n.deletePayment(rdId: rd1, transactionId: txId), isA<Success<void, String>>());
   });
 }

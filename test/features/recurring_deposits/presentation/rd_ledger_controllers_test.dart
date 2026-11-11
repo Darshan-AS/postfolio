@@ -197,13 +197,121 @@ void main() {
       expect(same, isA<Success<void, String>>(), reason: 'same day as the last visit is fine');
     });
 
-    test('financial terms lock follows facts', () async {
+    test('recordPayment with cold rdLedgerFactsProvider does not double-count hub summary', () async {
+      final h = _harness(deposits: [_deposit('rd1')]);
+      final c = h.container;
+      // Intentionally do NOT call _keep(c, 'rd1') or read rdLedgerFactsProvider beforehand —
+      // mirrors collecting a payment from the Monthly Hub when detail screen was never opened.
+      final result = await c.read(rDLedgerControllerProvider.notifier).recordPayment((
+        rdId: 'rd1',
+        transactionId: null,
+        amount: 1000,
+        paidDate: DateTime(2026, 1, 12),
+        paymentMode: RDPaymentMode.cash,
+      ));
+      expect(result, isA<Success<void, String>>());
+
+      final summary = h.ledger.summaryOf('rd1');
+      expect(summary, isNotNull);
+      expect(summary!.paidThroughNo, 1);
+      expect(summary.cashInHandCash, 1000, reason: 'must be 1x 1000, never 2x 2000');
+    });
+
+    test('sequential recordPayment + absorbFee preserves both in summary without race', () async {
+      final h = _harness(deposits: [_deposit('rd1')]);
+      final n = h.container.read(rDLedgerControllerProvider.notifier);
+
+      // Paid ₹1,000 on 10 Feb for #1 (due 15 Jan, 1 month late → ₹10 fee gap), then immediately absorb ₹10.
+      expect(
+        await n.recordPayment((
+          rdId: 'rd1',
+          transactionId: null,
+          amount: 1000,
+          paidDate: DateTime(2026, 2, 10),
+          paymentMode: RDPaymentMode.cash,
+        )),
+        isA<Success<void, String>>(),
+      );
+      expect(
+        await n.absorbFee(rdId: 'rd1', installmentNo: 1, amount: 10),
+        isA<Success<void, String>>(),
+      );
+
+      final summary = h.ledger.summaryOf('rd1')!;
+      expect(summary.paidThroughNo, 1);
+      expect(summary.absorbedTotal, 10);
+      expect(summary.cashInHandCash, 1000);
+    });
+
+    test('undoBatch rejects out-of-order batch undo and refreshes only touched RDs', () async {
+      final h = _harness(
+        deposits: [_deposit('rd1'), _deposit('rd2', customer: 'c2'), _deposit('rd3', customer: 'c3')],
+        transactions: {
+          'rd1': [_tx('rd1', 't1', 1000, DateTime(2026, 1, 12))],
+          'rd2': [_tx('rd2', 't2', 2000, DateTime(2026, 1, 12))],
+        },
+      );
+      final n = h.container.read(rDLedgerControllerProvider.notifier);
+      await n.rebuildSummary('rd3');
+      final untouchedSummaryBefore = h.ledger.summaryOf('rd3');
+
+      const batchId = 'batch-visit-1';
+      expect(
+        await n.depositNextToPo(rdId: 'rd1', count: 1, depositedOn: DateTime(2026, 3, 10), batchId: batchId),
+        isA<Success<void, String>>(),
+      );
+      expect(
+        await n.depositNextToPo(rdId: 'rd2', count: 1, depositedOn: DateTime(2026, 3, 10), batchId: batchId),
+        isA<Success<void, String>>(),
+      );
+      // Newer standalone PO visit on rd2 makes batch-visit-1 non-latest on rd2.
+      expect(
+        await n.depositNextToPo(rdId: 'rd2', count: 1, depositedOn: DateTime(2026, 3, 20)),
+        isA<Success<void, String>>(),
+      );
+
+      expect(await n.undoBatch(batchId), isA<Failure<void, String>>());
+      expect(h.ledger.poDepositsOf('rd1'), hasLength(1));
+      expect(h.ledger.poDepositsOf('rd2'), hasLength(2));
+
+      // Undo the newer visit on rd2 first; now batch-visit-1 is latest across all its RDs.
+      expect(await n.undoLatestPoDeposit('rd2'), isA<Success<void, String>>());
+      expect(await n.undoBatch(batchId), isA<Success<void, String>>());
+      expect(h.ledger.poDepositsOf('rd1'), isEmpty);
+      expect(h.ledger.poDepositsOf('rd2'), isEmpty);
+      expect(h.ledger.summaryOf('rd1')!.depositedThroughNo, 0);
+      expect(h.ledger.summaryOf('rd2')!.depositedThroughNo, 0);
+      expect(identical(h.ledger.summaryOf('rd3'), untouchedSummaryBefore), isTrue,
+          reason: 'untouched RD summary must not be rewritten during undoBatch');
+    });
+
+    test('financial terms lock follows facts (including fee absorptions and tenure/baseline)', () async {
       final h = _harness(deposits: [_deposit('rd1')]);
       _keep(h.container, 'rd1');
       expect(await h.container.read(rdIsFinancialTermsLockedProvider('rd1').future), isFalse);
-      await h.ledger.addTransaction(_tx('rd1', 't', 1000, DateTime(2026, 1, 12)));
+      await h.container
+          .read(rDLedgerControllerProvider.notifier)
+          .absorbFee(rdId: 'rd1', installmentNo: 1, amount: 10);
       await _settle();
       expect(await h.container.read(rdIsFinancialTermsLockedProvider('rd1').future), isTrue);
+
+      final existing = _deposit('rd1', initialPaid: 2);
+      expect(
+        RecurringDeposit.validateUpdate(
+          existing: existing,
+          updated: existing.copyWith(initialPaidInstallments: 3),
+          hasPayments: true,
+        ),
+        isA<Failure<void, String>>(),
+      );
+      expect(
+        RecurringDeposit.validateUpdate(
+          existing: existing,
+          updated: existing.copyWith(termYears: 5),
+          hasPayments: true,
+        ),
+        isA<Failure<void, String>>(),
+      );
     });
   });
 

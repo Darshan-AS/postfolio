@@ -58,6 +58,41 @@ void main() {
       expect(repo.absorptionsOf(rdId), isEmpty);
     });
 
+    test('deletePoDepositBatch returns affected RDs and blocks out-of-order batch undo', () async {
+      await repo.addPoDeposit(RDPoDeposit(
+        id: 'b1',
+        rdId: 'rd-1',
+        depositedOn: DateTime(2026, 3, 1),
+        installmentCount: 1,
+        batchId: 'batch-1',
+      ));
+      await repo.addPoDeposit(RDPoDeposit(
+        id: 'b2',
+        rdId: 'rd-2',
+        depositedOn: DateTime(2026, 3, 1),
+        installmentCount: 1,
+        batchId: 'batch-1',
+      ));
+      await repo.addPoDeposit(RDPoDeposit(
+        id: 'later',
+        rdId: 'rd-2',
+        depositedOn: DateTime(2026, 3, 15),
+        installmentCount: 1,
+      ));
+
+      final blocked = await repo.deletePoDepositBatch('batch-1');
+      expect(blocked, isA<Failure<List<String>, String>>());
+      expect(repo.poDepositsOf('rd-1'), hasLength(1), reason: 'atomic: rd-1 untouched when rd-2 blocks');
+      expect(repo.poDepositsOf('rd-2'), hasLength(2));
+
+      await repo.deletePoDeposit(rdId: 'rd-2', eventId: 'later');
+      final ok = await repo.deletePoDepositBatch('batch-1');
+      expect(ok, isA<Success<List<String>, String>>());
+      expect((ok as Success<List<String>, String>).value, containsAll(['rd-1', 'rd-2']));
+      expect(repo.poDepositsOf('rd-1'), isEmpty);
+      expect(repo.poDepositsOf('rd-2'), isEmpty);
+    });
+
     test('failWith turns every write into a Failure', () async {
       repo.failWith = 'offline';
       final r = await repo.addTransaction(tx('a'));

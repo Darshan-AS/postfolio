@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -137,16 +138,37 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   }
 
   @override
-  Future<Result<void, String>> deletePoDepositBatch(String batchId) async {
+  Future<Result<List<String>, String>> deletePoDepositBatch(String batchId) async {
     if (failWith != null) return Failure(failWith!);
+
+    // First pass: verify every event in `batchId` is still the latest PO deposit on its RD.
+    for (final entry in _poDeposits.entries) {
+      final batchEvents = entry.value.where((d) => d.batchId == batchId).toList();
+      if (batchEvents.isEmpty) continue;
+      for (final batchEvent in batchEvents) {
+        final hasNewer = entry.value.any(
+          (other) =>
+              other.batchId != batchId &&
+              RDLedgerFacts.comparePoDeposits(other, batchEvent) > 0,
+        );
+        if (hasNewer) {
+          return const Failure(
+            'Cannot undo this visit because a newer Post Office deposit was recorded afterward.',
+          );
+        }
+      }
+    }
+
+    final affectedRdIds = <String>[];
     for (final e in _poDeposits.entries) {
       final before = e.value.length;
       e.value.removeWhere((d) => d.batchId == batchId);
       if (e.value.length != before) {
+        affectedRdIds.add(e.key);
         _poControllers[e.key]?.add(Success(List.unmodifiable(e.value)));
       }
     }
-    return const Success(null);
+    return Success(affectedRdIds);
   }
 
   @override

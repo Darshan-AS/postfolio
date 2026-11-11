@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -133,7 +131,12 @@ class RDLedgerController extends _$RDLedgerController {
     return _mutate(
       tx.rdId,
       () => ref.read(rdLedgerRepositoryProvider).addTransaction(tx),
-      (f) => f.copyWith(transactions: [...f.transactions, tx]),
+      (f) => f.copyWith(
+        transactions: [
+          ...f.transactions.where((t) => t.id != tx.id),
+          tx,
+        ],
+      ),
     );
   }
 
@@ -210,7 +213,12 @@ class RDLedgerController extends _$RDLedgerController {
     return _mutate(
       rdId,
       () => ref.read(rdLedgerRepositoryProvider).addPoDeposit(event),
-      (f) => f.copyWith(poDeposits: [...f.poDeposits, event]),
+      (f) => f.copyWith(
+        poDeposits: [
+          ...f.poDeposits.where((e) => e.id != event.id),
+          event,
+        ],
+      ),
     );
   }
 
@@ -234,26 +242,31 @@ class RDLedgerController extends _$RDLedgerController {
     );
   }
 
-  /// Deletes every PO event recorded under one visit (`batchId`) and refreshes the touched
-  /// accounts' summaries. Used by "Undo visit".
+  /// Deletes every PO event recorded under one visit (`batchId`) and refreshes only the
+  /// touched accounts' summaries. Used by "Undo visit".
   Future<Result<void, String>> undoBatch(String batchId) async {
     if (state.isLoading) {
       return const Failure('Another ledger operation is still running.');
     }
     state = const AsyncLoading();
     try {
-      final summaries = ref.read(rdLedgerSummariesProvider).value ?? const {};
       final result = await ref.read(rdLedgerRepositoryProvider).deletePoDepositBatch(batchId);
-      if (result case Success()) {
-        for (final rdId in summaries.keys) {
-          unawaited(_refreshSummary(
-            rdId,
-            (f) => f.copyWith(poDeposits: f.poDeposits.where((e) => e.batchId != batchId).toList()),
-          ));
-        }
+      switch (result) {
+        case Success(value: final affectedRdIds):
+          for (final rdId in affectedRdIds) {
+            await _refreshSummary(
+              rdId,
+              (f) => f.copyWith(
+                poDeposits: f.poDeposits.where((e) => e.batchId != batchId).toList(),
+              ),
+            );
+          }
+          if (ref.mounted) state = const AsyncData(null);
+          return const Success(null);
+        case Failure(:final error):
+          if (ref.mounted) state = const AsyncData(null);
+          return Failure(error);
       }
-      if (ref.mounted) state = const AsyncData(null);
-      return result;
     } catch (e) {
       if (ref.mounted) state = const AsyncData(null);
       return Failure(e.toString());
@@ -321,11 +334,9 @@ class RDLedgerController extends _$RDLedgerController {
     }
   }
 
-  /// Reads the facts for [rdId] while holding a subscription, so an autoDispose family
-  /// that nobody is watching is not torn down mid-load.
+  /// Reads the latest facts for [rdId] while holding a subscription, so an autoDispose
+  /// family that nobody is watching is not torn down mid-load and rebuilding streams settle.
   Future<RDLedgerFacts> _readFacts(String rdId) async {
-    final cached = ref.read(rdLedgerFactsProvider(rdId)).value;
-    if (cached != null) return cached;
     final sub = ref.listen(rdLedgerFactsProvider(rdId), (_, _) {});
     try {
       return await ref.read(rdLedgerFactsProvider(rdId).future);
@@ -350,7 +361,7 @@ class RDLedgerController extends _$RDLedgerController {
     try {
       final result = await write();
       if (result case Success()) {
-        unawaited(_refreshSummary(rdId, apply));
+        await _refreshSummary(rdId, apply);
       }
       if (ref.mounted) state = const AsyncData(null);
       return result;

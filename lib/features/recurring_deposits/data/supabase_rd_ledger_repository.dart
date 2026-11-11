@@ -103,8 +103,24 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
       _guard(() => _client.from(_poDeposits).delete().eq('id', eventId).eq('rd_id', rdId));
 
   @override
-  Future<Result<void, String>> deletePoDepositBatch(String batchId) =>
-      _guard(() => _client.from(_poDeposits).delete().eq('batch_id', batchId));
+  Future<Result<List<String>, String>> deletePoDepositBatch(String batchId) async {
+    try {
+      final dynamic rows = await _client.rpc(
+        'undo_rd_po_deposit_batch',
+        params: {'p_batch_id': batchId},
+      );
+      final rdIds = switch (rows) {
+        final List<dynamic> list => [
+          for (final item in list)
+            if (item is String) item,
+        ],
+        _ => const <String>[],
+      };
+      return Success(rdIds);
+    } catch (e) {
+      return Failure(_describe(e));
+    }
+  }
 
   @override
   Future<Result<void, String>> upsertFeeAbsorption(RDFeeAbsorption absorption) =>
@@ -165,6 +181,9 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
         case '23505':
           return 'This entry has already been recorded.';
         case '23514':
+          if (e.message.contains('newer Post Office deposit')) {
+            return 'Cannot undo this visit because a newer Post Office deposit was recorded afterward.';
+          }
           return 'The entry does not satisfy the ledger rules.';
         case '42501':
           return 'You do not have permission to modify this account.';
