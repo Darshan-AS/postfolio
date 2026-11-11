@@ -72,37 +72,44 @@ class RDInstallmentTile extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       // Money lives on the title row (never in `trailing`, which is capped at 56dp).
-      title: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Text(
-              passbook.monthLabel(
-                month: inst.installmentNo.toString(),
-                monthName: inst.installmentDate.toMonthYearFormat(),
-              ),
-              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          AppSpacings.gapSm,
-          Flexible(
-            fit: FlexFit.loose,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerRight,
-              child: Text(
-                amountLabel,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: amountColor,
+      title: LayoutBuilder(
+        builder: (context, rowConstraints) {
+          final maxAmountWidth = rowConstraints.maxWidth.isFinite
+              ? rowConstraints.maxWidth * 0.55
+              : double.infinity;
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  passbook.monthLabel(
+                    month: inst.installmentNo.toString(),
+                    monthName: inst.installmentDate.toMonthYearFormat(),
+                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
               ),
-            ),
-          ),
-        ],
+              AppSpacings.gapSm,
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxAmountWidth),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    amountLabel,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: amountColor,
+                    ),
+                    maxLines: 1,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: AppDimensions.paddingXs),

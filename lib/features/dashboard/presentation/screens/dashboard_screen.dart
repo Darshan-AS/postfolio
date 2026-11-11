@@ -45,16 +45,17 @@ class DashboardScreen extends ConsumerWidget {
       appBar: ShellAppBar(
         title: t.nav.dashboard,
         actions: [
-          IconButton(
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedLogout01,
-              size: AppDimensions.iconMd,
+          if (MediaQuery.sizeOf(context).width < AppDimensions.breakpointTablet)
+            IconButton(
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedLogout01,
+                size: AppDimensions.iconMd,
+              ),
+              onPressed: () {
+                ref.read(authControllerProvider.notifier).signOut();
+              },
+              tooltip: t.auth.signOut,
             ),
-            onPressed: () {
-              ref.read(authControllerProvider.notifier).signOut();
-            },
-            tooltip: t.auth.signOut,
-          ),
         ],
       ),
       body: SafeArea(

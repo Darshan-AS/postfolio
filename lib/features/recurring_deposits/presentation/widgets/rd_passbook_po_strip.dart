@@ -88,94 +88,115 @@ class RDPassbookPoStrip extends ConsumerWidget {
       color: hasReady ? scheme.primaryContainer : scheme.surfaceContainerLow,
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingMd,
-          vertical: AppDimensions.paddingXs,
+        padding: const EdgeInsets.only(
+          left: AppDimensions.paddingMd,
+          top: AppDimensions.paddingXs,
+          bottom: AppDimensions.paddingXs,
         ),
-        child: Row(
-          children: [
-            HugeIcon(
-              icon: HugeIcons.strokeRoundedBuilding03,
-              size: AppDimensions.iconMd,
-              color: hasReady ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
-            ),
-            AppSpacings.gapSm,
-            Expanded(
-              child: Text(
-                label,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: hasReady ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
-                  fontWeight: hasReady ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            ),
-            AppSpacings.gapSm,
-            Flexible(
-              fit: FlexFit.loose,
-              child: FilledButton.tonalIcon(
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(0, AppDimensions.minTapTarget),
-                ),
-                onPressed: isBusy || !hasReady
-                    ? null
-                    : () => showRDDepositSheet(
-                          context,
-                          rdId: rdId,
-                          initialCount: readiness.readyCount,
-                        ),
-                icon: const HugeIcon(
+        child: LayoutBuilder(
+          builder: (context, rowConstraints) {
+            final maxCtaWidth = rowConstraints.maxWidth.isFinite
+                ? rowConstraints.maxWidth * 0.44
+                : double.infinity;
+            return Row(
+              children: [
+                HugeIcon(
                   icon: HugeIcons.strokeRoundedBuilding03,
-                  size: AppDimensions.iconXs,
-                ),
-                label: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(passbook.deposit, maxLines: 1),
-                ),
-              ),
-            ),
-            MenuAnchor(
-              builder: (context, controller, child) => IconButton(
-                icon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedMoreVertical,
                   size: AppDimensions.iconMd,
+                  color: hasReady ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
                 ),
-                tooltip: t.common.moreOptions,
-                onPressed: isBusy
-                    ? null
-                    : () => controller.isOpen ? controller.close() : controller.open(),
-              ),
-              menuChildren: [
-                MenuItemButton(
-                  leadingIcon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedWallet02,
-                    size: AppDimensions.iconSm,
-                  ),
-                  onPressed: canDepositFromPocket
-                      ? () => showRDDepositSheet(
-                            context,
-                            rdId: rdId,
-                            initialCount: readiness.readyCount + 1,
-                          )
-                      : null,
-                  child: Text(passbook.depositFromPocket),
-                ),
-                MenuItemButton(
-                  leadingIcon: HugeIcon(
-                    icon: HugeIcons.strokeRoundedArrowTurnBackward,
-                    size: AppDimensions.iconSm,
-                    color: canUndo ? scheme.error : null,
-                  ),
-                  onPressed: canUndo ? () => _undoLatest(context, ref) : null,
+                AppSpacings.gapSm,
+                Expanded(
                   child: Text(
-                    passbook.undoLastDeposit,
-                    style: canUndo
-                        ? theme.textTheme.labelLarge?.copyWith(color: scheme.error)
-                        : null,
+                    label,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: hasReady ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
+                      fontWeight: hasReady ? FontWeight.bold : FontWeight.normal,
+                    ),
                   ),
+                ),
+                AppSpacings.gapSm,
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxCtaWidth),
+                  child: FilledButton.tonalIcon(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, AppDimensions.minTapTarget),
+                    ),
+                    onPressed: isBusy || !hasReady
+                        ? null
+                        : () => showRDDepositSheet(
+                              context,
+                              rdId: rdId,
+                              initialCount: readiness.readyCount,
+                            ),
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedBuilding03,
+                      size: AppDimensions.iconXs,
+                    ),
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(passbook.deposit, maxLines: 1),
+                    ),
+                  ),
+                ),
+                MenuAnchor(
+                  builder: (context, controller, child) => IconButton(
+                    padding: EdgeInsets.zero,
+                    style: IconButton.styleFrom(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      minimumSize: const Size(
+                        AppDimensions.minTapTarget,
+                        AppDimensions.minTapTarget,
+                      ),
+                      maximumSize: const Size(
+                        AppDimensions.minTapTarget,
+                        AppDimensions.minTapTarget,
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedMoreVertical,
+                      size: AppDimensions.iconMd,
+                    ),
+                    tooltip: t.common.moreOptions,
+                    onPressed: isBusy
+                        ? null
+                        : () => controller.isOpen ? controller.close() : controller.open(),
+                  ),
+                  menuChildren: [
+                    MenuItemButton(
+                      leadingIcon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedWallet02,
+                        size: AppDimensions.iconSm,
+                      ),
+                      onPressed: canDepositFromPocket
+                          ? () => showRDDepositSheet(
+                                context,
+                                rdId: rdId,
+                                initialCount: readiness.readyCount + 1,
+                              )
+                          : null,
+                      child: Text(passbook.depositFromPocket),
+                    ),
+                    MenuItemButton(
+                      leadingIcon: HugeIcon(
+                        icon: HugeIcons.strokeRoundedArrowTurnBackward,
+                        size: AppDimensions.iconSm,
+                        color: canUndo ? scheme.error : null,
+                      ),
+                      onPressed: canUndo ? () => _undoLatest(context, ref) : null,
+                      child: Text(
+                        passbook.undoLastDeposit,
+                        style: canUndo
+                            ? theme.textTheme.labelLarge?.copyWith(color: scheme.error)
+                            : null,
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

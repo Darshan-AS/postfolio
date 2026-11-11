@@ -152,6 +152,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
   ) {
     return Column(
       children: [
+        AppSpacings.gapSm,
         AppSearchBar(
           query: criteria.searchQuery,
           hintText: t.recurringDeposits.searchHint,

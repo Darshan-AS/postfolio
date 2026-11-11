@@ -103,12 +103,10 @@ class RDMonthlyOperationCard extends StatelessWidget {
                 ),
               ),
               AppSpacings.gapSm,
-              Flexible(
-                child: Text(
-                  card.owes(amount: dummy.installmentAmount.toRupeeFormat()),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              Text(
+                card.owes(amount: dummy.installmentAmount.toRupeeFormat()),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -255,48 +253,58 @@ class RDMonthlyOperationCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Status on the left; the money that matters on the right (never ellipsised —
+          // Status on the left; the money that matters flush-right (never ellipsised —
           // it shrinks), with its caption underneath.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Flexible(fit: FlexFit.loose, child: _StatusPill(visual: visual)),
-              AppSpacings.gapSm,
-              Expanded(
-                child: money == null
-                    ? const SizedBox.shrink()
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              money.headline,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: money.color,
-                                fontWeight: FontWeight.bold,
+          LayoutBuilder(
+            builder: (context, rowConstraints) {
+              final maxPillWidth = rowConstraints.maxWidth.isFinite
+                  ? rowConstraints.maxWidth * 0.55
+                  : double.infinity;
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxPillWidth),
+                    child: _StatusPill(visual: visual),
+                  ),
+                  AppSpacings.gapSm,
+                  Expanded(
+                    child: money == null
+                        ? const SizedBox.shrink()
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  money.headline,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    color: money.color,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                ),
                               ),
-                              maxLines: 1,
-                            ),
+                              if (caption != null)
+                                Text(
+                                  caption,
+                                  textAlign: TextAlign.end,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: item.hasOverdueDebt(now)
+                                        ? scheme.error
+                                        : scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                            ],
                           ),
-                          if (caption != null)
-                            Text(
-                              caption,
-                              textAlign: TextAlign.end,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: item.hasOverdueDebt(now)
-                                    ? scheme.error
-                                    : scheme.onSurfaceVariant,
-                              ),
-                            ),
-                        ],
-                      ),
-              ),
-            ],
+                  ),
+                ],
+              );
+            },
           ),
           if (hasAction) ...[AppSpacings.gapSm, action],
         ],

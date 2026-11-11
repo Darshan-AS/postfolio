@@ -64,26 +64,12 @@ class InvestmentProjectionCard extends StatelessWidget {
               IncomeGeneration i => _buildIncomeGenerationDetails(context, i),
             },
             AppSpacings.gapSm,
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    t.projection.maturityDate,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
-                AppSpacings.gapSm,
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      proj.maturityDate.toAppFormat(),
-                      style: theme.textTheme.titleMedium,
-                    ),
-                  ),
-                ),
-              ],
+            _ProjectionKeyValueRow(
+              label: t.projection.maturityDate,
+              valueChild: Text(
+                proj.maturityDate.toAppFormat(),
+                style: theme.textTheme.titleMedium,
+              ),
             ),
             ...switch (proj) {
               WealthAccumulation w => _buildWealthAccumulationNote(
@@ -170,26 +156,15 @@ List<Widget> _buildWealthAccumulationNote(
   if (w.note == null) return [];
   final disableAnimations = MediaQuery.disableAnimationsOf(context);
 
-  final row = Row(
-    children: [
-      Expanded(
-        child: Text(t.projection.doublesIn, style: theme.textTheme.bodyMedium),
+  final row = _ProjectionKeyValueRow(
+    label: t.projection.doublesIn,
+    valueChild: Text(
+      w.note!,
+      style: theme.textTheme.titleMedium?.copyWith(
+        color: theme.colorScheme.primary,
+        fontWeight: FontWeight.bold,
       ),
-      AppSpacings.gapSm,
-      Flexible(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerRight,
-          child: Text(
-            w.note!,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    ],
+    ),
   );
 
   return [
@@ -238,32 +213,58 @@ class _AnimatedStatRow extends StatelessWidget {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
     final effectiveStyle = valueStyle ?? Theme.of(context).textTheme.titleMedium;
 
-    return Row(
-      children: [
-        Expanded(
-          child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
-        ),
-        AppSpacings.gapSm,
-        Flexible(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerRight,
-            child: disableAnimations
-                ? Text('$prefix${value.toRupeeFormat()}', style: effectiveStyle)
-                : TweenAnimationBuilder<double>(
-                    tween: Tween<double>(begin: 0, end: value),
-                    duration: const Duration(milliseconds: 500),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, val, child) {
-                      return Text(
-                        '$prefix${val.toRupeeFormat()}',
-                        style: effectiveStyle,
-                      );
-                    },
-                  ),
-          ),
-        ),
-      ],
+    return _ProjectionKeyValueRow(
+      label: label,
+      valueChild: disableAnimations
+          ? Text('$prefix${value.toRupeeFormat()}', style: effectiveStyle)
+          : TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: value),
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeOutCubic,
+              builder: (context, val, child) {
+                return Text(
+                  '$prefix${val.toRupeeFormat()}',
+                  style: effectiveStyle,
+                );
+              },
+            ),
+    );
+  }
+}
+
+class _ProjectionKeyValueRow extends StatelessWidget {
+  final String label;
+  final Widget valueChild;
+
+  const _ProjectionKeyValueRow({
+    required this.label,
+    required this.valueChild,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxValueWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth * 0.55
+            : double.infinity;
+        return Row(
+          children: [
+            Expanded(
+              child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+            ),
+            AppSpacings.gapSm,
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxValueWidth),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: valueChild,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

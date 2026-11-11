@@ -118,108 +118,121 @@ class EntityListTile extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              leading ?? _buildLeading(theme),
-              AppSpacings.gapMd,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+              LayoutBuilder(
+                builder: (context, rowConstraints) {
+                  final trailingMaxWidth = rowConstraints.maxWidth.isFinite
+                      ? rowConstraints.maxWidth * (hasActionButtons ? 0.42 : 0.48)
+                      : double.infinity;
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      leading ?? _buildLeading(theme),
+                      AppSpacings.gapMd,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              title,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            ?subtitle,
+                          ],
+                        ),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    ?subtitle,
-                  ],
-                ),
-              ),
-              if (trailing != null || hasActionButtons) AppSpacings.gapSm,
-              if (trailing != null)
-                Flexible(fit: FlexFit.loose, child: trailing!),
-              if (trailing != null && hasActionButtons) AppSpacings.gapXs,
-              for (final action in inlineActions)
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: AppDimensions.actionButtonSize,
-                  minHeight: AppDimensions.actionButtonSize,
-                  maxWidth: AppDimensions.actionButtonSize,
-                  maxHeight: AppDimensions.actionButtonSize,
-                ),
-                style: IconButton.styleFrom(
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                icon: action.icon,
-                iconSize: AppDimensions.iconMd,
-                tooltip: action.label,
-                color: action.isDestructive
-                    ? theme.colorScheme.error
-                    : theme.colorScheme.primary,
-                onPressed: action.onTap,
-              ),
-            if (menuActions.isNotEmpty)
-              MenuAnchor(
-                builder: (context, controller, child) {
-                  return IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedMoreVertical,
-                      size: AppDimensions.iconMd,
-                    ),
-                    iconSize: AppDimensions.iconMd,
-                    tooltip: t.common.moreOptions,
-                    style: IconButton.styleFrom(
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      minimumSize: const Size(
-                        AppDimensions.actionButtonSize,
-                        AppDimensions.actionButtonSize,
-                      ),
-                      maximumSize: const Size(
-                        AppDimensions.actionButtonSize,
-                        AppDimensions.actionButtonSize,
-                      ),
-                      padding: EdgeInsets.zero,
-                    ),
-                    onPressed: () {
-                      if (controller.isOpen) {
-                        controller.close();
-                      } else {
-                        controller.open();
-                      }
-                    },
+                      if (trailing != null || hasActionButtons) AppSpacings.gapSm,
+                      if (trailing != null)
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: trailingMaxWidth),
+                          child: trailing!,
+                        ),
+                      for (final action in inlineActions)
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: AppDimensions.minTapTarget,
+                            minHeight: AppDimensions.minTapTarget,
+                            maxWidth: AppDimensions.minTapTarget,
+                            maxHeight: AppDimensions.minTapTarget,
+                          ),
+                          style: IconButton.styleFrom(
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            padding: EdgeInsets.zero,
+                          ),
+                          icon: action.icon,
+                          iconSize: AppDimensions.iconMd,
+                          tooltip: action.label,
+                          color: action.isDestructive
+                              ? theme.colorScheme.error
+                              : theme.colorScheme.primary,
+                          onPressed: action.onTap,
+                        ),
+                      if (menuActions.isNotEmpty)
+                        MenuAnchor(
+                          builder: (context, controller, child) {
+                            return IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const HugeIcon(
+                                icon: HugeIcons.strokeRoundedMoreVertical,
+                                size: AppDimensions.iconMd,
+                              ),
+                              iconSize: AppDimensions.iconMd,
+                              tooltip: t.common.moreOptions,
+                              style: IconButton.styleFrom(
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                minimumSize: const Size(
+                                  AppDimensions.minTapTarget,
+                                  AppDimensions.minTapTarget,
+                                ),
+                                maximumSize: const Size(
+                                  AppDimensions.minTapTarget,
+                                  AppDimensions.minTapTarget,
+                                ),
+                                padding: EdgeInsets.zero,
+                              ),
+                              onPressed: () {
+                                if (controller.isOpen) {
+                                  controller.close();
+                                } else {
+                                  controller.open();
+                                }
+                              },
+                            );
+                          },
+                          menuChildren: menuActions.map((action) {
+                            final color = action.isDestructive
+                                ? theme.colorScheme.error
+                                : theme.colorScheme.onSurface;
+
+                            return MenuItemButton(
+                              onPressed: action.onTap,
+                              leadingIcon: IconTheme(
+                                data: IconThemeData(
+                                  color: color,
+                                  size: AppDimensions.iconMd,
+                                ),
+                                child: action.icon,
+                              ),
+                              child: Text(
+                                action.label,
+                                style: TextStyle(color: color),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                    ],
                   );
                 },
-                menuChildren: menuActions.map((action) {
-                  final color = action.isDestructive
-                      ? theme.colorScheme.error
-                      : theme.colorScheme.onSurface;
-
-                  return MenuItemButton(
-                    onPressed: action.onTap,
-                    leadingIcon: IconTheme(
-                      data: IconThemeData(
-                        color: color,
-                        size: AppDimensions.iconMd,
-                      ),
-                      child: action.icon,
-                    ),
-                    child: Text(action.label, style: TextStyle(color: color)),
-                  );
-                }).toList(),
               ),
-          ],
-        ),
               if (footer != null)
                 Padding(
-                  // Keep the footer clear of the overflow-menu gutter on the right.
+                  // Align footer's right edge with the 16dp horizontal grid.
                   padding: EdgeInsets.only(
                     top: AppDimensions.paddingSm,
                     right: hasActionButtons
