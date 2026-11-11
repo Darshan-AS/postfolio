@@ -569,4 +569,53 @@ BEGIN
 END $$;
 ROLLBACK;
 
-\echo '== ALL 18 SQL CONTRACT ASSERTIONS PASSED =='
+\echo '== CASE 19: privilege lockdown holds for objects that do not exist yet'
+-- 19a. A function created in `public` AFTER the migrations must not be callable by anyone
+--      until a migration grants it. PUBLIC's EXECUTE on new functions is a global default,
+--      so a per-schema ALTER DEFAULT PRIVILEGES cannot remove it.
+BEGIN;
+CREATE FUNCTION public.contract_probe_fn() RETURNS int LANGUAGE sql AS 'SELECT 1';
+DO $$
+BEGIN
+  ASSERT NOT has_function_privilege('anon', 'public.contract_probe_fn()', 'execute'),
+    'CASE 19a FAILED: a new function in public is executable by anon';
+  ASSERT NOT has_function_privilege('authenticated', 'public.contract_probe_fn()', 'execute'),
+    'CASE 19a FAILED: a new function in public is executable by authenticated without a grant';
+END $$;
+ROLLBACK;
+
+-- 19b. No existing function in `public` is executable by anon, and the functions
+--      authenticated may call are exactly the documented client surface.
+DO $$
+DECLARE
+  v_anon TEXT;
+  v_authenticated TEXT;
+BEGIN
+  SELECT string_agg(p.proname, ', ' ORDER BY p.proname) INTO v_anon
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND has_function_privilege('anon', p.oid, 'execute');
+  ASSERT v_anon IS NULL,
+    format('CASE 19b FAILED: functions in public executable by anon: %s', v_anon);
+
+  SELECT string_agg(p.proname, ', ' ORDER BY p.proname) INTO v_authenticated
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND has_function_privilege('authenticated', p.oid, 'execute');
+  ASSERT v_authenticated =
+    'is_admin, log_client_error, owns_account, save_customer_with_sb_account, '
+    'save_one_time_deposit, save_recurring_deposit, set_deposit_status',
+    format('CASE 19b FAILED: unexpected functions executable by authenticated: %s', v_authenticated);
+END $$;
+
+-- 19c. Every table in `public` has row-level security enabled.
+DO $$
+DECLARE
+  v_without_rls TEXT;
+BEGIN
+  SELECT string_agg(c.relname, ', ' ORDER BY c.relname) INTO v_without_rls
+  FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'public' AND c.relkind = 'r' AND NOT c.relrowsecurity;
+  ASSERT v_without_rls IS NULL,
+    format('CASE 19c FAILED: tables in public without RLS: %s', v_without_rls);
+END $$;
+
+\echo '== ALL 19 SQL CONTRACT ASSERTIONS PASSED =='

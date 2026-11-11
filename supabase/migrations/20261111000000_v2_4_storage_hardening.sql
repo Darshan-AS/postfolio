@@ -763,6 +763,15 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM anon;
 REVOKE ALL ON ALL ROUTINES IN SCHEMA public FROM PUBLIC, anon, authenticated;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON ROUTINES FROM PUBLIC, anon, authenticated;
 
+-- PUBLIC's EXECUTE on newly created functions is a *global* default privilege. Postgres adds
+-- per-schema defaults on top of the global ones, so the per-schema REVOKE above removes the
+-- anon/authenticated defaults granted in the initial schema but cannot remove PUBLIC's. Without
+-- this global revoke, every function a later migration creates is callable by anon until
+-- that migration remembers to revoke it (asserted by CASE 19 in supabase/tests).
+-- Consequence to remember: this applies to every schema, so functions from an extension
+-- enabled later by this role are not callable by API roles until explicitly granted.
+ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON ROUTINES FROM PUBLIC;
+
 -- RLS boolean helpers evaluated by `authenticated` policies:
 GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.owns_account(UUID) TO authenticated, service_role;
