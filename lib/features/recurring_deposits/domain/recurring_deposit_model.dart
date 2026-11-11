@@ -230,6 +230,9 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   }) {
     if (hasPayments) {
       if (existing.installmentAmount != updated.installmentAmount ||
+          existing.termYears != updated.termYears ||
+          existing.termMonths != updated.termMonths ||
+          existing.initialPaidInstallments != updated.initialPaidInstallments ||
           existing.openingReceivable != updated.openingReceivable ||
           existing.startDate.year != updated.startDate.year ||
           existing.startDate.month != updated.startDate.month ||

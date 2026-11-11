@@ -27,18 +27,20 @@ sealed class RDLedgerFacts with _$RDLedgerFacts {
 
   bool get hasTransactions => transactions.isNotEmpty;
   bool get hasPoDeposits => poDeposits.isNotEmpty;
+  bool get hasFeeAbsorptions => absorptions.isNotEmpty;
 
   /// Financial terms (amount, start date, tenure, baseline) freeze once the ledger has activity.
-  bool get isFinancialTermsLocked => hasTransactions || hasPoDeposits;
+  bool get isFinancialTermsLocked =>
+      hasTransactions || hasPoDeposits || hasFeeAbsorptions;
 
   /// PO deposit events in the order the Post Office applied them.
-  List<RDPoDeposit> get poDepositsInOrder => [...poDeposits]..sort(_poOrder);
+  List<RDPoDeposit> get poDepositsInOrder => [...poDeposits]..sort(comparePoDeposits);
 
   /// The only PO event that may be undone.
   RDPoDeposit? get latestPoDeposit =>
       poDeposits.isEmpty ? null : poDepositsInOrder.last;
 
-  static int _poOrder(RDPoDeposit a, RDPoDeposit b) {
+  static int comparePoDeposits(RDPoDeposit a, RDPoDeposit b) {
     final byDay = a.depositedOn.compareTo(b.depositedOn);
     if (byDay != 0) return byDay;
     if (a.createdAt != null && b.createdAt != null) {

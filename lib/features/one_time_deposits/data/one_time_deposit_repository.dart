@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:postfolio/core/constants/firestore_keys.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:uuid/uuid.dart';
@@ -22,6 +23,10 @@ abstract class OneTimeDepositRepository {
   Stream<Result<OneTimeDeposit, String>> watchOneTimeDepositById(String id);
   Future<Result<void, String>> createOneTimeDeposit(OneTimeDeposit deposit);
   Future<Result<void, String>> updateOneTimeDeposit(OneTimeDeposit deposit);
+  Future<Result<void, String>> updateDepositStatus(
+    String id,
+    DepositStatus status,
+  );
   Future<Result<void, String>> deleteOneTimeDeposit(String id);
 }
 
@@ -106,6 +111,22 @@ class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
   }
 
   @override
+  Future<Result<void, String>> updateDepositStatus(
+    String id,
+    DepositStatus status,
+  ) async {
+    try {
+      _deposits.doc(id).update({
+        'status': status.name,
+        FirestoreKeys.updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
   Future<Result<void, String>> deleteOneTimeDeposit(String id) async {
     try {
       _deposits.doc(id).delete();
@@ -183,6 +204,21 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
     final index = _deposits.indexWhere((d) => d.id == deposit.id);
     if (index != -1) {
       _deposits[index] = deposit;
+      _emit();
+      return const Success(null);
+    }
+    return const Failure('One Time Deposit not found');
+  }
+
+  @override
+  Future<Result<void, String>> updateDepositStatus(
+    String id,
+    DepositStatus status,
+  ) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    final index = _deposits.indexWhere((d) => d.id == id);
+    if (index != -1) {
+      _deposits[index] = _deposits[index].copyWith(status: status);
       _emit();
       return const Success(null);
     }

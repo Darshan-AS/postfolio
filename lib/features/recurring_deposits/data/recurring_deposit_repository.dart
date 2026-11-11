@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:postfolio/core/constants/firestore_keys.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:uuid/uuid.dart';
@@ -21,6 +22,10 @@ abstract class RecurringDepositRepository {
   Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits();
   Stream<Result<RecurringDeposit, String>> watchRecurringDepositById(String id);
   Future<Result<void, String>> saveRecurringDeposit(RecurringDeposit deposit);
+  Future<Result<void, String>> updateDepositStatus(
+    String id,
+    DepositStatus status,
+  );
   Future<Result<void, String>> deleteRecurringDeposit(String id);
 }
 
@@ -86,6 +91,22 @@ class FirestoreRecurringDepositRepository
   Future<Result<void, String>> saveRecurringDeposit(RecurringDeposit deposit) async {
     try {
       _deposits.doc(deposit.id).set(deposit, firestore.SetOptions(merge: true));
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  @override
+  Future<Result<void, String>> updateDepositStatus(
+    String id,
+    DepositStatus status,
+  ) async {
+    try {
+      _deposits.doc(id).update({
+        'status': status.name,
+        FirestoreKeys.updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
       return const Success(null);
     } catch (e) {
       return Failure(e.toString());
@@ -162,6 +183,18 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
       if (validation case Failure(error: final err)) return Failure(err);
       _deposits[index] = deposit;
     }
+    _emit();
+    return const Success(null);
+  }
+
+  @override
+  Future<Result<void, String>> updateDepositStatus(
+    String id,
+    DepositStatus status,
+  ) async {
+    final index = _deposits.indexWhere((d) => d.id == id);
+    if (index == -1) return const Failure('Recurring Deposit not found');
+    _deposits[index] = _deposits[index].copyWith(status: status);
     _emit();
     return const Success(null);
   }

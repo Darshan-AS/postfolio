@@ -4,6 +4,7 @@ import 'package:postfolio/features/recurring_deposits/data/supabase_recurring_de
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/customers/data/supabase_customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -78,7 +79,7 @@ void main() {
     final initialDbData = await client.from('recurring_deposits').select().eq('id', rdId).single();
     expect((initialDbData['installment_amount'] as num).toDouble(), 1000.0);
 
-    // Update RD with new installment amount 2000.0
+    // Update RD with new installment amount 2000.0 and openingReceivable 1500.0
     final rdUpdateRes = RecurringDeposit.create(
       id: rdId,
       accountNo: 'RD1001',
@@ -89,6 +90,7 @@ void main() {
       customerId: customerId,
       schemeType: RecurringSchemeType.recurringDeposit,
       startDate: DateTime(2025, 1, 1),
+      openingReceivable: 1500.0,
       nominees: const [
         Nominee(
           name: 'RD Nominee',
@@ -105,12 +107,25 @@ void main() {
     // Verify updated RD in DB directly
     final updatedDbData = await client.from('recurring_deposits').select().eq('id', rdId).single();
     expect((updatedDbData['installment_amount'] as num).toDouble(), 2000.0);
+    expect((updatedDbData['opening_receivable'] as num).toDouble(), 1500.0);
 
-    // Watch RDs
+    // Watch RDs list (must include openingReceivable while omitting nominees)
     final watchResult = await rdRepo.watchRecurringDeposits().first;
     expect(watchResult, isA<Success<List<RecurringDeposit>, String>>());
     final watchedList = (watchResult as Success<List<RecurringDeposit>, String>).value;
     final watchedRd = watchedList.firstWhere((r) => r.id == rdId);
     expect(watchedRd.installmentAmount, 2000.0);
+    expect(watchedRd.openingReceivable, 1500.0);
+
+    // Toggle status via atomic RPC (must preserve nominees and openingReceivable)
+    final closeRes = await rdRepo.updateDepositStatus(rdId, DepositStatus.closed);
+    expect(closeRes, isA<Success<void, String>>());
+    final closedDetail =
+        (await rdRepo.watchRecurringDepositById(rdId).first as Success<RecurringDeposit, String>)
+            .value;
+    expect(closedDetail.status, DepositStatus.closed);
+    expect(closedDetail.openingReceivable, 1500.0);
+    expect(closedDetail.nominees.length, 1);
+    expect(closedDetail.nominees.first.name, 'RD Nominee');
   });
 }

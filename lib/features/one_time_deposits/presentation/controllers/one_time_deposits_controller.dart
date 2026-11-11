@@ -281,26 +281,10 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
     String id,
     DepositStatus newStatus, {
     OneTimeDeposit? deposit,
-  }) async {
-    OneTimeDeposit? targetDeposit = deposit;
-    if (targetDeposit == null) {
-      final deposits = state.value;
-      targetDeposit = deposits?.where((d) => d.id == id).firstOrNull;
-    }
-
-    if (targetDeposit == null) {
-      final repository = ref.read(oneTimeDepositRepositoryProvider);
-      final singleResult = await repository.watchOneTimeDepositById(id).first;
-      return switch (singleResult) {
-        Success(value: final d) =>
-          await repository.updateOneTimeDeposit(d.copyWith(status: newStatus)),
-        Failure(error: final err) => Failure(err),
-      };
-    }
-
-    final updatedDeposit = targetDeposit.copyWith(status: newStatus);
-    final repository = ref.read(oneTimeDepositRepositoryProvider);
-    return await repository.updateOneTimeDeposit(updatedDeposit);
+  }) {
+    return ref
+        .read(oneTimeDepositRepositoryProvider)
+        .updateDepositStatus(id, newStatus);
   }
 }
 

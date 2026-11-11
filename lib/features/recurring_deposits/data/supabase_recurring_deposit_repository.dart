@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -17,7 +18,8 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   static const _listColumns =
       'id,agent_id,customer_id,customer_name,status,scheme_type,account_no,'
       'serial_no,installment_amount,interest_rate,term_years,term_months,'
-      'start_date,initial_paid_installments,created_at,updated_at';
+      'start_date,initial_paid_installments,opening_receivable,'
+      'created_at,updated_at';
 
   @override
   Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits() {
@@ -73,6 +75,22 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   @override
   Future<Result<void, String>> saveRecurringDeposit(RecurringDeposit deposit) async {
     return _saveRecurringDeposit(deposit);
+  }
+
+  @override
+  Future<Result<void, String>> updateDepositStatus(
+    String id,
+    DepositStatus status,
+  ) async {
+    try {
+      await _supabaseClient.rpc(
+        'set_deposit_status',
+        params: {'p_id': id, 'p_status': status.name},
+      );
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
   }
 
   @override

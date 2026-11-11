@@ -269,27 +269,10 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     String id,
     DepositStatus newStatus, {
     RecurringDeposit? deposit,
-  }) async {
-    RecurringDeposit? targetDeposit = deposit;
-    if (targetDeposit == null) {
-      final deposits = state.value;
-      targetDeposit = deposits?.where((d) => d.id == id).firstOrNull;
-    }
-
-    if (targetDeposit == null) {
-      final repository = ref.read(recurringDepositRepositoryProvider);
-      final singleResult =
-          await repository.watchRecurringDepositById(id).first;
-      return switch (singleResult) {
-        Success(value: final d) =>
-          await repository.saveRecurringDeposit(d.copyWith(status: newStatus)),
-        Failure(error: final err) => Failure(err),
-      };
-    }
-
-    final updatedDeposit = targetDeposit.copyWith(status: newStatus);
-    final repository = ref.read(recurringDepositRepositoryProvider);
-    return await repository.saveRecurringDeposit(updatedDeposit);
+  }) {
+    return ref
+        .read(recurringDepositRepositoryProvider)
+        .updateDepositStatus(id, newStatus);
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -75,6 +76,22 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
   @override
   Future<Result<void, String>> updateOneTimeDeposit(OneTimeDeposit deposit) async {
     return _saveOneTimeDeposit(deposit);
+  }
+
+  @override
+  Future<Result<void, String>> updateDepositStatus(
+    String id,
+    DepositStatus status,
+  ) async {
+    try {
+      await _supabaseClient.rpc(
+        'set_deposit_status',
+        params: {'p_id': id, 'p_status': status.name},
+      );
+      return const Success(null);
+    } catch (e) {
+      return Failure(e.toString());
+    }
   }
 
   @override

@@ -4,6 +4,7 @@ import 'package:postfolio/features/one_time_deposits/data/supabase_one_time_depo
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/customers/data/supabase_customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -121,5 +122,15 @@ void main() {
     expect(detailOtd.principalAmount, 100000.0);
     expect(detailOtd.nominees.length, 1);
     expect(detailOtd.nominees.first.name, 'OTD Nominee');
+
+    // Toggle status via atomic RPC (must preserve nominees even though list view omitted them)
+    final closeRes = await otdRepo.updateDepositStatus(otdId, DepositStatus.closed);
+    expect(closeRes, isA<Success<void, String>>());
+    final closedDetail =
+        (await otdRepo.watchOneTimeDepositById(otdId).first as Success<OneTimeDeposit, String>)
+            .value;
+    expect(closedDetail.status, DepositStatus.closed);
+    expect(closedDetail.nominees.length, 1);
+    expect(closedDetail.nominees.first.name, 'OTD Nominee');
   });
 }
