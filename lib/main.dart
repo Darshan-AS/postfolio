@@ -17,6 +17,7 @@ import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/firebase_options.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:skeletonizer/skeletonizer.dart' show SkeletonizerConfig;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 bool get _supportsCrashlytics =>
@@ -132,6 +133,13 @@ class PostfolioApp extends ConsumerWidget {
           darkTheme: effectiveDarkTheme,
           themeMode: materialThemeMode,
           routerConfig: goRouter,
+          builder: (context, child) {
+            final scheme = Theme.of(context).colorScheme;
+            return SkeletonizerConfig(
+              data: AppTheme.skeletonizerConfig(scheme),
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
           locale: TranslationProvider.of(context).flutterLocale,
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,

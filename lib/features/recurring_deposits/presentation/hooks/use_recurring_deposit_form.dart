@@ -11,6 +11,7 @@ import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
@@ -237,9 +238,7 @@ RecurringDepositFormState useRecurringDepositForm({
   Future<void> save() async {
     if (formKey.currentState!.validate()) {
       if (selectedCustomerId.value == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(t.recurringDeposits.selectCustomerPrompt)),
-        );
+        AppFeedback.showError(context, t.recurringDeposits.selectCustomerPrompt);
         return;
       }
 
@@ -278,12 +277,9 @@ RecurringDepositFormState useRecurringDepositForm({
         case Success():
           context.pop();
         case Failure(error: final err):
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                t.recurringDeposits.failedToSaveDeposit(error: err.toString()),
-              ),
-            ),
+          AppFeedback.showError(
+            context,
+            t.recurringDeposits.failedToSaveDeposit(error: err.toString()),
           );
       }
     }

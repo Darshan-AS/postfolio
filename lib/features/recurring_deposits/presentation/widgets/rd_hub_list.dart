@@ -353,7 +353,7 @@ class _RDHubRow extends ConsumerWidget {
     }
 
     final status = item.displayStatus(now);
-    final statusLabel = status.visual(Theme.of(context).colorScheme).label;
+    final statusLabel = status.visualOf(context).label;
     final customerName = item.deposit.customerName ?? t.recurringDeposits.unnamedCustomer;
     final serial = item.deposit.serialNo ?? t.common.notProvided;
     final overdueDays = item.installment.overdueDaysAt(now);

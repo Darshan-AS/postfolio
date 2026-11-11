@@ -616,7 +616,7 @@ class _PreviewMonthRow extends StatelessWidget {
     final scheme = theme.colorScheme;
     final strings = t.recurringDeposits.ledger.preview;
     final after = month.after;
-    final visual = after.displayStatusAt(asOf).visual(scheme);
+    final visual = after.displayStatusAt(asOf).visualOf(context);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

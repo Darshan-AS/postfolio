@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -224,6 +226,7 @@ class DetailAmountCard extends StatelessWidget {
 
 class StatusBadge extends StatelessWidget {
   final String status;
+  final DepositStatus? depositStatus;
   final bool compact;
   final MaturityUrgency urgency;
   final String? relativeTimeText;
@@ -231,6 +234,7 @@ class StatusBadge extends StatelessWidget {
   const StatusBadge({
     super.key,
     required this.status,
+    this.depositStatus,
     this.compact = false,
     this.urgency = MaturityUrgency.normal,
     this.relativeTimeText,
@@ -239,26 +243,31 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final financial = AppFinancialColors.of(context);
+    final isClosed = depositStatus != null
+        ? depositStatus == DepositStatus.closed
+        : status.toLowerCase() == 'closed';
 
     final Color bgColor;
     final Color fgColor;
 
-    if (urgency == MaturityUrgency.matured) {
-      bgColor = colorScheme.errorContainer;
-      fgColor = colorScheme.onErrorContainer;
-    } else if (urgency == MaturityUrgency.maturingSoon) {
-      bgColor = colorScheme.tertiaryContainer;
-      fgColor = colorScheme.onTertiaryContainer;
-    } else if (status.toLowerCase() == 'closed') {
+    if (isClosed) {
       bgColor = colorScheme.surfaceContainerHighest;
       fgColor = colorScheme.onSurfaceVariant;
+    } else if (urgency == MaturityUrgency.matured) {
+      bgColor = financial.overdue.container;
+      fgColor = financial.overdue.onContainer;
+    } else if (urgency == MaturityUrgency.maturingSoon) {
+      bgColor = financial.warning.container;
+      fgColor = financial.warning.onContainer;
     } else {
       bgColor = colorScheme.primaryContainer;
       fgColor = colorScheme.onPrimaryContainer;
     }
 
     final displayText =
-        (urgency == MaturityUrgency.maturingSoon ||
+        !isClosed &&
+            (urgency == MaturityUrgency.maturingSoon ||
                 urgency == MaturityUrgency.matured) &&
             relativeTimeText != null
         ? relativeTimeText!
@@ -281,7 +290,7 @@ class StatusBadge extends StatelessWidget {
         ),
       ),
       child: Text(
-        displayText.toUpperCase(),
+        displayText,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: fgColor,
           fontWeight: FontWeight.bold,
@@ -331,8 +340,8 @@ class KvpMultiplierBanner extends StatelessWidget {
               color: theme.colorScheme.surface.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.rocket_launch_rounded,
+            child: HugeIcon(
+              icon: HugeIcons.strokeRoundedRocket01,
               color: theme.colorScheme.onPrimaryContainer,
               size: AppDimensions.iconMd,
             ),
@@ -343,7 +352,7 @@ class KvpMultiplierBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Money Multiplier",
+                  t.common.moneyMultiplier,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.onPrimaryContainer.withValues(
                       alpha: 0.8,

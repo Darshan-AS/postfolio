@@ -184,7 +184,10 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                 ),
               ],
             ),
-            badge: StatusBadge(status: deposit.status.displayName),
+            badge: StatusBadge(
+              status: deposit.status.displayName,
+              depositStatus: deposit.status,
+            ),
           ),
           body: [
             SizedBox(

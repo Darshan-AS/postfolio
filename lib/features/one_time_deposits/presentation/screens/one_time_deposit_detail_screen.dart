@@ -11,6 +11,7 @@ import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
 import 'package:postfolio/core/widgets/domain/nominees_detail_section.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
@@ -69,10 +70,9 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                       );
 
                   if (result is Failure && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text((result as Failure).error.toString()),
-                      ),
+                    AppFeedback.showError(
+                      context,
+                      (result as Failure).error.toString(),
                     );
                   }
                 }
@@ -102,7 +102,10 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            badge: StatusBadge(status: deposit.status.displayName),
+            badge: StatusBadge(
+              status: deposit.status.displayName,
+              depositStatus: deposit.status,
+            ),
           ),
           body: [
             switch (deposit.projection) {

@@ -3,6 +3,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -32,32 +33,36 @@ class RDPassbookNextDueLine extends StatelessWidget {
     final passbook = t.recurringDeposits.ledger.passbook;
     final inst = nextDue;
 
+    final financial = AppFinancialColors.of(context);
+
     if (inst == null) {
       return Card(
         elevation: 0,
-        color: scheme.tertiaryContainer,
+        color: financial.settled.container,
         child: ListTile(
           leading: HugeIcon(
             icon: HugeIcons.strokeRoundedCheckmarkBadge01,
             size: AppDimensions.iconMd,
-            color: scheme.onTertiaryContainer,
+            color: financial.settled.onContainer,
           ),
           title: Text(
             passbook.allSettled,
             style: theme.textTheme.titleSmall?.copyWith(
-              color: scheme.onTertiaryContainer,
+              color: financial.settled.onContainer,
               fontWeight: FontWeight.bold,
             ),
           ),
           subtitle: Text(
             passbook.allSettledHint,
-            style: theme.textTheme.bodySmall?.copyWith(color: scheme.onTertiaryContainer),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: financial.settled.onContainer,
+            ),
           ),
         ),
       );
     }
 
-    final visual = inst.displayStatusAt(now).visual(scheme);
+    final visual = inst.displayStatusAt(now).visual(scheme, financial: financial);
 
     return Card(
       elevation: 0,

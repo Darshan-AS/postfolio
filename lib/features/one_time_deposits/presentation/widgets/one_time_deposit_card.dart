@@ -11,6 +11,7 @@ import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
 
@@ -146,6 +147,7 @@ class _OneTimeDepositCardView extends StatelessWidget {
             AppSpacings.gapXs,
             StatusBadge(
               status: status.displayName,
+              depositStatus: status,
               compact: true,
               urgency: urgency,
             ),
@@ -237,13 +239,10 @@ class OneTimeDepositCard extends ConsumerWidget {
               .deleteOneTimeDeposit(deposit.id);
 
           if (result is Failure && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  t.oneTimeDeposits.failedToDeleteDeposit(
-                    error: (result as Failure).error.toString(),
-                  ),
-                ),
+            AppFeedback.showError(
+              context,
+              t.oneTimeDeposits.failedToDeleteDeposit(
+                error: (result as Failure).error.toString(),
               ),
             );
           }
@@ -268,8 +267,9 @@ class OneTimeDepositCard extends ConsumerWidget {
               .toggleDepositStatus(deposit.id, newStatus);
 
           if (result is Failure && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text((result as Failure).error.toString())),
+            AppFeedback.showError(
+              context,
+              (result as Failure).error.toString(),
             );
           }
         }

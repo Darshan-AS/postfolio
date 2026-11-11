@@ -21,7 +21,6 @@ import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_m
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:postfolio/core/extensions/string_extension.dart';
 
 class CustomerDetailScreen extends ConsumerWidget {
@@ -112,45 +111,45 @@ class CustomerDetailScreen extends ConsumerWidget {
               ],
             ],
           ),
-          floatingActionButton: SpeedDial(
-            heroTag: null,
-            spacing: AppDimensions.paddingSm,
-            spaceBetweenChildren: AppDimensions.paddingSm,
-            backgroundColor: theme.floatingActionButtonTheme.backgroundColor,
-            foregroundColor: theme.floatingActionButtonTheme.foregroundColor,
-            activeChild: const HugeIcon(
-              icon: HugeIcons.strokeRoundedCancel01,
-              size: AppDimensions.iconMd,
-            ),
-            children: [
-              SpeedDialChild(
-                backgroundColor: colorScheme.secondaryContainer,
-                foregroundColor: colorScheme.onSecondaryContainer,
-                label: t.recurringDeposits.title,
-                onTap: () => RecurringDepositCreateRoute(
-                  customerId: customerId,
-                ).push(context),
-                child: const HugeIcon(
+          floatingActionButton: MenuAnchor(
+            menuChildren: [
+              MenuItemButton(
+                leadingIcon: HugeIcon(
                   icon: HugeIcons.strokeRoundedTransaction,
                   size: AppDimensions.iconMd,
+                  color: colorScheme.primary,
                 ),
-              ),
-              SpeedDialChild(
-                backgroundColor: colorScheme.secondaryContainer,
-                foregroundColor: colorScheme.onSecondaryContainer,
-                label: t.oneTimeDeposits.title,
-                onTap: () => OneTimeDepositCreateRoute(
+                onPressed: () => RecurringDepositCreateRoute(
                   customerId: customerId,
                 ).push(context),
-                child: const HugeIcon(
+                child: Text(t.recurringDeposits.title),
+              ),
+              MenuItemButton(
+                leadingIcon: HugeIcon(
                   icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
                   size: AppDimensions.iconMd,
+                  color: colorScheme.primary,
                 ),
+                onPressed: () => OneTimeDepositCreateRoute(
+                  customerId: customerId,
+                ).push(context),
+                child: Text(t.oneTimeDeposits.title),
               ),
             ],
-            child: const HugeIcon(
-              icon: HugeIcons.strokeRoundedAdd01,
-              size: AppDimensions.iconMd,
+            builder: (context, controller, _) => FloatingActionButton(
+              heroTag: null,
+              tooltip: t.common.add,
+              onPressed: () {
+                if (controller.isOpen) {
+                  controller.close();
+                } else {
+                  controller.open();
+                }
+              },
+              child: const HugeIcon(
+                icon: HugeIcons.strokeRoundedAdd01,
+                size: AppDimensions.iconMd,
+              ),
             ),
           ),
           body: [

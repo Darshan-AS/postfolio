@@ -15,7 +15,7 @@ extension type const LocalDate._(DateTime _value) {
   /// so explicit timezone offsets never shift the calendar day via UTC conversion.
   factory LocalDate.parse(String input) {
     final trimmed = input.trim();
-    final match = _isoDatePrefix.firstExpMatch(trimmed);
+    final match = _isoDatePrefix.firstMatch(trimmed);
     if (match != null) {
       return LocalDate(
         int.parse(match.group(1)!),
@@ -47,18 +47,9 @@ extension type const LocalDate._(DateTime _value) {
   }
 
   LocalDate addYears(int years) => addMonths(years * 12);
-
-  bool isBefore(LocalDate other) => _value.isBefore(other._value);
-  bool isAfter(LocalDate other) => _value.isAfter(other._value);
-
-  int compareTo(LocalDate other) => _value.compareTo(other._value);
 }
 
 final RegExp _isoDatePrefix = RegExp(r'^(\d{4})-(\d{2})-(\d{2})');
-
-extension _RegExpFirstMatch on RegExp {
-  RegExpMatch? firstExpMatch(String input) => firstMatch(input);
-}
 
 /// Serializes a calendar day (no time-of-day) as `yyyy-MM-dd` for Postgres `DATE` columns.
 class DateOnlyConverter implements JsonConverter<DateTime, Object?> {

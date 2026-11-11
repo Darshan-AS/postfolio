@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 
 class EntityDetailScaffold extends StatelessWidget {
   final String appBarTitle;
@@ -52,9 +53,7 @@ class EntityDetailScaffold extends StatelessWidget {
         context.pop();
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(behavior: SnackBarBehavior.floating, content: Text(error)),
-      );
+      AppFeedback.showError(context, error);
     }
   }
 

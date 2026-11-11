@@ -97,15 +97,15 @@ class _KpiGrid extends ConsumerWidget {
         : (kpis.overdueCount > 0
                   ? RDInstallmentDisplayStatus.overdue
                   : RDInstallmentDisplayStatus.upcoming)
-              .visual(scheme);
+              .visualOf(context);
     final inHandVisual = float.cashInHandAccounts > 0
-        ? RDInstallmentDisplayStatus.collectedPendingPo.visual(scheme)
+        ? RDInstallmentDisplayStatus.collectedPendingPo.visualOf(context)
         : neutral;
     final receivableVisual = float.receivableAccounts > 0
-        ? RDInstallmentDisplayStatus.frontedByAgent.visual(scheme)
+        ? RDInstallmentDisplayStatus.frontedByAgent.visualOf(context)
         : neutral;
     final arrearsVisual = float.arrearsAccounts > 0
-        ? RDInstallmentDisplayStatus.overdue.visual(scheme)
+        ? RDInstallmentDisplayStatus.overdue.visualOf(context)
         : neutral;
 
     return Padding(

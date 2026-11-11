@@ -10,6 +10,7 @@ import 'package:postfolio/core/models/postal_scheme_terms.dart';
 import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -243,9 +244,7 @@ OneTimeDepositFormState useOneTimeDepositForm({
   Future<void> save() async {
     if (formKey.currentState!.validate()) {
       if (selectedCustomerId.value == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(t.oneTimeDeposits.selectCustomerPrompt)),
-        );
+        AppFeedback.showError(context, t.oneTimeDeposits.selectCustomerPrompt);
         return;
       }
 
@@ -281,12 +280,9 @@ OneTimeDepositFormState useOneTimeDepositForm({
         case Success():
           context.pop();
         case Failure(error: final err):
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                t.oneTimeDeposits.failedToSaveDeposit(error: err.toString()),
-              ),
-            ),
+          AppFeedback.showError(
+            context,
+            t.oneTimeDeposits.failedToSaveDeposit(error: err.toString()),
           );
       }
     }

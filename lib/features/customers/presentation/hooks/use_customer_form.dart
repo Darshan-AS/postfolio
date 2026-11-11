@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -123,12 +124,9 @@ CustomerFormState useCustomerForm({
         case Success():
           context.pop();
         case Failure(error: final err):
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                t.customers.failedToSaveCustomer(error: err.toString()),
-              ),
-            ),
+          AppFeedback.showError(
+            context,
+            t.customers.failedToSaveCustomer(error: err.toString()),
           );
       }
     }

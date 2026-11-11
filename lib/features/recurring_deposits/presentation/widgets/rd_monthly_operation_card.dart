@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
@@ -159,9 +160,13 @@ class RDMonthlyOperationCard extends StatelessWidget {
     // month: carried-over arrears outrank "Upcoming" / "Due today".
     final arrearsMonths =
         item.priorOverdueCount + (item.isOverdue(now) && item.isCustomerPending ? 1 : 0);
+    final financial = AppFinancialColors.of(context);
     final RDStatusVisual visual;
     if (item.hasPriorArrears && status.isCustomerPending) {
-      final overdue = RDInstallmentDisplayStatus.overdue.visual(scheme);
+      final overdue = RDInstallmentDisplayStatus.overdue.visual(
+        scheme,
+        financial: financial,
+      );
       visual = (
         foreground: overdue.foreground,
         background: overdue.background,
@@ -171,7 +176,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
         emphasized: true,
       );
     } else {
-      visual = status.visual(scheme);
+      visual = status.visual(scheme, financial: financial);
     }
     final money = _money(scheme);
 
@@ -202,7 +207,9 @@ class RDMonthlyOperationCard extends StatelessWidget {
     final hasAction = action.resolve(context) != null;
 
     return EntityListTile(
-      indicatorColor: isDefaultState ? null : status.accent(scheme),
+      indicatorColor: isDefaultState
+          ? null
+          : status.accent(scheme, financial: financial),
       isSelected: isSelected,
       leading: isSelectionMode
           ? SizedBox(
@@ -527,7 +534,7 @@ class RDOperationActionButton extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final card = t.recurringDeposits.monthlyOperations.card;
     final status = item.displayStatus(evaluationDate);
-    final visual = status.visual(scheme);
+    final visual = status.visualOf(context);
 
     if (item.isCustomerPending) {
       final urgent = item.hasOverdueDebt(evaluationDate);

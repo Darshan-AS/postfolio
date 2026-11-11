@@ -1,20 +1,14 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 /// Visual vocabulary for an installment month. Every heatmap cell, tile, inspector row, hub
 /// pill and hub KPI tile derives colour/icon/label from here so they can never disagree.
 ///
-/// Colour semantics — no two statuses share a container colour:
-/// * primaryContainer        — settled at the PO (`settled`), muted success
-/// * secondaryContainer      — money is with the agent, waiting for the PO (`collectedPendingPo`)
-/// * secondaryFixedDim       — partial progress (`partiallyPaid`)
-/// * tertiaryContainer       — agent's own money is out (`frontedByAgent`)
-/// * errorContainer          — customer is in default (`overdue`)
-/// * surface + outline, bold — due today (`dueToday`)
-/// * surfaceContainerLow     — nothing to do yet (`upcoming`)
-/// * surfaceContainerHigh    — immutable history (`baseline`)
+/// Active financial statuses resolve from [AppFinancialColors] so no two statuses share a
+/// container colour and OS wallpaper dynamic colors never invert status semantics.
 typedef RDStatusVisual = ({
   Color foreground,
   Color background,
@@ -29,7 +23,19 @@ typedef RDStatusVisual = ({
 });
 
 extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
-  RDStatusVisual visual(ColorScheme scheme) {
+  RDStatusVisual visualOf(BuildContext context) {
+    final theme = Theme.of(context);
+    return visual(
+      theme.colorScheme,
+      financial: AppFinancialColors.of(context),
+    );
+  }
+
+  RDStatusVisual visual(
+    ColorScheme scheme, {
+    AppFinancialColors? financial,
+  }) {
+    final palette = financial ?? AppFinancialColors.forBrightness(scheme.brightness);
     final s = t.recurringDeposits.ledger.statuses;
     return switch (this) {
       RDInstallmentDisplayStatus.baseline => (
@@ -41,40 +47,40 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
         label: s.baseline,
       ),
       RDInstallmentDisplayStatus.settled => (
-        foreground: scheme.onPrimaryContainer,
-        background: scheme.primaryContainer,
+        foreground: palette.settled.onContainer,
+        background: palette.settled.container,
         outline: null,
         emphasized: false,
         icon: HugeIcons.strokeRoundedCheckmarkBadge01,
         label: s.settled,
       ),
       RDInstallmentDisplayStatus.collectedPendingPo => (
-        foreground: scheme.onSecondaryContainer,
-        background: scheme.secondaryContainer,
+        foreground: palette.inHand.onContainer,
+        background: palette.inHand.container,
         outline: null,
         emphasized: false,
         icon: HugeIcons.strokeRoundedCoins01,
         label: s.collectedPendingPo,
       ),
       RDInstallmentDisplayStatus.partiallyPaid => (
-        foreground: scheme.onSecondaryFixedVariant,
-        background: scheme.secondaryFixedDim,
+        foreground: palette.partial.onContainer,
+        background: palette.partial.container,
         outline: null,
         emphasized: false,
         icon: HugeIcons.strokeRoundedChartRing,
         label: s.partiallyPaid,
       ),
       RDInstallmentDisplayStatus.frontedByAgent => (
-        foreground: scheme.onTertiaryContainer,
-        background: scheme.tertiaryContainer,
+        foreground: palette.fronted.onContainer,
+        background: palette.fronted.container,
         outline: null,
         emphasized: false,
         icon: HugeIcons.strokeRoundedWallet02,
         label: s.frontedByAgent,
       ),
       RDInstallmentDisplayStatus.overdue => (
-        foreground: scheme.onErrorContainer,
-        background: scheme.errorContainer,
+        foreground: palette.overdue.onContainer,
+        background: palette.overdue.container,
         outline: null,
         emphasized: true,
         icon: HugeIcons.strokeRoundedAlert01,
@@ -99,10 +105,22 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
     };
   }
 
-  /// Flat accent colour (for heatmap cells, indicator bars) — the container colour above,
-  /// or the outline when the status is drawn as an outlined pill.
-  Color accent(ColorScheme scheme) {
-    final v = visual(scheme);
-    return v.outline ?? v.background;
+  /// High-contrast solid accent colour (`>= 3:1` against surface) for left-edge indicator bars
+  /// and active status markers.
+  Color accent(
+    ColorScheme scheme, {
+    AppFinancialColors? financial,
+  }) {
+    final palette = financial ?? AppFinancialColors.forBrightness(scheme.brightness);
+    return switch (this) {
+      RDInstallmentDisplayStatus.settled => palette.settled.accent,
+      RDInstallmentDisplayStatus.collectedPendingPo => palette.inHand.accent,
+      RDInstallmentDisplayStatus.partiallyPaid => palette.partial.accent,
+      RDInstallmentDisplayStatus.frontedByAgent => palette.fronted.accent,
+      RDInstallmentDisplayStatus.overdue => palette.overdue.accent,
+      RDInstallmentDisplayStatus.dueToday => scheme.primary,
+      RDInstallmentDisplayStatus.baseline => scheme.outline,
+      RDInstallmentDisplayStatus.upcoming => scheme.outlineVariant,
+    };
   }
 }
