@@ -1,37 +1,31 @@
 import 'package:animations/animations.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_financial_colors.dart';
+import 'package:postfolio/core/theme/app_surfaces.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/theme/app_widget_themes.dart';
 import 'package:skeletonizer/skeletonizer.dart' show ShimmerEffect, SkeletonizerConfigData;
 
+/// The app's Material 3 Expressive theme.
+///
+/// [buildTheme] turns any [ColorScheme] (brand seed, the device's dynamic colours, or the
+/// accessible palette) into the full theme, so all four modes share one set of shapes,
+/// type roles and component styles.
 class AppTheme {
   AppTheme._();
 
   static const Color _seedColor = Color(0xFF1A56DB);
 
-  static TextTheme _withTabularFigures(TextTheme base) {
-    TextStyle? tabular(TextStyle? style) => style?.copyWith(
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
-
-    return base.copyWith(
-      displayLarge: tabular(base.displayLarge),
-      displayMedium: tabular(base.displayMedium),
-      displaySmall: tabular(base.displaySmall),
-      headlineLarge: tabular(base.headlineLarge),
-      headlineMedium: tabular(base.headlineMedium),
-      headlineSmall: tabular(base.headlineSmall),
-      titleLarge: tabular(base.titleLarge),
-      titleMedium: tabular(base.titleMedium),
-      titleSmall: tabular(base.titleSmall),
-      bodyLarge: tabular(base.bodyLarge),
-      bodyMedium: tabular(base.bodyMedium),
-      bodySmall: tabular(base.bodySmall),
-      labelLarge: tabular(base.labelLarge),
-      labelMedium: tabular(base.labelMedium),
-      labelSmall: tabular(base.labelSmall),
-    );
-  }
+  /// The brand palette, used where the device offers no dynamic colours (web, desktop, iOS,
+  /// Android 11 and older) and as the base of the accessible themes.
+  ///
+  /// The `vibrant` variant keeps the primary colour close to the brand seed while containers
+  /// stay pastel. The default variant (`tonalSpot`) mutes the seed to a slate blue.
+  static ColorScheme _brandScheme(Brightness brightness) => ColorScheme.fromSeed(
+    brightness: brightness,
+    seedColor: _seedColor,
+    dynamicSchemeVariant: DynamicSchemeVariant.vibrant,
+  );
 
   /// Derives shimmer colors directly from the active [ColorScheme] so Dark Mode and Accessible
   /// Mode skeletons never fall back to light `ThemeData.fallback()` bones.
@@ -54,10 +48,17 @@ class AppTheme {
     );
     final effectiveFinancial =
         financialColors ?? AppFinancialColors.forBrightness(colorScheme.brightness);
+    // `ThemeData.textTheme` holds colours and the font family only; sizes are merged in per
+    // locale by `Theme.of`. Component themes replace a widget's default style rather than
+    // merge with it, so the styles handed to them need the sizes too.
+    final textTheme = AppTypography.withTabularFigures(base.textTheme);
+    final sizedTextTheme = base.typography.englishLike.merge(textTheme);
+    final emphasized = AppTypography.emphasized(sizedTextTheme);
 
     return base.copyWith(
-      scaffoldBackgroundColor: colorScheme.surface,
-      textTheme: _withTabularFigures(base.textTheme),
+      scaffoldBackgroundColor: colorScheme.page,
+      canvasColor: colorScheme.page,
+      textTheme: textTheme,
       extensions: <ThemeExtension<dynamic>>[effectiveFinancial],
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -70,49 +71,43 @@ class AppTheme {
           ),
         },
       ),
-      appBarTheme: AppWidgetThemes.appBarTheme(colorScheme),
+      appBarTheme: AppWidgetThemes.appBarTheme(colorScheme, emphasized),
       dividerTheme: AppWidgetThemes.dividerTheme(colorScheme),
       floatingActionButtonTheme: AppWidgetThemes.floatingActionButtonTheme(
         colorScheme,
       ),
       cardTheme: AppWidgetThemes.cardTheme(colorScheme),
-      elevatedButtonTheme: AppWidgetThemes.elevatedButtonTheme(colorScheme),
-      filledButtonTheme: AppWidgetThemes.filledButtonTheme(colorScheme),
-      outlinedButtonTheme: AppWidgetThemes.outlinedButtonTheme(colorScheme),
-      textButtonTheme: AppWidgetThemes.textButtonTheme(colorScheme),
-      segmentedButtonTheme: AppWidgetThemes.segmentedButtonTheme(colorScheme),
+      elevatedButtonTheme: AppWidgetThemes.elevatedButtonTheme(colorScheme, emphasized),
+      filledButtonTheme: AppWidgetThemes.filledButtonTheme(colorScheme, emphasized),
+      outlinedButtonTheme: AppWidgetThemes.outlinedButtonTheme(colorScheme, emphasized),
+      textButtonTheme: AppWidgetThemes.textButtonTheme(colorScheme, emphasized),
+      segmentedButtonTheme: AppWidgetThemes.segmentedButtonTheme(colorScheme, emphasized),
       inputDecorationTheme: AppWidgetThemes.inputDecorationTheme(colorScheme),
       iconButtonTheme: AppWidgetThemes.iconButtonTheme(colorScheme),
-      searchBarTheme: AppWidgetThemes.searchBarTheme(colorScheme),
-      chipTheme: AppWidgetThemes.chipTheme(colorScheme),
+      searchBarTheme: AppWidgetThemes.searchBarTheme(colorScheme, sizedTextTheme),
+      chipTheme: AppWidgetThemes.chipTheme(colorScheme, emphasized),
       expansionTileTheme: AppWidgetThemes.expansionTileTheme(colorScheme),
       snackBarTheme: AppWidgetThemes.snackBarTheme(colorScheme),
+      dialogTheme: AppWidgetThemes.dialogTheme(colorScheme, emphasized),
+      bottomSheetTheme: AppWidgetThemes.bottomSheetTheme(colorScheme),
+      menuTheme: AppWidgetThemes.menuTheme(colorScheme),
+      menuButtonTheme: AppWidgetThemes.menuButtonTheme(colorScheme, sizedTextTheme),
+      datePickerTheme: AppWidgetThemes.datePickerTheme(colorScheme),
+      bannerTheme: AppWidgetThemes.bannerTheme(colorScheme),
       radioTheme: AppWidgetThemes.radioTheme(colorScheme),
     );
   }
 
   static ThemeData get lightTheme {
-    final colorScheme = ColorScheme.fromSeed(
-      brightness: Brightness.light,
-      seedColor: _seedColor,
-    );
-    return buildTheme(colorScheme, financialColors: AppFinancialColors.light);
+    return buildTheme(_brandScheme(Brightness.light), financialColors: AppFinancialColors.light);
   }
 
   static ThemeData get darkTheme {
-    final colorScheme = ColorScheme.fromSeed(
-      brightness: Brightness.dark,
-      seedColor: _seedColor,
-    );
-    return buildTheme(colorScheme, financialColors: AppFinancialColors.dark);
+    return buildTheme(_brandScheme(Brightness.dark), financialColors: AppFinancialColors.dark);
   }
 
   static ThemeData get accessibleLightTheme {
-    final colorScheme =
-        ColorScheme.fromSeed(
-          brightness: Brightness.light,
-          seedColor: _seedColor,
-        ).copyWith(
+    final colorScheme = _brandScheme(Brightness.light).copyWith(
           error: const Color(0xFFB80F57),
           errorContainer: const Color(0xFFFCE4EC),
           onError: Colors.white,
@@ -129,11 +124,7 @@ class AppTheme {
   }
 
   static ThemeData get accessibleDarkTheme {
-    final colorScheme =
-        ColorScheme.fromSeed(
-          brightness: Brightness.dark,
-          seedColor: _seedColor,
-        ).copyWith(
+    final colorScheme = _brandScheme(Brightness.dark).copyWith(
           error: const Color(0xFFF48FB1),
           errorContainer: const Color(0xFF5E092C),
           onError: const Color(0xFF4A0420),

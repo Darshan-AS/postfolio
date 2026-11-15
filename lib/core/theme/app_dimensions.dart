@@ -28,8 +28,14 @@ class AppDimensions {
   static const double listBottomPaddingFAB = 88.0;
   static const double filterBarHeight = 48.0;
 
+  // App bars & menus
+  /// Material 3 small top app bar.
+  static const double appBarHeight = 64.0;
+  static const double menuItemMinWidth = 112.0;
+
   // Buttons
   static const double buttonHeight = 56.0;
+  static const double buttonHeightSm = 40.0;
   static const double actionButtonSize = 48.0;
   /// Minimum interactive target size (Material accessibility guideline).
   static const double minTapTarget = 44.0;

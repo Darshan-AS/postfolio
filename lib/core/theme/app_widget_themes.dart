@@ -1,23 +1,38 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
+import 'package:postfolio/core/theme/app_surfaces.dart';
 
+/// Component themes that give the official `material_ui` widgets the Material 3 Expressive
+/// look: tonal surfaces instead of outlines, pill buttons that square off when pressed,
+/// larger corner radii, emphasized type on titles and labels.
+///
+/// `IconButton` and `ElevatedButton` opt into the official Expressive variant. The other
+/// official widgets have no Expressive variant yet (or the spec leaves them unchanged), so
+/// they are styled here with the same tokens.
 class AppWidgetThemes {
   AppWidgetThemes._();
 
-  static AppBarTheme appBarTheme(ColorScheme colorScheme) => AppBarTheme(
-    backgroundColor: colorScheme.surface,
-    foregroundColor: colorScheme.onSurface,
-    elevation: 0,
-    centerTitle: false,
-    iconTheme: IconThemeData(
-      color: colorScheme.onSurface,
-      size: AppDimensions.iconMd,
-    ),
-    actionsIconTheme: IconThemeData(
-      color: colorScheme.onSurface,
-      size: AppDimensions.iconMd,
-    ),
-  );
+  static AppBarTheme appBarTheme(ColorScheme colorScheme, TextTheme emphasized) =>
+      AppBarTheme(
+        backgroundColor: colorScheme.page,
+        foregroundColor: colorScheme.onSurface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        toolbarHeight: AppDimensions.appBarHeight,
+        titleTextStyle: emphasized.titleLarge?.copyWith(color: colorScheme.onSurface),
+        iconTheme: IconThemeData(
+          color: colorScheme.onSurface,
+          size: AppDimensions.iconMd,
+        ),
+        actionsIconTheme: IconThemeData(
+          color: colorScheme.onSurfaceVariant,
+          size: AppDimensions.iconMd,
+        ),
+      );
 
   static DividerThemeData dividerTheme(ColorScheme colorScheme) =>
       DividerThemeData(
@@ -28,10 +43,8 @@ class AppWidgetThemes {
 
   static IconButtonThemeData iconButtonTheme(ColorScheme colorScheme) =>
       IconButtonThemeData(
-        style: IconButton.styleFrom(
-          iconSize: AppDimensions.iconMd,
-          foregroundColor: colorScheme.onSurfaceVariant,
-        ),
+        variant: StyleVariant.material3Expressive,
+        style: IconButton.styleFrom(iconSize: AppDimensions.iconMd),
       );
 
   static FloatingActionButtonThemeData floatingActionButtonTheme(
@@ -39,169 +52,140 @@ class AppWidgetThemes {
   ) => FloatingActionButtonThemeData(
     backgroundColor: colorScheme.primaryContainer,
     foregroundColor: colorScheme.onPrimaryContainer,
-    elevation: 4,
+    elevation: 3,
+    shape: AppShapes.rounded(AppShapes.large),
   );
 
   static CardThemeData cardTheme(ColorScheme colorScheme) => CardThemeData(
-    color: colorScheme.surface,
+    color: colorScheme.raised,
+    surfaceTintColor: Colors.transparent,
     elevation: 0,
-    shape: RoundedRectangleBorder(
-      side: BorderSide(
-        color: colorScheme.outlineVariant,
-        width: AppDimensions.borderSm,
-      ),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+    clipBehavior: Clip.antiAlias,
+    shape: AppShapes.rounded(AppShapes.groupOuter),
+  );
+
+  /// Shared by the official text-style buttons: a pill that pulls its corners in while
+  /// pressed, with an emphasized label.
+  static ButtonStyle _pillStyle(TextTheme emphasized) => ButtonStyle(
+    shape: WidgetStateProperty.resolveWith<OutlinedBorder>(
+      (states) => states.contains(WidgetState.pressed)
+          ? AppShapes.rounded(AppShapes.pressed)
+          : AppShapes.pill,
+    ),
+    textStyle: WidgetStatePropertyAll(emphasized.labelLarge),
+    minimumSize: const WidgetStatePropertyAll(
+      Size(AppDimensions.actionButtonSize, AppDimensions.buttonHeightSm),
+    ),
+    animationDuration: AppMotion.effectsDuration,
+  );
+
+  static ElevatedButtonThemeData elevatedButtonTheme(
+    ColorScheme colorScheme,
+    TextTheme emphasized,
+  ) => ElevatedButtonThemeData(
+    variant: StyleVariant.material3Expressive,
+    style: ButtonStyle(textStyle: WidgetStatePropertyAll(emphasized.labelLarge)),
+  );
+
+  static FilledButtonThemeData filledButtonTheme(
+    ColorScheme colorScheme,
+    TextTheme emphasized,
+  ) => FilledButtonThemeData(style: _pillStyle(emphasized));
+
+  static OutlinedButtonThemeData outlinedButtonTheme(
+    ColorScheme colorScheme,
+    TextTheme emphasized,
+  ) => OutlinedButtonThemeData(
+    style: _pillStyle(emphasized).copyWith(
+      side: WidgetStatePropertyAll(BorderSide(color: colorScheme.outlineVariant)),
     ),
   );
 
-  static ElevatedButtonThemeData elevatedButtonTheme(ColorScheme colorScheme) =>
-      ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          ),
-          textStyle: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-      );
-
-  static FilledButtonThemeData filledButtonTheme(ColorScheme colorScheme) =>
-      FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          ),
-          textStyle: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-      );
-
-  static OutlinedButtonThemeData outlinedButtonTheme(ColorScheme colorScheme) =>
-      OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: colorScheme.primary,
-          side: BorderSide(color: colorScheme.outlineVariant),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          ),
-          textStyle: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-      );
-
-  static TextButtonThemeData textButtonTheme(ColorScheme colorScheme) =>
-      TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: colorScheme.primary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          ),
-          textStyle: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-      );
+  static TextButtonThemeData textButtonTheme(
+    ColorScheme colorScheme,
+    TextTheme emphasized,
+  ) => TextButtonThemeData(style: _pillStyle(emphasized));
 
   static SegmentedButtonThemeData segmentedButtonTheme(
     ColorScheme colorScheme,
+    TextTheme emphasized,
   ) => SegmentedButtonThemeData(
     style: ButtonStyle(
-      shape: WidgetStatePropertyAll(
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        ),
-      ),
-      side: WidgetStatePropertyAll(
-        BorderSide(color: colorScheme.outlineVariant),
-      ),
+      textStyle: WidgetStatePropertyAll(emphasized.labelLarge),
+      side: WidgetStatePropertyAll(BorderSide(color: colorScheme.outlineVariant)),
       backgroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return colorScheme.primaryContainer;
+          return colorScheme.secondaryContainer;
         }
-        return colorScheme.surfaceContainerHighest.withValues(alpha: 0.3);
+        return Colors.transparent;
       }),
     ),
   );
 
-  static InputDecorationTheme inputDecorationTheme(ColorScheme colorScheme) =>
-      InputDecorationTheme(
-        filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          borderSide: BorderSide(color: colorScheme.outlineVariant),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          borderSide: BorderSide(color: colorScheme.outlineVariant),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          borderSide: BorderSide(
-            color: colorScheme.primary,
-            width: AppDimensions.borderMd,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          borderSide: BorderSide(color: colorScheme.error),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          borderSide: BorderSide(
-            color: colorScheme.error,
-            width: AppDimensions.borderMd,
-          ),
-        ),
-      );
+  static InputDecorationTheme inputDecorationTheme(ColorScheme colorScheme) {
+    OutlineInputBorder border(Color color, [double width = AppDimensions.borderSm]) =>
+        OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppShapes.large),
+          borderSide: BorderSide(color: color, width: width),
+        );
 
-  static SearchBarThemeData searchBarTheme(ColorScheme colorScheme) =>
+    return InputDecorationTheme(
+      filled: true,
+      fillColor: colorScheme.inset,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingLg,
+        vertical: AppDimensions.paddingLg,
+      ),
+      border: border(colorScheme.outlineVariant),
+      enabledBorder: border(colorScheme.outlineVariant),
+      disabledBorder: border(colorScheme.outlineVariant.withValues(alpha: 0.5)),
+      focusedBorder: border(colorScheme.primary, AppDimensions.borderMd),
+      errorBorder: border(colorScheme.error),
+      focusedErrorBorder: border(colorScheme.error, AppDimensions.borderMd),
+    );
+  }
+
+  static SearchBarThemeData searchBarTheme(ColorScheme colorScheme, TextTheme textTheme) =>
       SearchBarThemeData(
         elevation: const WidgetStatePropertyAll(0),
-        backgroundColor: WidgetStatePropertyAll(
-          colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        backgroundColor: WidgetStatePropertyAll(colorScheme.raised),
+        surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+        shape: const WidgetStatePropertyAll(AppShapes.pill),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
         ),
-        shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-            side: BorderSide(color: colorScheme.outlineVariant),
-          ),
-        ),
+        constraints: const BoxConstraints(minHeight: AppDimensions.buttonHeight),
         textStyle: WidgetStatePropertyAll(
-          TextStyle(color: colorScheme.onSurface),
+          textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
         ),
         hintStyle: WidgetStatePropertyAll(
-          TextStyle(color: colorScheme.onSurfaceVariant),
+          textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
       );
 
-  static ChipThemeData chipTheme(ColorScheme colorScheme) => ChipThemeData(
-    backgroundColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-    selectedColor: colorScheme.primaryContainer,
-    secondarySelectedColor: colorScheme.primaryContainer,
-    padding: const EdgeInsets.symmetric(
-      horizontal: AppDimensions.paddingSm,
-      vertical: AppDimensions.paddingXs,
-    ),
-    labelStyle: TextStyle(
-      color: colorScheme.onSurface,
-      fontWeight: FontWeight.w500,
-    ),
-    secondaryLabelStyle: TextStyle(
-      color: colorScheme.onPrimaryContainer,
-      fontWeight: FontWeight.w600,
-    ),
-    brightness: colorScheme.brightness,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-      side: BorderSide(color: colorScheme.outlineVariant),
-    ),
-    showCheckmark: true,
-    checkmarkColor: colorScheme.primary,
-  );
+  static ChipThemeData chipTheme(ColorScheme colorScheme, TextTheme emphasized) =>
+      ChipThemeData(
+        backgroundColor: Colors.transparent,
+        selectedColor: colorScheme.secondaryContainer,
+        secondarySelectedColor: colorScheme.secondaryContainer,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingSm,
+          vertical: AppDimensions.paddingXs,
+        ),
+        labelStyle: emphasized.labelLarge?.copyWith(color: colorScheme.onSurfaceVariant),
+        secondaryLabelStyle: emphasized.labelLarge?.copyWith(
+          color: colorScheme.onSecondaryContainer,
+        ),
+        brightness: colorScheme.brightness,
+        shape: AppShapes.rounded(AppShapes.small),
+        side: BorderSide(color: colorScheme.outlineVariant),
+        showCheckmark: true,
+        checkmarkColor: colorScheme.onSecondaryContainer,
+      );
 
   static ExpansionTileThemeData expansionTileTheme(ColorScheme colorScheme) =>
       ExpansionTileThemeData(
-        backgroundColor: colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.3,
-        ),
+        backgroundColor: Colors.transparent,
         collapsedBackgroundColor: Colors.transparent,
         textColor: colorScheme.onSurface,
         collapsedTextColor: colorScheme.onSurface,
@@ -217,10 +201,72 @@ class AppWidgetThemes {
         backgroundColor: colorScheme.inverseSurface,
         contentTextStyle: TextStyle(color: colorScheme.onInverseSurface),
         actionTextColor: colorScheme.inversePrimary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        shape: AppShapes.rounded(AppShapes.large),
+      );
+
+  static DialogThemeData dialogTheme(ColorScheme colorScheme, TextTheme emphasized) =>
+      DialogThemeData(
+        backgroundColor: colorScheme.surfaceContainerHigh,
+        surfaceTintColor: Colors.transparent,
+        shape: AppShapes.rounded(AppShapes.extraLarge),
+        titleTextStyle: emphasized.headlineSmall?.copyWith(color: colorScheme.onSurface),
+      );
+
+  static BottomSheetThemeData bottomSheetTheme(ColorScheme colorScheme) =>
+      BottomSheetThemeData(
+        backgroundColor: colorScheme.surfaceContainerLow,
+        modalBackgroundColor: colorScheme.surfaceContainerLow,
+        surfaceTintColor: Colors.transparent,
+        shape: AppShapes.sheet,
+        clipBehavior: Clip.antiAlias,
+        showDragHandle: true,
+        dragHandleColor: colorScheme.onSurfaceVariant,
+        dragHandleSize: const Size(
+          AppDimensions.bottomSheetHandleWidth,
+          AppDimensions.bottomSheetHandleHeight,
         ),
       );
+
+  /// Menus: a rounded container whose items are themselves rounded, inset by a small gap.
+  static MenuThemeData menuTheme(ColorScheme colorScheme) => MenuThemeData(
+    style: MenuStyle(
+      backgroundColor: WidgetStatePropertyAll(colorScheme.surfaceContainerLow),
+      surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+      elevation: const WidgetStatePropertyAll(3),
+      padding: const WidgetStatePropertyAll(EdgeInsets.all(AppDimensions.paddingXs)),
+      shape: WidgetStatePropertyAll(AppShapes.rounded(AppShapes.large)),
+    ),
+  );
+
+  static MenuButtonThemeData menuButtonTheme(
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) => MenuButtonThemeData(
+    style: ButtonStyle(
+      shape: WidgetStatePropertyAll(AppShapes.rounded(AppShapes.medium)),
+      minimumSize: const WidgetStatePropertyAll(
+        Size(AppDimensions.menuItemMinWidth, AppDimensions.actionButtonSize),
+      ),
+      padding: const WidgetStatePropertyAll(
+        EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+      ),
+      textStyle: WidgetStatePropertyAll(textTheme.bodyLarge),
+    ),
+  );
+
+  static DatePickerThemeData datePickerTheme(ColorScheme colorScheme) =>
+      DatePickerThemeData(
+        backgroundColor: colorScheme.surfaceContainerHigh,
+        surfaceTintColor: Colors.transparent,
+        shape: AppShapes.rounded(AppShapes.extraLarge),
+      );
+
+  static MaterialBannerThemeData bannerTheme(ColorScheme colorScheme) => MaterialBannerThemeData(
+    backgroundColor: colorScheme.tertiaryContainer,
+    surfaceTintColor: Colors.transparent,
+    dividerColor: Colors.transparent,
+    elevation: 0,
+  );
 
   static RadioThemeData radioTheme(ColorScheme colorScheme) => RadioThemeData(
     fillColor: WidgetStateProperty.resolveWith((states) {
