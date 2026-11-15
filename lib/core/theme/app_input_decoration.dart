@@ -13,21 +13,25 @@ class AppInputDecoration {
   }) {
     final colorScheme = Theme.of(context).colorScheme;
 
+    // One line, cut with an ellipsis, as the official label built from `labelText` is. A
+    // label that wraps is drawn across the field's top edge and over what was typed. The
+    // required marker is a separate text so that a cut label keeps it.
     Widget? label;
     if (labelText != null) {
+      final text = Text(
+        labelText,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
       label = isRequired
-          ? Text.rich(
-              TextSpan(
-                text: labelText,
-                children: [
-                  TextSpan(
-                    text: ' *',
-                    style: TextStyle(color: colorScheme.error),
-                  ),
-                ],
-              ),
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: text),
+                Text(' *', style: TextStyle(color: colorScheme.error)),
+              ],
             )
-          : Text(labelText);
+          : text;
     }
 
     Widget? finalPrefixIcon;

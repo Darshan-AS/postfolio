@@ -16,6 +16,9 @@ class AppDurationInput extends HookWidget {
   final void Function(int years, int months) onChanged;
   final bool enabled;
 
+  /// Above this text scale the years and months fields stack instead of sharing a row.
+  static const double _stackAboveTextScale = 1.2;
+
   const AppDurationInput({
     super.key,
     required this.tenureInputType,
@@ -95,9 +98,9 @@ class AppDurationInput extends HookWidget {
         size: AppDimensions.iconMd,
       ),
       segments: allowedYears.map((year) {
-        return ButtonSegment<int>(
+        return AppSegment<int>(
           value: year,
-          label: Text(t.common.duration.yearAbbreviation(n: year)),
+          label: t.common.duration.yearAbbreviation(n: year),
         );
       }).toList(),
       onChanged: (int newSelection) {
@@ -112,48 +115,56 @@ class AppDurationInput extends HookWidget {
     required TextEditingController yearsController,
     required TextEditingController monthsController,
   }) {
+    // Side by side, each field is too narrow for its label next to a leading icon, so the
+    // icons are shown only when the fields are stacked (large text).
+    final stacked =
+        MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
+    const calendarIcon = HugeIcon(
+      icon: HugeIcons.strokeRoundedCalendar01,
+      size: AppDimensions.iconMd,
+    );
+
+    final yearsField = AppTextField(
+      controller: yearsController,
+      labelText: t.common.duration.termYears,
+      prefixIcon: stacked ? calendarIcon : null,
+      isRequired: true,
+      enabled: enabled,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      onChanged: (val) {
+        final years = int.tryParse(val) ?? 0;
+        final months = int.tryParse(monthsController.text) ?? 0;
+        onChanged(years, months);
+      },
+    );
+    final monthsField = AppTextField(
+      controller: monthsController,
+      labelText: t.common.duration.termMonths,
+      prefixIcon: stacked ? calendarIcon : null,
+      isRequired: true,
+      enabled: enabled,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      onChanged: (val) {
+        final years = int.tryParse(yearsController.text) ?? 0;
+        final months = int.tryParse(val) ?? 0;
+        onChanged(years, months);
+      },
+    );
+
+    if (stacked) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [yearsField, AppSpacings.gapLg, monthsField],
+      );
+    }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: AppTextField(
-            controller: yearsController,
-            labelText: t.common.duration.termYears,
-            prefixIcon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedCalendar01,
-              size: AppDimensions.iconMd,
-            ),
-            isRequired: true,
-            enabled: enabled,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (val) {
-              final years = int.tryParse(val) ?? 0;
-              final months = int.tryParse(monthsController.text) ?? 0;
-              onChanged(years, months);
-            },
-          ),
-        ),
+        Expanded(child: yearsField),
         AppSpacings.gapMd,
-        Expanded(
-          child: AppTextField(
-            controller: monthsController,
-            labelText: t.common.duration.termMonths,
-            prefixIcon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedCalendar01,
-              size: AppDimensions.iconMd,
-            ),
-            isRequired: true,
-            enabled: enabled,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (val) {
-              final years = int.tryParse(yearsController.text) ?? 0;
-              final months = int.tryParse(val) ?? 0;
-              onChanged(years, months);
-            },
-          ),
-        ),
+        Expanded(child: monthsField),
       ],
     );
   }
