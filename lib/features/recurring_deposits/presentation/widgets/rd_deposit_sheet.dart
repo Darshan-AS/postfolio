@@ -7,12 +7,17 @@ import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/expressive/app_group.dart';
+import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
 import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_deposit_draft.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_sheet_parts.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 /// Opens the "Deposit next N installments at the Post Office on `date`" sheet.
@@ -126,7 +131,7 @@ class _DepositForm extends HookConsumerWidget {
     } else {
       body = const Padding(
         padding: EdgeInsets.all(AppDimensions.paddingXl),
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: AppLoadingIndicator()),
       );
     }
 
@@ -134,68 +139,28 @@ class _DepositForm extends HookConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppDimensions.paddingLg,
-            AppDimensions.paddingSm,
-            AppDimensions.paddingSm,
-            AppDimensions.paddingNone,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              IconButton(
-                tooltip: t.common.close,
-                icon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedCancel01,
-                  size: AppDimensions.iconMd,
-                ),
-                onPressed: () => Navigator.of(context).maybePop(false),
-              ),
-            ],
-          ),
+        RDSheetHeader(
+          title: title,
+          onClose: () => Navigator.of(context).maybePop(false),
         ),
         Flexible(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingLg,
+              horizontal: AppDimensions.pageMargin,
               vertical: AppDimensions.paddingSm,
             ),
             child: body,
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppDimensions.paddingLg,
-            AppDimensions.paddingSm,
-            AppDimensions.paddingLg,
-            AppDimensions.paddingLg,
-          ),
-          child: FilledButton.icon(
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(double.infinity, AppDimensions.minTapTarget),
+        RDSheetFooter(
+          children: [
+            RDSheetPrimaryAction(
+              label: ledger.depositSubmit(n: count),
+              icon: HugeIcons.strokeRoundedBuilding03,
+              isLoading: draft.isSubmitting,
+              onPressed: draft.canSubmit ? handleSubmit : null,
             ),
-            onPressed: draft.canSubmit ? handleSubmit : null,
-            icon: draft.isSubmitting
-                ? const SizedBox.square(
-                    dimension: AppDimensions.iconSm,
-                    child: CircularProgressIndicator(
-                      strokeWidth: AppDimensions.strokeWidthSm,
-                    ),
-                  )
-                : const HugeIcon(
-                    icon: HugeIcons.strokeRoundedBuilding03,
-                    size: AppDimensions.iconSm,
-                  ),
-            label: Text(ledger.depositSubmit(n: count)),
-          ),
+          ],
         ),
       ],
     );
@@ -207,13 +172,19 @@ class _DepositBody extends HookWidget {
 
   final DepositDraftState draft;
 
+  /// The hint carries the formula's fee; at large text it wraps instead of being cut.
+  static const int _feeHintMaxLines = 3;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final emphasized = AppTypography.emphasizedOf(context);
     final ledger = t.recurringDeposits.ledger;
     final quote = draft.quote;
     final feeController = useTextEditingController();
+    // Rebuild as the fee is typed: the currency prefix shows only next to a typed value.
+    useListenable(feeController);
 
     final throughText = draft.depositedThroughNo > 0
         ? ledger.depositThrough(month: draft.depositedThroughNo.toString())
@@ -230,11 +201,12 @@ class _DepositBody extends HookWidget {
           style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
         ),
         AppSpacings.gapLg,
-        _SectionLabel(text: ledger.depositCount),
+        RDSheetSectionLabel(ledger.depositCount),
         AppSpacings.gapSm,
+        // How many, and on which date: one group of two rows.
         _CountStepper(draft: draft),
-        AppSpacings.gapLg,
-        _DepositDateButton(draft: draft),
+        const SizedBox(height: AppShapes.groupGap),
+        _DepositDateTile(draft: draft),
         AppSpacings.gapLg,
         TextFormField(
           key: const ValueKey('deposit_counter_fee_override_field'),
@@ -247,8 +219,13 @@ class _DepositBody extends HookWidget {
             hintText: ledger.counterFeeOverrideHint(
               amount: draft.statutoryFee.toRupeeFormat(),
             ),
-            prefixText: t.format.currencySymbol,
+            // Not beside the hint, which would then read "₹Formula: ₹60".
+            prefixText: feeController.text.isEmpty ? null : t.format.currencySymbol,
           ).copyWith(
+            // The label is long. Kept floating, it fits on the field's edge and leaves the
+            // inside to the hint, which states the fee the formula gives.
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+            hintMaxLines: _feeHintMaxLines,
             suffixIcon: draft.feeOverride != null
                 ? IconButton(
                     tooltip: t.common.clear,
@@ -277,24 +254,21 @@ class _DepositBody extends HookWidget {
         ),
         AppSpacings.gapLg,
         if (quote != null)
-          Container(
-            padding: const EdgeInsets.all(AppDimensions.paddingMd),
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              border: Border.all(color: scheme.outlineVariant),
-            ),
+          RDSheetBlock(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                // What the counter will ask for: the figure of this sheet.
+                RDSheetFigure(
                   quote.fee > 0
                       ? ledger.depositQuote(
                           amount: quote.amount.toRupeeFormat(),
                           fee: quote.fee.toRupeeFormat(),
                         )
                       : ledger.depositQuoteNoFee(amount: quote.amount.toRupeeFormat()),
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: emphasized.titleMedium?.copyWith(color: scheme.onSurfaceVariant),
+                  figure: quote.amount.toRupeeFormat(),
+                  figureStyle: emphasized.headlineMedium?.copyWith(color: scheme.onSurface),
                 ),
                 if (draft.isFrontingFromPocket) ...[
                   AppSpacings.gapSm,
@@ -312,10 +286,7 @@ class _DepositBody extends HookWidget {
                           ledger.depositFromPocketWarning(
                             amount: draft.fromPocket.toRupeeFormat(),
                           ),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: scheme.error,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: emphasized.bodySmall?.copyWith(color: scheme.error),
                         ),
                       ),
                     ],
@@ -329,6 +300,8 @@ class _DepositBody extends HookWidget {
   }
 }
 
+/// The count of installments with its − / + buttons: the first row of the group that ends
+/// with the deposit date.
 class _CountStepper extends StatelessWidget {
   const _CountStepper({required this.draft});
 
@@ -339,52 +312,61 @@ class _CountStepper extends StatelessWidget {
     final theme = Theme.of(context);
     final ledger = t.recurringDeposits.ledger;
 
-    return Row(
-      children: [
-        IconButton.outlined(
-          tooltip: ledger.depositDecrement,
-          onPressed: draft.canDecrement ? () => draft.setCount(draft.count - 1) : null,
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedMinusSign,
-            size: AppDimensions.iconSm,
-          ),
+    return AppGroupTile(
+      position: AppGroupPosition.first,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingMd,
+          vertical: AppDimensions.paddingSm,
         ),
-        Expanded(
-          child: Column(
-            children: [
-              Text(
-                draft.count.toString(),
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        child: Row(
+          children: [
+            IconButton.filledTonal(
+              tooltip: ledger.depositDecrement,
+              onPressed: draft.canDecrement ? () => draft.setCount(draft.count - 1) : null,
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedMinusSign,
+                size: AppDimensions.iconMd,
               ),
-              Text(
-                ledger.depositRange(
-                  from: draft.fromNo.toString(),
-                  to: draft.toNo.toString(),
-                ),
-                textAlign: TextAlign.center,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+            ),
+            Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    draft.count.toString(),
+                    textAlign: TextAlign.center,
+                    style: AppTypography.emphasizedOf(context).displaySmall,
+                  ),
+                  Text(
+                    ledger.depositRange(
+                      from: draft.fromNo.toString(),
+                      to: draft.toNo.toString(),
+                    ),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            IconButton.filledTonal(
+              tooltip: ledger.depositIncrement,
+              onPressed: draft.canIncrement ? () => draft.setCount(draft.count + 1) : null,
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedPlusSign,
+                size: AppDimensions.iconMd,
+              ),
+            ),
+          ],
         ),
-        IconButton.outlined(
-          tooltip: ledger.depositIncrement,
-          onPressed: draft.canIncrement ? () => draft.setCount(draft.count + 1) : null,
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedPlusSign,
-            size: AppDimensions.iconSm,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
 
-class _DepositDateButton extends StatelessWidget {
-  const _DepositDateButton({required this.draft});
+class _DepositDateTile extends StatelessWidget {
+  const _DepositDateTile({required this.draft});
 
   final DepositDraftState draft;
 
@@ -407,31 +389,11 @@ class _DepositDateButton extends StatelessWidget {
       draft.depositedOn.value = selected;
     }
 
-    return OutlinedButton.icon(
-      onPressed: pick,
-      icon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedCalendar01,
-        size: AppDimensions.iconSm,
-      ),
-      label: Text(ledger.depositDateValue(date: current.toAppFormat())),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Text(
-      text,
-      style: theme.textTheme.labelMedium?.copyWith(
-        color: theme.colorScheme.onSurfaceVariant,
-        fontWeight: FontWeight.bold,
-      ),
+    return RDSheetPickerTile(
+      icon: HugeIcons.strokeRoundedCalendar01,
+      label: ledger.depositDateValue(date: current.toAppFormat()),
+      onTap: pick,
+      position: AppGroupPosition.last,
     );
   }
 }
