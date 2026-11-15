@@ -5,6 +5,9 @@ import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
@@ -14,6 +17,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projectio
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_status_pill.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -41,7 +45,8 @@ Future<void> showRDMonthInspectorSheet(
   );
 }
 
-/// Body of the month inspector: 3-column metric rows plus the month's actions.
+/// Body of the month inspector: the month's money rows as a group of tonal tiles, plus the
+/// month's actions.
 class RDMonthInspectorSheet extends ConsumerWidget {
   final String rdId;
   final int installmentNo;
@@ -86,10 +91,14 @@ class RDMonthInspectorSheet extends ConsumerWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          AppDimensions.paddingLg,
-          AppDimensions.paddingSm,
-          AppDimensions.paddingLg,
+        padding: EdgeInsets.fromLTRB(
+          AppDimensions.pageMargin,
+          // A bottom sheet has its drag handle above the title; a dialog has nothing, so
+          // the title needs the same inset as the sides.
+          AppAdaptiveSheet.isCompact(context)
+              ? AppDimensions.paddingSm
+              : AppDimensions.paddingLg,
+          AppDimensions.pageMargin,
           AppDimensions.paddingLg,
         ),
         child: body,
@@ -236,135 +245,75 @@ class _InspectorBody extends ConsumerWidget {
         ),
     ];
 
+    final actions = <Widget>[
+      if (canCollect)
+        AppButton(
+          label: passbook.collect,
+          icon: HugeIcons.strokeRoundedCoins01,
+          size: AppButtonSize.medium,
+          expand: true,
+          onPressed: isBusy ? null : () => onCollect(inst.outstandingAmount),
+        ),
+      if (canAbsorbFee)
+        AppButton.outlined(
+          label: inspector.absorbRemainingFee(amount: inst.absorbableFee.toRupeeFormat()),
+          icon: HugeIcons.strokeRoundedWallet02,
+          expand: true,
+          onPressed: isBusy ? null : () => _absorbRemainingFee(context, ref),
+        ),
+      if (canClearAbsorbed)
+        AppButton.text(
+          label: inspector.clearAbsorbedFee,
+          icon: HugeIcons.strokeRoundedArrowTurnBackward,
+          expand: true,
+          onPressed: isBusy ? null : () => _clearAbsorbedFee(context, ref),
+        ),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
+        // Title and status share a line when they fit; the pill drops below otherwise.
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: AppDimensions.paddingSm,
+          runSpacing: AppDimensions.paddingXs,
           children: [
-            HugeIcon(
-              icon: HugeIcons.strokeRoundedCalendar02,
-              size: AppDimensions.iconSm,
-              color: scheme.primary,
-            ),
-            AppSpacings.gapXs,
-            Expanded(
-              child: Text(
-                inspector.monthTitle(
-                  month: inst.installmentNo.toString(),
-                  date: inst.dueDate.toAppFormat(),
-                ),
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
+            Text(
+              inspector.monthTitle(
+                month: inst.installmentNo.toString(),
+                date: inst.dueDate.toAppFormat(),
               ),
+              style: AppTypography.emphasizedOf(context).titleLarge,
             ),
-            AppSpacings.gapSm,
-            _StatusChip(visual: visual),
+            RDStatusPill(visual: visual),
           ],
         ),
-        AppSpacings.gapMd,
-        Container(
-          padding: const EdgeInsets.all(AppDimensions.paddingMd),
-          decoration: BoxDecoration(
-            color: scheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          ),
-          child: Column(
-            children: [
-              for (var i = 0; i < metricRows.length; i++) ...[
-                if (i > 0) const Divider(height: AppDimensions.dividerHeight),
-                metricRows[i],
-              ],
-            ],
-          ),
-        ),
+        AppSpacings.gapLg,
+        AppGroup(children: metricRows),
         if (showCollectHint) ...[
           AppSpacings.gapSm,
-          Text(
-            inspector.collectHint(month: nextDueNo.toString()),
-            style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+            child: Text(
+              inspector.collectHint(month: nextDueNo.toString()),
+              style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
           ),
         ],
-        if (canCollect || canAbsorbFee || canClearAbsorbed) ...[
-          AppSpacings.gapLg,
-          if (canCollect)
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(double.infinity, AppDimensions.minTapTarget),
-              ),
-              onPressed: isBusy ? null : () => onCollect(inst.outstandingAmount),
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedCoins01,
-                size: AppDimensions.iconSm,
-              ),
-              label: Text(passbook.collect),
-            ),
-          if (canAbsorbFee) ...[
-            AppSpacings.gapSm,
-            OutlinedButton.icon(
-              onPressed: isBusy ? null : () => _absorbRemainingFee(context, ref),
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedWallet02,
-                size: AppDimensions.iconSm,
-              ),
-              label: Text(
-                inspector.absorbRemainingFee(amount: inst.absorbableFee.toRupeeFormat()),
-              ),
-            ),
-          ],
-          if (canClearAbsorbed) ...[
-            AppSpacings.gapSm,
-            TextButton.icon(
-              onPressed: isBusy ? null : () => _clearAbsorbedFee(context, ref),
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedArrowTurnBackward,
-                size: AppDimensions.iconSm,
-              ),
-              label: Text(inspector.clearAbsorbedFee),
-            ),
-          ],
+        for (final (i, action) in actions.indexed) ...[
+          if (i == 0) AppSpacings.gapLg else AppSpacings.gapSm,
+          action,
         ],
       ],
     );
   }
 }
 
-class _StatusChip extends StatelessWidget {
-  final RDStatusVisual visual;
-
-  const _StatusChip({required this.visual});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingSm,
-        vertical: AppDimensions.paddingXxs,
-      ),
-      decoration: BoxDecoration(
-        color: visual.background,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          HugeIcon(icon: visual.icon, size: AppDimensions.iconXs, color: visual.foreground),
-          AppSpacings.gapXs,
-          Text(
-            visual.label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: visual.foreground,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Fixed 3-column row: label / value / trailing note.
+/// One money row of the inspector: what the figure is, the figure itself in an emphasized
+/// role, and a short note at the end of the line.
 class _MetricRow extends StatelessWidget {
   final String label;
   final String value;
@@ -383,41 +332,54 @@ class _MetricRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final emphasized = AppTypography.emphasizedOf(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingXs),
-      child: Row(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingLg,
+        vertical: AppDimensions.paddingMd,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            flex: 3,
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: valueColor,
+          AppSpacings.gapXxs,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Figures shrink to the room they have; they never wrap or truncate.
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    style: emphasized.titleMedium?.copyWith(
+                      color: valueColor ?? scheme.onSurface,
+                    ),
+                  ),
+                ),
               ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: Text(
-              trailing,
-              textAlign: TextAlign.end,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: trailingColor ?? theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
+              AppSpacings.gapSm,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: Text(
+                    trailing,
+                    maxLines: 1,
+                    style: emphasized.labelLarge?.copyWith(
+                      color: trailingColor ?? scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
               ),
-              overflow: TextOverflow.ellipsis,
-            ),
+            ],
           ),
         ],
       ),
@@ -435,14 +397,13 @@ class _InspectorSkeleton extends StatelessWidget {
     final inspector = t.recurringDeposits.ledger.inspector;
     return Skeletonizer(
       enabled: true,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: AppGroup(
         children: [
           for (var i = 0; i < _rows; i++)
-            ListTile(
-              dense: true,
-              title: Text(inspector.installment),
-              trailing: Text(inspector.paid),
+            _MetricRow(
+              label: inspector.installment,
+              value: inspector.depositedOn,
+              trailing: inspector.paid,
             ),
         ],
       ),

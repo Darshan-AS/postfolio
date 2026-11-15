@@ -4,6 +4,10 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
+import 'package:postfolio/core/theme/app_surfaces.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
@@ -12,8 +16,8 @@ import 'package:postfolio/features/recurring_deposits/presentation/controllers/r
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_deposit_sheet.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-/// Post Office strip of the passbook: "Ready to deposit: N months · ₹X" with **Deposit**
-/// and an overflow for "Deposit from pocket" / "Undo last PO deposit".
+/// Post Office strip of the passbook: a raised tile reading "Ready to deposit: N months ·
+/// ₹X" with **Deposit** and an overflow for "Deposit from pocket" / "Undo last PO deposit".
 ///
 /// Deposits are sequential, so the strip only ever offers "the next N"; it never lets
 /// the agent pick months.
@@ -62,6 +66,10 @@ class RDPassbookPoStrip extends ConsumerWidget {
     AppFeedback.showResult(context, result, successMessage: passbook.undoLastDepositSuccess);
   }
 
+  /// Above this text scale the label needs the full width, so the actions move to a row of
+  /// their own below it.
+  static const double _stackAboveTextScale = AppDimensions.largeTextScale;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -69,6 +77,8 @@ class RDPassbookPoStrip extends ConsumerWidget {
     final passbook = t.recurringDeposits.ledger.passbook;
     final hasReady = readiness.hasReady;
     final canUndo = latestPoDeposit != null;
+    final stacked =
+        MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
 
     final label = !hasReady
         ? passbook.nothingReady
@@ -83,121 +93,136 @@ class RDPassbookPoStrip extends ConsumerWidget {
                 amount: readiness.readyAmount.toRupeeFormat(),
               );
 
-    return Card(
-      elevation: 0,
-      color: hasReady ? scheme.primaryContainer : scheme.surfaceContainerLow,
+    // The tile stays on the raised tone either way; months waiting for the Post Office
+    // are signalled by the tinted icon, the heavier label and the enabled button.
+    final leading = HugeIcon(
+      icon: HugeIcons.strokeRoundedBuilding03,
+      size: AppDimensions.iconMd,
+      color: hasReady ? scheme.primary : scheme.onSurfaceVariant,
+    );
+    final labelText = Text(
+      label,
+      style: hasReady
+          ? AppTypography.emphasizedOf(context).bodyMedium?.copyWith(
+              color: scheme.onSurface,
+            )
+          : theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+    );
+    final deposit = AppButton.tonal(
+      label: passbook.deposit,
+      expand: stacked,
+      onPressed: isBusy || !hasReady
+          ? null
+          : () => showRDDepositSheet(
+                context,
+                rdId: rdId,
+                initialCount: readiness.readyCount,
+              ),
+    );
+    final menu = MenuAnchor(
+      builder: (context, controller, child) => IconButton(
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          minimumSize: const Size(
+            AppDimensions.minTapTarget,
+            AppDimensions.minTapTarget,
+          ),
+          maximumSize: const Size(
+            AppDimensions.minTapTarget,
+            AppDimensions.minTapTarget,
+          ),
+          padding: EdgeInsets.zero,
+        ),
+        icon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedMoreVertical,
+          size: AppDimensions.iconMd,
+        ),
+        tooltip: t.common.moreOptions,
+        onPressed: isBusy
+            ? null
+            : () => controller.isOpen ? controller.close() : controller.open(),
+      ),
+      menuChildren: [
+        MenuItemButton(
+          leadingIcon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedWallet02,
+            size: AppDimensions.iconSm,
+          ),
+          onPressed: canDepositFromPocket
+              ? () => showRDDepositSheet(
+                    context,
+                    rdId: rdId,
+                    initialCount: readiness.readyCount + 1,
+                  )
+              : null,
+          child: Text(passbook.depositFromPocket),
+        ),
+        MenuItemButton(
+          leadingIcon: HugeIcon(
+            icon: HugeIcons.strokeRoundedArrowTurnBackward,
+            size: AppDimensions.iconSm,
+            color: canUndo ? scheme.error : null,
+          ),
+          onPressed: canUndo ? () => _undoLatest(context, ref) : null,
+          child: Text(
+            passbook.undoLastDeposit,
+            style: canUndo
+                ? theme.textTheme.labelLarge?.copyWith(color: scheme.error)
+                : null,
+          ),
+        ),
+      ],
+    );
+
+    return Material(
+      color: scheme.raised,
+      shape: AppShapes.rounded(AppShapes.groupOuter),
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.only(
-          left: AppDimensions.paddingMd,
-          top: AppDimensions.paddingXs,
-          bottom: AppDimensions.paddingXs,
+        // The overflow button brings its own inset, so the trailing edge needs little.
+        padding: const EdgeInsetsDirectional.only(
+          start: AppDimensions.paddingLg,
+          top: AppDimensions.paddingSm,
+          bottom: AppDimensions.paddingSm,
+          end: AppDimensions.paddingXs,
         ),
-        child: LayoutBuilder(
-          builder: (context, rowConstraints) {
-            final maxCtaWidth = rowConstraints.maxWidth.isFinite
-                ? rowConstraints.maxWidth * 0.44
-                : double.infinity;
-            return Row(
-              children: [
-                HugeIcon(
-                  icon: HugeIcons.strokeRoundedBuilding03,
-                  size: AppDimensions.iconMd,
-                  color: hasReady ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
-                ),
-                AppSpacings.gapSm,
-                Expanded(
-                  child: Text(
-                    label,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: hasReady ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
-                      fontWeight: hasReady ? FontWeight.bold : FontWeight.normal,
+        child: stacked
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(
+                      end: AppDimensions.paddingMd,
+                    ),
+                    child: Row(
+                      children: [
+                        leading,
+                        AppSpacings.gapMd,
+                        Expanded(child: labelText),
+                      ],
                     ),
                   ),
-                ),
-                AppSpacings.gapSm,
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxCtaWidth),
-                  child: FilledButton.tonalIcon(
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(0, AppDimensions.minTapTarget),
-                    ),
-                    onPressed: isBusy || !hasReady
-                        ? null
-                        : () => showRDDepositSheet(
-                              context,
-                              rdId: rdId,
-                              initialCount: readiness.readyCount,
-                            ),
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedBuilding03,
-                      size: AppDimensions.iconXs,
-                    ),
-                    label: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(passbook.deposit, maxLines: 1),
-                    ),
+                  AppSpacings.gapSm,
+                  Row(
+                    children: [
+                      Expanded(child: deposit),
+                      menu,
+                    ],
                   ),
-                ),
-                MenuAnchor(
-                  builder: (context, controller, child) => IconButton(
-                    padding: EdgeInsets.zero,
-                    style: IconButton.styleFrom(
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      minimumSize: const Size(
-                        AppDimensions.minTapTarget,
-                        AppDimensions.minTapTarget,
-                      ),
-                      maximumSize: const Size(
-                        AppDimensions.minTapTarget,
-                        AppDimensions.minTapTarget,
-                      ),
-                      padding: EdgeInsets.zero,
-                    ),
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedMoreVertical,
-                      size: AppDimensions.iconMd,
-                    ),
-                    tooltip: t.common.moreOptions,
-                    onPressed: isBusy
-                        ? null
-                        : () => controller.isOpen ? controller.close() : controller.open(),
-                  ),
-                  menuChildren: [
-                    MenuItemButton(
-                      leadingIcon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedWallet02,
-                        size: AppDimensions.iconSm,
-                      ),
-                      onPressed: canDepositFromPocket
-                          ? () => showRDDepositSheet(
-                                context,
-                                rdId: rdId,
-                                initialCount: readiness.readyCount + 1,
-                              )
-                          : null,
-                      child: Text(passbook.depositFromPocket),
-                    ),
-                    MenuItemButton(
-                      leadingIcon: HugeIcon(
-                        icon: HugeIcons.strokeRoundedArrowTurnBackward,
-                        size: AppDimensions.iconSm,
-                        color: canUndo ? scheme.error : null,
-                      ),
-                      onPressed: canUndo ? () => _undoLatest(context, ref) : null,
-                      child: Text(
-                        passbook.undoLastDeposit,
-                        style: canUndo
-                            ? theme.textTheme.labelLarge?.copyWith(color: scheme.error)
-                            : null,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            );
-          },
-        ),
+                ],
+              )
+            : Row(
+                children: [
+                  leading,
+                  AppSpacings.gapMd,
+                  Expanded(child: labelText),
+                  AppSpacings.gapSm,
+                  deposit,
+                  menu,
+                ],
+              ),
       ),
     );
   }
