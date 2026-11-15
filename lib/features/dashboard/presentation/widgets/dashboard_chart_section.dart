@@ -52,6 +52,8 @@ class DashboardChartSection extends HookConsumerWidget {
 
     final theme = Theme.of(context);
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
+    final isCompact =
+        MediaQuery.sizeOf(context).width < AppDimensions.breakpointTablet;
 
     String title = t.dashboard.depositsOverTime;
     if (selectedYear != null) {
@@ -136,50 +138,43 @@ class DashboardChartSection extends HookConsumerWidget {
 
             AppSpacings.gapSm,
 
-            // Scheme Filters. The strip runs to the card's edges and carries the inset itself.
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+            // Which deposits the chart counts: all of them or one scheme. Tapping the chosen
+            // scheme again goes back to All, so the group reports every tap. All five fit a
+            // phone's width; on a wide window the group hugs its labels instead of
+            // stretching across the card.
+            Padding(
               padding: _cardInsets,
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ChoiceChip(
-                    label: Text(t.dashboard.all),
-                    selected: currentFilter == null,
-                    onSelected: (selected) {
-                      if (selected) {
-                        ref
-                            .read(dashboardChartFilterProvider.notifier)
-                            .setFilter(null);
-                      }
-                    },
-                  ),
-                  AppSpacings.gapSm,
-                  FilterChip(
-                    label: Text(t.dashboard.includeRecurringDeposits),
-                    selected: includeRds && currentFilter == null,
-                    onSelected: currentFilter == null
-                        ? (_) {
-                            ref
-                                .read(
-                                  dashboardChartIncludeRdsProvider.notifier,
-                                )
-                                .toggle();
-                          }
-                        : null,
-                  ),
-                  for (final scheme in OneTimeSchemeType.values) ...[
-                    AppSpacings.gapSm,
-                    ChoiceChip(
-                      label: Text(scheme.shortName),
-                      selected: currentFilter == scheme,
-                      onSelected: (selected) {
-                        ref
-                            .read(dashboardChartFilterProvider.notifier)
-                            .setFilter(selected ? scheme : null);
-                      },
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: AppButtonGroup<OneTimeSchemeType?>.multi(
+                      expand: isCompact,
+                      segments: [
+                        AppSegment(value: null, label: t.dashboard.all),
+                        for (final scheme in OneTimeSchemeType.values)
+                          AppSegment(value: scheme, label: scheme.shortName),
+                      ],
+                      selected: {currentFilter},
+                      onToggled: (scheme) => ref
+                          .read(dashboardChartFilterProvider.notifier)
+                          .setFilter(scheme == currentFilter ? null : scheme),
                     ),
-                  ],
+                  ),
+                  // Recurring deposits can only be added to the view of everything.
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: AppButton.toggle(
+                      label: t.dashboard.includeRecurringDeposits,
+                      selected: includeRds && currentFilter == null,
+                      onPressed: currentFilter == null
+                          ? () => ref
+                                .read(dashboardChartIncludeRdsProvider.notifier)
+                                .toggle()
+                          : null,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -227,6 +222,11 @@ class DashboardChartSection extends HookConsumerWidget {
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    // The axis labels grow with the text size up to the cap applied to the chart. The
+    // column that holds the amounts has to grow with them, or "₹10L" is cut to "₹10".
+    final axisTextScale = MediaQuery.textScalerOf(
+      context,
+    ).scale(1).clamp(1.0, _maxAxisTextScale);
 
     double maxY = 0;
     for (final dp in data) {
@@ -313,7 +313,7 @@ class DashboardChartSection extends HookConsumerWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: AppDimensions.chartYAxisReservedSize,
+              reservedSize: AppDimensions.chartYAxisReservedSize * axisTextScale,
               getTitlesWidget: (double value, TitleMeta meta) {
                 if (value == 0 || value == maxY) {
                   return const SizedBox.shrink();

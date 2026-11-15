@@ -458,6 +458,81 @@ void main() {
     });
   });
 
+  group('AppButton.toggle', () {
+    Widget page({required bool selected, VoidCallback? onPressed}) => Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppButton.toggle(
+              key: const ValueKey('toggle'),
+              label: 'Include RDs',
+              selected: selected,
+              onPressed: onPressed,
+            ),
+            AppButton.tonal(
+              key: const ValueKey('plain'),
+              label: 'Include RDs',
+              onPressed: () {},
+            ),
+          ],
+        ),
+      ),
+    );
+
+    testWidgets('is one semantics node: name, button, and whether it is on', (tester) async {
+      final semantics = tester.ensureSemantics();
+      for (final selected in [false, true]) {
+        await pumpOnPhone(tester, page(selected: selected, onPressed: () {}));
+        final data = tester
+            .getSemantics(
+              find.descendant(
+                of: find.byKey(const ValueKey('toggle')),
+                matching: find.byType(MergeSemantics),
+              ),
+            )
+            .getSemanticsData();
+        expect(data.label, 'Include RDs');
+        expect(data.flagsCollection.isButton, isTrue);
+        expect(
+          data.flagsCollection.isSelected,
+          selected ? Tristate.isTrue : Tristate.isFalse,
+        );
+        expect(data.hasAction(SemanticsAction.tap), isTrue);
+      }
+      semantics.dispose();
+    });
+
+    testWidgets('reports a press whether it is on or off; none without a callback', (
+      tester,
+    ) async {
+      var presses = 0;
+      for (final selected in [false, true]) {
+        await pumpOnPhone(tester, page(selected: selected, onPressed: () => presses++));
+        await tester.tap(find.byKey(const ValueKey('toggle')));
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+      expect(presses, 2);
+
+      await pumpOnPhone(tester, page(selected: false));
+      await tester.tap(find.byKey(const ValueKey('toggle')), warnIfMissed: false);
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(presses, 2);
+    });
+
+    // The community button's own toggle, used outside a group, sizes its content by aspect
+    // ratio and comes out about twice as wide as its label.
+    testWidgets('is as wide as a plain button with the same label, on or off', (tester) async {
+      for (final selected in [false, true]) {
+        await pumpOnPhone(tester, page(selected: selected, onPressed: () {}));
+        final toggle = tester.getSize(find.byKey(const ValueKey('toggle')));
+        final plain = tester.getSize(find.byKey(const ValueKey('plain')));
+        expect(toggle.width, closeTo(plain.width, 0.5), reason: 'selected: $selected');
+        expect(toggle.height, plain.height);
+      }
+    });
+  });
+
   group('AppLoadingIndicator', () {
     testWidgets('accepts a size below the 24dp the community widget asserts on', (
       tester,

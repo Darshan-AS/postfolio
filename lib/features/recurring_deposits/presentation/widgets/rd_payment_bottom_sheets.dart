@@ -11,6 +11,7 @@ import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
@@ -292,15 +293,16 @@ class _FormBody extends StatelessWidget {
         ),
         if (draft.quickAmounts.isNotEmpty) ...[
           AppSpacings.gapSm,
+          // Each button brings its own touch padding above and below, which spaces the
+          // lines when they wrap.
           Wrap(
             spacing: AppDimensions.paddingSm,
-            runSpacing: AppDimensions.paddingXs,
             children: [
               for (final quick in draft.quickAmounts)
-                ChoiceChip(
-                  label: Text(quick.label),
+                AppButton.toggle(
+                  label: quick.label,
                   selected: draft.isQuickAmountSelected(quick),
-                  onSelected: (_) => draft.applyQuickAmount(quick),
+                  onPressed: () => draft.applyQuickAmount(quick),
                 ),
             ],
           ),

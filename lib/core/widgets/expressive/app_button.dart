@@ -43,7 +43,7 @@ class AppButton extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
     this.tooltip,
-  });
+  }) : selected = null;
 
   const AppButton.tonal({
     super.key,
@@ -57,7 +57,8 @@ class AppButton extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
     this.tooltip,
-  }) : variant = AppButtonVariant.tonal;
+  }) : variant = AppButtonVariant.tonal,
+       selected = null;
 
   const AppButton.outlined({
     super.key,
@@ -71,7 +72,8 @@ class AppButton extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
     this.tooltip,
-  }) : variant = AppButtonVariant.outlined;
+  }) : variant = AppButtonVariant.outlined,
+       selected = null;
 
   const AppButton.text({
     super.key,
@@ -85,7 +87,26 @@ class AppButton extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
     this.tooltip,
-  }) : variant = AppButtonVariant.text;
+  }) : variant = AppButtonVariant.text,
+       selected = null;
+
+  /// A toggle button: tonal while off, filled while [selected]. Every press is reported and
+  /// the caller flips the state. Use it for one on/off choice, or several independent ones
+  /// that wrap; a few options that belong together are an `AppButtonGroup`.
+  const AppButton.toggle({
+    super.key,
+    required this.label,
+    required bool this.selected,
+    required this.onPressed,
+    this.icon,
+    this.size = AppButtonSize.small,
+    this.expand = false,
+    this.tooltip,
+  }) : variant = AppButtonVariant.tonal,
+       isLoading = false,
+       isDestructive = false,
+       backgroundColor = null,
+       foregroundColor = null;
 
   final String label;
 
@@ -110,6 +131,9 @@ class AppButton extends StatelessWidget {
   /// Overrides the label and icon colour.
   final Color? foregroundColor;
   final String? tooltip;
+
+  /// Whether a toggle button is on; null for a button that is not a toggle.
+  final bool? selected;
 
   M3EButtonStyle get _style => switch (variant) {
     AppButtonVariant.filled => M3EButtonStyle.filled,
@@ -153,7 +177,13 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _colors(Theme.of(context).colorScheme);
+    final scheme = Theme.of(context).colorScheme;
+    final isOn = selected ?? false;
+    // A toggle that is on takes the selected colours of a tonal toggle, the ones a selected
+    // segment of an `AppButtonGroup` has.
+    final colors = isOn
+        ? (background: scheme.secondary, foreground: scheme.onSecondary)
+        : _colors(scheme);
     final decoration = (colors.background != null || colors.foreground != null)
         ? M3EButtonDecoration.styleFrom(
             backgroundColor: colors.background,
@@ -172,6 +202,11 @@ class AppButton extends StatelessWidget {
       enabled: onPressed != null,
       style: _style,
       size: _size,
+      // A toggle is drawn as a standard button with the selected colours and shape, not
+      // through the package's `isSelected`. On its own, outside a group, that path sizes
+      // the content box by aspect ratio and the button comes out about twice as wide as
+      // its label.
+      shape: isOn ? M3EButtonShape.square : M3EButtonShape.round,
       decoration: decoration,
       icon: leading,
       // A label that does not fit shrinks; it is never cut. Labels carry amounts
@@ -189,10 +224,17 @@ class AppButton extends StatelessWidget {
 
     // The official Tooltip (the one `find.byTooltip` looks for), merged with the button so
     // a screen reader gets one node carrying the label, the tooltip and the action. The
-    // community tooltip only labels its own bubble.
-    final labelled = tooltip == null
-        ? button
-        : MergeSemantics(child: Tooltip(message: tooltip, child: button));
+    // community tooltip only labels its own bubble. A toggle's state joins the same node.
+    Widget labelled = button;
+    if (tooltip != null) {
+      labelled = Tooltip(message: tooltip, child: labelled);
+    }
+    if (selected != null) {
+      labelled = Semantics(selected: selected, child: labelled);
+    }
+    if (tooltip != null || selected != null) {
+      labelled = MergeSemantics(child: labelled);
+    }
 
     return expand
         ? SizedBox(width: double.infinity, child: labelled)

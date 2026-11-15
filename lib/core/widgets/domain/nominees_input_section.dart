@@ -110,8 +110,8 @@ class NomineesInputSection extends HookWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // The chip sits at the end of the heading's line, and moves under the heading when
-        // the two do not fit side by side (large text).
+        // The action sits at the end of the heading's line, and moves under the heading
+        // when the two do not fit side by side (large text).
         Wrap(
           alignment: WrapAlignment.spaceBetween,
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -119,19 +119,16 @@ class NomineesInputSection extends HookWidget {
             DetailSectionTitle(t.nominees.title),
             if (nominees.length >= 2)
               Padding(
-                // Lines the chip up with the heading's text, and keeps it off the group
-                // below, when it is on its own line.
+                // Lines the button up with the heading's text when it is on its own line.
                 padding: const EdgeInsetsDirectional.only(
                   start: AppDimensions.paddingLg,
-                  bottom: AppDimensions.paddingXs,
                 ),
-                child: ActionChip(
+                child: AppButton.tonal(
+                  // The key keeps the name it had as a chip; a test finds it by this.
                   key: const ValueKey('split_nominees_evenly_chip'),
-                  avatar: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedPercent,
-                    size: AppDimensions.iconSm,
-                  ),
-                  label: Text(t.nominees.splitEvenly),
+                  label: t.nominees.splitEvenly,
+                  icon: HugeIcons.strokeRoundedPercent,
+                  size: AppButtonSize.extraSmall,
                   onPressed: splitEvenly,
                 ),
               ),

@@ -29,7 +29,8 @@ Use centralized Dart extensions in `lib/core/extensions/`:
 - **Ephemeral State**: Use `flutter_hooks` (`useTextEditingController`, `useState`) for purely local UI state.
 - **ListTile Trailing Height**: `ListTile` has a `56.0` height limit for `trailing`. If a complex/tall trailing widget is needed, build a custom row using `InkWell`.
 - **Adaptive Overlays**: BottomSheets on mobile should become Dialogs or side-panels on Desktop. Open every sheet with `AppAdaptiveSheet.show`; do not call `showModalBottomSheet` directly.
-- **Choosing among a few options**: one of them is an `AppButtonGroup`, any number of them is `AppButtonGroup.multi`. Chips are for sets that are long or scroll sideways.
+- **Choosing among a few options**: one of them is an `AppButtonGroup`, any number of them is `AppButtonGroup.multi`. A single on/off choice, or independent ones that wrap, are `AppButton.toggle`. The app has no chips; the official ones stay themed for a long set that scrolls sideways.
+- **Standalone toggles**: use `AppButton.toggle`, not `M3EButton(isSelected:)`. Outside a group the community toggle is about twice as wide as its label.
 - **Skeletonizer**: Use for loading states.
 - **Community widget sizing**: `material_3_expressive` button groups and split buttons are 40dp tall and its navigation bar does not cap text scaling. The `App*` wrappers add the 48dp touch target and the text-scale cap; do not bypass them. `test/core/expressive_widgets_test.dart` holds the wrappers to this.
 - **Labels are never cut**: `AppButton`, `AppButtonGroup` and `AppBarTitle` scale a label down when it does not fit. Button labels carry amounts, and an ellipsis there hides the money. Do not put a `Text` with `TextOverflow.ellipsis` on an amount.
