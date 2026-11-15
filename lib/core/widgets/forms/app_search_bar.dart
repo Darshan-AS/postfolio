@@ -5,6 +5,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class AppSearchBar extends HookWidget {
@@ -78,7 +79,7 @@ class AppSearchBar extends HookWidget {
     }, []);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.pageMargin),
       child: Row(
         children: [
           Expanded(
@@ -112,7 +113,7 @@ class AppSearchBar extends HookWidget {
           ),
           if (onClose != null) ...[
             AppSpacings.gapSm,
-            TextButton(onPressed: onClose, child: Text(t.common.cancel)),
+            AppButton.text(label: t.common.cancel, onPressed: onClose),
           ],
         ],
       ),

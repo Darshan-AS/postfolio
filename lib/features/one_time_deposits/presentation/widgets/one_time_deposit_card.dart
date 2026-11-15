@@ -1,14 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:hugeicons/hugeicons.dart';
 
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
-import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/layout/detail_components.dart';
+import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
-import 'package:postfolio/core/extensions/double_extension.dart';
-import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
@@ -19,193 +15,29 @@ import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_mod
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-class _OneTimeDepositCardView extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String schemeShortName;
-  final String? schemeTermLabel;
-  final double principalAmount;
-  final DepositStatus status;
-  final MaturityUrgency urgency;
-  final String relativeTimeText;
-  final DateTime maturityDate;
-  final VoidCallback? onTap;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
-  final VoidCallback? onToggleStatus;
-
-  const _OneTimeDepositCardView({
-    required this.title,
-    required this.subtitle,
-    required this.schemeShortName,
-    this.schemeTermLabel,
-    required this.principalAmount,
-    required this.status,
-    required this.urgency,
-    required this.relativeTimeText,
-    required this.maturityDate,
-    this.onTap,
-    this.onEdit,
-    this.onDelete,
-    this.onToggleStatus,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    Color? indicatorColor;
-    if (urgency == MaturityUrgency.matured) {
-      indicatorColor = Theme.of(context).colorScheme.errorContainer;
-    } else if (urgency == MaturityUrgency.maturingSoon) {
-      indicatorColor = Theme.of(context).colorScheme.tertiaryContainer;
-    }
-
-    return EntityListTile(
-      indicatorColor: indicatorColor,
-      leadingText: schemeShortName,
-      leadingSubtext: schemeTermLabel,
-      leadingBackgroundColor: Theme.of(context).colorScheme.primaryContainer,
-      leadingForegroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-      title: title,
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: AppDimensions.paddingXs),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (subtitle.isNotEmpty)
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            if (urgency == MaturityUrgency.maturingSoon ||
-                urgency == MaturityUrgency.matured) ...[
-              if (subtitle.isNotEmpty) AppSpacings.gapXs,
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  HugeIcon(
-                    icon: HugeIcons.strokeRoundedTimer02,
-                    size: AppDimensions.iconSm,
-                    color: urgency == MaturityUrgency.matured
-                        ? Theme.of(context).colorScheme.error
-                        : Theme.of(context).colorScheme.tertiary,
-                  ),
-                  AppSpacings.gapXs,
-                  Flexible(
-                    child: Text(
-                      relativeTimeText,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: urgency == MaturityUrgency.matured
-                            ? Theme.of(context).colorScheme.error
-                            : Theme.of(context).colorScheme.tertiary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
-      ),
-      onTap: onTap,
-      trailing: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              principalAmount.toRupeeFormat(),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            ...[
-              AppSpacings.gapXs,
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  HugeIcon(
-                    icon: HugeIcons.strokeRoundedCalendar01,
-                    size: AppDimensions.iconSm,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  AppSpacings.gapXs,
-                  Text(
-                    maturityDate.toAppFormat(),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            AppSpacings.gapXs,
-            StatusBadge(
-              status: status.displayName,
-              depositStatus: status,
-              compact: true,
-              urgency: urgency,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        if (onToggleStatus != null)
-          if (status == DepositStatus.active)
-            EntityAction(
-              label: t.common.close,
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedCheckmarkBadge01,
-                size: AppDimensions.iconMd,
-              ),
-              onTap: onToggleStatus!,
-            )
-          else if (status == DepositStatus.closed)
-            EntityAction(
-              label: t.common.reopen,
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedArrowTurnBackward,
-                size: AppDimensions.iconMd,
-              ),
-              onTap: onToggleStatus!,
-            ),
-        if (onEdit != null) EntityAction.edit(onTap: onEdit!),
-        if (onDelete != null) EntityAction.delete(onTap: onDelete!),
-      ],
-    );
-  }
-}
-
 class OneTimeDepositCard extends ConsumerWidget {
   final OneTimeDeposit deposit;
   final String? overrideTitle;
+
+  /// Where this row sits in its list (see [EntityListTile.position]).
+  final AppGroupPosition position;
 
   const OneTimeDepositCard({
     super.key,
     required this.deposit,
     this.overrideTitle,
+    this.position = AppGroupPosition.single,
   });
 
-  static Widget skeleton() {
+  static Widget skeleton({AppGroupPosition position = AppGroupPosition.single}) {
     final dummy = OneTimeDeposit.dummy;
-    return _OneTimeDepositCardView(
+    return _OneTimeDepositTile(
+      deposit: dummy,
       title: dummy.accountNo ?? t.common.loading,
       subtitle: dummy.accountNo ?? t.common.loading,
-      schemeShortName: dummy.schemeType.shortName,
-      schemeTermLabel: dummy.schemeTermLabel,
-      principalAmount: dummy.principalAmount,
-      status: dummy.status,
       urgency: MaturityUrgency.normal,
       relativeTimeText: '',
-      maturityDate: dummy.maturityDate,
+      position: position,
     );
   }
 
@@ -218,16 +50,13 @@ class OneTimeDepositCard extends ConsumerWidget {
         deposit.accountNo ??
         t.common.notProvided;
 
-    return _OneTimeDepositCardView(
+    return _OneTimeDepositTile(
+      deposit: deposit,
       title: title,
       subtitle: deposit.accountNo ?? t.common.notProvided,
-      schemeShortName: deposit.schemeType.shortName,
-      schemeTermLabel: deposit.schemeTermLabel,
-      principalAmount: deposit.principalAmount,
-      status: deposit.status,
       urgency: deposit.maturityUrgency,
       relativeTimeText: deposit.maturityRelativeTime,
-      maturityDate: deposit.maturityDate,
+      position: position,
       onTap: () => OneTimeDepositDetailRoute(deposit.id).push(context),
       onEdit: () => OneTimeDepositEditRoute(deposit.id).push(context),
       onDelete: () async {
@@ -277,6 +106,58 @@ class OneTimeDepositCard extends ConsumerWidget {
           }
         }
       },
+    );
+  }
+}
+
+/// Maps a one-time deposit onto the shared [DepositListTile].
+class _OneTimeDepositTile extends StatelessWidget {
+  const _OneTimeDepositTile({
+    required this.deposit,
+    required this.title,
+    required this.subtitle,
+    required this.urgency,
+    required this.relativeTimeText,
+    required this.position,
+    this.onTap,
+    this.onEdit,
+    this.onDelete,
+    this.onToggleStatus,
+  });
+
+  final OneTimeDeposit deposit;
+  final String title;
+  final String subtitle;
+  final MaturityUrgency urgency;
+  final String relativeTimeText;
+  final AppGroupPosition position;
+  final VoidCallback? onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final VoidCallback? onToggleStatus;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return DepositListTile(
+      position: position,
+      title: title,
+      subtitle: subtitle,
+      avatarText: deposit.schemeType.shortName,
+      avatarSubtext: deposit.schemeTermLabel,
+      avatarShape: deposit.schemeType.avatarShape,
+      avatarBackgroundColor: scheme.primaryContainer,
+      avatarForegroundColor: scheme.onPrimaryContainer,
+      amount: deposit.principalAmount,
+      amountColor: scheme.primary,
+      status: deposit.status,
+      urgency: urgency,
+      relativeTimeText: relativeTimeText,
+      maturityDate: deposit.maturityDate,
+      onTap: onTap,
+      onEdit: onEdit,
+      onDelete: onDelete,
+      onToggleStatus: onToggleStatus,
     );
   }
 }

@@ -76,9 +76,9 @@
 - [x] **M1 (Dependencies)**: upgrade `material_ui` to 1.11.0, add `material_3_expressive` 1.2.1.
 - [x] **M2 (Theme)**: Expressive shape, motion and type tokens (`AppShapes`, `AppMotion`, `AppTypography`); surface roles (`page` / `raised` / `inset`); component themes, with the official Expressive variant for `IconButton` / `ElevatedButton`; brand palette on the `vibrant` scheme variant.
 - [x] **M3 (Expressive widget layer)**: `lib/core/widgets/expressive/` — `AppButton`, `AppButtonGroup`, `AppExtendedFab` / `AppFabMenu`, `AppLoadingIndicator` / `AppLinearProgress`, `AppRefreshIndicator`, `AppNavigationBar` / `AppNavigationRail` (community package), and `AppGroupTile`, `AppShapeAvatar` (official shapes). `.agents/rules/ui.md` amended; `test/core/expressive_import_boundary_test.dart` keeps `package:material_3_expressive` imports inside that folder. Further wrappers (floating toolbar) are added with the screen that needs them.
-- [ ] **M4 (Shell and shared layout)**: navigation shell, app bars, list tile, detail scaffold/sections, sheets, dialogs, search, feedback.
-- [ ] **M5 (List screens)**: Customers, One-time deposits, Recurring deposits (Accounts).
-- [ ] **M6 (Detail screens)**: Customer, One-time deposit, Recurring deposit (info, passbook, transactions).
+- [x] **M4 (Shell and shared layout)**: navigation bar/rail, app bars, grouped `EntityListTile`, `EntityListBody`, detail scaffold/header/sections, sort and filter sheets, dialogs, search, empty and error states.
+- [x] **M5 (List screens)**: Customers, One-time deposits, Recurring deposits (Accounts), on the shared `EntityListBody` and `DepositListTile`.
+- [ ] **M6 (Detail screens)**: Customer, One-time deposit and Recurring deposit (header, tabs, info) are done. Open: the Recurring deposit passbook and transactions tabs.
 - [ ] **M7 (Forms)**: the three entity forms, nominee section, projection card.
 - [ ] **M8 (RD Monthly Hub and ledger sheets)**: hub header, month switcher, operation cards, batch bar, collect / deposit / PO-visit sheets.
 - [ ] **M9 (Dashboard and login)**.

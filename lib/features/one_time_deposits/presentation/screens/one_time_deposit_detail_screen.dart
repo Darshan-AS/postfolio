@@ -6,6 +6,7 @@ import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
@@ -95,6 +96,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
           header: EntityDetailHeader(
             avatarText: deposit.schemeType.shortName,
             avatarSubtext: deposit.schemeTermLabel,
+            avatarShape: deposit.schemeType.avatarShape,
             title: deposit.accountNo ?? t.common.notProvided,
             subtitle: Text(
               deposit.schemeType.displayName,
@@ -154,7 +156,6 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                     months: deposit.termMonths.toString(),
                   ),
                 ),
-                const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedPercent,
@@ -177,7 +178,6 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   label: t.oneTimeDeposits.fields.depositDate,
                   value: deposit.startDate.toAppFormat(),
                 ),
-                const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedCalendar03,
@@ -202,7 +202,6 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                     value: deposit.accountNo,
                     copyValue: deposit.accountNo,
                   ),
-                  const Divider(height: AppDimensions.dividerHeight),
                 ],
                 DetailItem(
                   icon: const HugeIcon(

@@ -22,9 +22,11 @@ class _CustomerCardView extends StatelessWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onPhoneTapped;
   final VoidCallback? onWhatsAppTapped;
+  final AppGroupPosition position;
 
   const _CustomerCardView({
     required this.name,
+    required this.position,
     this.phone,
     this.onTap,
     this.onEdit,
@@ -38,7 +40,9 @@ class _CustomerCardView extends StatelessWidget {
     final hasPhone = phone != null && phone!.isNotEmpty;
 
     return EntityListTile(
+      position: position,
       leadingText: name.isNotEmpty ? name[0].toUpperCase() : '?',
+      leadingShape: AppAvatarShape.forSeed(name),
       title: name,
       subtitle: Text(
         hasPhone ? phone!.toPhoneFormat() : t.common.notProvided,
@@ -78,11 +82,22 @@ class _CustomerCardView extends StatelessWidget {
 class CustomerCard extends ConsumerWidget {
   final Customer customer;
 
-  const CustomerCard({super.key, required this.customer});
+  /// Where this row sits in its list (see [EntityListTile.position]).
+  final AppGroupPosition position;
 
-  static Widget skeleton() {
+  const CustomerCard({
+    super.key,
+    required this.customer,
+    this.position = AppGroupPosition.single,
+  });
+
+  static Widget skeleton({AppGroupPosition position = AppGroupPosition.single}) {
     final dummy = Customer.dummy;
-    return _CustomerCardView(name: dummy.name, phone: dummy.phone);
+    return _CustomerCardView(
+      name: dummy.name,
+      phone: dummy.phone,
+      position: position,
+    );
   }
 
   @override
@@ -90,6 +105,7 @@ class CustomerCard extends ConsumerWidget {
     return _CustomerCardView(
       name: customer.name,
       phone: customer.phone,
+      position: position,
       onTap: () => CustomerDetailRoute(customer.id).push(context),
       onEdit: () => CustomerEditRoute(customer.id).push(context),
       onPhoneTapped: () =>

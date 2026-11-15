@@ -46,8 +46,13 @@ abstract final class AppShapes {
 
   static const StadiumBorder pill = StadiumBorder();
 
-  static RoundedRectangleBorder rounded(double radius, {BorderSide side = BorderSide.none}) =>
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius), side: side);
+  static RoundedRectangleBorder rounded(
+    double radius, {
+    BorderSide side = BorderSide.none,
+  }) => RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(radius),
+    side: side,
+  );
 
   /// Corner radii of a row at [position]: outer corners on the group's edge, inner corners
   /// where it meets a neighbour.
@@ -56,9 +61,15 @@ abstract final class AppShapes {
     const inner = Radius.circular(groupInner);
     return switch (position) {
       AppGroupPosition.single => const BorderRadius.all(outer),
-      AppGroupPosition.first => const BorderRadius.vertical(top: outer, bottom: inner),
+      AppGroupPosition.first => const BorderRadius.vertical(
+        top: outer,
+        bottom: inner,
+      ),
       AppGroupPosition.middle => const BorderRadius.all(inner),
-      AppGroupPosition.last => const BorderRadius.vertical(top: inner, bottom: outer),
+      AppGroupPosition.last => const BorderRadius.vertical(
+        top: inner,
+        bottom: outer,
+      ),
     };
   }
 

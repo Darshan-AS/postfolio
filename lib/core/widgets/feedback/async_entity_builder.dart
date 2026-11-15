@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -57,7 +58,7 @@ class AsyncEntityBuilder<T> extends StatelessWidget {
     if (dummyEntity != null) {
       return Skeletonizer(enabled: true, child: builder(dummyEntity));
     }
-    const loadingView = Center(child: CircularProgressIndicator());
+    const loadingView = Center(child: AppLoadingIndicator());
     return wrapWithScaffold
         ? Scaffold(
             appBar: AppBar(title: Text(t.common.loading)),
@@ -108,7 +109,7 @@ class AsyncSingleEntityBuilder<T> extends StatelessWidget {
     if (dummyEntity != null) {
       return Skeletonizer(enabled: true, child: builder(dummyEntity as T));
     }
-    const loadingView = Center(child: CircularProgressIndicator());
+    const loadingView = Center(child: AppLoadingIndicator());
     return wrapWithScaffold
         ? Scaffold(
             appBar: AppBar(title: Text(t.common.loading)),

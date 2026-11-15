@@ -1,8 +1,13 @@
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/expressive/app_fab.dart';
+import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/core/services/intent_service.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
@@ -59,6 +64,7 @@ class CustomerDetailScreen extends ConsumerWidget {
             avatarText: customer.name.isNotEmpty
                 ? customer.name[0].toUpperCase()
                 : t.common.notProvided,
+            avatarShape: AppAvatarShape.forSeed(customer.name),
             title: customer.name,
             subtitle: Column(
               children: [
@@ -78,79 +84,49 @@ class CustomerDetailScreen extends ConsumerWidget {
             ),
             bottomActions: [
               if (customer.phone != null && customer.phone!.isNotEmpty) ...[
-                FilledButton.icon(
+                AppButton(
+                  label: t.customers.actions.call,
+                  icon: HugeIcons.strokeRoundedCall02,
                   onPressed: () => ref
                       .read(intentServiceProvider)
                       .launchPhone(customer.phone!),
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedCall02,
-                    size: AppDimensions.iconMd,
-                  ),
-                  label: Text(t.customers.actions.call),
                 ),
-                FilledButton.tonalIcon(
+                AppButton.tonal(
+                  label: t.customers.actions.sms,
+                  icon: HugeIcons.strokeRoundedComment01,
                   onPressed: () => ref
                       .read(intentServiceProvider)
                       .launchSms(customer.phone!),
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedComment01,
-                    size: AppDimensions.iconMd,
-                  ),
-                  label: Text(t.customers.actions.sms),
                 ),
-                FilledButton.tonalIcon(
+                AppButton.tonal(
+                  label: t.customers.actions.whatsapp,
+                  icon: HugeIcons.strokeRoundedWhatsapp,
                   onPressed: () => ref
                       .read(intentServiceProvider)
                       .launchWhatsApp(customer.phone!),
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedWhatsapp,
-                    size: AppDimensions.iconMd,
-                  ),
-                  label: Text(t.customers.actions.whatsapp),
                 ),
               ],
             ],
           ),
-          floatingActionButton: MenuAnchor(
-            menuChildren: [
-              MenuItemButton(
-                leadingIcon: HugeIcon(
-                  icon: HugeIcons.strokeRoundedTransaction,
-                  size: AppDimensions.iconMd,
-                  color: colorScheme.primary,
-                ),
+          floatingActionButton: AppFabMenu(
+            icon: HugeIcons.strokeRoundedAdd01,
+            closeIcon: HugeIcons.strokeRoundedCancel01,
+            actions: [
+              AppFabMenuAction(
+                label: t.recurringDeposits.title,
+                icon: HugeIcons.strokeRoundedTransaction,
                 onPressed: () => RecurringDepositCreateRoute(
                   customerId: customerId,
                 ).push(context),
-                child: Text(t.recurringDeposits.title),
               ),
-              MenuItemButton(
-                leadingIcon: HugeIcon(
-                  icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
-                  size: AppDimensions.iconMd,
-                  color: colorScheme.primary,
-                ),
+              AppFabMenuAction(
+                label: t.oneTimeDeposits.title,
+                icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
                 onPressed: () => OneTimeDepositCreateRoute(
                   customerId: customerId,
                 ).push(context),
-                child: Text(t.oneTimeDeposits.title),
               ),
             ],
-            builder: (context, controller, _) => FloatingActionButton(
-              heroTag: null,
-              tooltip: t.common.add,
-              onPressed: () {
-                if (controller.isOpen) {
-                  controller.close();
-                } else {
-                  controller.open();
-                }
-              },
-              child: const HugeIcon(
-                icon: HugeIcons.strokeRoundedAdd01,
-                size: AppDimensions.iconMd,
-              ),
-            ),
           ),
           body: [
             _buildPersonalInfo(context, ref, customer),
@@ -202,8 +178,7 @@ Widget _buildPersonalInfo(
           ? () => ref.read(intentServiceProvider).launchMapSearch(customer.address!)
           : null,
     ),
-    if (customer.dateOfBirth != null) ...[
-      const Divider(height: AppDimensions.dividerHeight),
+    if (customer.dateOfBirth != null)
       DetailItem(
         icon: const HugeIcon(
           icon: HugeIcons.strokeRoundedCalendar01,
@@ -212,7 +187,6 @@ Widget _buildPersonalInfo(
         label: t.customers.fields.dateOfBirth,
         value: customer.dateOfBirth!.toAppFormat(),
       ),
-    ],
   ];
 
   return DetailSection(
@@ -294,12 +268,7 @@ Widget _buildIdentityDocuments(Customer customer) {
 
   return DetailSection(
     title: t.customers.sections.identityDocuments,
-    children: [
-      for (var i = 0; i < items.length; i++) ...[
-        if (i > 0) const Divider(height: AppDimensions.dividerHeight),
-        items[i],
-      ],
-    ],
+    children: items,
   );
 }
 
@@ -370,16 +339,17 @@ class _CustomerDepositsSection extends ConsumerWidget {
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (oneTimeDeposits.isNotEmpty)
           _DepositCategorySection(
             title: t.oneTimeDeposits.title,
             activeDeposits: activeOneTime,
             closedDeposits: closedOneTime,
-            itemBuilder: (deposit) => OneTimeDepositCard(
+            itemBuilder: (deposit, position) => OneTimeDepositCard(
               deposit: deposit,
               overrideTitle: deposit.schemeType.displayName,
+              position: position,
             ),
           ),
         if (recurringDeposits.isNotEmpty)
@@ -387,9 +357,10 @@ class _CustomerDepositsSection extends ConsumerWidget {
             title: t.recurringDeposits.title,
             activeDeposits: activeRecurring,
             closedDeposits: closedRecurring,
-            itemBuilder: (deposit) => RecurringDepositCard(
+            itemBuilder: (deposit, position) => RecurringDepositCard(
               deposit: deposit,
               overrideTitle: deposit.schemeType.displayName,
+              position: position,
             ),
           ),
       ],
@@ -397,11 +368,13 @@ class _CustomerDepositsSection extends ConsumerWidget {
   }
 }
 
-class _DepositCategorySection<T> extends StatelessWidget {
+/// One kind of deposit held by the customer: the active accounts as a group of rows, and
+/// the closed ones behind a toggle so they do not crowd the list.
+class _DepositCategorySection<T> extends HookWidget {
   final String title;
   final List<T> activeDeposits;
   final List<T> closedDeposits;
-  final Widget Function(T deposit) itemBuilder;
+  final Widget Function(T deposit, AppGroupPosition position) itemBuilder;
 
   const _DepositCategorySection({
     required this.title,
@@ -416,71 +389,43 @@ class _DepositCategorySection<T> extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final showClosed = useState(false);
+
+    List<Widget> rows(List<T> deposits) => [
+      for (var i = 0; i < deposits.length; i++) ...[
+        if (i > 0) const SizedBox(height: AppShapes.groupGap),
+        itemBuilder(deposits[i], AppGroupPosition.at(i, deposits.length)),
+      ],
+    ];
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DetailSection(
-          title: title,
-          children: [
-            ...activeDeposits
-                .asMap()
-                .map(
-                  (index, deposit) => MapEntry(
-                    index,
-                    Column(
-                      children: [
-                        itemBuilder(deposit),
-                        if (index < activeDeposits.length - 1 ||
-                            closedDeposits.isNotEmpty)
-                          const Divider(height: AppDimensions.dividerHeight),
-                      ],
-                    ),
-                  ),
-                )
-                .values,
-            if (closedDeposits.isNotEmpty)
-              ExpansionTile(
-                shape: const Border(),
-                collapsedShape: const Border(),
-                collapsedIconColor: colorScheme.onSurfaceVariant,
-                iconColor: colorScheme.primary,
-                title: Text(
-                  t.common.countWithLabel(
-                    label: DepositStatus.closed.displayName,
-                    count: closedDeposits.length,
-                  ),
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                children: closedDeposits
-                    .asMap()
-                    .map(
-                      (index, deposit) => MapEntry(
-                        index,
-                        Column(
-                          children: [
-                            Opacity(
-                              opacity: AppDimensions.opacityMuted,
-                              child: itemBuilder(deposit),
-                            ),
-                            if (index < closedDeposits.length - 1)
-                              const Divider(
-                                height: AppDimensions.dividerHeight,
-                              ),
-                          ],
-                        ),
-                      ),
-                    )
-                    .values
-                    .toList(),
+        DetailSectionTitle(title),
+        ...rows(activeDeposits),
+        if (closedDeposits.isNotEmpty) ...[
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: AppButton.text(
+              label: t.common.countWithLabel(
+                label: DepositStatus.closed.displayName,
+                count: closedDeposits.length,
               ),
-          ],
-        ),
+              icon: showClosed.value
+                  ? HugeIcons.strokeRoundedArrowUp01
+                  : HugeIcons.strokeRoundedArrowDown01,
+              onPressed: () => showClosed.value = !showClosed.value,
+            ),
+          ),
+          if (showClosed.value)
+            Opacity(
+              opacity: AppDimensions.opacityMuted,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: rows(closedDeposits),
+              ),
+            ),
+        ],
         AppSpacings.gapLg,
       ],
     );

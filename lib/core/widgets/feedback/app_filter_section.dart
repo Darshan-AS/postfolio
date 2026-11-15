@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
 
 class AppFilterSection<T> extends StatelessWidget {
   final String title;
@@ -25,9 +26,9 @@ class AppFilterSection<T> extends StatelessWidget {
       children: [
         Text(
           title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+          style: AppTypography.emphasizedOf(context).titleSmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         AppSpacings.gapSm,
         Wrap(

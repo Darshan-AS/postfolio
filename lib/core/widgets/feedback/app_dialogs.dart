@@ -1,6 +1,7 @@
 import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class AppDialogs {
@@ -22,17 +23,14 @@ class AppDialogs {
         title: Text(title),
         content: Text(content),
         actions: [
-          TextButton(
+          AppButton.text(
+            label: t.common.cancel,
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(t.common.cancel),
           ),
-          FilledButton.tonal(
-            style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.errorContainer,
-              foregroundColor: theme.colorScheme.onErrorContainer,
-            ),
+          AppButton.tonal(
+            label: t.common.delete,
+            isDestructive: true,
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(t.common.delete),
           ),
         ],
       ),
@@ -63,20 +61,15 @@ class AppDialogs {
         title: Text(title),
         content: Text(content),
         actions: [
-          TextButton(
+          AppButton.text(
+            label: t.common.cancel,
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(t.common.cancel),
           ),
-          FilledButton.tonal(
-            style: FilledButton.styleFrom(
-              backgroundColor:
-                  confirmBackgroundColor ?? theme.colorScheme.primaryContainer,
-              foregroundColor:
-                  confirmForegroundColor ??
-                  theme.colorScheme.onPrimaryContainer,
-            ),
+          AppButton.tonal(
+            label: confirmText ?? t.common.ok,
+            backgroundColor: confirmBackgroundColor,
+            foregroundColor: confirmForegroundColor,
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(confirmText ?? t.common.ok),
           ),
         ],
       ),
@@ -101,9 +94,9 @@ class AppDialogs {
         title: Text(title),
         content: Text(message),
         actions: [
-          TextButton(
+          AppButton.text(
+            label: t.common.ok,
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(t.common.ok),
           ),
         ],
       ),

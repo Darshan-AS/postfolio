@@ -1,5 +1,6 @@
 import 'package:material_3_expressive/components/navigation_bar/m3e_navigation_bar.dart';
 import 'package:material_3_expressive/components/navigation_rail/m3e_navigation_rail.dart';
+import 'package:material_3_expressive/foundations/theme/m3e_theme.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
@@ -71,31 +72,44 @@ class AppNavigationRail extends StatelessWidget {
   /// Pinned to the bottom of the rail (e.g. sign out).
   final Widget? trailing;
 
+  /// The community rail pads its 96dp width by 20dp a side, which leaves 56dp for a label
+  /// and clips "Dashboard" and "Customers" without an ellipsis. 8dp a side leaves 80dp.
+  static const double _horizontalPadding = 8;
+
   @override
   Widget build(BuildContext context) {
+    final expressive = M3ETheme.of(context);
+
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: _maxLabelTextScale,
-      child: M3ENavigationRail(
-        type: M3ENavigationRailType.alwaysCollapse,
-        selectedIndex: selectedIndex,
-        onDestinationSelected: onSelected,
-        trailing: trailing,
-        sections: [
-          M3ENavigationRailSection(
-            destinations: [
-              for (final destination in destinations)
-                M3ENavigationRailDestination(
-                  icon: AppIcon(destination.icon, size: AppDimensions.iconMd),
-                  selectedIcon: AppIcon(
-                    destination.icon,
-                    size: AppDimensions.iconMd,
-                    emphasized: true,
-                  ),
-                  label: destination.label,
-                ),
-            ],
+      child: M3ETheme(
+        data: expressive.copyWith(
+          navigationRailTheme: expressive.navigationRailTheme.copyWith(
+            collapsedHorizontalPadding: _horizontalPadding,
           ),
-        ],
+        ),
+        child: M3ENavigationRail(
+          type: M3ENavigationRailType.alwaysCollapse,
+          selectedIndex: selectedIndex,
+          onDestinationSelected: onSelected,
+          trailing: trailing,
+          sections: [
+            M3ENavigationRailSection(
+              destinations: [
+                for (final destination in destinations)
+                  M3ENavigationRailDestination(
+                    icon: AppIcon(destination.icon, size: AppDimensions.iconMd),
+                    selectedIcon: AppIcon(
+                      destination.icon,
+                      size: AppDimensions.iconMd,
+                      emphasized: true,
+                    ),
+                    label: destination.label,
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

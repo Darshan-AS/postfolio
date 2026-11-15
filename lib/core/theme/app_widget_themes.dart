@@ -24,14 +24,6 @@ class AppWidgetThemes {
         centerTitle: false,
         toolbarHeight: AppDimensions.appBarHeight,
         titleTextStyle: emphasized.titleLarge?.copyWith(color: colorScheme.onSurface),
-        iconTheme: IconThemeData(
-          color: colorScheme.onSurface,
-          size: AppDimensions.iconMd,
-        ),
-        actionsIconTheme: IconThemeData(
-          color: colorScheme.onSurfaceVariant,
-          size: AppDimensions.iconMd,
-        ),
       );
 
   static DividerThemeData dividerTheme(ColorScheme colorScheme) =>

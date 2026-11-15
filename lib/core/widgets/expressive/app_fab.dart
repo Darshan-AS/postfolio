@@ -7,6 +7,11 @@ import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 /// A Material 3 Expressive floating action button with a label: the one main action of a
 /// screen.
+///
+/// The community widget lays its icon and label out in a row that overflows when the label
+/// is wider than the window (large text, long translations). Two guards keep it inside:
+/// the label stops growing at [_maxLabelTextScale], and if the button is still wider than
+/// the window less its margins it is scaled down to fit.
 class AppExtendedFab extends StatelessWidget {
   const AppExtendedFab({
     super.key,
@@ -19,12 +24,26 @@ class AppExtendedFab extends StatelessWidget {
   final AppIconData icon;
   final VoidCallback? onPressed;
 
+  static const double _maxLabelTextScale = 1.3;
+
   @override
   Widget build(BuildContext context) {
-    return M3EExtendedFab(
-      label: label,
-      icon: AppIcon(icon, size: AppDimensions.iconMd),
-      onPressed: onPressed,
+    final maxWidth =
+        MediaQuery.sizeOf(context).width - 2 * AppDimensions.pageMargin;
+
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: _maxLabelTextScale,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: M3EExtendedFab(
+            label: label,
+            icon: AppIcon(icon, size: AppDimensions.iconMd),
+            onPressed: onPressed,
+          ),
+        ),
+      ),
     );
   }
 }

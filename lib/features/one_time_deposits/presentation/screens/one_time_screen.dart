@@ -8,10 +8,10 @@ import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_mod
 import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
-import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
+import 'package:postfolio/core/widgets/expressive/app_fab.dart';
+import 'package:postfolio/core/widgets/layout/entity_list_body.dart';
 import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 import 'package:postfolio/core/widgets/feedback/app_sort_bottom_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_filter_bottom_sheet.dart';
@@ -160,100 +160,27 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
           ),
           AppSpacings.gapMd,
           Expanded(
-            child: switch (depositsState) {
-              AsyncData(:final value) => _buildDataState(context, ref, value),
-              AsyncError(:final error) => ErrorStateView(
-                message: error.toString(),
-                onRetry: () =>
-                    ref.invalidate(oneTimeDepositsControllerProvider),
-              ),
-              _ => _buildLoadingState(),
-            },
+            child: EntityListBody<OneTimeDeposit>(
+              state: depositsState,
+              emptyMessage: t.oneTimeDeposits.noDepositsFound,
+              hasActiveFilters:
+                  criteria.searchQuery.isNotEmpty || activeFilterCount > 0,
+              onClearFilters: () =>
+                  ref.read(oneTimeListCriteriaProvider.notifier).clearAll(),
+              onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
+              onRefresh: () => ref.refresh(oneTimeDepositsControllerProvider.future),
+              itemBuilder: (context, deposit, position) =>
+                  OneTimeDepositCard(deposit: deposit, position: position),
+              skeletonBuilder: (position) =>
+                  OneTimeDepositCard.skeleton(position: position),
+            ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
+      floatingActionButton: AppExtendedFab(
+        label: t.oneTimeDeposits.newDeposit,
+        icon: HugeIcons.strokeRoundedAdd01,
         onPressed: () => const OneTimeDepositCreateRoute().push(context),
-        icon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedAdd01,
-          size: AppDimensions.iconMd,
-        ),
-        label: Text(t.oneTimeDeposits.newDeposit),
-      ),
-    );
-  }
-
-  Widget _buildDataState(
-    BuildContext context,
-    WidgetRef ref,
-    List<OneTimeDeposit> deposits,
-  ) {
-    if (deposits.isEmpty) {
-      final criteria = ref.read(oneTimeListCriteriaProvider);
-      final isDefaultStatus =
-          criteria.statusFilters.length == 1 &&
-          criteria.statusFilters.contains(DepositStatus.active);
-      final hasFilters =
-          criteria.searchQuery.isNotEmpty ||
-          !isDefaultStatus ||
-          criteria.urgencyFilters.isNotEmpty ||
-          criteria.schemeFilters.isNotEmpty;
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              hasFilters
-                  ? t.common.noResults
-                  : t.oneTimeDeposits.noDepositsFound,
-            ),
-            if (hasFilters) ...[
-              AppSpacings.gapMd,
-              TextButton.icon(
-                onPressed: () =>
-                    ref.read(oneTimeListCriteriaProvider.notifier).clearAll(),
-                icon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedFilterRemove,
-                  size: AppDimensions.iconSm,
-                ),
-                label: Text(t.common.clearFilters),
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-    return RefreshIndicator(
-      onRefresh: () => ref.refresh(oneTimeDepositsControllerProvider.future),
-      child: ListView.separated(
-        padding: const EdgeInsets.only(
-          bottom: AppDimensions.listBottomPaddingFAB,
-        ),
-        itemCount: deposits.length,
-        separatorBuilder: (context, index) =>
-            const Divider(height: AppDimensions.dividerHeight),
-        itemBuilder: (context, index) {
-          final deposit = deposits[index];
-          return OneTimeDepositCard(deposit: deposit);
-        },
-      ),
-    );
-  }
-
-  Widget _buildLoadingState() {
-    return Skeletonizer(
-      enabled: true,
-      child: ListView.separated(
-        padding: const EdgeInsets.only(
-          bottom: AppDimensions.listBottomPaddingFAB,
-        ),
-        itemCount: 5,
-        separatorBuilder: (context, index) =>
-            const Divider(height: AppDimensions.dividerHeight),
-        itemBuilder: (context, index) {
-          return OneTimeDepositCard.skeleton();
-        },
       ),
     );
   }

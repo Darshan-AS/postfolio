@@ -1,7 +1,6 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/feedback/app_sheet_header.dart';
 
 class AppFilterBottomSheet extends StatelessWidget {
   final String title;
@@ -21,13 +20,7 @@ class AppFilterBottomSheet extends StatelessWidget {
   }) {
     return showModalBottomSheet(
       context: context,
-      showDragHandle: true,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppDimensions.radiusXl),
-        ),
-      ),
       builder: builder,
     );
   }
@@ -37,34 +30,15 @@ class AppFilterBottomSheet extends StatelessWidget {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.only(
-          left: AppDimensions.paddingLg,
-          right: AppDimensions.paddingLg,
+          left: AppDimensions.pageMargin,
+          right: AppDimensions.pageMargin,
           bottom: AppDimensions.paddingLg,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const Spacer(),
-                TextButton(onPressed: onClearAll, child: Text(t.common.clear)),
-                IconButton(
-                  tooltip: t.common.close,
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedCancel01,
-                    size: AppDimensions.iconMd,
-                  ),
-                ),
-              ],
-            ),
+            AppSheetHeader(title: title, onClear: onClearAll),
             AppSpacings.gapLg,
             Flexible(
               child: SingleChildScrollView(

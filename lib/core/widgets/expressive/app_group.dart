@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_surfaces.dart';
 
@@ -57,7 +58,8 @@ class _AppGroupTileState extends State<AppGroupTile> {
           ? InkWell(
               onTap: widget.onTap,
               onLongPress: widget.onLongPress,
-              onHighlightChanged: (pressed) => setState(() => _pressed = pressed),
+              onHighlightChanged: (pressed) =>
+                  setState(() => _pressed = pressed),
               child: widget.child,
             )
           : widget.child,
@@ -87,6 +89,51 @@ class AppGroup extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// A lazily built list of grouped rows with the page margin on both sides.
+///
+/// [itemBuilder] receives the row's [AppGroupPosition] and returns the row, normally an
+/// [AppGroupTile] or a widget that wraps one.
+class AppGroupListView extends StatelessWidget {
+  const AppGroupListView({
+    super.key,
+    required this.itemCount,
+    required this.itemBuilder,
+    this.bottomPadding = AppDimensions.listBottomPaddingFAB,
+  });
+
+  final int itemCount;
+  final Widget Function(
+    BuildContext context,
+    int index,
+    AppGroupPosition position,
+  )
+  itemBuilder;
+  final double bottomPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: EdgeInsets.fromLTRB(
+        AppDimensions.pageMargin,
+        0,
+        AppDimensions.pageMargin,
+        bottomPadding,
+      ),
+      itemCount: itemCount,
+      itemBuilder: (context, index) => Padding(
+        padding: EdgeInsets.only(
+          bottom: index == itemCount - 1 ? 0 : AppShapes.groupGap,
+        ),
+        child: itemBuilder(
+          context,
+          index,
+          AppGroupPosition.at(index, itemCount),
+        ),
+      ),
     );
   }
 }

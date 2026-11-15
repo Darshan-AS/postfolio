@@ -4,9 +4,13 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+
+export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart' show AppAvatarShape;
 
 class EntityDetailScaffold extends StatelessWidget {
   final String appBarTitle;
@@ -83,7 +87,12 @@ class EntityDetailScaffold extends StatelessWidget {
           : null, // Let Scaffold handle default
       actions: [
         ...customActions,
-        IconButton(
+        IconButton.filledTonal(
+          // See FormAppBar: inside an app bar the tonal variant needs its foreground set
+          // explicitly.
+          style: IconButton.styleFrom(
+            foregroundColor: theme.colorScheme.onSecondaryContainer,
+          ),
           tooltip: t.common.edit,
           icon: const HugeIcon(
             icon: HugeIcons.strokeRoundedEdit02,
@@ -123,6 +132,7 @@ class EntityDetailScaffold extends StatelessWidget {
             },
           ),
         ),
+        const SizedBox(width: AppDimensions.paddingXs),
       ],
     );
   }
@@ -142,14 +152,14 @@ class EntityDetailScaffold extends StatelessWidget {
                 begin: AppAnimations.slideOffset,
                 end: 0,
                 duration: AppAnimations.medium,
-                curve: AppAnimations.defaultCurve,
+                curve: AppAnimations.spatialCurve,
               );
 
     return ListView(
       padding: EdgeInsets.fromLTRB(
-        AppDimensions.paddingLg,
-        AppDimensions.paddingLg,
-        AppDimensions.paddingLg,
+        AppDimensions.pageMargin,
+        AppDimensions.paddingSm,
+        AppDimensions.pageMargin,
         floatingActionButton != null
             ? AppDimensions.listBottomPaddingFAB
             : AppDimensions.paddingLg,
@@ -171,12 +181,15 @@ class EntityDetailScaffold extends StatelessWidget {
   }
 }
 
+/// The hero of a detail screen: a large Material shape with the entity's initial or code,
+/// its name in an emphasized headline, and optional supporting line, badge and actions.
 class EntityDetailHeader extends StatelessWidget {
   final Widget? avatarChild;
   final String? avatarText;
   final String? avatarSubtext;
   final Color? avatarBackgroundColor;
   final Color? avatarForegroundColor;
+  final AppAvatarShape avatarShape;
   final String title;
   final Widget? subtitle;
   final Widget? badge;
@@ -189,6 +202,7 @@ class EntityDetailHeader extends StatelessWidget {
     this.avatarSubtext,
     this.avatarBackgroundColor,
     this.avatarForegroundColor,
+    this.avatarShape = AppAvatarShape.cookie9,
     required this.title,
     this.subtitle,
     this.badge,
@@ -198,17 +212,16 @@ class EntityDetailHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final emphasized = AppTypography.emphasizedOf(context);
     return Center(
       child: Column(
         children: [
-          _buildAvatar(theme),
+          _buildAvatar(theme, emphasized),
           AppSpacings.gapLg,
           Text(
             title,
             textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: emphasized.headlineMedium,
           ),
           if (subtitle != null) ...[AppSpacings.gapSm, subtitle!],
           if (badge != null) ...[AppSpacings.gapMd, badge!],
@@ -226,13 +239,14 @@ class EntityDetailHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatar(ThemeData theme) {
+  Widget _buildAvatar(ThemeData theme, TextTheme emphasized) {
     final fgColor =
         avatarForegroundColor ?? theme.colorScheme.onPrimaryContainer;
     final hasSubtext = avatarSubtext != null && avatarSubtext!.isNotEmpty;
 
-    return CircleAvatar(
-      radius: AppDimensions.radiusDetailAvatar,
+    return AppShapeAvatar(
+      size: AppDimensions.avatarXl,
+      shape: avatarShape,
       backgroundColor:
           avatarBackgroundColor ?? theme.colorScheme.primaryContainer,
       foregroundColor: fgColor,
@@ -240,7 +254,7 @@ class EntityDetailHeader extends StatelessWidget {
           avatarChild ??
           (avatarText != null
               ? Padding(
-                  padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                  padding: const EdgeInsets.all(AppDimensions.paddingXl),
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Column(
@@ -253,8 +267,7 @@ class EntityDetailHeader extends StatelessWidget {
                             applyHeightToFirstAscent: false,
                             applyHeightToLastDescent: false,
                           ),
-                          style: theme.textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
+                          style: emphasized.displaySmall?.copyWith(
                             height: hasSubtext
                                 ? AppDimensions.lineHeightTight
                                 : null,
@@ -269,8 +282,7 @@ class EntityDetailHeader extends StatelessWidget {
                               applyHeightToFirstAscent: false,
                               applyHeightToLastDescent: false,
                             ),
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
+                            style: emphasized.titleMedium?.copyWith(
                               height: AppDimensions.lineHeightTight,
                               color: fgColor.withValues(
                                 alpha: AppDimensions.opacityMuted,
@@ -282,7 +294,7 @@ class EntityDetailHeader extends StatelessWidget {
                     ),
                   ),
                 )
-              : null),
+              : const SizedBox.shrink()),
     );
   }
 }

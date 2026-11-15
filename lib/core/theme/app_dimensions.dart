@@ -24,8 +24,13 @@ class AppDimensions {
   static const double paddingXl = 24.0;
   static const double paddingXxl = 32.0;
 
+  // Page
+  /// Space between the window edge and page content.
+  static const double pageMargin = 16.0;
+
   // List Views
-  static const double listBottomPaddingFAB = 88.0;
+  /// Clears the extended FAB (56) and its margins at the end of a list.
+  static const double listBottomPaddingFAB = 96.0;
   static const double filterBarHeight = 48.0;
 
   // App bars & menus
@@ -69,6 +74,10 @@ class AppDimensions {
   static const double radiusXxxl = 32.0;
   static const double radiusMax = 48.0;
   static const double radiusDetailAvatar = 72.0;
+
+  // Avatars
+  static const double avatarMd = 48.0;
+  static const double avatarXl = 120.0;
 
   // Icon Sizes
   static const double iconXs = 12.0;

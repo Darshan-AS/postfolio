@@ -136,7 +136,10 @@ class AppButton extends StatelessWidget {
       return (background: backgroundColor, foreground: foregroundColor);
     }
     return switch (variant) {
-      AppButtonVariant.filled => (background: scheme.error, foreground: scheme.onError),
+      AppButtonVariant.filled => (
+        background: scheme.error,
+        foreground: scheme.onError,
+      ),
       AppButtonVariant.tonal => (
         background: scheme.errorContainer,
         foreground: scheme.onErrorContainer,

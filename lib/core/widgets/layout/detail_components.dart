@@ -4,11 +4,45 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_financial_colors.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/expressive/app_group.dart';
+import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
+/// The heading above a group of rows on a detail screen.
+class DetailSectionTitle extends StatelessWidget {
+  const DetailSectionTitle(this.title, {super.key});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.paddingLg,
+        AppDimensions.paddingSm,
+        AppDimensions.paddingLg,
+        AppDimensions.paddingSm,
+      ),
+      child: Text(
+        title,
+        style: AppTypography.emphasizedOf(context).titleSmall?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
+    );
+  }
+}
+
+/// A titled group of detail rows.
+///
+/// Each child becomes one row of a grouped list (see [AppGroup]); the seams between rows
+/// replace divider lines, so callers pass rows only. A [DetailItem] that hides itself
+/// because it has no value is left out, so it does not leave an empty row behind.
 class DetailSection extends StatelessWidget {
   final String title;
   final List<Widget> children;
@@ -17,39 +51,16 @@ class DetailSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rows = [
+      for (final child in children)
+        if (!(child is DetailItem && child.isHidden)) child,
+    ];
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingMd,
-            vertical: AppDimensions.paddingSm,
-          ),
-          child: Text(
-            title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        Card(
-          elevation: 0,
-          color: Theme.of(context).colorScheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-            side: BorderSide(
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-          ),
-          margin: EdgeInsets.zero,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: AppDimensions.paddingSm,
-            ),
-            child: Column(children: children),
-          ),
-        ),
+        DetailSectionTitle(title),
+        AppGroup(children: rows),
       ],
     );
   }
@@ -75,9 +86,12 @@ class DetailItem extends StatelessWidget {
     this.trailing,
   });
 
+  /// True when the row has no value and was asked to hide in that case.
+  bool get isHidden => hideIfNull && (value == null || value!.isEmpty);
+
   @override
   Widget build(BuildContext context) {
-    if (hideIfNull && (value == null || value!.isEmpty)) {
+    if (isHidden) {
       return const SizedBox.shrink();
     }
 
@@ -119,9 +133,8 @@ class DetailItem extends StatelessWidget {
                 AppSpacings.gapXs,
                 Text(
                   displayValue,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  style: AppTypography.emphasizedOf(context).bodyLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -182,13 +195,9 @@ class DetailStatCard extends StatelessWidget {
     final bg = backgroundColor ?? theme.colorScheme.primaryContainer;
     final fg = textColor ?? theme.colorScheme.onPrimaryContainer;
 
-    Widget card = Card(
-      elevation: 0,
+    Widget card = Material(
       color: bg,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-      ),
-      margin: EdgeInsets.zero,
+      shape: AppShapes.rounded(AppShapes.groupOuter),
       child: Padding(
         padding: const EdgeInsets.all(AppDimensions.paddingLg),
         child: Column(
@@ -196,16 +205,21 @@ class DetailStatCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: theme.textTheme.titleSmall?.copyWith(
+              style: theme.textTheme.labelLarge?.copyWith(
                 color: fg.withValues(alpha: 0.8),
               ),
             ),
             AppSpacings.gapSm,
-            Text(
-              value,
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: fg,
-                fontWeight: FontWeight.bold,
+            // Amounts must stay on one line; shrink rather than wrap in a narrow card.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: AppTypography.emphasizedOf(context).headlineSmall?.copyWith(
+                  color: fg,
+                ),
               ),
             ),
           ],
@@ -264,6 +278,7 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final emphasized = AppTypography.emphasizedOf(context);
     final financial = AppFinancialColors.of(context);
     final isClosed = depositStatus != null
         ? depositStatus == DepositStatus.closed
@@ -306,18 +321,12 @@ class StatusBadge extends StatelessWidget {
             ),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(
-          compact ? AppDimensions.radiusMd : AppDimensions.radiusLg,
-        ),
+        borderRadius: BorderRadius.circular(AppShapes.extraExtraLarge),
       ),
       child: Text(
         displayText,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        style: (compact ? emphasized.labelSmall : emphasized.labelMedium)?.copyWith(
           color: fgColor,
-          fontWeight: FontWeight.bold,
-          letterSpacing: compact
-              ? AppDimensions.letterSpacingSm
-              : AppDimensions.letterSpacingMd,
         ),
       ),
     );
@@ -339,31 +348,21 @@ class KvpMultiplierBanner extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             theme.colorScheme.primaryContainer,
-            theme.colorScheme.secondaryContainer,
+            theme.colorScheme.tertiaryContainer,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppShapes.extraLarge),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(AppDimensions.paddingSm),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.5),
-              shape: BoxShape.circle,
-            ),
-            child: HugeIcon(
+          AppShapeAvatar(
+            shape: AppAvatarShape.sunny,
+            backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.6),
+            foregroundColor: theme.colorScheme.onPrimaryContainer,
+            child: const HugeIcon(
               icon: HugeIcons.strokeRoundedRocket01,
-              color: theme.colorScheme.onPrimaryContainer,
               size: AppDimensions.iconMd,
             ),
           ),
@@ -374,18 +373,16 @@ class KvpMultiplierBanner extends StatelessWidget {
               children: [
                 Text(
                   t.common.moneyMultiplier,
-                  style: theme.textTheme.labelMedium?.copyWith(
+                  style: theme.textTheme.labelLarge?.copyWith(
                     color: theme.colorScheme.onPrimaryContainer.withValues(
                       alpha: 0.8,
                     ),
-                    letterSpacing: 0.5,
                   ),
                 ),
                 Text(
                   doublesInText,
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: AppTypography.emphasizedOf(context).titleLarge?.copyWith(
                     color: theme.colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],

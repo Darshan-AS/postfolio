@@ -3,6 +3,8 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class DemoBanner extends ConsumerWidget {
@@ -23,19 +25,21 @@ class DemoBanner extends ConsumerWidget {
         leading: HugeIcon(
           icon: HugeIcons.strokeRoundedInformationCircle,
           size: AppDimensions.iconMd,
-          color: scheme.primary,
+          color: scheme.onTertiaryContainer,
         ),
         content: Text(
           t.common.demoModeActive,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: AppTypography.emphasizedOf(context).bodyMedium?.copyWith(
+            color: scheme.onTertiaryContainer,
+          ),
         ),
         actions: [
-          TextButton(
+          AppButton.text(
             key: const ValueKey('exit_demo_mode_button'),
+            label: t.common.exitDemoMode,
             onPressed: () {
               ref.read(demoModeProvider.notifier).disable();
             },
-            child: Text(t.common.exitDemoMode),
           ),
         ],
       ),

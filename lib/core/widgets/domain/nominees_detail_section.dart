@@ -20,18 +20,15 @@ class NomineesDetailSection extends StatelessWidget {
         DetailSection(
           title: t.nominees.title,
           children: [
-            for (int i = 0; i < nominees.length; i++) ...[
+            for (final nominee in nominees)
               DetailItem(
                 icon: const HugeIcon(
                   icon: HugeIcons.strokeRoundedUser,
                   size: AppDimensions.iconMd,
                 ),
-                label: nominees[i].displayRelationship,
-                value: '${nominees[i].name} (${nominees[i].percentage}%)',
+                label: nominee.displayRelationship,
+                value: '${nominee.name} (${nominee.percentage}%)',
               ),
-              if (i < nominees.length - 1)
-                const Divider(height: AppDimensions.dividerHeight),
-            ],
           ],
         ),
         AppSpacings.gapLg,

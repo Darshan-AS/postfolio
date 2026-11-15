@@ -11,7 +11,8 @@ abstract final class AppTypography {
 
   /// Amounts line up in columns throughout the app, so every role uses tabular figures.
   static TextTheme withTabularFigures(TextTheme base) {
-    TextStyle? tabular(TextStyle? style) => style?.copyWith(fontFeatures: _tabular);
+    TextStyle? tabular(TextStyle? style) =>
+        style?.copyWith(fontFeatures: _tabular);
 
     return base.copyWith(
       displayLarge: tabular(base.displayLarge),
@@ -34,7 +35,8 @@ abstract final class AppTypography {
 
   /// The emphasized counterpart of [base]: same sizes, heavier weights.
   static TextTheme emphasized(TextTheme base) {
-    TextStyle? weight(TextStyle? style, FontWeight w) => style?.copyWith(fontWeight: w);
+    TextStyle? weight(TextStyle? style, FontWeight w) =>
+        style?.copyWith(fontWeight: w);
     const medium = FontWeight.w500;
     const semiBold = FontWeight.w600;
 

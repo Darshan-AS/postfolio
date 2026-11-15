@@ -15,7 +15,8 @@ class SpringCurve extends Curve {
 
   @override
   double transformInternal(double t) {
-    final seconds = t * duration.inMicroseconds / Duration.microsecondsPerSecond;
+    final seconds =
+        t * duration.inMicroseconds / Duration.microsecondsPerSecond;
     return SpringSimulation(spring, 0, 1, 0).x(seconds);
   }
 }
@@ -37,14 +38,20 @@ abstract final class AppMotion {
   static const Duration effectsFastDuration = Duration(milliseconds: 150);
 
   /// For position, size and scale. Overshoots: do not use for opacity or radii.
-  static const Curve spatialCurve = SpringCurve(spatial, duration: spatialDuration);
+  static const Curve spatialCurve = SpringCurve(
+    spatial,
+    duration: spatialDuration,
+  );
   static const Curve spatialFastCurve = SpringCurve(
     spatialFast,
     duration: spatialFastDuration,
   );
 
   /// For colour, opacity and corner radius.
-  static const Curve effectsCurve = SpringCurve(effects, duration: effectsDuration);
+  static const Curve effectsCurve = SpringCurve(
+    effects,
+    duration: effectsDuration,
+  );
   static const Curve effectsFastCurve = SpringCurve(
     effectsFast,
     duration: effectsFastDuration,

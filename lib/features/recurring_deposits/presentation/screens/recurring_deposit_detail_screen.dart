@@ -9,9 +9,14 @@ import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
 import 'package:postfolio/core/widgets/domain/nominees_detail_section.dart';
 import 'package:postfolio/core/widgets/domain/wealth_accumulation_grid.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
+import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
@@ -138,6 +143,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
             avatarBackgroundColor: theme.colorScheme.secondaryContainer,
             avatarForegroundColor: theme.colorScheme.onSecondaryContainer,
             avatarText: deposit.avatarLabel,
+            avatarShape: deposit.schemeType.avatarShape,
             title: deposit.accountNo ?? t.common.notProvided,
             subtitle: Column(
               children: [
@@ -148,37 +154,11 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                   ),
                 ),
                 AppSpacings.gapXs,
-                InkWell(
-                  onTap: () =>
+                AppButton.text(
+                  label: resolvedCustomerName,
+                  icon: HugeIcons.strokeRoundedUser,
+                  onPressed: () =>
                       CustomerDetailRoute(deposit.customerId).push(context),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.paddingXs,
-                      vertical: AppDimensions.paddingXxs,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        HugeIcon(
-                          icon: HugeIcons.strokeRoundedUser,
-                          size: AppDimensions.iconXs,
-                          color: theme.colorScheme.primary,
-                        ),
-                        AppSpacings.gapXs,
-                        Flexible(
-                          child: Text(
-                            resolvedCustomerName,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
                 AppSpacings.gapSm,
                 _LedgerProgress(
@@ -193,40 +173,17 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
             ),
           ),
           body: [
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<RDDetailTab>(
-                segments: [
-                  ButtonSegment(
-                    value: RDDetailTab.info,
-                    label: Text(tabs.info),
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedInformationCircle,
-                      size: AppDimensions.iconSm,
-                    ),
-                  ),
-                  ButtonSegment(
-                    value: RDDetailTab.ledger,
-                    label: Text(tabs.ledger),
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedCalendar03,
-                      size: AppDimensions.iconSm,
-                    ),
-                  ),
-                  ButtonSegment(
-                    value: RDDetailTab.transactions,
-                    label: Text(tabs.transactions),
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedInvoice01,
-                      size: AppDimensions.iconSm,
-                    ),
-                  ),
-                ],
-                selected: {activeTab.value},
-                onSelectionChanged: (selection) {
-                  activeTab.value = selection.first;
-                },
-              ),
+            AppButtonGroup<RDDetailTab>(
+              selected: activeTab.value,
+              onChanged: (tab) => activeTab.value = tab,
+              segments: [
+                AppSegment(value: RDDetailTab.info, label: tabs.info),
+                AppSegment(value: RDDetailTab.ledger, label: tabs.ledger),
+                AppSegment(
+                  value: RDDetailTab.transactions,
+                  label: tabs.transactions,
+                ),
+              ],
             ),
             AppSpacings.gapLg,
             switch (activeTab.value) {
@@ -302,7 +259,6 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                         label: t.recurringDeposits.fields.startDate,
                         value: deposit.startDate.toAppFormat(),
                       ),
-                      const Divider(height: AppDimensions.dividerHeight),
                       DetailItem(
                         icon: const HugeIcon(
                           icon: HugeIcons.strokeRoundedCalendar03,
@@ -328,7 +284,6 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                           value: deposit.accountNo,
                           copyValue: deposit.accountNo,
                         ),
-                        const Divider(height: AppDimensions.dividerHeight),
                       ],
                       DetailItem(
                         icon: const HugeIcon(
@@ -339,7 +294,6 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                         value: deposit.serialNo ?? t.common.notProvided,
                         copyValue: deposit.serialNo,
                       ),
-                      const Divider(height: AppDimensions.dividerHeight),
                       DetailItem(
                         icon: const HugeIcon(
                           icon: HugeIcons.strokeRoundedUser,
@@ -410,17 +364,15 @@ class _LedgerProgress extends StatelessWidget {
       if (isSettled) (text: tabs.allSettled, color: scheme.primary),
     ];
 
+    final emphasized = AppTypography.emphasizedOf(context);
     final counterStyle = theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
 
     return Column(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-          child: LinearProgressIndicator(
-            // Indeterminate only while the very first projection is loading.
-            value: isFirstLoad ? null : progress,
-            minHeight: AppDimensions.paddingXs,
-          ),
+        AppLinearProgress(
+          // Indeterminate only while the very first projection is loading.
+          value: isFirstLoad ? null : progress,
+          semanticsLabel: tabs.collectedThrough(n: paidThrough.toString()),
         ),
         AppSpacings.gapXs,
         Wrap(
@@ -432,10 +384,7 @@ class _LedgerProgress extends StatelessWidget {
             if (frontedMonths > 0)
               Text(
                 tabs.monthsFronted(n: frontedMonths),
-                style: counterStyle?.copyWith(
-                  color: scheme.secondary,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: emphasized.bodySmall?.copyWith(color: scheme.secondary),
               ),
           ],
         ),
@@ -448,10 +397,7 @@ class _LedgerProgress extends StatelessWidget {
               for (final line in moneyLines)
                 Text(
                   line.text,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: line.color,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: emphasized.labelLarge?.copyWith(color: line.color),
                 ),
             ],
           ),

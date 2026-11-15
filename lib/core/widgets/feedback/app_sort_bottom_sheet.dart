@@ -2,8 +2,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
-
-import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
+import 'package:postfolio/core/widgets/expressive/app_group.dart';
+import 'package:postfolio/core/widgets/feedback/app_sheet_header.dart';
 
 class AppSortBottomSheet<T> extends StatelessWidget {
   final String title;
@@ -31,116 +34,89 @@ class AppSortBottomSheet<T> extends StatelessWidget {
     required BuildContext context,
     required WidgetBuilder builder,
   }) {
-    return showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppDimensions.radiusXl),
-        ),
-      ),
-      builder: builder,
-    );
+    return showModalBottomSheet(context: context, builder: builder);
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final emphasized = AppTypography.emphasizedOf(context);
+
     return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildHeader(context),
-          const Divider(),
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: fields.length,
-              itemBuilder: (context, index) {
-                final field = fields[index];
-                final isSelected = selectedField == field;
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.pageMargin,
+          0,
+          AppDimensions.pageMargin,
+          AppDimensions.paddingLg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppSheetHeader(title: title, onClear: onReset),
+            AppSpacings.gapMd,
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: fields.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: AppShapes.groupGap),
+                itemBuilder: (context, index) {
+                  final field = fields[index];
+                  final isSelected = selectedField == field;
 
-                return ListTile(
-                  title: Text(
-                    fieldLabelBuilder(field),
-                    style: TextStyle(
-                      fontWeight: isSelected ? FontWeight.bold : null,
-                      color: isSelected
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
+                  return AppGroupTile(
+                    position: AppGroupPosition.at(index, fields.length),
+                    selected: isSelected,
+                    onTap: () => onSelected(field, selectedDirection),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.paddingLg,
+                        vertical: AppDimensions.paddingLg,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              fieldLabelBuilder(field),
+                              style: isSelected
+                                  ? emphasized.bodyLarge?.copyWith(
+                                      color: theme.colorScheme.onSecondaryContainer,
+                                    )
+                                  : theme.textTheme.bodyLarge,
+                            ),
+                          ),
+                          if (isSelected)
+                            HugeIcon(
+                              icon: HugeIcons.strokeRoundedTick02,
+                              color: theme.colorScheme.onSecondaryContainer,
+                              size: AppDimensions.iconMd,
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  trailing: isSelected
-                      ? HugeIcon(
-                          icon: HugeIcons.strokeRoundedCheckmarkCircle01,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: AppDimensions.iconSm,
-                        )
-                      : null,
-                  onTap: () {
-                    onSelected(field, selectedDirection);
-                  },
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
-          const Divider(),
-          _buildDirectionToggle(context, selectedField, selectedDirection),
-          AppSpacings.gapLg,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const Spacer(),
-          if (onReset != null)
-            TextButton(onPressed: onReset!, child: Text(t.common.clear)),
-          IconButton(
-            tooltip: t.common.close,
-            onPressed: () => Navigator.pop(context),
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedCancel01,
-              size: AppDimensions.iconMd,
+            AppSpacings.gapLg,
+            AppButtonGroup<SortDirection>(
+              selected: selectedDirection,
+              onChanged: (direction) => onSelected(selectedField, direction),
+              segments: [
+                AppSegment(
+                  value: SortDirection.asc,
+                  label: directionLabelBuilder(selectedField, SortDirection.asc),
+                ),
+                AppSegment(
+                  value: SortDirection.desc,
+                  label: directionLabelBuilder(selectedField, SortDirection.desc),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDirectionToggle(
-    BuildContext context,
-    T field,
-    SortDirection direction,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingLg),
-      child: SegmentedButton<SortDirection>(
-        segments: [
-          ButtonSegment(
-            value: SortDirection.asc,
-            label: Text(directionLabelBuilder(field, SortDirection.asc)),
-          ),
-          ButtonSegment(
-            value: SortDirection.desc,
-            label: Text(directionLabelBuilder(field, SortDirection.desc)),
-          ),
-        ],
-        selected: {direction},
-        onSelectionChanged: (selection) {
-          final isDesc = selection.first;
-          onSelected(field, isDesc);
-        },
+          ],
+        ),
       ),
     );
   }
