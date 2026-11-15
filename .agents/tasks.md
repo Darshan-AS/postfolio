@@ -69,6 +69,21 @@
 - [ ] Owner: smoke-test the released web build and the release APK on a device; testers update from 2.3.1.
 - [ ] After release: move to Flutter 3.50 (import `GlobalCupertinoLocalizations` from `cupertino_ui`) and raise the pin; configure the backup workflow secrets, run it once and rehearse a restore; pin the Supabase CLI version in `ci.yml` (`latest` hit a GitHub rate limit once).
 
+## 🎨 Material 3 Expressive Redesign (Approved 2026-11-15 — In Progress)
+*Branch `feat/m3-expressive-ui`, on top of `refactor/v2.4-stabilization`. Research and log in `.agents/session_logs/2026-11-15_session_1.md`.*
+- [x] **M0 (Package scouting)**: Compare official `material_ui` (1.11.0, 2026-11-09) with community M3 Expressive packages.
+- [x] **Owner decision (2026-11-15)**: hybrid. `material_ui` 1.11.0 is the base; `material_3_expressive` 1.2.1 supplies the Expressive components the official package lacks, behind wrappers. The whole app moves to the Expressive look, not a few widgets.
+- [x] **M1 (Dependencies)**: upgrade `material_ui` to 1.11.0, add `material_3_expressive` 1.2.1.
+- [ ] **M2 (Theme)**: Expressive shape, motion and type tokens; surface hierarchy; component themes (official Expressive variant for `IconButton` / `ElevatedButton`).
+- [ ] **M3 (Expressive widget layer)**: `lib/core/widgets/expressive/` wrappers — buttons, button group, split button, FAB / FAB menu, loading and progress indicators, pull-to-refresh, floating toolbar, navigation bar/rail, grouped list surface, shape avatar. Amend `.agents/rules/ui.md`; a test keeps `package:material_3_expressive` imports inside that folder.
+- [ ] **M4 (Shell and shared layout)**: navigation shell, app bars, list tile, detail scaffold/sections, sheets, dialogs, search, feedback.
+- [ ] **M5 (List screens)**: Customers, One-time deposits, Recurring deposits (Accounts).
+- [ ] **M6 (Detail screens)**: Customer, One-time deposit, Recurring deposit (info, passbook, transactions).
+- [ ] **M7 (Forms)**: the three entity forms, nominee section, projection card.
+- [ ] **M8 (RD Monthly Hub and ledger sheets)**: hub header, month switcher, operation cards, batch bar, collect / deposit / PO-visit sheets.
+- [ ] **M9 (Dashboard and login)**.
+- [ ] **M10 (Sweep and verification)**: no screen left on the old look; analyzer, fast tests, coverage gate, web build; docs.
+
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)
 - [ ] **1. Statutory Rulebook & Circular Reference Docs (`docs/india_post_schemes_policy.md`)**: Compile authoritative citations across `G.S.R. 916(E)`–`922(E)` (National Savings RD, TD, MIS, KVP, NSC Rules 2019 & subsequent Gazette amendments), DOP SB Orders, Finacle CBS / DOP Agent Portal behavior, and MPKBY / SAS agency rules.
 - [ ] **2. RD Default-Fee & Discontinuation Verification (`G.S.R. 916(E)`)**: Verify ₹1 per ₹100 denomination default-fee calculation on ₹10-multiple installments (`₹250` RD -> exact `₹2.50` paise vs whole-rupee ceiling at Finacle CBS / DOP Agent Portal), maximum 4-default discontinuation threshold + 2-month revival window, and 6-month / 12-month advance deposit rebates.
