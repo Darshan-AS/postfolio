@@ -26,6 +26,7 @@ enum AppButtonSize {
 ///
 /// One widget covers what `FilledButton`, `FilledButton.tonal`, `OutlinedButton` and
 /// `TextButton` did, so every action in the app shares the same shape, motion and sizes.
+/// The label stays on one line and scales down when the button is too narrow for it.
 /// The official `material_ui` buttons have no Expressive variant yet (only `ElevatedButton`
 /// does); when they do, this wrapper is the one place to switch.
 class AppButton extends StatelessWidget {
@@ -172,16 +173,29 @@ class AppButton extends StatelessWidget {
       style: _style,
       size: _size,
       decoration: decoration,
-      tooltip: tooltip,
       icon: leading,
-      label: Text(
-        label,
-        maxLines: 1,
-        softWrap: false,
-        overflow: TextOverflow.ellipsis,
+      // A label that does not fit shrinks; it is never cut. Labels carry amounts
+      // ("Collect ₹1,25,000"), and an ellipsis there hides the money.
+      label: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          label,
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.visible,
+        ),
       ),
     );
 
-    return expand ? SizedBox(width: double.infinity, child: button) : button;
+    // The official Tooltip (the one `find.byTooltip` looks for), merged with the button so
+    // a screen reader gets one node carrying the label, the tooltip and the action. The
+    // community tooltip only labels its own bubble.
+    final labelled = tooltip == null
+        ? button
+        : MergeSemantics(child: Tooltip(message: tooltip, child: button));
+
+    return expand
+        ? SizedBox(width: double.infinity, child: labelled)
+        : labelled;
   }
 }

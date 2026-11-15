@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
 
 /// App bar of a create / edit form: back, the form's title and a filled confirm button that
 /// turns into a loading indicator while the form is saving.
@@ -23,7 +24,7 @@ class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text(title),
+      title: AppBarTitle(title),
       leading: onBack != null ? BackButton(onPressed: onBack) : null,
       actions: [
         if (isSaving)

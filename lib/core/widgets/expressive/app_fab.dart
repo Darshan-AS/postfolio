@@ -24,7 +24,7 @@ class AppExtendedFab extends StatelessWidget {
   final AppIconData icon;
   final VoidCallback? onPressed;
 
-  static const double _maxLabelTextScale = 1.3;
+  static const double _maxLabelTextScale = AppDimensions.largeTextScale;
 
   @override
   Widget build(BuildContext context) {

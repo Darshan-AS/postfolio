@@ -16,7 +16,7 @@ class AppDestination {
 /// Icon labels in navigation chrome stop growing at this text scale, as in the official
 /// `NavigationBar`: a four-destination bar has no room for 2x labels, and the community
 /// widget would otherwise break them mid-word.
-const double _maxLabelTextScale = 1.3;
+const double _maxLabelTextScale = AppDimensions.largeTextScale;
 
 /// The Material 3 Expressive bottom navigation bar for compact windows.
 class AppNavigationBar extends StatelessWidget {

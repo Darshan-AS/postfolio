@@ -34,6 +34,10 @@ abstract final class AppAdaptiveSheet {
       context: context,
       barrierDismissible: isDismissible,
       builder: (ctx) => Dialog(
+        // Same surface as the bottom sheet, so the content looks the same in both
+        // containers. On the default dialog surface a text field's tonal fill is the same
+        // colour as the dialog and only its outline shows.
+        backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
         clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: _dialogMaxWidth),

@@ -1,12 +1,13 @@
 import 'package:material_3_expressive/components/buttons/m3e_buttons.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 /// One choice in an [AppButtonGroup]: a [label], an [icon], or both.
 ///
-/// An icon-only segment must say what it is through [tooltip], which is also its
-/// accessibility label.
+/// An icon-only segment must say what it is through [tooltip]; as with the official
+/// `IconButton`, the tooltip is the name a screen reader announces for it.
 class AppSegment<T> {
   const AppSegment({
     required this.value,
@@ -52,7 +53,7 @@ class AppButtonGroup<T> extends StatelessWidget {
   /// its content, such as in an app bar.
   final bool expand;
 
-  static const double _stackAboveTextScale = 1.3;
+  static const double _stackAboveTextScale = AppDimensions.largeTextScale;
   static const double _iconSize = 20;
 
   /// Width share of a segment: its label length plus a constant for padding and icon.
@@ -75,7 +76,7 @@ class AppButtonGroup<T> extends StatelessWidget {
     Widget segment(int index) {
       final item = segments[index];
       final isSelected = item.value == selected;
-      return M3EButton(
+      final button = M3EButton(
         onPressed: enabled && item.enabled
             ? () {
                 if (!isSelected) onChanged(item.value);
@@ -89,17 +90,23 @@ class AppButtonGroup<T> extends StatelessWidget {
         isGroupConnected: !stacked,
         isFirstInGroup: index == 0,
         isLastInGroup: index == segments.length - 1,
-        tooltip: item.tooltip,
-        semanticLabel: item.label == null ? item.tooltip : null,
         icon: item.icon != null ? AppIcon(item.icon!, size: _iconSize) : null,
+        // As in AppButton: a label that does not fit shrinks, it is never cut.
         label: item.label == null
             ? null
-            : Text(
-                item.label!,
-                maxLines: 1,
-                softWrap: false,
-                overflow: TextOverflow.ellipsis,
+            : FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(item.label!, maxLines: 1, softWrap: false),
               ),
+      );
+      // The community button reports "selected" on one semantics node and the button on a
+      // child node; merged, a screen reader gets one node with the name, the role and the
+      // state. The tooltip is the official one: it joins that node (it is the name of an
+      // icon-only segment, as with the official `IconButton`) and `find.byTooltip` finds it.
+      return MergeSemantics(
+        child: item.tooltip == null
+            ? button
+            : Tooltip(message: item.tooltip, child: button),
       );
     }
 

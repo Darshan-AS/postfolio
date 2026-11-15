@@ -14,6 +14,16 @@ class AppDimensions {
   static const double chartXAxisSlantedExtraSpace = 24.0;
   static const double chartTooltipReservedHeight = 38.0;
 
+  // Text scaling
+  /// The system text scale past which a phone-width row can no longer hold two things side
+  /// by side. Above it, such rows give each part a line of its own, and labels in chrome of
+  /// fixed size (navigation, FAB, chart axes) stop growing.
+  static const double largeTextScale = 1.3;
+
+  /// Whether the ambient text scale is past [largeTextScale].
+  static bool isLargeText(BuildContext context) =>
+      MediaQuery.textScalerOf(context).scale(1) > largeTextScale;
+
   // Padding & Margins
   static const double paddingNone = 0.0;
   static const double paddingXxs = 2.0;
@@ -42,6 +52,10 @@ class AppDimensions {
   static const double buttonHeight = 56.0;
   static const double buttonHeightSm = 40.0;
   static const double actionButtonSize = 48.0;
+
+  /// The widest a full-width button grows. In a phone-wide row it fills the row; in a wider
+  /// one it stays a button instead of becoming a bar.
+  static const double buttonMaxWidth = 360.0;
   /// Minimum interactive target size (Material accessibility guideline).
   static const double minTapTarget = 44.0;
 

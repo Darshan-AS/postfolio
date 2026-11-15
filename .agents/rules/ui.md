@@ -19,6 +19,9 @@ Use centralized Dart extensions in `lib/core/extensions/`:
 ## 3. Styling & Theming
 - **No Magic Numbers**: Do not hardcode breakpoints, paddings, or colors. Use `Theme.of(context)` or `AppDimensions`.
 - **Shape and motion tokens**: Corner radii come from `AppShapes`, springs and durations from `AppMotion` (`lib/core/theme/`).
+- **Surfaces by role**: Content is separated by tone, not by outlines or dividers. Use `colorScheme.page` (scaffold, bars), `.raised` (rows and cards on the page) and `.inset` (fields and tiles inside a raised container) from `lib/core/theme/app_surfaces.dart`.
+- **Grouped rows**: Lists and sections are `AppGroup` / `AppGroupTile` / `AppGroupListView` (`lib/core/widgets/expressive/app_group.dart`). Plain `Card`, `ListTile`, `ExpansionTile` and a `Divider` between rows are not used.
+- **Large text**: `AppDimensions.isLargeText(context)` (text scale above `AppDimensions.largeTextScale`, 1.3) is the one switch for rows that cannot stay side by side. Above it each part takes its own line. Do not define a local threshold.
 - **Localization**: No hardcoded strings. Use **Slang** i18n system.
 - **Icons**: Use `hugeicons` library exclusively. `HugeIcon` is a widget, not `IconData`, so community APIs that take `IconData` cannot be used.
 
@@ -27,4 +30,8 @@ Use centralized Dart extensions in `lib/core/extensions/`:
 - **ListTile Trailing Height**: `ListTile` has a `56.0` height limit for `trailing`. If a complex/tall trailing widget is needed, build a custom row using `InkWell`.
 - **Adaptive Overlays**: BottomSheets on mobile should become Dialogs or side-panels on Desktop.
 - **Skeletonizer**: Use for loading states.
-- **Community widget sizing**: `material_3_expressive` button groups and split buttons are 40dp tall and its navigation bar does not cap text scaling. The `App*` wrappers add the 48dp touch target and the text-scale cap; do not bypass them.
+- **Community widget sizing**: `material_3_expressive` button groups and split buttons are 40dp tall and its navigation bar does not cap text scaling. The `App*` wrappers add the 48dp touch target and the text-scale cap; do not bypass them. `test/core/expressive_widgets_test.dart` holds the wrappers to this.
+- **Labels are never cut**: `AppButton`, `AppButtonGroup` and `AppBarTitle` scale a label down when it does not fit. Button labels carry amounts, and an ellipsis there hides the money. Do not put a `Text` with `TextOverflow.ellipsis` on an amount.
+- **Tooltips**: Pass `tooltip:` to the `App*` wrapper, or use the official `Tooltip`. The wrappers merge it into the button's semantics node, so an icon-only control is named by its tooltip, as with the official `IconButton`, and `find.byTooltip` finds it. The community package's own tooltip does neither.
+- **Icon buttons in an app bar**: `AppBar` wraps its actions in an `IconTheme`, and `IconButton` takes that colour ahead of the filled and tonal variants' defaults. Set `style: IconButton.styleFrom(foregroundColor: …)` on `IconButton.filled` / `.filledTonal` there.
+- **Full-width buttons in rows that grow**: In a list row, which is as wide as the window on desktop, cap a full-width button at `AppDimensions.buttonMaxWidth` and align it to the end.

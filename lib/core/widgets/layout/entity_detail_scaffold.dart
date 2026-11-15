@@ -9,6 +9,7 @@ import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
 
 export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart' show AppAvatarShape;
 
@@ -81,7 +82,7 @@ class EntityDetailScaffold extends StatelessWidget {
 
   PreferredSizeWidget _buildAppBar(ThemeData theme, BuildContext context) {
     return AppBar(
-      title: Text(appBarTitle),
+      title: AppBarTitle(appBarTitle),
       leading: onBack != null
           ? BackButton(onPressed: onBack)
           : null, // Let Scaffold handle default
