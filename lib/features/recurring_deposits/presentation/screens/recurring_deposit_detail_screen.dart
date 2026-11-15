@@ -198,7 +198,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
               RDDetailTab.info => Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
+                  DetailStatRow(
                     children: [
                       DetailAmountCard(
                         title: t.recurringDeposits.fields.installmentAmount,
@@ -206,7 +206,6 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                         backgroundColor: theme.colorScheme.secondaryContainer,
                         textColor: theme.colorScheme.onSecondaryContainer,
                       ),
-                      AppSpacings.gapLg,
                       DetailStatCard(
                         title: t.recurringDeposits.fields.interestRate,
                         value: rateLabel,
@@ -379,12 +378,21 @@ class _LedgerProgress extends StatelessWidget {
           alignment: WrapAlignment.center,
           spacing: AppDimensions.paddingMd,
           children: [
-            Text(tabs.collectedThrough(n: paidThrough.toString()), style: counterStyle),
-            Text(tabs.atPo(n: depositedThrough.toString()), style: counterStyle),
+            Text(
+              tabs.collectedThrough(n: paidThrough.toString()),
+              style: counterStyle,
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              tabs.atPo(n: depositedThrough.toString()),
+              style: counterStyle,
+              textAlign: TextAlign.center,
+            ),
             if (frontedMonths > 0)
               Text(
                 tabs.monthsFronted(n: frontedMonths),
                 style: emphasized.bodySmall?.copyWith(color: scheme.secondary),
+                textAlign: TextAlign.center,
               ),
           ],
         ),
@@ -395,9 +403,11 @@ class _LedgerProgress extends StatelessWidget {
             spacing: AppDimensions.paddingSm,
             children: [
               for (final line in moneyLines)
+                // A line too long for the row wraps; keep it centred like the rest.
                 Text(
                   line.text,
                   style: emphasized.labelLarge?.copyWith(color: line.color),
+                  textAlign: TextAlign.center,
                 ),
             ],
           ),

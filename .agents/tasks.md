@@ -69,7 +69,7 @@
 - [ ] Owner: smoke-test the released web build and the release APK on a device; testers update from 2.3.1.
 - [ ] After release: move to Flutter 3.50 (import `GlobalCupertinoLocalizations` from `cupertino_ui`) and raise the pin; configure the backup workflow secrets, run it once and rehearse a restore; pin the Supabase CLI version in `ci.yml` (`latest` hit a GitHub rate limit once).
 
-## 🎨 Material 3 Expressive Redesign (Approved 2026-11-15 — In Progress)
+## 🎨 Material 3 Expressive Redesign (Approved 2026-11-15 — Done on the branch, awaiting owner review)
 *Branch `feat/m3-expressive-ui`, on top of `refactor/v2.4-stabilization`. Research and log in `.agents/session_logs/2026-11-15_session_1.md`.*
 - [x] **M0 (Package scouting)**: Compare official `material_ui` (1.11.0, 2026-11-09) with community M3 Expressive packages.
 - [x] **Owner decision (2026-11-15)**: hybrid. `material_ui` 1.11.0 is the base; `material_3_expressive` 1.2.1 supplies the Expressive components the official package lacks, behind wrappers. The whole app moves to the Expressive look, not a few widgets.
@@ -78,11 +78,20 @@
 - [x] **M3 (Expressive widget layer)**: `lib/core/widgets/expressive/` — `AppButton`, `AppButtonGroup`, `AppExtendedFab` / `AppFabMenu`, `AppLoadingIndicator` / `AppLinearProgress`, `AppRefreshIndicator`, `AppNavigationBar` / `AppNavigationRail` (community package), and `AppGroupTile`, `AppShapeAvatar` (official shapes). `.agents/rules/ui.md` amended; `test/core/expressive_import_boundary_test.dart` keeps `package:material_3_expressive` imports inside that folder. Further wrappers (floating toolbar) are added with the screen that needs them.
 - [x] **M4 (Shell and shared layout)**: navigation bar/rail, app bars, grouped `EntityListTile`, `EntityListBody`, detail scaffold/header/sections, sort and filter sheets, dialogs, search, empty and error states.
 - [x] **M5 (List screens)**: Customers, One-time deposits, Recurring deposits (Accounts), on the shared `EntityListBody` and `DepositListTile`.
-- [ ] **M6 (Detail screens)**: Customer, One-time deposit and Recurring deposit (header, tabs, info) are done. Open: the Recurring deposit passbook and transactions tabs.
-- [ ] **M7 (Forms)**: the three entity forms, nominee section, projection card.
-- [ ] **M8 (RD Monthly Hub and ledger sheets)**: hub header, month switcher, operation cards, batch bar, collect / deposit / PO-visit sheets.
-- [ ] **M9 (Dashboard and login)**.
-- [ ] **M10 (Sweep and verification)**: no screen left on the old look; analyzer, fast tests, coverage gate, web build; docs.
+- [x] **M6 (Detail screens)**: Customer, One-time deposit and Recurring deposit, including the passbook and transactions tabs.
+- [x] **M7 (Forms)**: the three entity forms on `FormSection` groups, customer picker, nominee section, projection card.
+- [x] **M8 (RD Monthly Hub and ledger sheets)**: hub header tiles, month switcher, toolbar, operation rows, floating batch bar; collect / edit, deposit and PO-visit sheets.
+- [x] **M9 (Dashboard and login)**: metric tiles, scheme breakdown, chart card, projection grids, login.
+- [x] **M10 (Sweep and verification)**: no plain `Card`, `ListTile`, `ExpansionTile`, `Divider`, Material button, `SegmentedButton`, FAB or progress indicator left outside the wrappers; one text-scale threshold (`AppDimensions.largeTextScale`). Analyzer, fast tests, coverage gate and `flutter build web --wasm` pass; see the session log for what was not run.
+
+### Left for the owner after the redesign
+- [ ] **Look at it on a device**: nothing was run on a phone, an emulator or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width).
+- [ ] **Web icon font (decision)**: `flutter build web --wasm` now ships 1,261,120 bytes of `MaterialIcons-Regular.otf` (469 KB gzipped) instead of 7,736. `material_3_expressive` declares every Material icon in `M3EIcons` without `@staticIconProvider`, and every component imports it. With that annotation added to a copy of the package the font is 9,624 bytes. Android is not affected (2,116 bytes). Choose: report it upstream and wait, or override the dependency with a patched copy.
+- [ ] **Flaky Hub integration test** (`test/supabase_rd_ledger_e2e_test.dart`, "Hub: summaries stream, backfill, rows, KPIs"): it sleeps 500 ms and then expects a Realtime row that was measured to take 95–611 ms. It fails more often on this branch than on `502f1ac` although it compiles no file this branch changed. Suggested: wait until the row shows, capped below the provider's 2 s reload. Not changed here; it is outside the redesign.
+- [ ] **Palette**: the brand scheme now uses `DynamicSchemeVariant.vibrant` (`lib/core/theme/app_theme.dart`). Keep it, or go back to the default variant in that one line.
+- [ ] **Strings** (not changed, no new Slang keys were added): "1 months" on the passbook PO strip; `UnsavedChangesPopScope` has hard-coded English; three long field labels are cut at 2.0x text.
+- [ ] **Hub at 2.0x text**: the four header tiles take a line each, so the first row starts below the fold on an 800dp screen. The alternative is a 2×2 grid with smaller figures.
+- [ ] **`material_ui` Expressive coverage**: when the official package ships an Expressive button group, FAB menu, navigation bar or loading indicator, move that `App*` wrapper onto it and drop the community widget.
 
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)
 - [ ] **1. Statutory Rulebook & Circular Reference Docs (`docs/india_post_schemes_policy.md`)**: Compile authoritative citations across `G.S.R. 916(E)`–`922(E)` (National Savings RD, TD, MIS, KVP, NSC Rules 2019 & subsequent Gazette amendments), DOP SB Orders, Finacle CBS / DOP Agent Portal behavior, and MPKBY / SAS agency rules.

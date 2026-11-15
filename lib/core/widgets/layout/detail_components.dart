@@ -173,12 +173,38 @@ class DetailItem extends StatelessWidget {
   }
 }
 
+/// Stat cards side by side, all as tall as the tallest. At large text a card's title no
+/// longer fits half a phone's width, so each card takes a line of its own.
+class DetailStatRow extends StatelessWidget {
+  const DetailStatRow({super.key, required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    if (AppDimensions.isLargeText(context)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: AppDimensions.paddingSm,
+        children: children,
+      );
+    }
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: AppDimensions.paddingLg,
+        children: [for (final child in children) Expanded(child: child)],
+      ),
+    );
+  }
+}
+
+/// A headline figure with its name above it. Lay several out with [DetailStatRow].
 class DetailStatCard extends StatelessWidget {
   final String title;
   final String value;
   final Color? backgroundColor;
   final Color? textColor;
-  final bool isExpanded;
 
   const DetailStatCard({
     super.key,
@@ -186,7 +212,6 @@ class DetailStatCard extends StatelessWidget {
     required this.value,
     this.backgroundColor,
     this.textColor,
-    this.isExpanded = true,
   });
 
   @override
@@ -195,7 +220,7 @@ class DetailStatCard extends StatelessWidget {
     final bg = backgroundColor ?? theme.colorScheme.primaryContainer;
     final fg = textColor ?? theme.colorScheme.onPrimaryContainer;
 
-    Widget card = Material(
+    return Material(
       color: bg,
       shape: AppShapes.rounded(AppShapes.groupOuter),
       child: Padding(
@@ -226,17 +251,15 @@ class DetailStatCard extends StatelessWidget {
         ),
       ),
     );
-
-    return isExpanded ? Expanded(child: card) : card;
   }
 }
 
+/// A [DetailStatCard] whose figure is a rupee amount.
 class DetailAmountCard extends StatelessWidget {
   final String title;
   final double amount;
   final Color? backgroundColor;
   final Color? textColor;
-  final bool isExpanded;
 
   const DetailAmountCard({
     super.key,
@@ -244,7 +267,6 @@ class DetailAmountCard extends StatelessWidget {
     required this.amount,
     this.backgroundColor,
     this.textColor,
-    this.isExpanded = true,
   });
 
   @override
@@ -254,7 +276,6 @@ class DetailAmountCard extends StatelessWidget {
       value: amount.toRupeeFormat(),
       backgroundColor: backgroundColor,
       textColor: textColor,
-      isExpanded: isExpanded,
     );
   }
 }
