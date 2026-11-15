@@ -6,6 +6,7 @@ import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
+import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_sheet_header.dart';
 
 class AppSortBottomSheet<T> extends StatelessWidget {
@@ -30,11 +31,13 @@ class AppSortBottomSheet<T> extends StatelessWidget {
     this.onReset,
   });
 
+  /// A bottom sheet on a phone, a dialog on a wide window. The sheet takes the height its
+  /// content needs: capped at half the screen, the fields had room for two at large text.
   static Future<void> show<T>({
     required BuildContext context,
     required WidgetBuilder builder,
   }) {
-    return showModalBottomSheet(context: context, builder: builder);
+    return AppAdaptiveSheet.show<void>(context, builder: builder);
   }
 
   @override

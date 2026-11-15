@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_sheet_header.dart';
 
 class AppFilterBottomSheet extends StatelessWidget {
@@ -14,15 +15,12 @@ class AppFilterBottomSheet extends StatelessWidget {
     required this.filterSections,
   });
 
+  /// A bottom sheet on a phone, a dialog on a wide window.
   static Future<void> show({
     required BuildContext context,
     required WidgetBuilder builder,
   }) {
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: builder,
-    );
+    return AppAdaptiveSheet.show<void>(context, builder: builder);
   }
 
   @override

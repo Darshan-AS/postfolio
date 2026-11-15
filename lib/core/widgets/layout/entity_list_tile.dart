@@ -120,6 +120,9 @@ class EntityListTile extends StatelessWidget {
     final menuActions = actions.where((a) => !a.isInline).toList();
 
     final hasActionButtons = inlineActions.isNotEmpty || menuActions.isNotEmpty;
+    // Beside a trailing block the title is left with a third of a phone's width, which at
+    // large text is five letters. There the trailing block takes a line of its own below.
+    final trailingBelow = trailing != null && AppDimensions.isLargeText(context);
     final rightPadding = hasActionButtons
         ? AppDimensions.paddingNone
         : AppDimensions.paddingLg;
@@ -161,8 +164,9 @@ class EntityListTile extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (trailing != null || hasActionButtons) AppSpacings.gapSm,
-                  if (trailing != null)
+                  if ((trailing != null && !trailingBelow) || hasActionButtons)
+                    AppSpacings.gapSm,
+                  if (trailing != null && !trailingBelow)
                     ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: trailingMaxWidth),
                       child: trailing!,
@@ -245,6 +249,19 @@ class EntityListTile extends StatelessWidget {
               );
             },
           ),
+          if (trailingBelow)
+            Padding(
+              padding: EdgeInsets.only(
+                top: AppDimensions.paddingSm,
+                right: hasActionButtons
+                    ? AppDimensions.paddingLg
+                    : AppDimensions.paddingNone,
+              ),
+              child: Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: trailing,
+              ),
+            ),
           if (footer != null)
             Padding(
               // Align footer's right edge with the 16dp horizontal grid.

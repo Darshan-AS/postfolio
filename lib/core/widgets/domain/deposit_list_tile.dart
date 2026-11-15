@@ -121,6 +121,7 @@ class DepositListTile extends StatelessWidget {
               if (subtitle.isNotEmpty) AppSpacings.gapXs,
               Row(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   HugeIcon(
                     icon: HugeIcons.strokeRoundedTimer02,
@@ -128,10 +129,11 @@ class DepositListTile extends StatelessWidget {
                     color: attentionColor,
                   ),
                   AppSpacings.gapXs,
+                  // Wraps rather than being cut: beside the amount there is room for
+                  // "Matured 14 …", which drops the word that says whether it is past.
                   Flexible(
                     child: Text(
                       relativeTimeText,
-                      overflow: TextOverflow.ellipsis,
                       style: emphasized.bodySmall?.copyWith(
                         color: attentionColor,
                       ),

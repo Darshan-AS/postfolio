@@ -83,6 +83,7 @@
 - [x] **M8 (RD Monthly Hub and ledger sheets)**: hub header tiles, month switcher, toolbar, operation rows, floating batch bar; collect / edit, deposit and PO-visit sheets.
 - [x] **M9 (Dashboard and login)**: metric tiles, scheme breakdown, chart card, projection grids, login.
 - [x] **M10 (Sweep and verification)**: no plain `Card`, `ListTile`, `ExpansionTile`, `Divider`, Material button, `SegmentedButton`, FAB or progress indicator left outside the wrappers; one text-scale threshold (`AppDimensions.largeTextScale`). Analyzer, fast tests, coverage gate and `flutter build web --wasm` pass; see the session log for what was not run.
+- [x] **M11 (Sort and filter sheets, follow-up)**: the filter sheet's options are a multi-select `AppButtonGroup` instead of stock chips; both sheets open through `AppAdaptiveSheet` (dialog on wide windows, full-height sheet on a phone); list rows keep the name whole above 1.3x text. `test/core/sort_filter_sheet_test.dart` covers both sheets, which had no test.
 
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone, an emulator or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width).

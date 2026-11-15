@@ -24,10 +24,11 @@ class AppSegment<T> {
   final bool enabled;
 }
 
-/// A connected Material 3 Expressive button group for picking exactly one of a few options.
+/// A connected Material 3 Expressive button group for picking among a few options: exactly
+/// one with the default constructor, any number with [AppButtonGroup.multi].
 ///
 /// It replaces `SegmentedButton`: segments share the width, sit 2dp apart with small inner
-/// corners, and the selected one becomes a filled pill.
+/// corners, and a selected one becomes a filled pill.
 ///
 /// It is built from the community package's toggle buttons rather than its `M3EButtonGroup`.
 /// That widget keeps an invisible copy of every label in the tree to measure it, so
@@ -35,19 +36,41 @@ class AppSegment<T> {
 /// instead of wrapping. Here the labels exist once, and above [_stackAboveTextScale] the
 /// segments stack vertically so every label has the full width.
 class AppButtonGroup<T> extends StatelessWidget {
+  /// One option is always selected. Tapping it again reports nothing; tapping another
+  /// reports that one through [onChanged].
   const AppButtonGroup({
     super.key,
     required this.segments,
-    required this.selected,
-    required this.onChanged,
+    required T selected,
+    required ValueChanged<T> onChanged,
     this.enabled = true,
     this.expand = true,
-  });
+  }) : _selected = selected,
+       _selectedValues = null,
+       _onPressed = onChanged;
+
+  /// Any number of options are selected, none included. Every tap reports its value
+  /// through [onToggled], for the caller to add or remove.
+  const AppButtonGroup.multi({
+    super.key,
+    required this.segments,
+    required Set<T> selected,
+    required ValueChanged<T> onToggled,
+    this.enabled = true,
+    this.expand = true,
+  }) : _selected = null,
+       _selectedValues = selected,
+       _onPressed = onToggled;
 
   final List<AppSegment<T>> segments;
-  final T selected;
-  final ValueChanged<T> onChanged;
   final bool enabled;
+
+  /// The selected value of a single-select group.
+  final T? _selected;
+
+  /// The selected values of a multi-select group; null in a single-select one.
+  final Set<T>? _selectedValues;
+  final ValueChanged<T> _onPressed;
 
   /// Share the available width between the segments. Set to false where the group must hug
   /// its content, such as in an app bar.
@@ -75,11 +98,16 @@ class AppButtonGroup<T> extends StatelessWidget {
 
     Widget segment(int index) {
       final item = segments[index];
-      final isSelected = item.value == selected;
+      final selectedValues = _selectedValues;
+      final isSelected = selectedValues != null
+          ? selectedValues.contains(item.value)
+          : item.value == _selected;
       final button = M3EButton(
         onPressed: enabled && item.enabled
             ? () {
-                if (!isSelected) onChanged(item.value);
+                // A single-select group always has a choice, so its selected segment
+                // does nothing; in a multi-select group the same tap deselects.
+                if (selectedValues != null || !isSelected) _onPressed(item.value);
               }
             : null,
         isSelected: isSelected,
