@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_batch_bar.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_header.dart';
@@ -38,7 +39,7 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
 
     return Stack(
       children: [
-        RefreshIndicator(
+        AppRefreshIndicator(
           onRefresh: onRefresh,
           child: const CustomScrollView(
             slivers: [
