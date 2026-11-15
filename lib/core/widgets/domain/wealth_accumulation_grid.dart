@@ -1,9 +1,10 @@
 import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/layout/detail_components.dart';
+import 'package:postfolio/core/widgets/domain/projection_summary.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
+/// The projection of a deposit that grows to maturity, laid out as a sum:
+/// total invested, plus the estimated interest, equals the total return.
 class WealthAccumulationGrid extends StatelessWidget {
   final double totalInvested;
   final double projectedInterest;
@@ -18,56 +19,21 @@ class WealthAccumulationGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            DetailAmountCard(
-              title: t.projections.totalInvested,
-              amount: totalInvested,
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              textColor: theme.colorScheme.onSurfaceVariant,
-            ),
-            AppSpacings.gapMd,
-            HugeIcon(
-              icon: HugeIcons.strokeRoundedAdd01,
-              size: AppDimensions.iconSm,
-              color: theme.colorScheme.outline,
-            ),
-            AppSpacings.gapMd,
-            DetailAmountCard(
-              title: t.projections.estInterest,
-              amount: projectedInterest,
-              backgroundColor: theme.colorScheme.secondaryContainer.withValues(
-                alpha: 0.5,
-              ),
-              textColor: theme.colorScheme.onSecondaryContainer,
-            ),
-          ],
+    return ProjectionSummary(
+      lines: [
+        ProjectionLine(
+          label: t.projections.totalInvested,
+          amount: totalInvested,
         ),
-        AppSpacings.gapSm,
-        Container(
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(
-            vertical: AppDimensions.paddingXs,
-          ),
-          child: HugeIcon(
-            icon: HugeIcons.strokeRoundedArrowDown01,
-            size: AppDimensions.iconMd,
-            color: theme.colorScheme.outline,
-          ),
-        ),
-        AppSpacings.gapSm,
-        DetailAmountCard(
-          title: t.projections.totalReturnMaturity,
-          amount: maturityAmount,
-          backgroundColor: theme.colorScheme.primaryContainer,
-          textColor: theme.colorScheme.onPrimaryContainer,
-          isExpanded: false,
+        ProjectionLine(
+          label: t.projections.estInterest,
+          amount: projectedInterest,
+          sign: HugeIcons.strokeRoundedPlusSign,
         ),
       ],
+      resultLabel: t.projections.totalReturnMaturity,
+      resultAmount: maturityAmount,
+      resultSign: HugeIcons.strokeRoundedEqualSign,
     );
   }
 }

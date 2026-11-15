@@ -2,6 +2,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
@@ -17,19 +20,22 @@ class LoginScreen extends ConsumerWidget {
     final authState = ref.watch(authControllerProvider);
     final theme = Theme.of(context);
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
+    final isSigningIn = authState is AuthStateLoading;
 
     final heroItems = <Widget>[
-      HugeIcon(
-        icon: HugeIcons.strokeRoundedShield01,
-        color: theme.colorScheme.primary,
-        size: AppDimensions.iconXl,
+      // The brand mark on a large Material shape: the welcome's focal point.
+      const AppShapeAvatar(
+        shape: AppAvatarShape.softBurst,
+        size: AppDimensions.avatarXl,
+        child: HugeIcon(
+          icon: HugeIcons.strokeRoundedShield01,
+          size: AppDimensions.iconXl,
+        ),
       ),
       AppSpacings.gapXl,
       Text(
         t.auth.welcome,
-        style: theme.textTheme.headlineMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-        ),
+        style: AppTypography.emphasizedOf(context).displaySmall,
         textAlign: TextAlign.center,
       ),
       AppSpacings.gapSm,
@@ -46,7 +52,7 @@ class LoginScreen extends ConsumerWidget {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppDimensions.paddingLg),
+            padding: const EdgeInsets.all(AppDimensions.pageMargin),
             child: ConstrainedBox(
               constraints: const BoxConstraints(
                 maxWidth: AppDimensions.maxLoginWidth,
@@ -68,59 +74,42 @@ class LoginScreen extends ConsumerWidget {
                                 duration: AppAnimations.medium,
                               ),
                   ),
-              AppSpacings.gapXxl,
-              AppSpacings.gapXxl,
-              switch (authState) {
-                AuthStateLoading() => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-                _ => Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    FilledButton.icon(
-                      onPressed: () {
-                        ref
-                            .read(authControllerProvider.notifier)
-                            .signInWithGoogle();
-                      },
-                      icon: HugeIcon(
-                        icon: HugeIcons.strokeRoundedGoogle,
-                        color: theme.colorScheme.onPrimary,
-                        size: AppDimensions.iconMd,
-                      ),
-                      label: Text(t.auth.signInWithGoogle),
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(
-                          AppDimensions.buttonHeight,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppDimensions.paddingMd,
-                        ),
-                      ),
+                  AppSpacings.gapXxl,
+                  AppSpacings.gapXxl,
+                  // While signing in, the main button carries the loading indicator and the
+                  // demo entry is unavailable, as both were while a spinner replaced them.
+                  AppButton(
+                    label: t.auth.signInWithGoogle,
+                    icon: HugeIcons.strokeRoundedGoogle,
+                    size: AppButtonSize.medium,
+                    expand: true,
+                    isLoading: isSigningIn,
+                    onPressed: () {
+                      ref
+                          .read(authControllerProvider.notifier)
+                          .signInWithGoogle();
+                    },
+                  ),
+                  AppSpacings.gapSm,
+                  Center(
+                    child: AppButton.text(
+                      label: t.auth.tryDemoMode,
+                      icon: HugeIcons.strokeRoundedPlay,
+                      onPressed: isSigningIn
+                          ? null
+                          : () {
+                              ref.read(demoModeProvider.notifier).enable();
+                            },
                     ),
-                    AppSpacings.gapLg,
-                    TextButton.icon(
-                      onPressed: () {
-                        ref.read(demoModeProvider.notifier).enable();
-                      },
-                      icon: HugeIcon(
-                        icon: HugeIcons.strokeRoundedPlay,
-                        color: theme.colorScheme.primary,
-                        size: AppDimensions.iconMd,
-                      ),
-                      label: Text(t.auth.tryDemoMode),
+                  ),
+                  if (authState case AuthStateError(:final message)) ...[
+                    AppSpacings.gapMd,
+                    Text(
+                      message,
+                      style: TextStyle(color: theme.colorScheme.error),
+                      textAlign: TextAlign.center,
                     ),
                   ],
-                ),
-              },
-              if (authState case AuthStateError(:final message)) ...[
-                AppSpacings.gapMd,
-                Text(
-                  message,
-                  style: TextStyle(color: theme.colorScheme.error),
-                  textAlign: TextAlign.center,
-                ),
-              ],
                 ],
               ),
             ),
