@@ -70,7 +70,7 @@
 - [ ] After release: move to Flutter 3.50 (import `GlobalCupertinoLocalizations` from `cupertino_ui`) and raise the pin; configure the backup workflow secrets, run it once and rehearse a restore; pin the Supabase CLI version in `ci.yml` (`latest` hit a GitHub rate limit once).
 
 ## 🎨 Material 3 Expressive Redesign (Approved 2026-11-15 — Done on the branch, awaiting owner review)
-*Branch `feat/m3-expressive-ui`, on top of `refactor/v2.4-stabilization`. Research and log in `.agents/session_logs/2026-11-15_session_1.md`.*
+*Branch `feat/m3-expressive-ui`. Started on `refactor/v2.4-stabilization`; rebased onto `main` on 2026-11-16, after PR #18 (v2.4.0+23) was merged. Research and log in `.agents/session_logs/2026-11-15_session_1.md`.*
 - [x] **M0 (Package scouting)**: Compare official `material_ui` (1.11.0, 2026-11-09) with community M3 Expressive packages.
 - [x] **Owner decision (2026-11-15)**: hybrid. `material_ui` 1.11.0 is the base; `material_3_expressive` 1.2.1 supplies the Expressive components the official package lacks, behind wrappers. The whole app moves to the Expressive look, not a few widgets.
 - [x] **M1 (Dependencies)**: upgrade `material_ui` to 1.11.0, add `material_3_expressive` 1.2.1.
@@ -103,7 +103,7 @@
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone, an emulator or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width).
 - [ ] **Web icon font (decision)**: `flutter build web --wasm` now ships 1,261,120 bytes of `MaterialIcons-Regular.otf` (469 KB gzipped) instead of 7,736. `material_3_expressive` declares every Material icon in `M3EIcons` without `@staticIconProvider`, and every component imports it. With that annotation added to a copy of the package the font is 9,624 bytes. Android is not affected (2,116 bytes). Choose: report it upstream and wait, or override the dependency with a patched copy.
-- [ ] **Flaky Hub integration test** (`test/supabase_rd_ledger_e2e_test.dart`, "Hub: summaries stream, backfill, rows, KPIs"): it sleeps 500 ms and then expects a Realtime row that was measured to take 95–611 ms. It fails more often on this branch than on `502f1ac` although it compiles no file this branch changed. Suggested: wait until the row shows, capped below the provider's 2 s reload. Not changed here; it is outside the redesign.
+- [x] **Flaky Hub integration test**: fixed on `main` by `1467dc5` (the test waits for the summary row instead of sleeping 500 ms). The integration suite passes on this branch after the rebase.
 - [ ] **Palette**: the brand scheme now uses `DynamicSchemeVariant.vibrant` (`lib/core/theme/app_theme.dart`). Keep it, or go back to the default variant in that one line.
 - [x] **Strings**: "1 months" on the passbook, the hard-coded unsaved-changes dialog and the field labels cut at 2.0x text are fixed.
 - [ ] **Hub at 2.0x text**: the four header tiles take a line each, so the first row starts below the fold on an 800dp screen. The alternative is a 2×2 grid with smaller figures.
