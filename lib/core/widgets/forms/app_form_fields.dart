@@ -67,27 +67,32 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      decoration: AppInputDecoration.m3(
-        context,
-        labelText: labelText,
-        hintText: hintText,
-        prefixIcon: prefixIcon,
-        prefixText: prefixText,
-        isRequired: isRequired,
-      ).copyWith(suffixIcon: suffixIcon),
-      validator: validator,
-      keyboardType: keyboardType,
-      textInputAction: textInputAction,
-      textCapitalization: textCapitalization,
-      readOnly: readOnly,
-      enabled: enabled,
-      onTap: onTap,
-      maxLines: maxLines,
-      minLines: minLines,
-      onChanged: onChanged,
-      inputFormatters: inputFormatters,
+    return AppLabeledField(
+      labelText: labelText,
+      isRequired: isRequired,
+      builder: (context, label) => TextFormField(
+        controller: controller,
+        decoration: AppInputDecoration.m3(
+          context,
+          labelText: label,
+          hintText: hintText,
+          prefixIcon: prefixIcon,
+          prefixText: prefixText,
+          isRequired: isRequired,
+          restingLines: minLines ?? maxLines ?? 1,
+        ).copyWith(suffixIcon: suffixIcon),
+        validator: validator,
+        keyboardType: keyboardType,
+        textInputAction: textInputAction,
+        textCapitalization: textCapitalization,
+        readOnly: readOnly,
+        enabled: enabled,
+        onTap: onTap,
+        maxLines: maxLines,
+        minLines: minLines,
+        onChanged: onChanged,
+        inputFormatters: inputFormatters,
+      ),
     );
   }
 }
@@ -115,30 +120,35 @@ class AppDropdownField<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return DropdownButtonFormField<T>(
-      key: ValueKey<T?>(value),
-      initialValue: value,
-      decoration: AppInputDecoration.m3(
-        context,
-        labelText: labelText,
-        prefixIcon: prefixIcon,
-        isRequired: isRequired,
+    return AppLabeledField(
+      labelText: labelText,
+      isRequired: isRequired,
+      builder: (context, label) => DropdownButtonFormField<T>(
+        key: ValueKey<T?>(value),
+        initialValue: value,
+        decoration: AppInputDecoration.m3(
+          context,
+          labelText: label,
+          prefixIcon: prefixIcon,
+          isRequired: isRequired,
+        ),
+        // Without this the button is as wide as its longest item and overflows a narrow
+        // field.
+        isExpanded: true,
+        // The text field's input style; the dropdown's own default is a heavier title role.
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: theme.colorScheme.onSurface,
+        ),
+        // The same chevron as the customer picker, in place of the Material arrow glyph.
+        icon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedArrowDown01,
+          size: AppDimensions.iconMd,
+        ),
+        borderRadius: BorderRadius.circular(AppShapes.large),
+        items: items,
+        onChanged: onChanged,
+        validator: validator,
       ),
-      // Without this the button is as wide as its longest item and overflows a narrow field.
-      isExpanded: true,
-      // The text field's input style; the dropdown's own default is a heavier title role.
-      style: theme.textTheme.bodyLarge?.copyWith(
-        color: theme.colorScheme.onSurface,
-      ),
-      // The same chevron as the customer picker, in place of the Material arrow glyph.
-      icon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedArrowDown01,
-        size: AppDimensions.iconMd,
-      ),
-      borderRadius: BorderRadius.circular(AppShapes.large),
-      items: items,
-      onChanged: onChanged,
-      validator: validator,
     );
   }
 }

@@ -7,12 +7,12 @@ import 'package:postfolio/features/customers/presentation/controllers/customers_
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/domain/nominees_input_section.dart';
-import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/feedback/unsaved_changes_pop_scope.dart';
 import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
 import 'package:postfolio/core/widgets/layout/form_app_bar.dart';
+import 'package:postfolio/core/widgets/layout/form_screen_body.dart';
 
 import 'package:postfolio/features/customers/presentation/hooks/use_customer_form.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -80,68 +80,58 @@ class _CustomerForm extends HookConsumerWidget {
           title: state.isUpdating
               ? t.customers.editCustomer
               : t.customers.newCustomer,
+        ),
+        body: FormScreenBody(
           isSaving: state.isSaving.value,
           onSave: () => state.save(context),
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            AppDimensions.pageMargin,
-            AppDimensions.paddingSm,
-            AppDimensions.pageMargin,
-            AppDimensions.paddingLg,
-          ),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: AppDimensions.maxFormWidth,
-              ),
-              child: Form(
-                key: state.formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildPersonalInfo(
-                      nameController: state.nameController,
-                      phoneController: state.phoneController,
-                      emailController: state.emailController,
-                      dateOfBirthController: state.dateOfBirthController,
-                      addressController: state.addressController,
-                      onSelectDate: () => state.selectDate(context),
-                    ),
-                    AppSpacings.gapLg,
-                    _buildIdentityDocuments(
-                      cifNumberController: state.cifNumberController,
-                      aadhaarNumberController: state.aadhaarNumberController,
-                      panNumberController: state.panNumberController,
-                    ),
-                    AppSpacings.gapLg,
-                    _buildSavingsBank(
-                      savingsAccountNumberController:
-                          state.savingsAccountNumberController,
-                      nominees: state.nominees,
-                    ),
-                    AppSpacings.gapLg,
-                    NomineesInputSection(
-                      nominees: state.nominees.value,
-                      onChanged: (newNominees) {
-                        state.nominees.value = newNominees;
-                      },
-                    ),
-                    AppSpacings.gapLg,
-                    _buildNotes(notesController: state.notesController),
-                    AppSpacings.gapXl,
-                    AppButton(
-                      label: state.isSaving.value
-                          ? t.common.saving
-                          : t.common.confirm,
-                      icon: HugeIcons.strokeRoundedTick01,
-                      size: AppButtonSize.medium,
-                      expand: true,
-                      isLoading: state.isSaving.value,
-                      onPressed: () => state.save(context),
-                    ),
-                    AppSpacings.gapXl,
-                  ],
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimensions.pageMargin,
+              AppDimensions.paddingSm,
+              AppDimensions.pageMargin,
+              AppDimensions.paddingLg,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppDimensions.maxFormWidth,
+                ),
+                child: Form(
+                  key: state.formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildPersonalInfo(
+                        nameController: state.nameController,
+                        phoneController: state.phoneController,
+                        emailController: state.emailController,
+                        dateOfBirthController: state.dateOfBirthController,
+                        addressController: state.addressController,
+                        onSelectDate: () => state.selectDate(context),
+                      ),
+                      AppSpacings.gapLg,
+                      _buildIdentityDocuments(
+                        cifNumberController: state.cifNumberController,
+                        aadhaarNumberController: state.aadhaarNumberController,
+                        panNumberController: state.panNumberController,
+                      ),
+                      AppSpacings.gapLg,
+                      _buildSavingsBank(
+                        savingsAccountNumberController:
+                            state.savingsAccountNumberController,
+                        nominees: state.nominees,
+                      ),
+                      AppSpacings.gapLg,
+                      NomineesInputSection(
+                        nominees: state.nominees.value,
+                        onChanged: (newNominees) {
+                          state.nominees.value = newNominees;
+                        },
+                      ),
+                      AppSpacings.gapLg,
+                      _buildNotes(notesController: state.notesController),
+                    ],
+                  ),
                 ),
               ),
             ),

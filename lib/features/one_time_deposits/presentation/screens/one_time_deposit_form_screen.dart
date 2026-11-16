@@ -10,11 +10,11 @@ import 'package:postfolio/features/one_time_deposits/presentation/controllers/on
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/domain/nominees_input_section.dart';
-import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/feedback/unsaved_changes_pop_scope.dart';
 import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
 import 'package:postfolio/core/widgets/layout/form_app_bar.dart';
+import 'package:postfolio/core/widgets/layout/form_screen_body.dart';
 import 'package:postfolio/core/widgets/forms/app_duration_input.dart';
 import 'package:postfolio/core/widgets/domain/investment_projection_card.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
@@ -99,65 +99,55 @@ class _OneTimeDepositForm extends HookConsumerWidget {
           title: state.isUpdating
               ? t.oneTimeDeposits.editDeposit
               : t.oneTimeDeposits.newDeposit,
+        ),
+        body: FormScreenBody(
           isSaving: state.isSaving.value,
           onSave: state.save,
-        ),
-        body: Form(
-          key: state.formKey,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimensions.pageMargin,
-              AppDimensions.paddingSm,
-              AppDimensions.pageMargin,
-              AppDimensions.paddingLg,
-            ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: AppDimensions.maxFormWidth,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildAccountInformation(
-                      selectedCustomerId: state.selectedCustomerId,
-                      accountNoController: state.accountNoController,
-                      selectedStatus: state.selectedStatus,
-                    ),
-                    AppSpacings.gapLg,
-                    _buildInvestmentDetails(
-                      context,
-                      selectedScheme: state.selectedScheme,
-                      selectedTermYears: state.selectedTermYears,
-                      selectedTermMonths: state.selectedTermMonths,
-                      principalAmountController: state.principalAmountController,
-                      interestRateController: state.interestRateController,
-                      startDate: state.startDate,
-                      startDateController: state.startDateController,
-                      projection: state.projection,
-                      state: state,
-                    ),
-                    InvestmentProjectionCard(projection: state.projection),
-                    AppSpacings.gapLg,
-                    NomineesInputSection(
-                      nominees: state.nominees.value,
-                      onChanged: (newNominees) {
-                        state.nominees.value = newNominees;
-                      },
-                    ),
-                    AppSpacings.gapXl,
-                    AppButton(
-                      label: state.isSaving.value
-                          ? t.common.saving
-                          : t.common.confirm,
-                      icon: HugeIcons.strokeRoundedTick01,
-                      size: AppButtonSize.medium,
-                      expand: true,
-                      isLoading: state.isSaving.value,
-                      onPressed: state.save,
-                    ),
-                    AppSpacings.gapXl,
-                  ],
+          child: Form(
+            key: state.formKey,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.pageMargin,
+                AppDimensions.paddingSm,
+                AppDimensions.pageMargin,
+                AppDimensions.paddingLg,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppDimensions.maxFormWidth,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildAccountInformation(
+                        selectedCustomerId: state.selectedCustomerId,
+                        accountNoController: state.accountNoController,
+                        selectedStatus: state.selectedStatus,
+                      ),
+                      AppSpacings.gapLg,
+                      _buildInvestmentDetails(
+                        context,
+                        selectedScheme: state.selectedScheme,
+                        selectedTermYears: state.selectedTermYears,
+                        selectedTermMonths: state.selectedTermMonths,
+                        principalAmountController: state.principalAmountController,
+                        interestRateController: state.interestRateController,
+                        startDate: state.startDate,
+                        startDateController: state.startDateController,
+                        projection: state.projection,
+                        state: state,
+                      ),
+                      InvestmentProjectionCard(projection: state.projection),
+                      AppSpacings.gapLg,
+                      NomineesInputSection(
+                        nominees: state.nominees.value,
+                        onChanged: (newNominees) {
+                          state.nominees.value = newNominees;
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

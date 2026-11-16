@@ -12,11 +12,11 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/domain/nominees_input_section.dart';
-import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/feedback/unsaved_changes_pop_scope.dart';
 import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
 import 'package:postfolio/core/widgets/layout/form_app_bar.dart';
+import 'package:postfolio/core/widgets/layout/form_screen_body.dart';
 import 'package:postfolio/core/widgets/forms/app_duration_input.dart';
 import 'package:postfolio/core/widgets/domain/investment_projection_card.dart';
 
@@ -101,79 +101,69 @@ class _RecurringDepositForm extends HookConsumerWidget {
           title: state.isUpdating
               ? t.recurringDeposits.editDeposit
               : t.recurringDeposits.newDeposit,
+        ),
+        body: FormScreenBody(
           isSaving: state.isSaving.value,
           onSave: state.save,
-        ),
-        body: Form(
-          key: state.formKey,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimensions.pageMargin,
-              AppDimensions.paddingSm,
-              AppDimensions.pageMargin,
-              AppDimensions.paddingLg,
-            ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: AppDimensions.maxFormWidth,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildAccountInformation(
-                      selectedCustomerId: state.selectedCustomerId,
-                      serialNoController: state.serialNoController,
-                      accountNoController: state.accountNoController,
-                      selectedStatus: state.selectedStatus,
-                    ),
-                    AppSpacings.gapLg,
-                    // While the ledger lock state resolves the terms are treated as locked
-                    // (fail safe) and the section is skeletonized so it never looks editable.
-                    Skeletonizer(
-                      enabled: state.isFinancialTermsLockLoading,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildInvestmentDetails(
-                            context,
-                            selectedScheme: state.selectedScheme,
-                            selectedTermYears: state.selectedTermYears,
-                            selectedTermMonths: state.selectedTermMonths,
-                            installmentAmountController:
-                                state.installmentAmountController,
-                            interestRateController:
-                                state.interestRateController,
-                            startDate: state.startDate,
-                            startDateController: state.startDateController,
-                            state: state,
-                          ),
-                          InvestmentProjectionCard(
-                            projection: state.projection,
-                          ),
-                        ],
+          child: Form(
+            key: state.formKey,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.pageMargin,
+                AppDimensions.paddingSm,
+                AppDimensions.pageMargin,
+                AppDimensions.paddingLg,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppDimensions.maxFormWidth,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildAccountInformation(
+                        selectedCustomerId: state.selectedCustomerId,
+                        serialNoController: state.serialNoController,
+                        accountNoController: state.accountNoController,
+                        selectedStatus: state.selectedStatus,
                       ),
-                    ),
-                    AppSpacings.gapLg,
-                    NomineesInputSection(
-                      nominees: state.nominees.value,
-                      onChanged: (newNominees) {
-                        state.nominees.value = newNominees;
-                      },
-                    ),
-                    AppSpacings.gapXl,
-                    AppButton(
-                      label: state.isSaving.value
-                          ? t.common.saving
-                          : t.common.confirm,
-                      icon: HugeIcons.strokeRoundedTick01,
-                      size: AppButtonSize.medium,
-                      expand: true,
-                      isLoading: state.isSaving.value,
-                      onPressed: state.save,
-                    ),
-                    AppSpacings.gapXl,
-                  ],
+                      AppSpacings.gapLg,
+                      // While the ledger lock state resolves the terms are treated as locked
+                      // (fail safe) and the section is skeletonized so it never looks editable.
+                      Skeletonizer(
+                        enabled: state.isFinancialTermsLockLoading,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildInvestmentDetails(
+                              context,
+                              selectedScheme: state.selectedScheme,
+                              selectedTermYears: state.selectedTermYears,
+                              selectedTermMonths: state.selectedTermMonths,
+                              installmentAmountController:
+                                  state.installmentAmountController,
+                              interestRateController:
+                                  state.interestRateController,
+                              startDate: state.startDate,
+                              startDateController: state.startDateController,
+                              state: state,
+                            ),
+                            InvestmentProjectionCard(
+                              projection: state.projection,
+                            ),
+                          ],
+                        ),
+                      ),
+                      AppSpacings.gapLg,
+                      NomineesInputSection(
+                        nominees: state.nominees.value,
+                        onChanged: (newNominees) {
+                          state.nominees.value = newNominees;
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

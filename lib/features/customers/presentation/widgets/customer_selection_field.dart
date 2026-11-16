@@ -60,50 +60,54 @@ class CustomerSelectionField extends HookConsumerWidget {
               ? displayCustomer.cifNumber!
               : displayCustomer.phone?.toPhoneFormat());
 
-    return InkWell(
-      // The themed input corners, so the ripple stays inside the field.
-      borderRadius: BorderRadius.circular(AppShapes.large),
-      onTap: showSelectionSheet,
-      child: InputDecorator(
-        decoration: AppInputDecoration.m3(
-          context,
-          labelText: t.oneTimeDeposits.fields.customerId,
-          prefixIcon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedUser,
-            size: AppDimensions.iconMd,
-          ),
-          errorText: errorText,
-          isRequired: true,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                displayCustomer?.name ?? t.customers.selectCustomer,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: displayCustomer == null
-                      ? Theme.of(context).hintColor
-                      : Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-            ),
-            if (secondaryIdentifier != null && secondaryIdentifier.isNotEmpty) ...[
-              AppSpacings.gapSm,
-              Text(
-                secondaryIdentifier,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-            AppSpacings.gapXs,
-            const HugeIcon(
-              icon: HugeIcons.strokeRoundedArrowDown01,
+    return AppLabeledField(
+      labelText: t.oneTimeDeposits.fields.customerId,
+      isRequired: true,
+      builder: (context, label) => InkWell(
+        // The themed input corners, so the ripple stays inside the field.
+        borderRadius: BorderRadius.circular(AppShapes.large),
+        onTap: showSelectionSheet,
+        child: InputDecorator(
+          decoration: AppInputDecoration.m3(
+            context,
+            labelText: label,
+            prefixIcon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedUser,
               size: AppDimensions.iconMd,
             ),
-          ],
+            errorText: errorText,
+            isRequired: true,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                // Wraps: a name cut with an ellipsis is not the name.
+                child: Text(
+                  displayCustomer?.name ?? t.customers.selectCustomer,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: displayCustomer == null
+                        ? Theme.of(context).hintColor
+                        : Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              if (secondaryIdentifier != null && secondaryIdentifier.isNotEmpty) ...[
+                AppSpacings.gapSm,
+                Text(
+                  secondaryIdentifier,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              AppSpacings.gapXs,
+              const HugeIcon(
+                icon: HugeIcons.strokeRoundedArrowDown01,
+                size: AppDimensions.iconMd,
+              ),
+            ],
+          ),
         ),
       ),
     );
