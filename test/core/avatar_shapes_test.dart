@@ -27,8 +27,9 @@ import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_tr
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skeletonizer/skeletonizer.dart' show SkeletonizerConfig;
 
-/// On rows and headers an avatar's shape names a deposit scheme and nothing else. It also
-/// stood for a row's status, a payment's mode, and (differently per person) for nothing.
+/// Shapes are decoration: nothing is said by a shape alone. A deposit's avatar takes its
+/// scheme's shape, a customer's takes one from their name, and neither a row's status nor
+/// a payment's mode has a shape of its own, as they once had.
 void main() {
   final source = FakeDataSource();
 
@@ -101,25 +102,48 @@ void main() {
 
   final rdShape = RecurringSchemeType.recurringDeposit.avatarShape;
 
-  test('every scheme has a shape of its own, and none is the shape of a person', () {
-    final shapes = [
-      for (final scheme in OneTimeSchemeType.values) scheme.avatarShape,
-      for (final scheme in RecurringSchemeType.values) scheme.avatarShape,
+  final schemeShapes = [
+    for (final scheme in OneTimeSchemeType.values) scheme.avatarShape,
+    for (final scheme in RecurringSchemeType.values) scheme.avatarShape,
+  ];
+
+  test('every scheme has a shape of its own, and none is the plain one', () {
+    expect(schemeShapes.toSet(), hasLength(schemeShapes.length));
+    expect(schemeShapes, isNot(contains(AppAvatarShape.neutral)));
+  });
+
+  test('a person\'s shape comes from their name: always the same one, never a scheme\'s', () {
+    final names = [
+      for (final customer in source.customers) customer.name,
+      'A', 'Zoya', 'Venkateshwara Subramanian', 'ಕಿರಣ್', '',
     ];
-    expect(shapes.toSet(), hasLength(shapes.length));
-    expect(shapes, isNot(contains(AppAvatarShape.person)));
-    expect(shapes, isNot(contains(AppAvatarShape.neutral)));
+    for (final name in names) {
+      final shape = AppAvatarShape.forPerson(name);
+      expect(AppAvatarShape.forPerson(name), shape);
+      expect(schemeShapes, isNot(contains(shape)), reason: name);
+      expect(shape, isNot(AppAvatarShape.neutral), reason: name);
+    }
   });
 
-  testWidgets('every customer in the list has the same shape', (tester) async {
+  testWidgets('the customer list shows a mix of shapes, each customer their own', (
+    tester,
+  ) async {
     await pumpScreen(tester, const CustomersScreen());
-    expect(find.byType(EntityListTile), findsNWidgets(source.customers.length));
-    expect(shapesIn(tester, find.byType(EntityListTile)), {AppAvatarShape.person});
+    final rows = find.byType(EntityListTile);
+    expect(rows, findsNWidgets(source.customers.length));
+
+    final shapes = shapesIn(tester, rows);
+    expect(shapes.length, greaterThan(1));
+    expect(shapes, {for (final customer in source.customers) AppAvatarShape.forPerson(customer.name)});
   });
 
-  testWidgets('a customer has that shape on their own screen too', (tester) async {
-    await pumpScreen(tester, CustomerDetailScreen(customerId: source.customers.first.id));
-    expect(shapesIn(tester, find.byType(EntityDetailHeader)), {AppAvatarShape.person});
+  testWidgets('a customer has the same shape on their own screen', (tester) async {
+    final customer = source.customers.first;
+    await pumpScreen(tester, CustomerDetailScreen(customerId: customer.id));
+    expect(
+      shapesIn(tester, find.byType(EntityDetailHeader)),
+      {AppAvatarShape.forPerson(customer.name)},
+    );
   });
 
   for (final (name, now) in [

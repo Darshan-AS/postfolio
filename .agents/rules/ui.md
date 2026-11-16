@@ -23,7 +23,7 @@ Use centralized Dart extensions in `lib/core/extensions/`:
 - **Grouped rows**: Lists and sections are `AppGroup` / `AppGroupTile` / `AppGroupListView` (`lib/core/widgets/expressive/app_group.dart`). Plain `Card`, `ListTile`, `ExpansionTile` and a `Divider` between rows are not used.
 - **Large text**: `AppDimensions.isLargeText(context)` (text scale above `AppDimensions.largeTextScale`, 1.3) is the one switch for rows that cannot stay side by side. Above it each part takes its own line. Do not define a local threshold.
 - **Colour roles**: Red (`error`, `AppFinancialColors.overdue`) marks what is overdue or in error, and destructive actions. It is not the colour of a routine action (Collect is the brand colour) or of the agent's own money (`AppFinancialColors.fronted`).
-- **Avatar shapes**: On a row or a detail header a shape other than a circle names a deposit scheme (`schemeType.avatarShape`) and nothing else. People are `AppAvatarShape.person`, an icon that stands for no scheme is `AppAvatarShape.neutral`. Status is a pill and a colour; a payment mode is an icon.
+- **Avatar shapes**: Shapes are decoration, not a code (Material's shape guidance: a shape has no fixed meaning; the Expressive shapes are for avatars and image crops). A customer's avatar is `AppAvatarShape.forPerson(name)`. A deposit's is `schemeType.avatarShape`, with the scheme written inside. An icon that stands for neither is `AppAvatarShape.neutral`. Never let a shape be the only thing that says a status, a payment mode or a scheme.
 - **Localization**: No hardcoded strings. Use **Slang** i18n system.
 - **Icons**: Use `hugeicons` library exclusively. `HugeIcon` is a widget, not `IconData`, so community APIs that take `IconData` cannot be used.
 
