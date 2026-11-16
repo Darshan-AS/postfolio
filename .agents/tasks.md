@@ -92,6 +92,7 @@
   - [x] **Compact detail header**: a 64dp avatar beside the name instead of a centred hero; a recurring deposit's tabs start above the middle of a phone.
   - [x] **List rows**: WhatsApp in the row's menu, a status badge only when not Active, a search hint that is never cut, and account numbers as titles on a customer's deposits.
   - [x] **Forms**: one Confirm button under the fields, above the keyboard; labels above the field above 1.3x text; label and icon on the first row of a multi-row field.
+  - [x] **Shapes**: an avatar's shape names a scheme only; people and payments are circles, Hub rows take the recurring scheme's shape.
 
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone, an emulator or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width).

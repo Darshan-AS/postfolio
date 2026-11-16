@@ -42,7 +42,7 @@ class _CustomerCardView extends StatelessWidget {
     return EntityListTile(
       position: position,
       leadingText: name.isNotEmpty ? name[0].toUpperCase() : '?',
-      leadingShape: AppAvatarShape.forSeed(name),
+      leadingShape: AppAvatarShape.person,
       title: name,
       subtitle: Text(
         hasPhone ? phone!.toPhoneFormat() : t.common.notProvided,

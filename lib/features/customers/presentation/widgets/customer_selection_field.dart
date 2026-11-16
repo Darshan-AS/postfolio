@@ -223,7 +223,7 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
           leadingText: customer.name.isNotEmpty
               ? customer.name.substring(0, 1).toUpperCase()
               : '?',
-          leadingShape: AppAvatarShape.forSeed(customer.name),
+          leadingShape: AppAvatarShape.person,
           title: customer.name,
           subtitle: subtitleParts.isEmpty
               ? null

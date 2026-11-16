@@ -2,7 +2,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 
 /// Shapes from the official Material shape library ([MaterialShapes]) used for avatars and
-/// hero badges. Material 3 Expressive uses these instead of plain circles.
+/// hero badges.
+///
+/// On a row or a detail header a shape other than a circle names a deposit scheme, and
+/// nothing else: status is a pill and a colour, a payment mode is an icon. People are
+/// [person]. Illustrations (empty states, the login badge) use whichever shape suits them.
 enum AppAvatarShape {
   circle,
   cookie4,
@@ -40,28 +44,12 @@ enum AppAvatarShape {
     AppAvatarShape.pill => MaterialShapes.pill,
   };
 
-  /// Shapes with enough even interior for one or two characters of text.
-  static const List<AppAvatarShape> _personShapes = [
-    AppAvatarShape.cookie9,
-    AppAvatarShape.cookie6,
-    AppAvatarShape.clover4,
-    AppAvatarShape.sunny,
-    AppAvatarShape.cookie12,
-    AppAvatarShape.pentagon,
-    AppAvatarShape.cookie7,
-    AppAvatarShape.flower,
-  ];
+  /// The shape of every person. It varied from person to person, in the shapes the
+  /// schemes use, and meant nothing.
+  static const AppAvatarShape person = AppAvatarShape.circle;
 
-  /// A shape chosen from [seed] (a name or id), so the same person always gets the same
-  /// shape and a list shows a mix of them. Uses the code units rather than `hashCode`,
-  /// which differs between the VM and the web.
-  static AppAvatarShape forSeed(String seed) {
-    var sum = 0;
-    for (final unit in seed.codeUnits) {
-      sum = (sum + unit) & 0x7fffffff;
-    }
-    return _personShapes[sum % _personShapes.length];
-  }
+  /// The shape of an avatar that holds an icon and stands for no scheme.
+  static const AppAvatarShape neutral = AppAvatarShape.circle;
 }
 
 /// A tinted Material shape holding an initial, a short code or an icon.

@@ -64,7 +64,7 @@ class CustomerDetailScreen extends ConsumerWidget {
             avatarText: customer.name.isNotEmpty
                 ? customer.name[0].toUpperCase()
                 : t.common.notProvided,
-            avatarShape: AppAvatarShape.forSeed(customer.name),
+            avatarShape: AppAvatarShape.person,
             title: customer.name,
             // A number or an address broken across two lines reads as two things, so each
             // stays on one line and shrinks when it has to.

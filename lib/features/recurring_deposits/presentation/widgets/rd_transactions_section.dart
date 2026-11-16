@@ -17,7 +17,6 @@ import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -262,17 +261,6 @@ class _TransactionList extends StatelessWidget {
   }
 }
 
-/// The avatar shape that stands for each payment mode, so a mode is recognisable by outline
-/// as well as by its icon (`RDPaymentModeIcon.icon`).
-extension _PaymentModeAvatar on RDPaymentMode {
-  AppAvatarShape get avatarShape => switch (this) {
-    RDPaymentMode.cash => AppAvatarShape.cookie9,
-    RDPaymentMode.upi => AppAvatarShape.clover4,
-    RDPaymentMode.cheque => AppAvatarShape.pentagon,
-    RDPaymentMode.bankTransfer => AppAvatarShape.cookie4,
-  };
-}
-
 /// One receipt: the amount collected, when and how it was paid, and the months it was
 /// applied to. Swiping it away or its overflow menu deletes the payment after confirmation.
 ///
@@ -340,7 +328,9 @@ class RDTransactionTile extends ConsumerWidget {
           children: [
             AppShapeAvatar(
               size: AppDimensions.avatarMd,
-              shape: tx.paymentMode.avatarShape,
+              // The mode is the icon. It also had a shape of its own, two of them the
+              // shapes of deposit schemes.
+              shape: AppAvatarShape.neutral,
               backgroundColor: scheme.secondaryContainer,
               foregroundColor: scheme.onSecondaryContainer,
               child: AppIcon(tx.paymentMode.icon, size: AppDimensions.iconMd),

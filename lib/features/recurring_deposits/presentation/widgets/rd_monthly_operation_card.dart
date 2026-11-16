@@ -7,6 +7,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
+import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
@@ -31,21 +32,6 @@ typedef RDOperationActionSpec = ({
   AppButtonVariant variant,
   VoidCallback? onPressed,
 });
-
-/// The avatar outline that stands for each status, so a column of rows can be scanned by
-/// shape as well as by colour: a burst needs chasing, a scalloped seal is done.
-extension _StatusAvatarShape on RDInstallmentDisplayStatus {
-  AppAvatarShape get _avatarShape => switch (this) {
-    RDInstallmentDisplayStatus.baseline => AppAvatarShape.circle,
-    RDInstallmentDisplayStatus.settled => AppAvatarShape.cookie12,
-    RDInstallmentDisplayStatus.collectedPendingPo => AppAvatarShape.cookie6,
-    RDInstallmentDisplayStatus.partiallyPaid => AppAvatarShape.clover4,
-    RDInstallmentDisplayStatus.frontedByAgent => AppAvatarShape.pentagon,
-    RDInstallmentDisplayStatus.overdue => AppAvatarShape.softBurst,
-    RDInstallmentDisplayStatus.dueToday => AppAvatarShape.sunny,
-    RDInstallmentDisplayStatus.upcoming => AppAvatarShape.cookie9,
-  };
-}
 
 /// The money a row should headline, resolved once per row.
 typedef _RowMoney = ({String headline, Color color, List<String> captionParts});
@@ -293,9 +279,10 @@ class RDMonthlyOperationCard extends StatelessWidget {
           : _InstallmentAvatar(
               installmentNumber: item.installmentNumber,
               status: status,
-              // An account in arrears wears the overdue shape whatever this month's status.
-              shape: (inArrears ? RDInstallmentDisplayStatus.overdue : status)
-                  ._avatarShape,
+              // The scheme's shape, as on the Accounts list. The status is the avatar's
+              // colour and the pill; eight shapes for eight statuses, three of them the
+              // shapes of other schemes, was a second code nobody could learn.
+              shape: deposit.schemeType.avatarShape,
               visual: visual,
             ),
       title: titleByAccount
