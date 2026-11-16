@@ -85,7 +85,7 @@
 - [x] **M10 (Sweep and verification)**: no plain `Card`, `ListTile`, `ExpansionTile`, `Divider`, Material button, `SegmentedButton`, FAB or progress indicator left outside the wrappers; one text-scale threshold (`AppDimensions.largeTextScale`). Analyzer, fast tests, coverage gate and `flutter build web --wasm` pass; see the session log for what was not run.
 - [x] **M11 (Sort and filter sheets, follow-up)**: the filter sheet's options are a multi-select `AppButtonGroup` instead of stock chips; both sheets open through `AppAdaptiveSheet` (dialog on wide windows, full-height sheet on a phone); list rows keep the name whole above 1.3x text. `test/core/sort_filter_sheet_test.dart` covers both sheets, which had no test.
 - [x] **M12 (Last stock chips, follow-up)**: the dashboard chart's scheme selector is a button group and "Include RDs" a toggle; the collect sheet's quick amounts are toggle buttons; "Split evenly" is a tonal button. `AppButton.toggle` is new. No chip is left in `lib`. The chart's value axis keeps its unit at large text. `test/features/choice_controls_test.dart` covers all of it; none had a test.
-- [ ] **M13 (Design critique pass, 2026-11-16)**: the layout-only items of the design critique, one commit each. Log: `.agents/session_logs/2026-11-16_session_1.md`.
+- [x] **M13 (Design critique pass, 2026-11-16)**: the layout-only items of the design critique, one commit each. Log: `.agents/session_logs/2026-11-16_session_1.md`.
   - [x] **Monthly Hub density**: two-line header tiles, no group header for a customer with one account, one figure per row with the action on the status line.
   - [x] **Red means overdue**: Collect is always the brand colour and Deposit tonal; "from pocket" on the sheets takes the fronted colour.
   - [x] **Labelled view switch**: Accounts / Monthly Hub are two labelled segments in the app bar's title slot instead of two icons.
@@ -101,8 +101,17 @@
 - [ ] **Web icon font (decision)**: `flutter build web --wasm` now ships 1,261,120 bytes of `MaterialIcons-Regular.otf` (469 KB gzipped) instead of 7,736. `material_3_expressive` declares every Material icon in `M3EIcons` without `@staticIconProvider`, and every component imports it. With that annotation added to a copy of the package the font is 9,624 bytes. Android is not affected (2,116 bytes). Choose: report it upstream and wait, or override the dependency with a patched copy.
 - [ ] **Flaky Hub integration test** (`test/supabase_rd_ledger_e2e_test.dart`, "Hub: summaries stream, backfill, rows, KPIs"): it sleeps 500 ms and then expects a Realtime row that was measured to take 95–611 ms. It fails more often on this branch than on `502f1ac` although it compiles no file this branch changed. Suggested: wait until the row shows, capped below the provider's 2 s reload. Not changed here; it is outside the redesign.
 - [ ] **Palette**: the brand scheme now uses `DynamicSchemeVariant.vibrant` (`lib/core/theme/app_theme.dart`). Keep it, or go back to the default variant in that one line.
-- [ ] **Strings** (not changed, no new Slang keys were added): "1 months" on the passbook PO strip; `UnsavedChangesPopScope` has hard-coded English; three long field labels are cut at 2.0x text.
+- [ ] **Strings** (not changed, no new Slang keys were added): "1 months" on the passbook PO strip; `UnsavedChangesPopScope` has hard-coded English. (The field labels cut at 2.0x text are fixed: above 1.3x a label sits above its field.)
 - [ ] **Hub at 2.0x text**: the four header tiles take a line each, so the first row starts below the fold on an 800dp screen. The alternative is a 2×2 grid with smaller figures.
+- [ ] **Critique items that need a decision or strings** (details in `.agents/session_logs/2026-11-16_session_1.md`, "Not done"):
+  - Desktop list width: `test/ui/accessibility_and_layout_invariants_test.dart` asserts that the search bar spans a 1280dp window and that row menus are flush right, so capping the lists means changing that decision.
+  - New strings: labelled fee and fronting controls on the visit sheet; sheet titles that end in a bare serial; "Close deposit" in the detail menu; the maturity date in the one-time deposit header; what the "6" in "5 / 6" on the dashboard is; a "Plan visit" button in place of the "In hand" tile's second job.
+  - Hook change: grouping the amount typed on the collect sheet (the payment hook parses the field's text).
+  - Fields without an outline at rest: needs the filled-field layout with the label inside, which changes every field's height.
+  - Hub toolbar: the group and select toggles inside the search pill. The select toggle is the only visible way into selection, and grouping has no other place to go.
+  - Shell: theme and sign-out into one account menu; the "+" on a customer's screen as add buttons on the deposit sections.
+  - Palette: less chroma in the neutrals (one line in the theme; look at it on a device first).
+  - Product: the Hub as its own destination; a dashboard that says what to do; masking Aadhaar.
 - [ ] **`material_ui` Expressive coverage**: when the official package ships an Expressive button group, FAB menu, navigation bar or loading indicator, move that `App*` wrapper onto it and drop the community widget.
 
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)

@@ -22,6 +22,8 @@ Use centralized Dart extensions in `lib/core/extensions/`:
 - **Surfaces by role**: Content is separated by tone, not by outlines or dividers. Use `colorScheme.page` (scaffold, bars), `.raised` (rows and cards on the page) and `.inset` (fields and tiles inside a raised container) from `lib/core/theme/app_surfaces.dart`.
 - **Grouped rows**: Lists and sections are `AppGroup` / `AppGroupTile` / `AppGroupListView` (`lib/core/widgets/expressive/app_group.dart`). Plain `Card`, `ListTile`, `ExpansionTile` and a `Divider` between rows are not used.
 - **Large text**: `AppDimensions.isLargeText(context)` (text scale above `AppDimensions.largeTextScale`, 1.3) is the one switch for rows that cannot stay side by side. Above it each part takes its own line. Do not define a local threshold.
+- **Colour roles**: Red (`error`, `AppFinancialColors.overdue`) marks what is overdue or in error, and destructive actions. It is not the colour of a routine action (Collect is the brand colour) or of the agent's own money (`AppFinancialColors.fronted`).
+- **Avatar shapes**: On a row or a detail header a shape other than a circle names a deposit scheme (`schemeType.avatarShape`) and nothing else. People are `AppAvatarShape.person`, an icon that stands for no scheme is `AppAvatarShape.neutral`. Status is a pill and a colour; a payment mode is an icon.
 - **Localization**: No hardcoded strings. Use **Slang** i18n system.
 - **Icons**: Use `hugeicons` library exclusively. `HugeIcon` is a widget, not `IconData`, so community APIs that take `IconData` cannot be used.
 
@@ -37,3 +39,9 @@ Use centralized Dart extensions in `lib/core/extensions/`:
 - **Tooltips**: Pass `tooltip:` to the `App*` wrapper, or use the official `Tooltip`. The wrappers merge it into the button's semantics node, so an icon-only control is named by its tooltip, as with the official `IconButton`, and `find.byTooltip` finds it. The community package's own tooltip does neither.
 - **Icon buttons in an app bar**: `AppBar` wraps its actions in an `IconTheme`, and `IconButton` takes that colour ahead of the filled and tonal variants' defaults. Set `style: IconButton.styleFrom(foregroundColor: …)` on `IconButton.filled` / `.filledTonal` there.
 - **Full-width buttons in rows that grow**: In a list row, which is as wide as the window on desktop, cap a full-width button at `AppDimensions.buttonMaxWidth` and align it to the end.
+- **Rows say a thing once**: A row shows a figure once (on the action that carries it, when there is one), one inline action beside its menu, and a status badge only when the status is not the usual one.
+- **Detail header**: `EntityDetailHeader` is one row (avatar, name, supporting line, badge), with `footer` for a full-width block under it. Do not centre a hero above the content.
+- **Detail screen actions**: Edit is the app bar's button. Everything else is a labelled entry of the menu (`EntityDetailScaffold.menuActions`), above Delete.
+- **Forms**: The body of a create / edit screen is `FormScreenBody`: the fields scroll and one Confirm button stays under them, above the keyboard. `FormAppBar` has no save action. Build a field's label through `AppLabeledField` (as `AppTextField` and `AppDropdownField` do), so it moves above the field above 1.3x text instead of being cut.
+- **Search hints**: Give `AppSearchBar` the hint that says what can be searched. It shows it when it fits on one line and "Search..." otherwise.
+- **Text buttons under a title**: `AppButton.text(flushStart: true)` starts the label on the title's edge.
