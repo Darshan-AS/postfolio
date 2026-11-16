@@ -194,7 +194,7 @@ class DepositListTile extends StatelessWidget {
         if (onToggleStatus != null)
           if (status == DepositStatus.active)
             EntityAction(
-              label: t.common.close,
+              label: t.common.closeDeposit,
               icon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedCheckmarkBadge01,
                 size: AppDimensions.iconMd,
@@ -203,7 +203,7 @@ class DepositListTile extends StatelessWidget {
             )
           else if (status == DepositStatus.closed)
             EntityAction(
-              label: t.common.reopen,
+              label: t.common.reopenDeposit,
               icon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedArrowTurnBackward,
                 size: AppDimensions.iconMd,

@@ -3,7 +3,10 @@ import 'package:hugeicons/hugeicons.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
+import 'package:postfolio/core/enums/maturity_urgency.dart';
+import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
@@ -48,13 +51,13 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 size: AppDimensions.iconSm,
               ),
               label: deposit.status == DepositStatus.active
-                  ? t.common.close
-                  : t.common.reopen,
+                  ? t.common.closeDeposit
+                  : t.common.reopenDeposit,
               onTap: () async {
                 final isActive = deposit.status == DepositStatus.active;
                 final confirmed = await AppDialogs.confirmAction(
                   context,
-                  title: isActive ? t.common.close : t.common.reopen,
+                  title: isActive ? t.common.closeDeposit : t.common.reopenDeposit,
                   content: isActive
                       ? t.oneTimeDeposits.closeDepositConfirmation
                       : t.oneTimeDeposits.reopenDepositConfirmation,
@@ -100,11 +103,20 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
             avatarSubtext: deposit.schemeTermLabel,
             avatarShape: deposit.schemeType.avatarShape,
             title: deposit.accountNo ?? t.common.notProvided,
-            subtitle: Text(
-              deposit.schemeType.displayName,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  deposit.schemeType.displayName,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                // The date the screen is most often opened for; it was only in the
+                // Timeline group, half a screen down.
+                _MaturityLine(deposit: deposit),
+              ],
             ),
             badge: StatusBadge(
               status: deposit.status.displayName,
@@ -229,6 +241,35 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// "Matures 10 May 2029", in the colour the list uses for a deposit that is close to
+/// maturity or past it.
+class _MaturityLine extends StatelessWidget {
+  final OneTimeDeposit deposit;
+
+  const _MaturityLine({required this.deposit});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isActive = deposit.status == DepositStatus.active;
+    final urgency = deposit.maturityUrgency;
+    final date = deposit.maturityDate.toAppFormat();
+
+    final color = switch (urgency) {
+      MaturityUrgency.matured when isActive => scheme.error,
+      MaturityUrgency.maturingSoon when isActive => scheme.tertiary,
+      _ => scheme.onSurfaceVariant,
+    };
+    return Text(
+      urgency == MaturityUrgency.matured
+          ? t.common.maturedOn(date: date)
+          : t.common.maturesOn(date: date),
+      style: AppTypography.emphasizedOf(context).bodyMedium?.copyWith(color: color),
     );
   }
 }

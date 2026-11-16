@@ -35,6 +35,10 @@ common:
   add: "Add"
   close: "Close"
   reopen: "Reopen"
+  closeDeposit: "Close deposit"
+  reopenDeposit: "Reopen deposit"
+  maturesOn: "Matures ${date}"
+  maturedOn: "Matured ${date}"
   unsavedChanges:
     title: "Discard unsaved changes?"
     content: "You have unsaved edits. Leave this form without saving?"

@@ -1,11 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:postfolio/core/enums/maturity_urgency.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
+import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
+import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
 import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
@@ -20,8 +24,8 @@ import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skeletonizer/skeletonizer.dart' show SkeletonizerConfig;
 
-/// Deposit detail screens: the status action is in the menu with its label, and the
-/// receipts are grouped by year.
+/// Deposit detail screens: the status action is in the menu with its label, the header
+/// says when a one-time deposit matures, and the receipts are grouped by year.
 void main() {
   final source = FakeDataSource();
   final rd = source.recurringDeposits.first;
@@ -104,11 +108,11 @@ void main() {
 
         // Not an icon in the app bar any more.
         expect(find.byTooltip(t.common.close), findsNothing);
-        expect(find.text(t.common.close), findsNothing);
+        expect(find.text(t.common.closeDeposit), findsNothing);
 
         await tester.tap(find.byKey(const ValueKey('entity_detail_more_button')));
         await tester.pumpAndSettle();
-        final close = find.widgetWithText(MenuItemButton, t.common.close);
+        final close = find.widgetWithText(MenuItemButton, t.common.closeDeposit);
         final delete = find.byKey(const ValueKey('entity_detail_delete_item'));
         expect(close, findsOneWidget);
         expect(tester.getRect(close).bottom, lessThanOrEqualTo(tester.getRect(delete).top));
@@ -116,6 +120,42 @@ void main() {
         await tester.tap(close);
         await tester.pumpAndSettle();
         expect(find.text(confirmation), findsOneWidget);
+      });
+    }
+  });
+
+  group('one-time deposit header', () {
+    for (final deposit in source.oneTimeDeposits) {
+      testWidgets('${deposit.accountNo} says when it matures, under the scheme', (tester) async {
+        await pumpScreen(tester, OneTimeDepositDetailScreen(depositId: deposit.id));
+
+        // The model decides whether it has matured; the header only words and colours it.
+        final urgency = deposit.maturityUrgency;
+        final date = deposit.maturityDate.toAppFormat();
+        final header = find.byType(EntityDetailHeader);
+        final line = find.descendant(
+          of: header,
+          matching: find.text(
+            urgency == MaturityUrgency.matured
+                ? t.common.maturedOn(date: date)
+                : t.common.maturesOn(date: date),
+          ),
+        );
+        expect(line, findsOneWidget);
+
+        final scheme = AppTheme.lightTheme.colorScheme;
+        expect(tester.widget<Text>(line).style?.color, switch (urgency) {
+          MaturityUrgency.matured => scheme.error,
+          MaturityUrgency.maturingSoon => scheme.tertiary,
+          _ => scheme.onSurfaceVariant,
+        });
+
+        final name = find.descendant(
+          of: header,
+          matching: find.text(deposit.schemeType.displayName),
+        );
+        expect(tester.getRect(line).top, greaterThanOrEqualTo(tester.getRect(name).bottom));
+        expect(tester.getRect(line).left, tester.getRect(name).left);
       });
     }
   });

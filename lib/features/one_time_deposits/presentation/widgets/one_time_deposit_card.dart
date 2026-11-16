@@ -88,7 +88,7 @@ class OneTimeDepositCard extends ConsumerWidget {
         final isActive = deposit.status == DepositStatus.active;
         final confirmed = await AppDialogs.confirmAction(
           context,
-          title: isActive ? t.common.close : t.common.reopen,
+          title: isActive ? t.common.closeDeposit : t.common.reopenDeposit,
           content: isActive
               ? t.oneTimeDeposits.closeDepositConfirmation
               : t.oneTimeDeposits.reopenDepositConfirmation,

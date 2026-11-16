@@ -97,13 +97,13 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                 size: AppDimensions.iconSm,
               ),
               label: deposit.status == DepositStatus.active
-                  ? t.common.close
-                  : t.common.reopen,
+                  ? t.common.closeDeposit
+                  : t.common.reopenDeposit,
               onTap: () async {
                 final isActive = deposit.status == DepositStatus.active;
                 final confirmed = await AppDialogs.confirmAction(
                   context,
-                  title: isActive ? t.common.close : t.common.reopen,
+                  title: isActive ? t.common.closeDeposit : t.common.reopenDeposit,
                   content: isActive
                       ? t.recurringDeposits.closeDepositConfirmation
                       : t.recurringDeposits.reopenDepositConfirmation,
