@@ -557,9 +557,19 @@ ROLLBACK;
 BEGIN;
 DO $$
 DECLARE
-  v_existing_email TEXT := (SELECT email FROM public.agent_profiles WHERE email IS NOT NULL LIMIT 1);
-  v_owner UUID := (SELECT id FROM public.agent_profiles WHERE email = v_existing_email LIMIT 1);
-  v_customer_id UUID := (SELECT id FROM public.customers WHERE agent_id = v_owner LIMIT 1);
+  -- Pick an agent that owns a customer: a database with more than one agent profile
+  -- (e.g. a local stack after a Google sign-in) may hold profiles with no customers.
+  v_owner UUID := (
+    SELECT p.id FROM public.agent_profiles p
+    WHERE p.email IS NOT NULL
+      AND EXISTS (SELECT 1 FROM public.customers c WHERE c.agent_id = p.id)
+    ORDER BY p.created_at, p.id
+    LIMIT 1
+  );
+  v_existing_email TEXT := (SELECT email FROM public.agent_profiles WHERE id = v_owner);
+  v_customer_id UUID := (
+    SELECT id FROM public.customers WHERE agent_id = v_owner ORDER BY created_at, id LIMIT 1
+  );
   v_caught_email BOOLEAN := FALSE;
   v_caught_sb BOOLEAN := FALSE;
 BEGIN
