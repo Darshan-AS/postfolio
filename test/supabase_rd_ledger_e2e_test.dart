@@ -168,12 +168,23 @@ void main() {
     expect(items.map((i) => i.deposit.id), contains(rd1));
 
     await container.read(rDMonthlyOperationsActionsProvider.notifier).ensureSummaries();
-    await Future<void>.delayed(const Duration(milliseconds: 500));
 
     final rows = await client.from('rd_ledger_summary').select('rd_id').eq('rd_id', rd1);
     expect(rows, hasLength(1));
 
-    container.invalidate(monthlyOperationItemsProvider);
+    // The list shows a written row when Realtime delivers it, or after the confirmation
+    // reload (2 s) when the channel had not finished joining, as on a cold CI runner.
+    await _until(
+      () =>
+          container
+              .read(monthlyOperationItemsProvider)
+              .value
+              ?.where((i) => i.deposit.id == rd1)
+              .firstOrNull
+              ?.hasSummary ??
+          false,
+    );
+
     items = await container.read(monthlyOperationItemsProvider.future);
     final rd1Item = items.firstWhere((i) => i.deposit.id == rd1);
     expect(rd1Item.hasSummary, isTrue);
