@@ -247,18 +247,37 @@ Because we use **Google Play App Signing**, you can recover:
 - Apply locally with `supabase db reset` (replays all migrations from scratch).
 - Verify RLS + constraints at any time (every case rolls back):
   `docker exec -i supabase_db_postfolio psql -U postgres -d postgres < supabase/tests/rd_ledger_facts_rls.sql`
-- End-to-end provider check against the seeded data: `flutter test test/supabase_rd_ledger_e2e_test.dart`
+- End-to-end provider check (it creates its own agent and account, and removes them): `flutter test test/supabase_rd_ledger_e2e_test.dart`
 - If the Monthly Hub shows stale badges after editing data directly in SQL, pull-to-refresh on the Hub — it re-projects every visible RD from facts and rewrites the summary cache.
 
-### Local seed data & your Google account
-- `supabase/seed.sql` creates a dummy agent (`agent@postfolio.com` / `password123`) with 3 customers, 3 RDs (with payments, PO deposits, a waiver and real arrears), 3 OTDs and nominees. Enum columns (`scheme_type`, `status`, `relationship`, `payment_mode`) **must** use the app's serialised names (`recurringDeposit`, `monthlyIncomeScheme`, `Son`, `bankTransfer`, …) — a raw short code like `'RD'` makes `fromJson` throw and the RD tab fail to load.
-- The **first non-`@example.com` agent to sign in** on the emulator (e.g. your Google account) automatically adopts the seeded portfolio via the `trigger_seed_adoption` trigger. To hand it to a specific account manually:
+### Local seed data
+
+`supabase/seed.sql` runs on every `supabase db reset`. It creates one agent, `agent@postfolio.com` / `password123`, with 21 customers, 20 recurring deposits and 11 one-time deposits.
+
+- **One customer, one situation.** Each customer is there to show one thing in the app, and the customer's Notes field says what. Their first names run A to U in this order, followed by a customer whose name is written in Kannada.
+
+  | # | Customers | What they show |
+  | :--- | :--- | :--- |
+  | 1–11 | Asha to Kavita | The Monthly Hub this month: settled; in hand in cash, by UPI, and enough cash for two Post Office lots; part paid; not yet paid; one and three months in arrears; fronted by the agent; three installments paid at once with default fees; a fee the agent bore |
+  | 12–16 | Lalit to Prakash | Account lifecycle: opened this month; brought into the app with 36 installments paid and an opening receivable; maturing soon; matured and still open; closed |
+  | 17–21 | Ramesh to the Kannada name | Customer shape: a household with two recurring deposits, every one-time scheme and a savings account; a customer with only a name; a name too long for one line; a customer with no account; a name in Kannada script |
+
+- **Dates follow the day of the reset.** Every date is counted back from that day in India time, so "this month", "overdue" and "maturing soon" are true on that day, and nothing is dated after it. The data ages as days pass: after a month end, this month's rows become last month's. Run `supabase db reset` to refresh it.
+- **Signing in.** A build that runs against the local stack (`config/local.json`) shows **Sign in as seeded agent** on the login screen. If you sign in with Google instead, the first such sign-in takes over the seed data (the `trigger_seed_adoption` trigger), and the seeded agent is left with none. To hand the data to a particular account by hand:
   `docker exec supabase_db_postfolio psql -U postgres -d postgres -c "SELECT public.adopt_seed_data('you@example.com');"`
-- Without the Supabase CLI on PATH you can wipe + reseed the running container with:
+- **It is checked.** `test/supabase_seed_scenarios_test.dart` reads the seed through the app's repositories and ledger projection and asserts each situation above. Change the seed and that test together. The test is skipped when the seeded agent owns no customers.
+- **Enum columns** (`scheme_type`, `status`, `relationship`, `payment_mode`) must hold the app's serialised names (`recurringDeposit`, `monthlyIncomeScheme`, `Son`, `bankTransfer`, …). A CHECK constraint refuses anything else.
+- **Reseeding without the Supabase CLI**: wipe, then seed. The seed file does not update rows that exist.
   ```
   docker exec -i supabase_db_postfolio psql -U postgres -d postgres < supabase/tests/wipe_emulator_data.sql
   docker exec -i supabase_db_postfolio psql -U postgres -d postgres < supabase/seed.sql
   ```
+- **Trying another day**: seed as if today were a different date, to see the data on the 1st or the last day of a month:
+  ```
+  docker exec -i supabase_db_postfolio psql -U postgres -d postgres < supabase/tests/wipe_emulator_data.sql
+  docker exec -i -e PGOPTIONS="-c seed.today=2026-11-30" supabase_db_postfolio psql -U postgres -d postgres < supabase/seed.sql
+  ```
+  The app still uses the device's clock, so this is for checking the seed (`flutter test test/supabase_seed_scenarios_test.dart --dart-define=SEED_TODAY=2026-11-30`), not for browsing it.
 
 -   **"Developer Error" on Google Sign-In**: Usually means the SHA-1 in Firebase doesn't match the key used to sign the app (Debug vs Release).
 -   **"Keystore file not found"**: Check the path in `android/key.properties`. It is relative to the `android/app` directory.
