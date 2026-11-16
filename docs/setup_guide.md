@@ -85,7 +85,7 @@ flutter build appbundle
 4. **Then** tag and release the client.
 
 For `20261111000000_v2_4_storage_hardening.sql` specifically:
-- It was rehearsed on the 10 Nov 2026 production copy (757 customers, 766 RDs, 730 OTDs): it applied cleanly and no row counts changed. That copy predates the hosted RD-ledger migration, so the ledger tables were empty in the rehearsal.
+- It was rehearsed twice on copies of production: on 10 Nov 2026 (before the hosted RD-ledger migration) and again on 16 Nov 2026 with the final file (757 customers, 766 RDs, 733 OTDs, 214 ledger summaries, no ledger facts yet). Both times it applied cleanly in one transaction and no row counts or money totals changed.
 - The v2.4 client needs it first: it calls `set_deposit_status` and `log_client_error`, which do not exist before the migration.
 - The installed v2.3.1 client is expected to keep working after it: it uses only tables, views and the three `save_*` RPCs that the migration keeps. This comes from reading that client's code; it has not been run against the migrated schema. One known difference: deleting a customer who has a savings account fails until that client is updated.
 

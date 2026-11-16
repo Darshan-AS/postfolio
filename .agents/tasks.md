@@ -50,7 +50,7 @@
 - [x] **A6 (Enum guard)**: Decide the SQL boundary (restore enum CHECKs and/or tolerant decoding); decode list rows individually and log the original error instead of discarding it.
   - Decision: enum CHECKs in SQL mirroring the Dart enums, plus per-row decoding that names the failing row and reports the cause. Lists remain all-or-nothing.
 - [x] **A7 (Migration rehearsal)**: Apply `20261111000000_v2_4_storage_hardening.sql` to a copy of production data before `supabase db push`; define release ordering.
-  - [ ] Owner action: back up hosted, then `supabase db push`, then tag. The rehearsal copy was from 10 Nov and had no ledger rows; hosted has since had the RD-ledger migration, baselining and new entries.
+  - [ ] Owner action: back up hosted, then `supabase db push`, then tag `v2.4.0+23`. Re-rehearsed on a 16 Nov copy of hosted (clean; see `.agents/session_logs/2026-11-16_session_2.md`).
 - [x] **A8 (Realtime staleness)**: Refetch on resubscribe, retry failed loads, and keep a queued refetch when the in-flight fetch throws.
   - [x] Follow-up (done as B4): every ledger write refetched the whole `rd_ledger_summary` list; Realtime rows are now applied to an in-memory map instead.
 
@@ -59,6 +59,14 @@
 - [x] **B2 (Atomic ledger change)**: one RPC writes ledger facts and their summaries together; every `RDLedgerController` write goes through it.
 - [x] **B3 (Retry-safe single-account deposit)**: the deposit sheet keeps one event id per attempt so a retry after a lost response stores one event.
 - [x] **B4 (Incremental summary stream)**: apply Realtime summary rows to an in-memory map instead of refetching every summary after each write.
+
+### v2.4.0+23 release (2026-11-16)
+- [x] Release-readiness audit, PR #18, README and release checklist brought up to date, SQL contract CASE 17 made independent of which agent profile sorts first.
+- [x] Pin Flutter 3.47.2 in `ci.yml` and `release.yml`; make the Hub E2E test wait for its summary row.
+- [x] Re-rehearse the migration on a current copy of hosted; bump to `2.4.0+23`; changelog.
+- [ ] Merge PR #18 with a merge commit (not squash) once CI is green.
+- [ ] Owner go-ahead, then: full hosted backup → `supabase db push` → tag `v2.4.0+23` → smoke-test web and the release APK on a device → testers update.
+- [ ] After release: move to Flutter 3.50 (import `GlobalCupertinoLocalizations` from `cupertino_ui`) and raise the pin; run the backup workflow once and rehearse a restore.
 
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)
 - [ ] **1. Statutory Rulebook & Circular Reference Docs (`docs/india_post_schemes_policy.md`)**: Compile authoritative citations across `G.S.R. 916(E)`–`922(E)` (National Savings RD, TD, MIS, KVP, NSC Rules 2019 & subsequent Gazette amendments), DOP SB Orders, Finacle CBS / DOP Agent Portal behavior, and MPKBY / SAS agency rules.

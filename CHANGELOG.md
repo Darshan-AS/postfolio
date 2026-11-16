@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0+23] - 2026-11-16
+
+### Added
+- **Counter-fee override**: the deposit sheet and each PO visit line accept the default fee the counter actually charged (for example ₹0 on a holiday waiver); the passbook and Hub totals follow it.
+- **Theme menu**: System, Light, Dark and Accessible modes, with status colours checked for contrast in each.
+- **Copy buttons** for account numbers and identifiers on customer and deposit detail screens.
+- **Deep links and reloads**: opening a link or reloading the web app while signed in no longer flashes the login screen; a link opened while signed out returns to the same page after sign-in.
+- **Unsaved-changes prompt** when leaving a customer or deposit form with edits.
+- **Web error reporting**: uncaught errors on web are recorded in a capped `app_error_logs` table (native builds keep Crashlytics).
+- **CI gate** on pull requests (analysis, tests with coverage floors, Wasm build, migrations and SQL contracts on a clean database) and a nightly encrypted database backup workflow.
+
+### Changed
+- **Deleting is refused when history exists**: a customer who has deposits, or an RD with payments or PO deposits, can no longer be deleted. Previously the linked records were deleted with it.
+- **RD ledger writes are single requests**: a payment, PO deposit, PO visit or undo is stored together with its Hub summary, and tapping Deposit or re-sending a visit after a lost response records it once.
+- **Lists load past 1,000 rows** and recover on their own after a failed load or a dropped connection.
+- **Financial terms of an RD** cannot be changed when the ledger cannot be read to confirm it has no activity.
+- **Forms**: phone numbers accept spaces and hyphens, PAN is upper-cased, Aadhaar/PAN/CIF formats are validated, and forms are width-limited on desktop with a Save button at the bottom.
+- **Nominees**: a new nominee defaults to the remaining share, with an allocated-total badge and a Split Evenly action.
+- **Destructive actions** on detail screens moved into an overflow menu.
+- **Demo Mode** uses fixed, valid sample data.
+- Legacy Firestore, Firebase Auth, Analytics and Performance code and SDKs were removed; Firebase remains for Hosting and Crashlytics only.
+
+### Fixed
+- **Status toggle data loss**: marking an RD or one-time deposit active/closed from a list no longer clears its nominees or the RD's opening receivable.
+- **Hub totals**: a payment recorded right after opening the app was counted twice in the summary; back-to-back payment and fee absorption could overwrite each other.
+- **PO visit planner**: turning on "include unready" added every account on the Hub instead of staying within the selected ones.
+- **Nominee shares** such as 33.33 + 33.33 + 33.34 were rejected as not adding up to 100%.
+- **Dates**: dates entered late in the evening could be stored as the previous day; maturity dates for month-end and 29 February start dates are now correct.
+- **KVP** deposits opened between 1 Dec 2011 and 17 Nov 2014 resolve to 8.4% / 8 years 7 months.
+- **Amounts** show paise when present (₹2.50, ₹616.67) instead of rounding.
+- **Nominee name field** dropped spaces while typing; deleting a middle nominee scrambled the remaining rows.
+- **Layout**: no overflow at 360×800 with 2× text size; list rows no longer leave an empty gap on the right on wide screens.
+
+### Security
+- Internal database helper functions are no longer callable through the API, signed-out callers have no table or function access, and functions added later are not callable until explicitly granted.
+
+### Notes
+- **Apply `20261111000000_v2_4_storage_hardening.sql` to the hosted project before releasing this build** (`docs/setup_guide.md` §2.D). This build calls functions that do not exist before it.
+- After the migration, an installed 2.3.1 client still works with two differences until it is updated: deleting a customer who has a savings account fails, and the database no longer blocks a change to a locked RD's financial terms (2.4 enforces that in the app).
+
 ## [2.3.1+22] - 2026-11-10
 
 ### Fixed
