@@ -26,6 +26,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/controllers/r
 import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_payment_draft.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_sheet_parts.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_account_identity.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 /// Single source of truth for the payment-mode glyphs and short labels used across the sheets.
@@ -106,12 +107,11 @@ class _PaymentForm extends HookConsumerWidget {
     final isEditing = draft.isEditing;
     final deposit = draft.facts.value?.deposit;
     final customer = deposit?.customerName;
-    final serial = deposit?.serialNo;
 
     final title = isEditing
         ? ledger.editPaymentTitle
         : (customer != null && customer.isNotEmpty)
-            ? ledger.collectTitle(customer: customer, serial: serial ?? t.common.notProvided)
+            ? ledger.collectTitle(customer: customer)
             : ledger.logPaymentTitle;
 
     String collectedMessage() {
@@ -224,6 +224,7 @@ class _PaymentForm extends HookConsumerWidget {
         children: [
           RDSheetHeader(
             title: title,
+            subtitle: deposit == null ? null : rdAccountIdentity(deposit),
             onClose: () => Navigator.of(context).maybePop(false),
           ),
           Flexible(

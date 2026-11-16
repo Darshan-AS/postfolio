@@ -19,6 +19,7 @@ import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_deposit_draft.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_sheet_parts.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_account_identity.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 /// Opens the "Deposit next N installments at the Post Office on `date`" sheet.
@@ -65,11 +66,7 @@ class _DepositForm extends HookConsumerWidget {
     final count = draft.count.toString();
 
     final title = (customer != null && customer.isNotEmpty)
-        ? ledger.depositTitleFor(
-            n: count,
-            customer: customer,
-            serial: deposit?.serialNo ?? t.common.notProvided,
-          )
+        ? ledger.depositTitleFor(n: count, customer: customer)
         : ledger.depositTitle(n: count);
 
     Future<void> handleSubmit() async {
@@ -142,6 +139,7 @@ class _DepositForm extends HookConsumerWidget {
       children: [
         RDSheetHeader(
           title: title,
+          subtitle: deposit == null ? null : rdAccountIdentity(deposit),
           onClose: () => Navigator.of(context).maybePop(false),
         ),
         Flexible(

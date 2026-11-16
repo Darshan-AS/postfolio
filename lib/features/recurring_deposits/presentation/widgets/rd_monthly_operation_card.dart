@@ -15,6 +15,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_installment_disp
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_monthly_operation_item.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_account_identity.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_layout.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_status_pill.dart';
@@ -37,7 +38,6 @@ typedef RDOperationActionSpec = ({
 typedef _RowMoney = ({String headline, Color color, List<String> captionParts});
 
 /// Last digits of the account number shown on a row (`A/c …7890`).
-const int _accountTailLength = 4;
 
 /// Day + short month, e.g. "15 Mar" (the hub already says which year).
 const String _dueDatePattern = 'd MMM';
@@ -457,18 +457,7 @@ class _InstallmentAvatar extends StatelessWidget {
 }
 
 /// `Sl 12 · A/c …7890`, or the account alone when the deposit has no serial number.
-String _identityOf(RecurringDeposit deposit) {
-  final card = t.recurringDeposits.monthlyOperations.card;
-  final accountNo = deposit.accountNo ?? '';
-  final last4 = accountNo.length > _accountTailLength
-      ? accountNo.substring(accountNo.length - _accountTailLength)
-      : (accountNo.isEmpty ? t.common.notProvided : accountNo);
-  final account = card.accountTail(last4: last4);
-  final serialNo = deposit.serialNo;
-  return serialNo == null || serialNo.isEmpty
-      ? account
-      : card.identity(serial: card.serial(serialNo: serialNo), account: account);
-}
+String _identityOf(RecurringDeposit deposit) => rdAccountIdentity(deposit);
 
 /// `Sl 12 · A/c …7890 · due 15 Mar` on one line where it fits; only the account may be
 /// ellipsised. The due date moves to a line of its own, and wraps, rather than being cut.

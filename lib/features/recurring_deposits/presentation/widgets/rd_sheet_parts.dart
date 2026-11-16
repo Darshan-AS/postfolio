@@ -39,9 +39,18 @@ TextStyle? rdSheetLargeType(BuildContext context, TextStyle? style) {
 /// the customer and serial number, so they may wrap, and closing goes through [onClose]
 /// (`maybePop`) so a sheet's unsaved-input guard still runs.
 class RDSheetHeader extends StatelessWidget {
-  const RDSheetHeader({super.key, required this.title, required this.onClose});
+  const RDSheetHeader({
+    super.key,
+    required this.title,
+    required this.onClose,
+    this.subtitle,
+  });
 
   final String title;
+
+  /// Which account the sheet is about, under the title. In the title it wrapped with the
+  /// serial alone on the last line.
+  final String? subtitle;
   final VoidCallback onClose;
 
   static const int _titleMaxLines = 3;
@@ -62,17 +71,30 @@ class RDSheetHeader extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Semantics(
-              header: true,
-              child: Text(
-                title,
-                style: rdSheetLargeType(
-                  context,
-                  AppTypography.emphasizedOf(context).titleLarge,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Semantics(
+                  header: true,
+                  child: Text(
+                    title,
+                    style: rdSheetLargeType(
+                      context,
+                      AppTypography.emphasizedOf(context).titleLarge,
+                    ),
+                    maxLines: _titleMaxLines,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                maxLines: _titleMaxLines,
-                overflow: TextOverflow.ellipsis,
-              ),
+                if (subtitle != null)
+                  Text(
+                    subtitle!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
             ),
           ),
           AppSpacings.gapSm,

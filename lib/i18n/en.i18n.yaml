@@ -394,7 +394,7 @@ recurringDeposits:
     installmentsTitle: "Installment Schedule"
     transactionsTitle: "Payment History"
     logPaymentTitle: "Collect"
-    collectTitle: "Collect from ${customer} · ${serial}"
+    collectTitle: "Collect from ${customer}"
     editPaymentTitle: "Edit Payment"
     paymentModeValue: "Payment Mode • ${mode}"
     paymentModes:
@@ -429,7 +429,7 @@ recurringDeposits:
         one: "1 month (${amount})"
         other: "${n} months (${amount})"
     depositTitle: "Deposit ${n}"
-    depositTitleFor: "Deposit ${n} · ${customer} · ${serial}"
+    depositTitleFor: "Deposit ${n} · ${customer}"
     depositThrough: "Deposited through #${month}"
     depositNothingYet: "Nothing deposited yet"
     depositReady:
