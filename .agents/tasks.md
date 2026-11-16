@@ -88,6 +88,7 @@
 - [ ] **M13 (Design critique pass, 2026-11-16)**: the layout-only items of the design critique, one commit each. Log: `.agents/session_logs/2026-11-16_session_1.md`.
   - [x] **Monthly Hub density**: two-line header tiles, no group header for a customer with one account, one figure per row with the action on the status line.
   - [x] **Red means overdue**: Collect is always the brand colour and Deposit tonal; "from pocket" on the sheets takes the fronted colour.
+  - [x] **Labelled view switch**: Accounts / Monthly Hub are two labelled segments in the app bar's title slot instead of two icons.
 
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone, an emulator or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width).

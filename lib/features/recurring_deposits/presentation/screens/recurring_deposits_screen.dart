@@ -84,27 +84,25 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     return Scaffold(
       appBar: ShellAppBar(
         title: t.recurringDeposits.title,
-        // The Accounts ⇄ Hub toggle lives in the app bar so it never eats list height.
-        actions: [
-          AppButtonGroup<RDViewMode>(
-            expand: false,
-            selected: viewMode,
-            onChanged: (mode) =>
-                ref.read(rDViewModeControllerProvider.notifier).setMode(mode),
-            segments: [
-              AppSegment(
-                value: RDViewMode.accounts,
-                tooltip: t.recurringDeposits.views.accounts,
-                icon: HugeIcons.strokeRoundedFolder01,
-              ),
-              AppSegment(
-                value: RDViewMode.monthlyHub,
-                tooltip: t.recurringDeposits.views.monthlyHub,
-                icon: HugeIcons.strokeRoundedCalendar03,
-              ),
-            ],
-          ),
-        ],
+        // The Accounts ⇄ Hub switch is the way into the app's main workflow, so it says
+        // what it switches to. It sits where the title was, which the navigation bar
+        // repeats, so it takes no height from the list.
+        titleControl: AppButtonGroup<RDViewMode>(
+          expand: false,
+          selected: viewMode,
+          onChanged: (mode) =>
+              ref.read(rDViewModeControllerProvider.notifier).setMode(mode),
+          segments: [
+            AppSegment(
+              value: RDViewMode.accounts,
+              label: t.recurringDeposits.views.accounts,
+            ),
+            AppSegment(
+              value: RDViewMode.monthlyHub,
+              label: t.recurringDeposits.views.monthlyHub,
+            ),
+          ],
+        ),
       ),
       body: viewMode == RDViewMode.accounts
           ? _buildAccountsView(
