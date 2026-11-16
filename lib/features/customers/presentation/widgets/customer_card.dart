@@ -62,6 +62,8 @@ class _CustomerCardView extends StatelessWidget {
             onTap: onPhoneTapped!,
             isInline: true,
           ),
+        // In the row's menu, not on the row: two inline actions left the text a third of
+        // a phone's width, and the phone number broke in two.
         if (hasPhone && onWhatsAppTapped != null)
           EntityAction(
             label: t.customers.actions.whatsapp,
@@ -70,7 +72,6 @@ class _CustomerCardView extends StatelessWidget {
               size: AppDimensions.iconMd,
             ),
             onTap: onWhatsAppTapped!,
-            isInline: true,
           ),
         if (onEdit != null) EntityAction.edit(onTap: onEdit!),
         if (onDelete != null) EntityAction.delete(onTap: onDelete!),

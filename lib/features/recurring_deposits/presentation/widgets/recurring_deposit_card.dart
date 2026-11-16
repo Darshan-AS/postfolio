@@ -19,6 +19,8 @@ import 'package:postfolio/i18n/strings.g.dart';
 class RecurringDepositCard extends ConsumerWidget {
   final RecurringDeposit deposit;
   final String? overrideTitle;
+
+  /// Replaces the account number under the title; empty for no line there.
   final String? overrideSubtitle;
 
   /// Where this row sits in its list (see [EntityListTile.position]).

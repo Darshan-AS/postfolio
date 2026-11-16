@@ -175,13 +175,18 @@ class DepositListTile extends StatelessWidget {
                 ),
               ],
             ),
-            AppSpacings.gapXs,
-            StatusBadge(
-              status: status.displayName,
-              depositStatus: status,
-              compact: true,
-              urgency: urgency,
-            ),
+            // Only a status that is not the usual one. The lists open filtered to Active,
+            // so the badge was on every row; what is close to maturity is said by the
+            // row's bar and the line under its title.
+            if (status != DepositStatus.active) ...[
+              AppSpacings.gapXs,
+              StatusBadge(
+                status: status.displayName,
+                depositStatus: status,
+                compact: true,
+                urgency: urgency,
+              ),
+            ],
           ],
         ),
       ),

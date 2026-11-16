@@ -19,6 +19,9 @@ class OneTimeDepositCard extends ConsumerWidget {
   final OneTimeDeposit deposit;
   final String? overrideTitle;
 
+  /// Replaces the account number under the title; empty for no line there.
+  final String? overrideSubtitle;
+
   /// Where this row sits in its list (see [EntityListTile.position]).
   final AppGroupPosition position;
 
@@ -26,6 +29,7 @@ class OneTimeDepositCard extends ConsumerWidget {
     super.key,
     required this.deposit,
     this.overrideTitle,
+    this.overrideSubtitle,
     this.position = AppGroupPosition.single,
   });
 
@@ -53,7 +57,7 @@ class OneTimeDepositCard extends ConsumerWidget {
     return _OneTimeDepositTile(
       deposit: deposit,
       title: title,
-      subtitle: deposit.accountNo ?? t.common.notProvided,
+      subtitle: overrideSubtitle ?? (deposit.accountNo ?? t.common.notProvided),
       urgency: deposit.maturityUrgency,
       relativeTimeText: deposit.maturityRelativeTime,
       position: position,

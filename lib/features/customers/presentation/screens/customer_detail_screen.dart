@@ -361,9 +361,12 @@ class _CustomerDepositsSection extends ConsumerWidget {
             title: t.oneTimeDeposits.title,
             activeDeposits: activeOneTime,
             closedDeposits: closedOneTime,
+            // Titled by account number. The customer is the screen, and the scheme is
+            // on the avatar; as a title "Monthly Income Scheme" was cut beside the amount.
             itemBuilder: (deposit, position) => OneTimeDepositCard(
               deposit: deposit,
-              overrideTitle: deposit.schemeType.displayName,
+              overrideTitle: deposit.accountNo ?? t.common.notProvided,
+              overrideSubtitle: '',
               position: position,
             ),
           ),
@@ -374,7 +377,8 @@ class _CustomerDepositsSection extends ConsumerWidget {
             closedDeposits: closedRecurring,
             itemBuilder: (deposit, position) => RecurringDepositCard(
               deposit: deposit,
-              overrideTitle: deposit.schemeType.displayName,
+              overrideTitle: deposit.accountNo ?? t.common.notProvided,
+              overrideSubtitle: '',
               position: position,
             ),
           ),
