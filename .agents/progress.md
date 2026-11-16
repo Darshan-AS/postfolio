@@ -1,7 +1,14 @@
 # Project Progress
 
 ## Current State
-**v2.4.0+23 prepared for release (2026-11-16, PR #18 `refactor/v2.4-stabilization` → `main`).** Version bumped and changelog written. Not yet done: `supabase db push` on hosted, the tag, an Android release build on a device.
+**Release 2.4.0+23 (2026-11-16).** Shipped: hosted Supabase has `20261111000000_v2_4_storage_hardening.sql` applied; web serves 2.4.0+23 (https://postfolio-app.web.app, checked via `version.json`); the universal APK is on Firebase App Distribution; GitHub Release `v2.4.0+23` has four APKs. Tag is on `99868b9`.
+- **Order followed**: full `pg_dump` backup to Google Drive ("DB backups") → `supabase db push` → tag.
+- **Hosted after the push** (read-only check): all eight migrations recorded; row counts, view counts and money totals identical to before; no `public` function executable by `anon`; `authenticated` can execute exactly the nine documented functions; RLS on every table; the Realtime publication carries `account_identities`, `customers` and the four `rd_*` tables.
+- **First tag run failed at the Android build**: R8 (enabled in Stage 1, never run before the tag) stopped on Play Core classes the Flutter engine references. Fixed with `-dontwarn com.google.android.play.core.**` (PR #19); the tag was moved from `471d522` to `99868b9` with the owner's approval. Nothing had been published from the first run.
+- **Not verified**: nobody has signed in to the released web build or installed the release APK yet; this is the first production use of `apply_rd_ledger_change` and the first R8-shrunk APK. The backup file was checked for structure and row counts, not test-restored.
+- **Still open**: testers to update from 2.3.1; backup workflow secrets and a restore rehearsal; move to Flutter 3.50 and raise the CI pin; the audit items listed under "Still open from the audit" below.
+
+**Previous: v2.4.0+23 prepared for release (2026-11-16, PR #18 `refactor/v2.4-stabilization` → `main`).** Version bumped and changelog written.
 - **Release-readiness audit (`.agents/session_logs/2026-11-16_session_2.md`)**: no redesign or blocking bug found. Local run on the branch: analyzer clean, 213 fast tests, coverage gate, `flutter build web --wasm`, 21/21 SQL contracts.
 - **First CI run on GitHub failed twice, both fixed**: (1) unpinned `stable` had moved to Flutter 3.50, whose deprecation of `GlobalCupertinoLocalizations` fails `--fatal-infos`; `ci.yml` and `release.yml` now pin 3.47.2 (the release workflow would have failed the same way at tag time). (2) The Hub E2E test slept 500 ms for a summary row that arrives by Realtime or by the 2 s confirmation reload; it now waits for the row.
 - **Migration re-rehearsed on a 16 Nov copy of hosted** (757 customers, 766 RDs, 733 OTDs, 537 savings accounts, 1,911 nominees, 214 ledger summaries, no ledger facts yet): pre-flight found 0 rows the migration would delete, reject or round; it applied in one transaction; row counts, view counts and money totals were identical afterwards; no `public` function executable by `anon`; RLS on every table. Hosted has migrations through `20261110000000`; only `20261111000000` is pending.
@@ -692,6 +699,7 @@
 - Standardized UI bottom sheets (`AppSortBottomSheet`, `AppFilterBottomSheet`), standardizing their "Clear" actions to prevent abrupt closures and migrating the Sort sheet from `flutter_hooks` to a purely reactive Riverpod `Consumer` pattern.
 
 ## Releases
+- **v2.4.0+23 (2026-11-16)**: v2.4 stabilization — security and data-loss fixes, storage hardening migration, atomic RD ledger writes, pagination past 1,000 rows, exact money and dates, counter-fee overrides, theme and accessibility polish, legacy Firebase data/auth removal, CI gate.
 - **v2.2.1+20 (2026-10-10)**: Overhauled deposit list and detail avatars (`TD` + tenure sublabel, `MIS`, `NSC`, `KVP`, and RD `#<serialNo>`), refined avatar subtext optical spacing, and polished scheme display names.
 - **v2.2.0+19 (2026-10-10)**: Official Post Office historical rate schedule (`PostalRateService`), KVP maturity accuracy fix (`113` months at `7.6%`), Contractual Snapshot pattern, and Docker database backup documentation.
 - **v2.1.0+18 (2026-10-08)**: High-performance CDC streaming stabilization, N+1 deposit card watcher elimination, nominee lateral query pruning, single-entity lazy detail providers, standalone Material/Cupertino packages, DDD AuthUser refactoring, and Flutter SDK baseline upgrade.
