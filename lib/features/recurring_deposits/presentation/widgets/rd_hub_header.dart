@@ -122,7 +122,7 @@ class _KpiGrid extends ConsumerWidget {
         label: strings.toCollect,
         amount: kpis.toCollectAmount.toRupeeFormat(),
         caption: strings.accountsCount(n: kpis.toCollectCount),
-        icon: HugeIcons.strokeRoundedCoins01,
+        count: kpis.toCollectCount,
         visual: toCollectVisual,
         isSelected: statusFilter == RDMonthlyFilter.toCollect,
         onTap: () => toggle(RDMonthlyFilter.toCollect),
@@ -140,7 +140,7 @@ class _KpiGrid extends ConsumerWidget {
                 digital: float.cashInHandDigital.toRupeeFormat(),
               )
             : null,
-        icon: HugeIcons.strokeRoundedBuilding03,
+        count: float.cashInHandAccounts,
         visual: inHandVisual,
         isSelected: false,
         opensPlanner: true,
@@ -153,7 +153,7 @@ class _KpiGrid extends ConsumerWidget {
         label: strings.receivable,
         amount: float.receivableAmount.toRupeeFormat(),
         caption: strings.accountsCount(n: float.receivableAccounts),
-        icon: HugeIcons.strokeRoundedWallet02,
+        count: float.receivableAccounts,
         visual: receivableVisual,
         isSelected: statusFilter == RDMonthlyFilter.fronted,
         onTap: () => toggle(RDMonthlyFilter.fronted),
@@ -163,7 +163,6 @@ class _KpiGrid extends ConsumerWidget {
         label: strings.arrears,
         amount: strings.accountsCount(n: float.arrearsAccounts),
         caption: strings.arrearsCaption,
-        icon: HugeIcons.strokeRoundedAlert02,
         visual: arrearsVisual,
         isSelected: statusFilter == RDMonthlyFilter.overdue,
         onTap: () => toggle(RDMonthlyFilter.overdue),
@@ -238,14 +237,26 @@ class _TileRows extends StatelessWidget {
 /// One tappable KPI tile: a tonal container in its status colours. Money is never
 /// ellipsised — it shrinks to fit.
 ///
+/// Two lines: the label with the number of accounts, then the figure. The header sits
+/// above the list the agent works through, so it stays short; [caption] and [detail] are
+/// read out with the tile but not drawn, and the cash / UPI split is in the visit planner.
+/// The count is a number beside an icon: "125 accounts" would not fit beside "Receivable".
+///
 /// A selected filter swaps the tile's two colours, so the fill turns solid while the
 /// contrast stays that of the tested pair, and gains a tick; it does not rely on a border.
 class _KpiTile extends StatelessWidget {
   final String label;
   final String amount;
+
+  /// Announced after the figure.
   final String caption;
+
+  /// Announced between the figure and the caption.
   final String? detail;
-  final AppIconData icon;
+
+  /// Number of accounts behind the figure, shown at the end of the label's line. Null
+  /// where the figure is itself a count.
+  final int? count;
   final RDStatusVisual visual;
   final bool isSelected;
 
@@ -261,7 +272,7 @@ class _KpiTile extends StatelessWidget {
     required this.amount,
     required this.caption,
     this.detail,
-    required this.icon,
+    this.count,
     required this.visual,
     required this.isSelected,
     this.opensPlanner = false,
@@ -306,8 +317,8 @@ class _KpiTile extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingLg,
-              vertical: AppDimensions.paddingMd,
+              horizontal: AppDimensions.paddingMd,
+              vertical: AppDimensions.paddingSm,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,12 +326,7 @@ class _KpiTile extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    AppIcon(
-                      icon,
-                      size: AppDimensions.iconSm,
-                      color: foreground,
-                    ),
-                    AppSpacings.gapXs,
+                    // The label gives way first; the count beside it is never cut.
                     Expanded(
                       child: Text(
                         label,
@@ -333,6 +339,22 @@ class _KpiTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if (count != null) ...[
+                      AppSpacings.gapXs,
+                      AppIcon(
+                        HugeIcons.strokeRoundedUser,
+                        size: AppDimensions.iconXs,
+                        color: foreground,
+                      ),
+                      AppSpacings.gapXxs,
+                      Text(
+                        '$count',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: foreground,
+                        ),
+                        maxLines: 1,
+                      ),
+                    ],
                     if (trailingIcon != null) ...[
                       AppSpacings.gapXs,
                       AppIcon(
@@ -344,39 +366,14 @@ class _KpiTile extends StatelessWidget {
                     ],
                   ],
                 ),
-                AppSpacings.gapXs,
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: AlignmentDirectional.centerStart,
                   child: Text(
                     amount,
-                    style: emphasized.headlineSmall?.copyWith(
-                      color: foreground,
-                    ),
+                    style: emphasized.titleLarge?.copyWith(color: foreground),
                     maxLines: 1,
                   ),
-                ),
-                if (detail != null)
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text(
-                      detail!,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: foreground,
-                      ),
-                      maxLines: 1,
-                    ),
-                  ),
-                Text(
-                  caption,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: foreground.withValues(
-                      alpha: AppDimensions.opacityMuted,
-                    ),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

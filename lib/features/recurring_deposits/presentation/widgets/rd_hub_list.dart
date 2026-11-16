@@ -96,7 +96,9 @@ class RDHubList extends ConsumerWidget {
   }
 }
 
-/// One customer's block: the header, then that customer's accounts as one group of tiles.
+/// One customer's block. A customer with several accounts gets a header and the accounts
+/// under it as one group of tiles, titled by serial and account. A customer with one
+/// account is just that row: a header would repeat the name the row already carries.
 /// Built lazily, one block per list item, so a long list only builds the customers on screen.
 class _CustomerGroup extends StatelessWidget {
   final RDCustomerGroup group;
@@ -115,12 +117,13 @@ class _CustomerGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = group.items;
+    final hasHeader = items.length > 1;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (!isFirst) AppSpacings.gapSm,
-        _CustomerGroupHeader(group: group),
+        if (hasHeader) _CustomerGroupHeader(group: group),
         for (var i = 0; i < items.length; i++) ...[
           if (i > 0) const SizedBox(height: AppShapes.groupGap),
           _RDHubRow(
@@ -128,6 +131,7 @@ class _CustomerGroup extends StatelessWidget {
             item: items[i],
             now: now,
             position: AppGroupPosition.at(i, items.length),
+            titleByAccount: hasHeader,
           ),
         ],
       ],
@@ -287,11 +291,15 @@ class _RDHubRow extends ConsumerWidget {
   /// Where the row sits in its group of tiles.
   final AppGroupPosition position;
 
+  /// The row sits under its customer's header, so it is titled by serial and account.
+  final bool titleByAccount;
+
   const _RDHubRow({
     super.key,
     required this.item,
     required this.now,
     required this.position,
+    this.titleByAccount = false,
   });
 
   @override
@@ -410,6 +418,7 @@ class _RDHubRow extends ConsumerWidget {
         item: item,
         evaluationDate: now,
         position: position,
+        titleByAccount: titleByAccount,
         isSelected: isSelected,
         isSelectionMode: isSelectionMode,
         isBusy: isBusy,

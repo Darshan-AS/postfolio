@@ -85,6 +85,8 @@
 - [x] **M10 (Sweep and verification)**: no plain `Card`, `ListTile`, `ExpansionTile`, `Divider`, Material button, `SegmentedButton`, FAB or progress indicator left outside the wrappers; one text-scale threshold (`AppDimensions.largeTextScale`). Analyzer, fast tests, coverage gate and `flutter build web --wasm` pass; see the session log for what was not run.
 - [x] **M11 (Sort and filter sheets, follow-up)**: the filter sheet's options are a multi-select `AppButtonGroup` instead of stock chips; both sheets open through `AppAdaptiveSheet` (dialog on wide windows, full-height sheet on a phone); list rows keep the name whole above 1.3x text. `test/core/sort_filter_sheet_test.dart` covers both sheets, which had no test.
 - [x] **M12 (Last stock chips, follow-up)**: the dashboard chart's scheme selector is a button group and "Include RDs" a toggle; the collect sheet's quick amounts are toggle buttons; "Split evenly" is a tonal button. `AppButton.toggle` is new. No chip is left in `lib`. The chart's value axis keeps its unit at large text. `test/features/choice_controls_test.dart` covers all of it; none had a test.
+- [ ] **M13 (Design critique pass, 2026-11-16)**: the layout-only items of the design critique, one commit each. Log: `.agents/session_logs/2026-11-16_session_1.md`.
+  - [x] **Monthly Hub density**: two-line header tiles, no group header for a customer with one account, one figure per row with the action on the status line.
 
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone, an emulator or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width).

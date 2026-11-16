@@ -18,6 +18,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/controllers/r
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_batch_bar.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operation_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operations_view.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_status_pill.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skeletonizer/skeletonizer.dart' show SkeletonizerConfig;
@@ -32,6 +33,10 @@ void main() {
 
   final source = FakeDataSource();
   final ops = t.recurringDeposits.monthlyOperations;
+
+  /// The customer given a second account in [pumpHub], and one of those who keep one.
+  const twoAccounts = 'Deepika Sharma';
+  const oneAccount = 'Arjun Mehta';
 
   Future<void> settle(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 250));
@@ -57,8 +62,14 @@ void main() {
       transactions: source.rdTransactions,
       poDeposits: source.rdPoDeposits,
     );
+    // Deepika Sharma holds two accounts here: one customer with a header, four without.
     final deposits = FakeRecurringDepositRepository(
-      deposits: source.recurringDeposits,
+      deposits: [
+        ...source.recurringDeposits,
+        source.recurringDeposits
+            .firstWhere((d) => d.customerName == twoAccounts)
+            .copyWith(id: 'rd-second', serialNo: '6', accountNo: '100200306'),
+      ],
     );
     addTearDown(ledger.dispose);
     addTearDown(deposits.dispose);
@@ -138,7 +149,7 @@ void main() {
         expect(filters().dueWindow, RDDueWindowFilter.all);
 
         expect(filters().groupByCustomer, isTrue);
-        expect(find.text(ops.customerGroup.selectGroup), findsWidgets);
+        expect(find.text(ops.customerGroup.selectGroup), findsOneWidget);
         await tester.tap(find.byTooltip(ops.toolbar.groupByCustomer));
         await settle(tester);
         expect(filters().groupByCustomer, isFalse);
@@ -204,10 +215,11 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(RDHubBatchBar), findsNothing);
 
+        // The one customer with two accounts: Select All ticks both.
         final selectAll = find.text(ops.customerGroup.selectGroup);
-        await tester.tap(selectAll.at(0));
+        await tester.ensureVisible(selectAll);
         await tester.pumpAndSettle();
-        await tester.tap(selectAll.at(1));
+        await tester.tap(selectAll);
         await tester.pumpAndSettle();
 
         final selection = container.read(rDHubSelectionProvider);
@@ -294,6 +306,98 @@ void main() {
     );
   });
 
+  group('Monthly Hub layout', () {
+    testWidgets('only a customer with several accounts gets a header; its rows are titled '
+        'by account', (tester) async {
+      final container = await pumpHub(tester, height: 2400);
+
+      // One account: the row carries the name, and nothing repeats it above.
+      expect(find.text(oneAccount), findsOneWidget);
+      expect(find.textContaining('$oneAccount •'), findsNothing);
+
+      // Two accounts: the name is in the header only, and each row says which account.
+      expect(find.textContaining('$twoAccounts •'), findsOneWidget);
+      expect(find.text(twoAccounts), findsNothing);
+      final titles = [
+        for (final card in tester.widgetList<RDMonthlyOperationCard>(
+          find.byType(RDMonthlyOperationCard),
+        ))
+          if (card.item.deposit.customerName == twoAccounts) card.titleByAccount,
+      ];
+      expect(titles, [isTrue, isTrue]);
+      expect(find.textContaining('…0306'), findsOneWidget);
+
+      // Ungrouped there is no header to carry the name, so every row does.
+      container.read(rDHubFiltersProvider.notifier).toggleGroupByCustomer(false);
+      await settle(tester);
+      expect(find.text(twoAccounts), findsNWidgets(2));
+      expect(find.textContaining('$twoAccounts •'), findsNothing);
+    });
+
+    testWidgets('a row shows the amount to collect once, on its button', (tester) async {
+      await pumpHub(tester, height: 2400, today: DateTime(2026, 12, 20));
+
+      final cards = tester
+          .widgetList<RDMonthlyOperationCard>(find.byType(RDMonthlyOperationCard))
+          .where((card) => card.item.isCustomerPending && card.item.totalOutstanding > 0)
+          .toList();
+      expect(cards, isNotEmpty);
+
+      for (final card in cards) {
+        final amount = card.item.totalOutstanding.toRupeeFormat();
+        final inRow = find.descendant(
+          of: find.byWidget(card),
+          matching: find.textContaining(amount),
+        );
+        expect(inRow, findsOneWidget, reason: '$amount in ${card.item.deposit.accountNo}');
+        expect(
+          tester.widget<Text>(inRow).data,
+          ops.card.collect(amount: amount),
+        );
+      }
+    });
+
+    testWidgets('the status pill and the action share one line', (tester) async {
+      await pumpHub(tester, height: 2400, today: DateTime(2026, 12, 20));
+
+      final card = find.byType(RDMonthlyOperationCard).first;
+      final pill = tester.getRect(
+        find.descendant(of: card, matching: find.byType(RDStatusPill)),
+      );
+      final action = tester.getRect(
+        find.descendant(of: card, matching: find.byType(RDOperationActionButton)),
+      );
+      expect(action.left, greaterThan(pill.right));
+      expect(action.center.dy, closeTo(pill.center.dy, 1));
+      // Touch target of the action, though it hugs its label.
+      expect(action.height, greaterThanOrEqualTo(48));
+      // Nothing but the caption may follow that line: the action no longer has its own.
+      expect(tester.getRect(card).bottom - action.bottom, lessThan(action.height));
+    });
+
+    testWidgets('the four header tiles take under 150dp of a 360dp phone', (tester) async {
+      await pumpHub(tester);
+
+      final tiles = [
+        for (final label in [
+          ops.kpis.toCollect,
+          ops.kpis.inHand,
+          ops.kpis.receivable,
+          ops.kpis.arrears,
+        ])
+          tester.getRect(
+            find.ancestor(of: find.text(label), matching: find.byType(AppGroupTile)),
+          ),
+      ];
+      final top = tiles.map((r) => r.top).reduce((a, b) => a < b ? a : b);
+      final bottom = tiles.map((r) => r.bottom).reduce((a, b) => a > b ? a : b);
+      expect(bottom - top, lessThan(150));
+      // Two across: money keeps room to be read.
+      expect(tiles[0].top, tiles[1].top);
+      expect(tiles[2].top, greaterThan(tiles[0].bottom));
+    });
+  });
+
   // The window is tall on purpose. At 2.0x text the header's four full-width tiles fill an
   // 800dp screen, so a phone-sized window would never lay the rows out and the check would
   // pass without looking at them.
@@ -366,7 +470,8 @@ void main() {
                     .read(rDHubFiltersProvider.notifier)
                     .setStatus(RDMonthlyFilter.overdue);
               },
-              expects: find.textContaining(RegExp(r'^owes ₹')),
+              // Every account in arrears has something to collect.
+              expects: find.byType(RDOperationActionButton),
               hasRows: true,
             ),
             (

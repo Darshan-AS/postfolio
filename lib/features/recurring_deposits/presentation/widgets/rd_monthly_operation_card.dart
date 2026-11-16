@@ -60,11 +60,13 @@ const double _pillMaxWidthFraction = 0.55;
 /// `item.displayStatus(evaluationDate).visual(scheme)`; every write goes through a callback.
 ///
 /// Hierarchy (top → bottom): a status-shaped avatar and the customer **name** ·
-/// `Sl · A/c · due` · status pill with the money that matters on its right (`owes ₹X` /
-/// `₹X paid` / `collected ₹X`) · one full-width primary action:
+/// `Sl · A/c · due` · the status pill with the row's one action at the end of its line:
 /// * customer still owes → **Collect ₹X**
 /// * collected months waiting → **Deposit N**
-/// * settled → nothing
+/// * settled → no action; the figure (`₹X paid`) takes the action's place
+///
+/// The figure is shown once. "Collect ₹X" carries it; under a Deposit button, which has
+/// none, it sits in the caption line with what the figure is made of.
 ///
 /// The row is a grouped tile: pass its [position] among its neighbours.
 class RDMonthlyOperationCard extends StatelessWidget {
@@ -75,6 +77,10 @@ class RDMonthlyOperationCard extends StatelessWidget {
 
   /// Where this row sits in its group (see [EntityListTile.position]).
   final AppGroupPosition position;
+
+  /// Title the row by its serial and account instead of the customer's name. For rows
+  /// under a customer's group header, which already says the name.
+  final bool titleByAccount;
 
   /// True while the ledger controller is writing; disables every mutating control.
   final bool isBusy;
@@ -97,6 +103,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
     required this.isSelected,
     required this.isSelectionMode,
     this.position = AppGroupPosition.single,
+    this.titleByAccount = false,
     this.isBusy = false,
     this.onSelect,
     this.selectSemanticLabel,
@@ -122,39 +129,22 @@ class RDMonthlyOperationCard extends StatelessWidget {
       ),
       title: dummy.customerName ?? BoneMock.name,
       subtitle: Text(BoneMock.words(4)),
-      footer: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
+      // Laid out like a real row: a status on the left, the action at the end of its line.
+      footer: Row(
         children: [
-          // Laid out like a real row: the figure shrinks to its half instead of pushing
-          // past the tile's edge.
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  BoneMock.words(2),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              AppSpacings.gapSm,
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: Text(
-                    card.owes(amount: dummy.installmentAmount.toRupeeFormat()),
-                    maxLines: 1,
-                  ),
-                ),
-              ),
-            ],
+          Expanded(
+            child: Text(
+              BoneMock.words(2),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          AppSpacings.gapXs,
-          AppButton(
-            expand: true,
-            onPressed: null,
-            label: card.collect(amount: dummy.installmentAmount.toRupeeFormat()),
+          AppSpacings.gapSm,
+          Flexible(
+            child: AppButton(
+              onPressed: null,
+              label: card.collect(amount: dummy.installmentAmount.toRupeeFormat()),
+            ),
           ),
         ],
       ),
@@ -245,20 +235,30 @@ class RDMonthlyOperationCard extends StatelessWidget {
     final canAbsorbFee = inst.absorbableFee > 0 && onAbsorbFee != null;
     final canUndoLatest = item.isLatestDeposited && onUndoLatestDeposit != null;
 
-    final caption = money == null || money.captionParts.isEmpty
-        ? null
-        : money.captionParts.join(t.format.bulletSeparator);
-
+    final largeText = RDHubLayout.isLargeText(context);
     final action = RDOperationActionButton(
       item: item,
       evaluationDate: now,
       isBusy: isBusy,
+      // Beside the pill the button hugs its label; on a line of its own it fills the line.
+      compact: !largeText,
       onCollect: onCollect,
       onDeposit: onDeposit,
     );
     final hasAction = action.resolve(context) != null;
 
-    final headline = money == null
+    // "Collect ₹X" is the figure. A Deposit button has none, so there the figure leads
+    // the caption; a row with no action shows it where the action would be.
+    final figureInCaption = hasAction && !item.isCustomerPending && money != null;
+    final captionParts = [
+      if (figureInCaption) money.headline,
+      ...?money?.captionParts,
+    ];
+    final caption = captionParts.isEmpty
+        ? null
+        : captionParts.join(t.format.bulletSeparator);
+
+    final headline = money == null || hasAction
         ? null
         : FittedBox(
             fit: BoxFit.scaleDown,
@@ -295,7 +295,9 @@ class RDMonthlyOperationCard extends StatelessWidget {
                   ._avatarShape,
               visual: visual,
             ),
-      title: deposit.customerName ?? t.recurringDeposits.unnamedCustomer,
+      title: titleByAccount
+          ? _identityOf(deposit)
+          : deposit.customerName ?? t.recurringDeposits.unnamedCustomer,
       subtitle: Padding(
         padding: const EdgeInsets.only(top: AppDimensions.paddingXxs),
         child: _IdentityLine(
@@ -303,20 +305,32 @@ class RDMonthlyOperationCard extends StatelessWidget {
           installment: inst,
           status: status,
           now: now,
+          showIdentity: !titleByAccount,
         ),
       ),
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Status on the left; the money that matters flush-right (never ellipsised —
-          // it shrinks). At large text sizes each takes a line of its own, so the figure
-          // is not shrunk to make room for the pill.
-          if (RDHubLayout.isLargeText(context)) ...[
+          // Status on the left; the action, or the figure of a row that has none, at the
+          // end of the same line. Neither is ellipsised: the pill keeps up to its share of
+          // the line and the other shrinks into the rest. At large text sizes each takes
+          // a line of its own.
+          if (largeText) ...[
             Align(
               alignment: AlignmentDirectional.centerStart,
               child: RDStatusPill(visual: visual),
             ),
+            if (hasAction)
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppDimensions.buttonMaxWidth,
+                  ),
+                  child: action,
+                ),
+              ),
             ?headline,
           ] else
             LayoutBuilder(
@@ -332,7 +346,14 @@ class RDMonthlyOperationCard extends StatelessWidget {
                       child: RDStatusPill(visual: visual),
                     ),
                     AppSpacings.gapSm,
-                    Expanded(child: headline ?? const SizedBox.shrink()),
+                    Expanded(
+                      child: hasAction
+                          ? Align(
+                              alignment: AlignmentDirectional.centerEnd,
+                              child: action,
+                            )
+                          : headline ?? const SizedBox.shrink(),
+                    ),
                   ],
                 );
               },
@@ -349,20 +370,6 @@ class RDMonthlyOperationCard extends StatelessWidget {
                     : scheme.onSurfaceVariant,
               ),
             ),
-          // The button brings its own touch padding above and below. It fills a phone-wide
-          // row; in a wider one it sits at the end, under the figure it acts on.
-          if (hasAction) ...[
-            AppSpacings.gapXs,
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: AppDimensions.buttonMaxWidth,
-                ),
-                child: action,
-              ),
-            ),
-          ],
         ],
       ),
       actions: [
@@ -460,6 +467,20 @@ class _InstallmentAvatar extends StatelessWidget {
   }
 }
 
+/// `Sl 12 · A/c …7890`, or the account alone when the deposit has no serial number.
+String _identityOf(RecurringDeposit deposit) {
+  final card = t.recurringDeposits.monthlyOperations.card;
+  final accountNo = deposit.accountNo ?? '';
+  final last4 = accountNo.length > _accountTailLength
+      ? accountNo.substring(accountNo.length - _accountTailLength)
+      : (accountNo.isEmpty ? t.common.notProvided : accountNo);
+  final account = card.accountTail(last4: last4);
+  final serialNo = deposit.serialNo;
+  return serialNo == null || serialNo.isEmpty
+      ? account
+      : card.identity(serial: card.serial(serialNo: serialNo), account: account);
+}
+
 /// `Sl 12 · A/c …7890 · due 15 Mar` on one line where it fits; only the account may be
 /// ellipsised. The due date moves to a line of its own, and wraps, rather than being cut.
 class _IdentityLine extends StatelessWidget {
@@ -468,49 +489,42 @@ class _IdentityLine extends StatelessWidget {
   final RDInstallmentDisplayStatus status;
   final DateTime now;
 
+  /// False when the row's title already is the serial and account: only the due date shows.
+  final bool showIdentity;
+
   const _IdentityLine({
     required this.deposit,
     required this.installment,
     required this.status,
     required this.now,
+    this.showIdentity = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final card = t.recurringDeposits.monthlyOperations.card;
 
     final muted = theme.textTheme.bodySmall?.copyWith(
       color: scheme.onSurfaceVariant,
     );
 
-    final accountNo = deposit.accountNo ?? '';
-    final last4 = accountNo.length > _accountTailLength
-        ? accountNo.substring(accountNo.length - _accountTailLength)
-        : (accountNo.isEmpty ? t.common.notProvided : accountNo);
-    final serial = (deposit.serialNo?.isNotEmpty ?? false)
-        ? card.serial(serialNo: deposit.serialNo!)
-        : null;
-
     final (dueText, dueStyle) = _dueText(context);
 
-    // Serial + account share one flexible span so, when space runs out, the ellipsis eats the
+    // Serial + account share one span so, when space runs out, the ellipsis eats the
     // account tail first; the due date is never cut.
-    final account = card.accountTail(last4: last4);
-    final identity = serial == null ? account : card.identity(serial: serial, account: account);
-
     return Wrap(
       spacing: AppDimensions.paddingXs,
       runSpacing: AppDimensions.paddingXxs,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Text(
-          identity,
-          style: muted,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        if (showIdentity)
+          Text(
+            _identityOf(deposit),
+            style: muted,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         Text(dueText, style: dueStyle),
       ],
     );
@@ -555,6 +569,10 @@ class RDOperationActionButton extends StatelessWidget {
   final RDMonthlyOperationItem item;
   final DateTime evaluationDate;
   final bool isBusy;
+
+  /// Hug the label and drop the icon, for a button that shares a line with the status
+  /// pill. Otherwise the button fills its line.
+  final bool compact;
   final VoidCallback onCollect;
   final VoidCallback onDeposit;
 
@@ -563,6 +581,7 @@ class RDOperationActionButton extends StatelessWidget {
     required this.item,
     required this.evaluationDate,
     this.isBusy = false,
+    this.compact = false,
     required this.onCollect,
     required this.onDeposit,
   });
@@ -602,8 +621,8 @@ class RDOperationActionButton extends StatelessWidget {
 
     return AppButton(
       label: spec.label,
-      icon: spec.icon,
-      expand: true,
+      icon: compact ? null : spec.icon,
+      expand: !compact,
       backgroundColor: spec.background,
       foregroundColor: spec.foreground,
       onPressed: isBusy ? null : spec.onPressed,
