@@ -11,6 +11,8 @@ Ensure all items are checked before finalizing a production release.
 - [ ] `dart analyze --fatal-infos` passes with zero issues.
 - [ ] `flutter test --exclude-tags integration` passes 100%.
 - [ ] CI is green on the release commit (SQL contracts + integration suite on a clean local Supabase stack).
+- [ ] `flutter build apk --flavor prod --release` and `flutter build web --wasm` succeed locally before the release PR merges (CI does not build Android).
+- [ ] Release entry written in `.agents/progress.md`, `.agents/tasks.md` and the session log inside the release PR.
 - [ ] App launches against the local Supabase stack (`supabase start`).
 - [ ] Smoke test: Login, Create Deposit, View Dashboard, record an RD payment on the Monthly Hub.
 

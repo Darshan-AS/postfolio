@@ -27,19 +27,21 @@ Analyze commits and update versioning to ensure consistency.
 - **Step 4**: Open `pubspec.yaml` and increment the **version** (X.Y.Z) and **build number** (+N) accordingly.
 - **Step 5**: Draft new entries in `CHANGELOG.md` summarizing the analyzed commits in a human-readable format.
 - **Step 6**: Recommend a tag following the `v<version>+<build>` format (e.g., `v1.3.3+13`).
+- **Step 7 (docs go in the same PR)**: Write the release entry in `.agents/progress.md`, `.agents/tasks.md` and the session log in the release PR itself, alongside the version bump and changelog. Describe what the release contains and list what is still to happen after merge (database push, tag, device smoke test) as open items. Do not leave the release record for a follow-up commit.
 
 ### 2. Pre-Release Validation
 Before building, ensure the codebase is healthy.
 - **Step 1**: Run `flutter analyze` to catch lints.
 - **Step 2**: Run `flutter test` to ensure no regressions.
 - **Step 3**: Verify [Release Checklist](./references/release-checklist.md).
-- **Step 4 (when `supabase/migrations/` changed since the last tag)**: the database goes first. Take a backup, run `supabase db push`, and only then tag. Pushing the tag deploys the web build immediately, and a client that calls an RPC the database does not have yet fails in production. See "Release order when a migration is included" in `docs/setup_guide.md`.
+- **Step 4 (before the release PR merges)**: Run the builds the release workflow runs, locally: `flutter build apk --flavor prod --release` and `flutter build web --wasm`. CI does not build Android, so a release-only failure (R8, signing, Gradle) otherwise first appears after the tag is pushed and needs a second PR. The v2.4.0+23 tag run failed this way.
+- **Step 5 (when `supabase/migrations/` changed since the last tag)**: the database goes first. Take a backup, run `supabase db push`, and only then tag. Pushing the tag deploys the web build immediately, and a client that calls an RPC the database does not have yet fails in production. See "Release order when a migration is included" in `docs/setup_guide.md`.
 
 ### 3. Build & Finalize
 - **Android**: Trigger via tag (e.g., `git tag v1.3.3+13 && git push origin v1.3.3+13`) or manual dispatch.
 - **Distribution**: Artifacts are automatically uploaded to **Firebase App Distribution** (for testers) and **GitHub Releases**.
 - **Web**: Automatically deployed to **Firebase Hosting**.
-- **Finalize**: Update `.agents/progress.md` with the new version and summary of changes.
+- **Finalize**: The release entry already exists from Step 7 of "Prepare Release". After the tag run, only tick the open items and note anything that went differently (a failed run, a moved tag). That docs-only follow-up may be pushed directly to `main` with `[skip ci]`.
 
 ## Resources
 - [Release Checklist](./references/release-checklist.md): Comprehensive manual checks.
