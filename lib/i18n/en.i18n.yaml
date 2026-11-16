@@ -623,6 +623,7 @@ auth:
   welcome: "Welcome to Postfolio"
   signInSubtitle: "Sign in to manage your deposits securely"
   signInWithGoogle: "Sign in with Google"
+  signInAsSeededAgent: "Sign in as seeded agent"
   tryDemoMode: "Try Demo Mode"
   signOut: "Sign Out"
 

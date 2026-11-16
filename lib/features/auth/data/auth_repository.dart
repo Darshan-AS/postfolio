@@ -24,6 +24,13 @@ abstract class AuthRepository {
   AuthUser? get currentUser;
   Stream<AuthUser?> get authStateChanges;
   Future<Result<AuthUser, String>> signInWithGoogle();
+
+  /// Email and password sign-in. The app offers it only for the seeded agent of the local
+  /// stack; real agents sign in with Google.
+  Future<Result<AuthUser, String>> signInWithPassword({
+    required String email,
+    required String password,
+  });
   Future<Result<void, String>> signOut();
 }
 
@@ -36,6 +43,9 @@ class FakeAuthRepository implements AuthRepository {
   String? signInError;
   String? signOutError;
   int signOutCount = 0;
+
+  /// The credentials of every [signInWithPassword] call, in order.
+  final passwordSignIns = <({String email, String password})>[];
 
   @override
   AuthUser? get currentUser => _currentUser;
@@ -64,6 +74,18 @@ class FakeAuthRepository implements AuthRepository {
           displayName: 'Fake Agent',
         );
     _currentUser = user;
+    return Success(user);
+  }
+
+  @override
+  Future<Result<AuthUser, String>> signInWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    passwordSignIns.add((email: email, password: password));
+    if (signInError != null) return Failure(signInError!);
+    final user = AuthUser(id: 'fake-agent-1', email: email);
+    emit(user);
     return Success(user);
   }
 

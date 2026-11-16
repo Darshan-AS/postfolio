@@ -18,6 +18,10 @@ abstract final class Env {
     defaultValue: false,
   );
 
+  /// True when this build talks to the Supabase stack on the developer's machine
+  /// (`--dart-define-from-file=config/local.json`). Never true in a release that CI builds.
+  static const bool isLocalBackend = useEmulator || appEnv == 'local';
+
   static const String _localSupabaseUrl = 'http://127.0.0.1:54321';
   static const String _localSupabaseAnonKey =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
@@ -49,7 +53,7 @@ abstract final class Env {
   );
 
   static String get supabaseUrl {
-    if (useEmulator || appEnv == 'local') {
+    if (isLocalBackend) {
       return _definedSupabaseUrl.isNotEmpty
           ? _definedSupabaseUrl
           : _localSupabaseUrl;
@@ -60,7 +64,7 @@ abstract final class Env {
   }
 
   static String get supabasePublishableKey {
-    if (useEmulator || appEnv == 'local') {
+    if (isLocalBackend) {
       return _definedSupabaseKey.isNotEmpty
           ? _definedSupabaseKey
           : _localSupabaseAnonKey;

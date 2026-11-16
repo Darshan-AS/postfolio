@@ -117,6 +117,31 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<Result<AuthUser, String>> signInWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _supabaseClient.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      final user = response.user;
+      if (user == null) {
+        return const Failure('Sign in failed, Supabase user is null');
+      }
+      return Success(_mapUser(user));
+    } catch (e) {
+      return Failure(
+        SupabaseErrorMapper.describe(
+          e,
+          fallback: 'Could not sign in. Please try again.',
+        ),
+      );
+    }
+  }
+
+  @override
   Future<Result<void, String>> signOut() async {
     try {
       if (!kIsWeb) {

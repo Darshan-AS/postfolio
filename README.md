@@ -44,6 +44,8 @@ supabase start
 
 Supabase Studio (database UI) is at `http://localhost:54323`.
 
+**Signing in.** A build that runs against the local stack shows **Sign in as seeded agent** on the login screen. One tap signs in as `agent@postfolio.com`, who owns the seed data; no other build has the button. Google sign-in also works where this machine's debug key is registered in Firebase.
+
 Run one of the `Local:` entries from Run and Debug; each first checks that the stack is up. From a terminal:
 
 ```bash

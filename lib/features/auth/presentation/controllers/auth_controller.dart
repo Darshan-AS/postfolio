@@ -1,11 +1,18 @@
+import 'package:postfolio/core/env/env.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
 import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/features/auth/domain/auth_state.dart';
+import 'package:postfolio/features/auth/domain/local_seed_agent.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'auth_controller.g.dart';
+
+/// Whether the login screen offers "Sign in as seeded agent": only in a build that talks to
+/// the local Supabase stack. Tests override it.
+@riverpod
+bool seededAgentSignInAvailable(Ref ref) => Env.isLocalBackend;
 
 @Riverpod(keepAlive: true)
 class AuthController extends _$AuthController {
@@ -51,9 +58,34 @@ class AuthController extends _$AuthController {
     return const AuthState.unauthenticated();
   }
 
-  Future<Result<void, String>> signInWithGoogle() async {
+  Future<Result<void, String>> signInWithGoogle() =>
+      _signIn(() => ref.read(authRepositoryProvider).signInWithGoogle());
+
+  /// Signs in as the agent `supabase/seed.sql` creates, who owns the seed data. Refused
+  /// unless this build talks to the local Supabase stack.
+  Future<Result<void, String>> signInAsSeededAgent() {
+    if (!ref.read(seededAgentSignInAvailableProvider)) {
+      return Future.value(
+        const Failure(
+          'The seeded agent exists only in the local Supabase stack.',
+        ),
+      );
+    }
+    return _signIn(
+      () => ref
+          .read(authRepositoryProvider)
+          .signInWithPassword(
+            email: LocalSeedAgent.email,
+            password: LocalSeedAgent.password,
+          ),
+    );
+  }
+
+  Future<Result<void, String>> _signIn(
+    Future<Result<AuthUser, String>> Function() attempt,
+  ) async {
     state = const AuthState.loading();
-    final result = await ref.read(authRepositoryProvider).signInWithGoogle();
+    final result = await attempt();
 
     switch (result) {
       case Success():
