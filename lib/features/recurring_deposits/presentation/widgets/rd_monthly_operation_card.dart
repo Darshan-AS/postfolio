@@ -1,8 +1,10 @@
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
@@ -93,9 +95,19 @@ class RDMonthlyOperationCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(BoneMock.words(2)),
-              const Spacer(),
-              Text(card.owes(amount: dummy.installmentAmount.toRupeeFormat())),
+              Expanded(
+                child: Text(
+                  BoneMock.words(2),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              AppSpacings.gapSm,
+              Text(
+                card.owes(amount: dummy.installmentAmount.toRupeeFormat()),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
           AppSpacings.gapSm,
@@ -159,9 +171,13 @@ class RDMonthlyOperationCard extends StatelessWidget {
     // month: carried-over arrears outrank "Upcoming" / "Due today".
     final arrearsMonths =
         item.priorOverdueCount + (item.isOverdue(now) && item.isCustomerPending ? 1 : 0);
+    final financial = AppFinancialColors.of(context);
     final RDStatusVisual visual;
     if (item.hasPriorArrears && status.isCustomerPending) {
-      final overdue = RDInstallmentDisplayStatus.overdue.visual(scheme);
+      final overdue = RDInstallmentDisplayStatus.overdue.visual(
+        scheme,
+        financial: financial,
+      );
       visual = (
         foreground: overdue.foreground,
         background: overdue.background,
@@ -171,7 +187,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
         emphasized: true,
       );
     } else {
-      visual = status.visual(scheme);
+      visual = status.visual(scheme, financial: financial);
     }
     final money = _money(scheme);
 
@@ -202,7 +218,9 @@ class RDMonthlyOperationCard extends StatelessWidget {
     final hasAction = action.resolve(context) != null;
 
     return EntityListTile(
-      indicatorColor: isDefaultState ? null : status.accent(scheme),
+      indicatorColor: isDefaultState
+          ? null
+          : status.accent(scheme, financial: financial),
       isSelected: isSelected,
       leading: isSelectionMode
           ? SizedBox(
@@ -235,48 +253,58 @@ class RDMonthlyOperationCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Status on the left; the money that matters on the right (never ellipsised —
+          // Status on the left; the money that matters flush-right (never ellipsised —
           // it shrinks), with its caption underneath.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _StatusPill(visual: visual),
-              AppSpacings.gapSm,
-              Expanded(
-                child: money == null
-                    ? const SizedBox.shrink()
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              money.headline,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: money.color,
-                                fontWeight: FontWeight.bold,
+          LayoutBuilder(
+            builder: (context, rowConstraints) {
+              final maxPillWidth = rowConstraints.maxWidth.isFinite
+                  ? rowConstraints.maxWidth * 0.55
+                  : double.infinity;
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxPillWidth),
+                    child: _StatusPill(visual: visual),
+                  ),
+                  AppSpacings.gapSm,
+                  Expanded(
+                    child: money == null
+                        ? const SizedBox.shrink()
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  money.headline,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    color: money.color,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                ),
                               ),
-                              maxLines: 1,
-                            ),
+                              if (caption != null)
+                                Text(
+                                  caption,
+                                  textAlign: TextAlign.end,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: item.hasOverdueDebt(now)
+                                        ? scheme.error
+                                        : scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                            ],
                           ),
-                          if (caption != null)
-                            Text(
-                              caption,
-                              textAlign: TextAlign.end,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: item.hasOverdueDebt(now)
-                                    ? scheme.error
-                                    : scheme.onSurfaceVariant,
-                              ),
-                            ),
-                        ],
-                      ),
-              ),
-            ],
+                  ),
+                ],
+              );
+            },
           ),
           if (hasAction) ...[AppSpacings.gapSm, action],
         ],
@@ -390,7 +418,6 @@ class _IdentityLine extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final card = t.recurringDeposits.monthlyOperations.card;
-    final separator = t.format.bulletSeparator;
 
     final muted = theme.textTheme.bodySmall?.copyWith(
       color: scheme.onSurfaceVariant,
@@ -411,27 +438,31 @@ class _IdentityLine extends StatelessWidget {
     final account = card.accountTail(last4: last4);
     final identity = serial == null ? account : card.identity(serial: serial, account: account);
 
-    return Row(
+    return Wrap(
+      spacing: AppDimensions.paddingXs,
+      runSpacing: AppDimensions.paddingXxs,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Flexible(
-          child: Text(
-            identity,
-            style: muted,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+        Text(
+          identity,
+          style: muted,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-        Text(separator, style: muted, maxLines: 1),
-        Text(dueText, style: dueStyle, maxLines: 1),
+        Text(
+          dueText,
+          style: dueStyle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ],
     );
   }
 
   (String, TextStyle?) _dueText(ThemeData theme) {
     final card = t.recurringDeposits.monthlyOperations.card;
-    final locale = LocaleSettings.currentLocale.languageTag;
     final due = card.due(
-      date: DateFormat(_dueDatePattern, locale).format(installment.dueDate),
+      date: DateFormat(_dueDatePattern, resolvedDateLocale()).format(installment.dueDate),
     );
     final alert = theme.textTheme.bodySmall?.copyWith(
       color: theme.colorScheme.error,
@@ -492,11 +523,15 @@ class _StatusPill extends StatelessWidget {
             color: visual.foreground,
           ),
           AppSpacings.gapXs,
-          Text(
-            visual.label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: visual.foreground,
-              fontWeight: visual.emphasized ? FontWeight.w800 : FontWeight.w600,
+          Flexible(
+            child: Text(
+              visual.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: visual.foreground,
+                fontWeight: visual.emphasized ? FontWeight.w800 : FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -527,7 +562,7 @@ class RDOperationActionButton extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final card = t.recurringDeposits.monthlyOperations.card;
     final status = item.displayStatus(evaluationDate);
-    final visual = status.visual(scheme);
+    final visual = status.visualOf(context);
 
     if (item.isCustomerPending) {
       final urgent = item.hasOverdueDebt(evaluationDate);

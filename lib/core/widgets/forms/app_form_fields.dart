@@ -1,8 +1,21 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:postfolio/core/theme/app_input_decoration.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_input_decoration.dart';
+
+/// Uppercases ASCII characters as the user types (e.g. PAN numbers).
+class UpperCaseTextFormatter extends TextInputFormatter {
+  const UpperCaseTextFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return newValue.copyWith(text: newValue.text.toUpperCase());
+  }
+}
 
 class AppTextField extends StatelessWidget {
   final TextEditingController? controller;
@@ -14,6 +27,7 @@ class AppTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
+  final TextCapitalization textCapitalization;
   final bool readOnly;
   final bool enabled;
   final VoidCallback? onTap;
@@ -34,6 +48,7 @@ class AppTextField extends StatelessWidget {
     this.validator,
     this.keyboardType,
     this.textInputAction,
+    this.textCapitalization = TextCapitalization.none,
     this.readOnly = false,
     this.enabled = true,
     this.onTap,
@@ -59,6 +74,7 @@ class AppTextField extends StatelessWidget {
       validator: validator,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
+      textCapitalization: textCapitalization,
       readOnly: readOnly,
       enabled: enabled,
       onTap: onTap,
@@ -93,6 +109,7 @@ class AppDropdownField<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<T>(
+      key: ValueKey<T?>(value),
       initialValue: value,
       decoration: AppInputDecoration.m3(
         context,
@@ -162,6 +179,7 @@ class AppSegmentedButtonField<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -176,16 +194,27 @@ class AppSegmentedButtonField<T> extends StatelessWidget {
                 IconTheme(
                   data: IconThemeData(
                     size: AppDimensions.iconSm,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: scheme.onSurfaceVariant,
                   ),
                   child: prefixIcon!,
                 ),
                 AppSpacings.gapSm,
               ],
-              Text(
-                labelText + (isRequired ? ' *' : ''),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+              Flexible(
+                child: Text.rich(
+                  TextSpan(
+                    text: labelText,
+                    children: [
+                      if (isRequired)
+                        TextSpan(
+                          text: ' *',
+                          style: TextStyle(color: scheme.error),
+                        ),
+                    ],
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],

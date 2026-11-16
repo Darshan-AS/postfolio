@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
-import 'package:postfolio/core/constants/app_constants.dart';
 
 part 'nominee.freezed.dart';
 part 'nominee.g.dart';
@@ -77,7 +77,8 @@ sealed class Nominee with _$Nominee {
     if (percentage == null) {
       return t.errors.requiredField(field: t.nominees.percentage);
     }
-    if (percentage <= 0 || percentage > AppConstants.maxPercentage) {
+    final bps = BasisPoints.fromPercent(percentage);
+    if (bps <= BasisPoints.zero || bps > BasisPoints.hundredPercent) {
       return t.errors.percentageRange;
     }
     return null;
@@ -86,16 +87,39 @@ sealed class Nominee with _$Nominee {
   static String? validateNominees(List<Nominee> nominees) {
     if (nominees.isEmpty) return null; // Valid if empty
 
-    final totalPercentage = nominees.fold<double>(
-      0.0,
-      (sum, nominee) => sum + nominee.percentage,
+    for (final nominee in nominees) {
+      final fieldError =
+          validateName(nominee.name) ??
+          validateCustomRelationship(
+            nominee.relationship,
+            nominee.customRelationship,
+          ) ??
+          validatePercentage(nominee.percentage);
+      if (fieldError != null) return fieldError;
+    }
+
+    final totalBps = nominees.fold<BasisPoints>(
+      BasisPoints.zero,
+      (sum, nominee) => sum + BasisPoints.fromPercent(nominee.percentage),
     );
 
-    if (totalPercentage != AppConstants.maxPercentage) {
+    if (totalBps != BasisPoints.hundredPercent) {
       return t.errors.nomineePercentageTotal;
     }
     return null;
   }
+
+  /// Trims whitespace on nominee fields at save boundaries so typing spaces in UI inputs
+  /// stays natural without persisting trailing spaces.
+  static List<Nominee> sanitizeAll(List<Nominee> nominees) => List.unmodifiable([
+    for (final n in nominees)
+      n.copyWith(
+        name: n.name.trim(),
+        customRelationship: n.relationship == NomineeRelationship.other
+            ? n.customRelationship?.trim()
+            : null,
+      ),
+  ]);
 
   static Result<Nominee, String> create({
     required String name,

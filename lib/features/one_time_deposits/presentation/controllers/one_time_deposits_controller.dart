@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
@@ -83,12 +84,14 @@ class OneTimeListCriteria extends _$OneTimeListCriteria {
   }
 
   void clearAll() {
-    state = const OTDSearchCriteria();
-    ref.read(storageServiceProvider).setOTDSortField(OTDSortField.maturityDate);
-    ref.read(storageServiceProvider).setOTDSortDirection(SortDirection.asc);
-    ref.read(storageServiceProvider).setOTDStatusFilters([]);
-    ref.read(storageServiceProvider).setOTDUrgencyFilters([]);
-    ref.read(storageServiceProvider).setOTDSchemeFilters([]);
+    const defaults = OTDSearchCriteria();
+    state = defaults;
+    final storage = ref.read(storageServiceProvider);
+    storage.setOTDSortField(defaults.sortField);
+    storage.setOTDSortDirection(defaults.sortDirection);
+    storage.setOTDStatusFilters(defaults.statusFilters);
+    storage.setOTDUrgencyFilters(defaults.urgencyFilters);
+    storage.setOTDSchemeFilters(defaults.schemeFilters);
   }
 
   void clearFilters() {
@@ -114,20 +117,25 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
     oneTimeDepositsControllerProvider.future,
   );
 
-  final hasNullNames = asyncDeposits.any((d) => d.customerName == null);
+  final liveCustomers = ref.watch(customersControllerProvider).value;
   final Map<String, String> customerMap;
-  if (hasNullNames) {
+  if (liveCustomers != null) {
+    customerMap = {for (final c in liveCustomers) c.id: c.name};
+  } else if (asyncDeposits.any((d) => d.customerName == null)) {
     final asyncCustomers = await ref.watch(customersControllerProvider.future);
-    customerMap = {for (var c in asyncCustomers) c.id: c.name};
+    customerMap = {for (final c in asyncCustomers) c.id: c.name};
   } else {
     customerMap = const {};
   }
 
-  var result = hasNullNames
+  var result = customerMap.isNotEmpty
       ? asyncDeposits
-          .map((d) => d.customerName == null
-              ? d.copyWith(customerName: customerMap[d.customerId])
-              : d)
+          .map((d) {
+            final liveName = customerMap[d.customerId];
+            return (liveName != null && liveName != d.customerName)
+                ? d.copyWith(customerName: liveName)
+                : d;
+          })
           .toList()
       : asyncDeposits.toList();
 
@@ -203,6 +211,7 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
   }
 
   Stream<UnmodifiableListView<OneTimeDeposit>> _watchOneTimeDeposits() {
+    ref.watch(activeSessionKeyProvider);
     final repository = ref.watch(oneTimeDepositRepositoryProvider);
     return repository.watchOneTimeDeposits().map((result) {
       return switch (result) {
@@ -225,7 +234,7 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
     DepositStatus status = DepositStatus.active,
     List<Nominee> nominees = const [],
   }) async {
-    final depositId = id ?? const Uuid().v4();
+    final depositId = id ?? const Uuid().v7();
     final postalRateService = ref.read(postalRateServiceProvider);
 
     final amount = double.tryParse(principalAmount.trim()) ?? 0.0;
@@ -281,26 +290,10 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
     String id,
     DepositStatus newStatus, {
     OneTimeDeposit? deposit,
-  }) async {
-    OneTimeDeposit? targetDeposit = deposit;
-    if (targetDeposit == null) {
-      final deposits = state.value;
-      targetDeposit = deposits?.where((d) => d.id == id).firstOrNull;
-    }
-
-    if (targetDeposit == null) {
-      final repository = ref.read(oneTimeDepositRepositoryProvider);
-      final singleResult = await repository.watchOneTimeDepositById(id).first;
-      return switch (singleResult) {
-        Success(value: final d) =>
-          await repository.updateOneTimeDeposit(d.copyWith(status: newStatus)),
-        Failure(error: final err) => Failure(err),
-      };
-    }
-
-    final updatedDeposit = targetDeposit.copyWith(status: newStatus);
-    final repository = ref.read(oneTimeDepositRepositoryProvider);
-    return await repository.updateOneTimeDeposit(updatedDeposit);
+  }) {
+    return ref
+        .read(oneTimeDepositRepositoryProvider)
+        .updateDepositStatus(id, newStatus);
   }
 }
 

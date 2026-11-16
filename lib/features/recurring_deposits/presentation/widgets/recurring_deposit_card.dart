@@ -11,6 +11,7 @@ import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
 
@@ -92,13 +93,16 @@ class _RecurringDepositCardView extends StatelessWidget {
                         : Theme.of(context).colorScheme.tertiary,
                   ),
                   AppSpacings.gapXs,
-                  Text(
-                    relativeTimeText,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: urgency == MaturityUrgency.matured
-                          ? Theme.of(context).colorScheme.error
-                          : Theme.of(context).colorScheme.tertiary,
-                      fontWeight: FontWeight.w600,
+                  Flexible(
+                    child: Text(
+                      relativeTimeText,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: urgency == MaturityUrgency.matured
+                            ? Theme.of(context).colorScheme.error
+                            : Theme.of(context).colorScheme.tertiary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -145,6 +149,7 @@ class _RecurringDepositCardView extends StatelessWidget {
             AppSpacings.gapXs,
             StatusBadge(
               status: status.displayName,
+              depositStatus: status,
               compact: true,
               urgency: urgency,
             ),
@@ -239,13 +244,10 @@ class RecurringDepositCard extends ConsumerWidget {
               .deleteRecurringDeposit(deposit.id);
 
           if (result is Failure && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  t.recurringDeposits.failedToDeleteDeposit(
-                    error: (result as Failure).error.toString(),
-                  ),
-                ),
+            AppFeedback.showError(
+              context,
+              t.recurringDeposits.failedToDeleteDeposit(
+                error: (result as Failure).error.toString(),
               ),
             );
           }
@@ -270,8 +272,9 @@ class RecurringDepositCard extends ConsumerWidget {
               .toggleDepositStatus(deposit.id, newStatus);
 
           if (result is Failure && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text((result as Failure).error.toString())),
+            AppFeedback.showError(
+              context,
+              (result as Failure).error.toString(),
             );
           }
         }

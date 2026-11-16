@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:postfolio/core/env/env.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
 
@@ -16,18 +17,26 @@ class SupabaseAuthRepository implements AuthRepository {
   })  : _supabaseClient = supabaseClient,
         _googleSignIn = googleSignIn;
 
-  @override
-  Stream<AuthUser?> get authStateChanges {
-    return _supabaseClient.auth.onAuthStateChange.map((event) {
-      final session = event.session;
-      if (session == null) return null;
-      final user = session.user;
-      return AuthUser(
+  static AuthUser _mapUser(User user) => AuthUser(
         id: user.id,
         email: user.email,
         displayName: user.userMetadata?['full_name'] as String?,
         photoUrl: user.userMetadata?['avatar_url'] as String?,
       );
+
+  @override
+  AuthUser? get currentUser {
+    final user =
+        _supabaseClient.auth.currentSession?.user ?? _supabaseClient.auth.currentUser;
+    return user == null ? null : _mapUser(user);
+  }
+
+  @override
+  Stream<AuthUser?> get authStateChanges {
+    return _supabaseClient.auth.onAuthStateChange.map((event) {
+      final session = event.session;
+      if (session == null) return null;
+      return _mapUser(session.user);
     });
   }
 
@@ -95,7 +104,12 @@ class SupabaseAuthRepository implements AuthRepository {
         ),
       );
     } catch (e) {
-      return Failure('Failed to sign in with Google (Supabase): $e');
+      return Failure(
+        SupabaseErrorMapper.describe(
+          e,
+          fallback: 'Google Sign-In could not be completed. Please try again.',
+        ),
+      );
     }
   }
 
@@ -108,7 +122,12 @@ class SupabaseAuthRepository implements AuthRepository {
       await _supabaseClient.auth.signOut();
       return const Success(null);
     } catch (e) {
-      return Failure('Failed to sign out (Supabase): $e');
+      return Failure(
+        SupabaseErrorMapper.describe(
+          e,
+          fallback: 'Could not sign out cleanly. Please try again.',
+        ),
+      );
     }
   }
 }

@@ -1,9 +1,12 @@
+import 'package:flutter/services.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
@@ -16,7 +19,8 @@ import 'package:postfolio/i18n/strings.g.dart';
 /// Resolves `true` when a deposit event was recorded.
 ///
 /// The agent never picks months — the PO ledger is sequential, so only a count and a date
-/// are entered, exactly like the DOP agent portal.
+/// are entered, exactly like the DOP agent portal, with an optional override when the
+/// counter charges a different default fee (e.g. Sunday/holiday waiver).
 Future<bool?> showRDDepositSheet(
   BuildContext context, {
   required String rdId,
@@ -63,50 +67,45 @@ class _DepositForm extends HookConsumerWidget {
         : ledger.depositTitle(n: count);
 
     Future<void> handleSubmit() async {
-      // Resolve the toast copy before the write: the quote is derived from facts that change
-      // the moment the deposit lands.
-      final count = draft.count;
-      final quote = draft.quote;
       final who = customer ?? t.recurringDeposits.depositNotFound;
-      final installments = ledger.installmentsCount(n: count);
-      final successMessage = quote == null
-          ? ledger.depositDone(installments: installments, customer: who, amount: t.common.notProvided)
-          : quote.fee > 0
+      final result = await draft.submit();
+      if (!context.mounted) return;
+      switch (result) {
+        case Failure(:final error):
+          AppFeedback.showError(context, error);
+        case Success(value: final saved):
+          // The toast describes the deposit as stored. After a retry that is what the first
+          // attempt saved, even if the sheet has since moved on to the following months.
+          final installments = ledger.installmentsCount(n: saved.installmentCount);
+          final successMessage = saved.feePaid > 0
               ? ledger.depositDoneWithFee(
                   installments: installments,
                   customer: who,
-                  amount: quote.amount.toRupeeFormat(),
-                  fee: quote.fee.toRupeeFormat(),
+                  amount: saved.amount.toRupeeFormat(),
+                  fee: saved.feePaid.toRupeeFormat(),
                 )
               : ledger.depositDone(
                   installments: installments,
                   customer: who,
-                  amount: quote.amount.toRupeeFormat(),
+                  amount: saved.amount.toRupeeFormat(),
                 );
-
-      final result = await draft.submit();
-      if (!context.mounted) return;
-      if (result is Success<void, String>) {
-        Navigator.of(context).pop(true);
-        if (!hostContext.mounted) return;
-        AppFeedback.showResult(
-          hostContext,
-          result,
-          successMessage: successMessage,
-          undoLabel: t.recurringDeposits.monthlyOperations.undo,
-          onUndo: () async {
-            final undone = await draft.undo();
-            if (!hostContext.mounted) return;
-            AppFeedback.showResult(
-              hostContext,
-              undone,
-              successMessage: ledger.depositUndone,
-            );
-          },
-        );
-        return;
+          Navigator.of(context).pop(true);
+          if (!hostContext.mounted) return;
+          AppFeedback.showSuccess(
+            hostContext,
+            successMessage,
+            undoLabel: t.recurringDeposits.monthlyOperations.undo,
+            onUndo: () async {
+              final undone = await draft.undo();
+              if (!hostContext.mounted) return;
+              AppFeedback.showResult(
+                hostContext,
+                undone,
+                successMessage: ledger.depositUndone,
+              );
+            },
+          );
       }
-      AppFeedback.showResult(context, result, successMessage: successMessage);
     }
 
     final Widget body;
@@ -203,7 +202,7 @@ class _DepositForm extends HookConsumerWidget {
   }
 }
 
-class _DepositBody extends StatelessWidget {
+class _DepositBody extends HookWidget {
   const _DepositBody({required this.draft});
 
   final DepositDraftState draft;
@@ -214,6 +213,7 @@ class _DepositBody extends StatelessWidget {
     final scheme = theme.colorScheme;
     final ledger = t.recurringDeposits.ledger;
     final quote = draft.quote;
+    final feeController = useTextEditingController();
 
     final throughText = draft.depositedThroughNo > 0
         ? ledger.depositThrough(month: draft.depositedThroughNo.toString())
@@ -235,6 +235,46 @@ class _DepositBody extends StatelessWidget {
         _CountStepper(draft: draft),
         AppSpacings.gapLg,
         _DepositDateButton(draft: draft),
+        AppSpacings.gapLg,
+        TextFormField(
+          key: const ValueKey('deposit_counter_fee_override_field'),
+          controller: feeController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+          decoration: AppInputDecoration.m3(
+            context,
+            labelText: ledger.counterFeeOverrideLabel,
+            hintText: ledger.counterFeeOverrideHint(
+              amount: draft.statutoryFee.toRupeeFormat(),
+            ),
+            prefixText: t.format.currencySymbol,
+          ).copyWith(
+            suffixIcon: draft.feeOverride != null
+                ? IconButton(
+                    tooltip: t.common.clear,
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedCancel01,
+                      size: AppDimensions.iconSm,
+                    ),
+                    onPressed: () {
+                      feeController.clear();
+                      draft.setFeeOverride(null);
+                    },
+                  )
+                : null,
+          ),
+          onChanged: (raw) {
+            final trimmed = raw.trim();
+            if (trimmed.isEmpty) {
+              draft.setFeeOverride(null);
+              return;
+            }
+            final parsed = double.tryParse(trimmed);
+            if (parsed != null) {
+              draft.setFeeOverride(parsed);
+            }
+          },
+        ),
         AppSpacings.gapLg,
         if (quote != null)
           Container(

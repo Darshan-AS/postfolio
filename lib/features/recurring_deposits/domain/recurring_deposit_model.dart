@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
+import 'package:postfolio/core/utils/date_only_converter.dart';
+import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/core/utils/timestamp_converter.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
@@ -28,7 +30,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required String customerId,
     @JsonKey(includeFromJson: true, includeToJson: false) String? customerName,
     required RecurringSchemeType schemeType,
-    required DateTime startDate,
+    @DateOnlyConverter() required DateTime startDate,
     @Default([]) List<Nominee> nominees,
     @Default(DepositStatus.active) DepositStatus status,
     @Default(0) int initialPaidInstallments,
@@ -215,7 +217,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
         customerId: customerId,
         schemeType: schemeType,
         startDate: startDate,
-        nominees: List.unmodifiable(nominees),
+        nominees: Nominee.sanitizeAll(nominees),
         status: status,
         initialPaidInstallments: initialPaidInstallments,
         openingReceivable: openingReceivable,
@@ -223,19 +225,26 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     );
   }
 
+  /// Whether [updated] differs from [existing] in any term the ledger is projected from:
+  /// installment amount, tenure, start date, onboarding baseline or opening receivable.
+  static bool financialTermsChanged({
+    required RecurringDeposit existing,
+    required RecurringDeposit updated,
+  }) =>
+      !Money.equals(existing.installmentAmount, updated.installmentAmount) ||
+      existing.termYears != updated.termYears ||
+      existing.termMonths != updated.termMonths ||
+      existing.initialPaidInstallments != updated.initialPaidInstallments ||
+      !Money.equals(existing.openingReceivable, updated.openingReceivable) ||
+      existing.startDate.toLocalDate() != updated.startDate.toLocalDate();
+
   static Result<void, String> validateUpdate({
     required RecurringDeposit existing,
     required RecurringDeposit updated,
     required bool hasPayments,
   }) {
-    if (hasPayments) {
-      if (existing.installmentAmount != updated.installmentAmount ||
-          existing.openingReceivable != updated.openingReceivable ||
-          existing.startDate.year != updated.startDate.year ||
-          existing.startDate.month != updated.startDate.month ||
-          existing.startDate.day != updated.startDate.day) {
-        return Failure(t.recurringDeposits.fields.financialTermsLocked);
-      }
+    if (hasPayments && financialTermsChanged(existing: existing, updated: updated)) {
+      return Failure(t.recurringDeposits.fields.financialTermsLocked);
     }
     return const Success(null);
   }

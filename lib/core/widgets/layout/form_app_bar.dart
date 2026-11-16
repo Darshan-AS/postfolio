@@ -1,7 +1,7 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
-
+import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -38,6 +38,7 @@ class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
           )
         else
           IconButton(
+            tooltip: t.common.confirm,
             icon: const HugeIcon(
               icon: HugeIcons.strokeRoundedTick01,
               size: AppDimensions.iconMd,

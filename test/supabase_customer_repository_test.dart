@@ -1,3 +1,6 @@
+@Tags(['integration'])
+library;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postfolio/features/customers/data/supabase_customer_repository.dart';
@@ -113,6 +116,48 @@ void main() {
     final watchedByIdCust = (watchedByIdResult as Success<Customer, String>).value;
     expect(watchedByIdCust.savingsAccount, isNotNull);
     expect(watchedByIdCust.savingsAccount?.accountNumber, 'SB999999999');
+
+    // Deleting a customer who has an embedded SB account (and zero OTD/RD deposits) must succeed.
+    final deleteSbOnlyCustomer = await repository.deleteCustomer(customerId);
+    expect(deleteSbOnlyCustomer, isA<Success<void, String>>());
+
+    // Deleting a customer who owns an OTD/RD deposit must fail cleanly via ON DELETE NO ACTION (23503),
+    // and the refusal must leave their savings account in place.
+    final custWithDepositId = const Uuid().v7();
+    final custWithDeposit = (Customer.create(
+      id: custWithDepositId,
+      name: 'Protected Customer',
+      phone: '9876500000',
+      savingsAccountNumber: 'SB-PROTECT-1',
+    ) as Success<Customer, String>).value;
+    expect(await repository.createCustomer(custWithDeposit), isA<Success<void, String>>());
+    await client.rpc('save_one_time_deposit', params: {
+      'p_id': const Uuid().v7(),
+      'p_customer_id': custWithDepositId,
+      'p_status': 'active',
+      'p_scheme_type': 'timeDeposit',
+      'p_account_no': 'TD-PROTECT-1',
+      'p_principal_amount': 10000,
+      'p_interest_rate': 7.5,
+      'p_term_years': 5,
+      'p_term_months': 0,
+      'p_start_date': '2026-01-01',
+      'p_nominees': const <Map<String, dynamic>>[],
+    });
+
+    final blockedDelete = await repository.deleteCustomer(custWithDepositId);
+    expect(blockedDelete, isA<Failure<void, String>>());
+    final sbAfterRefusal = await client
+        .from('account_identities')
+        .select('id')
+        .eq('customer_id', custWithDepositId)
+        .eq('account_type', 'SB');
+    expect(sbAfterRefusal, hasLength(1), reason: 'a refused delete must not remove the savings account');
+
+    // The SB-only customer deleted above left nothing behind.
+    final leftovers =
+        await client.from('account_identities').select('id').eq('customer_id', customerId);
+    expect(leftovers, isEmpty);
   });
 }
 

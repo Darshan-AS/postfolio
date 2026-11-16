@@ -56,6 +56,7 @@ class AppFilterBottomSheet extends StatelessWidget {
                 const Spacer(),
                 TextButton(onPressed: onClearAll, child: Text(t.common.clear)),
                 IconButton(
+                  tooltip: t.common.close,
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedCancel01,

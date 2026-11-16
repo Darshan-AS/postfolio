@@ -1,10 +1,12 @@
 import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/money.dart';
+import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_rules.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 
@@ -47,28 +49,70 @@ final class RDLedgerProjector {
     final schedule = RDScheduleFactory.baselineSchedule(deposit, rules: rules);
     final amountP = Money.toPaise(deposit.installmentAmount);
 
-    // --- PO side: sequential events ------------------------------------------------------
+    // --- PO side: sequential events & counter-receipt fees -------------------------------
+    // poFee: what the counter actually charged (from ev.feePaid when recorded on a counter
+    //        receipt, otherwise rule-estimated at deposit date / asOf).
+    // customerFee: what the customer owes — fixed on the day they finish paying the month,
+    //              or at the PO counter's fee if the agent deposited it first.
     final depositedOn = List<DateTime?>.filled(n + 1, null);
     final batchOf = List<String?>.filled(n + 1, null);
+    final poFeeP = List<int>.filled(n + 1, 0);
+    final absorbedP = List<int>.filled(n + 1, 0);
+
+    int feeAt(int no, DateTime day) => Money.toPaise(rules.defaultFeeFor(
+        deposit.installmentAmount, rules.defaultedMonths(schedule[no - 1].dueDate, day)));
+
     var depositedThrough = baselineCount;
     for (final ev in facts.poDepositsInOrder) {
+      final evDay = ev.depositedOn.toDateOnly();
+      final covered = <int>[];
       for (var k = 0; k < ev.installmentCount; k++) {
         if (depositedThrough >= n) {
           warnings.add('PO deposit ${ev.id} exceeds the schedule; extra installments ignored');
           break;
         }
         depositedThrough++;
-        depositedOn[depositedThrough] = ev.depositedOn.toDateOnly();
+        depositedOn[depositedThrough] = evDay;
         batchOf[depositedThrough] = ev.batchId;
+        covered.add(depositedThrough);
+      }
+      if (covered.isEmpty) continue;
+
+      final ruleFees = [for (final no in covered) feeAt(no, evDay)];
+      final hasExplicitReceipt =
+          Money.toPaise(ev.amount) > 0 || Money.toPaise(ev.feePaid) > 0;
+      if (!hasExplicitReceipt) {
+        for (var i = 0; i < covered.length; i++) {
+          poFeeP[covered[i]] = ruleFees[i];
+        }
+        continue;
+      }
+
+      final actualFeeP = Money.toPaise(ev.feePaid);
+      final ruleSum = ruleFees.fold<int>(0, (s, f) => s + f);
+      if (actualFeeP <= 0) {
+        for (final no in covered) {
+          poFeeP[no] = 0;
+        }
+      } else if (actualFeeP == ruleSum) {
+        for (var i = 0; i < covered.length; i++) {
+          poFeeP[covered[i]] = ruleFees[i];
+        }
+      } else if (ruleSum == 0) {
+        poFeeP[covered.first] = actualFeeP;
+      } else {
+        var assigned = 0;
+        var lastFeeIdx = 0;
+        for (var i = 0; i < covered.length; i++) {
+          if (ruleFees[i] > 0) lastFeeIdx = i;
+          final share = actualFeeP * ruleFees[i] ~/ ruleSum;
+          poFeeP[covered[i]] = share;
+          assigned += share;
+        }
+        poFeeP[covered[lastFeeIdx]] += actualFeeP - assigned;
       }
     }
 
-    // --- Per-month fees ---------------------------------------------------------------------
-    // poFee: what the counter charges (fixed at deposit date, else estimated as of asOf).
-    // customerFee: what the customer owes — fixed on the day they finish paying the month,
-    //              or at the PO deposit date if the agent fronted it first.
-    final poFeeP = List<int>.filled(n + 1, 0);
-    final absorbedP = List<int>.filled(n + 1, 0);
     for (final a in facts.absorptions) {
       if (a.installmentNo >= 1 && a.installmentNo <= n) {
         absorbedP[a.installmentNo] += Money.toPaise(a.amount);
@@ -76,10 +120,9 @@ final class RDLedgerProjector {
         warnings.add('Fee absorption for #${a.installmentNo} is outside the schedule');
       }
     }
-    int feeAt(int no, DateTime day) => Money.toPaise(rules.defaultFeeFor(
-        deposit.installmentAmount, rules.defaultedMonths(schedule[no - 1].dueDate, day)));
-    for (var no = baselineCount + 1; no <= n; no++) {
-      poFeeP[no] = feeAt(no, depositedOn[no] ?? asOfDay);
+    for (var no = depositedThrough + 1; no <= n; no++) {
+      if (no <= baselineCount) continue;
+      poFeeP[no] = feeAt(no, asOfDay);
     }
 
     // --- Customer side: sequential allocation ---------------------------------------------
@@ -97,10 +140,16 @@ final class RDLedgerProjector {
     var pointer = baselineCount + 1;
     final allocations = <String, List<RDAllocationSlice>>{};
 
-    int customerDueAt(int no, DateTime day) {
+    int effectiveCustomerFeeAt(int no, DateTime day) {
       final d = depositedOn[no];
-      final feeDay = (d != null && d.isBefore(day)) ? d : day;
-      final fee = feeAt(no, feeDay);
+      if (d != null && !day.isBefore(d)) {
+        return poFeeP[no];
+      }
+      return feeAt(no, day);
+    }
+
+    int customerDueAt(int no, DateTime day) {
+      final fee = effectiveCustomerFeeAt(no, day);
       final absorbed = absorbedP[no] > fee ? fee : absorbedP[no];
       return amountP + fee - absorbed;
     }
@@ -138,8 +187,7 @@ final class RDLedgerProjector {
         }
         if (paidP[pointer] >= due) {
           settledAt[pointer] = true;
-          final d = depositedOn[pointer];
-          customerFeeP[pointer] = feeAt(pointer, (d != null && d.isBefore(day)) ? d : day);
+          customerFeeP[pointer] = effectiveCustomerFeeAt(pointer, day);
           pointer++;
         }
       }
@@ -156,9 +204,13 @@ final class RDLedgerProjector {
       allocations[tx.id] = slices;
     }
 
-    // Unsettled months keep accruing until the PO deposit date (or today).
+    // Unsettled months keep accruing until the PO deposit date (where the counter fee fixes it)
+    // or asOfDay when still undeposited.
     for (var no = baselineCount + 1; no <= n; no++) {
-      if (!settledAt[no]) customerFeeP[no] = feeAt(no, depositedOn[no] ?? asOfDay);
+      if (!settledAt[no]) {
+        customerFeeP[no] =
+            depositedOn[no] != null ? poFeeP[no] : feeAt(no, asOfDay);
+      }
       if (absorbedP[no] > customerFeeP[no]) absorbedP[no] = customerFeeP[no];
     }
     int dueOf(int no) => amountP + customerFeeP[no] - absorbedP[no];
@@ -283,30 +335,94 @@ final class RDLedgerProjector {
 
   /// Amount (installment + fee) the PO will charge to deposit the next [count] months on
   /// [depositedOn], given the current facts. Used by the "Deposit next N" sheet.
+  ///
+  /// Pass [feeOverride] when the counter charged a different fee than the statutory formula
+  /// (e.g. `0` when a holiday extended the due date); it replaces the rule fee for the visit.
   ({double amount, double fee}) quoteNextDeposit(
     RDLedgerFacts facts, {
     required int count,
     required DateTime depositedOn,
+    double? feeOverride,
   }) {
     final deposit = facts.deposit;
     final n = deposit.totalMonths;
-    var through = deposit.initialPaidInstallments.clamp(0, n);
-    for (final ev in facts.poDepositsInOrder) {
-      through = (through + ev.installmentCount).clamp(0, n);
-    }
-    var amount = 0;
+    final through = facts.depositedThroughNo;
+    var principal = 0;
     var fee = 0;
     final amountP = Money.toPaise(deposit.installmentAmount);
     for (var k = 0; k < count && through + 1 + k <= n; k++) {
       final no = through + 1 + k;
       final due = rules.dueDateFor(
           deposit.startDate, RDScheduleFactory.installmentDateFor(deposit.startDate, no));
-      final f = Money.toPaise(
+      principal += amountP;
+      fee += Money.toPaise(
           rules.defaultFeeFor(deposit.installmentAmount, rules.defaultedMonths(due, depositedOn)));
-      amount += amountP + f;
-      fee += f;
     }
-    return (amount: Money.toRupees(amount), fee: Money.toRupees(fee));
+    if (feeOverride != null) {
+      final overrideP = Money.toPaise(feeOverride);
+      fee = overrideP < 0 ? 0 : overrideP;
+    }
+    return (amount: Money.toRupees(principal + fee), fee: Money.toRupees(fee));
+  }
+
+  /// Validates and builds the Post Office event "the next [count] months of this account were
+  /// deposited on [depositedOn]". Every rule a visit must satisfy lives here, so the single
+  /// account sheet and the multi-account visit cannot disagree:
+  /// * at least one month, and no more than the account still has to deposit;
+  /// * the counter fee, when given, is not negative;
+  /// * the visit is not dated before the account's last recorded visit (the PO ledger is
+  ///   sequential, and an earlier date would re-assign which months earlier visits covered).
+  ///
+  /// [id] is the deposit's identity. If the ledger already holds an event with that id, that
+  /// stored event is returned as it is and nothing above is checked: recording a deposit
+  /// that is already recorded changes nothing.
+  Result<RDPoDeposit, String> planPoDeposit(
+    RDLedgerFacts facts, {
+    required String id,
+    required int count,
+    required DateTime depositedOn,
+    double? feeOverride,
+    String? batchId,
+  }) {
+    // The id is the deposit's identity. A request to record one the ledger already holds
+    // (a retry after a lost response) is answered with what is stored; it is not planned
+    // again on top of itself, whatever the retried draft now says.
+    for (final stored in facts.poDeposits) {
+      if (stored.id == id) return Success(stored);
+    }
+    if (count <= 0) return const Failure('Nothing to deposit.');
+    if (feeOverride != null && Money.toPaise(feeOverride) < 0) {
+      return const Failure('Counter fee cannot be negative.');
+    }
+    final remaining = facts.deposit.totalMonths - facts.depositedThroughNo;
+    if (count > remaining) {
+      return Failure('Only $remaining installment(s) remain on this account.');
+    }
+    final day = depositedOn.toDateOnly();
+    final latest = facts.latestPoDeposit;
+    if (latest != null && day.isBefore(latest.depositedOn.toDateOnly())) {
+      return Failure(
+        'Deposit date cannot be before the last recorded visit '
+        '(${latest.depositedOn.toDateOnlyString()}).',
+      );
+    }
+    final quote = quoteNextDeposit(
+      facts,
+      count: count,
+      depositedOn: day,
+      feeOverride: feeOverride,
+    );
+    return Success(
+      RDPoDeposit(
+        id: id,
+        rdId: facts.deposit.id,
+        depositedOn: day,
+        installmentCount: count,
+        feePaid: quote.fee,
+        amount: quote.amount,
+        batchId: batchId,
+      ),
+    );
   }
 
   static int _chronological(RDTransaction a, RDTransaction b) {

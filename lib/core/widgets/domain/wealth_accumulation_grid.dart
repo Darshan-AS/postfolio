@@ -1,7 +1,7 @@
+import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
-
 import 'package:postfolio/i18n/strings.g.dart';
 
 class WealthAccumulationGrid extends StatelessWidget {
@@ -31,7 +31,11 @@ class WealthAccumulationGrid extends StatelessWidget {
               textColor: theme.colorScheme.onSurfaceVariant,
             ),
             AppSpacings.gapMd,
-            Icon(Icons.add, color: theme.colorScheme.outline),
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedAdd01,
+              size: AppDimensions.iconSm,
+              color: theme.colorScheme.outline,
+            ),
             AppSpacings.gapMd,
             DetailAmountCard(
               title: t.projections.estInterest,
@@ -49,8 +53,9 @@ class WealthAccumulationGrid extends StatelessWidget {
           padding: const EdgeInsets.symmetric(
             vertical: AppDimensions.paddingXs,
           ),
-          child: Icon(
-            Icons.arrow_downward_rounded,
+          child: HugeIcon(
+            icon: HugeIcons.strokeRoundedArrowDown01,
+            size: AppDimensions.iconMd,
             color: theme.colorScheme.outline,
           ),
         ),

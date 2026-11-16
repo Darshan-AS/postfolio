@@ -27,10 +27,10 @@ class AuthController extends _$AuthController {
 
     final authRepository = ref.watch(authRepositoryProvider);
 
-    // Listen to Firebase auth state changes
     final authStream = authRepository.authStateChanges;
     final subscription = authStream.listen((user) {
       Future.microtask(() {
+        if (!ref.mounted) return;
         if (user != null) {
           state = AuthState.authenticated(user: user);
         } else {
@@ -43,7 +43,12 @@ class AuthController extends _$AuthController {
       subscription.cancel();
     });
 
-    return const AuthState.initial();
+    // Hydrate synchronously from the active session so Web F5 / deep links never flash /login.
+    final currentUser = authRepository.currentUser;
+    if (currentUser != null) {
+      return AuthState.authenticated(user: currentUser);
+    }
+    return const AuthState.unauthenticated();
   }
 
   Future<Result<void, String>> signInWithGoogle() async {

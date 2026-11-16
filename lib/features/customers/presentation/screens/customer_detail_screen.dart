@@ -21,7 +21,6 @@ import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_m
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:postfolio/core/extensions/string_extension.dart';
 
 class CustomerDetailScreen extends ConsumerWidget {
@@ -112,61 +111,70 @@ class CustomerDetailScreen extends ConsumerWidget {
               ],
             ],
           ),
-          floatingActionButton: SpeedDial(
-            heroTag: null,
-            spacing: AppDimensions.paddingSm,
-            spaceBetweenChildren: AppDimensions.paddingSm,
-            backgroundColor: theme.floatingActionButtonTheme.backgroundColor,
-            foregroundColor: theme.floatingActionButtonTheme.foregroundColor,
-            activeChild: const HugeIcon(
-              icon: HugeIcons.strokeRoundedCancel01,
-              size: AppDimensions.iconMd,
-            ),
-            children: [
-              SpeedDialChild(
-                backgroundColor: colorScheme.secondaryContainer,
-                foregroundColor: colorScheme.onSecondaryContainer,
-                label: t.recurringDeposits.title,
-                onTap: () => RecurringDepositCreateRoute(
-                  customerId: customerId,
-                ).push(context),
-                child: const HugeIcon(
+          floatingActionButton: MenuAnchor(
+            menuChildren: [
+              MenuItemButton(
+                leadingIcon: HugeIcon(
                   icon: HugeIcons.strokeRoundedTransaction,
                   size: AppDimensions.iconMd,
+                  color: colorScheme.primary,
                 ),
-              ),
-              SpeedDialChild(
-                backgroundColor: colorScheme.secondaryContainer,
-                foregroundColor: colorScheme.onSecondaryContainer,
-                label: t.oneTimeDeposits.title,
-                onTap: () => OneTimeDepositCreateRoute(
+                onPressed: () => RecurringDepositCreateRoute(
                   customerId: customerId,
                 ).push(context),
-                child: const HugeIcon(
+                child: Text(t.recurringDeposits.title),
+              ),
+              MenuItemButton(
+                leadingIcon: HugeIcon(
                   icon: HugeIcons.strokeRoundedMoneyReceiveSquare,
                   size: AppDimensions.iconMd,
+                  color: colorScheme.primary,
                 ),
+                onPressed: () => OneTimeDepositCreateRoute(
+                  customerId: customerId,
+                ).push(context),
+                child: Text(t.oneTimeDeposits.title),
               ),
             ],
-            child: const HugeIcon(
-              icon: HugeIcons.strokeRoundedAdd01,
-              size: AppDimensions.iconMd,
+            builder: (context, controller, _) => FloatingActionButton(
+              heroTag: null,
+              tooltip: t.common.add,
+              onPressed: () {
+                if (controller.isOpen) {
+                  controller.close();
+                } else {
+                  controller.open();
+                }
+              },
+              child: const HugeIcon(
+                icon: HugeIcons.strokeRoundedAdd01,
+                size: AppDimensions.iconMd,
+              ),
             ),
           ),
           body: [
-            _buildPersonalInfo(customer),
-            AppSpacings.gapLg,
-            _buildIdentityDocuments(customer),
-            AppSpacings.gapLg,
-            _buildSavingsBank(customer),
-            AppSpacings.gapLg,
-            if (customer.savingsAccount?.nominees != null) ...[
+            _buildPersonalInfo(context, ref, customer),
+            if (customer.cifNumber != null ||
+                customer.aadhaarNumber != null ||
+                customer.panNumber != null) ...[
+              AppSpacings.gapLg,
+              _buildIdentityDocuments(customer),
+            ],
+            if (customer.savingsAccount != null) ...[
+              AppSpacings.gapLg,
+              _buildSavingsBank(customer),
+            ],
+            if (customer.savingsAccount != null &&
+                customer.savingsAccount!.nominees.isNotEmpty) ...[
+              AppSpacings.gapLg,
               NomineesDetailSection(
                 nominees: customer.savingsAccount!.nominees,
               ),
-              AppSpacings.gapLg,
             ],
-            _buildNotes(customer),
+            if (customer.notes != null && customer.notes!.trim().isNotEmpty) ...[
+              AppSpacings.gapLg,
+              _buildNotes(customer),
+            ],
             AppSpacings.gapLg,
             _CustomerDepositsSection(customerId: customerId),
           ],
@@ -176,18 +184,25 @@ class CustomerDetailScreen extends ConsumerWidget {
   }
 }
 
-Widget _buildPersonalInfo(Customer customer) {
-  return DetailSection(
-    title: t.customers.sections.personalInfo,
-    children: [
-      DetailItem(
-        icon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedLocation01,
-          size: AppDimensions.iconMd,
-        ),
-        label: t.customers.fields.homeAddress,
-        value: customer.address ?? t.common.notProvided,
+Widget _buildPersonalInfo(
+  BuildContext context,
+  WidgetRef ref,
+  Customer customer,
+) {
+  final hasAddress = customer.address != null && customer.address!.trim().isNotEmpty;
+  final items = <Widget>[
+    DetailItem(
+      icon: const HugeIcon(
+        icon: HugeIcons.strokeRoundedLocation01,
+        size: AppDimensions.iconMd,
       ),
+      label: t.customers.fields.homeAddress,
+      value: customer.address ?? t.common.notProvided,
+      onTap: hasAddress
+          ? () => ref.read(intentServiceProvider).launchMapSearch(customer.address!)
+          : null,
+    ),
+    if (customer.dateOfBirth != null) ...[
       const Divider(height: AppDimensions.dividerHeight),
       DetailItem(
         icon: const HugeIcon(
@@ -195,9 +210,14 @@ Widget _buildPersonalInfo(Customer customer) {
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.dateOfBirth,
-        value: customer.dateOfBirth?.toAppFormat() ?? t.common.notProvided,
+        value: customer.dateOfBirth!.toAppFormat(),
       ),
     ],
+  ];
+
+  return DetailSection(
+    title: t.customers.sections.personalInfo,
+    children: items,
   );
 }
 
@@ -236,41 +256,55 @@ Widget _buildNotes(Customer customer) {
 }
 
 Widget _buildIdentityDocuments(Customer customer) {
-  return DetailSection(
-    title: t.customers.sections.identityDocuments,
-    children: [
+  final items = <Widget>[
+    if (customer.cifNumber != null && customer.cifNumber!.isNotEmpty)
       DetailItem(
         icon: const HugeIcon(
           icon: HugeIcons.strokeRoundedTicket01,
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.cif,
-        value: customer.cifNumber ?? t.common.notProvided,
+        value: customer.cifNumber,
+        copyValue: customer.cifNumber,
+        hideIfNull: true,
       ),
-      const Divider(height: AppDimensions.dividerHeight),
+    if (customer.aadhaarNumber != null && customer.aadhaarNumber!.isNotEmpty)
       DetailItem(
         icon: const HugeIcon(
           icon: HugeIcons.strokeRoundedId,
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.aadhaarNumber,
-        value:
-            customer.aadhaarNumber?.toAadhaarFormat() ?? t.common.notProvided,
+        value: customer.aadhaarNumber!.toAadhaarFormat(),
+        copyValue: customer.aadhaarNumber,
+        hideIfNull: true,
       ),
-      const Divider(height: AppDimensions.dividerHeight),
+    if (customer.panNumber != null && customer.panNumber!.isNotEmpty)
       DetailItem(
         icon: const HugeIcon(
           icon: HugeIcons.strokeRoundedCreditCard,
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.panNumber,
-        value: customer.panNumber?.toPanFormat() ?? t.common.notProvided,
+        value: customer.panNumber!.toPanFormat(),
+        copyValue: customer.panNumber,
+        hideIfNull: true,
       ),
+  ];
+
+  return DetailSection(
+    title: t.customers.sections.identityDocuments,
+    children: [
+      for (var i = 0; i < items.length; i++) ...[
+        if (i > 0) const Divider(height: AppDimensions.dividerHeight),
+        items[i],
+      ],
     ],
   );
 }
 
 Widget _buildSavingsBank(Customer customer) {
+  final sbAccountNo = customer.savingsAccount?.accountNumber;
   return DetailSection(
     title: t.customers.sections.savingsBank,
     children: [
@@ -280,7 +314,8 @@ Widget _buildSavingsBank(Customer customer) {
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.sbAccountNumber,
-        value: customer.savingsAccount?.accountNumber ?? t.common.notProvided,
+        value: sbAccountNo ?? t.common.notProvided,
+        copyValue: sbAccountNo,
       ),
     ],
   );

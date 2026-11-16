@@ -33,12 +33,14 @@ class CustomersScreen extends HookConsumerWidget {
         children: [
           AppSpacings.gapSm,
           AppSearchBar(
+            query: criteria.searchQuery,
             hintText: t.customers.searchHint,
             onChanged: (val) => ref
                 .read(customerListCriteriaProvider.notifier)
                 .updateSearch(val),
             trailing: [
               IconButton(
+                tooltip: t.sorting.title,
                 icon: Badge(
                   isLabelVisible:
                       criteria.sortField != CustomerSortField.name ||

@@ -1,10 +1,16 @@
+import 'dart:async';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/utils/supabase_error_mapper.dart';
+import 'package:postfolio/core/utils/supabase_paginated_query.dart';
 
 class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   final SupabaseClient _supabaseClient;
+  final _localMutations = StreamController<void>.broadcast();
 
   SupabaseRecurringDepositRepository(this._supabaseClient);
 
@@ -17,27 +23,34 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   static const _listColumns =
       'id,agent_id,customer_id,customer_name,status,scheme_type,account_no,'
       'serial_no,installment_amount,interest_rate,term_years,term_months,'
-      'start_date,initial_paid_installments,created_at,updated_at';
+      'start_date,initial_paid_installments,opening_receivable,'
+      'created_at,updated_at';
 
   @override
   Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits() {
-    return _supabaseClient
-        .from('account_identities')
-        .stream(primaryKey: ['id'])
-        .eq('agent_id', _agentId)
-        .asyncMap((_) async {
-          try {
-            final data = await _supabaseClient
-                .from('recurring_deposit_details_view')
-                .select(_listColumns)
-                .eq('agent_id', _agentId);
-            final deposits =
-                data.map((json) => RecurringDeposit.fromJson(json)).toList();
-            return Success(deposits);
-          } catch (e) {
-            return Failure(e.toString());
-          }
-        });
+    final agentId = _agentId;
+    return SupabasePaginatedQuery.watchPaginatedCollection<RecurringDeposit>(
+      client: _supabaseClient,
+      channelPrefix: 'rd-list',
+      table: 'account_identities',
+      filterColumn: 'agent_id',
+      filterValue: agentId,
+      localMutations: _localMutations.stream,
+      shouldRefetch: (payload) {
+        final type =
+            payload.newRecord['account_type'] ?? payload.oldRecord['account_type'];
+        return type == null || type == 'RD';
+      },
+      fetchAll: () => SupabasePaginatedQuery.fetchAllPages<RecurringDeposit>(
+        fetchPage: (from, to) => _supabaseClient
+            .from('recurring_deposit_details_view')
+            .select(_listColumns)
+            .eq('agent_id', agentId)
+            .order('id', ascending: true)
+            .range(from, to),
+        fromJson: RecurringDeposit.fromJson,
+      ),
+    );
   }
 
   @override
@@ -65,7 +78,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
             }
             return Success(RecurringDeposit.fromJson(data));
           } catch (e) {
-            return Failure(e.toString());
+            return Failure(SupabaseErrorMapper.describe(e));
           }
         });
   }
@@ -76,12 +89,30 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   }
 
   @override
+  Future<Result<void, String>> updateDepositStatus(
+    String id,
+    DepositStatus status,
+  ) async {
+    try {
+      await _supabaseClient.rpc(
+        'set_deposit_status',
+        params: {'p_id': id, 'p_status': status.name},
+      );
+      _localMutations.add(null);
+      return const Success(null);
+    } catch (e) {
+      return Failure(SupabaseErrorMapper.describe(e));
+    }
+  }
+
+  @override
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {
     try {
       await _supabaseClient.from('account_identities').delete().eq('id', id);
+      _localMutations.add(null);
       return const Success(null);
     } catch (e) {
-      return Failure(e.toString());
+      return Failure(SupabaseErrorMapper.describe(e));
     }
   }
 
@@ -107,9 +138,10 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
           'p_opening_receivable': deposit.openingReceivable,
         },
       );
+      _localMutations.add(null);
       return const Success(null);
     } catch (e) {
-      return Failure(e.toString());
+      return Failure(SupabaseErrorMapper.describe(e));
     }
   }
 }

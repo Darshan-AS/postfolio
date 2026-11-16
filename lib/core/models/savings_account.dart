@@ -37,7 +37,10 @@ sealed class SavingsAccount with _$SavingsAccount {
     if (error != null) return Failure(error);
 
     return Success(
-      SavingsAccount(accountNumber: accountNumber.trim(), nominees: nominees),
+      SavingsAccount(
+        accountNumber: accountNumber.trim(),
+        nominees: Nominee.sanitizeAll(nominees),
+      ),
     );
   }
 }

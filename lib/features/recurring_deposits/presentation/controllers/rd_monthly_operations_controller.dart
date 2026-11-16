@@ -4,6 +4,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
+import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
@@ -41,7 +42,10 @@ class RDViewModeController extends _$RDViewModeController {
 @Riverpod(keepAlive: true)
 class RDHubMonth extends _$RDHubMonth {
   @override
-  DateTime build() => ref.watch(clockProvider)().toMonthStart();
+  DateTime build() {
+    ref.watch(activeSessionKeyProvider);
+    return ref.watch(clockProvider)().toMonthStart();
+  }
 
   void setMonth(DateTime month) {
     state = month.toMonthStart();
@@ -73,7 +77,10 @@ sealed class RDHubFiltersState with _$RDHubFiltersState {
 @Riverpod(keepAlive: true)
 class RDHubFilters extends _$RDHubFilters {
   @override
-  RDHubFiltersState build() => const RDHubFiltersState();
+  RDHubFiltersState build() {
+    ref.watch(activeSessionKeyProvider);
+    return const RDHubFiltersState();
+  }
 
   void setStatus(RDMonthlyFilter filter) => state = state.copyWith(status: filter);
 
@@ -109,7 +116,10 @@ sealed class RDHubSelectionState with _$RDHubSelectionState {
 @Riverpod(keepAlive: true)
 class RDHubSelection extends _$RDHubSelection {
   @override
-  RDHubSelectionState build() => const RDHubSelectionState();
+  RDHubSelectionState build() {
+    ref.watch(activeSessionKeyProvider);
+    return const RDHubSelectionState();
+  }
 
   void enter() => state = state.copyWith(isSelectionMode: true);
 
@@ -145,16 +155,21 @@ class RDHubSelection extends _$RDHubSelection {
 @riverpod
 Future<UnmodifiableListView<RDMonthlyOperationItem>> monthlyOperationItems(Ref ref) async {
   final month = ref.watch(rDHubMonthProvider);
-  final now = ref.watch(clockProvider)().toDateOnly();
+  final now = ref.watch(currentDateProvider);
   final deposits = await ref.watch(recurringDepositsControllerProvider.future);
   final summaries = await ref.watch(rdLedgerSummariesProvider.future);
 
-  // The Supabase list view already carries customer_name; demo/Firestore deposits do not.
-  // Join lazily so a missing name never shows up as an id or a placeholder error.
-  Map<String, String> customerNames = const {};
-  if (deposits.any((d) => d.customerName == null)) {
+  // Overlay live customer names whenever CustomersController has loaded (so renaming a customer
+  // propagates immediately), and only block-await CustomersController when a deposit lacks a name.
+  final liveCustomers = ref.watch(customersControllerProvider).value;
+  final Map<String, String> customerNames;
+  if (liveCustomers != null) {
+    customerNames = {for (final c in liveCustomers) c.id: c.name};
+  } else if (deposits.any((d) => d.customerName == null)) {
     final customers = await ref.watch(customersControllerProvider.future);
     customerNames = {for (final c in customers) c.id: c.name};
+  } else {
+    customerNames = const {};
   }
 
   final isFutureMonth = month.isAfter(now.toMonthStart());
@@ -162,17 +177,21 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> monthlyOperationItems(Ref r
 
   for (var deposit in deposits) {
     if (deposit.status == DepositStatus.closed) continue;
-    if (deposit.customerName == null && customerNames.containsKey(deposit.customerId)) {
-      deposit = deposit.copyWith(customerName: customerNames[deposit.customerId]);
+    final liveName = customerNames[deposit.customerId];
+    if (liveName != null && liveName != deposit.customerName) {
+      deposit = deposit.copyWith(customerName: liveName);
     }
     final no = RDScheduleFactory.installmentNoFor(deposit.startDate, month);
     if (no < 1 || no > deposit.totalMonths) continue;
 
     final summary = summaries[deposit.id] ?? RDLedgerSummary.pristine(deposit, now);
     final installment = summary.installmentFor(deposit, no, now);
+    final allPriors = summary.priorOpenInstallments(deposit, no, now);
+    // On future-month planning views, suppress un-matured current/upcoming months so healthy
+    // accounts stay calm, while keeping genuinely past-due arrears (`dueDate < now`) visible.
     final priors = isFutureMonth
-        ? const <RDInstallment>[]
-        : summary.priorOpenInstallments(deposit, no, now);
+        ? [for (final p in allPriors) if (p.dueDate.isBefore(now)) p]
+        : allPriors;
 
     items.add(RDMonthlyOperationItem(
       deposit: deposit,
@@ -213,8 +232,9 @@ sealed class RDMonthlyKpiSummary with _$RDMonthlyKpiSummary {
 
 @riverpod
 RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
-  final items = ref.watch(monthlyOperationItemsProvider).value ?? const [];
-  final now = ref.watch(clockProvider)().toDateOnly();
+  final items =
+      ref.watch(monthlyOperationItemsProvider).value ?? const <RDMonthlyOperationItem>[];
+  final now = ref.watch(currentDateProvider);
   final month = ref.watch(rDHubMonthProvider);
   final isFutureMonth = month.isAfter(now.toMonthStart());
 
@@ -243,13 +263,14 @@ RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
         toCollectCount: s.toCollectCount + 1,
       );
     }
-    if (!isFutureMonth && item.hasOverdueDebt(now)) {
+    if (item.hasOverdueDebt(now)) {
       s = s.copyWith(
-        overdueAmount: s.overdueAmount + item.totalOutstanding,
+        overdueAmount: s.overdueAmount +
+            (isFutureMonth ? item.priorOverdueAmount : item.totalOutstanding),
         overdueCount: s.overdueCount + 1,
       );
     }
-    if (!isFutureMonth && item.priorOverdueCount > 0) {
+    if (item.priorOverdueCount > 0) {
       s = s.copyWith(
         priorArrearsAccountsCount: s.priorArrearsAccountsCount + 1,
         priorArrearsAmount: s.priorArrearsAmount + item.priorOverdueAmount,
@@ -286,7 +307,7 @@ sealed class RDAgentFloatSummary with _$RDAgentFloatSummary {
 RDAgentFloatSummary globalAgentFloat(Ref ref) {
   final summaries = ref.watch(rdLedgerSummariesProvider).value ?? const {};
   final deposits = ref.watch(recurringDepositsControllerProvider).value;
-  final now = ref.watch(clockProvider)().toDateOnly();
+  final now = ref.watch(currentDateProvider);
   final byId = {for (final d in deposits ?? const <RecurringDeposit>[]) d.id: d};
 
   var s = const RDAgentFloatSummary();
@@ -427,7 +448,8 @@ sealed class RDBatchSelectionSummary with _$RDBatchSelectionSummary {
 @riverpod
 RDBatchSelectionSummary batchSelectionSummary(Ref ref) {
   final ids = ref.watch(rDHubSelectionProvider.select((s) => s.installmentIds));
-  final items = ref.watch(monthlyOperationItemsProvider).value ?? const [];
+  final items =
+      ref.watch(monthlyOperationItemsProvider).value ?? const <RDMonthlyOperationItem>[];
   final selected = <RDMonthlyOperationItem>[
     for (final i in items)
       if (ids.contains(i.installment.id)) i,
@@ -485,17 +507,15 @@ class RDMonthlyOperationsActions extends _$RDMonthlyOperationsActions {
     }
   }
 
-  /// Builds summaries for RDs that have none yet (first run after migration), then
-  /// optionally re-projects every visible RD (pull-to-refresh).
+  /// Builds summaries for RDs that have none yet (first run after migration), or
+  /// re-projects every visible RD in a single batch read + bulk upsert (pull-to-refresh).
   Future<void> ensureSummaries({bool rebuildAll = false}) async {
-    final ledger = ref.read(rDLedgerControllerProvider.notifier);
-    final ids = rebuildAll
-        ? (ref.read(monthlyOperationItemsProvider).value ?? const [])
-            .map((i) => i.deposit.id)
-            .toList()
-        : await ref.read(rdIdsMissingSummaryProvider.future);
-    for (final id in ids) {
-      await ledger.rebuildSummary(id);
-    }
+    final items = await ref.read(monthlyOperationItemsProvider.future);
+    final deposits = <RecurringDeposit>[
+      for (final i in items)
+        if (rebuildAll || !i.hasSummary) i.deposit,
+    ];
+    if (deposits.isEmpty) return;
+    await ref.read(rDLedgerControllerProvider.notifier).rebuildSummaries(deposits);
   }
 }

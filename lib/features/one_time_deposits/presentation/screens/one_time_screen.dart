@@ -49,12 +49,14 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
         children: [
           AppSpacings.gapSm,
           AppSearchBar(
+            query: criteria.searchQuery,
             hintText: t.oneTimeDeposits.searchHint,
             onChanged: (val) => ref
                 .read(oneTimeListCriteriaProvider.notifier)
                 .updateSearch(val),
             trailing: [
               IconButton(
+                tooltip: t.sorting.title,
                 icon: Badge(
                   isLabelVisible:
                       criteria.sortField != OTDSortField.maturityDate ||
@@ -96,6 +98,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                 },
               ),
               IconButton(
+                tooltip: t.filters.title,
                 icon: Badge(
                   isLabelVisible: activeFilterCount > 0,
                   label: Text('$activeFilterCount'),

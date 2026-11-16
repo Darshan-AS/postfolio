@@ -1,144 +1,67 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Postfolio (Firebase Emulator)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "preLaunchTask": "Start Firebase Emulators",
-            "toolArgs": [
-                "--dart-define=USE_EMULATOR=true"
-            ]
-        },
-        {
-            "name": "Migration (Emulator)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/run_migration.dart",
-            "preLaunchTask": "Start Firebase Emulators",
-            "toolArgs": [
-                "--dart-define=USE_EMULATOR=true"
-            ]
-        },
-        {
-            "name": "Supabase Migration (Emulator)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/run_supabase_migration.dart",
-            "toolArgs": [
-                "--dart-define=USE_EMULATOR=true"
-            ]
-        },
-        {
-            "name": "Supabase Migration (Production)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/run_supabase_migration.dart"
-        },
-        {
-            "name": "Migration (Production)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/run_migration.dart"
-        },
-        {
-            "name": "Postfolio (Staging - Current Device)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "staging"
-            ]
-        },
-        {
-            "name": "Postfolio (Prod - Current Device)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "prod"
-            ]
-        },
-        {
-            "name": "Postfolio (Staging - Android Emulator)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "deviceId": "emulator-5554",
-            "args": [
-                "--flavor",
-                "staging"
-            ]
-        },
-        {
-            "name": "Postfolio (Prod - Android Emulator)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "deviceId": "emulator-5554",
-            "args": [
-                "--flavor",
-                "prod"
-            ]
-        },
-        {
-            "name": "Postfolio (macOS)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "deviceId": "macos"
-        },
-        {
-            "name": "Postfolio (Chrome - Emulator)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "deviceId": "chrome",
-            "toolArgs": [
-                "--web-port=3000",
-                "--dart-define=USE_EMULATOR=true"
-            ]
-        },
-        {
-            "name": "Postfolio (Chrome - Production)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "deviceId": "chrome",
-            "toolArgs": [
-                "--web-port=3000"
-            ]
-        },
-        {
-            "name": "Postfolio (iOS Simulator)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "deviceId": "ios"
-        },
-        {
-            "name": "Postfolio (Windows)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "deviceId": "windows"
-        },
-        {
-            "name": "Postfolio (Linux)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "deviceId": "linux"
-        },
-        {
-            "name": "Postfolio (Edge)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "deviceId": "edge"
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Postfolio (Staging - Local Supabase)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor",
+        "staging",
+        "--dart-define-from-file=config/local.json"
+      ]
+    },
+    {
+      "name": "Postfolio (Prod - Current Device)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor",
+        "prod"
+      ]
+    },
+    {
+      "name": "Postfolio (Chrome - Local Supabase)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--web-port=3000",
+        "--dart-define-from-file=config/local.json"
+      ]
+    },
+    {
+      "name": "Postfolio (Chrome - Production)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--web-port=3000"
+      ]
+    },
+    {
+      "name": "Postfolio (macOS - Local Supabase)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "macos",
+      "toolArgs": [
+        "--dart-define-from-file=config/local.json"
+      ]
+    },
+    {
+      "name": "Postfolio (iOS Simulator - Local Supabase)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "ios",
+      "toolArgs": [
+        "--dart-define-from-file=config/local.json"
+      ]
+    }
+  ]
 }

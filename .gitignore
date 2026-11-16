@@ -70,6 +70,8 @@ data/*
 .env
 .env.*
 !.env.example
+config/staging.json
+config/prod.json
 lib/core/env/env.g.dart
 
 # Generated Dart files
@@ -82,6 +84,7 @@ prod_users.json
 
 # Database dumps & local backups (sensitive data)
 *.dump
+*.age
 full_backup*.sql
 postfolio_backup*.sql
 

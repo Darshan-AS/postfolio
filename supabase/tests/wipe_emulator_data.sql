@@ -1,6 +1,7 @@
 -- Wipe every row of app + auth data in the local emulator, keep the schema, then reseed.
 BEGIN;
 TRUNCATE TABLE
+  public.app_error_logs,
   public.rd_ledger_summary,
   public.rd_fee_absorptions,
   public.rd_po_deposits,
@@ -19,8 +20,10 @@ DELETE FROM auth.refresh_tokens;
 DELETE FROM auth.sessions;
 DELETE FROM auth.identities;
 DELETE FROM auth.users;
--- Record the ledger migration as applied (if it was executed manually against this DB).
+-- Record the ledger + Stage 0 hotfix migrations as applied (if executed manually against this DB).
 INSERT INTO supabase_migrations.schema_migrations (version, name)
-VALUES ('20261110000000', 'rd_ledger')
+VALUES
+  ('20261110000000', 'rd_ledger'),
+  ('20261111000000', 'v2_4_storage_hardening')
 ON CONFLICT (version) DO NOTHING;
 COMMIT;

@@ -173,7 +173,7 @@ class _InspectorBody extends ConsumerWidget {
     final passbook = t.recurringDeposits.ledger.passbook;
     final inst = installment;
     final status = inst.displayStatusAt(now);
-    final visual = status.visual(scheme);
+    final visual = status.visualOf(context);
     final isBaseline = inst.isOpeningBaseline;
 
     final isOpen = !isBaseline && inst.outstandingAmount > 0;
@@ -230,7 +230,9 @@ class _InspectorBody extends ConsumerWidget {
         _MetricRow(
           label: inspector.depositedOn,
           value: depositedOn.toAppFormat(),
-          trailing: inst.poBatchId ?? t.common.notProvided,
+          trailing: inst.poBatchId != null
+              ? inspector.poVisitBadge
+              : t.common.notProvided,
         ),
     ];
 

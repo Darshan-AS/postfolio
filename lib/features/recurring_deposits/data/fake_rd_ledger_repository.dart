@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_fee_absorption_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_change.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -10,7 +11,9 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_mode
 /// In-memory facts store for demo mode and tests.
 ///
 /// Deliberately has **no** ledger logic: it stores lists and re-emits them. All behaviour
-/// comes from `RDLedgerProjector`, so the fake cannot drift from production.
+/// comes from `RDLedgerProjector`, so the fake cannot drift from production. Its write
+/// semantics mirror the database function: one all-or-nothing [applyChange] whose parts are
+/// upserts, insert-if-absent and delete-if-present.
 class FakeRDLedgerRepository implements RDLedgerRepository {
   FakeRDLedgerRepository({
     Map<String, List<RDTransaction>>? transactions,
@@ -21,8 +24,26 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
         _poDeposits = {for (final e in (poDeposits ?? {}).entries) e.key: [...e.value]},
         _absorptions = {for (final e in (absorptions ?? {}).entries) e.key: [...e.value]};
 
-  /// When set, every write fails with this message (for error-path tests).
+  /// When set, every write fails with this message and stores nothing.
   String? failWith;
+
+  /// When set, storing a summary fails. Because a change and its summaries are one
+  /// transaction, an [applyChange] that carries summaries then stores nothing at all.
+  String? failSummaryWith;
+
+  /// When set, every read fails with this message: fact streams opened from now on emit a
+  /// `Failure`, and the batch reads return one (simulates going offline).
+  String? failReadsWith;
+
+  /// When set, the next [applyChange] stores everything and then reports this failure once
+  /// (simulates a response lost after the server committed).
+  String? failApplyAfterCommitOnce;
+
+  /// Called right after an [applyChange] has stored its change.
+  void Function()? onChangeApplied;
+
+  /// Simulated network round-trip time for [applyChange] (tests only).
+  Duration? writeLatency;
 
   final Map<String, List<RDTransaction>> _transactions;
   final Map<String, List<RDPoDeposit>> _poDeposits;
@@ -34,6 +55,14 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   final _absorptionControllers = <String, StreamController<Result<List<RDFeeAbsorption>, String>>>{};
   final _summaryController =
       StreamController<Result<List<RDLedgerSummary>, String>>.broadcast();
+
+  /// Test telemetry.
+  int batchFactFetchCount = 0;
+  int upsertSummariesCallCount = 0;
+  int applyChangeCallCount = 0;
+
+  /// Number of per-account fact streams opened so far.
+  int streamOpenCount = 0;
 
   // --- Test inspection ----------------------------------------------------------------------
   List<RDTransaction> transactionsOf(String rdId) => List.unmodifiable(_transactions[rdId] ?? const []);
@@ -56,6 +85,32 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
       _watch(_absorptionControllers, rdId, () => _absorptions[rdId] ?? const []);
 
   @override
+  Future<Result<Map<String, RDRawFactsBundle>, String>> fetchRawFactsForRds(
+    List<String> rdIds,
+  ) async {
+    if (failReadsWith != null) return Failure(failReadsWith!);
+    batchFactFetchCount++;
+    return Success({
+      for (final id in rdIds)
+        id: (
+          transactions: List<RDTransaction>.unmodifiable(_transactions[id] ?? const []),
+          poDeposits: List<RDPoDeposit>.unmodifiable(_poDeposits[id] ?? const []),
+          absorptions: List<RDFeeAbsorption>.unmodifiable(_absorptions[id] ?? const []),
+        ),
+    });
+  }
+
+  @override
+  Future<Result<List<RDPoDeposit>, String>> fetchPoDepositsByBatch(String batchId) async {
+    if (failReadsWith != null) return Failure(failReadsWith!);
+    return Success([
+      for (final events in _poDeposits.values)
+        for (final e in events)
+          if (e.batchId == batchId) e,
+    ]);
+  }
+
+  @override
   Stream<Result<List<RDLedgerSummary>, String>> watchSummaries() async* {
     yield Success(_summaries.values.toList(growable: false));
     yield* _summaryController.stream;
@@ -64,109 +119,87 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   // --- Writes -------------------------------------------------------------------------------
 
   @override
-  Future<Result<void, String>> upsertSummary(RDLedgerSummary summary) async {
+  Future<Result<void, String>> upsertSummaries(List<RDLedgerSummary> summaries) async {
     if (failWith != null) return Failure(failWith!);
-    _summaries[summary.rdId] = summary;
-    _summaryController.add(Success(_summaries.values.toList(growable: false)));
+    if (failSummaryWith != null) return Failure(failSummaryWith!);
+    if (summaries.isEmpty) return const Success(null);
+    upsertSummariesCallCount++;
+    _storeSummaries(summaries);
     return const Success(null);
   }
 
   @override
-  Future<Result<void, String>> addTransaction(RDTransaction transaction) async {
-    if (failWith != null) return Failure(failWith!);
-    final list = _transactions.putIfAbsent(transaction.rdId, () => []);
-    if (list.any((t) => t.id == transaction.id)) {
-      return const Failure('This payment has already been recorded.');
-    }
-    list.add(transaction.copyWith(createdAt: transaction.createdAt ?? DateTime.now()));
-    _emitTx(transaction.rdId);
-    return const Success(null);
-  }
-
-  @override
-  Future<Result<void, String>> updateTransaction(RDTransaction transaction) async {
-    if (failWith != null) return Failure(failWith!);
-    final list = _transactions[transaction.rdId];
-    final idx = list?.indexWhere((t) => t.id == transaction.id) ?? -1;
-    if (list == null || idx < 0) return const Failure('Payment not found.');
-    list[idx] = transaction.copyWith(createdAt: list[idx].createdAt);
-    _emitTx(transaction.rdId);
-    return const Success(null);
-  }
-
-  @override
-  Future<Result<void, String>> deleteTransaction({
-    required String rdId,
-    required String transactionId,
+  Future<Result<void, String>> applyChange(
+    RDLedgerChange change, {
+    List<RDLedgerSummary> summaries = const [],
   }) async {
     if (failWith != null) return Failure(failWith!);
-    final list = _transactions[rdId];
-    if (list == null || !list.any((t) => t.id == transactionId)) {
-      return const Failure('Payment not found.');
-    }
-    list.removeWhere((t) => t.id == transactionId);
-    _emitTx(rdId);
-    return const Success(null);
-  }
+    final latency = writeLatency;
+    if (latency != null) await Future<void>.delayed(latency);
+    // One transaction: if any part cannot be stored, nothing is.
+    if (summaries.isNotEmpty && failSummaryWith != null) return Failure(failSummaryWith!);
+    applyChangeCallCount++;
 
-  @override
-  Future<Result<void, String>> addPoDeposit(RDPoDeposit event) async {
-    if (failWith != null) return Failure(failWith!);
-    final list = _poDeposits.putIfAbsent(event.rdId, () => []);
-    if (list.any((e) => e.id == event.id)) {
-      return const Failure('This entry has already been recorded.');
-    }
-    list.add(event.copyWith(createdAt: event.createdAt ?? DateTime.now()));
-    _poControllers[event.rdId]?.add(Success(List.unmodifiable(list)));
-    return const Success(null);
-  }
+    final now = DateTime.now();
+    final txTouched = <String>{};
+    final poTouched = <String>{};
+    final absorptionTouched = <String>{};
 
-  @override
-  Future<Result<void, String>> deletePoDeposit({
-    required String rdId,
-    required String eventId,
-  }) async {
-    if (failWith != null) return Failure(failWith!);
-    final list = _poDeposits[rdId];
-    if (list == null || !list.any((e) => e.id == eventId)) {
-      return const Failure('Deposit not found.');
+    for (final d in change.deleteTransactions) {
+      _transactions[d.rdId]?.removeWhere((t) => t.id == d.transactionId);
+      txTouched.add(d.rdId);
     }
-    list.removeWhere((e) => e.id == eventId);
-    _poControllers[rdId]?.add(Success(List.unmodifiable(list)));
-    return const Success(null);
-  }
-
-  @override
-  Future<Result<void, String>> deletePoDepositBatch(String batchId) async {
-    if (failWith != null) return Failure(failWith!);
-    for (final e in _poDeposits.entries) {
-      final before = e.value.length;
-      e.value.removeWhere((d) => d.batchId == batchId);
-      if (e.value.length != before) {
-        _poControllers[e.key]?.add(Success(List.unmodifiable(e.value)));
+    for (final d in change.deletePoDeposits) {
+      _poDeposits[d.rdId]?.removeWhere((e) => e.id == d.eventId);
+      poTouched.add(d.rdId);
+    }
+    for (final d in change.deleteFeeAbsorptions) {
+      _absorptions[d.rdId]?.removeWhere((a) => a.installmentNo == d.installmentNo);
+      absorptionTouched.add(d.rdId);
+    }
+    for (final t in change.upsertTransactions) {
+      final list = _transactions.putIfAbsent(t.rdId, () => []);
+      final index = list.indexWhere((x) => x.id == t.id);
+      if (index >= 0) {
+        list[index] = t.copyWith(createdAt: list[index].createdAt);
+      } else {
+        list.add(t.copyWith(createdAt: t.createdAt ?? now));
       }
+      txTouched.add(t.rdId);
     }
-    return const Success(null);
-  }
+    for (final e in change.insertPoDeposits) {
+      final list = _poDeposits.putIfAbsent(e.rdId, () => []);
+      if (!list.any((x) => x.id == e.id)) {
+        list.add(e.copyWith(createdAt: e.createdAt ?? now));
+      }
+      poTouched.add(e.rdId);
+    }
+    for (final a in change.upsertFeeAbsorptions) {
+      final list = _absorptions.putIfAbsent(a.rdId, () => []);
+      list
+        ..removeWhere((x) => x.installmentNo == a.installmentNo)
+        ..add(a);
+      absorptionTouched.add(a.rdId);
+    }
 
-  @override
-  Future<Result<void, String>> upsertFeeAbsorption(RDFeeAbsorption absorption) async {
-    if (failWith != null) return Failure(failWith!);
-    final list = _absorptions.putIfAbsent(absorption.rdId, () => []);
-    list.removeWhere((a) => a.installmentNo == absorption.installmentNo);
-    list.add(absorption);
-    _absorptionControllers[absorption.rdId]?.add(Success(List.unmodifiable(list)));
-    return const Success(null);
-  }
+    for (final rdId in txTouched) {
+      _txControllers[rdId]?.add(Success(List.unmodifiable(_transactions[rdId] ?? const [])));
+    }
+    for (final rdId in poTouched) {
+      _poControllers[rdId]?.add(Success(List.unmodifiable(_poDeposits[rdId] ?? const [])));
+    }
+    for (final rdId in absorptionTouched) {
+      _absorptionControllers[rdId]
+          ?.add(Success(List.unmodifiable(_absorptions[rdId] ?? const [])));
+    }
+    if (summaries.isNotEmpty) _storeSummaries(summaries);
 
-  @override
-  Future<Result<void, String>> removeFeeAbsorption({
-    required String rdId,
-    required int installmentNo,
-  }) async {
-    if (failWith != null) return Failure(failWith!);
-    _absorptions[rdId]?.removeWhere((a) => a.installmentNo == installmentNo);
-    _absorptionControllers[rdId]?.add(Success(List.unmodifiable(_absorptions[rdId] ?? const [])));
+    onChangeApplied?.call();
+    final lostResponse = failApplyAfterCommitOnce;
+    if (lostResponse != null) {
+      failApplyAfterCommitOnce = null;
+      return Failure(lostResponse);
+    }
     return const Success(null);
   }
 
@@ -185,6 +218,13 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
 
   // --- Internals ----------------------------------------------------------------------------
 
+  void _storeSummaries(List<RDLedgerSummary> summaries) {
+    for (final summary in summaries) {
+      _summaries[summary.rdId] = summary;
+    }
+    _summaryController.add(Success(_summaries.values.toList(growable: false)));
+  }
+
   Stream<Result<List<T>, String>> _watch<T>(
     Map<String, StreamController<Result<List<T>, String>>> controllers,
     String rdId,
@@ -194,10 +234,13 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
       rdId,
       () => StreamController<Result<List<T>, String>>.broadcast(),
     );
-    yield Success(List.unmodifiable(current()));
+    streamOpenCount++;
+    final readFailure = failReadsWith;
+    if (readFailure != null) {
+      yield Failure(readFailure);
+    } else {
+      yield Success(List.unmodifiable(current()));
+    }
     yield* controller.stream;
   }
-
-  void _emitTx(String rdId) =>
-      _txControllers[rdId]?.add(Success(List.unmodifiable(_transactions[rdId] ?? const [])));
 }

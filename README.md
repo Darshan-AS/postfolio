@@ -1,10 +1,10 @@
 # Postfolio
 
-A sophisticated portfolio management application for Small Savings Schemes, built with Flutter, Riverpod, and Firebase.
+A portfolio management application for Post Office Small Savings Schemes, built with Flutter, Riverpod, and Supabase (PostgreSQL). Firebase is used only for Hosting (web) and Crashlytics (native).
 
 ## Getting Started
 
-For detailed instructions on setting up a new development machine, managing release keys, or recovering from a lost environment, please refer to the **[Setup & Disaster Recovery Guide](docs/setup_guide.md)**.
+For setting up a new development machine, managing release keys, backups, and the release order when a database migration is included, see the **[Setup & Disaster Recovery Guide](docs/setup_guide.md)**.
 
 ### Quick Start
 
@@ -13,96 +13,86 @@ For detailed instructions on setting up a new development machine, managing rele
    ```bash
    flutter pub get
    ```
-3. Initialize Firebase (if not already configured):
+3. Create `.env` and generate code:
    ```bash
-   flutterfire configure
+   cp .env.local .env   # or copy .env.example and fill it in
+   dart run slang
+   dart run build_runner build
    ```
 
 ---
 
 ## Running the Application
 
-### 1. Normal Mode (Production/Cloud Firebase)
-Runs the app connected to your live Firebase project.
+### 1. Local Supabase (development)
+
+Ensure Docker is running, then start the local stack. This replays every file in `supabase/migrations/` and loads `supabase/seed.sql`:
+
 ```bash
-flutter run
+supabase start
 ```
 
-### 2. Emulator Mode (Local Development - Supabase)
-Postfolio is currently migrating to Supabase. During this transition, we use local Supabase emulators for development.
+Supabase Studio (database UI) is at `http://localhost:54323`.
 
-**Step A: Start the Emulators**
-Ensure Docker is running, then start the Supabase emulators:
+Run the app against the local stack without touching `.env`:
+
 ```bash
-npx supabase start
+flutter run -d chrome --dart-define-from-file=config/local.json
+flutter run --flavor staging --dart-define-from-file=config/local.json   # Android
 ```
 
-> **Tip**: You can access the **Supabase Studio** (Database UI) at `http://localhost:54323`.
+The same targets are available in VS Code's Run and Debug menu (`.vscode/launch.json`).
 
-**Step B: Configure Environment**
-1. Copy either `.env.local` or `.env.prod` to `.env` depending on your active target:
-   ```bash
-   cp .env.local .env
-   ```
-2. Build/Compile the env variables using the generator:
-   ```bash
-   dart run build_runner build --delete-conflicting-outputs
-   ```
+To reset the local database to migrations + seed:
 
-**Step C: Run the App**
-Run the app normally:
 ```bash
-flutter run
+supabase db reset
 ```
 
-### 3. Legacy Emulator Mode (Firebase)
-*Note: This will be deprecated once the migration is complete.*
-... (rest of the firebase section)
+### 2. Production backend
 
-### 3. Cleanup & Stopping
-To completely stop the emulators and any running Flutter instances (especially helpful if ports are stuck), you can use:
+Runs against the hosted Supabase project configured in `.env` (`cp .env.prod .env`, then re-run `build_runner`):
+
 ```bash
-# Kill Firebase Emulators (silent if no processes found)
-lsof -ti:8080,9099 | xargs -r kill -9
-
-# Kill all Chrome/Flutter run processes (Linux/macOS)
-pkill -f chrome
+flutter run --flavor prod
 ```
+
+### 3. Demo Mode
+
+Toggle **Demo Mode** on the login screen to use in-memory fixtures with no backend.
 
 ---
 
-## Data Migration
+## Tests
 
-If you need to bootstrap your local environment with legacy data (CSV/JSON), use the built-in migration utility. **Note**: Running on Chrome is highly recommended for the migration UI.
-
-1. Place your CSV/JSON files in the `data/` directory.
-2. Ensure the Firebase Emulator is running (`firebase emulators:start`).
-3. Run the migration script using the following command:
-   ```bash
-   flutter run -t lib/run_migration.dart -d chrome
-   ```
-4. Once the app launches, click **"Sign In"** to authenticate, then click **"Run Migration"**.
+```bash
+dart analyze --fatal-infos
+flutter test --exclude-tags integration          # fast suite, no Docker
+flutter test --tags integration                  # needs the local Supabase stack
+docker exec -i supabase_db_postfolio psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
+  < supabase/tests/rd_ledger_facts_rls.sql       # SQL contracts; every case rolls back
+```
 
 ---
 
 ## Database Backups
 
-To create a full manual backup (complete DDL schema + all data rows) into a self-contained SQL file using Docker:
+To create a full manual backup (schema + all rows) into a self-contained SQL file using Docker:
 
 ```bash
 docker run --rm -v $(pwd):/backup postgres:17 pg_dump "YOUR_SESSION_POOLER_DATABASE_URL" -f /backup/full_backup_$(date +%Y_%m_%d).sql
 ```
 
-For complete instructions on retrieving the Supabase Session Pooler connection string, verifying the dump, and restoring the database, see the **[Setup & Disaster Recovery Guide](docs/setup_guide.md#database-backups-schema--all-data-via-docker)**.
+For retrieving the Session Pooler connection string, the nightly encrypted backup workflow, and restoring, see the **[Setup & Disaster Recovery Guide](docs/setup_guide.md#database-backups-schema--all-data-via-docker)**.
 
 ---
 
 ## Architecture & Conventions
 
-This project follows strict architectural patterns:
 - **State Management**: Riverpod (Notifiers & AsyncNotifiers).
-- **Models**: Freezed (Immutable classes & Sealed unions).
-- **Navigation**: GoRouter (Declarative routing).
+- **Models**: Freezed (immutable classes & sealed unions).
+- **Navigation**: GoRouter (declarative routing).
+- **Backend**: Supabase (PostgreSQL with row-level security); business rules live in Dart.
 - **Design System**: Standardized components in `lib/core/widgets/` using HugeIcons.
 
-Refer to `AGENTS.md` for detailed coding conventions and structural guidelines.
+See [docs/architecture.md](docs/architecture.md) and `AGENTS.md` for coding conventions and structural guidelines.

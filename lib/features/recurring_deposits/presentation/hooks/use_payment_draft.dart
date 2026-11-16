@@ -47,6 +47,7 @@ class PaymentDraftState {
     required this.absorbableInstallmentNo,
     required this.isSubmitting,
     required this.isDirty,
+    required this.hasInitialPrefill,
     required this.firstDate,
     required this.lastDate,
     required this.applyQuickAmount,
@@ -89,6 +90,7 @@ class PaymentDraftState {
 
   final bool isSubmitting;
   final bool isDirty;
+  final bool hasInitialPrefill;
 
   /// Allowed paid-date range: deposit start through today.
   final DateTime firstDate;
@@ -201,7 +203,7 @@ PaymentDraftState usePaymentDraft(
   );
 
   // The id is minted once per draft so the sheet knows which transaction to delete on Undo.
-  final draftId = useMemoized(() => const Uuid().v4());
+  final draftId = useMemoized(() => const Uuid().v7());
   final previewTxId = existing?.id ?? draftId;
 
   final RDPaymentDraft draft = (
@@ -381,6 +383,7 @@ PaymentDraftState usePaymentDraft(
     absorbableInstallmentNo: absorbable.installmentNo,
     isSubmitting: isSubmitting,
     isDirty: isDirty,
+    hasInitialPrefill: existing != null || (initialAmount != null && initialAmount > 0),
     firstDate: firstDate,
     lastDate: today,
     applyQuickAmount: applyQuickAmount,

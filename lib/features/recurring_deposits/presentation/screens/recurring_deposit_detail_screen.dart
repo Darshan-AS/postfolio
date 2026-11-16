@@ -46,15 +46,20 @@ enum RDDetailTab {
 
 class RecurringDepositDetailScreen extends HookConsumerWidget {
   final String depositId;
+  final String? initialTab;
 
-  const RecurringDepositDetailScreen({super.key, required this.depositId});
+  const RecurringDepositDetailScreen({
+    super.key,
+    required this.depositId,
+    this.initialTab,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Deep link (`?tab=info|schedule|transactions`) wins on first build; the hook keeps
     // the user's subsequent choice. `maybeOf` keeps the screen usable outside a router.
     final tabFromRoute = RDDetailTab.fromQuery(
-      GoRouter.maybeOf(context)?.state.uri.queryParameters['tab'],
+      initialTab ?? GoRouter.maybeOf(context)?.state.uri.queryParameters['tab'],
     );
     final activeTab = useState(tabFromRoute ?? RDDetailTab.info);
     final projectionAsync = ref.watch(rdLedgerProjectionProvider(depositId));
@@ -161,11 +166,14 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                           color: theme.colorScheme.primary,
                         ),
                         AppSpacings.gapXs,
-                        Text(
-                          resolvedCustomerName,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.bold,
+                        Flexible(
+                          child: Text(
+                            resolvedCustomerName,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -179,7 +187,10 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                 ),
               ],
             ),
-            badge: StatusBadge(status: deposit.status.displayName),
+            badge: StatusBadge(
+              status: deposit.status.displayName,
+              depositStatus: deposit.status,
+            ),
           ),
           body: [
             SizedBox(
@@ -277,15 +288,6 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                           months: deposit.termMonths.toString(),
                         ),
                       ),
-                      const Divider(height: AppDimensions.dividerHeight),
-                      DetailItem(
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedPercent,
-                          size: AppDimensions.iconMd,
-                        ),
-                        label: t.recurringDeposits.fields.interestRate,
-                        value: rateLabel,
-                      ),
                     ],
                   ),
                   AppSpacings.gapLg,
@@ -315,6 +317,19 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                   DetailSection(
                     title: t.recurringDeposits.sections.accountInformation,
                     children: [
+                      if (deposit.accountNo != null &&
+                          deposit.accountNo!.isNotEmpty) ...[
+                        DetailItem(
+                          icon: const HugeIcon(
+                            icon: HugeIcons.strokeRoundedTicket01,
+                            size: AppDimensions.iconMd,
+                          ),
+                          label: t.recurringDeposits.fields.accountNo,
+                          value: deposit.accountNo,
+                          copyValue: deposit.accountNo,
+                        ),
+                        const Divider(height: AppDimensions.dividerHeight),
+                      ],
                       DetailItem(
                         icon: const HugeIcon(
                           icon: HugeIcons.strokeRoundedTag01,
@@ -322,6 +337,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                         ),
                         label: t.recurringDeposits.fields.serialNo,
                         value: deposit.serialNo ?? t.common.notProvided,
+                        copyValue: deposit.serialNo,
                       ),
                       const Divider(height: AppDimensions.dividerHeight),
                       DetailItem(

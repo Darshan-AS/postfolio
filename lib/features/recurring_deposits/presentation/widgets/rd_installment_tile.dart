@@ -32,7 +32,7 @@ class RDInstallmentTile extends StatelessWidget {
     final passbook = t.recurringDeposits.ledger.passbook;
     final inst = installment;
     final status = inst.displayStatusAt(now);
-    final visual = status.visual(scheme);
+    final visual = status.visualOf(context);
 
     final String amountLabel;
     final Color amountColor;
@@ -72,30 +72,44 @@ class RDInstallmentTile extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       // Money lives on the title row (never in `trailing`, which is capped at 56dp).
-      title: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Text(
-              passbook.monthLabel(
-                month: inst.installmentNo.toString(),
-                monthName: inst.installmentDate.toMonthYearFormat(),
+      title: LayoutBuilder(
+        builder: (context, rowConstraints) {
+          final maxAmountWidth = rowConstraints.maxWidth.isFinite
+              ? rowConstraints.maxWidth * 0.55
+              : double.infinity;
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  passbook.monthLabel(
+                    month: inst.installmentNo.toString(),
+                    monthName: inst.installmentDate.toMonthYearFormat(),
+                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          AppSpacings.gapSm,
-          Text(
-            amountLabel,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: amountColor,
-            ),
-            maxLines: 1,
-          ),
-        ],
+              AppSpacings.gapSm,
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxAmountWidth),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    amountLabel,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: amountColor,
+                    ),
+                    maxLines: 1,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: AppDimensions.paddingXs),
@@ -147,11 +161,14 @@ class _StatusChip extends StatelessWidget {
         children: [
           HugeIcon(icon: visual.icon, size: AppDimensions.iconXs, color: visual.foreground),
           AppSpacings.gapXxs,
-          Text(
-            visual.label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: visual.foreground,
-              fontWeight: FontWeight.bold,
+          Flexible(
+            child: Text(
+              visual.label,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: visual.foreground,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

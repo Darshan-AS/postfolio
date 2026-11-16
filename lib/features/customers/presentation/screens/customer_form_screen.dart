@@ -9,6 +9,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/domain/nominees_input_section.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
+import 'package:postfolio/core/widgets/feedback/unsaved_changes_pop_scope.dart';
 import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
 import 'package:postfolio/core/widgets/layout/form_app_bar.dart';
 
@@ -42,44 +43,100 @@ class _CustomerForm extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = useCustomerForm(ref: ref, customer: existingCustomer);
+    final isDirty = useIsFormDirty(
+      [
+        state.nameController,
+        state.emailController,
+        state.phoneController,
+        state.addressController,
+        state.cifNumberController,
+        state.aadhaarNumberController,
+        state.panNumberController,
+        state.savingsAccountNumberController,
+        state.dateOfBirthController,
+        state.notesController,
+        state.nominees,
+      ],
+      () => [
+        state.nameController.text,
+        state.emailController.text,
+        state.phoneController.text,
+        state.addressController.text,
+        state.cifNumberController.text,
+        state.aadhaarNumberController.text,
+        state.panNumberController.text,
+        state.savingsAccountNumberController.text,
+        state.dateOfBirthController.text,
+        state.notesController.text,
+        state.nominees.value.toString(),
+      ].join('\u0000'),
+    );
 
-    return Scaffold(
-      appBar: FormAppBar(
-        title: state.isUpdating
-            ? t.customers.editCustomer
-            : t.customers.newCustomer,
-        isSaving: state.isSaving.value,
-        onSave: () => state.save(context),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: Form(
-          key: state.formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ..._buildPersonalInfo(
-                nameController: state.nameController,
-                phoneController: state.phoneController,
-                emailController: state.emailController,
-                dateOfBirthController: state.dateOfBirthController,
-                addressController: state.addressController,
-                onSelectDate: () => state.selectDate(context),
+    return UnsavedChangesPopScope(
+      isDirty: isDirty && !state.isSaving.value,
+      child: Scaffold(
+        appBar: FormAppBar(
+          title: state.isUpdating
+              ? t.customers.editCustomer
+              : t.customers.newCustomer,
+          isSaving: state.isSaving.value,
+          onSave: () => state.save(context),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppDimensions.paddingLg),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: AppDimensions.maxFormWidth,
               ),
-              ..._buildIdentityDocuments(
-                cifNumberController: state.cifNumberController,
-                aadhaarNumberController: state.aadhaarNumberController,
-                panNumberController: state.panNumberController,
+              child: Form(
+                key: state.formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ..._buildPersonalInfo(
+                      nameController: state.nameController,
+                      phoneController: state.phoneController,
+                      emailController: state.emailController,
+                      dateOfBirthController: state.dateOfBirthController,
+                      addressController: state.addressController,
+                      onSelectDate: () => state.selectDate(context),
+                    ),
+                    ..._buildIdentityDocuments(
+                      cifNumberController: state.cifNumberController,
+                      aadhaarNumberController: state.aadhaarNumberController,
+                      panNumberController: state.panNumberController,
+                    ),
+                    ..._buildSavingsBank(
+                      savingsAccountNumberController:
+                          state.savingsAccountNumberController,
+                      nominees: state.nominees,
+                    ),
+                    ..._buildNotes(
+                      notesController: state.notesController,
+                    ),
+                    FilledButton.icon(
+                      onPressed: state.isSaving.value
+                          ? null
+                          : () => state.save(context),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(
+                          AppDimensions.buttonHeight,
+                        ),
+                      ),
+                      icon: const HugeIcon(
+                        icon: HugeIcons.strokeRoundedTick01,
+                        size: AppDimensions.iconMd,
+                      ),
+                      label: Text(
+                        state.isSaving.value ? t.common.saving : t.common.confirm,
+                      ),
+                    ),
+                    AppSpacings.gapXl,
+                  ],
+                ),
               ),
-              ..._buildSavingsBank(
-                savingsAccountNumberController:
-                    state.savingsAccountNumberController,
-                nominees: state.nominees,
-              ),
-              ..._buildNotes(
-                notesController: state.notesController,
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -169,6 +226,7 @@ List<Widget> _buildIdentityDocuments({
         icon: HugeIcons.strokeRoundedTicket01,
         size: AppDimensions.iconMd,
       ),
+      validator: Customer.validateCif,
       textInputAction: TextInputAction.next,
     ),
     AppSpacings.gapMd,
@@ -179,6 +237,7 @@ List<Widget> _buildIdentityDocuments({
         icon: HugeIcons.strokeRoundedId,
         size: AppDimensions.iconMd,
       ),
+      validator: Customer.validateAadhaar,
       keyboardType: TextInputType.number,
       textInputAction: TextInputAction.next,
     ),
@@ -190,6 +249,9 @@ List<Widget> _buildIdentityDocuments({
         icon: HugeIcons.strokeRoundedCreditCard,
         size: AppDimensions.iconMd,
       ),
+      validator: Customer.validatePan,
+      textCapitalization: TextCapitalization.characters,
+      inputFormatters: const [UpperCaseTextFormatter()],
       textInputAction: TextInputAction.next,
     ),
   ];

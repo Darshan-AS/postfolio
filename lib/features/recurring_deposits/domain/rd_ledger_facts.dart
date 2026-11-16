@@ -27,18 +27,31 @@ sealed class RDLedgerFacts with _$RDLedgerFacts {
 
   bool get hasTransactions => transactions.isNotEmpty;
   bool get hasPoDeposits => poDeposits.isNotEmpty;
+  bool get hasFeeAbsorptions => absorptions.isNotEmpty;
 
   /// Financial terms (amount, start date, tenure, baseline) freeze once the ledger has activity.
-  bool get isFinancialTermsLocked => hasTransactions || hasPoDeposits;
+  bool get isFinancialTermsLocked =>
+      hasTransactions || hasPoDeposits || hasFeeAbsorptions;
 
   /// PO deposit events in the order the Post Office applied them.
-  List<RDPoDeposit> get poDepositsInOrder => [...poDeposits]..sort(_poOrder);
+  List<RDPoDeposit> get poDepositsInOrder => [...poDeposits]..sort(comparePoDeposits);
 
   /// The only PO event that may be undone.
   RDPoDeposit? get latestPoDeposit =>
       poDeposits.isEmpty ? null : poDepositsInOrder.last;
 
-  static int _poOrder(RDPoDeposit a, RDPoDeposit b) {
+  /// Last month already at the Post Office: the onboarding baseline plus every recorded
+  /// PO event, never beyond the account's term.
+  int get depositedThroughNo {
+    final n = deposit.totalMonths;
+    var through = deposit.initialPaidInstallments.clamp(0, n);
+    for (final event in poDeposits) {
+      through = (through + event.installmentCount).clamp(0, n);
+    }
+    return through;
+  }
+
+  static int comparePoDeposits(RDPoDeposit a, RDPoDeposit b) {
     final byDay = a.depositedOn.compareTo(b.depositedOn);
     if (byDay != 0) return byDay;
     if (a.createdAt != null && b.createdAt != null) {
@@ -46,5 +59,32 @@ sealed class RDLedgerFacts with _$RDLedgerFacts {
       if (byCreated != 0) return byCreated;
     }
     return a.id.compareTo(b.id);
+  }
+
+  /// Pure-Dart domain invariant: a PO visit (`batchId`) can only be undone if no account
+  /// in that batch has a newer Post Office deposit recorded afterward.
+  static String? validateBatchUndo({
+    required String batchId,
+    required Iterable<RDPoDeposit> deposits,
+  }) {
+    final byRd = <String, List<RDPoDeposit>>{};
+    for (final d in deposits) {
+      byRd.putIfAbsent(d.rdId, () => []).add(d);
+    }
+    for (final list in byRd.values) {
+      final batchEvents = list.where((d) => d.batchId == batchId).toList();
+      if (batchEvents.isEmpty) continue;
+      for (final batchEvent in batchEvents) {
+        final hasNewer = list.any(
+          (other) =>
+              other.batchId != batchId &&
+              comparePoDeposits(other, batchEvent) > 0,
+        );
+        if (hasNewer) {
+          return 'Cannot undo this visit because a newer Post Office deposit was recorded afterward.';
+        }
+      }
+    }
+    return null;
   }
 }

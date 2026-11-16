@@ -1,24 +1,27 @@
-import "package:postfolio/core/constants/app_constants.dart";
-import 'package:faker/faker.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/models/nominee.dart';
+import 'package:postfolio/core/models/savings_account.dart';
 import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_rules.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
-import 'package:postfolio/core/models/nominee.dart';
-import 'package:postfolio/core/models/savings_account.dart';
-import 'package:postfolio/core/enums/scheme_type.dart';
-import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 
+/// Deterministic, zero-dependency in-memory portfolio for Demo Mode and offline UI smoke tests.
+///
+/// Every record satisfies all domain invariants (100% nominee share totals, valid PAN/Aadhaar/CIF
+/// formats, official Post Office scheme terms, and causally ordered RD ledger facts).
 class FakeDataSource {
   static final FakeDataSource _instance = FakeDataSource._internal();
   factory FakeDataSource() => _instance;
 
   static const PostalRateService _postalRateService = PostalRateService();
+  static final DateTime _referenceToday = DateTime(2026, 10, 27);
 
   late final List<Customer> customers;
   late final List<OneTimeDeposit> oneTimeDeposits;
@@ -27,227 +30,370 @@ class FakeDataSource {
   late final Map<String, List<RDPoDeposit>> rdPoDeposits;
 
   FakeDataSource._internal() {
-    _generateData();
+    _buildDeterministicPortfolio();
   }
 
-  void _generateData() {
-    // Using a fixed seed ensures the generated fake data is exactly the same
-    // every time the app is restarted, making UI testing much easier.
-    final faker = Faker(seed: 12345);
-    final random = faker.randomGenerator;
+  void _buildDeterministicPortfolio() {
+    const seeds = <({
+      String id,
+      String name,
+      String phone,
+      String cif,
+      String pan,
+      String aadhaar,
+      String sbNo,
+      List<Nominee> nominees,
+    })>[
+      (
+        id: 'demo-cust-01',
+        name: 'Arjun Mehta',
+        phone: '+919876543201',
+        cif: 'CIF100201',
+        pan: 'ABCDE1201F',
+        aadhaar: '2345 6789 0101',
+        sbNo: '0100200301',
+        nominees: [
+          Nominee(name: 'Sujata Mehta', relationship: NomineeRelationship.wife, percentage: 100),
+        ],
+      ),
+      (
+        id: 'demo-cust-02',
+        name: 'Deepika Sharma',
+        phone: '+919876543202',
+        cif: 'CIF100202',
+        pan: 'FGHIJ5602K',
+        aadhaar: '2345 6789 0102',
+        sbNo: '0100200302',
+        nominees: [
+          Nominee(name: 'Siddharth Sharma', relationship: NomineeRelationship.husband, percentage: 50),
+          Nominee(name: 'Kriti Sharma', relationship: NomineeRelationship.daughter, percentage: 50),
+        ],
+      ),
+      (
+        id: 'demo-cust-03',
+        name: 'Rohan Varma',
+        phone: '+919876543203',
+        cif: 'CIF100203',
+        pan: 'KLMNO9003P',
+        aadhaar: '2345 6789 0103',
+        sbNo: '0100200303',
+        nominees: [
+          Nominee(name: 'Preeti Varma', relationship: NomineeRelationship.wife, percentage: 100),
+        ],
+      ),
+      (
+        id: 'demo-cust-04',
+        name: 'Kavita Iyer',
+        phone: '+919876543204',
+        cif: 'CIF100204',
+        pan: 'PQRST3404L',
+        aadhaar: '2345 6789 0104',
+        sbNo: '0100200304',
+        nominees: [
+          Nominee(name: 'Raghav Iyer', relationship: NomineeRelationship.son, percentage: 60),
+          Nominee(name: 'Ananya Iyer', relationship: NomineeRelationship.daughter, percentage: 40),
+        ],
+      ),
+      (
+        id: 'demo-cust-05',
+        name: 'Suresh Nair',
+        phone: '+919876543205',
+        cif: 'CIF100205',
+        pan: 'UVWXY7805M',
+        aadhaar: '2345 6789 0105',
+        sbNo: '0100200305',
+        nominees: [
+          Nominee(name: 'Lakshmi Nair', relationship: NomineeRelationship.wife, percentage: 100),
+        ],
+      ),
+      (
+        id: 'demo-cust-06',
+        name: 'Meenakshi Rao',
+        phone: '+919876543206',
+        cif: 'CIF100206',
+        pan: 'ZABCD2306N',
+        aadhaar: '2345 6789 0106',
+        sbNo: '0100200306',
+        nominees: [
+          Nominee(name: 'Prakash Rao', relationship: NomineeRelationship.brother, percentage: 100),
+        ],
+      ),
+    ];
 
-    // Generate Customers
-    customers = List.generate(15, (index) {
-      return Customer(
-        id: faker.guid.guid(),
-        name: faker.person.name(),
-        email: faker.internet.email(),
-        phone: '+91 ${random.fromCharSet('0123456789', 10)}',
-        address: faker.address.streetAddress(),
-        cifNumber: 'CIF${random.fromCharSet('0123456789', 6)}',
-        dateOfBirth: faker.date.dateTimeBetween(DateTime(1950), DateTime(2005)),
-        aadhaarNumber:
-            '${random.fromCharSet('0123456789', 4)} ${random.fromCharSet('0123456789', 4)} ${random.fromCharSet('0123456789', 4)}',
-        panNumber:
-            '${random.fromCharSet('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 5)}${random.fromCharSet('0123456789', 4)}${random.fromCharSet('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 1)}',
-        savingsAccount: SavingsAccount(
-          accountNumber: 'SA${random.fromCharSet('0123456789', 9)}',
-          nominees: List.generate(
-            random.integer(3),
-            (_) => Nominee(
-              name: faker.person.name(),
-              relationship: random.element(NomineeRelationship.values),
-              percentage: AppConstants.maxPercentage,
-            ),
+    customers = [
+      for (var i = 0; i < seeds.length; i++)
+        Customer(
+          id: seeds[i].id,
+          name: seeds[i].name,
+          email: '${seeds[i].name.toLowerCase().replaceAll(' ', '.')}@example.com',
+          phone: seeds[i].phone,
+          address: '${101 + i}, Post Office Road, Bengaluru',
+          cifNumber: seeds[i].cif,
+          dateOfBirth: DateTime(1975 + i * 3, (i % 12) + 1, 12),
+          aadhaarNumber: seeds[i].aadhaar,
+          panNumber: seeds[i].pan,
+          savingsAccount: SavingsAccount(
+            accountNumber: seeds[i].sbNo,
+            nominees: seeds[i].nominees,
           ),
         ),
-      );
-    });
+    ];
 
-    final customerIds = customers.map((c) => c.id).toList();
+    final otdSpecs = <({
+      String id,
+      String custId,
+      OneTimeSchemeType scheme,
+      double principal,
+      DateTime start,
+      int? tdYears,
+      DepositStatus status,
+    })>[
+      (
+        id: 'demo-otd-01',
+        custId: 'demo-cust-01',
+        scheme: OneTimeSchemeType.monthlyIncomeScheme,
+        principal: 450000,
+        start: DateTime(2024, 5, 10),
+        tdYears: null,
+        status: DepositStatus.active,
+      ),
+      (
+        id: 'demo-otd-02',
+        custId: 'demo-cust-02',
+        scheme: OneTimeSchemeType.kisanVikasPatra,
+        principal: 200000,
+        start: DateTime(2023, 8, 15),
+        tdYears: null,
+        status: DepositStatus.active,
+      ),
+      (
+        id: 'demo-otd-03',
+        custId: 'demo-cust-03',
+        scheme: OneTimeSchemeType.timeDeposit,
+        principal: 300000,
+        start: DateTime(2025, 4, 20),
+        tdYears: 5,
+        status: DepositStatus.active,
+      ),
+      (
+        id: 'demo-otd-04',
+        custId: 'demo-cust-04',
+        scheme: OneTimeSchemeType.nationalSavingsCertificate,
+        principal: 150000,
+        start: DateTime(2025, 7, 5),
+        tdYears: null,
+        status: DepositStatus.active,
+      ),
+      (
+        id: 'demo-otd-05',
+        custId: 'demo-cust-05',
+        scheme: OneTimeSchemeType.timeDeposit,
+        principal: 100000,
+        start: DateTime(2024, 11, 1),
+        tdYears: 2,
+        status: DepositStatus.active,
+      ),
+      (
+        id: 'demo-otd-06',
+        custId: 'demo-cust-06',
+        scheme: OneTimeSchemeType.timeDeposit,
+        principal: 75000,
+        start: DateTime(2022, 6, 1),
+        tdYears: 1,
+        status: DepositStatus.closed,
+      ),
+    ];
 
-    // Generate One Time Deposits
-    final oneTimeSchemes = OneTimeSchemeType.values;
-    oneTimeDeposits = List.generate(15, (index) {
-      final scheme = random.element(oneTimeSchemes);
-      final startDate = faker.date.dateTimeBetween(
-        DateTime(2020),
-        DateTime.now(),
-      );
-      final tdOption = scheme.tenureInputType != TenureInputType.derived
-          ? random.element(scheme.allowedTenuresInYears)
-          : null;
+    oneTimeDeposits = [
+      for (var i = 0; i < otdSpecs.length; i++)
+        () {
+          final s = otdSpecs[i];
+          final cust = customers.firstWhere((c) => c.id == s.custId);
+          final terms = _postalRateService.resolveOneTimeSchemeTerms(
+            schemeType: s.scheme,
+            startDate: s.start,
+            tdTenureYears: s.tdYears,
+          );
+          return OneTimeDeposit(
+            id: s.id,
+            accountNo: '50060070${i + 1}',
+            principalAmount: s.principal,
+            termYears: terms.termYears,
+            termMonths: terms.termMonths,
+            interestRate: terms.interestRate,
+            customerId: cust.id,
+            customerName: cust.name,
+            schemeType: s.scheme,
+            startDate: s.start,
+            status: s.status,
+            nominees: cust.savingsAccount?.nominees ?? const [],
+          );
+        }(),
+    ];
 
-      final terms = _postalRateService.resolveOneTimeSchemeTerms(
-        schemeType: scheme,
-        startDate: startDate,
-        tdTenureYears: tdOption,
-      );
+    final rdSpecs = <({
+      String id,
+      String serial,
+      String custId,
+      double amount,
+      DateTime start,
+      int initialPaid,
+      DepositStatus status,
+    })>[
+      (
+        id: 'demo-rd-01',
+        serial: '1',
+        custId: 'demo-cust-01',
+        amount: 5000,
+        start: DateTime(2025, 1, 10),
+        initialPaid: 12,
+        status: DepositStatus.active,
+      ),
+      (
+        id: 'demo-rd-02',
+        serial: '2',
+        custId: 'demo-cust-02',
+        amount: 10000,
+        start: DateTime(2024, 6, 5),
+        initialPaid: 24,
+        status: DepositStatus.active,
+      ),
+      (
+        id: 'demo-rd-03',
+        serial: '3',
+        custId: 'demo-cust-03',
+        amount: 2000,
+        start: DateTime(2026, 5, 20),
+        initialPaid: 0,
+        status: DepositStatus.active,
+      ),
+      (
+        id: 'demo-rd-04',
+        serial: '4',
+        custId: 'demo-cust-04',
+        amount: 3000,
+        start: DateTime(2026, 2, 12),
+        initialPaid: 0,
+        status: DepositStatus.active,
+      ),
+      (
+        id: 'demo-rd-05',
+        serial: '5',
+        custId: 'demo-cust-05',
+        amount: 1500,
+        start: DateTime(2026, 3, 25),
+        initialPaid: 0,
+        status: DepositStatus.active,
+      ),
+      (
+        id: 'demo-rd-06',
+        serial: '6',
+        custId: 'demo-cust-06',
+        amount: 2500,
+        start: DateTime(2020, 4, 10),
+        initialPaid: 60,
+        status: DepositStatus.closed,
+      ),
+    ];
 
-      final maturityDate = DateTime(
-        startDate.year + terms.termYears,
-        startDate.month + terms.termMonths,
-        startDate.day,
-      );
+    recurringDeposits = [
+      for (var i = 0; i < rdSpecs.length; i++)
+        () {
+          final s = rdSpecs[i];
+          final cust = customers.firstWhere((c) => c.id == s.custId);
+          final terms = _postalRateService.resolveRecurringSchemeTerms(
+            schemeType: RecurringSchemeType.recurringDeposit,
+            startDate: s.start,
+          );
+          return RecurringDeposit(
+            id: s.id,
+            serialNo: s.serial,
+            accountNo: '10020030${i + 1}',
+            installmentAmount: s.amount,
+            termYears: terms.termYears,
+            termMonths: terms.termMonths,
+            interestRate: terms.interestRate,
+            customerId: cust.id,
+            customerName: cust.name,
+            schemeType: RecurringSchemeType.recurringDeposit,
+            startDate: s.start,
+            initialPaidInstallments: s.initialPaid,
+            status: s.status,
+            nominees: cust.savingsAccount?.nominees ?? const [],
+          );
+        }(),
+    ];
 
-      DepositStatus status;
-      if (maturityDate.isBefore(DateTime.now())) {
-        status = random.element([DepositStatus.active, DepositStatus.closed]);
-      } else {
-        // Can only be closed if the maturity date is in the past
-        status = random.element([DepositStatus.active, DepositStatus.closed]);
-      }
-
-      return OneTimeDeposit(
-        id: faker.guid.guid(),
-        accountNo: faker.randomGenerator.fromCharSet('0123456789', 10),
-        principalAmount: random.integer(500000, min: 10000).toDouble(),
-        termYears: terms.termYears,
-        termMonths: terms.termMonths,
-        interestRate: terms.interestRate,
-        customerId: random.element(customerIds),
-        schemeType: scheme,
-        startDate: startDate,
-        status: status,
-        nominees: List.generate(
-          random.integer(3),
-          (_) => Nominee(
-            name: faker.person.name(),
-            relationship: random.element(NomineeRelationship.values),
-            percentage: AppConstants.maxPercentage,
-          ),
-        ),
-      );
-    });
-
-    // Generate Recurring Deposits
-    final recurringSchemes = RecurringSchemeType.values;
-    recurringDeposits = List.generate(15, (index) {
-      final scheme = random.element(recurringSchemes);
-      final startDate = faker.date.dateTimeBetween(
-        DateTime(2020),
-        DateTime.now(),
-      );
-      final terms = _postalRateService.resolveRecurringSchemeTerms(
-        schemeType: scheme,
-        startDate: startDate,
-      );
-
-      final maturityDate = DateTime(
-        startDate.year + terms.termYears,
-        startDate.month + terms.termMonths,
-        startDate.day,
-      );
-
-      DepositStatus status;
-      if (maturityDate.isBefore(DateTime.now())) {
-        status = random.element([DepositStatus.active, DepositStatus.closed]);
-      } else {
-        // Can only be closed if the maturity date is in the past
-        status = random.element([DepositStatus.active, DepositStatus.closed]);
-      }
-
-      return RecurringDeposit(
-        id: faker.guid.guid(),
-        serialNo: 'RD-${random.integer(9999, min: 1000)}',
-        accountNo: 'RD-${random.fromCharSet('0123456789', 7)}',
-        installmentAmount: random.integer(50000, min: 1000).toDouble(),
-        termYears: terms.termYears,
-        termMonths: terms.termMonths,
-        interestRate: terms.interestRate,
-        customerId: random.element(customerIds),
-        schemeType: scheme,
-        startDate: startDate,
-        status: status,
-        nominees: List.generate(
-          random.integer(3),
-          (_) => Nominee(
-            name: faker.person.name(),
-            relationship: random.element(NomineeRelationship.values),
-            percentage: AppConstants.maxPercentage,
-          ),
-        ),
-      );
-    });
-
-    // Ledger facts for demo mode: most due months are paid a few days before/after the due
-    // date (as several small amounts now and then), a few are skipped so arrears and default
-    // fees appear, and everything collected except the last couple of months has been
-    // deposited at the Post Office as sequential events (one visit per month).
-    final today = DateTime.now();
     rdTransactions = {};
     rdPoDeposits = {};
-    for (final rd in recurringDeposits) {
+
+    for (var idx = 0; idx < recurringDeposits.length; idx++) {
+      final rd = recurringDeposits[idx];
       if (rd.status != DepositStatus.active) continue;
+
       final txs = <RDTransaction>[];
-      final deposits = <RDPoDeposit>[];
-      final total = rd.totalMonths;
-      var paidCount = 0;
+      final poEvents = <RDPoDeposit>[];
       var depositedThrough = rd.initialPaidInstallments;
-      for (var no = rd.initialPaidInstallments + 1; no <= total; no++) {
+      var paidCount = 0;
+
+      for (var no = rd.initialPaidInstallments + 1; no <= rd.totalMonths; no++) {
         final month = RDScheduleFactory.installmentDateFor(rd.startDate, no);
         final due = RDLedgerRules.standard.dueDateFor(rd.startDate, month);
-        if (!due.isBefore(today)) break;
-        // ~1 in 6 months is skipped to create realistic arrears.
-        if (random.integer(6) == 0) continue;
-        final paidOn = due.add(Duration(days: random.integer(9, min: -4)));
-        final paidDay = DateTime(paidOn.year, paidOn.month, paidOn.day);
+        if (!due.isBefore(_referenceToday)) break;
+
+        // Deterministically leave recent months unpaid on alternate accounts to showcase arrears.
+        if ((no + idx) % 5 == 0) continue;
+
+        final dayOffset = ((no + idx) % 3 == 0) ? 2 : -2;
+        final paidDay = DateTime(due.year, due.month, due.day).add(Duration(days: dayOffset));
         final lateMonths = RDLedgerRules.standard.defaultedMonths(due, paidDay);
         final fee = RDLedgerRules.standard.defaultFeeFor(rd.installmentAmount, lateMonths);
-        if (random.integer(4) == 0) {
-          // Two part-payments in the same month.
-          final first = (rd.installmentAmount * 0.6).roundToDouble();
-          txs.add(RDTransaction(
-            id: faker.guid.guid(),
-            rdId: rd.id,
-            paidDate: paidDay.subtract(const Duration(days: 6)),
-            amount: first,
-            paymentMode: RDPaymentMode.cash,
-            createdAt: paidOn,
-          ));
-          txs.add(RDTransaction(
-            id: faker.guid.guid(),
-            rdId: rd.id,
-            paidDate: paidDay,
-            amount: rd.installmentAmount - first + fee,
-            paymentMode: random.element(RDPaymentMode.values),
-            createdAt: paidOn,
-          ));
-        } else {
-          txs.add(RDTransaction(
-            id: faker.guid.guid(),
+
+        txs.add(
+          RDTransaction(
+            id: '${rd.id}-tx-$no',
             rdId: rd.id,
             paidDate: paidDay,
             amount: rd.installmentAmount + fee,
-            paymentMode: random.element(RDPaymentMode.values),
-            createdAt: paidOn,
-          ));
-        }
+            paymentMode: no.isEven ? RDPaymentMode.upi : RDPaymentMode.cash,
+            createdAt: paidDay,
+          ),
+        );
         paidCount++;
-        // Deposit everything collected so far at the PO, except the most recent couple of months.
-        if (paidCount > 2 && random.integer(5) != 0 && depositedThrough < no) {
-          final count = no - depositedThrough;
-          final depositedOn = paidDay.add(Duration(days: random.integer(4, min: 1)));
+
+        // Deposit earlier months at the PO, keeping the latest collected month in hand.
+        if (paidCount >= 2 && (no % 2 == 0) && depositedThrough < no - 1) {
+          final targetNo = no - 1;
+          final count = targetNo - depositedThrough;
+          final depositedOn = paidDay.add(const Duration(days: 1));
           var feePaid = 0.0;
-          for (var k = depositedThrough + 1; k <= no; k++) {
+          for (var k = depositedThrough + 1; k <= targetNo; k++) {
             final kDue = RDLedgerRules.standard.dueDateFor(
-                rd.startDate, RDScheduleFactory.installmentDateFor(rd.startDate, k));
+              rd.startDate,
+              RDScheduleFactory.installmentDateFor(rd.startDate, k),
+            );
             feePaid += RDLedgerRules.standard.defaultFeeFor(
-                rd.installmentAmount, RDLedgerRules.standard.defaultedMonths(kDue, depositedOn));
+              rd.installmentAmount,
+              RDLedgerRules.standard.defaultedMonths(kDue, depositedOn),
+            );
           }
-          deposits.add(RDPoDeposit(
-            id: faker.guid.guid(),
-            rdId: rd.id,
-            depositedOn: depositedOn,
-            installmentCount: count,
-            feePaid: feePaid,
-            amount: count * rd.installmentAmount + feePaid,
-          ));
-          depositedThrough = no;
+          poEvents.add(
+            RDPoDeposit(
+              id: '${rd.id}-po-$targetNo',
+              rdId: rd.id,
+              depositedOn: depositedOn,
+              installmentCount: count,
+              feePaid: feePaid,
+              amount: count * rd.installmentAmount + feePaid,
+              createdAt: depositedOn,
+            ),
+          );
+          depositedThrough = targetNo;
         }
       }
+
       rdTransactions[rd.id] = txs;
-      rdPoDeposits[rd.id] = deposits;
+      rdPoDeposits[rd.id] = poEvents;
     }
   }
 }

@@ -7,6 +7,7 @@ import '../../../../i18n/strings.g.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/extensions/string_extension.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/services/intent_service.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/routing/app_router.dart';
@@ -107,13 +108,10 @@ class CustomerCard extends ConsumerWidget {
               .deleteCustomer(customer.id);
 
           if (result is Failure && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  t.customers.failedToDeleteCustomer(
-                    error: (result as Failure).error.toString(),
-                  ),
-                ),
+            AppFeedback.showError(
+              context,
+              t.customers.failedToDeleteCustomer(
+                error: (result as Failure).error.toString(),
               ),
             );
           }

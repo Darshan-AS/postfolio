@@ -1,7 +1,5 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:hugeicons/hugeicons.dart';
-import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/widgets/common/accessible_theme_toggle.dart';
 
 class ShellAppBar extends ConsumerWidget implements PreferredSizeWidget {
@@ -13,13 +11,7 @@ class ShellAppBar extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AppBar(
-      leading: IconButton(
-        icon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedMenu01,
-          size: AppDimensions.iconMd,
-        ),
-        onPressed: () {},
-      ),
+      automaticallyImplyLeading: false,
       title: Text(title),
       actions: [
         const AccessibleThemeToggle(),

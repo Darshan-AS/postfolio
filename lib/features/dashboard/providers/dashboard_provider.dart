@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
@@ -9,7 +10,6 @@ import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_mod
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
-import 'package:postfolio/i18n/strings.g.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'dashboard_provider.freezed.dart';
@@ -120,16 +120,33 @@ class DashboardChartFilter extends _$DashboardChartFilter {
   }
 }
 
+class DashboardChartIncludeRdsNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void toggle() => state = !state;
+}
+
+final dashboardChartIncludeRdsProvider =
+    NotifierProvider<DashboardChartIncludeRdsNotifier, bool>(
+      DashboardChartIncludeRdsNotifier.new,
+    );
+
 @riverpod
 List<ChartDataPoint> dashboardChartSeries(Ref ref) {
   final otds =
       ref.watch(oneTimeDepositsControllerProvider).value ?? <OneTimeDeposit>[];
+  final rds =
+      ref.watch(recurringDepositsControllerProvider).value ??
+      <RecurringDeposit>[];
   final filter = ref.watch(dashboardChartFilterProvider);
+  final includeRds = ref.watch(dashboardChartIncludeRdsProvider);
   final selectedYear = ref.watch(dashboardChartSelectedYearProvider);
 
   final filteredOtds = filter == null
       ? otds
       : otds.where((d) => d.schemeType == filter).toList();
+  final includedRds = (includeRds && filter == null) ? rds : const <RecurringDeposit>[];
 
   if (selectedYear == null) {
     final Map<int, double> amountByYear = {};
@@ -141,6 +158,14 @@ List<ChartDataPoint> dashboardChartSeries(Ref ref) {
       amountByYear[year] = (amountByYear[year] ?? 0) + otd.principalAmount;
       countByYear[year] = (countByYear[year] ?? 0) + 1;
       labelByYear[year] = otd.startDate.financialYearLabel;
+    }
+
+    for (final rd in includedRds) {
+      final year = rd.startDate.financialYearStart;
+      final committed = rd.installmentAmount * rd.totalMonths;
+      amountByYear[year] = (amountByYear[year] ?? 0) + committed;
+      countByYear[year] = (countByYear[year] ?? 0) + 1;
+      labelByYear[year] = rd.startDate.financialYearLabel;
     }
 
     final List<ChartDataPoint> data = [];
@@ -159,8 +184,7 @@ List<ChartDataPoint> dashboardChartSeries(Ref ref) {
     return data;
   } else {
     final List<ChartDataPoint> data = [];
-    final locale = LocaleSettings.currentLocale.languageTag;
-    final formatter = DateFormat('MMM yy', locale);
+    final formatter = DateFormat('MMM yy', resolvedDateLocale());
 
     // Generate the 12 months for the selected financial year starting from April
     final List<DateTime> fyMonths = List.generate(
@@ -185,6 +209,16 @@ List<ChartDataPoint> dashboardChartSeries(Ref ref) {
       final key = otd.startDate.year * 100 + otd.startDate.month;
       amountByMonthYear[key] =
           (amountByMonthYear[key] ?? 0) + otd.principalAmount;
+      countByMonthYear[key] = (countByMonthYear[key] ?? 0) + 1;
+    }
+
+    final yearRds = includedRds.where(
+      (d) => d.startDate.financialYearStart == selectedYear,
+    );
+    for (final rd in yearRds) {
+      final key = rd.startDate.year * 100 + rd.startDate.month;
+      final committed = rd.installmentAmount * rd.totalMonths;
+      amountByMonthYear[key] = (amountByMonthYear[key] ?? 0) + committed;
       countByMonthYear[key] = (countByMonthYear[key] ?? 0) + 1;
     }
 

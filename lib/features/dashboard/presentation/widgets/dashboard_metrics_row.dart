@@ -78,8 +78,8 @@ class _MetricCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppDimensions.paddingMd),
-            RichText(
-              text: TextSpan(
+            Text.rich(
+              TextSpan(
                 text: '$active',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,

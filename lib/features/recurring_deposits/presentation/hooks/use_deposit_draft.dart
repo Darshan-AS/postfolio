@@ -1,12 +1,17 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
+import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
+import 'package:uuid/uuid.dart';
 
 /// Everything the "Deposit next N at the Post Office" sheet needs. The sheet is a pure
 /// layout over this object; every number comes from the projector.
@@ -17,6 +22,8 @@ class DepositDraftState {
     required this.projection,
     required this.count,
     required this.depositedOn,
+    required this.feeOverride,
+    required this.statutoryFee,
     required this.depositedThroughNo,
     required this.readyCount,
     required this.remaining,
@@ -26,6 +33,7 @@ class DepositDraftState {
     required this.lastDate,
     required this.isSubmitting,
     required this.setCount,
+    required this.setFeeOverride,
     required this.submit,
     required this.undo,
   });
@@ -37,6 +45,12 @@ class DepositDraftState {
   /// Effective installment count (already clamped to `1..remaining`).
   final int count;
   final ValueNotifier<DateTime> depositedOn;
+
+  /// Optional explicit counter fee override (`null` uses statutory formula quote).
+  final double? feeOverride;
+
+  /// Statutory formula fee before any counter override.
+  final double statutoryFee;
 
   /// Last month already at the Post Office (baseline + all events).
   final int depositedThroughNo;
@@ -58,7 +72,10 @@ class DepositDraftState {
   final bool isSubmitting;
 
   final void Function(int value) setCount;
-  final Future<Result<void, String>> Function() submit;
+  final void Function(double? value) setFeeOverride;
+  /// Records the deposit and returns it as stored. Calling it again re-sends the same
+  /// deposit; it never records a second one.
+  final Future<Result<RDPoDeposit, String>> Function() submit;
   final Future<Result<void, String>> Function() undo;
 
   bool get isLoaded => facts.hasValue && projection.hasValue;
@@ -72,7 +89,7 @@ class DepositDraftState {
   int get toNo => depositedThroughNo + count;
 }
 
-/// Owns the count / date state of the deposit sheet and derives the live quote.
+/// Owns the count / date / counter-fee state of the deposit sheet and derives the live quote.
 DepositDraftState useDepositDraft(
   WidgetRef ref, {
   required String rdId,
@@ -86,6 +103,7 @@ DepositDraftState useDepositDraft(
 
   final countInput = useState<int?>(initialCount);
   final depositedOn = useState<DateTime>(today);
+  final feeOverrideState = useState<double?>(null);
 
   final factsValue = facts.value;
   final projectionValue = projection.value;
@@ -98,7 +116,7 @@ DepositDraftState useDepositDraft(
   final requested = countInput.value ?? (readyCount > 0 ? readyCount : 1);
   final count = remaining == 0 ? 0 : requested.clamp(1, remaining);
 
-  final quote = useMemoized<({double amount, double fee})?>(
+  final baseQuote = useMemoized<({double amount, double fee})?>(
     () {
       if (factsValue == null || count == 0) return null;
       return projector.quoteNextDeposit(
@@ -110,16 +128,34 @@ DepositDraftState useDepositDraft(
     [factsValue, projector, count, depositedOn.value],
   );
 
+  final quote = useMemoized<({double amount, double fee})?>(
+    () {
+      if (factsValue == null || baseQuote == null || count == 0) return null;
+      final override = feeOverrideState.value;
+      if (override == null) return baseQuote;
+      return projector.quoteNextDeposit(
+        factsValue,
+        count: count,
+        depositedOn: depositedOn.value,
+        feeOverride: override,
+      );
+    },
+    [factsValue, projector, baseQuote, count, depositedOn.value, feeOverrideState.value],
+  );
+
   final fromPocket = useMemoized<double>(
     () {
-      if (projectionValue == null || count == 0) return 0.0;
-      var sum = 0.0;
+      if (projectionValue == null || quote == null || count == 0) return 0.0;
+      var customerPaidPaise = 0;
       for (var no = depositedThroughNo + 1; no <= depositedThroughNo + count; no++) {
-        sum += projectionValue.byNo(no)?.outstandingAmount ?? 0.0;
+        customerPaidPaise += Money.toPaise(
+          projectionValue.byNo(no)?.customerPaidAmount ?? 0.0,
+        );
       }
-      return sum;
+      final pocketPaise = math.max(0, Money.toPaise(quote.amount) - customerPaidPaise);
+      return Money.toRupees(pocketPaise);
     },
-    [projectionValue, depositedThroughNo, count],
+    [projectionValue, depositedThroughNo, count, quote],
   );
 
   // Date range: never before the last PO visit (sequential ledger), never after today.
@@ -129,13 +165,22 @@ DepositDraftState useDepositDraft(
   if (firstDate.isAfter(today)) firstDate = today;
 
   void setCount(int value) => countInput.value = value;
+  void setFeeOverride(double? value) => feeOverrideState.value = value;
 
-  // Resolved eagerly: the controller is kept alive, so Undo can still run from a snackbar
-  // after the sheet itself has been popped and its `ref` disposed.
   final ledger = ref.read(rDLedgerControllerProvider.notifier);
 
-  Future<Result<void, String>> submit() =>
-      ledger.depositNextToPo(rdId: rdId, count: count, depositedOn: depositedOn.value);
+  // One id for the one deposit this sheet records. A retry after a failed or lost response
+  // sends the same id, so it can never deposit a second set of months. The sheet closes on
+  // success, so the id is never reused for another deposit.
+  final eventId = useMemoized(() => const Uuid().v7());
+
+  Future<Result<RDPoDeposit, String>> submit() => ledger.depositNextToPo(
+        rdId: rdId,
+        count: count,
+        depositedOn: depositedOn.value,
+        feeOverride: feeOverrideState.value,
+        eventId: eventId,
+      );
 
   Future<Result<void, String>> undo() => ledger.undoLatestPoDeposit(rdId);
 
@@ -145,6 +190,8 @@ DepositDraftState useDepositDraft(
     projection: projection,
     count: count,
     depositedOn: depositedOn,
+    feeOverride: feeOverrideState.value,
+    statutoryFee: baseQuote?.fee ?? 0.0,
     depositedThroughNo: depositedThroughNo,
     readyCount: readyCount,
     remaining: remaining,
@@ -154,6 +201,7 @@ DepositDraftState useDepositDraft(
     lastDate: today,
     isSubmitting: isSubmitting,
     setCount: setCount,
+    setFeeOverride: setFeeOverride,
     submit: submit,
     undo: undo,
   );

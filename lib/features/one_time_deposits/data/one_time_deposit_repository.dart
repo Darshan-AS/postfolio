@@ -1,19 +1,14 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
-import 'package:postfolio/core/constants/firestore_keys.dart';
-import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
-import 'package:uuid/uuid.dart';
-
-import 'package:postfolio/features/auth/domain/auth_state.dart';
-import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
-import 'package:postfolio/core/env/env.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
+import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/one_time_deposits/data/supabase_one_time_deposit_repository.dart';
+import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:uuid/uuid.dart';
 
 part 'one_time_deposit_repository.g.dart';
 
@@ -22,106 +17,27 @@ abstract class OneTimeDepositRepository {
   Stream<Result<OneTimeDeposit, String>> watchOneTimeDepositById(String id);
   Future<Result<void, String>> createOneTimeDeposit(OneTimeDeposit deposit);
   Future<Result<void, String>> updateOneTimeDeposit(OneTimeDeposit deposit);
+  Future<Result<void, String>> updateDepositStatus(
+    String id,
+    DepositStatus status,
+  );
   Future<Result<void, String>> deleteOneTimeDeposit(String id);
 }
 
-class FirestoreOneTimeDepositRepository implements OneTimeDepositRepository {
-  final firestore.FirebaseFirestore _firestore;
-  final String _agentId;
-
-  FirestoreOneTimeDepositRepository(this._firestore, this._agentId);
-
-  firestore.CollectionReference<OneTimeDeposit> get _deposits => _firestore
-      .collection(FirestoreCollections.users)
-      .doc(_agentId)
-      .collection(FirestoreCollections.oneTimeDeposits)
-      .withConverter<OneTimeDeposit>(
-        fromFirestore: (snapshot, _) {
-          final data = snapshot.data()!;
-          data[FirestoreKeys.id] = snapshot.id;
-          return OneTimeDeposit.fromJson(data);
-        },
-        toFirestore: (deposit, _) {
-          final data = deposit.toJson();
-          data.remove(FirestoreKeys.id);
-          if (deposit.createdAt == null) {
-            data[FirestoreKeys.createdAt] =
-                firestore.FieldValue.serverTimestamp();
-          }
-          data[FirestoreKeys.updatedAt] =
-              firestore.FieldValue.serverTimestamp();
-          return data;
-        },
-      );
-
-  @override
-  Stream<Result<List<OneTimeDeposit>, String>> watchOneTimeDeposits() {
-    return _deposits.snapshots().map((snapshot) {
-      try {
-        final deposits = snapshot.docs.map((doc) => doc.data()).toList();
-        return Success(deposits);
-      } catch (e) {
-        return Failure(e.toString());
-      }
-    });
-  }
-
-  @override
-  Stream<Result<OneTimeDeposit, String>> watchOneTimeDepositById(String id) {
-    return _deposits.doc(id).snapshots().map((snapshot) {
-      try {
-        if (!snapshot.exists) {
-          return const Failure('One Time Deposit not found');
-        }
-        return Success(snapshot.data()!);
-      } catch (e) {
-        return Failure(e.toString());
-      }
-    });
-  }
-
-  @override
-  Future<Result<void, String>> createOneTimeDeposit(
-    OneTimeDeposit deposit,
-  ) async {
-    try {
-      // We use .set() without awaiting the server sync.
-      _deposits.doc(deposit.id).set(deposit);
-      return const Success(null);
-    } catch (e) {
-      return Failure(e.toString());
-    }
-  }
-
-  @override
-  Future<Result<void, String>> updateOneTimeDeposit(
-    OneTimeDeposit deposit,
-  ) async {
-    try {
-      _deposits.doc(deposit.id).set(deposit, firestore.SetOptions(merge: true));
-      return const Success(null);
-    } catch (e) {
-      return Failure(e.toString());
-    }
-  }
-
-  @override
-  Future<Result<void, String>> deleteOneTimeDeposit(String id) async {
-    try {
-      _deposits.doc(id).delete();
-      return const Success(null);
-    } catch (e) {
-      return Failure(e.toString());
-    }
-  }
-}
-
 class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
+  FakeOneTimeDepositRepository({
+    List<OneTimeDeposit>? deposits,
+    this.delay = const Duration(milliseconds: 500),
+  }) : _deposits = [...(deposits ?? FakeDataSource().oneTimeDeposits)];
+
+  final Duration delay;
+
   final _controller =
       StreamController<Result<List<OneTimeDeposit>, String>>.broadcast();
 
-  final List<OneTimeDeposit> _deposits = FakeDataSource().oneTimeDeposits
-      .toList();
+  final List<OneTimeDeposit> _deposits;
+
+  List<OneTimeDeposit> get deposits => List.unmodifiable(_deposits);
 
   void _emit() {
     if (!_controller.isClosed) {
@@ -166,9 +82,9 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
   Future<Result<void, String>> createOneTimeDeposit(
     OneTimeDeposit deposit,
   ) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    if (delay > Duration.zero) await Future.delayed(delay);
     final newDeposit = deposit.copyWith(
-      id: deposit.id.isEmpty ? const Uuid().v4() : deposit.id,
+      id: deposit.id.isEmpty ? const Uuid().v7() : deposit.id,
     );
     _deposits.add(newDeposit);
     _emit();
@@ -179,7 +95,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
   Future<Result<void, String>> updateOneTimeDeposit(
     OneTimeDeposit deposit,
   ) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    if (delay > Duration.zero) await Future.delayed(delay);
     final index = _deposits.indexWhere((d) => d.id == deposit.id);
     if (index != -1) {
       _deposits[index] = deposit;
@@ -190,8 +106,23 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
   }
 
   @override
+  Future<Result<void, String>> updateDepositStatus(
+    String id,
+    DepositStatus status,
+  ) async {
+    if (delay > Duration.zero) await Future.delayed(delay);
+    final index = _deposits.indexWhere((d) => d.id == id);
+    if (index != -1) {
+      _deposits[index] = _deposits[index].copyWith(status: status);
+      _emit();
+      return const Success(null);
+    }
+    return const Failure('One Time Deposit not found');
+  }
+
+  @override
   Future<Result<void, String>> deleteOneTimeDeposit(String id) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    if (delay > Duration.zero) await Future.delayed(delay);
     final initialLength = _deposits.length;
     _deposits.removeWhere((d) => d.id == id);
     if (_deposits.length < initialLength) {
@@ -206,34 +137,12 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
   }
 }
 
-// Global Provider for the Repository.
 @riverpod
 OneTimeDepositRepository oneTimeDepositRepository(Ref ref) {
-  final isDemoMode = ref.watch(demoModeProvider);
-  if (isDemoMode) {
+  if (ref.watch(demoModeProvider)) {
     final repo = FakeOneTimeDepositRepository();
     ref.onDispose(repo.dispose);
     return repo;
   }
-
-  if (Env.useSupabase) {
-    return SupabaseOneTimeDepositRepository(ref.watch(supabaseClientProvider));
-  }
-
-  final authState = ref.watch(authControllerProvider);
-  final agentId = switch (authState) {
-    AuthStateAuthenticated state => state.user.id,
-    _ => null,
-  };
-
-  if (agentId == null) {
-    throw StateError(
-      'Agent is not authenticated. Cannot access OneTimeDepositRepository.',
-    );
-  }
-
-  return FirestoreOneTimeDepositRepository(
-    firestore.FirebaseFirestore.instance,
-    agentId,
-  );
+  return SupabaseOneTimeDepositRepository(ref.watch(supabaseClientProvider));
 }

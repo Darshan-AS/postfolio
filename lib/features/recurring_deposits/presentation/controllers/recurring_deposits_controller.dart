@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
@@ -10,7 +11,11 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
+import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 
 import 'package:uuid/uuid.dart';
@@ -73,11 +78,13 @@ class RecurringListCriteria extends _$RecurringListCriteria {
   }
 
   void clearAll() {
-    state = const RDSearchCriteria();
-    ref.read(storageServiceProvider).setRDSortField(RDSortField.startDate);
-    ref.read(storageServiceProvider).setRDSortDirection(SortDirection.desc);
-    ref.read(storageServiceProvider).setRDStatusFilters([]);
-    ref.read(storageServiceProvider).setRDUrgencyFilters([]);
+    const defaults = RDSearchCriteria();
+    state = defaults;
+    final storage = ref.read(storageServiceProvider);
+    storage.setRDSortField(defaults.sortField);
+    storage.setRDSortDirection(defaults.sortDirection);
+    storage.setRDStatusFilters(defaults.statusFilters);
+    storage.setRDUrgencyFilters(defaults.urgencyFilters);
   }
 
   void clearFilters() {
@@ -99,20 +106,25 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
     recurringDepositsControllerProvider.future,
   );
 
-  final hasNullNames = asyncDeposits.any((d) => d.customerName == null);
+  final liveCustomers = ref.watch(customersControllerProvider).value;
   final Map<String, String> customerMap;
-  if (hasNullNames) {
+  if (liveCustomers != null) {
+    customerMap = {for (final c in liveCustomers) c.id: c.name};
+  } else if (asyncDeposits.any((d) => d.customerName == null)) {
     final asyncCustomers = await ref.watch(customersControllerProvider.future);
-    customerMap = {for (var c in asyncCustomers) c.id: c.name};
+    customerMap = {for (final c in asyncCustomers) c.id: c.name};
   } else {
     customerMap = const {};
   }
 
-  var result = hasNullNames
+  var result = customerMap.isNotEmpty
       ? asyncDeposits
-          .map((d) => d.customerName == null
-              ? d.copyWith(customerName: customerMap[d.customerId])
-              : d)
+          .map((d) {
+            final liveName = customerMap[d.customerId];
+            return (liveName != null && liveName != d.customerName)
+                ? d.copyWith(customerName: liveName)
+                : d;
+          })
           .toList()
       : asyncDeposits.toList();
 
@@ -189,6 +201,7 @@ class RecurringDepositsController extends _$RecurringDepositsController {
   }
 
   Stream<UnmodifiableListView<RecurringDeposit>> _watchRecurringDeposits() {
+    ref.watch(activeSessionKeyProvider);
     final repository = ref.watch(recurringDepositRepositoryProvider);
     return repository.watchRecurringDeposits().map((result) {
       return switch (result) {
@@ -214,45 +227,113 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     String initialPaidInstallments = '0',
     String openingReceivable = '0',
   }) async {
-    final depositId = id ?? const Uuid().v4();
-    final postalRateService = ref.read(postalRateServiceProvider);
+    final link = ref.keepAlive();
+    try {
+      final depositId = id ?? const Uuid().v7();
+      final postalRateService = ref.read(postalRateServiceProvider);
 
-    final amount = double.tryParse(installmentAmount.trim()) ?? 0.0;
-    final rate = interestRate != null
-        ? double.tryParse(interestRate.trim())
-        : null;
-    final initialPaid = int.tryParse(initialPaidInstallments.trim()) ?? 0;
-    final openingReceivableAmount =
-        double.tryParse(openingReceivable.trim()) ?? 0.0;
+      final amount = double.tryParse(installmentAmount.trim()) ?? 0.0;
+      final rate = interestRate != null
+          ? double.tryParse(interestRate.trim())
+          : null;
+      final initialPaid = int.tryParse(initialPaidInstallments.trim()) ?? 0;
+      final openingReceivableAmount =
+          double.tryParse(openingReceivable.trim()) ?? 0.0;
 
-    final createResult = RecurringDeposit.create(
-      id: depositId,
-      serialNo: serialNo,
-      accountNo: accountNo,
-      installmentAmount: amount,
-      termYears: termYears,
-      termMonths: termMonths,
-      interestRate: rate,
-      customerId: customerId,
-      schemeType: schemeType,
-      status: status,
-      startDate: startDate,
-      nominees: nominees,
-      postalRateService: postalRateService,
-      initialPaidInstallments: initialPaid,
-      openingReceivable: openingReceivableAmount,
-    );
+      final createResult = RecurringDeposit.create(
+        id: depositId,
+        serialNo: serialNo,
+        accountNo: accountNo,
+        installmentAmount: amount,
+        termYears: termYears,
+        termMonths: termMonths,
+        interestRate: rate,
+        customerId: customerId,
+        schemeType: schemeType,
+        status: status,
+        startDate: startDate,
+        nominees: nominees,
+        postalRateService: postalRateService,
+        initialPaidInstallments: initialPaid,
+        openingReceivable: openingReceivableAmount,
+      );
 
-    final RecurringDeposit deposit;
-    switch (createResult) {
-      case Failure(error: final err):
-        return Failure(err);
-      case Success(value: final d):
-        deposit = d;
+      final RecurringDeposit deposit;
+      switch (createResult) {
+        case Failure(error: final err):
+          return Failure(err);
+        case Success(value: final d):
+          deposit = d;
+      }
+
+      final repository = ref.read(recurringDepositRepositoryProvider);
+
+      // An edit must be checked against the stored account. Every branch that cannot
+      // establish "this change is allowed" refuses the save rather than letting it through.
+      var termsChangedOnExisting = false;
+      if (id != null) {
+        var existing = state.value?.where((d) => d.id == id).firstOrNull;
+        if (existing == null) {
+          switch (await repository.watchRecurringDepositById(id).first) {
+            case Success(value: final found):
+              existing = found;
+            case Failure(:final error):
+              return Failure(error);
+          }
+        }
+        termsChangedOnExisting = RecurringDeposit.financialTermsChanged(
+          existing: existing,
+          updated: deposit,
+        );
+        // Only a terms change needs the ledger; metadata edits never depend on reading it.
+        if (termsChangedOnExisting) {
+          final bool isLocked;
+          switch (await _hasLedgerActivity(existing)) {
+            case Success(:final value):
+              isLocked = value;
+            case Failure():
+              return Failure(t.recurringDeposits.fields.financialTermsUnverified);
+          }
+          final lockCheck = RecurringDeposit.validateUpdate(
+            existing: existing,
+            updated: deposit,
+            hasPayments: isLocked,
+          );
+          if (lockCheck case Failure(error: final err)) {
+            return Failure(err);
+          }
+        }
+      }
+
+      final saveResult = await repository.saveRecurringDeposit(deposit);
+      if (saveResult case Success() when termsChangedOnExisting) {
+        await ref
+            .read(rDLedgerControllerProvider.notifier)
+            .rebuildSummary(deposit.id);
+      }
+      return saveResult;
+    } finally {
+      link.close();
     }
+  }
 
-    final repository = ref.read(recurringDepositRepositoryProvider);
-    return await repository.saveRecurringDeposit(deposit);
+  /// Whether [deposit] has any ledger fact, from one direct read. A failed read is returned
+  /// as a `Failure` — the caller must not treat "unknown" as "no activity".
+  Future<Result<bool, String>> _hasLedgerActivity(RecurringDeposit deposit) async {
+    final raw = await ref
+        .read(rdLedgerRepositoryProvider)
+        .fetchRawFactsForRds([deposit.id]);
+    return switch (raw) {
+      Failure(:final error) => Failure(error),
+      Success(value: final bundles) => Success(
+          RDLedgerFacts(
+            deposit: deposit,
+            transactions: bundles[deposit.id]?.transactions ?? const [],
+            poDeposits: bundles[deposit.id]?.poDeposits ?? const [],
+            absorptions: bundles[deposit.id]?.absorptions ?? const [],
+          ).isFinancialTermsLocked,
+        ),
+    };
   }
 
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {
@@ -269,27 +350,10 @@ class RecurringDepositsController extends _$RecurringDepositsController {
     String id,
     DepositStatus newStatus, {
     RecurringDeposit? deposit,
-  }) async {
-    RecurringDeposit? targetDeposit = deposit;
-    if (targetDeposit == null) {
-      final deposits = state.value;
-      targetDeposit = deposits?.where((d) => d.id == id).firstOrNull;
-    }
-
-    if (targetDeposit == null) {
-      final repository = ref.read(recurringDepositRepositoryProvider);
-      final singleResult =
-          await repository.watchRecurringDepositById(id).first;
-      return switch (singleResult) {
-        Success(value: final d) =>
-          await repository.saveRecurringDeposit(d.copyWith(status: newStatus)),
-        Failure(error: final err) => Failure(err),
-      };
-    }
-
-    final updatedDeposit = targetDeposit.copyWith(status: newStatus);
-    final repository = ref.read(recurringDepositRepositoryProvider);
-    return await repository.saveRecurringDeposit(updatedDeposit);
+  }) {
+    return ref
+        .read(recurringDepositRepositoryProvider)
+        .updateDepositStatus(id, newStatus);
   }
 }
 

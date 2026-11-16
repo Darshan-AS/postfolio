@@ -1,0 +1,7 @@
+{
+  "APP_ENV": "staging",
+  "SUPABASE_URL": "https://your-staging-project.supabase.co",
+  "SUPABASE_PUBLISHABLE_KEY": "your-staging-publishable-key",
+  "GOOGLE_WEB_CLIENT_ID": "your-google-web-client-id.apps.googleusercontent.com",
+  "GOOGLE_IOS_CLIENT_ID": "your-google-ios-client-id.apps.googleusercontent.com"
+}

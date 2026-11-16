@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/routing/app_router.dart';
@@ -138,8 +139,7 @@ class _EmptySliver extends ConsumerWidget {
     final totalCount = ref.watch(monthlyOperationsKpiProvider.select((k) => k.totalCount));
     final toCollectCount =
         ref.watch(monthlyOperationsKpiProvider.select((k) => k.toCollectCount));
-    final locale = LocaleSettings.currentLocale.languageTag;
-    final monthLabel = DateFormat.yMMM(locale).format(month);
+    final monthLabel = DateFormat.yMMM(resolvedDateLocale()).format(month);
 
     final hasFilters = filters.hasActiveFilters;
     final isCollectFilter = filters.status == RDMonthlyFilter.toCollect ||
@@ -353,7 +353,7 @@ class _RDHubRow extends ConsumerWidget {
     }
 
     final status = item.displayStatus(now);
-    final statusLabel = status.visual(Theme.of(context).colorScheme).label;
+    final statusLabel = status.visualOf(context).label;
     final customerName = item.deposit.customerName ?? t.recurringDeposits.unnamedCustomer;
     final serial = item.deposit.serialNo ?? t.common.notProvided;
     final overdueDays = item.installment.overdueDaysAt(now);
@@ -389,7 +389,10 @@ class _RDHubRow extends ConsumerWidget {
         isBusy: isBusy,
         selectSemanticLabel: card.selectRow(name: customerName),
         onSelect: (_) => selection.toggle(id),
-        onTap: () => RecurringDepositDetailRoute(item.deposit.id).push(context),
+        onTap: () => RecurringDepositDetailRoute(
+          item.deposit.id,
+          tab: 'schedule',
+        ).push(context),
         onLongPress: () {
           if (!isSelectionMode) selection.toggle(id);
         },

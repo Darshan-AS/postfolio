@@ -33,6 +33,7 @@ Before building, ensure the codebase is healthy.
 - **Step 1**: Run `flutter analyze` to catch lints.
 - **Step 2**: Run `flutter test` to ensure no regressions.
 - **Step 3**: Verify [Release Checklist](./references/release-checklist.md).
+- **Step 4 (when `supabase/migrations/` changed since the last tag)**: the database goes first. Take a backup, run `supabase db push`, and only then tag. Pushing the tag deploys the web build immediately, and a client that calls an RPC the database does not have yet fails in production. See "Release order when a migration is included" in `docs/setup_guide.md`.
 
 ### 3. Build & Finalize
 - **Android**: Trigger via tag (e.g., `git tag v1.3.3+13 && git push origin v1.3.3+13`) or manual dispatch.

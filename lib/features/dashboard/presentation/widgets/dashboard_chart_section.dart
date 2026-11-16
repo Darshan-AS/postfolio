@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
@@ -27,6 +28,7 @@ class DashboardChartSection extends HookConsumerWidget {
 
     final chartData = ref.watch(dashboardChartSeriesProvider);
     final currentFilter = ref.watch(dashboardChartFilterProvider);
+    final includeRds = ref.watch(dashboardChartIncludeRdsProvider);
     final selectedYear = ref.watch(dashboardChartSelectedYearProvider);
 
     String title = t.dashboard.depositsOverTime;
@@ -62,7 +64,11 @@ class DashboardChartSection extends HookConsumerWidget {
                             .read(dashboardChartSelectedYearProvider.notifier)
                             .setYear(null);
                       },
-                      icon: const Icon(Icons.close, size: 16),
+                      icon: HugeIcon(
+                        icon: HugeIcons.strokeRoundedCancel01,
+                        size: AppDimensions.iconSm,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                       label: Text(t.dashboard.backToYears),
                       style: TextButton.styleFrom(
                         visualDensity: VisualDensity.compact,
@@ -140,6 +146,25 @@ class DashboardChartSection extends HookConsumerWidget {
                                   .setFilter(null);
                             }
                           },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          right: AppDimensions.paddingSm,
+                        ),
+                        child: FilterChip(
+                          label: Text(t.dashboard.includeRecurringDeposits),
+                          selected: includeRds && currentFilter == null,
+                          onSelected: currentFilter == null
+                              ? (_) {
+                                  ref
+                                      .read(
+                                        dashboardChartIncludeRdsProvider
+                                            .notifier,
+                                      )
+                                      .toggle();
+                                }
+                              : null,
                         ),
                       ),
                       ...OneTimeSchemeType.values.map((scheme) {

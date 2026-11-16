@@ -1,8 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 
 class AppDimensions {
-  // Breakpoints
+  // Breakpoints & Constrained Widths
   static const double breakpointTablet = 600.0;
+  static const double maxLoginWidth = 420.0;
+  static const double maxFormWidth = 720.0;
 
   // Components
   static const double chartHeight = 250.0;
@@ -28,7 +30,7 @@ class AppDimensions {
 
   // Buttons
   static const double buttonHeight = 56.0;
-  static const double actionButtonSize = 40.0;
+  static const double actionButtonSize = 48.0;
   /// Minimum interactive target size (Material accessibility guideline).
   static const double minTapTarget = 44.0;
 

@@ -1,5 +1,6 @@
+import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:go_router/go_router.dart';
+import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class AppDialogs {
@@ -13,12 +14,16 @@ class AppDialogs {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: Icon(Icons.warning, color: theme.colorScheme.error),
+        icon: HugeIcon(
+          icon: HugeIcons.strokeRoundedAlert02,
+          size: AppDimensions.iconLg,
+          color: theme.colorScheme.error,
+        ),
         title: Text(title),
         content: Text(content),
         actions: [
           TextButton(
-            onPressed: () => ctx.pop(false),
+            onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(t.common.cancel),
           ),
           FilledButton.tonal(
@@ -26,7 +31,7 @@ class AppDialogs {
               backgroundColor: theme.colorScheme.errorContainer,
               foregroundColor: theme.colorScheme.onErrorContainer,
             ),
-            onPressed: () => ctx.pop(true),
+            onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(t.common.delete),
           ),
         ],
@@ -41,7 +46,7 @@ class AppDialogs {
     String? confirmText,
     Color? confirmBackgroundColor,
     Color? confirmForegroundColor,
-    IconData? icon,
+    List<List<dynamic>>? icon,
   }) {
     final theme = Theme.of(context);
 
@@ -49,7 +54,11 @@ class AppDialogs {
       context: context,
       builder: (ctx) => AlertDialog(
         icon: icon != null
-            ? Icon(icon, color: theme.colorScheme.primary)
+            ? HugeIcon(
+                icon: icon,
+                size: AppDimensions.iconLg,
+                color: theme.colorScheme.primary,
+              )
             : null,
         title: Text(title),
         content: Text(content),
@@ -84,11 +93,18 @@ class AppDialogs {
     return showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: Icon(Icons.error_outline, color: theme.colorScheme.error),
+        icon: HugeIcon(
+          icon: HugeIcons.strokeRoundedAlertCircle,
+          size: AppDimensions.iconLg,
+          color: theme.colorScheme.error,
+        ),
         title: Text(title),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () => ctx.pop(), child: Text(t.common.ok)),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(t.common.ok),
+          ),
         ],
       ),
     );
