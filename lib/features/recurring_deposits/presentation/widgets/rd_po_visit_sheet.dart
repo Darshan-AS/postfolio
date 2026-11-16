@@ -293,16 +293,19 @@ class _TotalsBlock extends StatelessWidget {
             AppSpacings.gapXs,
             Row(
               children: [
+                // The agent's own money takes the fronted colour, not the overdue red.
                 HugeIcon(
                   icon: HugeIcons.strokeRoundedWallet02,
                   size: AppDimensions.iconSm,
-                  color: scheme.error,
+                  color: AppFinancialColors.of(context).fronted.onContainer,
                 ),
                 AppSpacings.gapXs,
                 Flexible(
                   child: RDSheetFigure(
                     visit.fromPocket(amount: plan.totalFromPocket.toRupeeFormat()),
-                    style: emphasized.bodyMedium?.copyWith(color: scheme.error),
+                    style: emphasized.bodyMedium?.copyWith(
+                      color: AppFinancialColors.of(context).fronted.onContainer,
+                    ),
                   ),
                 ),
               ],
@@ -495,7 +498,9 @@ class _VisitLineTile extends HookWidget {
         if (line.fromPocket > 0)
           RDSheetFigure(
             visit.lineFromPocket(amount: line.fromPocket.toRupeeFormat()),
-            style: emphasized.labelMedium?.copyWith(color: scheme.error),
+            style: emphasized.labelMedium?.copyWith(
+              color: AppFinancialColors.of(context).fronted.onContainer,
+            ),
           ),
       ],
     );

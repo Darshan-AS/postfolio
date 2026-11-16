@@ -9,6 +9,7 @@ import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_repository.dart';
@@ -373,6 +374,43 @@ void main() {
       expect(action.height, greaterThanOrEqualTo(48));
       // Nothing but the caption may follow that line: the action no longer has its own.
       expect(tester.getRect(card).bottom - action.bottom, lessThan(action.height));
+    });
+
+    testWidgets('Collect is the main action in the brand colour even in arrears; Deposit '
+        'is tonal', (tester) async {
+      // December: every account is in arrears.
+      await pumpHub(tester, height: 2400, today: DateTime(2026, 12, 20));
+      final collect = tester.widgetList<AppButton>(
+        find.descendant(
+          of: find.byType(RDOperationActionButton),
+          matching: find.byType(AppButton),
+        ),
+      );
+      expect(collect, isNotEmpty);
+      for (final button in collect) {
+        expect(button.variant, AppButtonVariant.filled, reason: button.label);
+        expect(button.isDestructive, isFalse, reason: button.label);
+        expect(button.backgroundColor, isNull, reason: button.label);
+      }
+    });
+
+    testWidgets('a Deposit action is tonal, whatever the status of its row', (tester) async {
+      // April: some accounts are settled with money waiting for the Post Office.
+      await pumpHub(tester, height: 2400);
+      final deposits = tester
+          .widgetList<AppButton>(
+            find.descendant(
+              of: find.byType(RDOperationActionButton),
+              matching: find.byType(AppButton),
+            ),
+          )
+          .where((button) => button.label.startsWith(ops.card.deposit(count: 1).split(' ').first))
+          .toList();
+      expect(deposits, isNotEmpty);
+      for (final button in deposits) {
+        expect(button.variant, AppButtonVariant.tonal, reason: button.label);
+        expect(button.backgroundColor, isNull, reason: button.label);
+      }
     });
 
     testWidgets('the four header tiles take under 150dp of a 360dp phone', (tester) async {

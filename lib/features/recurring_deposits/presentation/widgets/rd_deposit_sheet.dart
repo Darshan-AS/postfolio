@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
@@ -275,10 +276,12 @@ class _DepositBody extends HookWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // The agent's own money: the fronted colour, as on the Hub and the
+                      // passbook. Red is for what is overdue.
                       HugeIcon(
                         icon: HugeIcons.strokeRoundedWallet02,
                         size: AppDimensions.iconSm,
-                        color: scheme.error,
+                        color: AppFinancialColors.of(context).fronted.onContainer,
                       ),
                       AppSpacings.gapSm,
                       Expanded(
@@ -286,7 +289,9 @@ class _DepositBody extends HookWidget {
                           ledger.depositFromPocketWarning(
                             amount: draft.fromPocket.toRupeeFormat(),
                           ),
-                          style: emphasized.bodySmall?.copyWith(color: scheme.error),
+                          style: emphasized.bodySmall?.copyWith(
+                            color: AppFinancialColors.of(context).fronted.onContainer,
+                          ),
                         ),
                       ),
                     ],

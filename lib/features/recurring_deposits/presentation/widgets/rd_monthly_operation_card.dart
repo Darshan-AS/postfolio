@@ -21,11 +21,14 @@ import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 /// Everything the primary action button needs, resolved once per row.
+///
+/// The button's colour says how much the action matters, not what state the account is
+/// in: the pill and the indicator bar say that. Collecting is the main action whether or
+/// not the account is overdue, and a solid red button reads as "this deletes something".
 typedef RDOperationActionSpec = ({
   String label,
   AppIconData icon,
-  Color background,
-  Color foreground,
+  AppButtonVariant variant,
   VoidCallback? onPressed,
 });
 
@@ -364,10 +367,9 @@ class RDMonthlyOperationCard extends StatelessWidget {
             Text(
               caption,
               textAlign: TextAlign.end,
+              // Neutral: the pill above already says the account is overdue.
               style: theme.textTheme.labelMedium?.copyWith(
-                color: item.hasOverdueDebt(now)
-                    ? scheme.error
-                    : scheme.onSurfaceVariant,
+                color: scheme.onSurfaceVariant,
               ),
             ),
         ],
@@ -587,18 +589,13 @@ class RDOperationActionButton extends StatelessWidget {
   });
 
   RDOperationActionSpec? resolve(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final card = t.recurringDeposits.monthlyOperations.card;
-    final status = item.displayStatus(evaluationDate);
-    final visual = status.visualOf(context);
 
     if (item.isCustomerPending) {
-      final urgent = item.hasOverdueDebt(evaluationDate);
       return (
         label: card.collect(amount: item.totalOutstanding.toRupeeFormat()),
         icon: HugeIcons.strokeRoundedCoins01,
-        background: urgent ? scheme.error : scheme.primary,
-        foreground: urgent ? scheme.onError : scheme.onPrimary,
+        variant: AppButtonVariant.filled,
         onPressed: onCollect,
       );
     }
@@ -606,8 +603,7 @@ class RDOperationActionButton extends StatelessWidget {
       return (
         label: card.deposit(count: item.readyForPoCount),
         icon: HugeIcons.strokeRoundedBuilding03,
-        background: visual.background,
-        foreground: visual.foreground,
+        variant: AppButtonVariant.tonal,
         onPressed: onDeposit,
       );
     }
@@ -622,9 +618,8 @@ class RDOperationActionButton extends StatelessWidget {
     return AppButton(
       label: spec.label,
       icon: compact ? null : spec.icon,
+      variant: spec.variant,
       expand: !compact,
-      backgroundColor: spec.background,
-      foregroundColor: spec.foreground,
       onPressed: isBusy ? null : spec.onPressed,
     );
   }
