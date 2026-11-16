@@ -35,6 +35,9 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          # Pinned to the SDK the code is developed and tested on (same as ci.yml). An unpinned
+          # 'stable' moved to 3.50, whose new deprecations fail the analysis gate below.
+          flutter-version: '3.47.2'
           cache: true
 
       - name: Install Dependencies
