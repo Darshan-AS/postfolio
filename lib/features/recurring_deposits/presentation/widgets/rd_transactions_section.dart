@@ -235,16 +235,23 @@ class _TransactionList extends StatelessWidget {
       );
     }
 
-    final groups = RDLedgerProjection.groupTransactionsByMonth(transactions);
+    // Newest first, a run of grouped tiles per year. A header per month is, for a payment
+    // made every month, a header per receipt, above a receipt that already says its date.
+    final groups = <({int year, List<RDTransaction> items})>[];
+    for (final month in RDLedgerProjection.groupTransactionsByMonth(transactions)) {
+      if (groups.isEmpty || groups.last.year != month.month.year) {
+        groups.add((year: month.month.year, items: <RDTransaction>[]));
+      }
+      groups.last.items.addAll(month.items);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Each month is a group: its name, then that month's receipts as grouped tiles.
         for (final (g, group) in groups.indexed) ...[
           if (g > 0) AppSpacings.gapSm,
-          DetailSectionTitle(group.month.toMonthYearFormat()),
+          DetailSectionTitle(group.year.toString()),
           for (final (i, tx) in group.items.indexed) ...[
             if (i > 0) const SizedBox(height: AppShapes.groupGap),
             RDTransactionTile(
@@ -385,13 +392,15 @@ class RDTransactionTile extends ConsumerWidget {
                               foregroundColor: scheme.onSecondaryContainer,
                             )
                           else
+                            // Neutral: it is a label. In the primary tone it looked like
+                            // something to tap.
                             _AllocationChip(
                               label: ledger.allocations.installmentPill(
                                 month: slice.installmentNo.toString(),
                                 amount: slice.amount.toRupeeFormat(),
                               ),
-                              backgroundColor: scheme.primaryContainer,
-                              foregroundColor: scheme.onPrimaryContainer,
+                              backgroundColor: scheme.inset,
+                              foregroundColor: scheme.onSurfaceVariant,
                             ),
                       ],
                     ),

@@ -5,6 +5,7 @@ import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
 import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
@@ -14,11 +15,13 @@ import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_reposi
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/screens/recurring_deposit_detail_screen.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_transactions_section.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skeletonizer/skeletonizer.dart' show SkeletonizerConfig;
 
-/// Deposit detail screens: the status action is in the menu with its label.
+/// Deposit detail screens: the status action is in the menu with its label, and the
+/// receipts are grouped by year.
 void main() {
   final source = FakeDataSource();
   final rd = source.recurringDeposits.first;
@@ -115,5 +118,65 @@ void main() {
         expect(find.text(confirmation), findsOneWidget);
       });
     }
+  });
+
+  group('receipts', () {
+    final receipts = source.rdTransactions[rd.id] ?? const [];
+    final years = receipts.map((tx) => tx.paidDate.year).toSet();
+
+    testWidgets('are grouped by year, newest first, with no header per month', (tester) async {
+      await pumpScreen(
+        tester,
+        RecurringDepositDetailScreen(depositId: rd.id, initialTab: 'transactions'),
+      );
+      expect(receipts.length, greaterThan(years.length), reason: 'fixture: several per year');
+
+      final section = find.byType(RDTransactionsSection);
+      expect(
+        find.descendant(of: section, matching: find.byType(RDTransactionTile)),
+        findsNWidgets(receipts.length),
+      );
+      final headers = tester
+          .widgetList<DetailSectionTitle>(
+            find.descendant(of: section, matching: find.byType(DetailSectionTitle)),
+          )
+          .map((header) => header.title)
+          .toList();
+      // The section has other headers too (the Post Office visits); none names a month.
+      expect(headers.where((h) => RegExp(r'^\D+ \d{4}$').hasMatch(h)), isEmpty);
+      expect(
+        headers.where((h) => RegExp(r'^\d{4}$').hasMatch(h)).toList(),
+        (years.toList()..sort((a, b) => b.compareTo(a))).map((y) => '$y').toList(),
+      );
+
+      // Top to bottom the receipts run from the latest payment to the earliest.
+      final tiles = tester
+          .widgetList<RDTransactionTile>(
+            find.descendant(of: section, matching: find.byType(RDTransactionTile)),
+          )
+          .map((tile) => tile.transaction.paidDate)
+          .toList();
+      for (var i = 1; i < tiles.length; i++) {
+        expect(tiles[i].isAfter(tiles[i - 1]), isFalse);
+      }
+    });
+
+    testWidgets('the months a receipt was applied to are neutral labels', (tester) async {
+      await pumpScreen(
+        tester,
+        RecurringDepositDetailScreen(depositId: rd.id, initialTab: 'transactions'),
+      );
+      final scheme = AppTheme.lightTheme.colorScheme;
+      final pills = tester.widgetList<Text>(
+        find.descendant(
+          of: find.byType(RDTransactionTile),
+          matching: find.textContaining(RegExp(r'^#\d+ ')),
+        ),
+      );
+      expect(pills, isNotEmpty);
+      for (final pill in pills) {
+        expect(pill.style?.color, scheme.onSurfaceVariant);
+      }
+    });
   });
 }
