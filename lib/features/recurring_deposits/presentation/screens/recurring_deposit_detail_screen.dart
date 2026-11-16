@@ -146,6 +146,8 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
             avatarShape: deposit.schemeType.avatarShape,
             title: deposit.accountNo ?? t.common.notProvided,
             subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   deposit.schemeType.displayName,
@@ -153,19 +155,19 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                AppSpacings.gapXs,
                 AppButton.text(
                   label: resolvedCustomerName,
                   icon: HugeIcons.strokeRoundedUser,
+                  size: AppButtonSize.extraSmall,
+                  flushStart: true,
                   onPressed: () =>
                       CustomerDetailRoute(deposit.customerId).push(context),
                 ),
-                AppSpacings.gapSm,
-                _LedgerProgress(
-                  projectionAsync: projectionAsync,
-                  totalMonths: deposit.totalMonths,
-                ),
               ],
+            ),
+            footer: _LedgerProgress(
+              projectionAsync: projectionAsync,
+              totalMonths: deposit.totalMonths,
             ),
             badge: StatusBadge(
               status: deposit.status.displayName,
@@ -367,6 +369,7 @@ class _LedgerProgress extends StatelessWidget {
     final counterStyle = theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppLinearProgress(
           // Indeterminate only while the very first projection is loading.
@@ -375,39 +378,26 @@ class _LedgerProgress extends StatelessWidget {
         ),
         AppSpacings.gapXs,
         Wrap(
-          alignment: WrapAlignment.center,
           spacing: AppDimensions.paddingMd,
           children: [
-            Text(
-              tabs.collectedThrough(n: paidThrough.toString()),
-              style: counterStyle,
-              textAlign: TextAlign.center,
-            ),
-            Text(
-              tabs.atPo(n: depositedThrough.toString()),
-              style: counterStyle,
-              textAlign: TextAlign.center,
-            ),
+            Text(tabs.collectedThrough(n: paidThrough.toString()), style: counterStyle),
+            Text(tabs.atPo(n: depositedThrough.toString()), style: counterStyle),
             if (frontedMonths > 0)
               Text(
                 tabs.monthsFronted(n: frontedMonths),
                 style: emphasized.bodySmall?.copyWith(color: scheme.secondary),
-                textAlign: TextAlign.center,
               ),
           ],
         ),
         if (moneyLines.isNotEmpty) ...[
           AppSpacings.gapXxs,
           Wrap(
-            alignment: WrapAlignment.center,
             spacing: AppDimensions.paddingSm,
             children: [
               for (final line in moneyLines)
-                // A line too long for the row wraps; keep it centred like the rest.
                 Text(
                   line.text,
                   style: emphasized.labelLarge?.copyWith(color: line.color),
-                  textAlign: TextAlign.center,
                 ),
             ],
           ),

@@ -91,6 +91,7 @@ class AppDimensions {
 
   // Avatars
   static const double avatarMd = 48.0;
+  static const double avatarLg = 64.0;
   static const double avatarXl = 120.0;
 
   // Icon Sizes

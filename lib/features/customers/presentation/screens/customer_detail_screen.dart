@@ -66,18 +66,33 @@ class CustomerDetailScreen extends ConsumerWidget {
                 : t.common.notProvided,
             avatarShape: AppAvatarShape.forSeed(customer.name),
             title: customer.name,
+            // A number or an address broken across two lines reads as two things, so each
+            // stays on one line and shrinks when it has to.
             subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  customer.phone?.toPhoneFormat() ?? t.common.notProvided,
-                  style: textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    customer.phone?.toPhoneFormat() ?? t.common.notProvided,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
-                Text(
-                  customer.email ?? t.common.notProvided,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    customer.email ?? t.common.notProvided,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],

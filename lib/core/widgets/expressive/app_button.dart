@@ -43,7 +43,8 @@ class AppButton extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
     this.tooltip,
-  }) : selected = null;
+  }) : selected = null,
+       flushStart = false;
 
   const AppButton.tonal({
     super.key,
@@ -58,7 +59,8 @@ class AppButton extends StatelessWidget {
     this.foregroundColor,
     this.tooltip,
   }) : variant = AppButtonVariant.tonal,
-       selected = null;
+       selected = null,
+       flushStart = false;
 
   const AppButton.outlined({
     super.key,
@@ -73,7 +75,8 @@ class AppButton extends StatelessWidget {
     this.foregroundColor,
     this.tooltip,
   }) : variant = AppButtonVariant.outlined,
-       selected = null;
+       selected = null,
+       flushStart = false;
 
   const AppButton.text({
     super.key,
@@ -87,6 +90,7 @@ class AppButton extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
     this.tooltip,
+    this.flushStart = false,
   }) : variant = AppButtonVariant.text,
        selected = null;
 
@@ -106,7 +110,8 @@ class AppButton extends StatelessWidget {
        isLoading = false,
        isDestructive = false,
        backgroundColor = null,
-       foregroundColor = null;
+       foregroundColor = null,
+       flushStart = false;
 
   final String label;
 
@@ -135,6 +140,10 @@ class AppButton extends StatelessWidget {
   /// Whether a toggle button is on; null for a button that is not a toggle.
   final bool? selected;
 
+  /// Pulls a text button back by its own inset, so its icon or label starts where the text
+  /// above it starts. The button keeps its size and its pressed shape hangs over that edge.
+  final bool flushStart;
+
   M3EButtonStyle get _style => switch (variant) {
     AppButtonVariant.filled => M3EButtonStyle.filled,
     AppButtonVariant.tonal => M3EButtonStyle.tonal,
@@ -154,6 +163,14 @@ class AppButton extends StatelessWidget {
     AppButtonSize.extraSmall || AppButtonSize.small => 20,
     AppButtonSize.medium => 24,
     AppButtonSize.large => 32,
+  };
+
+  /// The space Material 3 Expressive leaves before the icon or label at each size.
+  double get _leadingSpace => switch (size) {
+    AppButtonSize.extraSmall => 12,
+    AppButtonSize.small => 16,
+    AppButtonSize.medium => 24,
+    AppButtonSize.large => 48,
   };
 
   ({Color? background, Color? foreground}) _colors(ColorScheme scheme) {
@@ -234,6 +251,14 @@ class AppButton extends StatelessWidget {
     }
     if (tooltip != null || selected != null) {
       labelled = MergeSemantics(child: labelled);
+    }
+
+    if (flushStart) {
+      final towardsStart = Directionality.of(context) == TextDirection.ltr ? -1.0 : 1.0;
+      labelled = Transform.translate(
+        offset: Offset(towardsStart * _leadingSpace, 0),
+        child: labelled,
+      );
     }
 
     return expand

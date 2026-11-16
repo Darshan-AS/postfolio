@@ -140,7 +140,7 @@ class EntityDetailScaffold extends StatelessWidget {
 
   Widget _buildBody(BuildContext context, ThemeData theme) {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
-    final items = <Widget>[header, AppSpacings.gapXxl, ...body];
+    final items = <Widget>[header, AppSpacings.gapXl, ...body];
     final animatedItems = disableAnimations
         ? items
         : items
@@ -182,8 +182,12 @@ class EntityDetailScaffold extends StatelessWidget {
   }
 }
 
-/// The hero of a detail screen: a large Material shape with the entity's initial or code,
-/// its name in an emphasized headline, and optional supporting line, badge and actions.
+/// The head of a detail screen: a Material shape with the entity's initial or code beside
+/// its name, with an optional supporting line, badge, block and actions.
+///
+/// It is one row, not a centred hero. A screen's worth of avatar and headline pushed what
+/// the screen is opened for (the next due amount, the contact details) past the middle of
+/// a phone.
 class EntityDetailHeader extends StatelessWidget {
   final Widget? avatarChild;
   final String? avatarText;
@@ -192,8 +196,16 @@ class EntityDetailHeader extends StatelessWidget {
   final Color? avatarForegroundColor;
   final AppAvatarShape avatarShape;
   final String title;
+
+  /// Under the title, beside the avatar. At large text it takes the full width under the
+  /// avatar's row instead: beside the avatar a phone number or a scheme name breaks in two.
   final Widget? subtitle;
+
+  /// At the end of the title's row; under the subtitle at large text.
   final Widget? badge;
+
+  /// A full-width block under the avatar's row, e.g. a progress summary.
+  final Widget? footer;
   final List<Widget> bottomActions;
 
   const EntityDetailHeader({
@@ -207,6 +219,7 @@ class EntityDetailHeader extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.badge,
+    this.footer,
     this.bottomActions = const [],
   });
 
@@ -214,29 +227,44 @@ class EntityDetailHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final emphasized = AppTypography.emphasizedOf(context);
-    return Center(
-      child: Column(
-        children: [
-          _buildAvatar(theme, emphasized),
-          AppSpacings.gapLg,
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: emphasized.headlineMedium,
-          ),
-          if (subtitle != null) ...[AppSpacings.gapSm, subtitle!],
-          if (badge != null) ...[AppSpacings.gapMd, badge!],
-          if (bottomActions.isNotEmpty) ...[
+    // At large text only the title stays beside the avatar; the rest needs the width.
+    final stacked = AppDimensions.isLargeText(context);
+    final titleText = Text(title, style: emphasized.titleLarge);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            _buildAvatar(theme, emphasized),
             AppSpacings.gapLg,
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: AppDimensions.paddingSm,
-              runSpacing: AppDimensions.paddingSm,
-              children: bottomActions,
+            Expanded(
+              child: stacked
+                  ? titleText
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [titleText, ?subtitle],
+                    ),
             ),
+            if (badge != null && !stacked) ...[AppSpacings.gapSm, badge!],
           ],
+        ),
+        if (stacked)
+          for (final line in [subtitle, badge].nonNulls) ...[
+            AppSpacings.gapXs,
+            Align(alignment: AlignmentDirectional.centerStart, child: line),
+          ],
+        if (footer != null) ...[AppSpacings.gapMd, footer!],
+        if (bottomActions.isNotEmpty) ...[
+          AppSpacings.gapMd,
+          Wrap(
+            spacing: AppDimensions.paddingSm,
+            runSpacing: AppDimensions.paddingSm,
+            children: bottomActions,
+          ),
         ],
-      ),
+      ],
     );
   }
 
@@ -246,7 +274,7 @@ class EntityDetailHeader extends StatelessWidget {
     final hasSubtext = avatarSubtext != null && avatarSubtext!.isNotEmpty;
 
     return AppShapeAvatar(
-      size: AppDimensions.avatarXl,
+      size: AppDimensions.avatarLg,
       shape: avatarShape,
       backgroundColor:
           avatarBackgroundColor ?? theme.colorScheme.primaryContainer,
@@ -255,7 +283,7 @@ class EntityDetailHeader extends StatelessWidget {
           avatarChild ??
           (avatarText != null
               ? Padding(
-                  padding: const EdgeInsets.all(AppDimensions.paddingXl),
+                  padding: const EdgeInsets.all(AppDimensions.paddingMd),
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Column(

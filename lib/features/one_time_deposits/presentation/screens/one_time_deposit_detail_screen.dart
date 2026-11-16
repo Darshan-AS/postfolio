@@ -100,7 +100,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
             title: deposit.accountNo ?? t.common.notProvided,
             subtitle: Text(
               deposit.schemeType.displayName,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
