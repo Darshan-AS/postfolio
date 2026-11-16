@@ -37,18 +37,20 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
       builder: (deposit) {
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
-          customActions: [
-            IconButton(
+          // In the menu, with its label, as on the deposit's row in the list. It was a bare
+          // seal icon in the app bar.
+          menuActions: [
+            EntityAction(
               icon: HugeIcon(
                 icon: deposit.status == DepositStatus.active
                     ? HugeIcons.strokeRoundedCheckmarkBadge01
                     : HugeIcons.strokeRoundedArrowTurnBackward,
-                size: AppDimensions.iconMd,
+                size: AppDimensions.iconSm,
               ),
-              tooltip: deposit.status == DepositStatus.active
+              label: deposit.status == DepositStatus.active
                   ? t.common.close
                   : t.common.reopen,
-              onPressed: () async {
+              onTap: () async {
                 final isActive = deposit.status == DepositStatus.active;
                 final confirmed = await AppDialogs.confirmAction(
                   context,

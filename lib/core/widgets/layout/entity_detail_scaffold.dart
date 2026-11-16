@@ -10,8 +10,10 @@ import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
+import 'package:postfolio/core/widgets/layout/entity_list_tile.dart' show EntityAction;
 
 export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart' show AppAvatarShape;
+export 'package:postfolio/core/widgets/layout/entity_list_tile.dart' show EntityAction;
 
 class EntityDetailScaffold extends StatelessWidget {
   final String appBarTitle;
@@ -23,7 +25,9 @@ class EntityDetailScaffold extends StatelessWidget {
   final List<Widget> body;
   final VoidCallback? onBack;
   final Widget? floatingActionButton;
-  final List<Widget> customActions;
+
+  /// Actions of the overflow menu, listed above Delete with their labels.
+  final List<EntityAction> menuActions;
 
   const EntityDetailScaffold({
     super.key,
@@ -36,7 +40,7 @@ class EntityDetailScaffold extends StatelessWidget {
     required this.body,
     this.onBack,
     this.floatingActionButton,
-    this.customActions = const [],
+    this.menuActions = const [],
   });
 
   void _confirmDelete(BuildContext context) async {
@@ -87,7 +91,6 @@ class EntityDetailScaffold extends StatelessWidget {
           ? BackButton(onPressed: onBack)
           : null, // Let Scaffold handle default
       actions: [
-        ...customActions,
         IconButton.filledTonal(
           // See FormAppBar: inside an app bar the tonal variant needs its foreground set
           // explicitly.
@@ -103,6 +106,15 @@ class EntityDetailScaffold extends StatelessWidget {
         ),
         MenuAnchor(
           menuChildren: [
+            for (final action in menuActions)
+              MenuItemButton(
+                leadingIcon: IconTheme.merge(
+                  data: const IconThemeData(size: AppDimensions.iconSm),
+                  child: action.icon,
+                ),
+                onPressed: action.onTap,
+                child: Text(action.label),
+              ),
             MenuItemButton(
               key: const ValueKey('entity_detail_delete_item'),
               leadingIcon: HugeIcon(
