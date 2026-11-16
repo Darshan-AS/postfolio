@@ -95,6 +95,7 @@
   - [x] **Shapes**: an avatar's shape names a scheme only; people and payments are circles, Hub rows take the recurring scheme's shape.
   - [x] **Status action**: closing or reopening a deposit is a labelled menu entry on its screen, not a bare seal icon in the app bar.
   - [x] **Receipts**: the Transactions tab groups receipts by year instead of giving each one a month header; the allocation pills are neutral.
+  - [x] **String hygiene**: the unsaved-changes dialog reads from Slang; the passbook's Post Office line says "1 month".
 
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone, an emulator or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width).

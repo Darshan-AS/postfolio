@@ -1,6 +1,7 @@
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 /// Tracks whether a form's live inputs have diverged from their initial baseline snapshot.
 bool useIsFormDirty(
@@ -34,9 +35,9 @@ class UnsavedChangesPopScope extends StatelessWidget {
         final scheme = Theme.of(context).colorScheme;
         final discard = await AppDialogs.confirmAction(
           context,
-          title: 'Discard unsaved changes?',
-          content: 'You have unsaved edits. Leave this form without saving?',
-          confirmText: 'Discard',
+          title: t.common.unsavedChanges.title,
+          content: t.common.unsavedChanges.content,
+          confirmText: t.common.unsavedChanges.discard,
           confirmBackgroundColor: scheme.errorContainer,
           confirmForegroundColor: scheme.onErrorContainer,
         );

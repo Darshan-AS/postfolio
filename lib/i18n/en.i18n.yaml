@@ -35,6 +35,10 @@ common:
   add: "Add"
   close: "Close"
   reopen: "Reopen"
+  unsavedChanges:
+    title: "Discard unsaved changes?"
+    content: "You have unsaved edits. Leave this form without saving?"
+    discard: "Discard"
   duration:
     termYears: "Term (Years)"
     termMonths: "Term (Months)"
@@ -510,8 +514,12 @@ recurringDeposits:
       allSettledHint: "Every month is collected and deposited."
       collect: "Collect"
       deposit: "Deposit"
-      readyToDeposit: "Collected · to deposit: ${count} months · ${amount}"
-      readyToDepositWithFee: "Collected · to deposit: ${count} months · ${amount} (incl. ${fee} fee)"
+      readyToDeposit:
+        one: "Collected · to deposit: 1 month · ${amount}"
+        other: "Collected · to deposit: ${n} months · ${amount}"
+      readyToDepositWithFee:
+        one: "Collected · to deposit: 1 month · ${amount} (incl. ${fee} fee)"
+        other: "Collected · to deposit: ${n} months · ${amount} (incl. ${fee} fee)"
       nothingReady: "Nothing collected to deposit yet"
       depositFromPocket: "Front from pocket"
       undoLastDeposit: "Undo last PO deposit"

@@ -84,12 +84,12 @@ class RDPassbookPoStrip extends ConsumerWidget {
         ? passbook.nothingReady
         : readiness.readyFee > 0
             ? passbook.readyToDepositWithFee(
-                count: readiness.readyCount.toString(),
+                n: readiness.readyCount,
                 amount: readiness.readyAmount.toRupeeFormat(),
                 fee: readiness.readyFee.toRupeeFormat(),
               )
             : passbook.readyToDeposit(
-                count: readiness.readyCount.toString(),
+                n: readiness.readyCount,
                 amount: readiness.readyAmount.toRupeeFormat(),
               );
 
