@@ -136,7 +136,9 @@ class DashboardChartSection extends HookConsumerWidget {
                 child: drillUp,
               ),
 
-            AppSpacings.gapSm,
+            // Each control is a 40dp pill in a 48dp touch target, so 4dp here is 12dp between
+            // one pill and the next. The rows of controls were 16dp and then 8dp apart.
+            AppSpacings.gapXs,
 
             // Which deposits the chart counts: all of them or one scheme. Tapping the chosen
             // scheme again goes back to All, so the group reports every tap. All five fit a
@@ -162,6 +164,7 @@ class DashboardChartSection extends HookConsumerWidget {
                           .setFilter(scheme == currentFilter ? null : scheme),
                     ),
                   ),
+                  AppSpacings.gapXs,
                   // Recurring deposits can only be added to the view of everything.
                   Align(
                     alignment: AlignmentDirectional.centerStart,
@@ -179,7 +182,9 @@ class DashboardChartSection extends HookConsumerWidget {
               ),
             ),
 
-            AppSpacings.gapLg,
+            // The chart keeps a band above its tallest bar for that bar's tooltip, so the
+            // controls need no more than this before it.
+            AppSpacings.gapXs,
 
             // Chart Body
             Padding(

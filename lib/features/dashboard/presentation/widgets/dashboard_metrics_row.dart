@@ -223,9 +223,11 @@ class _MetricTile extends StatelessWidget {
       color: color,
       shape: AppShapes.rounded(AppShapes.extraLarge),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
+        // The tall tile pins its badge to one corner and its figure to another, so its
+        // inset is the same on every side. The short tiles centre their content.
+        padding: EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingLg,
-          vertical: AppDimensions.paddingMd,
+          vertical: isHero ? AppDimensions.paddingLg : AppDimensions.paddingMd,
         ),
         child: content,
       ),
