@@ -86,6 +86,14 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
 
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
+          onRefresh: () async {
+            // The account and the three streams its ledger is projected from.
+            ref.invalidate(recurringDepositByIdProvider(depositId));
+            ref.invalidate(rdTransactionsStreamProvider(depositId));
+            ref.invalidate(rdPoDepositsStreamProvider(depositId));
+            ref.invalidate(rdFeeAbsorptionsStreamProvider(depositId));
+            await ref.read(rdLedgerProjectionProvider(depositId).future);
+          },
           // In the menu, with its label, as on the deposit's row in the list. It was a bare
           // seal icon in the app bar.
           menuActions: [

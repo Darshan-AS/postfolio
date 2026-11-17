@@ -47,6 +47,13 @@ class CustomerDetailScreen extends ConsumerWidget {
       builder: (customer) {
         return EntityDetailScaffold(
           appBarTitle: t.customers.customerDetails,
+          onRefresh: () async {
+            // The customer, and the deposits listed under them.
+            ref.invalidate(customerByIdProvider(customerId));
+            ref.invalidate(oneTimeDepositsControllerProvider);
+            ref.invalidate(recurringDepositsControllerProvider);
+            await ref.read(customerByIdProvider(customerId).future);
+          },
           onEdit: () => CustomerEditRoute(customerId).push(context),
           deleteDialogTitle: t.customers.deleteCustomer,
           deleteDialogContent: t.customers.deleteCustomerConfirmation,

@@ -12,6 +12,7 @@ import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart' show EntityAction;
 import 'package:postfolio/core/widgets/expressive/app_menu.dart';
+import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
 
 export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart' show AppAvatarShape;
 export 'package:postfolio/core/widgets/layout/entity_list_tile.dart' show EntityAction;
@@ -30,6 +31,9 @@ class EntityDetailScaffold extends StatelessWidget {
   /// Actions of the overflow menu, listed above Delete with their labels.
   final List<EntityAction> menuActions;
 
+  /// Reloads what the screen shows. When set, the body can be pulled down to refresh.
+  final Future<void> Function()? onRefresh;
+
   const EntityDetailScaffold({
     super.key,
     required this.appBarTitle,
@@ -42,6 +46,7 @@ class EntityDetailScaffold extends StatelessWidget {
     this.onBack,
     this.floatingActionButton,
     this.menuActions = const [],
+    this.onRefresh,
   });
 
   void _confirmDelete(BuildContext context) async {
@@ -152,7 +157,10 @@ class EntityDetailScaffold extends StatelessWidget {
                 curve: AppAnimations.spatialCurve,
               );
 
-    return ListView(
+    final onRefresh = this.onRefresh;
+    final list = ListView(
+      // A short screen must still be draggable for the pull to start.
+      physics: onRefresh == null ? null : const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(
         AppDimensions.pageMargin,
         AppDimensions.paddingSm,
@@ -175,6 +183,8 @@ class EntityDetailScaffold extends StatelessWidget {
         ),
       ],
     );
+
+    return onRefresh == null ? list : AppRefreshIndicator(onRefresh: onRefresh, child: list);
   }
 }
 

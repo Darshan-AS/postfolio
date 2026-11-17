@@ -8,6 +8,7 @@ import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
@@ -109,6 +110,9 @@ void main() {
         // Not an icon in the app bar any more.
         expect(find.byTooltip(t.common.close), findsNothing);
         expect(find.text(t.common.closeDeposit), findsNothing);
+
+        // The screen passes its reload to the scaffold.
+        expect(find.byType(AppRefreshIndicator), findsOneWidget);
 
         await tester.tap(find.byKey(const ValueKey('entity_detail_more_button')));
         await tester.pumpAndSettle();

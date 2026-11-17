@@ -47,6 +47,7 @@ Use centralized Dart extensions in `lib/core/extensions/`:
 - **Full-width buttons in rows that grow**: In a list row, which is as wide as the window on desktop, cap a full-width button at `AppDimensions.buttonMaxWidth` and align it to the end.
 - **Rows say a thing once**: A row shows a figure once (on the action that carries it, when there is one), one inline action beside its menu, and a status badge only when the status is not the usual one.
 - **Detail header**: `EntityDetailHeader` is one row (avatar, name, supporting line, badge), with `footer` for a full-width block under it. Do not centre a hero above the content.
+- **Pull to refresh**: every screen that shows loaded data can be pulled down to reload it: the lists (`EntityListBody.onRefresh`), the dashboard, the Hub, and the detail screens (`EntityDetailScaffold.onRefresh`, which invalidates what that screen reads). Use `AppRefreshIndicator`.
 - **Detail screen actions**: Edit is the app bar's button. Everything else is a labelled entry of the menu (`EntityDetailScaffold.menuActions`), above Delete.
 - **Forms**: The body of a create / edit screen is `FormScreenBody`: the fields scroll and one Confirm button stays under them, above the keyboard. `FormAppBar` has no save action. Build a field's label through `AppLabeledField` (as `AppTextField` and `AppDropdownField` do), so it moves above the field above 1.3x text instead of being cut.
 - **Search hints**: Give `AppSearchBar` the hint that says what can be searched. It shows it when it fits on one line and "Search..." otherwise.

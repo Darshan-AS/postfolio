@@ -40,6 +40,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
       builder: (deposit) {
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
+          onRefresh: () => ref.refresh(oneTimeDepositByIdProvider(depositId).future),
           // In the menu, with its label, as on the deposit's row in the list. It was a bare
           // seal icon in the app bar.
           menuActions: [
