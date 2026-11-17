@@ -8,6 +8,43 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
+/// The hint for a search pill [barWidth] wide: [hint] when it fits on one line, and the
+/// short "Search..." otherwise. A hint cannot wrap, and a cut one ("Search by accou…") says
+/// less than the short one.
+///
+/// [trailingButtons] is the number of 48dp icon buttons at the end of the pill.
+String searchHintThatFits(
+  BuildContext context, {
+  required String? hint,
+  required double barWidth,
+  required int trailingButtons,
+}) {
+  if (hint == null) return t.common.search;
+
+  final theme = SearchBarTheme.of(context);
+  final inset =
+      theme.padding?.resolve(const {})?.horizontal ?? 2 * AppDimensions.paddingSm;
+  // The bar insets its row and then the text field by the same amount; the leading icon
+  // and each trailing icon button keep their own width.
+  final room =
+      barWidth -
+      2 * inset -
+      AppDimensions.iconMd -
+      trailingButtons * kMinInteractiveDimension;
+  final painter = TextPainter(
+    text: TextSpan(
+      text: hint,
+      style: theme.hintStyle?.resolve(const {}) ?? Theme.of(context).textTheme.bodyLarge,
+    ),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+    maxLines: 1,
+  )..layout();
+  final fits = painter.width <= room;
+  painter.dispose();
+  return fits ? hint : t.common.search;
+}
+
 class AppSearchBar extends HookWidget {
   final String? query;
 
@@ -28,34 +65,6 @@ class AppSearchBar extends HookWidget {
     this.onClose,
     this.trailing,
   });
-
-  String _hintFor(BuildContext context, double barWidth) {
-    final hint = hintText;
-    if (hint == null) return t.common.search;
-
-    final theme = SearchBarTheme.of(context);
-    final inset =
-        theme.padding?.resolve(const {})?.horizontal ?? 2 * AppDimensions.paddingSm;
-    // The bar insets its row and then the text field by the same amount; the leading icon
-    // and each trailing icon button keep their own width.
-    final room =
-        barWidth -
-        2 * inset -
-        AppDimensions.iconMd -
-        (trailing?.length ?? 0) * kMinInteractiveDimension;
-    final painter = TextPainter(
-      text: TextSpan(
-        text: hint,
-        style: theme.hintStyle?.resolve(const {}) ?? Theme.of(context).textTheme.bodyLarge,
-      ),
-      textDirection: Directionality.of(context),
-      textScaler: MediaQuery.textScalerOf(context),
-      maxLines: 1,
-    )..layout();
-    final fits = painter.width <= room;
-    painter.dispose();
-    return fits ? hint : t.common.search;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +129,12 @@ class AppSearchBar extends HookWidget {
               builder: (context, constraints) => SearchBar(
                 controller: controller,
                 focusNode: focusNode,
-                hintText: _hintFor(context, constraints.maxWidth),
+                hintText: searchHintThatFits(
+                  context,
+                  hint: hintText,
+                  barWidth: constraints.maxWidth,
+                  trailingButtons: trailing?.length ?? 0,
+                ),
                 leading: HugeIcon(
                   icon: HugeIcons.strokeRoundedSearch01,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,

@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -10,6 +11,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_repository.dart';
@@ -17,6 +19,7 @@ import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_batch_bar.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_month_switcher.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operation_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operations_view.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_status_pill.dart';
@@ -48,12 +51,13 @@ void main() {
   /// the default date shows a settled month and a date after that shows overdue accounts.
   Future<ProviderContainer> pumpHub(
     WidgetTester tester, {
+    double width = 360,
     double height = 800,
     double textScale = 1.0,
     bool disableAnimations = true,
     DateTime? today,
   }) async {
-    tester.view.physicalSize = Size(360, height) * 2.0;
+    tester.view.physicalSize = Size(width, height) * 2.0;
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.reset);
 
@@ -433,6 +437,144 @@ void main() {
       // Two across: money keeps room to be read.
       expect(tiles[0].top, tiles[1].top);
       expect(tiles[2].top, greaterThan(tiles[0].bottom));
+    });
+  });
+
+  group('Monthly Hub spacing', () {
+    // The test font is about twice as wide as the app's. In a window this wide a name, a
+    // hint or the batch bar's text takes one line, as it does on a phone with the real font.
+    const roomy = 700.0;
+
+    Rect tilesRect(WidgetTester tester) {
+      final tiles = [
+        for (final label in [
+          ops.kpis.toCollect,
+          ops.kpis.inHand,
+          ops.kpis.receivable,
+          ops.kpis.arrears,
+        ])
+          tester.getRect(
+            find.ancestor(of: find.text(label), matching: find.byType(AppGroupTile)),
+          ),
+      ];
+      return tiles.reduce((a, b) => a.expandToInclude(b));
+    }
+
+    testWidgets('the status pill is at the same height in a row with a button and in a row '
+        'without one', (tester) async {
+      // April: settled rows, which have no button, and rows waiting for the Post Office.
+      await pumpHub(tester, width: roomy, height: 2400);
+
+      final withButton = <double>[];
+      final withoutButton = <double>[];
+      for (final element in find.byType(RDMonthlyOperationCard).evaluate()) {
+        final card = find.byWidget(element.widget);
+        final pill = tester.getRect(
+          find.descendant(of: card, matching: find.byType(RDStatusPill)),
+        );
+        final hasButton = find
+            .descendant(of: card, matching: find.byType(RDOperationActionButton))
+            .evaluate()
+            .isNotEmpty;
+        (hasButton ? withButton : withoutButton).add(pill.top - tester.getRect(card).top);
+      }
+      expect(withButton, isNotEmpty);
+      expect(withoutButton, isNotEmpty);
+
+      final all = [...withButton, ...withoutButton]..sort();
+      // The button's touch padding had put its row's pill 8dp lower.
+      expect(all.last - all.first, lessThanOrEqualTo(2));
+    });
+
+    testWidgets('the blocks above the rows are 12dp apart', (tester) async {
+      await pumpHub(tester);
+
+      final switcher = tester.getRect(find.byType(RDMonthSwitcher));
+      final tiles = tilesRect(tester);
+      final search = tester.getRect(find.byType(SearchBar));
+      final dueWindow = tester.getRect(find.byType(AppButtonGroup<RDDueWindowFilter>));
+      // A 40dp pill sits 4dp inside its 48dp touch target.
+      const touchPadding = (kMinInteractiveDimension - AppDimensions.buttonHeightSm) / 2;
+
+      expect(tiles.top - switcher.bottom, AppDimensions.paddingMd);
+      expect(search.top - tiles.bottom, AppDimensions.paddingMd);
+      expect(dueWindow.top + touchPadding - search.bottom, AppDimensions.paddingMd);
+    });
+
+    testWidgets('a tile\'s text starts on the edge a row\'s avatar and pill start on', (
+      tester,
+    ) async {
+      await pumpHub(tester, height: 1600);
+
+      final card = find.byType(RDMonthlyOperationCard).first;
+      final pill = tester.getRect(
+        find.descendant(of: card, matching: find.byType(RDStatusPill)),
+      );
+      expect(pill.left, 2 * AppDimensions.pageMargin);
+      for (final label in [ops.kpis.toCollect, ops.kpis.receivable]) {
+        expect(tester.getRect(find.text(label)).left, pill.left);
+      }
+    });
+
+    testWidgets('where the search hint does not fit, the pill shows the short one', (
+      tester,
+    ) async {
+      await pumpHub(tester);
+      expect(find.text(t.common.search), findsOneWidget);
+      expect(find.text(ops.searchHint), findsNothing);
+    });
+
+    testWidgets('where the search hint fits, it is shown whole', (tester) async {
+      await pumpHub(tester, width: roomy);
+      final hint = find.text(ops.searchHint);
+      expect(hint, findsOneWidget);
+      final paragraph = tester.renderObject<RenderParagraph>(
+        find.descendant(of: hint, matching: find.byType(RichText)).first,
+      );
+      expect(paragraph.didExceedMaxLines, isFalse);
+    });
+
+    testWidgets('two toggles that are on keep a gap between them, inside the search pill', (
+      tester,
+    ) async {
+      final container = await pumpHub(tester);
+      container.read(rDHubSelectionProvider.notifier).enter();
+      await settle(tester);
+
+      Rect fillOf(String tooltip) => tester.getRect(
+        // The button's own surface: the nearest one around its icon.
+        find.ancestor(of: find.byTooltip(tooltip), matching: find.byType(Material)).first,
+      );
+      final group = fillOf(ops.toolbar.groupByCustomer);
+      final select = fillOf(ops.toolbar.exitSelectMode);
+      final search = tester.getRect(find.byType(SearchBar));
+
+      expect(group.size, const Size.square(AppDimensions.buttonHeightSm));
+      expect(select.size, group.size);
+      expect(select.left - group.right, greaterThanOrEqualTo(AppDimensions.paddingSm));
+      expect(group.top - search.top, greaterThanOrEqualTo(AppDimensions.paddingSm));
+      expect(search.bottom - group.bottom, greaterThanOrEqualTo(AppDimensions.paddingSm));
+    });
+
+    testWidgets('the batch bar\'s button is as far from the bar\'s end as from its top', (
+      tester,
+    ) async {
+      final container = await pumpHub(tester, width: roomy);
+      final items = await container.read(monthlyOperationItemsProvider.future);
+      container.read(rDHubSelectionProvider.notifier).selectAll([
+        for (final i in items) i.installment.id,
+      ]);
+      await settle(tester);
+
+      final barFinder = find.byType(RDHubBatchBar);
+      final bar = tester.getRect(
+        find.descendant(of: barFinder, matching: find.byType(Material)).first,
+      );
+      final button = tester.getRect(
+        find.descendant(of: barFinder, matching: find.byType(AppButton)),
+      );
+      final aboveTheButton = (bar.height - AppDimensions.buttonHeightSm) / 2;
+      expect(bar.right - button.right, aboveTheButton);
     });
   });
 

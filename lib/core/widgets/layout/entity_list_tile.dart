@@ -2,7 +2,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
@@ -73,7 +72,9 @@ class EntityListTile extends StatelessWidget {
   /// Shape of the default leading avatar.
   final AppAvatarShape leadingShape;
 
-  /// A status colour shown as a short bar on the leading edge.
+  /// A status colour drawn as a stripe down the leading edge. It runs the row's full height
+  /// and is cut by the row's own corners; a shorter bar with rounded ends was cut by them
+  /// too, at an angle, and read as something stuck onto the card.
   final Color? indicatorColor;
   final String title;
   final Widget? subtitle;
@@ -82,6 +83,9 @@ class EntityListTile extends StatelessWidget {
   /// Optional full-width block rendered below the main row (e.g. a primary action button).
   /// It shares the tile's tap surface and horizontal padding.
   final Widget? footer;
+
+  /// Space between the main row and the [footer].
+  final double footerSpacing;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final List<EntityAction> actions;
@@ -104,6 +108,7 @@ class EntityListTile extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.footer,
+    this.footerSpacing = AppDimensions.paddingSm,
     this.onTap,
     this.onLongPress,
     this.actions = const [],
@@ -266,7 +271,7 @@ class EntityListTile extends StatelessWidget {
             Padding(
               // Align footer's right edge with the 16dp horizontal grid.
               padding: EdgeInsets.only(
-                top: AppDimensions.paddingSm,
+                top: footerSpacing,
                 right: hasActionButtons
                     ? AppDimensions.paddingLg
                     : AppDimensions.paddingNone,
@@ -287,19 +292,12 @@ class EntityListTile extends StatelessWidget {
           : Stack(
               children: [
                 content,
-                Positioned(
-                  left: 0,
-                  top: AppDimensions.paddingMd,
-                  bottom: AppDimensions.paddingMd,
+                PositionedDirectional(
+                  start: 0,
+                  top: 0,
+                  bottom: 0,
                   width: AppDimensions.borderLg,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: indicatorColor,
-                      borderRadius: const BorderRadius.horizontal(
-                        right: Radius.circular(AppShapes.extraSmall),
-                      ),
-                    ),
-                  ),
+                  child: ColoredBox(color: indicatorColor!),
                 ),
               ],
             ),

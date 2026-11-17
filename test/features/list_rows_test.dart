@@ -10,7 +10,9 @@ import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/services/intent_service.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
@@ -221,6 +223,52 @@ void main() {
       expect(find.descendant(of: otdRow, matching: find.text(customer.name)), findsNothing);
       expect(find.descendant(of: rdRow, matching: find.text(customer.name)), findsNothing);
     });
+  });
+
+  group('status stripe', () {
+    for (final position in AppGroupPosition.values) {
+      testWidgets('runs the full height of a ${position.name} row, inside its corners', (
+        tester,
+      ) async {
+        const colour = Color(0xFFB3261E);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: Scaffold(
+              body: Padding(
+                padding: const EdgeInsets.all(AppDimensions.pageMargin),
+                child: EntityListTile(
+                  title: 'Suresh Nair',
+                  leadingText: 'TD',
+                  indicatorColor: colour,
+                  position: position,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        final tile = find.byType(EntityListTile);
+        final row = tester.getRect(tile);
+        final stripe = find.descendant(
+          of: tile,
+          matching: find.byWidgetPredicate((w) => w is ColoredBox && w.color == colour),
+        );
+        expect(stripe, findsOneWidget);
+        final rect = tester.getRect(stripe);
+        expect(rect.left, row.left);
+        expect(rect.top, row.top);
+        expect(rect.bottom, row.bottom);
+        expect(rect.width, AppDimensions.borderLg);
+
+        // The row's surface cuts it to the row's corners.
+        final surface = tester.widget<Material>(
+          find.descendant(of: tile, matching: find.byType(Material)).first,
+        );
+        expect(surface.clipBehavior, isNot(Clip.none));
+        expect(surface.shape, AppShapes.group(position));
+      });
+    }
   });
 
   group('AppSearchBar hint', () {

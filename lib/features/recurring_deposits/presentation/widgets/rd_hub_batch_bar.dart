@@ -132,7 +132,14 @@ class RDHubBatchBar extends ConsumerWidget {
       shadowColor: scheme.shadow,
       shape: stacked ? AppShapes.rounded(AppShapes.extraLarge) : AppShapes.pill,
       child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.paddingSm),
+        // The button is 40dp in a 64dp pill: 12dp above and below it, so 12dp after it.
+        // With 8dp it sat off-centre in the pill's rounded end.
+        padding: const EdgeInsetsDirectional.fromSTEB(
+          AppDimensions.paddingSm,
+          AppDimensions.paddingSm,
+          AppDimensions.paddingMd,
+          AppDimensions.paddingSm,
+        ),
         child: content,
       ),
     );

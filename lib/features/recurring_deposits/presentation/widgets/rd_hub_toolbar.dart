@@ -6,6 +6,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_surfaces.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
+import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -15,6 +16,9 @@ import 'package:postfolio/i18n/strings.g.dart';
 /// This is the only header widget that rebuilds on a keystroke.
 class RDHubToolbar extends HookConsumerWidget {
   const RDHubToolbar({super.key});
+
+  /// The group-by and select toggles at the end of the search pill.
+  static const int _toggleCount = 2;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -56,43 +60,50 @@ class RDHubToolbar extends HookConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SearchBar(
-              controller: searchController,
-              hintText: ops.searchHint,
-              onChanged: filtersNotifier.setSearchQuery,
-              leading: AppIcon(
-                HugeIcons.strokeRoundedSearch01,
-                color: scheme.onSurfaceVariant,
-                size: AppDimensions.iconMd,
-              ),
-              trailing: [
-                if (searchController.text.isNotEmpty)
-                  IconButton(
-                    tooltip: t.common.clear,
-                    onPressed: () {
-                      searchController.clear();
-                      filtersNotifier.setSearchQuery('');
-                    },
-                    icon: AppIcon(
-                      HugeIcons.strokeRoundedCancel01,
-                      color: scheme.onSurfaceVariant,
-                      size: AppDimensions.iconMd,
+            LayoutBuilder(
+              builder: (context, constraints) => SearchBar(
+                controller: searchController,
+                hintText: searchHintThatFits(
+                  context,
+                  hint: ops.searchHint,
+                  barWidth: constraints.maxWidth,
+                  trailingButtons: _toggleCount,
+                ),
+                onChanged: filtersNotifier.setSearchQuery,
+                leading: AppIcon(
+                  HugeIcons.strokeRoundedSearch01,
+                  color: scheme.onSurfaceVariant,
+                  size: AppDimensions.iconMd,
+                ),
+                trailing: [
+                  if (searchController.text.isNotEmpty)
+                    IconButton(
+                      tooltip: t.common.clear,
+                      onPressed: () {
+                        searchController.clear();
+                        filtersNotifier.setSearchQuery('');
+                      },
+                      icon: AppIcon(
+                        HugeIcons.strokeRoundedCancel01,
+                        color: scheme.onSurfaceVariant,
+                        size: AppDimensions.iconMd,
+                      ),
                     ),
+                  _ToolbarToggle(
+                    tooltip: toolbar.groupByCustomer,
+                    isSelected: groupByCustomer,
+                    icon: HugeIcons.strokeRoundedUserGroup,
+                    onPressed: filtersNotifier.toggleGroupByCustomer,
                   ),
-                _ToolbarToggle(
-                  tooltip: toolbar.groupByCustomer,
-                  isSelected: groupByCustomer,
-                  icon: HugeIcons.strokeRoundedUserGroup,
-                  onPressed: filtersNotifier.toggleGroupByCustomer,
-                ),
-                _ToolbarToggle(
-                  tooltip: isSelectionMode ? toolbar.exitSelectMode : toolbar.selectMode,
-                  isSelected: isSelectionMode,
-                  icon: HugeIcons.strokeRoundedCheckList,
-                  selectedIcon: HugeIcons.strokeRoundedCheckmarkCircle02,
-                  onPressed: isSelectionMode ? selectionNotifier.exit : selectionNotifier.enter,
-                ),
-              ],
+                  _ToolbarToggle(
+                    tooltip: isSelectionMode ? toolbar.exitSelectMode : toolbar.selectMode,
+                    isSelected: isSelectionMode,
+                    icon: HugeIcons.strokeRoundedCheckList,
+                    selectedIcon: HugeIcons.strokeRoundedCheckmarkCircle02,
+                    onPressed: isSelectionMode ? selectionNotifier.exit : selectionNotifier.enter,
+                  ),
+                ],
+              ),
             ),
             AppSpacings.gapSm,
             AppButtonGroup<RDDueWindowFilter>(
@@ -142,7 +153,10 @@ class _ToolbarToggle extends StatelessWidget {
   final AppIconData? selectedIcon;
   final VoidCallback onPressed;
 
-  static const Size _minimumSize = Size.square(AppDimensions.minTapTarget);
+  /// The Material icon button: 40dp to look at inside a 48dp touch target. The fill of a
+  /// toggle that is on is the 40dp, so two that are on side by side keep 8dp between them;
+  /// at 44dp with no padding they touched.
+  static const Size _visualSize = Size.square(AppDimensions.buttonHeightSm);
 
   @override
   Widget build(BuildContext context) {
@@ -162,8 +176,9 @@ class _ToolbarToggle extends StatelessWidget {
             style: IconButton.styleFrom(
               backgroundColor: scheme.secondary,
               foregroundColor: scheme.onSecondary,
-              minimumSize: _minimumSize,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              minimumSize: _visualSize,
+              maximumSize: _visualSize,
+              tapTargetSize: MaterialTapTargetSize.padded,
             ),
             onPressed: onPressed,
             icon: glyph,
@@ -172,8 +187,9 @@ class _ToolbarToggle extends StatelessWidget {
             tooltip: tooltip,
             isSelected: false,
             style: IconButton.styleFrom(
-              minimumSize: _minimumSize,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              minimumSize: _visualSize,
+              maximumSize: _visualSize,
+              tapTargetSize: MaterialTapTargetSize.padded,
             ),
             onPressed: onPressed,
             icon: glyph,

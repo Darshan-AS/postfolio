@@ -48,7 +48,8 @@ class RDHubHeader extends ConsumerWidget {
           onResetToCurrent: monthNotifier.resetToCurrentMonth,
           onPickMonth: monthNotifier.setMonth,
         ),
-        AppSpacings.gapSm,
+        // 12dp between the Hub's blocks: switcher, tiles, search, due window, rows.
+        AppSpacings.gapMd,
         Skeletonizer(enabled: isLoading, child: const _KpiGrid()),
         AppSpacings.gapSm,
       ],
@@ -316,8 +317,10 @@ class _KpiTile extends StatelessWidget {
           color: background,
           onTap: onTap,
           child: Padding(
+            // 16dp at the sides, as in the rows below: a tile's text starts on the same
+            // edge as a row's avatar and pill.
             padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingMd,
+              horizontal: AppDimensions.paddingLg,
               vertical: AppDimensions.paddingSm,
             ),
             child: Column(

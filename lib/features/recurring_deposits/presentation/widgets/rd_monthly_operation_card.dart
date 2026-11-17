@@ -298,6 +298,12 @@ class RDMonthlyOperationCard extends StatelessWidget {
           showIdentity: !titleByAccount,
         ),
       ),
+      // A button brings 4dp of touch padding above and below, and the pill is centred on
+      // it. Without this the pill of a row with a button sat 8dp lower than the pill of a
+      // row without one, and the two kinds are mixed in every month.
+      footerSpacing: hasAction && !largeText
+          ? AppDimensions.paddingNone
+          : AppDimensions.paddingSm,
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
