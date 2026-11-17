@@ -110,13 +110,13 @@
   - [x] **Sheets over the navigation bar** (found while testing back): a sheet opened from a tab's own screen sat above the navigation bar, which stayed bright and tappable. Sheets now open on the root navigator and cover it.
 
 ### Left for the owner after the redesign
-- [ ] **Look at it on a device**: nothing was run on a phone, an emulator or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width).
+- [ ] **Look at it on a device**: nothing was run on a phone or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width). On 2026-11-17 the motion work alone was run on an Android 17 emulator in demo mode (customers list, a customer's screen, the customer form, the sort sheet, a row's menu).
 - [ ] **Web icon font (decision)**: `flutter build web --wasm` now ships 1,261,120 bytes of `MaterialIcons-Regular.otf` (469 KB gzipped) instead of 7,736. `material_3_expressive` declares every Material icon in `M3EIcons` without `@staticIconProvider`, and every component imports it. With that annotation added to a copy of the package the font is 9,624 bytes. Android is not affected (2,116 bytes). Choose: report it upstream and wait, or override the dependency with a patched copy.
 - [x] **Flaky Hub integration test**: fixed on `main` by `1467dc5` (the test waits for the summary row instead of sleeping 500 ms). The integration suite passes on this branch after the rebase.
 - [ ] **Palette**: the brand scheme now uses `DynamicSchemeVariant.vibrant` (`lib/core/theme/app_theme.dart`). Keep it, or go back to the default variant in that one line.
 - [x] **Strings**: "1 months" on the passbook, the hard-coded unsaved-changes dialog and the field labels cut at 2.0x text are fixed.
 - [ ] **Hub at 2.0x text**: the four header tiles take a line each, so the first row starts below the fold on an 800dp screen. The alternative is a 2×2 grid with smaller figures.
-- [ ] **Rebuild `chore/dev-experience`** on this branch's new tip (it is stacked on the tip from before the spacing pass).
+- [ ] **Rebuild `chore/dev-experience`** on this branch's new tip (it is stacked on the tip from before the spacing and motion passes).
 - [ ] **Critique items still open** (details in `.agents/session_logs/2026-11-16_session_1.md`). Adding Slang keys needs no discussion, so the string ones are plain work:
   - Deferred by the owner: responsive UI, desktop included, will be its own branch. (The desktop test in `test/ui/accessibility_and_layout_invariants_test.dart` asserts a full-width search bar and flush-right row menus.)
   - To do, with new strings: labelled fee and fronting controls on the visit sheet; what the "6" in "5 / 6" on the dashboard is; a "Plan visit" button in place of the "In hand" tile's second job; the monthly payout as the headline of a Monthly Income Scheme deposit.
@@ -126,6 +126,13 @@
   - Shell: theme and sign-out into one account menu; the "+" on a customer's screen as add buttons on the deposit sections.
   - Palette: less chroma in the neutrals (one line in the theme; look at it on a device first).
   - Product: the Hub as its own destination; a dashboard that says what to do; masking Aadhaar.
+- [ ] **Motion that needs our own code** (asked 2026-11-17; the owner wants it from packages only, so none is built; details in part 2, section 5 of `.agents/session_logs/2026-11-17_session_1.md`):
+  - A transition between the four destinations (fade through). Needs a container for `go_router`'s `navigatorContainerBuilder` that keeps every tab alive, about 30 to 50 lines.
+  - Back closes an open menu. Today back skips a `MenuAnchor` menu and leaves the app from a tab's own screen. Needs a `PopScope` tied to each menu's controller.
+  - Predictive back and a spring on sheets. Means moving every sheet to the community `M3EBottomSheet` and passing each sheet's unsaved-input guard to it.
+  - Container transform from a row to its screen. The package versions push routes outside `go_router`; a `Hero` on the avatar is the route-safe variant and needs a look on a device.
+- [ ] **Try on a phone** (motion pass): a back swipe from a detail screen, from a form with something typed, from a tab's own screen, and with a sheet open, on Android 13, 14 or 15 if one is at hand, since only those depend on the new manifest flag; the swipe back from the left edge on an iPhone.
+- [ ] **Row menu at the screen's edge**: a row's overflow menu ends about 4dp from the edge (flush on a 448dp emulator). Not new.
 - [ ] **`material_ui` Expressive coverage**: when the official package ships an Expressive button group, FAB menu, navigation bar or loading indicator, move that `App*` wrapper onto it and drop the community widget.
 
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)
@@ -251,7 +258,7 @@
   - [x] Implement dark theme support.
 - [ ] **Media**: Implement image capture and display for customer profiles.
 - [x] **Routing UX**: Re-evaluate context-aware "back" navigation (e.g., Detail -> List vs Detail -> Home).
-- [ ] **Predictive Back Gesture**: Add predictive back gestures. The last trial had issues between customer detail page to customer list page.
+- [x] **Predictive Back Gesture**: on since M15 (2026-11-17): the theme's builder plus the manifest opt-in. Customer detail to the list works on an Android 17 emulator, release and cancel. Not tried on a phone or on Android 13 to 15.
 - [x] **Minor Fixes**: Remove duplicate display of RD interest rate; replace `FilledButton` with `AppButton` (if deemed necessary).
 
 ## ⚙️ Architecture, Tooling & Security

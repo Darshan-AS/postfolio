@@ -16,6 +16,7 @@
   - Set `canPop: false` only while there is unsaved input. A screen that refuses to pop gets no preview, and the swipe ends in its `onPopInvokedWithResult`.
   - Push detail and form screens on the root navigator (`$parentNavigatorKey`), so each tab's navigator holds one page and a tab's root leaves the swipe to the system's back-to-home animation.
   - `test/core/routing/predictive_back_test.dart` drives the gesture through the router; extend it when a new kind of screen or overlay is added.
+  - Known limit: an open `MenuAnchor` menu is an overlay, not a route. Back skips it and acts on what is underneath (it leaves the app from a tab's own screen).
 - **Deep Links**: Never pass complex objects via `extra`. Pass primitive IDs in the URL so Web page refreshes (`F5`) and deep links stay deterministic.
 - **Keyboard Handling**: Let the outer `Scaffold` handle resizing. Use a `Builder` inside the body if `MediaQuery` modification is needed.
 

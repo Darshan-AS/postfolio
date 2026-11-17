@@ -1,6 +1,15 @@
 # Project Progress
 
 ## Current State
+**Motion, page transitions and predictive back — on `feat/m3-expressive-ui` (PR #20), 2026-11-17.** What the packages already offer, switched on; nothing built by hand and no new dependency (M15 in `.agents/tasks.md`; part 2 of `.agents/session_logs/2026-11-17_session_1.md`).
+- **Predictive back**: the manifest now opts in (`android:enableOnBackInvokedCallback`), so Android 13 to 15 send the gesture; Android 16 and later already did for an app that targets API 36. The theme has had the official predictive back transition since September.
+- **Page transitions**: one per platform. iOS takes the Cupertino transition and with it the swipe back from the edge (it had a shared axis with no back gesture); Windows, Linux and Fuchsia take the shared axis macOS had (they fell back to the Android 10 zoom, also in a browser).
+- **Menus**: the five `MenuAnchor` menus use the official open and close animation.
+- **Fix found on the way**: sheets opened from a tab's own screen ended above the navigation bar and left it bright and tappable; they now open on the root navigator and cover it.
+- **Not possible from packages alone** (listed in `tasks.md`): a transition between the tabs, back closing an open menu, predictive back on sheets, a container transform from a row to its screen.
+- **Verification**: `dart analyze --fatal-infos` clean; 380 fast tests pass (363 before); coverage gate passes (domain & core 83.6%, controllers & providers 85.1%, data & repositories 47.8%, presentation UI & routing 78.1%, total 77.7%); the Android debug build of the staging flavor succeeds with the flag in the merged manifest. Run on an Android 17 emulator in demo mode: back from a detail screen, from a tab's own screen, from a form with unsaved input and with a sheet open, and a menu opening. Not run: a phone, Android 13 to 16, iOS, a browser, the integration suite, the web build.
+- **Follow-up**: `chore/dev-experience` has to be rebuilt on this branch's new tip.
+
 **Spacing pass — done on `feat/m3-expressive-ui` (PR #20), 2026-11-17.** Paddings, margins and gaps checked on every screen, at 360dp and, new, on a 412dp phone with system bars and the navigation bar (M14 in `.agents/tasks.md`; log `.agents/session_logs/2026-11-17_session_1.md`). Presentation only.
 - **Monthly Hub**: the status stripe follows the row's corners; the status pill sits at one height with or without a button; 12dp between the blocks above the rows; tile text on the rows' edge; toggles that do not touch; a search hint that is not cut.
 - **Dashboard**: scheme pills share the width or leave half of the next one showing (on a 412dp phone one ended on the screen's edge); the chart's controls are evenly spaced; the tall tile is inset 16dp all round.
