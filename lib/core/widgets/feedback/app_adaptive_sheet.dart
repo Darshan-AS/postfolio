@@ -20,6 +20,9 @@ abstract final class AppAdaptiveSheet {
     if (isCompact(context)) {
       return showModalBottomSheet<T>(
         context: context,
+        // A tab's screens live in that tab's own navigator, above the navigation bar. Pushed
+        // there, a sheet would end at the bar and leave it bright and tappable.
+        useRootNavigator: true,
         isScrollControlled: true,
         useSafeArea: true,
         showDragHandle: true,

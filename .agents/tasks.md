@@ -107,6 +107,7 @@
   - [x] **Predictive back**: the manifest opts in, so Android 13 to 15 send the gesture too (Android 16 already did); tests drive the swipe through the router: detail to list, a cancelled swipe, a form with unsaved input, an open sheet, the tab roots.
   - [x] **Page transitions**: every platform has one. iOS gets the Cupertino transition and with it the swipe back from the edge; Windows, Linux and Fuchsia get the shared axis macOS had (they fell back to the Android 10 zoom).
   - [x] **Menus**: the five `MenuAnchor` menus open and close with the official Material 3 animation (`animated: true`); a test keeps new ones on it.
+  - [x] **Sheets over the navigation bar** (found while testing back): a sheet opened from a tab's own screen sat above the navigation bar, which stayed bright and tappable. Sheets now open on the root navigator and cover it.
 
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone, an emulator or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width).
