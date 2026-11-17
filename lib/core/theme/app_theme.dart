@@ -27,6 +27,30 @@ class AppTheme {
     dynamicSchemeVariant: DynamicSchemeVariant.vibrant,
   );
 
+  static const PageTransitionsBuilder _desktopPageTransition =
+      SharedAxisPageTransitionsBuilder(
+        transitionType: SharedAxisTransitionType.horizontal,
+      );
+
+  /// The transition between two screens, for every platform.
+  ///
+  /// - Android: the official predictive back transition. It follows the finger during a
+  ///   back swipe and fades forwards for a tap.
+  /// - iOS: `material_ui`'s default, the platform's own transition. It brings the swipe back
+  ///   from the left edge, which an iPhone needs because it has no back button.
+  /// - Desktop: a horizontal shared axis. A platform that is not listed here would fall back
+  ///   to the Android 10 zoom.
+  static final PageTransitionsTheme _pageTransitions = PageTransitionsTheme(
+    builders: <TargetPlatform, PageTransitionsBuilder>{
+      ...const PageTransitionsTheme().builders,
+      TargetPlatform.android: const PredictiveBackPageTransitionsBuilder(),
+      TargetPlatform.macOS: _desktopPageTransition,
+      TargetPlatform.windows: _desktopPageTransition,
+      TargetPlatform.linux: _desktopPageTransition,
+      TargetPlatform.fuchsia: _desktopPageTransition,
+    },
+  );
+
   /// Derives shimmer colors directly from the active [ColorScheme] so Dark Mode and Accessible
   /// Mode skeletons never fall back to light `ThemeData.fallback()` bones.
   static SkeletonizerConfigData skeletonizerConfig(ColorScheme colorScheme) {
@@ -60,17 +84,7 @@ class AppTheme {
       canvasColor: colorScheme.page,
       textTheme: textTheme,
       extensions: <ThemeExtension<dynamic>>[effectiveFinancial],
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: <TargetPlatform, PageTransitionsBuilder>{
-          TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
-          TargetPlatform.iOS: SharedAxisPageTransitionsBuilder(
-            transitionType: SharedAxisTransitionType.horizontal,
-          ),
-          TargetPlatform.macOS: SharedAxisPageTransitionsBuilder(
-            transitionType: SharedAxisTransitionType.horizontal,
-          ),
-        },
-      ),
+      pageTransitionsTheme: _pageTransitions,
       appBarTheme: AppWidgetThemes.appBarTheme(colorScheme, emphasized),
       dividerTheme: AppWidgetThemes.dividerTheme(colorScheme),
       floatingActionButtonTheme: AppWidgetThemes.floatingActionButtonTheme(

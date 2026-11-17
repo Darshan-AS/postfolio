@@ -51,3 +51,7 @@ Use centralized Dart extensions in `lib/core/extensions/`:
 - **Forms**: The body of a create / edit screen is `FormScreenBody`: the fields scroll and one Confirm button stays under them, above the keyboard. `FormAppBar` has no save action. Build a field's label through `AppLabeledField` (as `AppTextField` and `AppDropdownField` do), so it moves above the field above 1.3x text instead of being cut.
 - **Search hints**: Give `AppSearchBar` the hint that says what can be searched. It shows it when it fits on one line and "Search..." otherwise.
 - **Text buttons under a title**: `AppButton.text(flushStart: true)` starts the label on the title's edge.
+
+## 5. Motion
+- **From the packages, not by hand**: motion comes from what `material_ui`, `animations`, `flutter_animate` and the components behind the `App*` wrappers already provide, on the `AppMotion` tokens. Do not write a transition or an animated container of our own without asking the owner; note the gap in `tasks.md` instead.
+- **Page transitions**: set once, in `AppTheme`, for every platform: Android the predictive back transition (follows the finger on a back swipe, fades forwards on a tap), iOS the platform's own (it carries the swipe back from the edge), desktop a horizontal shared axis. Do not give a route a transition of its own, and do not give iOS one without a back gesture. `test/core/page_transitions_test.dart` checks all three.
