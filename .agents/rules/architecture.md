@@ -11,6 +11,11 @@
     - **Use for**: Primary navigation (Tabs, Shell routes, Auth redirects), Deep Linking, and horizontal structural movement.
   - **`push()` (Imperative/Temporal Navigation)**: Pushes onto the navigation stack.
     - **Use for**: Master-Detail Flow (List -> Detail), Forms, Data Entry, and vertical hierarchical movement so hardware/predictive back returns cleanly.
+- **Back and Predictive Back**: On Android a back swipe previews the screen beneath (`PredictiveBackPageTransitionsBuilder` in the theme, `android:enableOnBackInvokedCallback="true"` in the manifest). It works only while Flutter knows whether a pop is possible:
+  - Intercept back with `PopScope` only. No `WillPopScope`, no back-button listener.
+  - Set `canPop: false` only while there is unsaved input. A screen that refuses to pop gets no preview, and the swipe ends in its `onPopInvokedWithResult`.
+  - Push detail and form screens on the root navigator (`$parentNavigatorKey`), so each tab's navigator holds one page and a tab's root leaves the swipe to the system's back-to-home animation.
+  - `test/core/routing/predictive_back_test.dart` drives the gesture through the router; extend it when a new kind of screen or overlay is added.
 - **Deep Links**: Never pass complex objects via `extra`. Pass primitive IDs in the URL so Web page refreshes (`F5`) and deep links stay deterministic.
 - **Keyboard Handling**: Let the outer `Scaffold` handle resizing. Use a `Builder` inside the body if `MediaQuery` modification is needed.
 

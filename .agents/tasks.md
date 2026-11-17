@@ -102,8 +102,9 @@
 - [x] **M14 (Spacing pass, 2026-11-17)**: paddings, margins and gaps checked on every screen, at 360dp and on a 412dp phone with system bars. Log: `.agents/session_logs/2026-11-17_session_1.md`.
   - [x] **Monthly Hub**: the status stripe follows the row's corners, the status pill sits at one height with or without a button, 12dp between the blocks, tile text on the rows' edge, toggles that do not touch, a search hint that is not cut.
   - [x] **Dashboard**: scheme pills share the width or leave half of the next one showing, the chart's controls are one step apart with less of a hole above the bars, the tall tile is inset the same on every side.
-- [ ] **M14 (Spacing pass, 2026-11-17)**: paddings, margins and gaps checked on every screen, at 360dp and on a 412dp phone with system bars. Log: `.agents/session_logs/2026-11-17_session_1.md`.
   - [x] **Shared layout**: app bar actions end on the content's edge, the copy button and the chevron of a detail row share an axis, customer form fields are 16dp apart like the deposit forms', one gap after a detail screen's figures.
+- [x] **M15 (Motion, page transitions and predictive back, 2026-11-17)**: what the packages already offer, switched on; nothing built by hand. Log: part 2 of `.agents/session_logs/2026-11-17_session_1.md`.
+  - [x] **Predictive back**: the manifest opts in, so Android 13 to 15 send the gesture too (Android 16 already did); tests drive the swipe through the router: detail to list, a cancelled swipe, a form with unsaved input, an open sheet, the tab roots.
 
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone, an emulator or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width).
