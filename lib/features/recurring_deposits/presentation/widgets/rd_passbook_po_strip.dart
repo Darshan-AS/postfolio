@@ -15,6 +15,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_deposit_sheet.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 
 /// Post Office strip of the passbook: a raised tile reading "Ready to deposit: N months ·
 /// ₹X" with **Deposit** and an overflow for "Deposit from pocket" / "Undo last PO deposit".
@@ -119,9 +120,33 @@ class RDPassbookPoStrip extends ConsumerWidget {
                 initialCount: readiness.readyCount,
               ),
     );
-    final menu = MenuAnchor(
-      animated: true,
-      builder: (context, controller, child) => IconButton(
+    final menu = AppMenu(
+      entries: [
+        AppMenuEntry(
+          label: passbook.depositFromPocket,
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedWallet02,
+            size: AppDimensions.iconSm,
+          ),
+          onPressed: canDepositFromPocket
+              ? () => showRDDepositSheet(
+                    context,
+                    rdId: rdId,
+                    initialCount: readiness.readyCount + 1,
+                  )
+              : null,
+        ),
+        AppMenuEntry(
+          label: passbook.undoLastDeposit,
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedArrowTurnBackward,
+            size: AppDimensions.iconSm,
+          ),
+          isDestructive: true,
+          onPressed: canUndo ? () => _undoLatest(context, ref) : null,
+        ),
+      ],
+      anchorBuilder: (context, open) => IconButton(
         padding: EdgeInsets.zero,
         style: IconButton.styleFrom(
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -140,40 +165,8 @@ class RDPassbookPoStrip extends ConsumerWidget {
           size: AppDimensions.iconMd,
         ),
         tooltip: t.common.moreOptions,
-        onPressed: isBusy
-            ? null
-            : () => controller.isOpen ? controller.close() : controller.open(),
+        onPressed: isBusy ? null : open,
       ),
-      menuChildren: [
-        MenuItemButton(
-          leadingIcon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedWallet02,
-            size: AppDimensions.iconSm,
-          ),
-          onPressed: canDepositFromPocket
-              ? () => showRDDepositSheet(
-                    context,
-                    rdId: rdId,
-                    initialCount: readiness.readyCount + 1,
-                  )
-              : null,
-          child: Text(passbook.depositFromPocket),
-        ),
-        MenuItemButton(
-          leadingIcon: HugeIcon(
-            icon: HugeIcons.strokeRoundedArrowTurnBackward,
-            size: AppDimensions.iconSm,
-            color: canUndo ? scheme.error : null,
-          ),
-          onPressed: canUndo ? () => _undoLatest(context, ref) : null,
-          child: Text(
-            passbook.undoLastDeposit,
-            style: canUndo
-                ? theme.textTheme.labelLarge?.copyWith(color: scheme.error)
-                : null,
-          ),
-        ),
-      ],
     );
 
     return Material(

@@ -24,6 +24,7 @@ import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_m
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 /// Payment history tab: receipts grouped by month with projected allocation chips, then the
@@ -408,9 +409,27 @@ class RDTransactionTile extends ConsumerWidget {
                 ],
               ),
             ),
-            MenuAnchor(
-              animated: true,
-              builder: (context, controller, child) => IconButton(
+            AppMenu(
+              entries: [
+                AppMenuEntry(
+                  label: ledger.actions.editPayment,
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedEdit02,
+                    size: AppDimensions.iconSm,
+                  ),
+                  onPressed: () => showRDEditPaymentSheet(context, rdId: rdId, transaction: tx),
+                ),
+                AppMenuEntry(
+                  label: ledger.actions.deletePayment,
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedDelete02,
+                    size: AppDimensions.iconSm,
+                  ),
+                  isDestructive: true,
+                  onPressed: () => _confirmAndDelete(context, ref),
+                ),
+              ],
+              anchorBuilder: (context, open) => IconButton(
                 padding: EdgeInsets.zero,
                 style: IconButton.styleFrom(
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -429,32 +448,8 @@ class RDTransactionTile extends ConsumerWidget {
                   size: AppDimensions.iconMd,
                 ),
                 tooltip: t.common.moreOptions,
-                onPressed: isBusy
-                    ? null
-                    : () => controller.isOpen ? controller.close() : controller.open(),
+                onPressed: isBusy ? null : open,
               ),
-              menuChildren: [
-                MenuItemButton(
-                  leadingIcon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedEdit02,
-                    size: AppDimensions.iconSm,
-                  ),
-                  child: Text(ledger.actions.editPayment),
-                  onPressed: () => showRDEditPaymentSheet(context, rdId: rdId, transaction: tx),
-                ),
-                MenuItemButton(
-                  leadingIcon: HugeIcon(
-                    icon: HugeIcons.strokeRoundedDelete02,
-                    size: AppDimensions.iconSm,
-                    color: scheme.error,
-                  ),
-                  child: Text(
-                    ledger.actions.deletePayment,
-                    style: theme.textTheme.labelLarge?.copyWith(color: scheme.error),
-                  ),
-                  onPressed: () => _confirmAndDelete(context, ref),
-                ),
-              ],
             ),
           ],
         ),

@@ -110,6 +110,7 @@
   - [x] **Sheets over the navigation bar** (found while testing back): a sheet opened from a tab's own screen sat above the navigation bar, which stayed bright and tappable. Sheets now open on the root navigator and cover it.
 - [x] **M16 (More of the community package, 2026-11-17)**: the Expressive components the owner asked for, each behind an `App*` wrapper and checked at 360dp, 2x text, 48dp targets and with a screen reader's tree. Log: part 3 of `.agents/session_logs/2026-11-17_session_1.md`.
   - [x] **Dependencies**: `go_router` 18.1.4 (navigation bar back in the screen reader's tree, system back after a tab switch) and `material_3_expressive` 1.2.2 (menus inside a nested navigator anchor to their trigger).
+  - [x] **Menus**: the five menus are `AppMenu` on the community menu. Back closes an open menu (it used to leave the app from a tab's own screen). The wrapper widens the menu to its longest label; the community one is 224dp from an icon button and cuts the rest.
 
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width). On 2026-11-17 the motion work alone was run on an Android 17 emulator in demo mode (customers list, a customer's screen, the customer form, the sort sheet, a row's menu).
@@ -130,7 +131,6 @@
   - Product: the Hub as its own destination; a dashboard that says what to do; masking Aadhaar.
 - [ ] **Motion that needs our own code** (asked 2026-11-17; the owner wants it from packages only, so none is built; details in part 2, section 5 of `.agents/session_logs/2026-11-17_session_1.md`):
   - A transition between the four destinations (fade through). Needs a container for `go_router`'s `navigatorContainerBuilder` that keeps every tab alive, about 30 to 50 lines.
-  - Back closes an open menu. Today back skips a `MenuAnchor` menu and leaves the app from a tab's own screen. Needs a `PopScope` tied to each menu's controller.
   - Predictive back and a spring on sheets. Means moving every sheet to the community `M3EBottomSheet` and passing each sheet's unsaved-input guard to it.
   - Container transform from a row to its screen. The package versions push routes outside `go_router`; a `Hero` on the avatar is the route-safe variant and needs a look on a device.
 - [ ] **Try on a phone** (motion pass): a back swipe from a detail screen, from a form with something typed, from a tab's own screen, and with a sheet open, on Android 13, 14 or 15 if one is at hand, since only those depend on the new manifest flag; the swipe back from the left edge on an iPhone.

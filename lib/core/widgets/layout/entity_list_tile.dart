@@ -6,6 +6,7 @@ import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 
 export 'package:postfolio/core/widgets/expressive/app_group.dart' show AppGroupPosition;
 export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart' show AppAvatarShape;
@@ -198,58 +199,38 @@ class EntityListTile extends StatelessWidget {
                       onPressed: action.onTap,
                     ),
                   if (menuActions.isNotEmpty)
-                    MenuAnchor(
-                      animated: true,
-                      builder: (context, controller, child) {
-                        return IconButton(
+                    AppMenu(
+                      entries: [
+                        for (final action in menuActions)
+                          AppMenuEntry(
+                            label: action.label,
+                            icon: action.icon,
+                            isDestructive: action.isDestructive,
+                            onPressed: action.onTap,
+                          ),
+                      ],
+                      anchorBuilder: (context, open) => IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const HugeIcon(
+                          icon: HugeIcons.strokeRoundedMoreVertical,
+                          size: AppDimensions.iconMd,
+                        ),
+                        iconSize: AppDimensions.iconMd,
+                        tooltip: t.common.moreOptions,
+                        style: IconButton.styleFrom(
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          minimumSize: const Size(
+                            AppDimensions.minTapTarget,
+                            AppDimensions.minTapTarget,
+                          ),
+                          maximumSize: const Size(
+                            AppDimensions.minTapTarget,
+                            AppDimensions.minTapTarget,
+                          ),
                           padding: EdgeInsets.zero,
-                          icon: const HugeIcon(
-                            icon: HugeIcons.strokeRoundedMoreVertical,
-                            size: AppDimensions.iconMd,
-                          ),
-                          iconSize: AppDimensions.iconMd,
-                          tooltip: t.common.moreOptions,
-                          style: IconButton.styleFrom(
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            minimumSize: const Size(
-                              AppDimensions.minTapTarget,
-                              AppDimensions.minTapTarget,
-                            ),
-                            maximumSize: const Size(
-                              AppDimensions.minTapTarget,
-                              AppDimensions.minTapTarget,
-                            ),
-                            padding: EdgeInsets.zero,
-                          ),
-                          onPressed: () {
-                            if (controller.isOpen) {
-                              controller.close();
-                            } else {
-                              controller.open();
-                            }
-                          },
-                        );
-                      },
-                      menuChildren: menuActions.map((action) {
-                        final color = action.isDestructive
-                            ? theme.colorScheme.error
-                            : theme.colorScheme.onSurface;
-
-                        return MenuItemButton(
-                          onPressed: action.onTap,
-                          leadingIcon: IconTheme(
-                            data: IconThemeData(
-                              color: color,
-                              size: AppDimensions.iconMd,
-                            ),
-                            child: action.icon,
-                          ),
-                          child: Text(
-                            action.label,
-                            style: TextStyle(color: color),
-                          ),
-                        );
-                      }).toList(),
+                        ),
+                        onPressed: open,
+                      ),
                     ),
                 ],
               );

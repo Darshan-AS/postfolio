@@ -16,6 +16,7 @@ import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 double _relativeLuminance(Color c) {
@@ -197,7 +198,7 @@ void main() {
       // Open 4-mode theme selector and select Dark mode.
       await tester.tap(find.byKey(const ValueKey('theme_mode_selector_button')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('theme_mode_dark')));
+      await tester.tap(find.text(t.common.theme.dark));
       await tester.pumpAndSettle();
       expect(container.read(themeModeProvider), AppThemeMode.dark);
 

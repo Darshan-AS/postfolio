@@ -265,6 +265,27 @@ void main() {
       expect(handlesBack.last, isFalse);
     });
 
+    testWidgets('a swipe with a row\'s menu open closes the menu and stays in the app', (
+      tester,
+    ) async {
+      final (:router, :handlesBack) = await pumpSignedIn(tester);
+      await tester.tap(find.byTooltip(t.common.moreOptions).first);
+      await tester.pumpAndSettle();
+      expect(find.text(t.common.delete), findsOneWidget);
+      // The official menu left this false: back went to the system and closed the app.
+      expect(handlesBack.last, isTrue);
+
+      await _sendBack(tester, 'startBackGesture', _swipe(0));
+      await tester.pump();
+      await _sendBack(tester, 'commitBackGesture');
+      await tester.pumpAndSettle();
+
+      expect(find.text(t.common.delete), findsNothing);
+      expect(find.byType(CustomersScreen), findsOneWidget);
+      expect(router.location(), '/customers');
+      expect(handlesBack.last, isFalse);
+    });
+
     testWidgets('every tab root leaves the swipe to the system', (tester) async {
       final (:router, :handlesBack) = await pumpSignedIn(tester);
 

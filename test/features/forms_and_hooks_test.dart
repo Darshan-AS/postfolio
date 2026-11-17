@@ -641,7 +641,8 @@ void main() {
       // 3. Delete lives inside overflow menu, not exposed directly on AppBar
       await tester.tap(find.byKey(const ValueKey('entity_detail_more_button')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('entity_detail_delete_item')));
+      // The menu's entry, then the dialog's button of the same name.
+      await tester.tap(find.text(t.common.delete));
       await tester.pumpAndSettle();
       await tester.tap(find.text(t.common.delete));
       await tester.pumpAndSettle();

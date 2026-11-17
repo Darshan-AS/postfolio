@@ -11,6 +11,7 @@ import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart' show EntityAction;
+import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 
 export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart' show AppAvatarShape;
 export 'package:postfolio/core/widgets/layout/entity_list_tile.dart' show EntityAction;
@@ -104,46 +105,28 @@ class EntityDetailScaffold extends StatelessWidget {
           ),
           onPressed: onEdit,
         ),
-        MenuAnchor(
-          animated: true,
-          menuChildren: [
+        AppMenu(
+          entries: [
             for (final action in menuActions)
-              MenuItemButton(
-                leadingIcon: IconTheme.merge(
-                  data: const IconThemeData(size: AppDimensions.iconSm),
-                  child: action.icon,
-                ),
-                onPressed: action.onTap,
-                child: Text(action.label),
-              ),
-            MenuItemButton(
-              key: const ValueKey('entity_detail_delete_item'),
-              leadingIcon: HugeIcon(
+              AppMenuEntry(label: action.label, icon: action.icon, onPressed: action.onTap),
+            AppMenuEntry(
+              label: t.common.delete,
+              icon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedDelete02,
                 size: AppDimensions.iconSm,
-                color: theme.colorScheme.error,
               ),
+              isDestructive: true,
               onPressed: () => _confirmDelete(context),
-              child: Text(
-                t.common.delete,
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
             ),
           ],
-          builder: (context, controller, _) => IconButton(
+          anchorBuilder: (context, open) => IconButton(
             key: const ValueKey('entity_detail_more_button'),
             tooltip: t.common.moreOptions,
             icon: const HugeIcon(
               icon: HugeIcons.strokeRoundedMoreVertical,
               size: AppDimensions.iconMd,
             ),
-            onPressed: () {
-              if (controller.isOpen) {
-                controller.close();
-              } else {
-                controller.open();
-              }
-            },
+            onPressed: open,
           ),
         ),
         const SizedBox(width: AppDimensions.paddingXs),

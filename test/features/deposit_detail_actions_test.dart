@@ -112,8 +112,8 @@ void main() {
 
         await tester.tap(find.byKey(const ValueKey('entity_detail_more_button')));
         await tester.pumpAndSettle();
-        final close = find.widgetWithText(MenuItemButton, t.common.closeDeposit);
-        final delete = find.byKey(const ValueKey('entity_detail_delete_item'));
+        final close = find.text(t.common.closeDeposit);
+        final delete = find.text(t.common.delete);
         expect(close, findsOneWidget);
         expect(tester.getRect(close).bottom, lessThanOrEqualTo(tester.getRect(delete).top));
 
