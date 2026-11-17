@@ -1,6 +1,13 @@
 # Project Progress
 
 ## Current State
+**More of the community package — on `feat/m3-expressive-ui` (PR #20), 2026-11-17.** The owner asked for more `material_3_expressive` widgets. Each was rendered at 360dp, 1.0x and 2.0x text, with the screen reader's tree, and adopted only if it passed or could be fixed in its wrapper (M16 in `.agents/tasks.md`; part 3 of `.agents/session_logs/2026-11-17_session_1.md`).
+- **Adopted**: the menus (`AppMenu`: back now closes an open menu, also from a tab's own screen) and the confirm and error dialogs (`AppDialog`). Pull to refresh on the three detail screens. `go_router` 18.1.4 and `material_3_expressive` 1.2.2.
+- **Not adopted, with the reason for each in the log**: search bar, chips, split button, app bar, toolbar, lists, bottom sheet. Each fails at 2.0x text or in the screen reader's tree, or would undo an unsaved-input guard. The owner decides whether to relax those checks.
+- **Container transform**: a `Hero` morph works with `go_router` (branch `spike/hero-morph`, not merged) but is not good enough to ship yet.
+- **Fix found on the way**: the status bar icons stayed white under the demo banner after a dialog closed.
+- **Verification**: `dart analyze --fatal-infos` clean; 395 fast tests pass (380 before); coverage gate passes (domain & core 83.6%, controllers & providers 85.1%, data & repositories 47.8%, presentation UI & routing 78.1%, total 77.8%); the menu, the dialog and the status bar were looked at on an Android 17 emulator. Not run: a phone, Android 13 to 16, iOS, a browser, the integration suite, TalkBack.
+
 **Motion, page transitions and predictive back — on `feat/m3-expressive-ui` (PR #20), 2026-11-17.** What the packages already offer, switched on; nothing built by hand and no new dependency (M15 in `.agents/tasks.md`; part 2 of `.agents/session_logs/2026-11-17_session_1.md`).
 - **Predictive back**: the manifest now opts in (`android:enableOnBackInvokedCallback`), so Android 13 to 15 send the gesture; Android 16 and later already did for an app that targets API 36. The theme has had the official predictive back transition since September.
 - **Page transitions**: one per platform. iOS takes the Cupertino transition and with it the swipe back from the edge (it had a shared axis with no back gesture); Windows, Linux and Fuchsia take the shared axis macOS had (they fell back to the Android 10 zoom, also in a browser).

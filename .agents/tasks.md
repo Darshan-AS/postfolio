@@ -135,9 +135,11 @@
 - [ ] **Motion that needs our own code** (asked 2026-11-17; the owner wants it from packages only, so none is built; details in part 2, section 5 of `.agents/session_logs/2026-11-17_session_1.md`):
   - A transition between the four destinations (fade through). Needs a container for `go_router`'s `navigatorContainerBuilder` that keeps every tab alive, about 30 to 50 lines.
   - Predictive back and a spring on sheets. Means moving every sheet to the community `M3EBottomSheet` and passing each sheet's unsaved-input guard to it.
-  - Container transform from a row to its screen. The package versions push routes outside `go_router`; a `Hero` on the avatar is the route-safe variant and needs a look on a device.
+  - Container transform from a row to its screen. The package versions push routes outside `go_router`. A `Hero` morph keeps the route (branch `spike/hero-morph`, 2026-11-17): it works, but the list vanishes behind the new page at once and the screen arrives as a skeleton. Needs the owner's go-ahead and tuning on a device.
 - [ ] **Try on a phone** (motion pass): a back swipe from a detail screen, from a form with something typed, from a tab's own screen, and with a sheet open, on Android 13, 14 or 15 if one is at hand, since only those depend on the new manifest flag; the swipe back from the left edge on an iPhone.
-- [ ] **Row menu at the screen's edge**: a row's overflow menu ends about 4dp from the edge (flush on a 448dp emulator). Not new.
+- [x] **Row menu at the screen's edge**: the `AppMenu` keeps at least 8dp from the window; about 12dp on the 448dp emulator.
+- [ ] **Community widgets held back (owner decision, 2026-11-17)**: search bar, chips, split button, app bar, toolbar, lists and bottom sheet were rendered and not adopted; the reasons are in part 3, section 3 of `.agents/session_logs/2026-11-17_session_1.md`. They fail at 2.0x text or in the screen reader's tree, or drop an unsaved-input guard. To adopt them the owner has to accept that, or wait for the package.
+  - Where the owner wanted them: chips for the collect sheet's quick amounts, a split button for Deposit on the passbook strip, the toolbar for the Hub's batch bar.
 - [ ] **`material_ui` Expressive coverage**: when the official package ships an Expressive button group, FAB menu, navigation bar or loading indicator, move that `App*` wrapper onto it and drop the community widget.
 
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)
