@@ -39,6 +39,9 @@ class AppDimensions {
   static const double pageMargin = 16.0;
 
   // List Views
+  /// Material's two-line list row: a 48dp touch target with 12dp above and below.
+  static const double rowMinHeight = 72.0;
+
   /// Clears the extended FAB (56) and its margins at the end of a list.
   static const double listBottomPaddingFAB = 96.0;
   static const double filterBarHeight = 48.0;

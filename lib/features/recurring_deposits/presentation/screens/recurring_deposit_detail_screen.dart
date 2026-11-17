@@ -219,7 +219,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                       ),
                     ],
                   ),
-                  AppSpacings.gapXxl,
+                  AppSpacings.gapLg,
                   switch (deposit.projection) {
                     WealthAccumulation(
                       :final totalInvested,
@@ -233,7 +233,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                       ),
                     IncomeGeneration() => const SizedBox.shrink(),
                   },
-                  AppSpacings.gapXxl,
+                  AppSpacings.gapLg,
                   DetailSection(
                     title: t.recurringDeposits.sections.investmentDetails,
                     children: [

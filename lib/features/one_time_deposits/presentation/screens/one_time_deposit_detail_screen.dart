@@ -155,7 +155,9 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   totalInterestEarned: totalInterestEarned,
                 ),
             },
-            AppSpacings.gapXxl,
+            // 16dp, the gap between any two blocks of a detail screen; the figures were
+            // followed by 32dp.
+            AppSpacings.gapLg,
             DetailSection(
               title: t.oneTimeDeposits.sections.investmentDetails,
               children: [

@@ -102,66 +102,78 @@ class DetailItem extends StatelessWidget {
         ? copyValue!.trim()
         : null;
 
-    Widget content = Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLg,
-        vertical: AppDimensions.paddingMd,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (icon != null) ...[
-            IconTheme(
-              data: IconThemeData(
+    // A copy button ends its row 4dp from the edge: its icon is then centred where a
+    // chevron is, 28dp in. With the row's 16dp it sat 12dp further in than the chevron of
+    // the row above it.
+    final endsWithCopy = effectiveCopy != null && trailing == null && onTap == null;
+
+    Widget content = ConstrainedBox(
+      // One height for every row. A row with a copy button was 72dp and its neighbours
+      // 68dp.
+      constraints: const BoxConstraints(minHeight: AppDimensions.rowMinHeight),
+      child: Padding(
+        padding: EdgeInsetsDirectional.only(
+          start: AppDimensions.paddingLg,
+          end: endsWithCopy ? AppDimensions.paddingXs : AppDimensions.paddingLg,
+          top: AppDimensions.paddingMd,
+          bottom: AppDimensions.paddingMd,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (icon != null) ...[
+              IconTheme(
+                data: IconThemeData(
+                  size: AppDimensions.iconMd,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                child: icon!,
+              ),
+              AppSpacings.gapMd,
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  AppSpacings.gapXs,
+                  Text(
+                    displayValue,
+                    style: AppTypography.emphasizedOf(context).bodyLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (effectiveCopy != null)
+              IconButton(
+                key: ValueKey('copy_$label'),
+                tooltip: t.common.copy,
+                icon: HugeIcon(
+                  icon: HugeIcons.strokeRoundedCopy01,
+                  size: AppDimensions.iconSm,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: effectiveCopy));
+                  AppFeedback.showSuccess(context, t.common.copiedToClipboard);
+                },
+              ),
+            ?trailing,
+            if (onTap != null && trailing == null)
+              HugeIcon(
+                icon: HugeIcons.strokeRoundedArrowRight01,
                 size: AppDimensions.iconMd,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              child: icon!,
-            ),
-            AppSpacings.gapMd,
           ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                AppSpacings.gapXs,
-                Text(
-                  displayValue,
-                  style: AppTypography.emphasizedOf(context).bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (effectiveCopy != null)
-            IconButton(
-              key: ValueKey('copy_$label'),
-              tooltip: t.common.copy,
-              icon: HugeIcon(
-                icon: HugeIcons.strokeRoundedCopy01,
-                size: AppDimensions.iconSm,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: effectiveCopy));
-                AppFeedback.showSuccess(context, t.common.copiedToClipboard);
-              },
-            ),
-          ?trailing,
-          if (onTap != null && trailing == null)
-            HugeIcon(
-              icon: HugeIcons.strokeRoundedArrowRight01,
-              size: AppDimensions.iconMd,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-        ],
+        ),
       ),
     );
 
@@ -192,7 +204,8 @@ class DetailStatRow extends StatelessWidget {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: AppDimensions.paddingLg,
+        // 8dp between tiles side by side, as on the dashboard and the Monthly Hub.
+        spacing: AppDimensions.paddingSm,
         children: [for (final child in children) Expanded(child: child)],
       ),
     );

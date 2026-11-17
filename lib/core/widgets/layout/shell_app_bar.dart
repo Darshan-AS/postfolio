@@ -45,7 +45,10 @@ class ShellAppBar extends ConsumerWidget implements PreferredSizeWidget {
       actions: [
         const AccessibleThemeToggle(),
         ...?actions,
-        const SizedBox(width: AppDimensions.paddingSm),
+        // An icon is 12dp inside its 48dp button, so 4dp here ends the last icon on the
+        // page margin, where the title starts on the other side. The detail screens' bar
+        // does the same.
+        const SizedBox(width: AppDimensions.paddingXs),
       ],
     );
   }

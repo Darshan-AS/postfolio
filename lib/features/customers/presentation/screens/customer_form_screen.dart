@@ -164,7 +164,7 @@ Widget _buildPersonalInfo({
         validator: Customer.validateName,
         textInputAction: TextInputAction.next,
       ),
-      AppSpacings.gapMd,
+      AppSpacings.gapLg,
       AppTextField(
         controller: phoneController,
         labelText: t.customers.fields.phoneNumber,
@@ -176,7 +176,7 @@ Widget _buildPersonalInfo({
         keyboardType: TextInputType.phone,
         textInputAction: TextInputAction.next,
       ),
-      AppSpacings.gapMd,
+      AppSpacings.gapLg,
       AppTextField(
         controller: emailController,
         labelText: t.customers.fields.emailAddress,
@@ -188,13 +188,13 @@ Widget _buildPersonalInfo({
         keyboardType: TextInputType.emailAddress,
         textInputAction: TextInputAction.next,
       ),
-      AppSpacings.gapMd,
+      AppSpacings.gapLg,
       AppDateField(
         controller: dateOfBirthController,
         labelText: t.customers.fields.dateOfBirth,
         onTap: onSelectDate,
       ),
-      AppSpacings.gapMd,
+      AppSpacings.gapLg,
       AppTextField(
         controller: addressController,
         labelText: t.customers.fields.homeAddress,
@@ -226,7 +226,7 @@ Widget _buildIdentityDocuments({
         validator: Customer.validateCif,
         textInputAction: TextInputAction.next,
       ),
-      AppSpacings.gapMd,
+      AppSpacings.gapLg,
       AppTextField(
         controller: aadhaarNumberController,
         labelText: t.customers.fields.aadhaarNumber,
@@ -238,7 +238,7 @@ Widget _buildIdentityDocuments({
         keyboardType: TextInputType.number,
         textInputAction: TextInputAction.next,
       ),
-      AppSpacings.gapMd,
+      AppSpacings.gapLg,
       AppTextField(
         controller: panNumberController,
         labelText: t.customers.fields.panNumber,

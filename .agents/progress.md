@@ -1,6 +1,13 @@
 # Project Progress
 
 ## Current State
+**Spacing pass — done on `feat/m3-expressive-ui` (PR #20), 2026-11-17.** Paddings, margins and gaps checked on every screen, at 360dp and, new, on a 412dp phone with system bars and the navigation bar (M14 in `.agents/tasks.md`; log `.agents/session_logs/2026-11-17_session_1.md`). Presentation only.
+- **Monthly Hub**: the status stripe follows the row's corners; the status pill sits at one height with or without a button; 12dp between the blocks above the rows; tile text on the rows' edge; toggles that do not touch; a search hint that is not cut.
+- **Dashboard**: scheme pills share the width or leave half of the next one showing (on a 412dp phone one ended on the screen's edge); the chart's controls are evenly spaced; the tall tile is inset 16dp all round.
+- **Shared**: app bar icons end on the page margin; detail rows are one height and end on one axis; 16dp after a detail screen's figures and between customer form fields.
+- **Verification**: `dart analyze --fatal-infos` clean; 363 fast tests pass (340 before); coverage gate passes (domain & core 83.3%, controllers & providers 85.1%, data & repositories 47.8%, presentation UI & routing 77.5%, total 77.3%). Not rerun: integration suite, web build, Android compile. Not run on a device.
+- **Follow-up**: `chore/dev-experience` has to be rebuilt on this branch's new tip.
+
 **Design critique pass — done on branch `feat/m3-expressive-ui`, awaiting owner review (2026-11-16).** The layout-only items of the critique written after the redesign, one commit each (M13 in `.agents/tasks.md`; log `.agents/session_logs/2026-11-16_session_1.md`). No controller, provider, domain, data or routing change. The first nine commits add no Slang key; the follow-up adds the strings its items needed.
 - **Monthly Hub**: two-line header tiles, no group header for a customer with one account, one figure per row with the action on the status line. An 800dp phone shows two accounts and part of a third on entry; it showed one.
 - **Colour**: red is kept for what is overdue. Collect is the brand colour, Deposit tonal, "from pocket" the fronted colour.

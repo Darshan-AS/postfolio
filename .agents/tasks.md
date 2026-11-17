@@ -99,9 +99,11 @@
   - [x] **Deposit wording**: the menu says "Close deposit"; the one-time deposit header says when it matures.
   - [x] **Sheet titles**: the collect and deposit sheets name the customer in the title and the account on a line under it.
   - [x] **Customer shapes**: a customer's avatar takes a shape from their name again, from shapes no scheme uses; shapes are decoration, not a code.
-- [ ] **M14 (Spacing pass, 2026-11-17)**: paddings, margins and gaps checked on every screen, at 360dp and on a 412dp phone with system bars. Log: `.agents/session_logs/2026-11-17_session_1.md`.
+- [x] **M14 (Spacing pass, 2026-11-17)**: paddings, margins and gaps checked on every screen, at 360dp and on a 412dp phone with system bars. Log: `.agents/session_logs/2026-11-17_session_1.md`.
   - [x] **Monthly Hub**: the status stripe follows the row's corners, the status pill sits at one height with or without a button, 12dp between the blocks, tile text on the rows' edge, toggles that do not touch, a search hint that is not cut.
   - [x] **Dashboard**: scheme pills share the width or leave half of the next one showing, the chart's controls are one step apart with less of a hole above the bars, the tall tile is inset the same on every side.
+- [ ] **M14 (Spacing pass, 2026-11-17)**: paddings, margins and gaps checked on every screen, at 360dp and on a 412dp phone with system bars. Log: `.agents/session_logs/2026-11-17_session_1.md`.
+  - [x] **Shared layout**: app bar actions end on the content's edge, the copy button and the chevron of a detail row share an axis, customer form fields are 16dp apart like the deposit forms', one gap after a detail screen's figures.
 
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone, an emulator or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width).
@@ -110,6 +112,7 @@
 - [ ] **Palette**: the brand scheme now uses `DynamicSchemeVariant.vibrant` (`lib/core/theme/app_theme.dart`). Keep it, or go back to the default variant in that one line.
 - [x] **Strings**: "1 months" on the passbook, the hard-coded unsaved-changes dialog and the field labels cut at 2.0x text are fixed.
 - [ ] **Hub at 2.0x text**: the four header tiles take a line each, so the first row starts below the fold on an 800dp screen. The alternative is a 2×2 grid with smaller figures.
+- [ ] **Rebuild `chore/dev-experience`** on this branch's new tip (it is stacked on the tip from before the spacing pass).
 - [ ] **Critique items still open** (details in `.agents/session_logs/2026-11-16_session_1.md`). Adding Slang keys needs no discussion, so the string ones are plain work:
   - Deferred by the owner: responsive UI, desktop included, will be its own branch. (The desktop test in `test/ui/accessibility_and_layout_invariants_test.dart` asserts a full-width search bar and flush-right row menus.)
   - To do, with new strings: labelled fee and fronting controls on the visit sheet; what the "6" in "5 / 6" on the dashboard is; a "Plan visit" button in place of the "In hand" tile's second job; the monthly payout as the headline of a Monthly Income Scheme deposit.
