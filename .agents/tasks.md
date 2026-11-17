@@ -112,6 +112,7 @@
   - [x] **Dependencies**: `go_router` 18.1.4 (navigation bar back in the screen reader's tree, system back after a tab switch) and `material_3_expressive` 1.2.2 (menus inside a nested navigator anchor to their trigger).
   - [x] **Menus**: the five menus are `AppMenu` on the community menu. Back closes an open menu (it used to leave the app from a tab's own screen). The wrapper widens the menu to its longest label; the community one is 224dp from an icon button and cuts the rest.
   - [x] **Refresh on detail screens**: the customer and both deposit detail screens can be pulled down to reload (`EntityDetailScaffold.onRefresh`), like the lists, the dashboard and the Hub.
+  - [x] **Dialogs**: the confirm and error dialogs are the community dialog behind `AppDialog` (spring entrance, actions stack at large text). All of them already went through `AppDialogs`.
 
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width). On 2026-11-17 the motion work alone was run on an Android 17 emulator in demo mode (customers list, a customer's screen, the customer form, the sort sheet, a row's menu).
