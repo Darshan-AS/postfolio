@@ -108,6 +108,8 @@
   - [x] **Page transitions**: every platform has one. iOS gets the Cupertino transition and with it the swipe back from the edge; Windows, Linux and Fuchsia get the shared axis macOS had (they fell back to the Android 10 zoom).
   - [x] **Menus**: the five `MenuAnchor` menus open and close with the official Material 3 animation (`animated: true`); a test keeps new ones on it.
   - [x] **Sheets over the navigation bar** (found while testing back): a sheet opened from a tab's own screen sat above the navigation bar, which stayed bright and tappable. Sheets now open on the root navigator and cover it.
+- [x] **M16 (More of the community package, 2026-11-17)**: the Expressive components the owner asked for, each behind an `App*` wrapper and checked at 360dp, 2x text, 48dp targets and with a screen reader's tree. Log: part 3 of `.agents/session_logs/2026-11-17_session_1.md`.
+  - [x] **Dependencies**: `go_router` 18.1.4 (navigation bar back in the screen reader's tree, system back after a tab switch) and `material_3_expressive` 1.2.2 (menus inside a nested navigator anchor to their trigger).
 
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width). On 2026-11-17 the motion work alone was run on an Android 17 emulator in demo mode (customers list, a customer's screen, the customer form, the sort sheet, a row's menu).
