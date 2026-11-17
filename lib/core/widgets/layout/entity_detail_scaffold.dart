@@ -105,6 +105,7 @@ class EntityDetailScaffold extends StatelessWidget {
           onPressed: onEdit,
         ),
         MenuAnchor(
+          animated: true,
           menuChildren: [
             for (final action in menuActions)
               MenuItemButton(

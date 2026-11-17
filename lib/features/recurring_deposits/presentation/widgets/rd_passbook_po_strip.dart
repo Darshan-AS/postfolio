@@ -120,6 +120,7 @@ class RDPassbookPoStrip extends ConsumerWidget {
               ),
     );
     final menu = MenuAnchor(
+      animated: true,
       builder: (context, controller, child) => IconButton(
         padding: EdgeInsets.zero,
         style: IconButton.styleFrom(

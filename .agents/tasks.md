@@ -106,6 +106,7 @@
 - [x] **M15 (Motion, page transitions and predictive back, 2026-11-17)**: what the packages already offer, switched on; nothing built by hand. Log: part 2 of `.agents/session_logs/2026-11-17_session_1.md`.
   - [x] **Predictive back**: the manifest opts in, so Android 13 to 15 send the gesture too (Android 16 already did); tests drive the swipe through the router: detail to list, a cancelled swipe, a form with unsaved input, an open sheet, the tab roots.
   - [x] **Page transitions**: every platform has one. iOS gets the Cupertino transition and with it the swipe back from the edge; Windows, Linux and Fuchsia get the shared axis macOS had (they fell back to the Android 10 zoom).
+  - [x] **Menus**: the five `MenuAnchor` menus open and close with the official Material 3 animation (`animated: true`); a test keeps new ones on it.
 
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone, an emulator or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width).

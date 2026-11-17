@@ -199,6 +199,7 @@ class EntityListTile extends StatelessWidget {
                     ),
                   if (menuActions.isNotEmpty)
                     MenuAnchor(
+                      animated: true,
                       builder: (context, controller, child) {
                         return IconButton(
                           padding: EdgeInsets.zero,

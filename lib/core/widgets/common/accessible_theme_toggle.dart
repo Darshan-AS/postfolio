@@ -54,6 +54,7 @@ class AccessibleThemeToggle extends ConsumerWidget {
     };
 
     return MenuAnchor(
+      animated: true,
       menuChildren: [
         for (final opt in options)
           MenuItemButton(
