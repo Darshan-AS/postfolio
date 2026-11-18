@@ -176,12 +176,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a back swipe is the theme\'s predictive back: nothing travels', (tester) async {
-    final router = await pumpSignedInApp(tester);
-    await openFromRow(tester);
-    await tester.pumpAndSettle();
-
-    Future<void> send(String method, [Map<String, Object?>? arguments]) =>
+  group('a back swipe', () {
+    Future<void> send(WidgetTester tester, String method, [Map<String, Object?>? arguments]) =>
         tester.binding.defaultBinaryMessenger.handlePlatformMessage(
           'flutter/backgesture',
           const StandardMethodCodec().encodeMethodCall(MethodCall(method, arguments)),
@@ -193,25 +189,125 @@ void main() {
       'swipeEdge': 0,
     };
 
-    await send('startBackGesture', swipe(0));
-    await tester.pump();
-    await send('updateBackGestureProgress', swipe(0.6));
-    await tester.pump();
+    /// The avatar at the head of the screen that is being swiped away.
+    Finder headAvatar() =>
+        find.descendant(of: find.byType(EntityDetailHeader), matching: avatar());
 
-    // Both screens are in view with their own copies: the row's and the screen's.
-    expect(router.root().userGestureInProgress, isTrue);
-    expect(avatar(), findsNWidgets(2));
-    expect(find.text(name), findsNWidgets(2));
-    // And nothing has to keep out of the way: the whole screen follows the finger.
-    expect(shown(tester, email()), 1);
-    expect(shown(tester, call()), 1);
-    expect(shown(tester, section()), 1);
+    /// Opens the customer's screen from its row and drags a back swipe [progress] of the
+    /// way. Returns where the row's avatar was.
+    Future<Rect> openAndDrag(WidgetTester tester, double progress) async {
+      final rowAvatar = tester.getRect(avatar());
+      await openFromRow(tester);
+      await tester.pumpAndSettle();
 
-    await send('commitBackGesture');
-    await tester.pumpAndSettle();
-    expect(router.location(), '/customers');
-    expect(avatar(), findsOneWidget);
-    expect(tester.takeException(), isNull);
+      await send(tester, 'startBackGesture', swipe(0));
+      await tester.pump();
+      await send(tester, 'updateBackGestureProgress', swipe(progress));
+      await tester.pump();
+      return rowAvatar;
+    }
+
+    testWidgets('while it is dragged the screen shrinks whole and nothing travels', (
+      tester,
+    ) async {
+      final router = await pumpSignedInApp(tester);
+      await openAndDrag(tester, 0.6);
+
+      // Both screens are in view with their own copies: the row's and the screen's.
+      expect(router.root().userGestureInProgress, isTrue);
+      expect(avatar(), findsNWidgets(2));
+      expect(find.text(name), findsNWidgets(2));
+      // The screen follows the finger whole: its avatar is drawn smaller than at rest,
+      // and nothing has to keep out of anything's way.
+      expect(tester.getRect(headAvatar()).width, lessThan(AppDimensions.avatarLg));
+      expect(shown(tester, email()), 1);
+      expect(shown(tester, call()), 1);
+      expect(shown(tester, section()), 1);
+    });
+
+    testWidgets('when it is let go the parts travel from where the screen had them', (
+      tester,
+    ) async {
+      final router = await pumpSignedInApp(tester);
+      final rowAvatar = await openAndDrag(tester, 0.5);
+      final dragged = tester.getRect(headAvatar());
+
+      await send(tester, 'commitBackGesture');
+      await tester.pump();
+
+      // One of each again: the parts have left the screen. They start where the shrunken
+      // screen had them, not where the screen has them at rest.
+      await expectOneOfEach(tester);
+      final released = tester.getRect(avatar());
+      expect(released.top, closeTo(dragged.top, 1));
+      expect(released.left, closeTo(dragged.left, 1));
+      expect(released.width, closeTo(dragged.width, 1));
+
+      // On the way to the row, and the rest of the screen is out of the way.
+      await tester.pump(const Duration(milliseconds: 150));
+      await expectOneOfEach(tester);
+      final flying = tester.getRect(avatar());
+      expect(flying.top, greaterThan(released.top));
+      expect(flying.top, lessThan(rowAvatar.top));
+      expect(shown(tester, email()), 0);
+      expect(shown(tester, call()), 0);
+
+      await tester.pumpAndSettle();
+      expect(router.location(), '/customers');
+      expect(tester.getRect(avatar()), rowAvatar);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('when it is dragged back to the edge nothing travels and the screen stays', (
+      tester,
+    ) async {
+      final router = await pumpSignedInApp(tester);
+      await openAndDrag(tester, 0.5);
+
+      await send(tester, 'cancelBackGesture');
+      await tester.pump();
+      expect(avatar(), findsNWidgets(2));
+      expect(shown(tester, email()), 1);
+
+      await tester.pumpAndSettle();
+      expect(router.location(), '/customers/${rameshRao.id}');
+      expect(tester.getRect(headAvatar()).width, AppDimensions.avatarLg);
+      expect(shown(tester, email()), 1);
+      expect(shown(tester, section()), 1);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+      'on iOS the swipe from the edge carries no parts',
+      (tester) async {
+        // Its transition carries on from where the finger left it. Parts sent off at that
+        // moment would jump, so they sit this swipe out.
+        final router = await pumpSignedInApp(tester);
+        await openFromRow(tester);
+        await tester.pumpAndSettle();
+
+        final gesture = await tester.startGesture(const Offset(4, 300));
+        for (var i = 0; i < 6; i++) {
+          await gesture.moveBy(const Offset(50, 0));
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+        expect(avatar(), findsNWidgets(2));
+        expect(router.root().userGestureInProgress, isTrue);
+
+        await gesture.up();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        // Each screen still has its own copy: nothing is drawn above them.
+        expect(avatar(), findsNWidgets(2));
+        expect(find.text(name), findsNWidgets(2));
+
+        await tester.pumpAndSettle();
+        expect(router.location(), '/customers');
+        expect(avatar(), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+    );
   });
 
   group('while the full record loads', () {

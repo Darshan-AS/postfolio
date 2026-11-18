@@ -17,6 +17,7 @@ import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/presentation/screens/login_screen.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/routing/app_routes.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 
 part 'app_router.g.dart';
 
@@ -45,6 +46,8 @@ GoRouter goRouter(Ref ref) {
 
   final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
+    // The detail screens are pages of this navigator.
+    observers: [EntityHeroBackSwipe()],
     initialLocation: AppRoutes.customers,
     routes: [
       GoRoute(

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
@@ -9,8 +12,13 @@ import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
 /// title of the row. Its [amount] is the first figure under the head.
 enum EntityHeroPart { avatar, title, subtitle, amount }
 
+/// The zone value that holds where a screen is drawn at the moment a back swipe on it is
+/// let go (a `Matrix4`), while [EntityHeroBackSwipe] starts the parts on their way back.
+final Object _releasedScreen = Object();
+
 /// A part of an entity that travels between its row in a list and the head of its screen
-/// when the screen opens, and back when it is closed with the back button.
+/// when the screen opens, and back when it is closed: with the back button, or when a back
+/// swipe is let go (see [EntityHeroBackSwipe]).
 ///
 /// Give the row's copy and the screen's copy the same [tag] (see [tagFrom]) and [part].
 /// It is the framework's `Hero`: the screens keep their page transition, their URL and the
@@ -48,7 +56,38 @@ class EntityHero extends StatelessWidget {
     final tag = this.tag;
     // A device set to remove animations gets none.
     if (tag == null || MediaQuery.disableAnimationsOf(context)) return child;
-    return Hero(tag: (tag, part), flightShuttleBuilder: _inFlight, child: child);
+
+    // Detail screens are pages of the root navigator, and a back swipe is its gesture.
+    final ValueListenable<bool> backSwipe =
+        Navigator.maybeOf(context, rootNavigator: true)?.userGestureInProgressNotifier ??
+        const AlwaysStoppedAnimation(false);
+    return ValueListenableBuilder<bool>(
+      valueListenable: backSwipe,
+      builder: (context, isSwiping, child) => Hero(
+        tag: (tag, part),
+        // The framework asks this when a back swipe starts, and would move the part with
+        // the finger: no, the screen follows the finger whole. [EntityHeroBackSwipe] asks
+        // again when the swipe is let go: yes.
+        transitionOnUserGestures: isSwiping,
+        createRectTween: _path,
+        flightShuttleBuilder: _inFlight,
+        child: child!,
+      ),
+      child: child,
+    );
+  }
+
+  /// The way a part takes: the framework's arc for Material.
+  ///
+  /// The framework measures a part inside its screen, as if the screen were at rest. A
+  /// screen whose back swipe has just been let go is shrunk and moved aside, and the part
+  /// sets out from where it is drawn there.
+  static Tween<Rect?> _path(Rect? begin, Rect? end) {
+    final Object? screen = Zone.current[_releasedScreen];
+    return MaterialRectArcTween(
+      begin: begin != null && screen is Matrix4 ? MatrixUtils.transformRect(screen, begin) : begin,
+      end: end,
+    );
   }
 
   static Widget _inFlight(
@@ -127,13 +166,57 @@ class EntityHero extends StatelessWidget {
   }
 }
 
+/// Sends the parts back to the row when a back swipe is let go.
+///
+/// Android's predictive back moves the screen with the finger and, once the finger lifts,
+/// plays the screen's exit from its start. The framework's `Hero` has no answer to that:
+/// a part either follows the finger and jumps when the exit restarts, or sits the swipe
+/// out. This asks the navigator's hero controller for the flights at the moment the swipe
+/// is let go, and the parts set out from where the shrunken screen has left them.
+///
+/// Give it to the navigator that holds the detail screens (`GoRouter.observers`). It leans
+/// on the order in which the framework handles a released swipe: the pop is announced to
+/// the observers before the exit is restarted. `test/core/routing/entity_hero_test.dart`
+/// holds it to that.
+class EntityHeroBackSwipe extends NavigatorObserver {
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    final navigator = this.navigator;
+    // A pop by the back button is the framework's to handle.
+    if (navigator == null || !navigator.userGestureInProgress) return;
+    if (route is! ModalRoute || !_exitRestartsWhenLetGo(navigator.context)) return;
+    final controller = HeroControllerScope.maybeOf(navigator.context);
+    final screen = route.subtreeContext?.findRenderObject();
+    if (controller == null || screen == null) return;
+
+    runZoned(
+      // What the controller does for a swipe that carries parts: it starts their flights
+      // back. They ask for their way inside this call ([EntityHero._path]).
+      () => controller.didStartUserGesture(route, previousRoute),
+      zoneValues: {
+        _releasedScreen: screen.getTransformTo(navigator.context.findRenderObject()),
+      },
+    );
+  }
+
+  /// Only the predictive back transition plays the exit from its start. Under a swipe
+  /// that carries on from where the finger left it (iOS), parts sent off now would jump
+  /// there; they sit that swipe out.
+  static bool _exitRestartsWhenLetGo(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.pageTransitionsTheme.builders[theme.platform]
+        is PredictiveBackPageTransitionsBuilder;
+  }
+}
+
 /// A part of a screen that the row does not show: an email address and the actions at
 /// its head, the sections under it. It keeps out of the way of the parts that travel
 /// ([EntityHero]): it fades in as they land and is gone before they have left, so they
 /// never pass over it.
 ///
 /// It follows the screen's own transition, so a screen opened without one (by a link) shows
-/// it at once. Like the parts that travel, it sits out a back swipe.
+/// it at once. While a back swipe is dragged it stays, as the screen follows the finger
+/// whole; when the swipe is let go it goes first, as for the back button.
 class EntityHeroFollower extends StatelessWidget {
   const EntityHeroFollower({super.key, required this.tag, required this.child});
 
@@ -157,13 +240,19 @@ class EntityHeroFollower extends StatelessWidget {
       return child;
     }
 
-    return ValueListenableBuilder<bool>(
-      // A back swipe moves the screen's transition with the finger, and nothing travels.
-      valueListenable: navigator.userGestureInProgressNotifier,
-      builder: (context, isBackSwipe, child) => FadeTransition(
-        opacity: isBackSwipe ? kAlwaysCompleteAnimation : transition.drive(_afterLanding),
-        child: child,
-      ),
+    final backSwipe = navigator.userGestureInProgressNotifier;
+    final afterLanding = transition.drive(_afterLanding);
+    return ListenableBuilder(
+      listenable: Listenable.merge([backSwipe, transition]),
+      builder: (context, child) {
+        // A back swipe moves the screen's transition with the finger, and nothing travels
+        // until it is let go. From then on the screen's exit is playing.
+        final isDragged = backSwipe.value && transition.status != AnimationStatus.reverse;
+        return FadeTransition(
+          opacity: isDragged ? kAlwaysCompleteAnimation : afterLanding,
+          child: child,
+        );
+      },
       child: child,
     );
   }
