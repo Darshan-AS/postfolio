@@ -11,7 +11,6 @@ import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
@@ -294,16 +293,21 @@ class _FormBody extends StatelessWidget {
         ),
         if (draft.quickAmounts.isNotEmpty) ...[
           AppSpacings.gapSm,
-          // Each button brings its own touch padding above and below, which spaces the
-          // lines when they wrap.
+          // Suggestions that fill the field: chips, filled while the field holds their
+          // amount. Each brings its own touch padding above and below, which spaces the
+          // lines when they wrap. At large text a chip fills that padding, so the lines get
+          // a gap of their own.
           Wrap(
             spacing: AppDimensions.paddingSm,
+            runSpacing: AppDimensions.isLargeText(context) ? AppDimensions.paddingSm : 0,
             children: [
               for (final quick in draft.quickAmounts)
-                AppButton.toggle(
-                  label: quick.label,
+                ChoiceChip(
+                  // As on a button: the label carries an amount, so one that does not
+                  // fit shrinks. A chip would cut it.
+                  label: FittedBox(fit: BoxFit.scaleDown, child: Text(quick.label)),
                   selected: draft.isQuickAmountSelected(quick),
-                  onPressed: () => draft.applyQuickAmount(quick),
+                  onSelected: (_) => draft.applyQuickAmount(quick),
                 ),
             ],
           ),

@@ -30,8 +30,8 @@ import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skeletonizer/skeletonizer.dart' show SkeletonizerConfig;
 
-/// The choices that used to be chips: the dashboard chart's scheme selector and its
-/// "Include RDs" switch, and the quick amounts on the collect sheet.
+/// The dashboard chart's scheme selector and its "Include RDs" switch, which used to be
+/// chips, and the quick amounts on the collect sheet, which are chips.
 void main() {
   Future<void> settle(WidgetTester tester) async {
     await tester.pump();
@@ -301,7 +301,7 @@ void main() {
       startDate: DateTime(2026, 1, 5),
     );
 
-    Future<void> openCollectSheet(WidgetTester tester) async {
+    Future<void> openCollectSheet(WidgetTester tester, {double textScale = 1.0}) async {
       tester.view.physicalSize = const Size(360, 800) * 2;
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.reset);
@@ -327,6 +327,12 @@ void main() {
           container: container,
           child: MaterialApp(
             theme: AppTheme.lightTheme,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(textScale),
+              ),
+              child: child!,
+            ),
             home: Builder(
               builder: (context) => Scaffold(
                 body: Center(
@@ -344,57 +350,132 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    List<AppButton> quickAmounts(WidgetTester tester) => tester
-        .widgetList<AppButton>(find.byType(AppButton))
-        .where((button) => button.selected != null)
-        .toList();
+    List<ChoiceChip> quickAmounts(WidgetTester tester) =>
+        tester.widgetList<ChoiceChip>(find.byType(ChoiceChip)).toList();
+
+    String labelOf(ChoiceChip chip) => ((chip.label as FittedBox).child! as Text).data!;
+
+    List<Rect> chipRects(WidgetTester tester) => [
+      for (final chip in quickAmounts(tester)) tester.getRect(find.byWidget(chip)),
+    ];
 
     testWidgets('one is marked when the amount is exactly its amount', (tester) async {
       await openCollectSheet(tester);
 
       final before = quickAmounts(tester);
       expect(before.length, greaterThanOrEqualTo(2));
-      expect(before.every((button) => button.selected == false), isTrue);
+      expect(before.every((chip) => !chip.selected), isTrue);
 
-      final first = before.first.label;
-      final second = before[1].label;
+      final first = labelOf(before.first);
+      final second = labelOf(before[1]);
       await tester.tap(find.text(first));
       await tester.pumpAndSettle();
       expect(
-        [for (final button in quickAmounts(tester)) if (button.selected!) button.label],
+        [for (final chip in quickAmounts(tester)) if (chip.selected) labelOf(chip)],
         [first],
       );
 
       await tester.tap(find.text(second));
       await tester.pumpAndSettle();
       expect(
-        [for (final button in quickAmounts(tester)) if (button.selected!) button.label],
+        [for (final chip in quickAmounts(tester)) if (chip.selected) labelOf(chip)],
         [second],
       );
 
       // Typing another amount leaves none marked.
       await tester.enterText(find.byType(EditableText).first, '1');
       await tester.pumpAndSettle();
-      expect(quickAmounts(tester).every((button) => button.selected == false), isTrue);
+      expect(quickAmounts(tester).every((chip) => !chip.selected), isTrue);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('each keeps its amount whole and is at least 48dp to touch', (tester) async {
+    for (final textScale in const [1.0, 2.0]) {
+      testWidgets(
+        'each keeps its amount whole and is at least 48dp to touch at ${textScale}x text',
+        (tester) async {
+          await openCollectSheet(tester, textScale: textScale);
+
+          for (final chip in quickAmounts(tester)) {
+            final label = find.text(labelOf(chip));
+            final paragraph = tester.renderObject<RenderParagraph>(label);
+            // Laid out at its full width on one line, then shrunk to fit if it must be: a
+            // chip on its own cuts a label that does not fit.
+            expect(paragraph.didExceedMaxLines, isFalse, reason: labelOf(chip));
+            expect(
+              paragraph.size.width,
+              greaterThanOrEqualTo(paragraph.getMaxIntrinsicWidth(double.infinity) - 0.5),
+              reason: labelOf(chip),
+            );
+            final box = tester.getRect(find.byWidget(chip));
+            final painted = tester.getRect(label);
+            expect(painted.left, greaterThanOrEqualTo(box.left), reason: labelOf(chip));
+            expect(painted.right, lessThanOrEqualTo(box.right), reason: labelOf(chip));
+            expect(box.height, greaterThanOrEqualTo(48), reason: labelOf(chip));
+            expect(box.left, greaterThanOrEqualTo(0), reason: labelOf(chip));
+            expect(box.right, lessThanOrEqualTo(360), reason: labelOf(chip));
+          }
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+
+    testWidgets('at 2.0x text the lines of chips do not touch', (tester) async {
+      // A chip grows with its label until it fills its 48dp touch target.
+      await openCollectSheet(tester, textScale: 2.0);
+
+      final rects = chipRects(tester);
+      expect(rects.length, greaterThanOrEqualTo(2));
+      for (var i = 1; i < rects.length; i++) {
+        if (rects[i].top == rects[i - 1].top) continue;
+        expect(
+          rects[i].top - rects[i - 1].bottom,
+          greaterThanOrEqualTo(AppDimensions.paddingSm),
+        );
+      }
+    });
+
+    testWidgets('choosing one does not move the others', (tester) async {
+      // A tick or a missing outline would change the chip's width, and on a 360dp phone
+      // that pushes the next chip to a new line and everything under the chips down.
       await openCollectSheet(tester);
 
-      for (final button in quickAmounts(tester)) {
-        final label = find.text(button.label);
-        final paragraph = tester.renderObject<RenderParagraph>(label);
-        // Painted at the size it was laid out at: a label that did not fit would shrink.
-        expect(tester.getRect(label).width, closeTo(paragraph.size.width, 0.5),
-            reason: button.label);
-        final box = tester.getRect(
-          find.ancestor(of: label, matching: find.byType(AppButton)),
-        );
-        expect(box.height, greaterThanOrEqualTo(48), reason: button.label);
-        expect(box.left, greaterThanOrEqualTo(0), reason: button.label);
-        expect(box.right, lessThanOrEqualTo(360), reason: button.label);
+      List<Size> sizes() => [for (final rect in chipRects(tester)) rect.size];
+      List<Offset> offsets() {
+        final rects = chipRects(tester);
+        // Relative to the first chip: the sheet itself may scroll when the field changes.
+        return [for (final rect in rects) rect.topLeft - rects.first.topLeft];
       }
+
+      final restingSizes = sizes();
+      final restingOffsets = offsets();
+      for (final chip in quickAmounts(tester)) {
+        await tester.tap(find.text(labelOf(chip)));
+        await tester.pumpAndSettle();
+        expect(sizes(), restingSizes, reason: labelOf(chip));
+        expect(offsets(), restingOffsets, reason: labelOf(chip));
+      }
+    });
+
+    testWidgets('a screen reader gets each as a button with its state', (tester) async {
+      final handle = tester.ensureSemantics();
+      await openCollectSheet(tester);
+
+      final first = labelOf(quickAmounts(tester).first);
+      await tester.tap(find.text(first));
+      await tester.pumpAndSettle();
+
+      for (final chip in quickAmounts(tester)) {
+        final data = tester.getSemantics(find.byWidget(chip)).getSemanticsData();
+        expect(data.label, labelOf(chip));
+        expect(data.flagsCollection.isButton, isTrue, reason: labelOf(chip));
+        expect(data.hasAction(SemanticsAction.tap), isTrue, reason: labelOf(chip));
+        expect(
+          data.flagsCollection.isSelected,
+          labelOf(chip) == first ? Tristate.isTrue : Tristate.isFalse,
+          reason: labelOf(chip),
+        );
+      }
+      handle.dispose();
     });
   });
 }

@@ -114,6 +114,8 @@
   - [x] **Refresh on detail screens**: the customer and both deposit detail screens can be pulled down to reload (`EntityDetailScaffold.onRefresh`), like the lists, the dashboard and the Hub.
   - [x] **Dialogs**: the confirm and error dialogs are the community dialog behind `AppDialog` (spring entrance, actions stack at large text). All of them already went through `AppDialogs`.
   - [x] **Status bar under the demo banner** (found on the emulator): after the new dialog closed, the clock stayed white on the light page. The banner now asks for its theme's status bar icons.
+- [x] **M17 (Chips and the container transform, 2026-11-18)**: the collect sheet's quick amounts are chips again, and a row grows into its detail screen. Log: `.agents/session_logs/2026-11-18_session_1.md`.
+  - [x] **Quick amounts as chips**: the collect sheet's quick amounts are the official `ChoiceChip` (toggle buttons since M12). A chosen chip has the colours of a selected segment and no tick, so choosing one moves nothing; a label shrinks instead of being cut.
 
 ### Left for the owner after the redesign
 - [ ] **Look at it on a device**: nothing was run on a phone or in a browser. Everything was checked in widget tests and rendered screenshots (light, dark, 2.0x text, desktop width). On 2026-11-17 the motion work alone was run on an Android 17 emulator in demo mode (customers list, a customer's screen, the customer form, the sort sheet, a row's menu).
@@ -139,7 +141,8 @@
 - [ ] **Try on a phone** (motion pass): a back swipe from a detail screen, from a form with something typed, from a tab's own screen, and with a sheet open, on Android 13, 14 or 15 if one is at hand, since only those depend on the new manifest flag; the swipe back from the left edge on an iPhone.
 - [x] **Row menu at the screen's edge**: the `AppMenu` keeps at least 8dp from the window; about 12dp on the 448dp emulator.
 - [ ] **Community widgets held back (owner decision, 2026-11-17)**: search bar, chips, split button, app bar, toolbar, lists and bottom sheet were rendered and not adopted; the reasons are in part 3, section 3 of `.agents/session_logs/2026-11-17_session_1.md`. They fail at 2.0x text or in the screen reader's tree, or drop an unsaved-input guard. To adopt them the owner has to accept that, or wait for the package.
-  - Where the owner wanted them: chips for the collect sheet's quick amounts, a split button for Deposit on the passbook strip, the toolbar for the Hub's batch bar.
+  - Where the owner wanted them: chips for the collect sheet's quick amounts (done with the official chip, M17), a split button for Deposit on the passbook strip, the toolbar for the Hub's batch bar.
+  - Owner, 2026-11-18: no split button of our own. It comes from the package or not at all.
 - [ ] **`material_ui` Expressive coverage**: when the official package ships an Expressive button group, FAB menu, navigation bar or loading indicator, move that `App*` wrapper onto it and drop the community widget.
 
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)

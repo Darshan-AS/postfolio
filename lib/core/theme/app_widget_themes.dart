@@ -155,24 +155,44 @@ class AppWidgetThemes {
         ),
       );
 
+  /// Chips are suggestions and choices that sit in a line and wrap, such as the quick amounts
+  /// on the collect sheet.
+  ///
+  /// A chosen chip takes the colours of a selected segment or toggle, and no tick: the tick
+  /// widens the chip, which on a narrow phone pushes the next chip to a new line and moves
+  /// everything under the chips.
   static ChipThemeData chipTheme(ColorScheme colorScheme, TextTheme emphasized) =>
       ChipThemeData(
         backgroundColor: Colors.transparent,
-        selectedColor: colorScheme.secondaryContainer,
-        secondarySelectedColor: colorScheme.secondaryContainer,
+        selectedColor: colorScheme.secondary,
+        secondarySelectedColor: colorScheme.secondary,
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingSm,
           vertical: AppDimensions.paddingXs,
         ),
-        labelStyle: emphasized.labelLarge?.copyWith(color: colorScheme.onSurfaceVariant),
+        labelStyle: emphasized.labelLarge?.copyWith(
+          color: WidgetStateColor.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? colorScheme.onSecondary
+                : colorScheme.onSurfaceVariant,
+          ),
+        ),
         secondaryLabelStyle: emphasized.labelLarge?.copyWith(
-          color: colorScheme.onSecondaryContainer,
+          color: colorScheme.onSecondary,
         ),
         brightness: colorScheme.brightness,
         shape: AppShapes.rounded(AppShapes.small),
-        side: BorderSide(color: colorScheme.outlineVariant),
-        showCheckmark: true,
-        checkmarkColor: colorScheme.onSecondaryContainer,
+        // The outline stays under the fill of a chosen chip, in the fill's colour: without
+        // it the chip would be 2dp smaller and nudge its neighbours.
+        side: WidgetStateBorderSide.resolveWith(
+          (states) => BorderSide(
+            color: states.contains(WidgetState.selected)
+                ? colorScheme.secondary
+                : colorScheme.outlineVariant,
+          ),
+        ),
+        showCheckmark: false,
+        checkmarkColor: colorScheme.onSecondary,
       );
 
   static ExpansionTileThemeData expansionTileTheme(ColorScheme colorScheme) =>
