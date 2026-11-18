@@ -1,6 +1,13 @@
 # Project Progress
 
 ## Current State
+**More of Expressive, started — on `feat/m3-expressive-ui` (PR #20), 2026-11-18.** Local, not pushed (M18 in `.agents/tasks.md`; part 7 of `.agents/session_logs/2026-11-18_session_1.md`).
+- **Review** against the Material 3 Expressive guidance (read through search summaries): the app is in line on most of it; the gaps are a hero moment, the name in the app bar on long screens, and action sizes. None of those is decided.
+- **Built**: a light tap on every saved action and the platform's feedback on a long press that starts a selection; the Hub's figures count to their new value.
+- **Rendered and dropped**: tabs and a switch in place of button groups. Filter chips for the Hub's date ranges are open.
+- **To build** (approved): month picker, shrinking FAB, selection flip, the month's progress and its "settled" moment, the sign-in shape, a navigation badge, the package date picker and expandable item, a Hub row that moves.
+- **Verification**: `dart analyze --fatal-infos` clean; 425 fast tests pass; coverage gate passes (domain & core 83.7%, controllers & providers 85.3%, data & repositories 47.8%, presentation UI & routing 78.7%, total 78.2%). Not run: a device, iOS, a browser, the integration suite, TalkBack.
+
 **Chips, and parts that travel from a row to its screen — on `feat/m3-expressive-ui` (PR #20), 2026-11-18.** M17 in `.agents/tasks.md`; log `.agents/session_logs/2026-11-18_session_1.md` (six parts).
 - **Quick amounts**: the collect sheet's quick amounts are official chips again, without a tick, so choosing one moves nothing.
 - **Parts that travel**: a row's avatar and its name or number travel to the head of the screen the row opens, and back on the back button. Customers list (avatar, name, phone); the two deposit lists and a deposit's row on its customer's screen (avatar, customer's name, account number, amount). A deposit's screen is headed like its row, name first. A line of text and a written avatar change form on their way, from the row's to the screen's, so nothing snaps on arrival. On a back swipe the screen shrinks under the finger and the parts travel when it is let go (`EntityHeroBackSwipe`). It is the framework's `Hero` on each part (`EntityHero`); the route, its URL and the back swipe are unchanged. Nothing travels from the Hub or from the customer link on a deposit's screen: neither shows the same thing as the head.
