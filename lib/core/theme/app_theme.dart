@@ -35,7 +35,10 @@ class AppTheme {
   /// The transition between two screens, for every platform.
   ///
   /// - Android: the official predictive back transition. It follows the finger during a
-  ///   back swipe and fades forwards for a tap.
+  ///   back swipe and fades forwards for a tap. Both screens are drawn live while it runs.
+  ///   By default it animates a picture of each, taken on its first frame: a screen whose
+  ///   content fades in would be empty until the transition ends, and a row would stay in
+  ///   the picture after its avatar and name have set out for the next screen.
   /// - iOS: `material_ui`'s default, the platform's own transition. It brings the swipe back
   ///   from the left edge, which an iPhone needs because it has no back button.
   /// - Desktop: a horizontal shared axis. A platform that is not listed here would fall back
@@ -43,7 +46,9 @@ class AppTheme {
   static final PageTransitionsTheme _pageTransitions = PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
       ...const PageTransitionsTheme().builders,
-      TargetPlatform.android: const PredictiveBackPageTransitionsBuilder(),
+      TargetPlatform.android: const PredictiveBackPageTransitionsBuilder(
+        allowSnapshotting: false,
+      ),
       TargetPlatform.macOS: _desktopPageTransition,
       TargetPlatform.windows: _desktopPageTransition,
       TargetPlatform.linux: _desktopPageTransition,

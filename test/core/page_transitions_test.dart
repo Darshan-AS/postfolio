@@ -19,10 +19,17 @@ void main() {
         // A platform that is not listed falls back to the Android 10 zoom.
         expect(builders.keys, containsAll(TargetPlatform.values));
 
-        // Follows the finger during a back swipe, fades forwards for a tap.
+        // Follows the finger during a back swipe, fades forwards for a tap. Both screens
+        // are drawn live meanwhile: a picture of each, taken on its first frame, would keep
+        // a row's avatar and name in the list after they have set out for the next screen
+        // (`EntityHero`), and would not show what fades in behind them.
         expect(
           builders[TargetPlatform.android],
-          isA<PredictiveBackPageTransitionsBuilder>(),
+          isA<PredictiveBackPageTransitionsBuilder>().having(
+            (builder) => builder.allowSnapshotting,
+            'allowSnapshotting',
+            isFalse,
+          ),
         );
         for (final desktop in const [
           TargetPlatform.macOS,
