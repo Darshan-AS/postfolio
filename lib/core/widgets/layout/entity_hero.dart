@@ -72,9 +72,10 @@ class EntityHero extends StatelessWidget {
   }
 }
 
-/// A part of the head of a screen that the row does not show: an email address, the
-/// actions. It keeps out of the way of the parts that travel ([EntityHero]): it fades in as
-/// they land and is gone before they have left, so they never pass over it.
+/// A part of a screen that the row does not show: an email address and the actions at
+/// its head, the sections under it. It keeps out of the way of the parts that travel
+/// ([EntityHero]): it fades in as they land and is gone before they have left, so they
+/// never pass over it.
 ///
 /// It follows the screen's own transition, so a screen opened without one (by a link) shows
 /// it at once. Like the parts that travel, it sits out a back swipe.

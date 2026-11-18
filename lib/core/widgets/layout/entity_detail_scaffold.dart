@@ -149,11 +149,18 @@ class EntityDetailScaffold extends StatelessWidget {
 
   Widget _buildBody(BuildContext context, ThemeData theme) {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
+    final header = this.header;
+    // The sections wait, with the rest of the head, for the parts that travel to it: from
+    // a row low on the screen those parts would cross the sections as they fade in.
+    final heroTag = header is EntityDetailHeader ? header.heroTag : null;
     final items = <Widget>[
       header,
       AppSpacings.gapXl,
       for (final section in body)
-        bodyLoading ? Skeletonizer(enabled: true, child: section) : section,
+        EntityHeroFollower(
+          tag: heroTag,
+          child: bodyLoading ? Skeletonizer(enabled: true, child: section) : section,
+        ),
     ];
     final animatedItems = disableAnimations
         ? items
@@ -229,9 +236,9 @@ class EntityDetailHeader extends StatelessWidget {
 
   /// Identifies the entity and the row that opened the screen (`EntityHero.tagFrom`). The
   /// avatar and the title travel here from that row; a part of the [subtitle] that the
-  /// row shows too wraps itself in an [EntityHero]. Everything else in the header waits
-  /// for them to land ([EntityHeroFollower]). Null while the header shows a placeholder,
-  /// and when no row opened the screen.
+  /// row shows too wraps itself in an [EntityHero]. Everything else in the header, and
+  /// the sections under it, wait for them to land ([EntityHeroFollower]). Null while the
+  /// header shows a placeholder, and when no row opened the screen.
   final Object? heroTag;
 
   const EntityDetailHeader({

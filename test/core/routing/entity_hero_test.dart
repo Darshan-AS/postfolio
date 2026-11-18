@@ -42,6 +42,9 @@ void main() {
   Finder call() => find.text(t.customers.actions.call);
   Finder email() => find.text(rameshRao.email!);
 
+  /// The title of the first section under the head.
+  Finder section() => find.text(t.customers.sections.personalInfo);
+
   Future<void> openFromRow(WidgetTester tester) async {
     await tester.tap(find.text(name));
     // The router builds the screen; the flight starts once it has been laid out.
@@ -110,16 +113,18 @@ void main() {
   testWidgets('the rest of the head keeps out of their way', (tester) async {
     await pumpSignedInApp(tester);
 
-    // On the way in, the email line and the actions are not drawn: the name and the avatar
-    // pass through their places.
+    // On the way in, the email line, the actions and the sections under the head are not
+    // drawn: the name and the avatar pass through their places.
     await openFromRow(tester);
     await tester.pump(const Duration(milliseconds: 150));
     expect(shown(tester, email()), 0);
     expect(shown(tester, call()), 0);
+    expect(shown(tester, section()), 0);
 
     await tester.pumpAndSettle();
     expect(shown(tester, email()), 1);
     expect(shown(tester, call()), 1);
+    expect(shown(tester, section()), 1);
 
     // On the way out they are gone while the travelling parts are still near the head.
     await tester.tap(find.byType(BackButton));
@@ -127,6 +132,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     expect(shown(tester, email()), 0);
     expect(shown(tester, call()), 0);
+    expect(shown(tester, section()), 0);
 
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
@@ -158,9 +164,10 @@ void main() {
     expect(router.root().userGestureInProgress, isTrue);
     expect(avatar(), findsNWidgets(2));
     expect(find.text(name), findsNWidgets(2));
-    // And nothing has to keep out of the way: the whole head follows the finger.
+    // And nothing has to keep out of the way: the whole screen follows the finger.
     expect(shown(tester, email()), 1);
     expect(shown(tester, call()), 1);
+    expect(shown(tester, section()), 1);
 
     await send('commitBackGesture');
     await tester.pumpAndSettle();
@@ -252,16 +259,18 @@ void main() {
     await tester.pump(const Duration(milliseconds: 150));
     expect(router.location(), '/customers/${rameshRao.id}');
 
-    // Each screen keeps its own copies, and the head is drawn whole from the start.
+    // Each screen keeps its own copies, and the screen is drawn whole from the start.
     expect(avatar(), findsNWidgets(2));
     expect(find.text(name), findsNWidgets(2));
-    expect(
-      find.descendant(
-        of: find.byType(EntityHeroFollower),
-        matching: find.ancestor(of: email(), matching: find.byType(FadeTransition)),
-      ),
-      findsNothing,
-    );
+    for (final part in [email(), section()]) {
+      expect(
+        find.descendant(
+          of: find.byType(EntityHeroFollower),
+          matching: find.ancestor(of: part, matching: find.byType(FadeTransition)),
+        ),
+        findsNothing,
+      );
+    }
 
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
