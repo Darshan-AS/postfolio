@@ -1,6 +1,14 @@
 # Project Progress
 
 ## Current State
+**Chips, and parts that travel from a row to its screen — on `feat/m3-expressive-ui` (PR #20), 2026-11-18.** Local, not pushed (M17 in `.agents/tasks.md`; log `.agents/session_logs/2026-11-18_session_1.md`).
+- **Quick amounts**: the collect sheet's quick amounts are official chips again, without a tick, so choosing one moves nothing.
+- **Customers list to customer's screen**: the avatar, the name and the phone number travel from the row to the head of the screen and back on the back button. It is the framework's `Hero` on each part (`EntityHero`); the route, its URL and the back swipe are unchanged. The head is drawn from the list's record at once and the rest is a placeholder until the full record arrives.
+- **Two things it needed**: Android's page transition now draws both screens live instead of animating a picture of each; and the head's email line and actions fade in after the parts land (`EntityHeroFollower`, about 25 lines of our own motion code, for the owner to accept or drop).
+- **Waiting for the owner**: a look at it on a device before it goes to the other lists. It was rendered by the test binding (storyboard and a 60 fps film), not run on the emulator or a phone.
+- **Not built**: a split button (the owner: from the package or not at all); a page transition of our own (tried, dropped).
+- **Verification**: `dart analyze --fatal-infos` clean; 406 fast tests pass (399 before); coverage gate passes (domain & core 83.6%, controllers & providers 85.1%, data & repositories 47.8%, presentation UI & routing 78.3%, total 77.9%); eight deliberate breaks of the new code are each caught by the new tests. Not run: the emulator, a phone, iOS, a browser, the integration suite, TalkBack.
+
 **More of the community package — on `feat/m3-expressive-ui` (PR #20), 2026-11-17.** The owner asked for more `material_3_expressive` widgets. Each was rendered at 360dp, 1.0x and 2.0x text, with the screen reader's tree, and adopted only if it passed or could be fixed in its wrapper (M16 in `.agents/tasks.md`; part 3 of `.agents/session_logs/2026-11-17_session_1.md`).
 - **Adopted**: the menus (`AppMenu`: back now closes an open menu, also from a tab's own screen) and the confirm and error dialogs (`AppDialog`). Pull to refresh on the three detail screens. `go_router` 18.1.4 and `material_3_expressive` 1.2.2.
 - **Not adopted, with the reason for each in the log**: search bar, chips, split button, app bar, toolbar, lists, bottom sheet. Each fails at 2.0x text or in the screen reader's tree, or would undo an unsaved-input guard. The owner decides whether to relax those checks.
