@@ -56,4 +56,8 @@ abstract final class AppMotion {
     effectsFast,
     duration: effectsFastDuration,
   );
+
+  /// The last stretch of a screen's transition. By then the parts that travel to the
+  /// screen from a row have all but landed, so what they would cross fades in here.
+  static const Curve afterSharedElements = Interval(0.7, 1);
 }

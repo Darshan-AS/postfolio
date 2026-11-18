@@ -7,6 +7,7 @@ import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/widgets/expressive/app_menu.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 
 export 'package:postfolio/core/widgets/expressive/app_group.dart' show AppGroupPosition;
 export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart' show AppAvatarShape;
@@ -95,6 +96,11 @@ class EntityListTile extends StatelessWidget {
   /// Where this row sits among its neighbours.
   final AppGroupPosition position;
 
+  /// Identifies the entity the row stands for. With the same tag on the head of the
+  /// entity's screen, the avatar and the title travel there when the row opens it (see
+  /// [EntityHero]). A [subtitle] that should travel too wraps itself in an [EntityHero].
+  final Object? heroTag;
+
   const EntityListTile({
     super.key,
     this.leading,
@@ -115,6 +121,7 @@ class EntityListTile extends StatelessWidget {
     this.actions = const [],
     this.isSelected = false,
     this.position = AppGroupPosition.single,
+    this.heroTag,
   });
 
   @override
@@ -152,7 +159,11 @@ class EntityListTile extends StatelessWidget {
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  leading ?? _buildLeading(theme, emphasized),
+                  EntityHero(
+                    tag: heroTag,
+                    part: EntityHeroPart.avatar,
+                    child: leading ?? _buildLeading(theme, emphasized),
+                  ),
                   AppSpacings.gapLg,
                   Expanded(
                     child: Column(
@@ -160,11 +171,15 @@ class EntityListTile extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          title,
-                          style: emphasized.titleMedium,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        EntityHero(
+                          tag: heroTag,
+                          part: EntityHeroPart.title,
+                          child: Text(
+                            title,
+                            style: emphasized.titleMedium,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         ?subtitle,
                       ],

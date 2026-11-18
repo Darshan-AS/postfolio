@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
@@ -13,6 +14,7 @@ import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart' show EntityAction;
 import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 
 export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart' show AppAvatarShape;
 export 'package:postfolio/core/widgets/layout/entity_list_tile.dart' show EntityAction;
@@ -34,6 +36,11 @@ class EntityDetailScaffold extends StatelessWidget {
   /// Reloads what the screen shows. When set, the body can be pulled down to refresh.
   final Future<void> Function()? onRefresh;
 
+  /// Whether [body] is built from a record that is still loading, while [header] already
+  /// shows the real entity (from its row in a list). The body is drawn as a placeholder
+  /// and the header as it is.
+  final bool bodyLoading;
+
   const EntityDetailScaffold({
     super.key,
     required this.appBarTitle,
@@ -47,6 +54,7 @@ class EntityDetailScaffold extends StatelessWidget {
     this.floatingActionButton,
     this.menuActions = const [],
     this.onRefresh,
+    this.bodyLoading = false,
   });
 
   void _confirmDelete(BuildContext context) async {
@@ -141,7 +149,12 @@ class EntityDetailScaffold extends StatelessWidget {
 
   Widget _buildBody(BuildContext context, ThemeData theme) {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
-    final items = <Widget>[header, AppSpacings.gapXl, ...body];
+    final items = <Widget>[
+      header,
+      AppSpacings.gapXl,
+      for (final section in body)
+        bodyLoading ? Skeletonizer(enabled: true, child: section) : section,
+    ];
     final animatedItems = disableAnimations
         ? items
         : items
@@ -214,6 +227,11 @@ class EntityDetailHeader extends StatelessWidget {
   final Widget? footer;
   final List<Widget> bottomActions;
 
+  /// Identifies the entity. With the same tag on its row in a list, the avatar and the
+  /// title travel here from the row that opened the screen (see [EntityHero]). Null while
+  /// the header shows a placeholder.
+  final Object? heroTag;
+
   const EntityDetailHeader({
     super.key,
     this.avatarChild,
@@ -227,6 +245,7 @@ class EntityDetailHeader extends StatelessWidget {
     this.badge,
     this.footer,
     this.bottomActions = const [],
+    this.heroTag,
   });
 
   @override
@@ -235,39 +254,53 @@ class EntityDetailHeader extends StatelessWidget {
     final emphasized = AppTypography.emphasizedOf(context);
     // At large text only the title stays beside the avatar; the rest needs the width.
     final stacked = AppDimensions.isLargeText(context);
-    final titleText = Text(title, style: emphasized.titleLarge);
+    final titleText = EntityHero(
+      tag: heroTag,
+      part: EntityHeroPart.title,
+      child: Text(title, style: emphasized.titleLarge),
+    );
+    // The parts the row does not show wait for the ones that travel from it.
+    Widget? waiting(Widget? part) =>
+        part == null ? null : EntityHeroFollower(tag: heroTag, child: part);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
-            _buildAvatar(theme, emphasized),
+            EntityHero(
+              tag: heroTag,
+              part: EntityHeroPart.avatar,
+              child: _buildAvatar(theme, emphasized),
+            ),
             AppSpacings.gapLg,
             Expanded(
               child: stacked
-                  ? titleText
+                  // Aligned, so the title's box is as wide as the title and no wider.
+                  ? Align(alignment: AlignmentDirectional.centerStart, child: titleText)
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [titleText, ?subtitle],
                     ),
             ),
-            if (badge != null && !stacked) ...[AppSpacings.gapSm, badge!],
+            if (badge != null && !stacked) ...[AppSpacings.gapSm, ?waiting(badge)],
           ],
         ),
         if (stacked)
-          for (final line in [subtitle, badge].nonNulls) ...[
+          for (final line in [subtitle, waiting(badge)].nonNulls) ...[
             AppSpacings.gapXs,
             Align(alignment: AlignmentDirectional.centerStart, child: line),
           ],
-        if (footer != null) ...[AppSpacings.gapMd, footer!],
+        if (footer != null) ...[AppSpacings.gapMd, ?waiting(footer)],
         if (bottomActions.isNotEmpty) ...[
           AppSpacings.gapMd,
-          Wrap(
-            spacing: AppDimensions.paddingSm,
-            runSpacing: AppDimensions.paddingSm,
-            children: bottomActions,
+          ?waiting(
+            Wrap(
+              spacing: AppDimensions.paddingSm,
+              runSpacing: AppDimensions.paddingSm,
+              children: bottomActions,
+            ),
           ),
         ],
       ],

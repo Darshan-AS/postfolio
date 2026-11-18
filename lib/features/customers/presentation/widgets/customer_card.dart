@@ -13,6 +13,7 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 
 class _CustomerCardView extends StatelessWidget {
   final String name;
@@ -24,9 +25,13 @@ class _CustomerCardView extends StatelessWidget {
   final VoidCallback? onWhatsAppTapped;
   final AppGroupPosition position;
 
+  /// See [CustomerCard.heroTag]. Null for a placeholder row.
+  final Object? heroTag;
+
   const _CustomerCardView({
     required this.name,
     required this.position,
+    this.heroTag,
     this.phone,
     this.onTap,
     this.onEdit,
@@ -41,13 +46,18 @@ class _CustomerCardView extends StatelessWidget {
 
     return EntityListTile(
       position: position,
+      heroTag: heroTag,
       leadingText: name.isNotEmpty ? name[0].toUpperCase() : '?',
       leadingShape: AppAvatarShape.forPerson(name),
       title: name,
-      subtitle: Text(
-        hasPhone ? phone!.toPhoneFormat() : t.common.notProvided,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+      subtitle: EntityHero(
+        tag: heroTag,
+        part: EntityHeroPart.subtitle,
+        child: Text(
+          hasPhone ? phone!.toPhoneFormat() : t.common.notProvided,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
       onTap: onTap,
@@ -92,6 +102,10 @@ class CustomerCard extends ConsumerWidget {
     this.position = AppGroupPosition.single,
   });
 
+  /// The tag under which a customer's avatar, name and phone number travel between the
+  /// customer's row and the head of the customer's screen (see [EntityHero]).
+  static Object heroTag(String customerId) => ('customer', customerId);
+
   static Widget skeleton({AppGroupPosition position = AppGroupPosition.single}) {
     final dummy = Customer.dummy;
     return _CustomerCardView(
@@ -107,6 +121,7 @@ class CustomerCard extends ConsumerWidget {
       name: customer.name,
       phone: customer.phone,
       position: position,
+      heroTag: heroTag(customer.id),
       onTap: () => CustomerDetailRoute(customer.id).push(context),
       onEdit: () => CustomerEditRoute(customer.id).push(context),
       onPhoneTapped: () =>

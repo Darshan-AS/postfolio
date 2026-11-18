@@ -4,6 +4,7 @@
 - **Riverpod**: Use `Notifier` or `AsyncNotifier` (via `@riverpod` generator).
 - **Dependency Injection**: All services, repositories, and the `SupabaseClient` instance must be provided via Riverpod (`supabaseClientProvider`). No static singletons in domain or presentation code.
 - **Feature-First Structure**: `lib/features/<feature>/` with `data`, `domain`, and `presentation` layers. Layers must be isolated: `domain` never imports `data` or `presentation`.
+- **A detail screen starts from the list's record**: a provider such as `customerInListProvider(id)` reads the entity out of the list that is already loaded (no fetch; null when the list is not loaded, as after a link). The screen passes it to `AsyncSingleEntityBuilder.seed` and marks what that record lacks with `EntityDetailScaffold.bodyLoading` until the full record arrives. The builder must tell the seed from the cold-start stand-in (`entity.id == id`).
 
 ## 2. Routing (`go_router`)
 - **Navigation Policy (`go` vs `push`)**:

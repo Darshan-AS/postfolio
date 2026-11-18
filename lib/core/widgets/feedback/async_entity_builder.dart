@@ -86,6 +86,15 @@ class AsyncSingleEntityBuilder<T> extends StatelessWidget {
   final T? dummyEntity;
   final bool wrapWithScaffold;
 
+  /// What is already known of the entity while [state] loads: the record its row in a
+  /// list was built from.
+  ///
+  /// The screen is built from it straight away, with nothing drawn over it. [builder]
+  /// marks what the seed cannot vouch for as loading (`EntityDetailScaffold.bodyLoading`).
+  /// When the full record arrives the screen is rebuilt in place, so what is on its way to
+  /// the head of the screen lands on the widget it set out for.
+  final T? seed;
+
   const AsyncSingleEntityBuilder({
     super.key,
     required this.state,
@@ -94,6 +103,7 @@ class AsyncSingleEntityBuilder<T> extends StatelessWidget {
     required this.onRetry,
     this.dummyEntity,
     this.wrapWithScaffold = true,
+    this.seed,
   });
 
   @override
@@ -106,6 +116,8 @@ class AsyncSingleEntityBuilder<T> extends StatelessWidget {
   }
 
   Widget _buildLoadingState(BuildContext context) {
+    final seed = this.seed;
+    if (seed != null) return builder(seed);
     if (dummyEntity != null) {
       return Skeletonizer(enabled: true, child: builder(dummyEntity as T));
     }

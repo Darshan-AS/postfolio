@@ -27,6 +27,8 @@ import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 
 import 'package:postfolio/core/extensions/string_extension.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
+import 'package:postfolio/features/customers/presentation/widgets/customer_card.dart';
 
 class CustomerDetailScreen extends ConsumerWidget {
   final String customerId;
@@ -39,14 +41,24 @@ class CustomerDetailScreen extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
+    final record = ref.watch(customerByIdProvider(customerId));
+
     return AsyncSingleEntityBuilder<Customer>(
-      state: ref.watch(customerByIdProvider(customerId)),
+      state: record,
+      // Opened from the list, the screen has the list's record of the customer at once.
+      seed: ref.watch(customerInListProvider(customerId)),
       notFoundMessage: t.customers.customerNotFound,
       onRetry: () => ref.invalidate(customerByIdProvider(customerId)),
       dummyEntity: Customer.dummy,
       builder: (customer) {
+        // The list's record or the full one. The placeholder of a cold start is neither.
+        final isKnown = customer.id == customerId;
+        final heroTag = isKnown ? CustomerCard.heroTag(customerId) : null;
+
         return EntityDetailScaffold(
           appBarTitle: t.customers.customerDetails,
+          // The list's record lacks the savings account and its nominees.
+          bodyLoading: isKnown && !record.hasValue,
           onRefresh: () async {
             // The customer, and the deposits listed under them.
             ref.invalidate(customerByIdProvider(customerId));
@@ -68,6 +80,7 @@ class CustomerDetailScreen extends ConsumerWidget {
                 : null;
           },
           header: EntityDetailHeader(
+            heroTag: heroTag,
             avatarText: customer.name.isNotEmpty
                 ? customer.name[0].toUpperCase()
                 : t.common.notProvided,
@@ -78,27 +91,34 @@ class CustomerDetailScreen extends ConsumerWidget {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    customer.phone?.toPhoneFormat() ?? t.common.notProvided,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                EntityHero(
+                  tag: heroTag,
+                  part: EntityHeroPart.subtitle,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      customer.phone?.toPhoneFormat() ?? t.common.notProvided,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    customer.email ?? t.common.notProvided,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                EntityHeroFollower(
+                  tag: heroTag,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      customer.email ?? t.common.notProvided,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
