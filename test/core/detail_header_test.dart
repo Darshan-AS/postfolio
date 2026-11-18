@@ -22,10 +22,12 @@ import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/features/customers/presentation/screens/customer_detail_screen.dart';
 import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
+import 'package:postfolio/features/one_time_deposits/presentation/screens/one_time_deposit_detail_screen.dart';
 import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/screens/recurring_deposit_detail_screen.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skeletonizer/skeletonizer.dart' show SkeletonizerConfig;
 
@@ -314,22 +316,46 @@ void main() {
       expect(tabs.top, lessThan(phone.height / 2));
     });
 
-    testWidgets('a recurring deposit names its customer under the account number, on the '
-        'same edge', (tester) async {
+    testWidgets('a recurring deposit is headed by its customer\'s name, with the account '
+        'number and the way to the customer under it, on the same edge', (tester) async {
       await pumpScreen(tester, RecurringDepositDetailScreen(depositId: rd.id));
 
+      // As the deposit's row in the list: whose it is, then which.
       final header = find.byType(EntityDetailHeader);
       final title = tester.getRect(
+        find.descendant(of: header, matching: find.text(rd.customerName!)),
+      );
+      final number = tester.getRect(
         find.descendant(of: header, matching: find.text(rd.accountNo!)),
       );
+      expect(number.left, moreOrLessEquals(title.left, epsilon: 0.5));
+      expect(number.top, greaterThanOrEqualTo(title.bottom));
+
+      // The title says the name, so the link says where it leads.
       final link = find.descendant(
         of: header,
-        matching: find.widgetWithText(AppButton, customer.name),
+        matching: find.widgetWithText(AppButton, t.customers.customerDetails),
       );
       expect(link, findsOneWidget);
       final icon = tester.getRect(find.descendant(of: link, matching: find.byType(AppIcon)));
       expect(icon.left, moreOrLessEquals(title.left, epsilon: 0.5));
-      expect(icon.top, greaterThan(title.bottom));
+      expect(icon.top, greaterThan(number.bottom));
+    });
+
+    testWidgets('a one-time deposit is headed by its customer\'s name, with the account '
+        'number under it', (tester) async {
+      final otd = source.oneTimeDeposits.first;
+      await pumpScreen(tester, OneTimeDepositDetailScreen(depositId: otd.id));
+
+      final header = find.byType(EntityDetailHeader);
+      final title = tester.getRect(
+        find.descendant(of: header, matching: find.text(otd.customerName!)),
+      );
+      final number = tester.getRect(
+        find.descendant(of: header, matching: find.text(otd.accountNo!)),
+      );
+      expect(number.left, moreOrLessEquals(title.left, epsilon: 0.5));
+      expect(number.top, greaterThanOrEqualTo(title.bottom));
     });
 
     for (final textScale in const [1.0, 2.0]) {

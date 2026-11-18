@@ -3,9 +3,9 @@ import 'package:postfolio/core/theme/app_motion.dart';
 
 /// The parts of an entity that its row in a list and the head of its screen both show.
 ///
-/// A part is named for its place on the screen. A deposit's account number is the head's
-/// [title], also in a list where it is the second line of the row. Its [amount] is the
-/// first figure under the head.
+/// A part is named for its place on the screen. A deposit's account number is the line
+/// under the head's title, its [subtitle], also on its customer's screen, where it is the
+/// title of the row. Its [amount] is the first figure under the head.
 enum EntityHeroPart { avatar, title, subtitle, amount }
 
 /// A part of an entity that travels between its row in a list and the head of its screen

@@ -50,8 +50,14 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
       builder: (deposit) {
         // The list's record or the full one. The placeholder of a cold start is neither.
         final isKnown = deposit.id == depositId;
-        // The avatar, the account number and the amount travel here from the row.
+        // The avatar, the customer's name, the account number and the amount travel here
+        // from the row.
         final heroTag = isKnown ? EntityHero.tagFrom(openedFrom, depositId) : null;
+        final accountNo = deposit.accountNo ?? t.common.notProvided;
+        final customerName = (deposit.customerName?.isNotEmpty ?? false)
+            ? deposit.customerName!
+            : ref.watch(customerByIdProvider(deposit.customerId)).value?.name;
+        final supporting = Theme.of(context).colorScheme.onSurfaceVariant;
 
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
@@ -119,16 +125,31 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
             avatarText: deposit.schemeType.shortName,
             avatarSubtext: deposit.schemeTermLabel,
             avatarShape: deposit.schemeType.avatarShape,
-            title: deposit.accountNo ?? t.common.notProvided,
+            // Headed as its row in the list is: whose deposit it is, then which. A deposit
+            // without a named customer is titled by its number there too.
+            title: customerName ?? accountNo,
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
+                // An account number broken across two lines reads as two numbers.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: EntityHero(
+                    tag: heroTag,
+                    part: EntityHeroPart.subtitle,
+                    child: Text(
+                      accountNo,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: supporting),
+                    ),
+                  ),
+                ),
                 Text(
                   deposit.schemeType.displayName,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: supporting),
                 ),
                 // The date the screen is most often opened for; it was only in the
                 // Timeline group, half a screen down.

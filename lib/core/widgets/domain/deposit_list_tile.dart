@@ -60,9 +60,9 @@ class DepositListTile extends StatelessWidget {
     this.onToggleStatus,
   });
 
-  /// Identifies the deposit and the row (`EntityHero.tagFrom`). The avatar and the account
-  /// number travel to the head of the deposit's screen, which is titled by that number,
-  /// and the amount to the first figure under it.
+  /// Identifies the deposit and the row (`EntityHero.tagFrom`). The avatar, the customer's
+  /// name and the account number travel to the head of the deposit's screen, which has the
+  /// name over the number as the row does, and the amount to the first figure under it.
   final Object? heroTag;
 
   /// Whether [title] is the account number. Otherwise [subtitle] is.
@@ -108,7 +108,8 @@ class DepositListTile extends StatelessWidget {
     return EntityListTile(
       position: position,
       heroTag: heroTag,
-      titleTravels: titleIsAccount,
+      // On the deposit's screen the account number is the line under the title.
+      titlePart: titleIsAccount ? EntityHeroPart.subtitle : EntityHeroPart.title,
       indicatorColor: indicatorColor,
       leadingText: avatarText,
       leadingSubtext: avatarSubtext,
@@ -124,7 +125,7 @@ class DepositListTile extends StatelessWidget {
             if (subtitle.isNotEmpty)
               EntityHero(
                 tag: titleIsAccount ? null : heroTag,
-                part: EntityHeroPart.title,
+                part: EntityHeroPart.subtitle,
                 child: Text(
                   subtitle,
                   style: theme.textTheme.bodyMedium?.copyWith(

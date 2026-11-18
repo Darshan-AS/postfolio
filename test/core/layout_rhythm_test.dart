@@ -242,7 +242,9 @@ void main() {
           tester.getRect(find.byWidget(element.widget)),
       ].where((r) => r.bottom <= titleRect.top && r.width > 300 && r.top > 100);
       final lowest = above.map((r) => r.bottom).reduce((a, b) => a > b ? a : b);
-      expect(titleRect.top - lowest, AppDimensions.paddingLg);
+      // The header's lines have heights that are not whole pixels; the sum can be off by
+      // a rounding error.
+      expect(titleRect.top - lowest, moreOrLessEquals(AppDimensions.paddingLg, epsilon: 0.01));
     });
   });
 }

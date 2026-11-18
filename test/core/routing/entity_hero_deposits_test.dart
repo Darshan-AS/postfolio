@@ -16,8 +16,9 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import 'signed_in_app.dart';
 
-/// A deposit's avatar, account number and amount travel between a row of the deposit and
-/// the deposit's screen, from each place that has such a row, through the real router.
+/// A deposit's avatar, its customer's name, its account number and its amount travel
+/// between a row of the deposit and the deposit's screen, from each place that has such a
+/// row, through the real router.
 void main() {
   Finder avatar() => find.byType(AppShapeAvatar);
 
@@ -26,6 +27,20 @@ void main() {
     of: find.byType(DefaultTextStyleTransition),
     matching: find.text(text),
   );
+
+  /// The copy of [text] that is drawn above both screens while it travels: the one that
+  /// is on no screen.
+  Finder aloft(String text) => find.byElementPredicate((element) {
+    if (element.widget case Text(:final data) when data == text) {
+      var onAScreen = false;
+      element.visitAncestorElements((ancestor) {
+        onAScreen = ancestor.widget is Scaffold;
+        return !onAScreen;
+      });
+      return !onAScreen;
+    }
+    return false;
+  });
 
   /// The size of the font [text] is drawn in.
   double fontSize(WidgetTester tester, Finder text) => tester
@@ -83,7 +98,9 @@ void main() {
     required String accountNo,
     required String amount,
     bool accountOnOneLine = true,
+    bool nameTravels = true,
   }) async {
+    final name = rameshRao.name;
     Finder inRow(Finder part) => find.descendant(of: row, matching: part);
     Finder onScreen(Finder part) => find.descendant(of: find.byType(S), matching: part);
 
@@ -101,6 +118,16 @@ void main() {
     expect(inRow(find.text(amount)), findsNothing);
     expect(inHeadOf<S>(avatar()), findsNothing);
     expect(inHeadOf<S>(find.text(accountNo)), findsNothing);
+    // The name heads the screen as it heads the row, so it travels too, over the number.
+    if (nameTravels) {
+      expect(inRow(find.text(name)), findsNothing);
+      expect(inHeadOf<S>(find.text(name)), findsNothing);
+      expect(aloft(name), findsOneWidget);
+      expect(
+        tester.getRect(aloft(name)).top,
+        lessThan(tester.getRect(aloft(accountNo)).top),
+      );
+    }
     // The number and the amount are growing from the row's size of font to the screen's.
     if (accountOnOneLine) {
       expect(fontSize(tester, inFlight(accountNo)), greaterThan(rowAccountSize));
@@ -109,12 +136,16 @@ void main() {
 
     await rest(tester);
 
-    // Landed: a larger avatar and the account number as the title at the head, and the
-    // amount in the first figure under it.
+    // Landed: a larger avatar, the name as the title with the account number under it,
+    // and the amount in the first figure under the head.
     expect(inFlight(accountNo), findsNothing);
     expect(tester.getRect(inHeadOf<S>(avatar())).width, AppDimensions.avatarLg);
     final headAccountSize = fontSize(tester, inHeadOf<S>(find.text(accountNo)));
-    expect(headAccountSize, greaterThan(rowAccountSize));
+    if (accountOnOneLine) expect(headAccountSize, greaterThan(rowAccountSize));
+    expect(
+      tester.getRect(inHeadOf<S>(find.text(name))).bottom,
+      lessThanOrEqualTo(tester.getRect(inHeadOf<S>(find.text(accountNo))).top),
+    );
     expect(onScreen(find.text(amount)), findsWidgets);
 
     await tester.tap(find.byType(BackButton));
@@ -144,18 +175,10 @@ void main() {
   testWidgets('from the one-time list', (tester) async {
     final router = await pumpWithDeposits(tester);
     await openTab(tester, 'One-Time');
-    final row = find.byType(OneTimeDepositCard);
-
-    // The row is titled by the customer and the head of the screen is not: the name is
-    // not among the parts that travel. The account number, the row's second line, is.
-    final name = find.descendant(of: row, matching: find.text(rameshRao.name));
-    expect(name, findsOneWidget);
-    expect(find.ancestor(of: name, matching: find.byType(Hero)), findsNothing);
-
     await expectRoundTrip<OneTimeDepositDetailScreen>(
       tester,
       router,
-      row: row,
+      row: find.byType(OneTimeDepositCard),
       depositId: rameshTimeDeposit.id,
       accountNo: rameshTimeDeposit.accountNo!,
       amount: rameshTimeDeposit.principalAmount.toRupeeFormat(),
@@ -221,6 +244,9 @@ void main() {
       // about twice as wide as the app's. A name on two lines travels as the screen's
       // copy, scaled; the lists above cover the change of style.
       accountOnOneLine: false,
+      // The row is titled by the account number there: the customer is the screen. The
+      // number travels to its line under the title, and the title has nowhere to come from.
+      nameTravels: false,
     );
   });
 

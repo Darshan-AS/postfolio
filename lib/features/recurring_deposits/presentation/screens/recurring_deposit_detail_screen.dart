@@ -88,15 +88,17 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
       builder: (deposit) {
         // The list's record or the full one. The placeholder of a cold start is neither.
         final isKnown = deposit.id == depositId;
-        // The avatar, the account number and the installment travel here from the row.
+        // The avatar, the customer's name, the account number and the installment travel
+        // here from the row.
         final heroTag = isKnown ? EntityHero.tagFrom(openedFrom, depositId) : null;
+        final accountNo = deposit.accountNo ?? t.common.notProvided;
         final theme = Theme.of(context);
         final tabs = t.recurringDeposits.detailTabs;
         final fields = t.recurringDeposits.fields;
-        final resolvedCustomerName = (deposit.customerName?.isNotEmpty ?? false)
+        final customerName = (deposit.customerName?.isNotEmpty ?? false)
             ? deposit.customerName!
-            : (ref.watch(customerByIdProvider(deposit.customerId)).value?.name ??
-                deposit.customerId);
+            : ref.watch(customerByIdProvider(deposit.customerId)).value?.name;
+        final resolvedCustomerName = customerName ?? deposit.customerId;
         final rateLabel = fields.ratePercent(rate: deposit.interestRate.toStringAsFixed(2));
 
         return EntityDetailScaffold(
@@ -170,19 +172,39 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
             avatarForegroundColor: theme.colorScheme.onSecondaryContainer,
             avatarText: deposit.avatarLabel,
             avatarShape: deposit.schemeType.avatarShape,
-            title: deposit.accountNo ?? t.common.notProvided,
+            // Headed as its row in the list is: whose deposit it is, then which. A deposit
+            // without a named customer is titled by its number there too.
+            title: customerName ?? accountNo,
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
+                // An account number broken across two lines reads as two numbers.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: EntityHero(
+                    tag: heroTag,
+                    part: EntityHeroPart.subtitle,
+                    child: Text(
+                      accountNo,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
                 Text(
                   deposit.schemeType.displayName,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
+                // The way to the customer from any tab. The title already says the name.
                 AppButton.text(
-                  label: resolvedCustomerName,
+                  label: t.customers.customerDetails,
                   icon: HugeIcons.strokeRoundedUser,
                   size: AppButtonSize.extraSmall,
                   flushStart: true,
