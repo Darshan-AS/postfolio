@@ -7,6 +7,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_surfaces.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
+import 'package:postfolio/core/widgets/common/animated_figure.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
@@ -118,10 +119,16 @@ class _KpiGrid extends ConsumerWidget {
         ? RDInstallmentDisplayStatus.overdue.visualOf(context)
         : neutral;
 
+    // A figure counts to its new value when something is collected or deposited. Another
+    // month's figure is another quantity and is shown at once.
+    final month = ref.watch(rDHubMonthProvider);
+    String rupees(double value) => value.toRupeeFormat();
+
     final tiles = <Widget>[
       _KpiTile(
         label: strings.toCollect,
         amount: kpis.toCollectAmount.toRupeeFormat(),
+        figure: (value: kpis.toCollectAmount, format: rupees, of: month),
         caption: strings.accountsCount(n: kpis.toCollectCount),
         count: kpis.toCollectCount,
         visual: toCollectVisual,
@@ -132,6 +139,7 @@ class _KpiGrid extends ConsumerWidget {
       _KpiTile(
         label: strings.inHand,
         amount: float.cashInHandTotal.toRupeeFormat(),
+        figure: (value: float.cashInHandTotal, format: rupees, of: month),
         caption: float.cashInHandAccounts > 0
             ? strings.accountsReady(n: float.cashInHandAccounts)
             : strings.nothingToDeposit,
@@ -153,6 +161,7 @@ class _KpiGrid extends ConsumerWidget {
       _KpiTile(
         label: strings.receivable,
         amount: float.receivableAmount.toRupeeFormat(),
+        figure: (value: float.receivableAmount, format: rupees, of: month),
         caption: strings.accountsCount(n: float.receivableAccounts),
         count: float.receivableAccounts,
         visual: receivableVisual,
@@ -163,6 +172,11 @@ class _KpiGrid extends ConsumerWidget {
       _KpiTile(
         label: strings.arrears,
         amount: strings.accountsCount(n: float.arrearsAccounts),
+        figure: (
+          value: float.arrearsAccounts.toDouble(),
+          format: (value) => strings.accountsCount(n: value.round()),
+          of: month,
+        ),
         caption: strings.arrearsCaption,
         visual: arrearsVisual,
         isSelected: statusFilter == RDMonthlyFilter.overdue,
@@ -247,7 +261,12 @@ class _TileRows extends StatelessWidget {
 /// contrast stays that of the tested pair, and gains a tick; it does not rely on a border.
 class _KpiTile extends StatelessWidget {
   final String label;
+
+  /// The figure as it is announced, and as it is drawn when [figure] is null.
   final String amount;
+
+  /// The figure as a number, so that it counts to a new value (see [AnimatedFigure]).
+  final ({double value, String Function(double value) format, Object? of})? figure;
 
   /// Announced after the figure.
   final String caption;
@@ -271,6 +290,7 @@ class _KpiTile extends StatelessWidget {
   const _KpiTile({
     required this.label,
     required this.amount,
+    this.figure,
     required this.caption,
     this.detail,
     this.count,
@@ -372,11 +392,19 @@ class _KpiTile extends StatelessWidget {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    amount,
-                    style: emphasized.titleLarge?.copyWith(color: foreground),
-                    maxLines: 1,
-                  ),
+                  child: switch (figure) {
+                    null => Text(
+                      amount,
+                      style: emphasized.titleLarge?.copyWith(color: foreground),
+                      maxLines: 1,
+                    ),
+                    final figure => AnimatedFigure(
+                      value: figure.value,
+                      format: figure.format,
+                      of: figure.of,
+                      style: emphasized.titleLarge?.copyWith(color: foreground),
+                    ),
+                  },
                 ),
               ],
             ),
