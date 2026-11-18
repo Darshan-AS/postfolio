@@ -13,6 +13,7 @@ import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 import 'package:postfolio/core/widgets/domain/nominees_detail_section.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
@@ -28,18 +29,30 @@ import 'package:postfolio/core/extensions/date_time_extension.dart';
 class OneTimeDepositDetailScreen extends ConsumerWidget {
   final String depositId;
 
-  const OneTimeDepositDetailScreen({super.key, required this.depositId});
+  /// Where the row that opened the screen is, when a row did (`EntityHero.tagFrom`).
+  final String? openedFrom;
+
+  const OneTimeDepositDetailScreen({super.key, required this.depositId, this.openedFrom});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final record = ref.watch(oneTimeDepositByIdProvider(depositId));
+
     return AsyncSingleEntityBuilder<OneTimeDeposit>(
-      state: ref.watch(oneTimeDepositByIdProvider(depositId)),
+      state: record,
+      // Opened from a row, the screen has the list's record of the deposit at once.
+      seed: ref.watch(oneTimeDepositInListProvider(depositId)),
       notFoundMessage: t.oneTimeDeposits.depositNotFound,
       onRetry: () => ref.invalidate(oneTimeDepositByIdProvider(depositId)),
       dummyEntity: OneTimeDeposit.dummy,
       builder: (deposit) {
+        // The list's record or the full one. The placeholder of a cold start is neither.
+        final isKnown = deposit.id == depositId;
+
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
+          // The list's record lacks the nominees.
+          bodyLoading: isKnown && !record.hasValue,
           onRefresh: () => ref.refresh(oneTimeDepositByIdProvider(depositId).future),
           // In the menu, with its label, as on the deposit's row in the list. It was a bare
           // seal icon in the app bar.
@@ -100,6 +113,8 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 : null;
           },
           header: EntityDetailHeader(
+            // The avatar and the account number travel here from the row.
+            heroTag: isKnown ? EntityHero.tagFrom(openedFrom, depositId) : null,
             avatarText: deposit.schemeType.shortName,
             avatarSubtext: deposit.schemeTermLabel,
             avatarShape: deposit.schemeType.avatarShape,

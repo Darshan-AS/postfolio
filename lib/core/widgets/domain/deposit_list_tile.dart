@@ -8,6 +8,7 @@ import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -51,11 +52,20 @@ class DepositListTile extends StatelessWidget {
     required this.relativeTimeText,
     required this.maturityDate,
     this.position = AppGroupPosition.single,
+    this.heroTag,
+    this.titleIsAccount = false,
     this.onTap,
     this.onEdit,
     this.onDelete,
     this.onToggleStatus,
   });
+
+  /// Identifies the deposit and the row (`EntityHero.tagFrom`). The avatar and the account
+  /// number travel to the head of the deposit's screen, which is titled by that number.
+  final Object? heroTag;
+
+  /// Whether [title] is the account number. Otherwise [subtitle] is.
+  final bool titleIsAccount;
 
   final String title;
   final String subtitle;
@@ -96,6 +106,8 @@ class DepositListTile extends StatelessWidget {
 
     return EntityListTile(
       position: position,
+      heroTag: heroTag,
+      titleTravels: titleIsAccount,
       indicatorColor: indicatorColor,
       leadingText: avatarText,
       leadingSubtext: avatarSubtext,
@@ -109,13 +121,17 @@ class DepositListTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (subtitle.isNotEmpty)
-              Text(
-                subtitle,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
+              EntityHero(
+                tag: titleIsAccount ? null : heroTag,
+                part: EntityHeroPart.title,
+                child: Text(
+                  subtitle,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             if (needsAttention) ...[
               if (subtitle.isNotEmpty) AppSpacings.gapXs,

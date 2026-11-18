@@ -2,24 +2,41 @@ import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_motion.dart';
 
 /// The parts of an entity that its row in a list and the head of its screen both show.
+///
+/// A part is named for its place at the head. A deposit's account number is the head's
+/// [title], also in a list where it is the second line of the row.
 enum EntityHeroPart { avatar, title, subtitle }
 
 /// A part of an entity that travels between its row in a list and the head of its screen
 /// when the screen opens, and back when it is closed with the back button.
 ///
-/// Give the row's copy and the screen's copy the same [tag] and [part]. It is the
-/// framework's `Hero`: the screens keep their page transition, their URL and the back
-/// swipe, and a screen opened without its row in view (by a link) opens as before.
+/// Give the row's copy and the screen's copy the same [tag] (see [tagFrom]) and [part].
+/// It is the framework's `Hero`: the screens keep their page transition, their URL and the
+/// back swipe, and a screen that no row opened (a link, a URL) opens as before.
 ///
 /// What travels is the copy at the head of the screen, the larger of the two, scaled to
 /// the box on its way. Laid out in a box of another size, a name would wrap or be cut.
 class EntityHero extends StatelessWidget {
   const EntityHero({super.key, required this.tag, required this.part, required this.child});
 
-  /// Identifies the entity. Null for a placeholder, which has nowhere to travel to.
+  /// Identifies the entity and the row. Null where nothing travels: a placeholder, or a
+  /// screen that no row opened.
   final Object? tag;
   final EntityHeroPart part;
   final Widget child;
+
+  /// The origin of a row in the entity's own list (see [tagFrom]).
+  static const String ownList = 'list';
+
+  /// The tag of the parts of the entity [id] that travel between a row and the head of
+  /// the screen that row opens.
+  ///
+  /// [origin] names where the row is. An entity can have a row in more than one place (a
+  /// deposit in the deposits list and on its customer's screen), and those places can be
+  /// on the two screens of one transition. The head pairs only with the row that opened
+  /// it: the row hands its origin to the route it pushes (`$extra`), and the screen builds
+  /// its tag from that. A screen opened any other way has no origin and so no tag.
+  static Object? tagFrom(String? origin, String id) => origin == null ? null : (origin, id);
 
   @override
   Widget build(BuildContext context) {

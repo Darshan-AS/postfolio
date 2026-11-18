@@ -5,6 +5,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
@@ -18,10 +19,14 @@ import 'package:postfolio/i18n/strings.g.dart';
 
 class RecurringDepositCard extends ConsumerWidget {
   final RecurringDeposit deposit;
-  final String? overrideTitle;
 
-  /// Replaces the account number under the title; empty for no line there.
-  final String? overrideSubtitle;
+  /// Title the row by its account number instead of the customer's name, with no second
+  /// line. For rows on the customer's screen: the customer is the screen.
+  final bool titleByAccount;
+
+  /// Where this row is, for the avatar and the account number that travel to the head of
+  /// the deposit's screen (`EntityHero.tagFrom`).
+  final String heroOrigin;
 
   /// Where this row sits in its list (see [EntityListTile.position]).
   final AppGroupPosition position;
@@ -29,8 +34,8 @@ class RecurringDepositCard extends ConsumerWidget {
   const RecurringDepositCard({
     super.key,
     required this.deposit,
-    this.overrideTitle,
-    this.overrideSubtitle,
+    this.titleByAccount = false,
+    this.heroOrigin = EntityHero.ownList,
     this.position = AppGroupPosition.single,
   });
 
@@ -48,24 +53,22 @@ class RecurringDepositCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final title = (overrideTitle?.isNotEmpty == true ? overrideTitle : null) ??
-        (deposit.customerName?.isNotEmpty == true
-            ? deposit.customerName
-            : null) ??
-        deposit.accountNo ??
-        t.common.notProvided;
-
-    final subtitle =
-        overrideSubtitle ?? (deposit.accountNo ?? t.common.notProvided);
+    final accountNo = deposit.accountNo ?? t.common.notProvided;
+    final customerName = deposit.customerName ?? '';
 
     return _RecurringDepositTile(
       deposit: deposit,
-      title: title,
-      subtitle: subtitle,
+      title: titleByAccount || customerName.isEmpty ? accountNo : customerName,
+      subtitle: titleByAccount ? '' : accountNo,
       urgency: deposit.maturityUrgency,
       relativeTimeText: deposit.maturityRelativeTime,
       position: position,
-      onTap: () => RecurringDepositDetailRoute(deposit.id).push(context),
+      heroTag: EntityHero.tagFrom(heroOrigin, deposit.id),
+      titleIsAccount: titleByAccount,
+      onTap: () => RecurringDepositDetailRoute(
+        deposit.id,
+        $extra: heroOrigin,
+      ).push(context),
       onEdit: () => RecurringDepositEditRoute(deposit.id).push(context),
       onDelete: () async {
         final confirmed = await AppDialogs.confirmDelete(
@@ -127,11 +130,16 @@ class _RecurringDepositTile extends StatelessWidget {
     required this.urgency,
     required this.relativeTimeText,
     required this.position,
+    this.heroTag,
+    this.titleIsAccount = false,
     this.onTap,
     this.onEdit,
     this.onDelete,
     this.onToggleStatus,
   });
+
+  final Object? heroTag;
+  final bool titleIsAccount;
 
   final RecurringDeposit deposit;
   final String title;
@@ -149,6 +157,8 @@ class _RecurringDepositTile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return DepositListTile(
       position: position,
+      heroTag: heroTag,
+      titleIsAccount: titleIsAccount,
       title: title,
       subtitle: subtitle,
       avatarText: deposit.avatarLabel,

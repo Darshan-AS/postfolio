@@ -4,7 +4,7 @@
 - **Riverpod**: Use `Notifier` or `AsyncNotifier` (via `@riverpod` generator).
 - **Dependency Injection**: All services, repositories, and the `SupabaseClient` instance must be provided via Riverpod (`supabaseClientProvider`). No static singletons in domain or presentation code.
 - **Feature-First Structure**: `lib/features/<feature>/` with `data`, `domain`, and `presentation` layers. Layers must be isolated: `domain` never imports `data` or `presentation`.
-- **A detail screen starts from the list's record**: a provider such as `customerInListProvider(id)` reads the entity out of the list that is already loaded (no fetch; null when the list is not loaded, as after a link). The screen passes it to `AsyncSingleEntityBuilder.seed` and marks what that record lacks with `EntityDetailScaffold.bodyLoading` until the full record arrives. The builder must tell the seed from the cold-start stand-in (`entity.id == id`).
+- **A detail screen starts from the list's record**: `customerInListProvider(id)`, `oneTimeDepositInListProvider(id)` and `recurringDepositInListProvider(id)` read the entity out of the list that is already loaded (no fetch; null when the list is not loaded, as after a link). The screen passes it to `AsyncSingleEntityBuilder.seed` and marks what that record lacks (a customer's savings account, any record's nominees) with `EntityDetailScaffold.bodyLoading` until the full record arrives. The builder must tell the seed from the cold-start stand-in (`entity.id == id`). An action that writes the whole record must not be offered on the seed.
 
 ## 2. Routing (`go_router`)
 - **Navigation Policy (`go` vs `push`)**:
@@ -18,7 +18,7 @@
   - Push detail and form screens on the root navigator (`$parentNavigatorKey`), so each tab's navigator holds one page and a tab's root leaves the swipe to the system's back-to-home animation.
   - `test/core/routing/predictive_back_test.dart` drives the gesture through the router; extend it when a new kind of screen or overlay is added.
   - A menu is an `AppMenu`. Back closes an open one first and leaves the screen where it is (`test/core/app_menu_test.dart`). The official `MenuAnchor` is an overlay that back skips, which left the app from a tab's own screen.
-- **Deep Links**: Never pass complex objects via `extra`. Pass primitive IDs in the URL so Web page refreshes (`F5`) and deep links stay deterministic.
+- **Deep Links**: Never pass complex objects via `extra`. Pass primitive IDs in the URL so Web page refreshes (`F5`) and deep links stay deterministic. The one thing sent in `extra` is the origin of the row that opened a detail screen (`$extra`, a short string, see `EntityHero.tagFrom`): it only decides whether the row's avatar and title travel to the screen. Without it, as after a refresh, the screen opens the same and nothing travels.
 - **Keyboard Handling**: Let the outer `Scaffold` handle resizing. Use a `Builder` inside the body if `MediaQuery` modification is needed.
 
 ## 3. Backend & Telemetry ("Rules in Dart, Integrity in Postgres")

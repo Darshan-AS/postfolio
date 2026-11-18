@@ -28,12 +28,17 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 
 import 'package:postfolio/core/extensions/string_extension.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
-import 'package:postfolio/features/customers/presentation/widgets/customer_card.dart';
+
+/// The origin of a deposit's row on its customer's screen (`EntityHero.tagFrom`).
+const String _underCustomer = 'customer';
 
 class CustomerDetailScreen extends ConsumerWidget {
   final String customerId;
 
-  const CustomerDetailScreen({super.key, required this.customerId});
+  /// Where the row that opened the screen is, when a row did (`EntityHero.tagFrom`).
+  final String? openedFrom;
+
+  const CustomerDetailScreen({super.key, required this.customerId, this.openedFrom});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,7 +58,7 @@ class CustomerDetailScreen extends ConsumerWidget {
       builder: (customer) {
         // The list's record or the full one. The placeholder of a cold start is neither.
         final isKnown = customer.id == customerId;
-        final heroTag = isKnown ? CustomerCard.heroTag(customerId) : null;
+        final heroTag = isKnown ? EntityHero.tagFrom(openedFrom, customerId) : null;
 
         return EntityDetailScaffold(
           appBarTitle: t.customers.customerDetails,
@@ -107,18 +112,15 @@ class CustomerDetailScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                EntityHeroFollower(
-                  tag: heroTag,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text(
-                      customer.email ?? t.common.notProvided,
-                      maxLines: 1,
-                      softWrap: false,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    customer.email ?? t.common.notProvided,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -392,8 +394,8 @@ class _CustomerDepositsSection extends ConsumerWidget {
             // on the avatar; as a title "Monthly Income Scheme" was cut beside the amount.
             itemBuilder: (deposit, position) => OneTimeDepositCard(
               deposit: deposit,
-              overrideTitle: deposit.accountNo ?? t.common.notProvided,
-              overrideSubtitle: '',
+              titleByAccount: true,
+              heroOrigin: _underCustomer,
               position: position,
             ),
           ),
@@ -404,8 +406,8 @@ class _CustomerDepositsSection extends ConsumerWidget {
             closedDeposits: closedRecurring,
             itemBuilder: (deposit, position) => RecurringDepositCard(
               deposit: deposit,
-              overrideTitle: deposit.accountNo ?? t.common.notProvided,
-              overrideSubtitle: '',
+              titleByAccount: true,
+              heroOrigin: _underCustomer,
               position: position,
             ),
           ),

@@ -101,6 +101,10 @@ class EntityListTile extends StatelessWidget {
   /// [EntityHero]). A [subtitle] that should travel too wraps itself in an [EntityHero].
   final Object? heroTag;
 
+  /// Whether the [title] is among the parts that travel. Not when the head of the screen
+  /// is titled by something else than the row is.
+  final bool titleTravels;
+
   const EntityListTile({
     super.key,
     this.leading,
@@ -122,6 +126,7 @@ class EntityListTile extends StatelessWidget {
     this.isSelected = false,
     this.position = AppGroupPosition.single,
     this.heroTag,
+    this.titleTravels = true,
   });
 
   @override
@@ -172,7 +177,7 @@ class EntityListTile extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         EntityHero(
-                          tag: heroTag,
+                          tag: titleTravels ? heroTag : null,
                           part: EntityHeroPart.title,
                           child: Text(
                             title,

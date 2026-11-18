@@ -25,7 +25,7 @@ class _CustomerCardView extends StatelessWidget {
   final VoidCallback? onWhatsAppTapped;
   final AppGroupPosition position;
 
-  /// See [CustomerCard.heroTag]. Null for a placeholder row.
+  /// Identifies the customer and this row (`EntityHero.tagFrom`). Null for a placeholder.
   final Object? heroTag;
 
   const _CustomerCardView({
@@ -102,10 +102,6 @@ class CustomerCard extends ConsumerWidget {
     this.position = AppGroupPosition.single,
   });
 
-  /// The tag under which a customer's avatar, name and phone number travel between the
-  /// customer's row and the head of the customer's screen (see [EntityHero]).
-  static Object heroTag(String customerId) => ('customer', customerId);
-
   static Widget skeleton({AppGroupPosition position = AppGroupPosition.single}) {
     final dummy = Customer.dummy;
     return _CustomerCardView(
@@ -121,8 +117,12 @@ class CustomerCard extends ConsumerWidget {
       name: customer.name,
       phone: customer.phone,
       position: position,
-      heroTag: heroTag(customer.id),
-      onTap: () => CustomerDetailRoute(customer.id).push(context),
+      // The avatar, the name and the phone number travel to the head of the screen.
+      heroTag: EntityHero.tagFrom(EntityHero.ownList, customer.id),
+      onTap: () => CustomerDetailRoute(
+        customer.id,
+        $extra: EntityHero.ownList,
+      ).push(context),
       onEdit: () => CustomerEditRoute(customer.id).push(context),
       onPhoneTapped: () =>
           ref.read(intentServiceProvider).launchPhone(customer.phone ?? ''),

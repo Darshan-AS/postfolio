@@ -2,14 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/extensions/string_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
-import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/screens/customer_detail_screen.dart';
 import 'package:postfolio/features/customers/presentation/screens/customers_screen.dart';
@@ -174,7 +173,7 @@ void main() {
     testWidgets('the head of the screen is the customer at once and the rest a placeholder', (
       tester,
     ) async {
-      final customers = _LateDetailRepository();
+      final customers = LateCustomerRepository();
       await pumpSignedInApp(tester, customers: customers);
 
       // The screen's first frame, before anything has set out for it.
@@ -222,7 +221,7 @@ void main() {
     });
 
     testWidgets('a record that arrives mid-flight does not leave two copies', (tester) async {
-      final customers = _LateDetailRepository();
+      final customers = LateCustomerRepository();
       await pumpSignedInApp(tester, customers: customers);
 
       await openFromRow(tester);
@@ -240,6 +239,32 @@ void main() {
       expect(tester.getRect(avatar()).width, AppDimensions.avatarLg);
       expect(tester.takeException(), isNull);
     });
+  });
+
+  testWidgets('a screen that no row opened: nothing travels and nothing waits', (tester) async {
+    final router = await pumpSignedInApp(tester);
+
+    // By its URL, as a link opens it. The row is in view all the same.
+    final context = tester.element(find.byType(CustomersScreen));
+    unawaited(GoRouter.of(context).push('/customers/${rameshRao.id}'));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(router.location(), '/customers/${rameshRao.id}');
+
+    // Each screen keeps its own copies, and the head is drawn whole from the start.
+    expect(avatar(), findsNWidgets(2));
+    expect(find.text(name), findsNWidgets(2));
+    expect(
+      find.descendant(
+        of: find.byType(EntityHeroFollower),
+        matching: find.ancestor(of: email(), matching: find.byType(FadeTransition)),
+      ),
+      findsNothing,
+    );
+
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('a device set to remove animations gets no travelling parts', (tester) async {
@@ -269,20 +294,4 @@ void main() {
       findsOneWidget,
     );
   });
-}
-
-/// A customer repository whose full record of a customer arrives only when the test says
-/// so, as it does from a server. The list answers at once.
-class _LateDetailRepository extends FakeCustomerRepository {
-  _LateDetailRepository() : super(customers: const [rameshRao], delay: Duration.zero);
-
-  final Completer<void> _answered = Completer<void>();
-
-  void answer() => _answered.complete();
-
-  @override
-  Stream<Result<Customer, String>> watchCustomerById(String id) async* {
-    await _answered.future;
-    yield* super.watchCustomerById(id);
-  }
 }

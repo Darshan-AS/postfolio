@@ -227,9 +227,11 @@ class EntityDetailHeader extends StatelessWidget {
   final Widget? footer;
   final List<Widget> bottomActions;
 
-  /// Identifies the entity. With the same tag on its row in a list, the avatar and the
-  /// title travel here from the row that opened the screen (see [EntityHero]). Null while
-  /// the header shows a placeholder.
+  /// Identifies the entity and the row that opened the screen (`EntityHero.tagFrom`). The
+  /// avatar and the title travel here from that row; a part of the [subtitle] that the
+  /// row shows too wraps itself in an [EntityHero]. Everything else in the header waits
+  /// for them to land ([EntityHeroFollower]). Null while the header shows a placeholder,
+  /// and when no row opened the screen.
   final Object? heroTag;
 
   const EntityDetailHeader({
@@ -281,14 +283,14 @@ class EntityDetailHeader extends StatelessWidget {
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
-                      children: [titleText, ?subtitle],
+                      children: [titleText, ?waiting(subtitle)],
                     ),
             ),
             if (badge != null && !stacked) ...[AppSpacings.gapSm, ?waiting(badge)],
           ],
         ),
         if (stacked)
-          for (final line in [subtitle, waiting(badge)].nonNulls) ...[
+          for (final line in [waiting(subtitle), waiting(badge)].nonNulls) ...[
             AppSpacings.gapXs,
             Align(alignment: AlignmentDirectional.centerStart, child: line),
           ],

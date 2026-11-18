@@ -22,6 +22,7 @@ import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
@@ -53,10 +54,14 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
   final String depositId;
   final String? initialTab;
 
+  /// Where the row that opened the screen is, when a row did (`EntityHero.tagFrom`).
+  final String? openedFrom;
+
   const RecurringDepositDetailScreen({
     super.key,
     required this.depositId,
     this.initialTab,
+    this.openedFrom,
   });
 
   @override
@@ -69,12 +74,18 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
     final activeTab = useState(tabFromRoute ?? RDDetailTab.info);
     final projectionAsync = ref.watch(rdLedgerProjectionProvider(depositId));
 
+    final record = ref.watch(recurringDepositByIdProvider(depositId));
+
     return AsyncSingleEntityBuilder<RecurringDeposit>(
-      state: ref.watch(recurringDepositByIdProvider(depositId)),
+      state: record,
+      // Opened from a row, the screen has the list's record of the deposit at once.
+      seed: ref.watch(recurringDepositInListProvider(depositId)),
       notFoundMessage: t.recurringDeposits.depositNotFound,
       onRetry: () => ref.invalidate(recurringDepositByIdProvider(depositId)),
       dummyEntity: RecurringDeposit.dummy,
       builder: (deposit) {
+        // The list's record or the full one. The placeholder of a cold start is neither.
+        final isKnown = deposit.id == depositId;
         final theme = Theme.of(context);
         final tabs = t.recurringDeposits.detailTabs;
         final fields = t.recurringDeposits.fields;
@@ -86,6 +97,8 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
 
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
+          // The list's record lacks the nominees.
+          bodyLoading: isKnown && !record.hasValue,
           onRefresh: () async {
             // The account and the three streams its ledger is projected from.
             ref.invalidate(recurringDepositByIdProvider(depositId));
@@ -150,6 +163,8 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
             };
           },
           header: EntityDetailHeader(
+            // The avatar and the account number travel here from the row.
+            heroTag: isKnown ? EntityHero.tagFrom(openedFrom, depositId) : null,
             avatarBackgroundColor: theme.colorScheme.secondaryContainer,
             avatarForegroundColor: theme.colorScheme.onSecondaryContainer,
             avatarText: deposit.avatarLabel,
