@@ -25,6 +25,13 @@ void main() {
 
   Finder avatar() => find.byType(AppShapeAvatar);
 
+  /// The size of the font [text] is drawn in.
+  double fontSize(WidgetTester tester, Finder text) => tester
+      .widget<RichText>(find.descendant(of: text, matching: find.byType(RichText)))
+      .text
+      .style!
+      .fontSize!;
+
   /// The travelling parts on stage: a part in flight hides both of its ends.
   Future<void> expectOneOfEach(WidgetTester tester) async {
     expect(avatar(), findsOneWidget);
@@ -56,6 +63,7 @@ void main() {
     final router = await pumpSignedInApp(tester);
     final rowAvatar = tester.getRect(avatar());
     final rowName = tester.getRect(find.text(name));
+    final rowNameSize = fontSize(tester, find.text(name));
     expect(rowAvatar.width, AppDimensions.avatarMd);
 
     await openFromRow(tester);
@@ -71,9 +79,12 @@ void main() {
     expect(flying.width, greaterThan(AppDimensions.avatarMd));
     expect(flying.width, lessThan(AppDimensions.avatarLg));
     expect(flying.top, lessThan(rowAvatar.top));
-    // The name on the way is the screen's copy, scaled: laid out as it will be at the head,
-    // not wrapped or cut to the box it is passing through.
-    final flyingName = tester.renderObject<RenderBox>(find.text(name)).size;
+    // A line of text changes style on the way: its font is between the row's size and the
+    // head's, so it leaves the row and reaches the head without a change of size. (The
+    // phone number takes two lines in the row in the test font, so here it travels as the
+    // screen's copy, scaled.)
+    final flyingNameSize = fontSize(tester, find.text(name));
+    expect(flyingNameSize, greaterThan(rowNameSize));
 
     await tester.pumpAndSettle();
 
@@ -84,7 +95,7 @@ void main() {
     expect(tester.getRect(avatar()).width, AppDimensions.avatarLg);
     expect(tester.getRect(avatar()).top, lessThan(rowAvatar.top));
     expect(tester.getRect(find.text(name)).height, greaterThan(rowName.height));
-    expect(tester.renderObject<RenderBox>(find.text(name)).size, flyingName);
+    expect(fontSize(tester, find.text(name)), greaterThan(flyingNameSize));
     expect(tester.takeException(), isNull);
   });
 

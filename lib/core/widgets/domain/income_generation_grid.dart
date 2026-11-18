@@ -10,12 +10,17 @@ class IncomeGenerationGrid extends StatelessWidget {
   final String payoutFrequency;
   final double totalInterestEarned;
 
+  /// The [principal] is the amount on the deposit's row: it travels here from the row
+  /// that opened the screen.
+  final Object? principalHeroTag;
+
   const IncomeGenerationGrid({
     super.key,
     required this.principal,
     required this.periodicPayout,
     required this.payoutFrequency,
     required this.totalInterestEarned,
+    this.principalHeroTag,
   });
 
   @override
@@ -23,7 +28,11 @@ class IncomeGenerationGrid extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return ProjectionSummary(
       lines: [
-        ProjectionLine(label: t.projections.lockedPrincipal, amount: principal),
+        ProjectionLine(
+          label: t.projections.lockedPrincipal,
+          amount: principal,
+          heroTag: principalHeroTag,
+        ),
         // The payout is what the holder receives; it keeps its own accent.
         ProjectionLine(
           label: t.projections.payoutTitle(frequency: payoutFrequency),

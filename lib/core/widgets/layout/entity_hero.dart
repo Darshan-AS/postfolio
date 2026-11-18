@@ -3,9 +3,10 @@ import 'package:postfolio/core/theme/app_motion.dart';
 
 /// The parts of an entity that its row in a list and the head of its screen both show.
 ///
-/// A part is named for its place at the head. A deposit's account number is the head's
-/// [title], also in a list where it is the second line of the row.
-enum EntityHeroPart { avatar, title, subtitle }
+/// A part is named for its place on the screen. A deposit's account number is the head's
+/// [title], also in a list where it is the second line of the row. Its [amount] is the
+/// first figure under the head.
+enum EntityHeroPart { avatar, title, subtitle, amount }
 
 /// A part of an entity that travels between its row in a list and the head of its screen
 /// when the screen opens, and back when it is closed with the back button.
@@ -14,8 +15,10 @@ enum EntityHeroPart { avatar, title, subtitle }
 /// It is the framework's `Hero`: the screens keep their page transition, their URL and the
 /// back swipe, and a screen that no row opened (a link, a URL) opens as before.
 ///
-/// What travels is the copy at the head of the screen, the larger of the two, scaled to
-/// the box on its way. Laid out in a box of another size, a name would wrap or be cut.
+/// A line of text changes on the way from the row's style to the screen's: its size, its
+/// weight and its colour, so that it leaves and arrives looking as it does there. Anything
+/// else (an avatar, a name on two lines) is the screen's copy, the larger of the two,
+/// scaled to the box on its way.
 class EntityHero extends StatelessWidget {
   const EntityHero({super.key, required this.tag, required this.part, required this.child});
 
@@ -54,21 +57,63 @@ class EntityHero extends StatelessWidget {
     BuildContext toHeroContext,
   ) {
     // The screen is the route on top: where a push goes to and where a pop comes from.
-    final onScreen = direction == HeroFlightDirection.push ? toHeroContext : fromHeroContext;
-    final size = (onScreen.findRenderObject()! as RenderBox).size;
+    final isPush = direction == HeroFlightDirection.push;
+    final onScreen = isPush ? toHeroContext : fromHeroContext;
+    final inRow = isPush ? fromHeroContext : toHeroContext;
+    final atScreen = (onScreen.widget as Hero).child;
+    final atRow = (inRow.widget as Hero).child;
 
+    if (atScreen is Text &&
+        atRow is Text &&
+        atScreen.data != null &&
+        _isOneLine(onScreen, atScreen) &&
+        _isOneLine(inRow, atRow)) {
+      final (_, part) = (onScreen.widget as Hero).tag as (Object, EntityHeroPart);
+      // The route's animation is at 0 with the row and at 1 with the screen, whichever
+      // way the parts are going.
+      return DefaultTextStyleTransition(
+        style: animation.drive(
+          TextStyleTween(begin: _styleOf(inRow, atRow), end: _styleOf(onScreen, atScreen)),
+        ),
+        child: Align(
+          // An amount ends its line at both places; everything else starts it.
+          alignment: part == EntityHeroPart.amount
+              ? AlignmentDirectional.centerEnd
+              : AlignmentDirectional.centerStart,
+          child: Text(
+            atScreen.data!,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.visible,
+          ),
+        ),
+      );
+    }
+
+    final size = (onScreen.findRenderObject()! as RenderBox).size;
     return FittedBox(
       alignment: AlignmentDirectional.centerStart,
       child: SizedBox.fromSize(
         size: size,
         // In flight the copy is drawn above both screens, where no `Material` gives text
         // its default style.
-        child: Material(
-          type: MaterialType.transparency,
-          child: (onScreen.widget as Hero).child,
-        ),
+        child: Material(type: MaterialType.transparency, child: atScreen),
       ),
     );
+  }
+
+  /// The style [text] is drawn in at [context], complete, so that two of them can be
+  /// blended.
+  static TextStyle _styleOf(BuildContext context, Text text) =>
+      DefaultTextStyle.of(context).style.merge(text.style).copyWith(inherit: false);
+
+  /// Whether [text] takes one line at [context]. Two lines are at least two and a half
+  /// times the font's size tall, one line at most one and a half.
+  static bool _isOneLine(BuildContext context, Text text) {
+    final fontSize = _styleOf(context, text).fontSize;
+    if (fontSize == null) return false;
+    final height = (context.findRenderObject()! as RenderBox).size.height;
+    return height < 2 * MediaQuery.textScalerOf(context).scale(fontSize);
   }
 }
 

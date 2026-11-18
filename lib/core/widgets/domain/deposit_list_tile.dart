@@ -61,7 +61,8 @@ class DepositListTile extends StatelessWidget {
   });
 
   /// Identifies the deposit and the row (`EntityHero.tagFrom`). The avatar and the account
-  /// number travel to the head of the deposit's screen, which is titled by that number.
+  /// number travel to the head of the deposit's screen, which is titled by that number,
+  /// and the amount to the first figure under it.
   final Object? heroTag;
 
   /// Whether [title] is the account number. Otherwise [subtitle] is.
@@ -169,9 +170,13 @@ class DepositListTile extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              amount.toRupeeFormat(),
-              style: emphasized.titleMedium?.copyWith(color: amountColor),
+            EntityHero(
+              tag: heroTag,
+              part: EntityHeroPart.amount,
+              child: Text(
+                amount.toRupeeFormat(),
+                style: emphasized.titleMedium?.copyWith(color: amountColor),
+              ),
             ),
             AppSpacings.gapXs,
             Row(

@@ -78,7 +78,9 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
 
     return AsyncSingleEntityBuilder<RecurringDeposit>(
       state: record,
-      // Opened from a row, the screen has the list's record of the deposit at once.
+      // Opened from a row, the screen has the list's record of the deposit at once. It
+      // lacks only the nominees, so nothing here is a placeholder meanwhile: their section
+      // arrives with the full record.
       seed: ref.watch(recurringDepositInListProvider(depositId)),
       notFoundMessage: t.recurringDeposits.depositNotFound,
       onRetry: () => ref.invalidate(recurringDepositByIdProvider(depositId)),
@@ -86,6 +88,8 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
       builder: (deposit) {
         // The list's record or the full one. The placeholder of a cold start is neither.
         final isKnown = deposit.id == depositId;
+        // The avatar, the account number and the installment travel here from the row.
+        final heroTag = isKnown ? EntityHero.tagFrom(openedFrom, depositId) : null;
         final theme = Theme.of(context);
         final tabs = t.recurringDeposits.detailTabs;
         final fields = t.recurringDeposits.fields;
@@ -97,8 +101,6 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
 
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
-          // The list's record lacks the nominees.
-          bodyLoading: isKnown && !record.hasValue,
           onRefresh: () async {
             // The account and the three streams its ledger is projected from.
             ref.invalidate(recurringDepositByIdProvider(depositId));
@@ -163,8 +165,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
             };
           },
           header: EntityDetailHeader(
-            // The avatar and the account number travel here from the row.
-            heroTag: isKnown ? EntityHero.tagFrom(openedFrom, depositId) : null,
+            heroTag: heroTag,
             avatarBackgroundColor: theme.colorScheme.secondaryContainer,
             avatarForegroundColor: theme.colorScheme.onSecondaryContainer,
             avatarText: deposit.avatarLabel,
@@ -232,6 +233,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                         amount: deposit.installmentAmount,
                         backgroundColor: theme.colorScheme.secondaryContainer,
                         textColor: theme.colorScheme.onSecondaryContainer,
+                        heroTag: heroTag,
                       ),
                       DetailStatCard(
                         title: t.recurringDeposits.fields.interestRate,

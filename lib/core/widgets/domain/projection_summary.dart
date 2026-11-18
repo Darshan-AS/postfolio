@@ -5,6 +5,7 @@ import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 
 /// One input of a projection: a label with its amount, optionally led by the arithmetic sign
 /// that joins it to the line above.
@@ -15,10 +16,15 @@ class ProjectionLine {
     this.sign,
     this.color,
     this.onColor,
+    this.heroTag,
   });
 
   final String label;
   final double amount;
+
+  /// Set on the line whose amount is the one on the deposit's row: it travels here from
+  /// the row that opened the screen (`EntityHero.tagFrom`).
+  final Object? heroTag;
 
   /// The sign in front of the label, e.g. a plus.
   final AppIconData? sign;
@@ -157,12 +163,16 @@ class _LineRow extends StatelessWidget {
     Widget amount(AlignmentGeometry alignment) => FittedBox(
       fit: BoxFit.scaleDown,
       alignment: alignment,
-      child: Text(
-        line.amount.toRupeeFormat(),
-        maxLines: 1,
-        style: AppTypography.emphasizedOf(
-          context,
-        ).titleLarge?.copyWith(color: amountColor),
+      child: EntityHero(
+        tag: line.heroTag,
+        part: EntityHeroPart.amount,
+        child: Text(
+          line.amount.toRupeeFormat(),
+          maxLines: 1,
+          style: AppTypography.emphasizedOf(
+            context,
+          ).titleLarge?.copyWith(color: amountColor),
+        ),
       ),
     );
 

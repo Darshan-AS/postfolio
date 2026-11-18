@@ -40,7 +40,9 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
 
     return AsyncSingleEntityBuilder<OneTimeDeposit>(
       state: record,
-      // Opened from a row, the screen has the list's record of the deposit at once.
+      // Opened from a row, the screen has the list's record of the deposit at once. It
+      // lacks only the nominees, so nothing here is a placeholder meanwhile: their section
+      // arrives with the full record.
       seed: ref.watch(oneTimeDepositInListProvider(depositId)),
       notFoundMessage: t.oneTimeDeposits.depositNotFound,
       onRetry: () => ref.invalidate(oneTimeDepositByIdProvider(depositId)),
@@ -48,11 +50,11 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
       builder: (deposit) {
         // The list's record or the full one. The placeholder of a cold start is neither.
         final isKnown = deposit.id == depositId;
+        // The avatar, the account number and the amount travel here from the row.
+        final heroTag = isKnown ? EntityHero.tagFrom(openedFrom, depositId) : null;
 
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
-          // The list's record lacks the nominees.
-          bodyLoading: isKnown && !record.hasValue,
           onRefresh: () => ref.refresh(oneTimeDepositByIdProvider(depositId).future),
           // In the menu, with its label, as on the deposit's row in the list. It was a bare
           // seal icon in the app bar.
@@ -113,8 +115,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 : null;
           },
           header: EntityDetailHeader(
-            // The avatar and the account number travel here from the row.
-            heroTag: isKnown ? EntityHero.tagFrom(openedFrom, depositId) : null,
+            heroTag: heroTag,
             avatarText: deposit.schemeType.shortName,
             avatarSubtext: deposit.schemeTermLabel,
             avatarShape: deposit.schemeType.avatarShape,
@@ -156,6 +157,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                       totalInvested: totalInvested,
                       projectedInterest: totalInterestEarned,
                       maturityAmount: maturityAmount,
+                      investedHeroTag: heroTag,
                     ),
                   ],
                 ),
@@ -169,6 +171,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   periodicPayout: periodicPayoutAmount,
                   payoutFrequency: payoutFrequency.displayName,
                   totalInterestEarned: totalInterestEarned,
+                  principalHeroTag: heroTag,
                 ),
             },
             // 16dp, the gap between any two blocks of a detail screen; the figures were

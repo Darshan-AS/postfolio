@@ -33,9 +33,12 @@ const rameshRao = Customer(
 );
 
 /// A time deposit of [rameshRao]'s, for a test that puts one in the list.
+///
+/// The account numbers are short enough to take one line as the title of the deposit's
+/// screen in the test font, which is about twice as wide as the app's.
 final rameshTimeDeposit = OneTimeDeposit(
   id: 'otd-1',
-  accountNo: '500600701',
+  accountNo: '50060701',
   principalAmount: 100000,
   termYears: 5,
   termMonths: 0,
@@ -46,11 +49,26 @@ final rameshTimeDeposit = OneTimeDeposit(
   startDate: DateTime(2025, 4, 20),
 );
 
+/// A savings certificate of [rameshRao]'s: a one-time deposit that grows to maturity
+/// instead of paying interest out, so its screen leads with another set of figures.
+final rameshSavingsCertificate = OneTimeDeposit(
+  id: 'otd-2',
+  accountNo: '50060702',
+  principalAmount: 50000,
+  termYears: 5,
+  termMonths: 0,
+  interestRate: 7.7,
+  customerId: rameshRao.id,
+  customerName: rameshRao.name,
+  schemeType: OneTimeSchemeType.nationalSavingsCertificate,
+  startDate: DateTime(2025, 4, 20),
+);
+
 /// A recurring deposit of [rameshRao]'s, for a test that puts one in the list.
 final rameshRecurringDeposit = RecurringDeposit(
   id: 'rd-1',
   serialNo: '7',
-  accountNo: '100200301',
+  accountNo: '10020301',
   installmentAmount: 2000,
   termYears: 5,
   termMonths: 0,
@@ -74,6 +92,23 @@ class LateCustomerRepository extends FakeCustomerRepository {
   Stream<Result<Customer, String>> watchCustomerById(String id) async* {
     await _answered.future;
     yield* super.watchCustomerById(id);
+  }
+}
+
+/// A one-time deposit repository whose full record of a deposit arrives only when the
+/// test says so, as it does from a server. The list answers at once.
+class LateOneTimeDepositRepository extends FakeOneTimeDepositRepository {
+  LateOneTimeDepositRepository()
+    : super(deposits: [rameshTimeDeposit], delay: Duration.zero);
+
+  final Completer<void> _answered = Completer<void>();
+
+  void answer() => _answered.complete();
+
+  @override
+  Stream<Result<OneTimeDeposit, String>> watchOneTimeDepositById(String id) async* {
+    await _answered.future;
+    yield* super.watchOneTimeDepositById(id);
   }
 }
 

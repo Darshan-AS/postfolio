@@ -12,6 +12,7 @@ import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 
 /// The heading above a group of rows on a detail screen.
 class DetailSectionTitle extends StatelessWidget {
@@ -219,12 +220,17 @@ class DetailStatCard extends StatelessWidget {
   final Color? backgroundColor;
   final Color? textColor;
 
+  /// Set when the figure is also on the row that opened the screen: it travels here from
+  /// that row (`EntityHero.tagFrom`).
+  final Object? heroTag;
+
   const DetailStatCard({
     super.key,
     required this.title,
     required this.value,
     this.backgroundColor,
     this.textColor,
+    this.heroTag,
   });
 
   @override
@@ -252,11 +258,15 @@ class DetailStatCard extends StatelessWidget {
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: AlignmentDirectional.centerStart,
-              child: Text(
-                value,
-                maxLines: 1,
-                style: AppTypography.emphasizedOf(context).headlineSmall?.copyWith(
-                  color: fg,
+              child: EntityHero(
+                tag: heroTag,
+                part: EntityHeroPart.amount,
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  style: AppTypography.emphasizedOf(context).headlineSmall?.copyWith(
+                    color: fg,
+                  ),
                 ),
               ),
             ),
@@ -274,12 +284,16 @@ class DetailAmountCard extends StatelessWidget {
   final Color? backgroundColor;
   final Color? textColor;
 
+  /// See [DetailStatCard.heroTag].
+  final Object? heroTag;
+
   const DetailAmountCard({
     super.key,
     required this.title,
     required this.amount,
     this.backgroundColor,
     this.textColor,
+    this.heroTag,
   });
 
   @override
@@ -289,6 +303,7 @@ class DetailAmountCard extends StatelessWidget {
       value: amount.toRupeeFormat(),
       backgroundColor: backgroundColor,
       textColor: textColor,
+      heroTag: heroTag,
     );
   }
 }

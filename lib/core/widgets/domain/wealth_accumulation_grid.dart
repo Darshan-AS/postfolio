@@ -10,11 +10,16 @@ class WealthAccumulationGrid extends StatelessWidget {
   final double projectedInterest;
   final double maturityAmount;
 
+  /// Set when [totalInvested] is the amount on the deposit's row (a one-time deposit's
+  /// principal): it travels here from the row that opened the screen.
+  final Object? investedHeroTag;
+
   const WealthAccumulationGrid({
     super.key,
     required this.totalInvested,
     required this.projectedInterest,
     required this.maturityAmount,
+    this.investedHeroTag,
   });
 
   @override
@@ -24,6 +29,7 @@ class WealthAccumulationGrid extends StatelessWidget {
         ProjectionLine(
           label: t.projections.totalInvested,
           amount: totalInvested,
+          heroTag: investedHeroTag,
         ),
         ProjectionLine(
           label: t.projections.estInterest,

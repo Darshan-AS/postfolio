@@ -96,12 +96,13 @@ class CustomerDetailScreen extends ConsumerWidget {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                EntityHero(
-                  tag: heroTag,
-                  part: EntityHeroPart.subtitle,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerStart,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  // Around the text itself: a line of text changes style on its way.
+                  child: EntityHero(
+                    tag: heroTag,
+                    part: EntityHeroPart.subtitle,
                     child: Text(
                       customer.phone?.toPhoneFormat() ?? t.common.notProvided,
                       maxLines: 1,
