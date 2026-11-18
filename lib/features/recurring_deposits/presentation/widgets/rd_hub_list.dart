@@ -429,7 +429,10 @@ class _RDHubRow extends ConsumerWidget {
           tab: 'schedule',
         ).push(context),
         onLongPress: () {
-          if (!isSelectionMode) selection.toggle(id);
+          if (isSelectionMode) return;
+          // The platform's feedback for a long press: it has started something.
+          Feedback.forLongPress(context);
+          selection.toggle(id);
         },
         onCollect: onCollect,
         onDeposit: onDeposit,
