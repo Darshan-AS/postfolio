@@ -14,6 +14,7 @@ import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart' show EntityAction;
 import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
+import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 
 export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart' show AppAvatarShape;
@@ -280,7 +281,7 @@ class EntityDetailHeader extends StatelessWidget {
             EntityHero(
               tag: heroTag,
               part: EntityHeroPart.avatar,
-              child: _buildAvatar(theme, emphasized),
+              child: _buildAvatar(theme),
             ),
             AppSpacings.gapLg,
             Expanded(
@@ -316,62 +317,24 @@ class EntityDetailHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatar(ThemeData theme, TextTheme emphasized) {
-    final fgColor =
-        avatarForegroundColor ?? theme.colorScheme.onPrimaryContainer;
-    final hasSubtext = avatarSubtext != null && avatarSubtext!.isNotEmpty;
-
+  Widget _buildAvatar(ThemeData theme) {
+    final text = avatarText;
+    if (avatarChild == null && text != null) {
+      return EntityAvatar(
+        text: text,
+        subtext: avatarSubtext,
+        shape: avatarShape,
+        backgroundColor: avatarBackgroundColor,
+        foregroundColor: avatarForegroundColor,
+        prominence: 1,
+      );
+    }
     return AppShapeAvatar(
       size: AppDimensions.avatarLg,
       shape: avatarShape,
-      backgroundColor:
-          avatarBackgroundColor ?? theme.colorScheme.primaryContainer,
-      foregroundColor: fgColor,
-      child:
-          avatarChild ??
-          (avatarText != null
-              ? Padding(
-                  padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          avatarText!,
-                          textHeightBehavior: const TextHeightBehavior(
-                            applyHeightToFirstAscent: false,
-                            applyHeightToLastDescent: false,
-                          ),
-                          style: emphasized.displaySmall?.copyWith(
-                            height: hasSubtext
-                                ? AppDimensions.lineHeightTight
-                                : null,
-                            color: fgColor,
-                          ),
-                        ),
-                        if (hasSubtext) ...[
-                          AppSpacings.gapXs,
-                          Text(
-                            avatarSubtext!,
-                            textHeightBehavior: const TextHeightBehavior(
-                              applyHeightToFirstAscent: false,
-                              applyHeightToLastDescent: false,
-                            ),
-                            style: emphasized.titleMedium?.copyWith(
-                              height: AppDimensions.lineHeightTight,
-                              color: fgColor.withValues(
-                                alpha: AppDimensions.opacityMuted,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink()),
+      backgroundColor: avatarBackgroundColor ?? theme.colorScheme.primaryContainer,
+      foregroundColor: avatarForegroundColor ?? theme.colorScheme.onPrimaryContainer,
+      child: avatarChild ?? const SizedBox.shrink(),
     );
   }
 }

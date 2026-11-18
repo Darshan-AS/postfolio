@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_motion.dart';
+import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
 
 /// The parts of an entity that its row in a list and the head of its screen both show.
 ///
@@ -16,9 +17,10 @@ enum EntityHeroPart { avatar, title, subtitle, amount }
 /// back swipe, and a screen that no row opened (a link, a URL) opens as before.
 ///
 /// A line of text changes on the way from the row's style to the screen's: its size, its
-/// weight and its colour, so that it leaves and arrives looking as it does there. Anything
-/// else (an avatar, a name on two lines) is the screen's copy, the larger of the two,
-/// scaled to the box on its way.
+/// weight and its colour, so that it leaves and arrives looking as it does there. So does
+/// an [EntityAvatar], whose letters are larger for its size at the head of a screen than
+/// in a row. Anything else (a name on two lines) is the screen's copy, the larger of the
+/// two, scaled to the box on its way.
 class EntityHero extends StatelessWidget {
   const EntityHero({super.key, required this.tag, required this.part, required this.child});
 
@@ -87,6 +89,14 @@ class EntityHero extends StatelessWidget {
             overflow: TextOverflow.visible,
           ),
         ),
+      );
+    }
+
+    if (atScreen is EntityAvatar && atRow is EntityAvatar) {
+      return AnimatedBuilder(
+        animation: animation,
+        builder: (context, _) =>
+            FittedBox(child: EntityAvatar.between(atRow, atScreen, animation.value)),
       );
     }
 

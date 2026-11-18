@@ -7,6 +7,7 @@ import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/widgets/expressive/app_menu.dart';
+import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 
 export 'package:postfolio/core/widgets/expressive/app_group.dart' show AppGroupPosition;
@@ -167,7 +168,7 @@ class EntityListTile extends StatelessWidget {
                   EntityHero(
                     tag: heroTag,
                     part: EntityHeroPart.avatar,
-                    child: leading ?? _buildLeading(theme, emphasized),
+                    child: leading ?? _buildLeading(theme),
                   ),
                   AppSpacings.gapLg,
                   Expanded(
@@ -306,65 +307,23 @@ class EntityListTile extends StatelessWidget {
     );
   }
 
-  Widget _buildLeading(ThemeData theme, TextTheme emphasized) {
-    final fgColor =
-        leadingForegroundColor ?? theme.colorScheme.onPrimaryContainer;
-    final hasSubtext = leadingSubtext != null && leadingSubtext!.isNotEmpty;
-    final isSingleChar = leadingText != null && leadingText!.length == 1;
-    final textStyle = isSingleChar
-        ? emphasized.titleLarge
-        : emphasized.titleSmall;
-
+  Widget _buildLeading(ThemeData theme) {
+    final text = leadingText;
+    if (leadingIcon == null && text != null) {
+      return EntityAvatar(
+        text: text,
+        subtext: leadingSubtext,
+        shape: leadingShape,
+        backgroundColor: leadingBackgroundColor,
+        foregroundColor: leadingForegroundColor,
+      );
+    }
     return AppShapeAvatar(
       size: AppDimensions.avatarMd,
       shape: leadingShape,
-      backgroundColor:
-          leadingBackgroundColor ?? theme.colorScheme.primaryContainer,
-      foregroundColor: fgColor,
-      child:
-          leadingIcon ??
-          (leadingText != null
-              ? Padding(
-                  padding: const EdgeInsets.all(AppDimensions.paddingSm),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          leadingText!,
-                          textHeightBehavior: const TextHeightBehavior(
-                            applyHeightToFirstAscent: false,
-                            applyHeightToLastDescent: false,
-                          ),
-                          style: textStyle?.copyWith(
-                            height: hasSubtext ? 1.15 : null,
-                            color: fgColor,
-                          ),
-                        ),
-                        if (hasSubtext) ...[
-                          AppSpacings.gapXxs,
-                          Text(
-                            leadingSubtext!,
-                            textHeightBehavior: const TextHeightBehavior(
-                              applyHeightToFirstAscent: false,
-                              applyHeightToLastDescent: false,
-                            ),
-                            style: emphasized.labelSmall?.copyWith(
-                              fontSize: AppDimensions.fontXs,
-                              height: AppDimensions.lineHeightTight,
-                              color: fgColor.withValues(
-                                alpha: AppDimensions.opacityMuted,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink()),
+      backgroundColor: leadingBackgroundColor ?? theme.colorScheme.primaryContainer,
+      foregroundColor: leadingForegroundColor ?? theme.colorScheme.onPrimaryContainer,
+      child: leadingIcon ?? const SizedBox.shrink(),
     );
   }
 }

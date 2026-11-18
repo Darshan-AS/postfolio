@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
+import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/features/customers/presentation/screens/customer_detail_screen.dart';
@@ -28,19 +29,24 @@ void main() {
     matching: find.text(text),
   );
 
-  /// The copy of [text] that is drawn above both screens while it travels: the one that
-  /// is on no screen.
-  Finder aloft(String text) => find.byElementPredicate((element) {
-    if (element.widget case Text(:final data) when data == text) {
-      var onAScreen = false;
-      element.visitAncestorElements((ancestor) {
-        onAScreen = ancestor.widget is Scaffold;
-        return !onAScreen;
-      });
+  /// A widget that is drawn above both screens while it travels: one that is on no screen.
+  Finder aloftWhere(bool Function(Widget widget) test) => find.byElementPredicate((element) {
+    if (!test(element.widget)) return false;
+    var onAScreen = false;
+    element.visitAncestorElements((ancestor) {
+      onAScreen = ancestor.widget is Scaffold;
       return !onAScreen;
-    }
-    return false;
+    });
+    return !onAScreen;
   });
+
+  /// The copy of [text] that is on its way.
+  Finder aloft(String text) => aloftWhere((widget) => widget is Text && widget.data == text);
+
+  /// The form of the avatar that is on its way: 0 as in a row, 1 as at the head of a
+  /// screen.
+  double avatarForm(WidgetTester tester) =>
+      tester.widget<EntityAvatar>(aloftWhere((widget) => widget is EntityAvatar)).prominence;
 
   /// The size of the font [text] is drawn in.
   double fontSize(WidgetTester tester, Finder text) => tester
@@ -118,6 +124,8 @@ void main() {
     expect(inRow(find.text(amount)), findsNothing);
     expect(inHeadOf<S>(avatar()), findsNothing);
     expect(inHeadOf<S>(find.text(accountNo)), findsNothing);
+    // The avatar is between its form in the row and its form at the head.
+    expect(avatarForm(tester), allOf(greaterThan(0), lessThan(1)));
     // The name heads the screen as it heads the row, so it travels too, over the number.
     if (nameTravels) {
       expect(inRow(find.text(name)), findsNothing);
@@ -157,9 +165,10 @@ void main() {
       expect(fontSize(tester, inFlight(accountNo)), lessThan(headAccountSize));
     }
 
-    // Just before they land the number and the amount have the row's size of font: they
-    // do not arrive large and shrink in the row.
+    // Just before they land the number and the amount have the row's size of font, and
+    // the avatar the row's form: they do not arrive large and shrink in the row.
     await tester.pump(const Duration(milliseconds: 280));
+    expect(avatarForm(tester), lessThan(0.05));
     if (accountOnOneLine) {
       expect(fontSize(tester, inFlight(accountNo)), closeTo(rowAccountSize, 0.5));
     }

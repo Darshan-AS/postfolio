@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/extensions/string_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
+import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
@@ -24,6 +25,15 @@ void main() {
   final phone = rameshRao.phone!.toPhoneFormat();
 
   Finder avatar() => find.byType(AppShapeAvatar);
+
+  /// The form of the one avatar on stage: 0 as in a row, 1 as at the head of a screen.
+  double avatarForm(WidgetTester tester) =>
+      tester.widget<EntityAvatar>(find.byType(EntityAvatar)).prominence;
+
+  /// How tall the avatar's initial is drawn.
+  double initialHeight(WidgetTester tester) => tester
+      .getRect(find.descendant(of: avatar(), matching: find.text(name[0])))
+      .height;
 
   /// The size of the font [text] is drawn in.
   double fontSize(WidgetTester tester, Finder text) => tester
@@ -64,7 +74,9 @@ void main() {
     final rowAvatar = tester.getRect(avatar());
     final rowName = tester.getRect(find.text(name));
     final rowNameSize = fontSize(tester, find.text(name));
+    final rowInitial = initialHeight(tester);
     expect(rowAvatar.width, AppDimensions.avatarMd);
+    expect(avatarForm(tester), 0);
 
     await openFromRow(tester);
     await tester.pump(const Duration(milliseconds: 150));
@@ -79,6 +91,11 @@ void main() {
     expect(flying.width, greaterThan(AppDimensions.avatarMd));
     expect(flying.width, lessThan(AppDimensions.avatarLg));
     expect(flying.top, lessThan(rowAvatar.top));
+    // Its initial is larger for the avatar's size at the head than in the row, and is
+    // between the two on the way: the avatar does not arrive as the other form, shrunk.
+    expect(avatarForm(tester), allOf(greaterThan(0), lessThan(1)));
+    final flyingInitial = initialHeight(tester);
+    expect(flyingInitial, greaterThan(rowInitial));
     // A line of text changes style on the way: its font is between the row's size and the
     // head's, so it leaves the row and reaches the head without a change of size. (The
     // phone number takes two lines in the row in the test font, so here it travels as the
@@ -94,6 +111,8 @@ void main() {
     expect(find.descendant(of: header, matching: avatar()), findsOneWidget);
     expect(tester.getRect(avatar()).width, AppDimensions.avatarLg);
     expect(tester.getRect(avatar()).top, lessThan(rowAvatar.top));
+    expect(avatarForm(tester), 1);
+    expect(initialHeight(tester), greaterThan(flyingInitial));
     expect(tester.getRect(find.text(name)).height, greaterThan(rowName.height));
     expect(fontSize(tester, find.text(name)), greaterThan(flyingNameSize));
     expect(tester.takeException(), isNull);
@@ -102,6 +121,7 @@ void main() {
   testWidgets('the back button sends them back to the row', (tester) async {
     final router = await pumpSignedInApp(tester);
     final rowAvatar = tester.getRect(avatar());
+    final rowInitial = initialHeight(tester);
     await openFromRow(tester);
     await tester.pumpAndSettle();
     final headAvatar = tester.getRect(avatar());
@@ -114,6 +134,13 @@ void main() {
     final flying = tester.getRect(avatar());
     expect(flying.width, greaterThan(rowAvatar.width));
     expect(flying.width, lessThan(headAvatar.width));
+
+    // Just before it lands it is the row's avatar, initial and all: nothing is left to
+    // change when the row takes over.
+    await tester.pump(const Duration(milliseconds: 280));
+    expect(avatarForm(tester), lessThan(0.05));
+    expect(tester.getRect(avatar()).width, closeTo(rowAvatar.width, 0.5));
+    expect(initialHeight(tester), closeTo(rowInitial, 0.5));
 
     await tester.pumpAndSettle();
     expect(router.location(), '/customers');
