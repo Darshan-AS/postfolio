@@ -357,6 +357,19 @@ class RecurringDepositsController extends _$RecurringDepositsController {
   }
 }
 
+/// The list's record of a deposit, once the list has loaded it.
+///
+/// It is what the deposit's rows are built from, in the list, in the Hub and on its
+/// customer's screen: the deposit without its nominees, which only
+/// [recurringDepositById] fetches. A screen shows its head from this record until the
+/// full one arrives.
+@riverpod
+RecurringDeposit? recurringDepositInList(Ref ref, String id) => ref
+    .watch(recurringDepositsControllerProvider)
+    .value
+    ?.where((deposit) => deposit.id == id)
+    .firstOrNull;
+
 @riverpod
 Stream<RecurringDeposit> recurringDepositById(Ref ref, String id) {
   final repository = ref.watch(recurringDepositRepositoryProvider);

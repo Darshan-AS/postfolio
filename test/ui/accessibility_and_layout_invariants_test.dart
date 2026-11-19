@@ -76,6 +76,13 @@ void main() {
         ),
       ),
       (
+        name: 'RecurringDepositDetailScreen (Transactions)',
+        build: () => RecurringDepositDetailScreen(
+          depositId: rd.id,
+          initialTab: 'transactions',
+        ),
+      ),
+      (
         name: 'CustomerFormScreen',
         build: () => const CustomerFormScreen(),
       ),

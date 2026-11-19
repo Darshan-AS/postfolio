@@ -5,10 +5,18 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
+import 'package:postfolio/core/theme/app_surfaces.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/expressive/app_group.dart';
+import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
+import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -16,9 +24,11 @@ import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_m
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-/// Payment history tab: transactions grouped by month with projected allocation chips.
+/// Payment history tab: receipts grouped by month with projected allocation chips, then the
+/// Post Office visits of the account.
 class RDTransactionsSection extends HookConsumerWidget {
   final RecurringDeposit deposit;
   final bool isEmbeddedTab;
@@ -29,93 +39,106 @@ class RDTransactionsSection extends HookConsumerWidget {
     this.isEmbeddedTab = false,
   });
 
+  /// Half a turn: the chevron points up while the section is open.
+  static const double _openChevronTurns = 0.5;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isExpanded = useState(false);
     final theme = Theme.of(context);
+    final emphasized = AppTypography.emphasizedOf(context);
     final isBusy = ref.watch(rDLedgerControllerProvider).isLoading;
     final ledger = t.recurringDeposits.ledger;
 
-    final shape = RoundedRectangleBorder(
-      side: BorderSide(color: theme.colorScheme.outlineVariant),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-    );
-
-    if (isEmbeddedTab) {
-      return Card(
-        clipBehavior: Clip.antiAlias,
-        elevation: 0,
-        shape: shape,
-        child: Column(
+    Widget history() => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingMd,
-                vertical: AppDimensions.paddingSm,
-              ),
-              child: Row(
-                children: [
-                  const HugeIcon(
-                    icon: HugeIcons.strokeRoundedInvoice01,
-                    size: AppDimensions.iconMd,
-                  ),
-                  AppSpacings.gapSm,
-                  Expanded(
-                    child: Text(
-                      ledger.transactionsTitle,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  FilledButton.tonalIcon(
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(0, AppDimensions.minTapTarget),
-                    ),
-                    onPressed: isBusy
-                        ? null
-                        : () => showRDLogPaymentSheet(context, rdId: deposit.id),
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedCoins01,
-                      size: AppDimensions.iconXs,
-                    ),
-                    label: Text(ledger.passbook.collect),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: AppDimensions.dividerHeight),
             _RDTransactionsContent(rdId: deposit.id, isBusy: isBusy),
-            const Divider(height: AppDimensions.dividerHeight),
+            AppSpacings.gapLg,
             _RDPoVisitsList(rdId: deposit.id, isBusy: isBusy),
           ],
-        ),
+        );
+
+    if (isEmbeddedTab) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            // Lines the title up with the text inside the tiles below it.
+            padding: const EdgeInsetsDirectional.only(start: AppDimensions.paddingLg),
+            // Title and action share a line when they fit; the button drops below otherwise.
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: AppDimensions.paddingSm,
+              runSpacing: AppDimensions.paddingSm,
+              children: [
+                Text(
+                  ledger.transactionsTitle,
+                  style: emphasized.titleLarge,
+                ),
+                AppButton.tonal(
+                  label: ledger.passbook.collect,
+                  icon: HugeIcons.strokeRoundedCoins01,
+                  onPressed: isBusy
+                      ? null
+                      : () => showRDLogPaymentSheet(context, rdId: deposit.id),
+                ),
+              ],
+            ),
+          ),
+          AppSpacings.gapSm,
+          history(),
+        ],
       );
     }
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      elevation: 0,
-      shape: shape,
-      child: ExpansionTile(
-        title: Text(
-          ledger.transactionsTitle,
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+    // Stand-alone: a header row that unfolds the history. The history sits on the page
+    // below the header rather than inside it, so its tiles are not nested in a card.
+    final isOpen = isExpanded.value;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppGroupTile(
+          onTap: () => isExpanded.value = !isOpen,
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimensions.paddingLg),
+            child: Row(
+              children: [
+                HugeIcon(
+                  icon: HugeIcons.strokeRoundedInvoice01,
+                  size: AppDimensions.iconMd,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                AppSpacings.gapMd,
+                Expanded(
+                  child: Text(
+                    ledger.transactionsTitle,
+                    style: emphasized.titleMedium,
+                  ),
+                ),
+                AppSpacings.gapSm,
+                AnimatedRotation(
+                  turns: isOpen ? _openChevronTurns : 0,
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : AppMotion.spatialFastDuration,
+                  curve: AppMotion.spatialFastCurve,
+                  child: HugeIcon(
+                    icon: HugeIcons.strokeRoundedArrowDown01,
+                    size: AppDimensions.iconMd,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        leading: const HugeIcon(
-          icon: HugeIcons.strokeRoundedInvoice01,
-          size: AppDimensions.iconMd,
-        ),
-        onExpansionChanged: (value) => isExpanded.value = value,
-        children: [
-          if (isExpanded.value) ...[
-            _RDTransactionsContent(rdId: deposit.id, isBusy: isBusy),
-            const Divider(height: AppDimensions.dividerHeight),
-            _RDPoVisitsList(rdId: deposit.id, isBusy: isBusy),
-          ],
-        ],
-      ),
+        if (isOpen) ...[AppSpacings.gapSm, history()],
+      ],
     );
   }
 }
@@ -170,9 +193,13 @@ class _TransactionList extends StatelessWidget {
     required this.isBusy,
   });
 
+  /// Twice the avatar of a list row: the badge is the only thing in the empty list.
+  static const double _emptyBadgeSize = AppDimensions.avatarMd * 2;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final ledger = t.recurringDeposits.ledger;
 
     if (transactions.isEmpty) {
@@ -180,83 +207,80 @@ class _TransactionList extends StatelessWidget {
         padding: const EdgeInsets.all(AppDimensions.paddingXl),
         child: Column(
           children: [
-            HugeIcon(
-              icon: HugeIcons.strokeRoundedInvoice01,
-              size: AppDimensions.iconXl,
-              color: theme.colorScheme.onSurfaceVariant,
+            AppShapeAvatar(
+              size: _emptyBadgeSize,
+              shape: AppAvatarShape.cookie12,
+              backgroundColor: scheme.secondaryContainer,
+              foregroundColor: scheme.onSecondaryContainer,
+              child: const AppIcon(
+                HugeIcons.strokeRoundedInvoice01,
+                size: AppDimensions.iconXl - AppDimensions.paddingSm,
+              ),
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             Text(
               ledger.noPayments,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: scheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
             AppSpacings.gapLg,
-            FilledButton.icon(
+            AppButton(
+              label: ledger.passbook.collect,
+              icon: HugeIcons.strokeRoundedCoins01,
               onPressed: isBusy ? null : () => showRDLogPaymentSheet(context, rdId: rdId),
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedCoins01,
-                size: AppDimensions.iconSm,
-              ),
-              label: Text(ledger.passbook.collect),
             ),
           ],
         ),
       );
     }
 
-    final groups = RDLedgerProjection.groupTransactionsByMonth(transactions);
+    // Newest first, a run of grouped tiles per year. A header per month is, for a payment
+    // made every month, a header per receipt, above a receipt that already says its date.
+    final groups = <({int year, List<RDTransaction> items})>[];
+    for (final month in RDLedgerProjection.groupTransactionsByMonth(transactions)) {
+      if (groups.isEmpty || groups.last.year != month.month.year) {
+        groups.add((year: month.month.year, items: <RDTransaction>[]));
+      }
+      groups.last.items.addAll(month.items);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        for (final group in groups) ...[
-          _MonthHeader(label: group.month.toMonthYearFormat()),
-          for (final tx in group.items)
+        for (final (g, group) in groups.indexed) ...[
+          if (g > 0) AppSpacings.gapSm,
+          DetailSectionTitle(group.year.toString()),
+          for (final (i, tx) in group.items.indexed) ...[
+            if (i > 0) const SizedBox(height: AppShapes.groupGap),
             RDTransactionTile(
               rdId: rdId,
               transaction: tx,
               allocations: allocationsByTx[tx.id] ?? const [],
               isBusy: isBusy,
+              position: AppGroupPosition.at(i, group.items.length),
             ),
+          ],
         ],
       ],
     );
   }
 }
 
-class _MonthHeader extends StatelessWidget {
-  final String label;
-
-  const _MonthHeader({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      color: theme.colorScheme.surfaceContainerLow,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLg,
-        vertical: AppDimensions.paddingXs,
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
+/// One receipt: the amount collected, when and how it was paid, and the months it was
+/// applied to. Swiping it away or its overflow menu deletes the payment after confirmation.
+///
+/// The receipt is a grouped tile: pass its [position] among the receipts of its month.
 class RDTransactionTile extends ConsumerWidget {
   final String rdId;
   final RDTransaction transaction;
   final List<RDAllocationSlice> allocations;
   final bool isBusy;
+
+  /// Where this receipt sits among the rows of its group.
+  final AppGroupPosition position;
 
   const RDTransactionTile({
     super.key,
@@ -264,6 +288,7 @@ class RDTransactionTile extends ConsumerWidget {
     required this.transaction,
     required this.isBusy,
     this.allocations = const [],
+    this.position = AppGroupPosition.single,
   });
 
   Future<void> _confirmAndDelete(BuildContext context, WidgetRef ref) async {
@@ -298,133 +323,172 @@ class RDTransactionTile extends ConsumerWidget {
     final ledger = t.recurringDeposits.ledger;
     final tx = transaction;
 
-    final modeIcon = switch (tx.paymentMode) {
-      RDPaymentMode.cash => HugeIcons.strokeRoundedCoins01,
-      RDPaymentMode.upi => HugeIcons.strokeRoundedCreditCard,
-      RDPaymentMode.cheque => HugeIcons.strokeRoundedTicket01,
-      RDPaymentMode.bankTransfer => HugeIcons.strokeRoundedBank,
-    };
-
-    final tile = ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(AppDimensions.paddingSm),
-        decoration: BoxDecoration(
-          color: scheme.secondaryContainer,
-          shape: BoxShape.circle,
+    final tile = AppGroupTile(
+      position: position,
+      child: Padding(
+        // The overflow button ends the row, so the tile adds no trailing inset of its own.
+        padding: const EdgeInsetsDirectional.only(
+          start: AppDimensions.paddingLg,
+          top: AppDimensions.paddingMd,
+          bottom: AppDimensions.paddingMd,
         ),
-        child: HugeIcon(
-          icon: modeIcon,
-          size: AppDimensions.iconSm,
-          color: scheme.onSecondaryContainer,
-        ),
-      ),
-      title: Text(
-        tx.amount.toRupeeFormat(),
-        style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            ledger.installmentDetails.paidOnVia(
-              date: tx.paidDate.toAppFormat(),
-              mode: tx.paymentMode.displayName,
+        child: Row(
+          children: [
+            AppShapeAvatar(
+              size: AppDimensions.avatarMd,
+              // The mode is the icon. It also had a shape of its own, two of them the
+              // shapes of deposit schemes.
+              shape: AppAvatarShape.neutral,
+              backgroundColor: scheme.secondaryContainer,
+              foregroundColor: scheme.onSecondaryContainer,
+              child: AppIcon(tx.paymentMode.icon, size: AppDimensions.iconMd),
             ),
-          ),
-          AppSpacings.gapXs,
-          Wrap(
-            spacing: AppDimensions.paddingXs,
-            runSpacing: AppDimensions.paddingXs,
-            children: [
-              for (final slice in allocations)
-                if (slice.isCredit)
-                  _AllocationChip(
-                    label: ledger.allocations.creditPill(
-                      amount: slice.amount.toRupeeFormat(),
+            AppSpacings.gapLg,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // The amount shrinks rather than wraps when width is tight.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      tx.amount.toRupeeFormat(),
+                      maxLines: 1,
+                      style: AppTypography.emphasizedOf(context).titleMedium,
                     ),
-                    backgroundColor: scheme.surfaceContainerHighest,
-                    foregroundColor: scheme.onSurfaceVariant,
-                  )
-                else if (slice.isOpeningReceivable)
-                  _AllocationChip(
-                    label: ledger.allocations.openingDuesPill(
-                      amount: slice.amount.toRupeeFormat(),
-                    ),
-                    backgroundColor: scheme.secondaryContainer,
-                    foregroundColor: scheme.onSecondaryContainer,
-                  )
-                else
-                  _AllocationChip(
-                    label: ledger.allocations.installmentPill(
-                      month: slice.installmentNo.toString(),
-                      amount: slice.amount.toRupeeFormat(),
-                    ),
-                    backgroundColor: scheme.primaryContainer,
-                    foregroundColor: scheme.onPrimaryContainer,
                   ),
-            ],
-          ),
-        ],
-      ),
-      trailing: MenuAnchor(
-        builder: (context, controller, child) => IconButton(
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedMoreVertical,
-            size: AppDimensions.iconMd,
-          ),
-          tooltip: t.common.moreOptions,
-          onPressed: isBusy
-              ? null
-              : () => controller.isOpen ? controller.close() : controller.open(),
+                  AppSpacings.gapXxs,
+                  Text(
+                    ledger.installmentDetails.paidOnVia(
+                      date: tx.paidDate.toAppFormat(),
+                      mode: tx.paymentMode.displayName,
+                    ),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  if (allocations.isNotEmpty) ...[
+                    AppSpacings.gapSm,
+                    Wrap(
+                      spacing: AppDimensions.paddingXs,
+                      runSpacing: AppDimensions.paddingXs,
+                      children: [
+                        for (final slice in allocations)
+                          if (slice.isCredit)
+                            _AllocationChip(
+                              label: ledger.allocations.creditPill(
+                                amount: slice.amount.toRupeeFormat(),
+                              ),
+                              backgroundColor: scheme.inset,
+                              foregroundColor: scheme.onSurfaceVariant,
+                            )
+                          else if (slice.isOpeningReceivable)
+                            _AllocationChip(
+                              label: ledger.allocations.openingDuesPill(
+                                amount: slice.amount.toRupeeFormat(),
+                              ),
+                              backgroundColor: scheme.secondaryContainer,
+                              foregroundColor: scheme.onSecondaryContainer,
+                            )
+                          else
+                            // Neutral: it is a label. In the primary tone it looked like
+                            // something to tap.
+                            _AllocationChip(
+                              label: ledger.allocations.installmentPill(
+                                month: slice.installmentNo.toString(),
+                                amount: slice.amount.toRupeeFormat(),
+                              ),
+                              backgroundColor: scheme.inset,
+                              foregroundColor: scheme.onSurfaceVariant,
+                            ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            AppMenu(
+              entries: [
+                AppMenuEntry(
+                  label: ledger.actions.editPayment,
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedEdit02,
+                    size: AppDimensions.iconSm,
+                  ),
+                  onPressed: () => showRDEditPaymentSheet(context, rdId: rdId, transaction: tx),
+                ),
+                AppMenuEntry(
+                  label: ledger.actions.deletePayment,
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedDelete02,
+                    size: AppDimensions.iconSm,
+                  ),
+                  isDestructive: true,
+                  onPressed: () => _confirmAndDelete(context, ref),
+                ),
+              ],
+              anchorBuilder: (context, open) => IconButton(
+                padding: EdgeInsets.zero,
+                style: IconButton.styleFrom(
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  minimumSize: const Size(
+                    AppDimensions.minTapTarget,
+                    AppDimensions.minTapTarget,
+                  ),
+                  maximumSize: const Size(
+                    AppDimensions.minTapTarget,
+                    AppDimensions.minTapTarget,
+                  ),
+                  padding: EdgeInsets.zero,
+                ),
+                icon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedMoreVertical,
+                  size: AppDimensions.iconMd,
+                ),
+                tooltip: t.common.moreOptions,
+                onPressed: isBusy ? null : open,
+              ),
+            ),
+          ],
         ),
-        menuChildren: [
-          MenuItemButton(
-            leadingIcon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedEdit02,
-              size: AppDimensions.iconSm,
-            ),
-            child: Text(ledger.actions.editPayment),
-            onPressed: () => showRDEditPaymentSheet(context, rdId: rdId, transaction: tx),
-          ),
-          MenuItemButton(
-            leadingIcon: HugeIcon(
-              icon: HugeIcons.strokeRoundedDelete02,
-              size: AppDimensions.iconSm,
-              color: scheme.error,
-            ),
-            child: Text(
-              ledger.actions.deletePayment,
-              style: theme.textTheme.labelLarge?.copyWith(color: scheme.error),
-            ),
-            onPressed: () => _confirmAndDelete(context, ref),
-          ),
-        ],
       ),
     );
 
-    return Dismissible(
-      key: ValueKey('rd_tx_${tx.id}'),
-      direction: isBusy ? DismissDirection.none : DismissDirection.endToStart,
-      background: Container(
-        color: scheme.errorContainer,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
-        child: HugeIcon(
-          icon: HugeIcons.strokeRoundedDelete02,
-          size: AppDimensions.iconMd,
-          color: scheme.onErrorContainer,
+    // Clipped to the tile's slot, so a swiped receipt slides out of its own row and never
+    // across the page margin.
+    return ClipRRect(
+      borderRadius: AppShapes.groupRadius(position),
+      child: Dismissible(
+        key: ValueKey('rd_tx_${tx.id}'),
+        direction: isBusy ? DismissDirection.none : DismissDirection.endToStart,
+        background: ColoredBox(
+          color: scheme.errorContainer,
+          child: Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+              child: HugeIcon(
+                icon: HugeIcons.strokeRoundedDelete02,
+                size: AppDimensions.iconMd,
+                color: scheme.onErrorContainer,
+              ),
+            ),
+          ),
         ),
+        // The stream removes the row once the delete lands, so never dismiss optimistically.
+        confirmDismiss: (_) async {
+          await _confirmAndDelete(context, ref);
+          return false;
+        },
+        child: tile,
       ),
-      // The stream removes the row once the delete lands, so never dismiss optimistically.
-      confirmDismiss: (_) async {
-        await _confirmAndDelete(context, ref);
-        return false;
-      },
-      child: tile,
     );
   }
 }
 
+/// Where part of a payment went: a month, the opening dues, or credit carried forward.
 class _AllocationChip extends StatelessWidget {
   final String label;
   final Color backgroundColor;
@@ -438,21 +502,24 @@ class _AllocationChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingSm,
-        vertical: AppDimensions.paddingXxs,
-      ),
-      decoration: BoxDecoration(
+    // The chip carries an amount: in a narrow tile it shrinks rather than wraps.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Material(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMax),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: foregroundColor,
-          fontWeight: FontWeight.w600,
+        shape: AppShapes.pill,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingSm,
+            vertical: AppDimensions.paddingXs,
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            style: AppTypography.emphasizedOf(
+              context,
+            ).labelSmall?.copyWith(color: foregroundColor),
+          ),
         ),
       ),
     );
@@ -466,6 +533,9 @@ class _RDPoVisitsList extends ConsumerWidget {
   final bool isBusy;
 
   const _RDPoVisitsList({required this.rdId, required this.isBusy});
+
+  /// Above this text scale a visit and its Undo button no longer fit side by side.
+  static const double _stackAboveTextScale = AppDimensions.largeTextScale;
 
   Future<void> _undoLatest(
     BuildContext context,
@@ -509,69 +579,81 @@ class _RDPoVisitsList extends ConsumerWidget {
       AsyncError() || AsyncLoading() => const <RDPoDeposit>[],
     };
 
+    // Only the latest visit can be undone. At large text sizes its button moves under the
+    // text, which then keeps the full width of the row.
+    final stacked =
+        MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
+
+    Widget undo(RDPoDeposit visit) => AppButton.text(
+          label: t.recurringDeposits.ledger.actions.undo,
+          onPressed: isBusy ? null : () => _undoLatest(context, ref, visit),
+        );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppDimensions.paddingLg,
-            AppDimensions.paddingMd,
-            AppDimensions.paddingLg,
-            AppDimensions.paddingXs,
-          ),
-          child: Row(
-            children: [
-              HugeIcon(
-                icon: HugeIcons.strokeRoundedBuilding03,
-                size: AppDimensions.iconSm,
-                color: scheme.onSurfaceVariant,
-              ),
-              AppSpacings.gapSm,
-              Text(
-                passbook.poVisitsTitle,
-                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ),
+        DetailSectionTitle(passbook.poVisitsTitle),
         if (visits.isEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimensions.paddingLg,
-              AppDimensions.paddingXs,
-              AppDimensions.paddingLg,
-              AppDimensions.paddingLg,
-            ),
-            child: Text(
-              passbook.noPoVisits,
-              style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          AppGroupTile(
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.paddingLg),
+              child: Text(
+                passbook.noPoVisits,
+                style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+              ),
             ),
           )
         else
-          for (final (i, visit) in visits.indexed)
-            ListTile(
-              dense: true,
-              leading: HugeIcon(
-                icon: HugeIcons.strokeRoundedCheckmarkBadge01,
-                size: AppDimensions.iconSm,
-                color: scheme.primary,
-              ),
-              title: Text(
-                passbook.poVisit(
-                  date: visit.depositedOn.toAppFormat(),
-                  count: visit.installmentCount.toString(),
-                  amount: visit.amount.toRupeeFormat(),
-                  fee: visit.feePaid.toRupeeFormat(),
+          for (final (i, visit) in visits.indexed) ...[
+            if (i > 0) const SizedBox(height: AppShapes.groupGap),
+            AppGroupTile(
+              position: AppGroupPosition.at(i, visits.length),
+              child: Padding(
+                // The undo button brings its own trailing inset.
+                padding: EdgeInsetsDirectional.only(
+                  start: AppDimensions.paddingLg,
+                  end: i == visits.length - 1 && !stacked
+                      ? AppDimensions.paddingSm
+                      : AppDimensions.paddingLg,
+                  top: AppDimensions.paddingMd,
+                  bottom: AppDimensions.paddingMd,
                 ),
-                style: theme.textTheme.bodySmall,
+                child: Row(
+                  children: [
+                    HugeIcon(
+                      icon: HugeIcons.strokeRoundedCheckmarkBadge01,
+                      size: AppDimensions.iconMd,
+                      color: scheme.primary,
+                    ),
+                    AppSpacings.gapMd,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            passbook.poVisit(
+                              date: visit.depositedOn.toAppFormat(),
+                              count: visit.installmentCount.toString(),
+                              amount: visit.amount.toRupeeFormat(),
+                              fee: visit.feePaid.toRupeeFormat(),
+                            ),
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          if (i == visits.length - 1 && stacked) undo(visit),
+                        ],
+                      ),
+                    ),
+                    if (i == visits.length - 1 && !stacked) ...[
+                      AppSpacings.gapSm,
+                      undo(visit),
+                    ],
+                  ],
+                ),
               ),
-              trailing: i == visits.length - 1
-                  ? TextButton(
-                      onPressed: isBusy ? null : () => _undoLatest(context, ref, visit),
-                      child: Text(t.recurringDeposits.ledger.actions.undo),
-                    )
-                  : null,
             ),
+          ],
       ],
     );
   }
@@ -584,16 +666,37 @@ class _TransactionsSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final ledger = t.recurringDeposits.ledger;
     return Skeletonizer(
       enabled: true,
-      child: Column(
+      child: AppGroup(
         children: [
           for (var i = 0; i < _rows; i++)
-            ListTile(
-              leading: const CircleAvatar(),
-              title: Text(ledger.paymentAmount),
-              subtitle: Text(ledger.paymentDate),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingLg,
+                vertical: AppDimensions.paddingMd,
+              ),
+              child: Row(
+                children: [
+                  const AppShapeAvatar(
+                    size: AppDimensions.avatarMd,
+                    child: SizedBox.shrink(),
+                  ),
+                  AppSpacings.gapLg,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(ledger.paymentAmount, style: theme.textTheme.titleMedium),
+                        AppSpacings.gapXxs,
+                        Text(ledger.paymentDate),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
         ],
       ),

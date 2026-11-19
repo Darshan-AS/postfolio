@@ -13,6 +13,7 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 
 class _CustomerCardView extends StatelessWidget {
   final String name;
@@ -22,9 +23,15 @@ class _CustomerCardView extends StatelessWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onPhoneTapped;
   final VoidCallback? onWhatsAppTapped;
+  final AppGroupPosition position;
+
+  /// Identifies the customer and this row (`EntityHero.tagFrom`). Null for a placeholder.
+  final Object? heroTag;
 
   const _CustomerCardView({
     required this.name,
+    required this.position,
+    this.heroTag,
     this.phone,
     this.onTap,
     this.onEdit,
@@ -38,12 +45,19 @@ class _CustomerCardView extends StatelessWidget {
     final hasPhone = phone != null && phone!.isNotEmpty;
 
     return EntityListTile(
+      position: position,
+      heroTag: heroTag,
       leadingText: name.isNotEmpty ? name[0].toUpperCase() : '?',
+      leadingShape: AppAvatarShape.forPerson(name),
       title: name,
-      subtitle: Text(
-        hasPhone ? phone!.toPhoneFormat() : t.common.notProvided,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+      subtitle: EntityHero(
+        tag: heroTag,
+        part: EntityHeroPart.subtitle,
+        child: Text(
+          hasPhone ? phone!.toPhoneFormat() : t.common.notProvided,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
       onTap: onTap,
@@ -58,6 +72,8 @@ class _CustomerCardView extends StatelessWidget {
             onTap: onPhoneTapped!,
             isInline: true,
           ),
+        // In the row's menu, not on the row: two inline actions left the text a third of
+        // a phone's width, and the phone number broke in two.
         if (hasPhone && onWhatsAppTapped != null)
           EntityAction(
             label: t.customers.actions.whatsapp,
@@ -66,7 +82,6 @@ class _CustomerCardView extends StatelessWidget {
               size: AppDimensions.iconMd,
             ),
             onTap: onWhatsAppTapped!,
-            isInline: true,
           ),
         if (onEdit != null) EntityAction.edit(onTap: onEdit!),
         if (onDelete != null) EntityAction.delete(onTap: onDelete!),
@@ -78,11 +93,22 @@ class _CustomerCardView extends StatelessWidget {
 class CustomerCard extends ConsumerWidget {
   final Customer customer;
 
-  const CustomerCard({super.key, required this.customer});
+  /// Where this row sits in its list (see [EntityListTile.position]).
+  final AppGroupPosition position;
 
-  static Widget skeleton() {
+  const CustomerCard({
+    super.key,
+    required this.customer,
+    this.position = AppGroupPosition.single,
+  });
+
+  static Widget skeleton({AppGroupPosition position = AppGroupPosition.single}) {
     final dummy = Customer.dummy;
-    return _CustomerCardView(name: dummy.name, phone: dummy.phone);
+    return _CustomerCardView(
+      name: dummy.name,
+      phone: dummy.phone,
+      position: position,
+    );
   }
 
   @override
@@ -90,7 +116,13 @@ class CustomerCard extends ConsumerWidget {
     return _CustomerCardView(
       name: customer.name,
       phone: customer.phone,
-      onTap: () => CustomerDetailRoute(customer.id).push(context),
+      position: position,
+      // The avatar, the name and the phone number travel to the head of the screen.
+      heroTag: EntityHero.tagFrom(EntityHero.ownList, customer.id),
+      onTap: () => CustomerDetailRoute(
+        customer.id,
+        $extra: EntityHero.ownList,
+      ).push(context),
       onEdit: () => CustomerEditRoute(customer.id).push(context),
       onPhoneTapped: () =>
           ref.read(intentServiceProvider).launchPhone(customer.phone ?? ''),

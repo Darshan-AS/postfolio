@@ -7,6 +7,10 @@ import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
@@ -14,6 +18,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_monthly_operatio
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_deposit_sheet.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_layout.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operation_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
@@ -22,8 +27,10 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 const int _skeletonRowCount = 5;
 
-/// The hub's row list as a sliver. Flat when ungrouped; one header + list per household when
-/// "group by customer" is on. Loading / error / empty states are rendered in place.
+/// The hub's rows as a sliver, inset by the page margin. Every run of rows is a group of
+/// tiles: the whole list when ungrouped; one group per customer, under that customer's
+/// header, when "group by customer" is on. Loading / error / empty states are rendered in
+/// place.
 class RDHubList extends ConsumerWidget {
   const RDHubList({super.key});
 
@@ -32,26 +39,35 @@ class RDHubList extends ConsumerWidget {
     final groupByCustomer = ref.watch(rDHubFiltersProvider.select((s) => s.groupByCustomer));
     final now = ref.watch(clockProvider)();
 
+    // The room under the last row clears the floating batch bar, which grows with the text.
+    final padding = EdgeInsets.fromLTRB(
+      AppDimensions.pageMargin,
+      0,
+      AppDimensions.pageMargin,
+      MediaQuery.textScalerOf(context).scale(AppDimensions.listBottomPaddingFAB),
+    );
+
     if (groupByCustomer) {
       return switch (ref.watch(groupedMonthlyOperationsProvider)) {
         AsyncData(:final value) => value.isEmpty
             ? const _EmptySliver()
             : SliverPadding(
-                padding: const EdgeInsets.only(bottom: AppDimensions.listBottomPaddingFAB),
-                sliver: SliverMainAxisGroup(
-                  slivers: [
-                    for (final group in value) ...[
-                      SliverToBoxAdapter(
-                        key: ValueKey('group-${group.customerId}'),
-                        child: _CustomerGroupHeader(group: group),
-                      ),
-                      _ItemsSliver(items: group.items, now: now),
-                    ],
-                  ],
+                padding: padding,
+                sliver: SliverList.builder(
+                  itemCount: value.length,
+                  itemBuilder: (context, index) {
+                    final group = value[index];
+                    return _CustomerGroup(
+                      key: ValueKey('group-${group.customerId}'),
+                      group: group,
+                      now: now,
+                      isFirst: index == 0,
+                    );
+                  },
                 ),
               ),
         AsyncError(:final error) => _ErrorSliver(error: error),
-        AsyncLoading() => const _LoadingSliver(),
+        AsyncLoading() => _LoadingSliver(padding: padding),
       };
     }
 
@@ -59,30 +75,66 @@ class RDHubList extends ConsumerWidget {
       AsyncData(:final value) => value.isEmpty
           ? const _EmptySliver()
           : SliverPadding(
-              padding: const EdgeInsets.only(bottom: AppDimensions.listBottomPaddingFAB),
-              sliver: _ItemsSliver(items: value, now: now),
+              padding: padding,
+              sliver: SliverList.separated(
+                itemCount: value.length,
+                separatorBuilder: (context, index) => const SizedBox(height: AppShapes.groupGap),
+                itemBuilder: (context, index) {
+                  final item = value[index];
+                  return _RDHubRow(
+                    key: ValueKey(item.installment.id),
+                    item: item,
+                    now: now,
+                    position: AppGroupPosition.at(index, value.length),
+                  );
+                },
+              ),
             ),
       AsyncError(:final error) => _ErrorSliver(error: error),
-      AsyncLoading() => const _LoadingSliver(),
+      AsyncLoading() => _LoadingSliver(padding: padding),
     };
   }
 }
 
-class _ItemsSliver extends StatelessWidget {
-  final List<RDMonthlyOperationItem> items;
+/// One customer's block. A customer with several accounts gets a header and the accounts
+/// under it as one group of tiles, titled by serial and account. A customer with one
+/// account is just that row: a header would repeat the name the row already carries.
+/// Built lazily, one block per list item, so a long list only builds the customers on screen.
+class _CustomerGroup extends StatelessWidget {
+  final RDCustomerGroup group;
   final DateTime now;
 
-  const _ItemsSliver({required this.items, required this.now});
+  /// The first block needs no gap above it.
+  final bool isFirst;
+
+  const _CustomerGroup({
+    super.key,
+    required this.group,
+    required this.now,
+    required this.isFirst,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SliverList.separated(
-      itemCount: items.length,
-      separatorBuilder: (context, index) => const Divider(height: AppDimensions.dividerHeight),
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return _RDHubRow(key: ValueKey(item.installment.id), item: item, now: now);
-      },
+    final items = group.items;
+    final hasHeader = items.length > 1;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!isFirst) AppSpacings.gapSm,
+        if (hasHeader) _CustomerGroupHeader(group: group),
+        for (var i = 0; i < items.length; i++) ...[
+          if (i > 0) const SizedBox(height: AppShapes.groupGap),
+          _RDHubRow(
+            key: ValueKey(items[i].installment.id),
+            item: items[i],
+            now: now,
+            position: AppGroupPosition.at(i, items.length),
+            titleByAccount: hasHeader,
+          ),
+        ],
+      ],
     );
   }
 }
@@ -105,18 +157,22 @@ class _ErrorSliver extends ConsumerWidget {
 }
 
 class _LoadingSliver extends StatelessWidget {
-  const _LoadingSliver();
+  final EdgeInsets padding;
+
+  const _LoadingSliver({required this.padding});
 
   @override
   Widget build(BuildContext context) {
     return SliverPadding(
-      padding: const EdgeInsets.only(bottom: AppDimensions.listBottomPaddingFAB),
+      padding: padding,
       sliver: SliverList.separated(
         itemCount: _skeletonRowCount,
-        separatorBuilder: (context, index) => const Divider(height: AppDimensions.dividerHeight),
+        separatorBuilder: (context, index) => const SizedBox(height: AppShapes.groupGap),
         itemBuilder: (context, index) => Skeletonizer(
           enabled: true,
-          child: RDMonthlyOperationCard.skeleton(),
+          child: RDMonthlyOperationCard.skeleton(
+            position: AppGroupPosition.at(index, _skeletonRowCount),
+          ),
         ),
       ),
     );
@@ -132,7 +188,6 @@ class _EmptySliver extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final ops = t.recurringDeposits.monthlyOperations;
     final filters = ref.watch(rDHubFiltersProvider);
     final month = ref.watch(rDHubMonthProvider);
@@ -149,54 +204,28 @@ class _EmptySliver extends ConsumerWidget {
     final allSettled =
         totalCount > 0 && toCollectCount == 0 && isCollectFilter && onlyStatusFilter;
 
-    final message = totalCount == 0
-        ? ops.noInstallmentsIn(month: monthLabel)
+    final (message, icon) = totalCount == 0
+        ? (ops.noInstallmentsIn(month: monthLabel), HugeIcons.strokeRoundedInbox)
         : allSettled
-            ? ops.allSettledFor(month: monthLabel)
-            : ops.noFilterResults;
+            ? (ops.allSettledFor(month: monthLabel), HugeIcons.strokeRoundedCheckmarkBadge01)
+            : (ops.noFilterResults, HugeIcons.strokeRoundedSearchRemove);
 
     return SliverFillRemaining(
       hasScrollBody: false,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingLg),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (allSettled) ...[
-                HugeIcon(
-                  icon: HugeIcons.strokeRoundedCheckmarkBadge01,
-                  size: AppDimensions.iconLg,
-                  color: theme.colorScheme.primary,
-                ),
-                AppSpacings.gapSm,
-              ],
-              Text(
-                message,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              if (hasFilters) ...[
-                AppSpacings.gapMd,
-                TextButton.icon(
-                  onPressed: ref.read(rDHubFiltersProvider.notifier).clear,
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedFilterRemove,
-                    size: AppDimensions.iconSm,
-                  ),
-                  label: Text(t.common.clearFilters),
-                ),
-              ],
-            ],
-          ),
-        ),
+      child: EmptyStateView(
+        message: message,
+        icon: icon,
+        actionLabel: t.common.clearFilters,
+        actionIcon: HugeIcons.strokeRoundedFilterRemove,
+        onAction: hasFilters ? ref.read(rDHubFiltersProvider.notifier).clear : null,
       ),
     );
   }
 }
 
+/// The line above a customer's group: who, how many accounts, how much a month, and a
+/// way to select them all. The text wraps rather than cutting the amount; at large text
+/// sizes the button drops under it so the text keeps the full width.
 class _CustomerGroupHeader extends ConsumerWidget {
   final RDCustomerGroup group;
 
@@ -204,59 +233,51 @@ class _CustomerGroupHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final scheme = Theme.of(context).colorScheme;
     final groupStrings = t.recurringDeposits.monthlyOperations.customerGroup;
 
-    return Container(
-      color: theme.colorScheme.surfaceContainerLow,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLg,
-        vertical: AppDimensions.paddingXs,
-      ),
-      child: Row(
-        children: [
-          HugeIcon(
-            icon: HugeIcons.strokeRoundedUser,
-            size: AppDimensions.iconSm,
-            color: theme.colorScheme.primary,
-          ),
-          AppSpacings.gapXs,
-          Expanded(
-            child: Text(
-              groupStrings.header(
-                name: group.customerName,
-                n: group.items.length,
-                amount: group.monthlyTotal.toRupeeFormat(),
-              ),
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.bold,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+    final title = Row(
+      children: [
+        AppIcon(
+          HugeIcons.strokeRoundedUser,
+          size: AppDimensions.iconSm,
+          color: scheme.primary,
+        ),
+        AppSpacings.gapSm,
+        Expanded(
+          child: Text(
+            groupStrings.header(
+              name: group.customerName,
+              n: group.items.length,
+              amount: group.monthlyTotal.toRupeeFormat(),
+            ),
+            style: AppTypography.emphasizedOf(context).labelLarge?.copyWith(
+              color: scheme.onSurfaceVariant,
             ),
           ),
-          Tooltip(
-            message: groupStrings.selectGroupFor(name: group.customerName),
-            child: TextButton(
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingSm),
-              ),
-              onPressed: () => ref
-                  .read(rDHubSelectionProvider.notifier)
-                  .selectAll([for (final i in group.items) i.installment.id]),
-              child: Text(
-                groupStrings.selectGroup,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
+      ],
+    );
+    final selectAll = Tooltip(
+      message: groupStrings.selectGroupFor(name: group.customerName),
+      child: AppButton.text(
+        label: groupStrings.selectGroup,
+        onPressed: () => ref
+            .read(rDHubSelectionProvider.notifier)
+            .selectAll([for (final i in group.items) i.installment.id]),
       ),
+    );
+
+    return Padding(
+      // Lines the text up with the content of the tiles below.
+      padding: const EdgeInsets.only(left: AppDimensions.paddingLg),
+      child: RDHubLayout.isLargeText(context)
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [title, selectAll],
+            )
+          : Row(children: [Expanded(child: title), selectAll]),
     );
   }
 }
@@ -267,7 +288,19 @@ class _RDHubRow extends ConsumerWidget {
   final RDMonthlyOperationItem item;
   final DateTime now;
 
-  const _RDHubRow({super.key, required this.item, required this.now});
+  /// Where the row sits in its group of tiles.
+  final AppGroupPosition position;
+
+  /// The row sits under its customer's header, so it is titled by serial and account.
+  final bool titleByAccount;
+
+  const _RDHubRow({
+    super.key,
+    required this.item,
+    required this.now,
+    required this.position,
+    this.titleByAccount = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -384,6 +417,8 @@ class _RDHubRow extends ConsumerWidget {
       child: RDMonthlyOperationCard(
         item: item,
         evaluationDate: now,
+        position: position,
+        titleByAccount: titleByAccount,
         isSelected: isSelected,
         isSelectionMode: isSelectionMode,
         isBusy: isBusy,
@@ -394,7 +429,10 @@ class _RDHubRow extends ConsumerWidget {
           tab: 'schedule',
         ).push(context),
         onLongPress: () {
-          if (!isSelectionMode) selection.toggle(id);
+          if (isSelectionMode) return;
+          // The platform's feedback for a long press: it has started something.
+          Feedback.forLongPress(context);
+          selection.toggle(id);
         },
         onCollect: onCollect,
         onDeposit: onDeposit,

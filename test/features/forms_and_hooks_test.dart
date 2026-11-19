@@ -184,7 +184,7 @@ void main() {
       );
 
       // Tap Save -> invalid CIF, Aadhaar, PAN must surface inline errors
-      await tester.tap(find.byTooltip(t.common.confirm));
+      await tester.tap(find.text(t.common.confirm));
       await tester.pumpAndSettle();
 
       expect(find.text(t.errors.invalidCif), findsOneWidget);
@@ -641,7 +641,8 @@ void main() {
       // 3. Delete lives inside overflow menu, not exposed directly on AppBar
       await tester.tap(find.byKey(const ValueKey('entity_detail_more_button')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('entity_detail_delete_item')));
+      // The menu's entry, then the dialog's button of the same name.
+      await tester.tap(find.text(t.common.delete));
       await tester.pumpAndSettle();
       await tester.tap(find.text(t.common.delete));
       await tester.pumpAndSettle();

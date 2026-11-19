@@ -7,8 +7,13 @@ import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
+import 'package:postfolio/core/widgets/expressive/app_group.dart';
+import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
 import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
@@ -19,6 +24,8 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_mode
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_payment_draft.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_sheet_parts.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_account_identity.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 /// Single source of truth for the payment-mode glyphs and short labels used across the sheets.
@@ -30,7 +37,7 @@ extension RDPaymentModeIcon on RDPaymentMode {
         RDPaymentMode.bankTransfer => HugeIcons.strokeRoundedBank,
       };
 
-  /// One-word label that fits a segmented button next to the glyph.
+  /// One-word label that fits a button-group segment next to the glyph.
   String get shortLabel => switch (this) {
         RDPaymentMode.cash => t.recurringDeposits.ledger.paymentModes.cash,
         RDPaymentMode.upi => t.recurringDeposits.ledger.paymentModes.upi,
@@ -95,17 +102,15 @@ class _PaymentForm extends HookConsumerWidget {
       existing: existing,
       initialAmount: initialAmount,
     );
-    final theme = Theme.of(context);
     final ledger = t.recurringDeposits.ledger;
     final isEditing = draft.isEditing;
     final deposit = draft.facts.value?.deposit;
     final customer = deposit?.customerName;
-    final serial = deposit?.serialNo;
 
     final title = isEditing
         ? ledger.editPaymentTitle
         : (customer != null && customer.isNotEmpty)
-            ? ledger.collectTitle(customer: customer, serial: serial ?? t.common.notProvided)
+            ? ledger.collectTitle(customer: customer)
             : ledger.logPaymentTitle;
 
     String collectedMessage() {
@@ -199,7 +204,7 @@ class _PaymentForm extends HookConsumerWidget {
     } else {
       body = const Padding(
         padding: EdgeInsets.all(AppDimensions.paddingXl),
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: AppLoadingIndicator()),
       );
     }
 
@@ -216,70 +221,29 @@ class _PaymentForm extends HookConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimensions.paddingLg,
-              AppDimensions.paddingSm,
-              AppDimensions.paddingSm,
-              AppDimensions.paddingNone,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                IconButton(
-                  tooltip: t.common.close,
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedCancel01,
-                    size: AppDimensions.iconMd,
-                  ),
-                  onPressed: () => Navigator.of(context).maybePop(false),
-                ),
-              ],
-            ),
+          RDSheetHeader(
+            title: title,
+            subtitle: deposit == null ? null : rdAccountIdentity(deposit),
+            onClose: () => Navigator.of(context).maybePop(false),
           ),
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingLg,
+                horizontal: AppDimensions.pageMargin,
                 vertical: AppDimensions.paddingSm,
               ),
               child: body,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimensions.paddingLg,
-              AppDimensions.paddingSm,
-              AppDimensions.paddingLg,
-              AppDimensions.paddingLg,
-            ),
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(double.infinity, AppDimensions.minTapTarget),
+          RDSheetFooter(
+            children: [
+              RDSheetPrimaryAction(
+                label: submitLabel,
+                icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+                isLoading: draft.isSubmitting,
+                onPressed: draft.canSubmit ? handleSubmit : null,
               ),
-              onPressed: draft.canSubmit ? handleSubmit : null,
-              icon: draft.isSubmitting
-                  ? const SizedBox.square(
-                      dimension: AppDimensions.iconSm,
-                      child: CircularProgressIndicator(
-                        strokeWidth: AppDimensions.strokeWidthSm,
-                      ),
-                    )
-                  : const HugeIcon(
-                      icon: HugeIcons.strokeRoundedCheckmarkCircle02,
-                      size: AppDimensions.iconSm,
-                    ),
-              label: Text(submitLabel),
-            ),
+            ],
           ),
         ],
       ),
@@ -294,13 +258,18 @@ class _FormBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final scheme = Theme.of(context).colorScheme;
     final ledger = t.recurringDeposits.ledger;
     final amountText = draft.amountController.text.trim();
     final amountError =
         amountText.isNotEmpty && draft.validationError == ledger.enterValidAmount
             ? ledger.enterValidAmount
             : null;
+    // The amount is the hero of the sheet: the field is set in a headline role.
+    final amountStyle = rdSheetLargeType(
+      context,
+      AppTypography.emphasizedOf(context).headlineMedium,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -311,24 +280,32 @@ class _FormBody extends StatelessWidget {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
           textInputAction: TextInputAction.done,
-          style: theme.textTheme.titleLarge,
+          style: amountStyle,
           decoration: AppInputDecoration.m3(
             context,
             labelText: ledger.paymentAmount,
             prefixText: t.format.currencySymbol,
             isRequired: true,
             errorText: amountError,
+          ).copyWith(
+            prefixStyle: amountStyle?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ),
         if (draft.quickAmounts.isNotEmpty) ...[
           AppSpacings.gapSm,
+          // Suggestions that fill the field: chips, filled while the field holds their
+          // amount. Each brings its own touch padding above and below, which spaces the
+          // lines when they wrap. At large text a chip fills that padding, so the lines get
+          // a gap of their own.
           Wrap(
             spacing: AppDimensions.paddingSm,
-            runSpacing: AppDimensions.paddingXs,
+            runSpacing: AppDimensions.isLargeText(context) ? AppDimensions.paddingSm : 0,
             children: [
               for (final quick in draft.quickAmounts)
                 ChoiceChip(
-                  label: Text(quick.label),
+                  // As on a button: the label carries an amount, so one that does not
+                  // fit shrinks. A chip would cut it.
+                  label: FittedBox(fit: BoxFit.scaleDown, child: Text(quick.label)),
                   selected: draft.isQuickAmountSelected(quick),
                   onSelected: (_) => draft.applyQuickAmount(quick),
                 ),
@@ -336,34 +313,32 @@ class _FormBody extends StatelessWidget {
           ),
         ],
         AppSpacings.gapLg,
-        _SectionLabel(
-          text: ledger.paymentModeValue(mode: draft.paymentMode.value.shortLabel),
+        // Four segments have no room for a glyph each on a phone, so the caption carries
+        // the glyph of the chosen mode.
+        RDSheetSectionLabel(
+          ledger.paymentModeValue(mode: draft.paymentMode.value.shortLabel),
+          icon: draft.paymentMode.value.icon,
         ),
         AppSpacings.gapSm,
-        SizedBox(
-          width: double.infinity,
-          child: SegmentedButton<RDPaymentMode>(
-            showSelectedIcon: false,
-            selected: {draft.paymentMode.value},
-            onSelectionChanged: (selection) => draft.paymentMode.value = selection.first,
-            segments: [
-              for (final mode in RDPaymentMode.values)
-                ButtonSegment<RDPaymentMode>(
-                  value: mode,
-                  tooltip: mode.displayName,
-                  icon: HugeIcon(icon: mode.icon, size: AppDimensions.iconSm),
-                  label: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(mode.shortLabel, maxLines: 1, softWrap: false),
-                  ),
-                ),
-            ],
-          ),
+        AppButtonGroup<RDPaymentMode>(
+          selected: draft.paymentMode.value,
+          onChanged: (mode) => draft.paymentMode.value = mode,
+          segments: [
+            for (final mode in RDPaymentMode.values)
+              AppSegment(
+                value: mode,
+                label: mode.shortLabel,
+                tooltip: mode.displayName,
+              ),
+          ],
         ),
         AppSpacings.gapLg,
-        _PaidDateButton(draft: draft),
+        _PaidDateTile(
+          draft: draft,
+          position: draft.canAbsorbFee ? AppGroupPosition.first : AppGroupPosition.single,
+        ),
         if (draft.canAbsorbFee) ...[
-          AppSpacings.gapSm,
+          const SizedBox(height: AppShapes.groupGap),
           _AbsorbFeeTile(draft: draft),
         ],
         AppSpacings.gapLg,
@@ -381,28 +356,11 @@ class _FormBody extends StatelessWidget {
   }
 }
 
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Text(
-      text,
-      style: theme.textTheme.labelMedium?.copyWith(
-        color: theme.colorScheme.onSurfaceVariant,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
-}
-
-class _PaidDateButton extends StatelessWidget {
-  const _PaidDateButton({required this.draft});
+class _PaidDateTile extends StatelessWidget {
+  const _PaidDateTile({required this.draft, required this.position});
 
   final PaymentDraftState draft;
+  final AppGroupPosition position;
 
   @override
   Widget build(BuildContext context) {
@@ -423,19 +381,19 @@ class _PaidDateButton extends StatelessWidget {
       draft.paidDate.value = selected;
     }
 
-    return OutlinedButton.icon(
-      onPressed: pick,
-      icon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedCalendar01,
-        size: AppDimensions.iconSm,
-      ),
-      label: Text(ledger.paymentDateValue(date: current.toAppFormat())),
+    return RDSheetPickerTile(
+      icon: HugeIcons.strokeRoundedCalendar01,
+      label: ledger.paymentDateValue(date: current.toAppFormat()),
+      onTap: pick,
+      position: position,
     );
   }
 }
 
 /// "Absorb remaining fee ₹X from pocket" — offered only when, after this payment, the
 /// earliest open month is short by no more than its default fee.
+///
+/// The last row of the group that starts with the payment date.
 class _AbsorbFeeTile extends StatelessWidget {
   const _AbsorbFeeTile({required this.draft});
 
@@ -445,24 +403,36 @@ class _AbsorbFeeTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final ledger = t.recurringDeposits.ledger;
-    return CheckboxListTile(
-      value: draft.absorbFeeChecked.value,
-      onChanged: (v) => draft.absorbFeeChecked.value = v ?? false,
-      controlAffinity: ListTileControlAffinity.leading,
-      contentPadding: EdgeInsets.zero,
-      dense: true,
-      title: Text(
-        ledger.absorbFee(amount: draft.absorbableFee.toRupeeFormat()),
-        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-      ),
-      subtitle: Text(
-        ledger.absorbFeeHint,
-        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-      ),
-      secondary: HugeIcon(
-        icon: HugeIcons.strokeRoundedWallet02,
-        size: AppDimensions.iconSm,
-        color: theme.colorScheme.secondary,
+    return AppGroupTile(
+      position: AppGroupPosition.last,
+      // Padding and gap put the checkbox under the date row's icon and the text under its
+      // text.
+      child: ListTileTheme.merge(
+        horizontalTitleGap: AppDimensions.paddingXs,
+        child: CheckboxListTile(
+          value: draft.absorbFeeChecked.value,
+          onChanged: (v) => draft.absorbFeeChecked.value = v ?? false,
+          controlAffinity: ListTileControlAffinity.leading,
+          contentPadding: const EdgeInsetsDirectional.only(
+            start: AppDimensions.paddingSm,
+            end: AppDimensions.paddingLg,
+          ),
+          title: Text(
+            ledger.absorbFee(amount: draft.absorbableFee.toRupeeFormat()),
+            style: AppTypography.emphasizedOf(context).bodyMedium,
+          ),
+          subtitle: Text(
+            ledger.absorbFeeHint,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          secondary: HugeIcon(
+            icon: HugeIcons.strokeRoundedWallet02,
+            size: AppDimensions.iconMd,
+            color: theme.colorScheme.secondary,
+          ),
+        ),
       ),
     );
   }
@@ -500,16 +470,11 @@ class RDAllocationPreviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final emphasized = AppTypography.emphasizedOf(context);
     final strings = t.recurringDeposits.ledger.preview;
     final previewValue = preview;
 
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
+    return RDSheetBlock(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -524,10 +489,7 @@ class RDAllocationPreviewCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   isRecalculation ? strings.recalculatedTitle : strings.title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: emphasized.titleSmall?.copyWith(color: scheme.primary),
                 ),
               ),
             ],
@@ -536,18 +498,15 @@ class RDAllocationPreviewCard extends StatelessWidget {
           if (previewValue == null)
             Text(
               isRecalculation ? strings.recalculatedHint : strings.hint,
-              style: theme.textTheme.bodySmall,
+              style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
             )
           else ...[
-            Text(
-              _summaryLine(previewValue),
-              style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
+            Text(_summaryLine(previewValue), style: emphasized.bodyMedium),
             if (delta.isNotEmpty) ...[
-              AppSpacings.gapSm,
+              AppSpacings.gapMd,
               for (final month in delta) ...[
                 _PreviewMonthRow(month: month, asOf: asOf),
-                AppSpacings.gapXs,
+                AppSpacings.gapSm,
               ],
             ],
             if (previewValue.customerCredit > 0) ...[
@@ -556,17 +515,14 @@ class RDAllocationPreviewCard extends StatelessWidget {
                 children: [
                   HugeIcon(
                     icon: HugeIcons.strokeRoundedStar,
-                    size: AppDimensions.iconXs,
+                    size: AppDimensions.iconSm,
                     color: scheme.primary,
                   ),
-                  AppSpacings.gapXs,
+                  AppSpacings.gapSm,
                   Expanded(
                     child: Text(
                       strings.credit(amount: previewValue.customerCredit.toRupeeFormat()),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: emphasized.bodySmall?.copyWith(color: scheme.primary),
                     ),
                   ),
                 ],
@@ -618,6 +574,7 @@ class _PreviewMonthRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final emphasized = AppTypography.emphasizedOf(context);
     final strings = t.recurringDeposits.ledger.preview;
     final after = month.after;
     final visual = after.displayStatusAt(asOf).visualOf(context);
@@ -628,11 +585,11 @@ class _PreviewMonthRow extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.paddingSm,
-            vertical: AppDimensions.paddingXxs,
+            vertical: AppDimensions.paddingXs,
           ),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: visual.background,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+            shape: AppShapes.rounded(AppShapes.small),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -645,15 +602,12 @@ class _PreviewMonthRow extends StatelessWidget {
               AppSpacings.gapXs,
               Text(
                 strings.monthLabel(month: after.installmentNo.toString()),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: visual.foreground,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: emphasized.labelMedium?.copyWith(color: visual.foreground),
               ),
             ],
           ),
         ),
-        AppSpacings.gapSm,
+        AppSpacings.gapMd,
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -663,7 +617,7 @@ class _PreviewMonthRow extends StatelessWidget {
                   paid: after.customerPaidAmount.toRupeeFormat(),
                   due: after.dueAmount.toRupeeFormat(),
                 ),
-                style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                style: emphasized.bodyMedium,
               ),
               if (after.customerFeeDue > 0)
                 Text(
@@ -672,7 +626,7 @@ class _PreviewMonthRow extends StatelessWidget {
                 ),
               Text(
                 visual.label,
-                style: theme.textTheme.labelSmall?.copyWith(color: visual.foreground),
+                style: theme.textTheme.labelMedium?.copyWith(color: visual.foreground),
               ),
             ],
           ),

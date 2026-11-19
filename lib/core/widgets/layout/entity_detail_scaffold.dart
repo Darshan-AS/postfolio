@@ -2,11 +2,23 @@ import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
+import 'package:postfolio/core/widgets/layout/entity_list_tile.dart' show EntityAction;
+import 'package:postfolio/core/widgets/expressive/app_menu.dart';
+import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
+import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
+
+export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart' show AppAvatarShape;
+export 'package:postfolio/core/widgets/layout/entity_list_tile.dart' show EntityAction;
 
 class EntityDetailScaffold extends StatelessWidget {
   final String appBarTitle;
@@ -18,7 +30,17 @@ class EntityDetailScaffold extends StatelessWidget {
   final List<Widget> body;
   final VoidCallback? onBack;
   final Widget? floatingActionButton;
-  final List<Widget> customActions;
+
+  /// Actions of the overflow menu, listed above Delete with their labels.
+  final List<EntityAction> menuActions;
+
+  /// Reloads what the screen shows. When set, the body can be pulled down to refresh.
+  final Future<void> Function()? onRefresh;
+
+  /// Whether [body] is built from a record that is still loading, while [header] already
+  /// shows the real entity (from its row in a list). The body is drawn as a placeholder
+  /// and the header as it is.
+  final bool bodyLoading;
 
   const EntityDetailScaffold({
     super.key,
@@ -31,7 +53,9 @@ class EntityDetailScaffold extends StatelessWidget {
     required this.body,
     this.onBack,
     this.floatingActionButton,
-    this.customActions = const [],
+    this.menuActions = const [],
+    this.onRefresh,
+    this.bodyLoading = false,
   });
 
   void _confirmDelete(BuildContext context) async {
@@ -77,13 +101,17 @@ class EntityDetailScaffold extends StatelessWidget {
 
   PreferredSizeWidget _buildAppBar(ThemeData theme, BuildContext context) {
     return AppBar(
-      title: Text(appBarTitle),
+      title: AppBarTitle(appBarTitle),
       leading: onBack != null
           ? BackButton(onPressed: onBack)
           : null, // Let Scaffold handle default
       actions: [
-        ...customActions,
-        IconButton(
+        IconButton.filledTonal(
+          // See FormAppBar: inside an app bar the tonal variant needs its foreground set
+          // explicitly.
+          style: IconButton.styleFrom(
+            foregroundColor: theme.colorScheme.onSecondaryContainer,
+          ),
           tooltip: t.common.edit,
           icon: const HugeIcon(
             icon: HugeIcons.strokeRoundedEdit02,
@@ -91,45 +119,50 @@ class EntityDetailScaffold extends StatelessWidget {
           ),
           onPressed: onEdit,
         ),
-        MenuAnchor(
-          menuChildren: [
-            MenuItemButton(
-              key: const ValueKey('entity_detail_delete_item'),
-              leadingIcon: HugeIcon(
+        AppMenu(
+          entries: [
+            for (final action in menuActions)
+              AppMenuEntry(label: action.label, icon: action.icon, onPressed: action.onTap),
+            AppMenuEntry(
+              label: t.common.delete,
+              icon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedDelete02,
                 size: AppDimensions.iconSm,
-                color: theme.colorScheme.error,
               ),
+              isDestructive: true,
               onPressed: () => _confirmDelete(context),
-              child: Text(
-                t.common.delete,
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
             ),
           ],
-          builder: (context, controller, _) => IconButton(
+          anchorBuilder: (context, open) => IconButton(
             key: const ValueKey('entity_detail_more_button'),
             tooltip: t.common.moreOptions,
             icon: const HugeIcon(
               icon: HugeIcons.strokeRoundedMoreVertical,
               size: AppDimensions.iconMd,
             ),
-            onPressed: () {
-              if (controller.isOpen) {
-                controller.close();
-              } else {
-                controller.open();
-              }
-            },
+            onPressed: open,
           ),
         ),
+        const SizedBox(width: AppDimensions.paddingXs),
       ],
     );
   }
 
   Widget _buildBody(BuildContext context, ThemeData theme) {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
-    final items = <Widget>[header, AppSpacings.gapXxl, ...body];
+    final header = this.header;
+    // The sections wait, with the rest of the head, for the parts that travel to it: from
+    // a row low on the screen those parts would cross the sections as they fade in.
+    final heroTag = header is EntityDetailHeader ? header.heroTag : null;
+    final items = <Widget>[
+      header,
+      AppSpacings.gapXl,
+      for (final section in body)
+        EntityHeroFollower(
+          tag: heroTag,
+          child: bodyLoading ? Skeletonizer(enabled: true, child: section) : section,
+        ),
+    ];
     final animatedItems = disableAnimations
         ? items
         : items
@@ -142,14 +175,17 @@ class EntityDetailScaffold extends StatelessWidget {
                 begin: AppAnimations.slideOffset,
                 end: 0,
                 duration: AppAnimations.medium,
-                curve: AppAnimations.defaultCurve,
+                curve: AppAnimations.spatialCurve,
               );
 
-    return ListView(
+    final onRefresh = this.onRefresh;
+    final list = ListView(
+      // A short screen must still be draggable for the pull to start.
+      physics: onRefresh == null ? null : const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(
-        AppDimensions.paddingLg,
-        AppDimensions.paddingLg,
-        AppDimensions.paddingLg,
+        AppDimensions.pageMargin,
+        AppDimensions.paddingSm,
+        AppDimensions.pageMargin,
         floatingActionButton != null
             ? AppDimensions.listBottomPaddingFAB
             : AppDimensions.paddingLg,
@@ -168,19 +204,43 @@ class EntityDetailScaffold extends StatelessWidget {
         ),
       ],
     );
+
+    return onRefresh == null ? list : AppRefreshIndicator(onRefresh: onRefresh, child: list);
   }
 }
 
+/// The head of a detail screen: a Material shape with the entity's initial or code beside
+/// its name, with an optional supporting line, badge, block and actions.
+///
+/// It is one row, not a centred hero. A screen's worth of avatar and headline pushed what
+/// the screen is opened for (the next due amount, the contact details) past the middle of
+/// a phone.
 class EntityDetailHeader extends StatelessWidget {
   final Widget? avatarChild;
   final String? avatarText;
   final String? avatarSubtext;
   final Color? avatarBackgroundColor;
   final Color? avatarForegroundColor;
+  final AppAvatarShape avatarShape;
   final String title;
+
+  /// Under the title, beside the avatar. At large text it takes the full width under the
+  /// avatar's row instead: beside the avatar a phone number or a scheme name breaks in two.
   final Widget? subtitle;
+
+  /// At the end of the title's row; under the subtitle at large text.
   final Widget? badge;
+
+  /// A full-width block under the avatar's row, e.g. a progress summary.
+  final Widget? footer;
   final List<Widget> bottomActions;
+
+  /// Identifies the entity and the row that opened the screen (`EntityHero.tagFrom`). The
+  /// avatar and the title travel here from that row; a part of the [subtitle] that the
+  /// row shows too wraps itself in an [EntityHero]. Everything else in the header, and
+  /// the sections under it, wait for them to land ([EntityHeroFollower]). Null while the
+  /// header shows a placeholder, and when no row opened the screen.
+  final Object? heroTag;
 
   const EntityDetailHeader({
     super.key,
@@ -189,100 +249,92 @@ class EntityDetailHeader extends StatelessWidget {
     this.avatarSubtext,
     this.avatarBackgroundColor,
     this.avatarForegroundColor,
+    this.avatarShape = AppAvatarShape.cookie9,
     required this.title,
     this.subtitle,
     this.badge,
+    this.footer,
     this.bottomActions = const [],
+    this.heroTag,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        children: [
-          _buildAvatar(theme),
-          AppSpacings.gapLg,
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+    final emphasized = AppTypography.emphasizedOf(context);
+    // At large text only the title stays beside the avatar; the rest needs the width.
+    final stacked = AppDimensions.isLargeText(context);
+    final titleText = EntityHero(
+      tag: heroTag,
+      part: EntityHeroPart.title,
+      child: Text(title, style: emphasized.titleLarge),
+    );
+    // The parts the row does not show wait for the ones that travel from it.
+    Widget? waiting(Widget? part) =>
+        part == null ? null : EntityHeroFollower(tag: heroTag, child: part);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            EntityHero(
+              tag: heroTag,
+              part: EntityHeroPart.avatar,
+              child: _buildAvatar(theme),
             ),
-          ),
-          if (subtitle != null) ...[AppSpacings.gapSm, subtitle!],
-          if (badge != null) ...[AppSpacings.gapMd, badge!],
-          if (bottomActions.isNotEmpty) ...[
             AppSpacings.gapLg,
+            Expanded(
+              child: stacked
+                  // Aligned, so the title's box is as wide as the title and no wider.
+                  ? Align(alignment: AlignmentDirectional.centerStart, child: titleText)
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [titleText, ?waiting(subtitle)],
+                    ),
+            ),
+            if (badge != null && !stacked) ...[AppSpacings.gapSm, ?waiting(badge)],
+          ],
+        ),
+        if (stacked)
+          for (final line in [waiting(subtitle), waiting(badge)].nonNulls) ...[
+            AppSpacings.gapXs,
+            Align(alignment: AlignmentDirectional.centerStart, child: line),
+          ],
+        if (footer != null) ...[AppSpacings.gapMd, ?waiting(footer)],
+        if (bottomActions.isNotEmpty) ...[
+          AppSpacings.gapMd,
+          ?waiting(
             Wrap(
-              alignment: WrapAlignment.center,
               spacing: AppDimensions.paddingSm,
               runSpacing: AppDimensions.paddingSm,
               children: bottomActions,
             ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 
   Widget _buildAvatar(ThemeData theme) {
-    final fgColor =
-        avatarForegroundColor ?? theme.colorScheme.onPrimaryContainer;
-    final hasSubtext = avatarSubtext != null && avatarSubtext!.isNotEmpty;
-
-    return CircleAvatar(
-      radius: AppDimensions.radiusDetailAvatar,
-      backgroundColor:
-          avatarBackgroundColor ?? theme.colorScheme.primaryContainer,
-      foregroundColor: fgColor,
-      child:
-          avatarChild ??
-          (avatarText != null
-              ? Padding(
-                  padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          avatarText!,
-                          textHeightBehavior: const TextHeightBehavior(
-                            applyHeightToFirstAscent: false,
-                            applyHeightToLastDescent: false,
-                          ),
-                          style: theme.textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            height: hasSubtext
-                                ? AppDimensions.lineHeightTight
-                                : null,
-                            color: fgColor,
-                          ),
-                        ),
-                        if (hasSubtext) ...[
-                          AppSpacings.gapXs,
-                          Text(
-                            avatarSubtext!,
-                            textHeightBehavior: const TextHeightBehavior(
-                              applyHeightToFirstAscent: false,
-                              applyHeightToLastDescent: false,
-                            ),
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              height: AppDimensions.lineHeightTight,
-                              color: fgColor.withValues(
-                                alpha: AppDimensions.opacityMuted,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                )
-              : null),
+    final text = avatarText;
+    if (avatarChild == null && text != null) {
+      return EntityAvatar(
+        text: text,
+        subtext: avatarSubtext,
+        shape: avatarShape,
+        backgroundColor: avatarBackgroundColor,
+        foregroundColor: avatarForegroundColor,
+        prominence: 1,
+      );
+    }
+    return AppShapeAvatar(
+      size: AppDimensions.avatarLg,
+      shape: avatarShape,
+      backgroundColor: avatarBackgroundColor ?? theme.colorScheme.primaryContainer,
+      foregroundColor: avatarForegroundColor ?? theme.colorScheme.onPrimaryContainer,
+      child: avatarChild ?? const SizedBox.shrink(),
     );
   }
 }

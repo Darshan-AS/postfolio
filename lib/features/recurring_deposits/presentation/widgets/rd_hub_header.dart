@@ -4,19 +4,26 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_surfaces.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
+import 'package:postfolio/core/widgets/common/animated_figure.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
+import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_layout.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_month_progress.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_month_switcher.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_po_visit_sheet.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-/// Scroll-away header of the Monthly Hub: the month switcher and one compact 2×2 block of
-/// KPI tiles (To collect · In hand · Receivable · Arrears). Three tiles set a list filter;
+/// Scroll-away header of the Monthly Hub: the month switcher and one block of four KPI
+/// tiles (To collect · In hand · Receivable · Arrears). Three tiles set a list filter;
 /// "In hand" opens the Post Office visit planner. Rebuilds only on month / KPI changes —
 /// never on a search keystroke.
 class RDHubHeader extends ConsumerWidget {
@@ -29,6 +36,9 @@ class RDHubHeader extends ConsumerWidget {
     final monthNotifier = ref.read(rDHubMonthProvider.notifier);
     final isLoading = ref.watch(
       monthlyOperationItemsProvider.select((a) => a.isLoading),
+    );
+    final progress = ref.watch(
+      monthlyOperationsKpiProvider.select((k) => (settled: k.settledCount, total: k.totalCount)),
     );
 
     return Column(
@@ -43,7 +53,19 @@ class RDHubHeader extends ConsumerWidget {
           onResetToCurrent: monthNotifier.resetToCurrentMonth,
           onPickMonth: monthNotifier.setMonth,
         ),
-        AppSpacings.gapXs,
+        // 12dp between the Hub's blocks: switcher, progress, tiles, search, due window, rows.
+        AppSpacings.gapMd,
+        // One per month: the statement arrives with a motion when a month becomes settled,
+        // not when a settled month is switched to. Not while the month loads, when the
+        // tiles are placeholders too and the figures may still be the last month's.
+        if (!isLoading)
+          RDHubMonthProgress(
+            key: ValueKey(month),
+            month: month,
+            settled: progress.settled,
+            total: progress.total,
+            isPast: month.isBefore(now.toMonthStart()),
+          ),
         Skeletonizer(enabled: isLoading, child: const _KpiGrid()),
         AppSpacings.gapSm,
       ],
@@ -51,10 +73,16 @@ class RDHubHeader extends ConsumerWidget {
   }
 }
 
-/// 2×2 grid: every tile's colours come from the matching `RDStatusVisual`, so the header
-/// can never contradict the row pills.
+/// The four tiles: every tile's colours come from the matching `RDStatusVisual`, so the
+/// header can never contradict the row pills.
+///
+/// Two across on a phone, four across once each tile would still be as wide as on a phone,
+/// and one per row at large text sizes, where half the width cuts the labels.
 class _KpiGrid extends ConsumerWidget {
   const _KpiGrid();
+
+  /// From this width the four tiles fit in one row.
+  static const double _singleRowMinWidth = AppDimensions.maxFormWidth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -81,23 +109,21 @@ class _KpiGrid extends ConsumerWidget {
       showRDPoVisitPlanner(context);
     }
 
+    // Nothing to report: a plain container resting on the page.
     final RDStatusVisual neutral = (
       foreground: scheme.onSurfaceVariant,
-      background: scheme.surfaceContainerLow,
+      background: scheme.raised,
       outline: null,
       emphasized: false,
       icon: HugeIcons.strokeRoundedCoins01,
       label: '',
     );
 
-    // To collect: red only when something is actually overdue; otherwise the "upcoming"
-    // tone, exactly like the rows below.
-    final toCollectVisual = kpis.toCollectCount == 0
-        ? neutral
-        : (kpis.overdueCount > 0
-                  ? RDInstallmentDisplayStatus.overdue
-                  : RDInstallmentDisplayStatus.upcoming)
-              .visualOf(context);
+    // To collect: red only when something is actually overdue. Money that is merely
+    // upcoming has nothing to flag, so its tile stays the plain container.
+    final toCollectVisual = kpis.toCollectCount > 0 && kpis.overdueCount > 0
+        ? RDInstallmentDisplayStatus.overdue.visualOf(context)
+        : neutral;
     final inHandVisual = float.cashInHandAccounts > 0
         ? RDInstallmentDisplayStatus.collectedPendingPo.visualOf(context)
         : neutral;
@@ -108,100 +134,169 @@ class _KpiGrid extends ConsumerWidget {
         ? RDInstallmentDisplayStatus.overdue.visualOf(context)
         : neutral;
 
+    // A figure counts to its new value when something is collected or deposited. Another
+    // month's figure is another quantity and is shown at once.
+    final month = ref.watch(rDHubMonthProvider);
+    String rupees(double value) => value.toRupeeFormat();
+
+    final tiles = <Widget>[
+      _KpiTile(
+        label: strings.toCollect,
+        amount: kpis.toCollectAmount.toRupeeFormat(),
+        figure: (value: kpis.toCollectAmount, format: rupees, of: month),
+        caption: strings.accountsCount(n: kpis.toCollectCount),
+        count: kpis.toCollectCount,
+        visual: toCollectVisual,
+        isSelected: statusFilter == RDMonthlyFilter.toCollect,
+        onTap: () => toggle(RDMonthlyFilter.toCollect),
+        hint: strings.filterHint(label: strings.toCollect),
+      ),
+      _KpiTile(
+        label: strings.inHand,
+        amount: float.cashInHandTotal.toRupeeFormat(),
+        figure: (value: float.cashInHandTotal, format: rupees, of: month),
+        caption: float.cashInHandAccounts > 0
+            ? strings.accountsReady(n: float.cashInHandAccounts)
+            : strings.nothingToDeposit,
+        detail: float.cashInHandAccounts > 0
+            ? ops.visit.byMode(
+                cash: float.cashInHandCash.toRupeeFormat(),
+                digital: float.cashInHandDigital.toRupeeFormat(),
+              )
+            : null,
+        count: float.cashInHandAccounts,
+        visual: inHandVisual,
+        isSelected: false,
+        opensPlanner: true,
+        // Always reachable: fronting from pocket is planned here even when
+        // nothing has been collected yet.
+        onTap: isBusy ? null : planVisit,
+        hint: strings.plannerHint,
+      ),
+      _KpiTile(
+        label: strings.receivable,
+        amount: float.receivableAmount.toRupeeFormat(),
+        figure: (value: float.receivableAmount, format: rupees, of: month),
+        caption: strings.accountsCount(n: float.receivableAccounts),
+        count: float.receivableAccounts,
+        visual: receivableVisual,
+        isSelected: statusFilter == RDMonthlyFilter.fronted,
+        onTap: () => toggle(RDMonthlyFilter.fronted),
+        hint: strings.filterHint(label: strings.receivable),
+      ),
+      _KpiTile(
+        label: strings.arrears,
+        amount: strings.accountsCount(n: float.arrearsAccounts),
+        figure: (
+          value: float.arrearsAccounts.toDouble(),
+          format: (value) => strings.accountsCount(n: value.round()),
+          of: month,
+        ),
+        caption: strings.arrearsCaption,
+        visual: arrearsVisual,
+        isSelected: statusFilter == RDMonthlyFilter.overdue,
+        onTap: () => toggle(RDMonthlyFilter.overdue),
+        hint: strings.filterHint(label: strings.arrears),
+      ),
+    ];
+
+    final largeText = RDHubLayout.isLargeText(context);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
-      child: Column(
-        children: [
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _KpiTile(
-                    label: strings.toCollect,
-                    amount: kpis.toCollectAmount.toRupeeFormat(),
-                    caption: strings.accountsCount(n: kpis.toCollectCount),
-                    icon: HugeIcons.strokeRoundedCoins01,
-                    visual: toCollectVisual,
-                    isSelected: statusFilter == RDMonthlyFilter.toCollect,
-                    onTap: () => toggle(RDMonthlyFilter.toCollect),
-                    hint: strings.filterHint(label: strings.toCollect),
-                  ),
-                ),
-                AppSpacings.gapSm,
-                Expanded(
-                  child: _KpiTile(
-                    label: strings.inHand,
-                    amount: float.cashInHandTotal.toRupeeFormat(),
-                    caption: float.cashInHandAccounts > 0
-                        ? strings.accountsReady(n: float.cashInHandAccounts)
-                        : strings.nothingToDeposit,
-                    detail: float.cashInHandAccounts > 0
-                        ? ops.visit.byMode(
-                            cash: float.cashInHandCash.toRupeeFormat(),
-                            digital: float.cashInHandDigital.toRupeeFormat(),
-                          )
-                        : null,
-                    icon: HugeIcons.strokeRoundedBuilding03,
-                    visual: inHandVisual,
-                    isSelected: false,
-                    // Always reachable: fronting from pocket is planned here even when
-                    // nothing has been collected yet.
-                    onTap: isBusy ? null : planVisit,
-                    hint: strings.plannerHint,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          AppSpacings.gapSm,
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _KpiTile(
-                    label: strings.receivable,
-                    amount: float.receivableAmount.toRupeeFormat(),
-                    caption: strings.accountsCount(n: float.receivableAccounts),
-                    icon: HugeIcons.strokeRoundedWallet02,
-                    visual: receivableVisual,
-                    isSelected: statusFilter == RDMonthlyFilter.fronted,
-                    onTap: () => toggle(RDMonthlyFilter.fronted),
-                    hint: strings.filterHint(label: strings.receivable),
-                  ),
-                ),
-                AppSpacings.gapSm,
-                Expanded(
-                  child: _KpiTile(
-                    label: strings.arrears,
-                    amount: strings.accountsCount(n: float.arrearsAccounts),
-                    caption: strings.arrearsCaption,
-                    icon: HugeIcons.strokeRoundedAlert02,
-                    visual: arrearsVisual,
-                    isSelected: statusFilter == RDMonthlyFilter.overdue,
-                    onTap: () => toggle(RDMonthlyFilter.overdue),
-                    hint: strings.filterHint(label: strings.arrears),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.pageMargin),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = largeText
+              ? 1
+              : constraints.maxWidth >= _singleRowMinWidth
+              ? tiles.length
+              : 2;
+          return _TileRows(columns: columns, tiles: tiles);
+        },
       ),
     );
   }
 }
 
-/// One tappable KPI tile. Money is never ellipsised — it shrinks to fit.
+/// Lays [tiles] out [columns] across; tiles that share a row share its height.
+class _TileRows extends StatelessWidget {
+  const _TileRows({required this.columns, required this.tiles});
+
+  final int columns;
+  final List<Widget> tiles;
+
+  @override
+  Widget build(BuildContext context) {
+    if (columns == 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < tiles.length; i++) ...[
+            if (i > 0) AppSpacings.gapSm,
+            tiles[i],
+          ],
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        for (var start = 0; start < tiles.length; start += columns) ...[
+          if (start > 0) AppSpacings.gapSm,
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (
+                  var i = start;
+                  i < start + columns && i < tiles.length;
+                  i++
+                ) ...[
+                  if (i > start) AppSpacings.gapSm,
+                  Expanded(child: tiles[i]),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// One tappable KPI tile: a tonal container in its status colours. Money is never
+/// ellipsised — it shrinks to fit.
+///
+/// Two lines: the label with the number of accounts, then the figure. The header sits
+/// above the list the agent works through, so it stays short; [caption] and [detail] are
+/// read out with the tile but not drawn, and the cash / UPI split is in the visit planner.
+/// The count is a number beside an icon: "125 accounts" would not fit beside "Receivable".
+///
+/// A selected filter swaps the tile's two colours, so the fill turns solid while the
+/// contrast stays that of the tested pair, and gains a tick; it does not rely on a border.
 class _KpiTile extends StatelessWidget {
   final String label;
+
+  /// The figure as it is announced, and as it is drawn when [figure] is null.
   final String amount;
+
+  /// The figure as a number, so that it counts to a new value (see [AnimatedFigure]).
+  final ({double value, String Function(double value) format, Object? of})? figure;
+
+  /// Announced after the figure.
   final String caption;
+
+  /// Announced between the figure and the caption.
   final String? detail;
-  final List<List<dynamic>> icon;
+
+  /// Number of accounts behind the figure, shown at the end of the label's line. Null
+  /// where the figure is itself a count.
+  final int? count;
   final RDStatusVisual visual;
   final bool isSelected;
+
+  /// The tile opens the Post Office visit planner instead of filtering the list.
+  final bool opensPlanner;
   final VoidCallback? onTap;
 
   /// Screen-reader hint describing what a tap does (filter / open planner).
@@ -210,11 +305,13 @@ class _KpiTile extends StatelessWidget {
   const _KpiTile({
     required this.label,
     required this.amount,
+    this.figure,
     required this.caption,
     this.detail,
-    required this.icon,
+    this.count,
     required this.visual,
     required this.isSelected,
+    this.opensPlanner = false,
     required this.onTap,
     this.hint,
   });
@@ -222,11 +319,16 @@ class _KpiTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final emphasized = AppTypography.emphasizedOf(context);
     final kpis = t.recurringDeposits.monthlyOperations.kpis;
-    final borderColor = isSelected
-        ? scheme.primary
-        : (visual.outline ?? scheme.outlineVariant);
+
+    final background = isSelected ? visual.foreground : visual.background;
+    final foreground = isSelected ? visual.background : visual.foreground;
+    final trailingIcon = isSelected
+        ? HugeIcons.strokeRoundedTick02
+        : opensPlanner
+        ? HugeIcons.strokeRoundedArrowRight01
+        : null;
 
     // One node per tile: "<label>, <amount>[, <detail>], <caption>" + what a tap does.
     final semanticLabel = detail == null
@@ -246,82 +348,80 @@ class _KpiTile extends StatelessWidget {
       label: semanticLabel,
       hint: hint,
       child: ExcludeSemantics(
-        child: Material(
-          color: visual.background,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-            side: BorderSide(
-              color: borderColor,
-              width: isSelected ? AppDimensions.borderMd : AppDimensions.borderSm,
+        child: AppGroupTile(
+          color: background,
+          onTap: onTap,
+          child: Padding(
+            // 16dp at the sides, as in the rows below: a tile's text starts on the same
+            // edge as a row's avatar and pill.
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingLg,
+              vertical: AppDimensions.paddingSm,
             ),
-          ),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-            child: Padding(
-              padding: const EdgeInsets.all(AppDimensions.paddingSm),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      HugeIcon(
-                        icon: icon,
-                        size: AppDimensions.iconXs,
-                        color: visual.foreground,
-                      ),
-                      AppSpacings.gapXs,
-                      Expanded(
-                        child: Text(
-                          label,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: visual.foreground,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  AppSpacings.gapXs,
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      amount,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: visual.foreground,
-                      ),
-                      maxLines: 1,
-                    ),
-                  ),
-                  if (detail != null)
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    // The label gives way first; the count beside it is never cut.
+                    Expanded(
                       child: Text(
-                        detail!,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: visual.foreground,
+                        label,
+                        style:
+                            (isSelected
+                                    ? emphasized.labelLarge
+                                    : theme.textTheme.labelLarge)
+                                ?.copyWith(color: foreground),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (count != null) ...[
+                      AppSpacings.gapXs,
+                      AppIcon(
+                        HugeIcons.strokeRoundedUser,
+                        size: AppDimensions.iconXs,
+                        color: foreground,
+                      ),
+                      AppSpacings.gapXxs,
+                      Text(
+                        '$count',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: foreground,
                         ),
                         maxLines: 1,
                       ),
-                    ),
-                  Text(
-                    caption,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: visual.foreground.withValues(
-                        alpha: AppDimensions.opacityMuted,
+                    ],
+                    if (trailingIcon != null) ...[
+                      AppSpacings.gapXs,
+                      AppIcon(
+                        trailingIcon,
+                        size: AppDimensions.iconSm,
+                        color: foreground,
+                        emphasized: isSelected,
                       ),
+                    ],
+                  ],
+                ),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: switch (figure) {
+                    null => Text(
+                      amount,
+                      style: emphasized.titleLarge?.copyWith(color: foreground),
+                      maxLines: 1,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+                    final figure => AnimatedFigure(
+                      value: figure.value,
+                      format: figure.format,
+                      of: figure.of,
+                      style: emphasized.titleLarge?.copyWith(color: foreground),
+                    ),
+                  },
+                ),
+              ],
             ),
           ),
         ),

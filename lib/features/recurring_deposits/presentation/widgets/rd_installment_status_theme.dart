@@ -94,9 +94,12 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
         icon: HugeIcons.strokeRoundedTimer02,
         label: s.dueToday,
       ),
+      // Neutral, so it has only a surface tone to stand on. A pill or avatar in this state
+      // sits on rows, inset panels and sheets; the dim tone is the one that stays apart from
+      // all of them in both brightnesses.
       RDInstallmentDisplayStatus.upcoming => (
         foreground: scheme.onSurfaceVariant,
-        background: scheme.surfaceContainerLow,
+        background: scheme.surfaceDim,
         outline: null,
         emphasized: false,
         icon: HugeIcons.strokeRoundedCalendar02,

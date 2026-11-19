@@ -1,10 +1,122 @@
-import 'package:material_ui/material_ui.dart';
-import 'package:hugeicons/hugeicons.dart';
-
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+
+/// A centred message for a screen or list that has nothing to show: a large Material shape
+/// holding an icon, the message, and an optional action.
+///
+/// [EmptyStateView] and [ErrorStateView] share this layout; they differ in colour and
+/// default icon.
+class _StateMessage extends StatelessWidget {
+  const _StateMessage({
+    required this.icon,
+    required this.shape,
+    required this.message,
+    required this.badgeColor,
+    required this.iconColor,
+    this.actionLabel,
+    this.actionIcon,
+    this.onAction,
+  });
+
+  final AppIconData icon;
+  final AppAvatarShape shape;
+  final String message;
+  final Color badgeColor;
+  final Color iconColor;
+  final String? actionLabel;
+  final AppIconData? actionIcon;
+  final VoidCallback? onAction;
+
+  static const double _badgeSize = 96;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final column = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppShapeAvatar(
+          size: _badgeSize,
+          shape: shape,
+          backgroundColor: badgeColor,
+          foregroundColor: iconColor,
+          child: AppIcon(icon, size: AppDimensions.iconXl - AppDimensions.paddingSm),
+        ),
+        AppSpacings.gapLg,
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        if (onAction != null && actionLabel != null) ...[
+          AppSpacings.gapLg,
+          AppButton.tonal(label: actionLabel!, icon: actionIcon, onPressed: onAction),
+        ],
+      ],
+    );
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimensions.paddingXl),
+        child: MediaQuery.disableAnimationsOf(context)
+            ? column
+            : column
+                  .animate()
+                  .fade(duration: AppAnimations.slow, curve: AppAnimations.defaultCurve)
+                  .scale(
+                    begin: const Offset(0.9, 0.9),
+                    end: const Offset(1, 1),
+                    duration: AppAnimations.slow,
+                    curve: AppAnimations.bounceCurve,
+                  ),
+      ),
+    );
+  }
+}
+
+/// Shown when a list or section has no content, with an optional way out (e.g. clearing
+/// filters).
+class EmptyStateView extends StatelessWidget {
+  const EmptyStateView({
+    super.key,
+    required this.message,
+    this.icon = HugeIcons.strokeRoundedInbox,
+    this.actionLabel,
+    this.actionIcon,
+    this.onAction,
+  });
+
+  final String message;
+  final AppIconData icon;
+  final String? actionLabel;
+  final AppIconData? actionIcon;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return _StateMessage(
+      icon: icon,
+      shape: AppAvatarShape.cookie12,
+      message: message,
+      badgeColor: scheme.secondaryContainer,
+      iconColor: scheme.onSecondaryContainer,
+      actionLabel: actionLabel,
+      actionIcon: actionIcon,
+      onAction: onAction,
+    );
+  }
+}
 
 class ErrorStateView extends StatelessWidget {
   final String message;
@@ -14,48 +126,16 @@ class ErrorStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child:
-            Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    HugeIcon(
-                      icon: HugeIcons.strokeRoundedAlert01,
-                      size: AppDimensions.iconXl,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    AppSpacings.gapLg,
-                    Text(
-                      message,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    if (onRetry != null) ...[
-                      AppSpacings.gapLg,
-                      ElevatedButton.icon(
-                        onPressed: onRetry,
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedRefresh,
-                          size: AppDimensions.iconMd,
-                        ),
-                        label: Text(t.common.retry),
-                      ),
-                    ],
-                  ],
-                )
-                .animate()
-                .fade(duration: AppAnimations.slow)
-                .scale(
-                  begin: const Offset(0.9, 0.9),
-                  end: const Offset(1, 1),
-                  duration: AppAnimations.slow,
-                  curve: AppAnimations.bounceCurve,
-                ),
-      ),
+    final scheme = Theme.of(context).colorScheme;
+    return _StateMessage(
+      icon: HugeIcons.strokeRoundedAlert01,
+      shape: AppAvatarShape.softBurst,
+      message: message,
+      badgeColor: scheme.errorContainer,
+      iconColor: scheme.onErrorContainer,
+      actionLabel: t.common.retry,
+      actionIcon: HugeIcons.strokeRoundedRefresh,
+      onAction: onRetry,
     );
   }
 }

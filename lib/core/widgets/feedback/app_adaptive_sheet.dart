@@ -20,6 +20,9 @@ abstract final class AppAdaptiveSheet {
     if (isCompact(context)) {
       return showModalBottomSheet<T>(
         context: context,
+        // A tab's screens live in that tab's own navigator, above the navigation bar. Pushed
+        // there, a sheet would end at the bar and leave it bright and tappable.
+        useRootNavigator: true,
         isScrollControlled: true,
         useSafeArea: true,
         showDragHandle: true,
@@ -34,6 +37,10 @@ abstract final class AppAdaptiveSheet {
       context: context,
       barrierDismissible: isDismissible,
       builder: (ctx) => Dialog(
+        // Same surface as the bottom sheet, so the content looks the same in both
+        // containers. On the default dialog surface a text field's tonal fill is the same
+        // colour as the dialog and only its outline shows.
+        backgroundColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
         clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: _dialogMaxWidth),

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -57,7 +58,7 @@ class AsyncEntityBuilder<T> extends StatelessWidget {
     if (dummyEntity != null) {
       return Skeletonizer(enabled: true, child: builder(dummyEntity));
     }
-    const loadingView = Center(child: CircularProgressIndicator());
+    const loadingView = Center(child: AppLoadingIndicator());
     return wrapWithScaffold
         ? Scaffold(
             appBar: AppBar(title: Text(t.common.loading)),
@@ -85,6 +86,15 @@ class AsyncSingleEntityBuilder<T> extends StatelessWidget {
   final T? dummyEntity;
   final bool wrapWithScaffold;
 
+  /// What is already known of the entity while [state] loads: the record its row in a
+  /// list was built from.
+  ///
+  /// The screen is built from it straight away, with nothing drawn over it. [builder]
+  /// marks what the seed cannot vouch for as loading (`EntityDetailScaffold.bodyLoading`).
+  /// When the full record arrives the screen is rebuilt in place, so what is on its way to
+  /// the head of the screen lands on the widget it set out for.
+  final T? seed;
+
   const AsyncSingleEntityBuilder({
     super.key,
     required this.state,
@@ -93,6 +103,7 @@ class AsyncSingleEntityBuilder<T> extends StatelessWidget {
     required this.onRetry,
     this.dummyEntity,
     this.wrapWithScaffold = true,
+    this.seed,
   });
 
   @override
@@ -105,10 +116,12 @@ class AsyncSingleEntityBuilder<T> extends StatelessWidget {
   }
 
   Widget _buildLoadingState(BuildContext context) {
+    final seed = this.seed;
+    if (seed != null) return builder(seed);
     if (dummyEntity != null) {
       return Skeletonizer(enabled: true, child: builder(dummyEntity as T));
     }
-    const loadingView = Center(child: CircularProgressIndicator());
+    const loadingView = Center(child: AppLoadingIndicator());
     return wrapWithScaffold
         ? Scaffold(
             appBar: AppBar(title: Text(t.common.loading)),

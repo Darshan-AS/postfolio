@@ -3,6 +3,12 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
+import 'package:postfolio/core/theme/app_surfaces.dart';
+import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
+import 'package:postfolio/core/widgets/layout/detail_components.dart';
+
+export 'package:postfolio/core/widgets/expressive/app_button_group.dart' show AppSegment;
 
 /// Uppercases ASCII characters as the user types (e.g. PAN numbers).
 class UpperCaseTextFormatter extends TextInputFormatter {
@@ -61,27 +67,32 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      decoration: AppInputDecoration.m3(
-        context,
-        labelText: labelText,
-        hintText: hintText,
-        prefixIcon: prefixIcon,
-        prefixText: prefixText,
-        isRequired: isRequired,
-      ).copyWith(suffixIcon: suffixIcon),
-      validator: validator,
-      keyboardType: keyboardType,
-      textInputAction: textInputAction,
-      textCapitalization: textCapitalization,
-      readOnly: readOnly,
-      enabled: enabled,
-      onTap: onTap,
-      maxLines: maxLines,
-      minLines: minLines,
-      onChanged: onChanged,
-      inputFormatters: inputFormatters,
+    return AppLabeledField(
+      labelText: labelText,
+      isRequired: isRequired,
+      builder: (context, label) => TextFormField(
+        controller: controller,
+        decoration: AppInputDecoration.m3(
+          context,
+          labelText: label,
+          hintText: hintText,
+          prefixIcon: prefixIcon,
+          prefixText: prefixText,
+          isRequired: isRequired,
+          restingLines: minLines ?? maxLines ?? 1,
+        ).copyWith(suffixIcon: suffixIcon),
+        validator: validator,
+        keyboardType: keyboardType,
+        textInputAction: textInputAction,
+        textCapitalization: textCapitalization,
+        readOnly: readOnly,
+        enabled: enabled,
+        onTap: onTap,
+        maxLines: maxLines,
+        minLines: minLines,
+        onChanged: onChanged,
+        inputFormatters: inputFormatters,
+      ),
     );
   }
 }
@@ -108,18 +119,36 @@ class AppDropdownField<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<T>(
-      key: ValueKey<T?>(value),
-      initialValue: value,
-      decoration: AppInputDecoration.m3(
-        context,
-        labelText: labelText,
-        prefixIcon: prefixIcon,
-        isRequired: isRequired,
+    final theme = Theme.of(context);
+    return AppLabeledField(
+      labelText: labelText,
+      isRequired: isRequired,
+      builder: (context, label) => DropdownButtonFormField<T>(
+        key: ValueKey<T?>(value),
+        initialValue: value,
+        decoration: AppInputDecoration.m3(
+          context,
+          labelText: label,
+          prefixIcon: prefixIcon,
+          isRequired: isRequired,
+        ),
+        // Without this the button is as wide as its longest item and overflows a narrow
+        // field.
+        isExpanded: true,
+        // The text field's input style; the dropdown's own default is a heavier title role.
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: theme.colorScheme.onSurface,
+        ),
+        // The same chevron as the customer picker, in place of the Material arrow glyph.
+        icon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedArrowDown01,
+          size: AppDimensions.iconMd,
+        ),
+        borderRadius: BorderRadius.circular(AppShapes.large),
+        items: items,
+        onChanged: onChanged,
+        validator: validator,
       ),
-      items: items,
-      onChanged: onChanged,
-      validator: validator,
     );
   }
 }
@@ -157,11 +186,12 @@ class AppDateField extends StatelessWidget {
   }
 }
 
+/// A labelled single-choice field drawn as a connected button group ([AppButtonGroup]).
 class AppSegmentedButtonField<T> extends StatelessWidget {
   final T value;
   final String labelText;
   final Widget? prefixIcon;
-  final List<ButtonSegment<T>> segments;
+  final List<AppSegment<T>> segments;
   final void Function(T) onChanged;
   final bool isRequired;
   final bool enabled;
@@ -220,40 +250,74 @@ class AppSegmentedButtonField<T> extends StatelessWidget {
             ],
           ),
         ),
-        SegmentedButton<T>(
+        AppButtonGroup<T>(
           segments: segments,
-          selected: {value},
-          onSelectionChanged: enabled
-              ? (Set<T> newSelection) {
-                  onChanged(newSelection.first);
-                }
-              : null,
+          selected: value,
+          enabled: enabled,
+          onChanged: onChanged,
         ),
       ],
     );
   }
 }
 
-class FormSectionHeader extends StatelessWidget {
+/// One section of a create / edit form: a heading in the style of the detail screens, and
+/// the section's fields inside one raised container.
+///
+/// The fields keep the themed tonal fill, which reads as recessed against the container.
+/// Callers space the fields themselves.
+class FormSection extends StatelessWidget {
   final String title;
-  final EdgeInsetsGeometry? padding;
+  final List<Widget> children;
 
-  const FormSectionHeader({super.key, required this.title, this.padding});
+  const FormSection({super.key, required this.title, required this.children});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding:
-          padding ??
-          const EdgeInsets.only(
-            top: AppDimensions.paddingLg,
-            bottom: AppDimensions.paddingMd,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DetailSectionTitle(title),
+        Material(
+          color: Theme.of(context).colorScheme.raised,
+          shape: AppShapes.rounded(AppShapes.groupOuter),
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimensions.paddingLg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: children,
+            ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Supporting text under a form field, aligned with the field's content.
+class FormFieldSupportingText extends StatelessWidget {
+  final String text;
+
+  /// Uses the primary colour and italics, for a value echoed back from the field (an amount
+  /// in words, the full name of the picked option). Plain helper text otherwise.
+  final bool isEcho;
+
+  const FormFieldSupportingText(this.text, {super.key, this.isEcho = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: AppDimensions.paddingXs,
+        left: AppDimensions.paddingLg,
+        right: AppDimensions.paddingLg,
+      ),
       child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.bold,
+        text,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: isEcho ? scheme.primary : scheme.onSurfaceVariant,
+          fontStyle: isEcho ? FontStyle.italic : null,
         ),
       ),
     );

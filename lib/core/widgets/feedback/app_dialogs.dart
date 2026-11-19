@@ -1,6 +1,8 @@
 import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/expressive/app_dialog.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class AppDialogs {
@@ -11,31 +13,26 @@ class AppDialogs {
   }) {
     final theme = Theme.of(context);
 
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        icon: HugeIcon(
-          icon: HugeIcons.strokeRoundedAlert02,
-          size: AppDimensions.iconLg,
-          color: theme.colorScheme.error,
-        ),
-        title: Text(title),
-        content: Text(content),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(t.common.cancel),
-          ),
-          FilledButton.tonal(
-            style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.errorContainer,
-              foregroundColor: theme.colorScheme.onErrorContainer,
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(t.common.delete),
-          ),
-        ],
+    return AppDialog.show<bool>(
+      context,
+      icon: HugeIcon(
+        icon: HugeIcons.strokeRoundedAlert02,
+        size: AppDimensions.iconLg,
+        color: theme.colorScheme.error,
       ),
+      title: title,
+      content: Text(content),
+      actions: (ctx) => [
+        AppButton.text(
+          label: t.common.cancel,
+          onPressed: () => Navigator.of(ctx).pop(false),
+        ),
+        AppButton.tonal(
+          label: t.common.delete,
+          isDestructive: true,
+          onPressed: () => Navigator.of(ctx).pop(true),
+        ),
+      ],
     );
   }
 
@@ -50,36 +47,29 @@ class AppDialogs {
   }) {
     final theme = Theme.of(context);
 
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        icon: icon != null
-            ? HugeIcon(
-                icon: icon,
-                size: AppDimensions.iconLg,
-                color: theme.colorScheme.primary,
-              )
-            : null,
-        title: Text(title),
-        content: Text(content),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(t.common.cancel),
-          ),
-          FilledButton.tonal(
-            style: FilledButton.styleFrom(
-              backgroundColor:
-                  confirmBackgroundColor ?? theme.colorScheme.primaryContainer,
-              foregroundColor:
-                  confirmForegroundColor ??
-                  theme.colorScheme.onPrimaryContainer,
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(confirmText ?? t.common.ok),
-          ),
-        ],
-      ),
+    return AppDialog.show<bool>(
+      context,
+      icon: icon != null
+          ? HugeIcon(
+              icon: icon,
+              size: AppDimensions.iconLg,
+              color: theme.colorScheme.primary,
+            )
+          : null,
+      title: title,
+      content: Text(content),
+      actions: (ctx) => [
+        AppButton.text(
+          label: t.common.cancel,
+          onPressed: () => Navigator.of(ctx).pop(false),
+        ),
+        AppButton.tonal(
+          label: confirmText ?? t.common.ok,
+          backgroundColor: confirmBackgroundColor,
+          foregroundColor: confirmForegroundColor,
+          onPressed: () => Navigator.of(ctx).pop(true),
+        ),
+      ],
     );
   }
 
@@ -90,23 +80,21 @@ class AppDialogs {
   }) {
     final theme = Theme.of(context);
 
-    return showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        icon: HugeIcon(
-          icon: HugeIcons.strokeRoundedAlertCircle,
-          size: AppDimensions.iconLg,
-          color: theme.colorScheme.error,
-        ),
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(t.common.ok),
-          ),
-        ],
+    return AppDialog.show<void>(
+      context,
+      icon: HugeIcon(
+        icon: HugeIcons.strokeRoundedAlertCircle,
+        size: AppDimensions.iconLg,
+        color: theme.colorScheme.error,
       ),
+      title: title,
+      content: Text(message),
+      actions: (ctx) => [
+        AppButton.text(
+          label: t.common.ok,
+          onPressed: () => Navigator.of(ctx).pop(),
+        ),
+      ],
     );
   }
 }

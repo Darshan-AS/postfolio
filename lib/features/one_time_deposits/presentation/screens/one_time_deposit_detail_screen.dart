@@ -3,12 +3,17 @@ import 'package:hugeicons/hugeicons.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
+import 'package:postfolio/core/enums/maturity_urgency.dart';
+import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 import 'package:postfolio/core/widgets/domain/nominees_detail_section.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
@@ -24,34 +29,57 @@ import 'package:postfolio/core/extensions/date_time_extension.dart';
 class OneTimeDepositDetailScreen extends ConsumerWidget {
   final String depositId;
 
-  const OneTimeDepositDetailScreen({super.key, required this.depositId});
+  /// Where the row that opened the screen is, when a row did (`EntityHero.tagFrom`).
+  final String? openedFrom;
+
+  const OneTimeDepositDetailScreen({super.key, required this.depositId, this.openedFrom});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final record = ref.watch(oneTimeDepositByIdProvider(depositId));
+
     return AsyncSingleEntityBuilder<OneTimeDeposit>(
-      state: ref.watch(oneTimeDepositByIdProvider(depositId)),
+      state: record,
+      // Opened from a row, the screen has the list's record of the deposit at once. It
+      // lacks only the nominees, so nothing here is a placeholder meanwhile: their section
+      // arrives with the full record.
+      seed: ref.watch(oneTimeDepositInListProvider(depositId)),
       notFoundMessage: t.oneTimeDeposits.depositNotFound,
       onRetry: () => ref.invalidate(oneTimeDepositByIdProvider(depositId)),
       dummyEntity: OneTimeDeposit.dummy,
       builder: (deposit) {
+        // The list's record or the full one. The placeholder of a cold start is neither.
+        final isKnown = deposit.id == depositId;
+        // The avatar, the customer's name, the account number and the amount travel here
+        // from the row.
+        final heroTag = isKnown ? EntityHero.tagFrom(openedFrom, depositId) : null;
+        final accountNo = deposit.accountNo ?? t.common.notProvided;
+        final customerName = (deposit.customerName?.isNotEmpty ?? false)
+            ? deposit.customerName!
+            : ref.watch(customerByIdProvider(deposit.customerId)).value?.name;
+        final supporting = Theme.of(context).colorScheme.onSurfaceVariant;
+
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
-          customActions: [
-            IconButton(
+          onRefresh: () => ref.refresh(oneTimeDepositByIdProvider(depositId).future),
+          // In the menu, with its label, as on the deposit's row in the list. It was a bare
+          // seal icon in the app bar.
+          menuActions: [
+            EntityAction(
               icon: HugeIcon(
                 icon: deposit.status == DepositStatus.active
                     ? HugeIcons.strokeRoundedCheckmarkBadge01
                     : HugeIcons.strokeRoundedArrowTurnBackward,
-                size: AppDimensions.iconMd,
+                size: AppDimensions.iconSm,
               ),
-              tooltip: deposit.status == DepositStatus.active
-                  ? t.common.close
-                  : t.common.reopen,
-              onPressed: () async {
+              label: deposit.status == DepositStatus.active
+                  ? t.common.closeDeposit
+                  : t.common.reopenDeposit,
+              onTap: () async {
                 final isActive = deposit.status == DepositStatus.active;
                 final confirmed = await AppDialogs.confirmAction(
                   context,
-                  title: isActive ? t.common.close : t.common.reopen,
+                  title: isActive ? t.common.closeDeposit : t.common.reopenDeposit,
                   content: isActive
                       ? t.oneTimeDeposits.closeDepositConfirmation
                       : t.oneTimeDeposits.reopenDepositConfirmation,
@@ -93,14 +121,40 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 : null;
           },
           header: EntityDetailHeader(
+            heroTag: heroTag,
             avatarText: deposit.schemeType.shortName,
             avatarSubtext: deposit.schemeTermLabel,
-            title: deposit.accountNo ?? t.common.notProvided,
-            subtitle: Text(
-              deposit.schemeType.displayName,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            avatarShape: deposit.schemeType.avatarShape,
+            // Headed as its row in the list is: whose deposit it is, then which. A deposit
+            // without a named customer is titled by its number there too.
+            title: customerName ?? accountNo,
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // An account number broken across two lines reads as two numbers.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: EntityHero(
+                    tag: heroTag,
+                    part: EntityHeroPart.subtitle,
+                    child: Text(
+                      accountNo,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: supporting),
+                    ),
+                  ),
+                ),
+                Text(
+                  deposit.schemeType.displayName,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: supporting),
+                ),
+                // The date the screen is most often opened for; it was only in the
+                // Timeline group, half a screen down.
+                _MaturityLine(deposit: deposit),
+              ],
             ),
             badge: StatusBadge(
               status: deposit.status.displayName,
@@ -124,6 +178,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                       totalInvested: totalInvested,
                       projectedInterest: totalInterestEarned,
                       maturityAmount: maturityAmount,
+                      investedHeroTag: heroTag,
                     ),
                   ],
                 ),
@@ -137,9 +192,12 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   periodicPayout: periodicPayoutAmount,
                   payoutFrequency: payoutFrequency.displayName,
                   totalInterestEarned: totalInterestEarned,
+                  principalHeroTag: heroTag,
                 ),
             },
-            AppSpacings.gapXxl,
+            // 16dp, the gap between any two blocks of a detail screen; the figures were
+            // followed by 32dp.
+            AppSpacings.gapLg,
             DetailSection(
               title: t.oneTimeDeposits.sections.investmentDetails,
               children: [
@@ -154,7 +212,6 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                     months: deposit.termMonths.toString(),
                   ),
                 ),
-                const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedPercent,
@@ -177,7 +234,6 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   label: t.oneTimeDeposits.fields.depositDate,
                   value: deposit.startDate.toAppFormat(),
                 ),
-                const Divider(height: AppDimensions.dividerHeight),
                 DetailItem(
                   icon: const HugeIcon(
                     icon: HugeIcons.strokeRoundedCalendar03,
@@ -202,7 +258,6 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                     value: deposit.accountNo,
                     copyValue: deposit.accountNo,
                   ),
-                  const Divider(height: AppDimensions.dividerHeight),
                 ],
                 DetailItem(
                   icon: const HugeIcon(
@@ -228,6 +283,35 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// "Matures 10 May 2029", in the colour the list uses for a deposit that is close to
+/// maturity or past it.
+class _MaturityLine extends StatelessWidget {
+  final OneTimeDeposit deposit;
+
+  const _MaturityLine({required this.deposit});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isActive = deposit.status == DepositStatus.active;
+    final urgency = deposit.maturityUrgency;
+    final date = deposit.maturityDate.toAppFormat();
+
+    final color = switch (urgency) {
+      MaturityUrgency.matured when isActive => scheme.error,
+      MaturityUrgency.maturingSoon when isActive => scheme.tertiary,
+      _ => scheme.onSurfaceVariant,
+    };
+    return Text(
+      urgency == MaturityUrgency.matured
+          ? t.common.maturedOn(date: date)
+          : t.common.maturesOn(date: date),
+      style: AppTypography.emphasizedOf(context).bodyMedium?.copyWith(color: color),
     );
   }
 }

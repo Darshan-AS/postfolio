@@ -182,6 +182,18 @@ class CustomersController extends _$CustomersController {
   }
 }
 
+/// The list's record of a customer, once the list has loaded it.
+///
+/// It is what the customer's row is built from: the customer's own details, without the
+/// savings account and its nominees, which only [customerById] fetches. A screen opened
+/// from the list shows its head from this record until the full one arrives.
+@riverpod
+Customer? customerInList(Ref ref, String id) => ref
+    .watch(customersControllerProvider)
+    .value
+    ?.where((customer) => customer.id == id)
+    .firstOrNull;
+
 @riverpod
 Stream<Customer> customerById(Ref ref, String id) {
   final repository = ref.watch(customerRepositoryProvider);

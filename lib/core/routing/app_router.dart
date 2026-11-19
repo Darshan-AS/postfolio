@@ -17,6 +17,7 @@ import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/presentation/screens/login_screen.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/routing/app_routes.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 
 part 'app_router.g.dart';
 
@@ -45,6 +46,8 @@ GoRouter goRouter(Ref ref) {
 
   final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
+    // The detail screens are pages of this navigator.
+    observers: [EntityHeroBackSwipe()],
     initialLocation: AppRoutes.customers,
     routes: [
       GoRoute(
@@ -240,11 +243,14 @@ class OneTimeDepositDetailRoute extends GoRouteData
   static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
 
   final String otdId;
-  const OneTimeDepositDetailRoute(this.otdId);
+
+  /// Where the row that opened the screen is (`EntityHero.tagFrom`). Not part of the URL.
+  final String? $extra;
+  const OneTimeDepositDetailRoute(this.otdId, {this.$extra});
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return OneTimeDepositDetailScreen(depositId: otdId);
+    return OneTimeDepositDetailScreen(depositId: otdId, openedFrom: $extra);
   }
 }
 
@@ -291,11 +297,18 @@ class RecurringDepositDetailRoute extends GoRouteData
 
   final String rdId;
   final String? tab;
-  const RecurringDepositDetailRoute(this.rdId, {this.tab});
+
+  /// Where the row that opened the screen is (`EntityHero.tagFrom`). Not part of the URL.
+  final String? $extra;
+  const RecurringDepositDetailRoute(this.rdId, {this.tab, this.$extra});
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return RecurringDepositDetailScreen(depositId: rdId, initialTab: tab);
+    return RecurringDepositDetailScreen(
+      depositId: rdId,
+      initialTab: tab,
+      openedFrom: $extra,
+    );
   }
 }
 
@@ -336,11 +349,14 @@ class CustomerDetailRoute extends GoRouteData with $CustomerDetailRoute {
   static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
 
   final String customerId;
-  const CustomerDetailRoute(this.customerId);
+
+  /// Where the row that opened the screen is (`EntityHero.tagFrom`). Not part of the URL.
+  final String? $extra;
+  const CustomerDetailRoute(this.customerId, {this.$extra});
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return CustomerDetailScreen(customerId: customerId);
+    return CustomerDetailScreen(customerId: customerId, openedFrom: $extra);
   }
 }
 

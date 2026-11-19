@@ -1,14 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:hugeicons/hugeicons.dart';
 
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
-import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/layout/detail_components.dart';
+import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
-import 'package:postfolio/core/extensions/double_extension.dart';
-import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
@@ -19,218 +17,58 @@ import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_m
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-class _RecurringDepositCardView extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String leadingLabel;
-  final double installmentAmount;
-  final DepositStatus status;
-  final MaturityUrgency urgency;
-  final String relativeTimeText;
-  final DateTime maturityDate;
-  final VoidCallback? onTap;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
-  final VoidCallback? onToggleStatus;
-
-  const _RecurringDepositCardView({
-    required this.title,
-    required this.subtitle,
-    required this.leadingLabel,
-    required this.installmentAmount,
-    required this.status,
-    required this.urgency,
-    required this.relativeTimeText,
-    required this.maturityDate,
-    this.onTap,
-    this.onEdit,
-    this.onDelete,
-    this.onToggleStatus,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    Color? indicatorColor;
-    if (urgency == MaturityUrgency.matured) {
-      indicatorColor = Theme.of(context).colorScheme.errorContainer;
-    } else if (urgency == MaturityUrgency.maturingSoon) {
-      indicatorColor = Theme.of(context).colorScheme.tertiaryContainer;
-    }
-
-    return EntityListTile(
-      indicatorColor: indicatorColor,
-      leadingText: leadingLabel,
-      leadingBackgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-      leadingForegroundColor: Theme.of(
-        context,
-      ).colorScheme.onSecondaryContainer,
-      title: title,
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: AppDimensions.paddingXs),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (subtitle.isNotEmpty)
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            if (urgency == MaturityUrgency.maturingSoon ||
-                urgency == MaturityUrgency.matured) ...[
-              if (subtitle.isNotEmpty) AppSpacings.gapXs,
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  HugeIcon(
-                    icon: HugeIcons.strokeRoundedTimer02,
-                    size: AppDimensions.iconSm,
-                    color: urgency == MaturityUrgency.matured
-                        ? Theme.of(context).colorScheme.error
-                        : Theme.of(context).colorScheme.tertiary,
-                  ),
-                  AppSpacings.gapXs,
-                  Flexible(
-                    child: Text(
-                      relativeTimeText,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: urgency == MaturityUrgency.matured
-                            ? Theme.of(context).colorScheme.error
-                            : Theme.of(context).colorScheme.tertiary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
-      ),
-      onTap: onTap,
-      trailing: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              installmentAmount.toRupeeFormat(),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.secondary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            ...[
-              AppSpacings.gapXs,
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  HugeIcon(
-                    icon: HugeIcons.strokeRoundedCalendar01,
-                    size: AppDimensions.iconSm,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  AppSpacings.gapXs,
-                  Text(
-                    maturityDate.toAppFormat(),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            AppSpacings.gapXs,
-            StatusBadge(
-              status: status.displayName,
-              depositStatus: status,
-              compact: true,
-              urgency: urgency,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        if (onToggleStatus != null)
-          if (status == DepositStatus.active)
-            EntityAction(
-              label: t.common.close,
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedCheckmarkBadge01,
-                size: AppDimensions.iconMd,
-              ),
-              onTap: onToggleStatus!,
-            )
-          else if (status == DepositStatus.closed)
-            EntityAction(
-              label: t.common.reopen,
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedArrowTurnBackward,
-                size: AppDimensions.iconMd,
-              ),
-              onTap: onToggleStatus!,
-            ),
-        if (onEdit != null) EntityAction.edit(onTap: onEdit!),
-        if (onDelete != null) EntityAction.delete(onTap: onDelete!),
-      ],
-    );
-  }
-}
-
 class RecurringDepositCard extends ConsumerWidget {
   final RecurringDeposit deposit;
-  final String? overrideTitle;
-  final String? overrideSubtitle;
+
+  /// Title the row by its account number instead of the customer's name, with no second
+  /// line. For rows on the customer's screen: the customer is the screen.
+  final bool titleByAccount;
+
+  /// Where this row is, for the avatar and the account number that travel to the head of
+  /// the deposit's screen (`EntityHero.tagFrom`).
+  final String heroOrigin;
+
+  /// Where this row sits in its list (see [EntityListTile.position]).
+  final AppGroupPosition position;
 
   const RecurringDepositCard({
     super.key,
     required this.deposit,
-    this.overrideTitle,
-    this.overrideSubtitle,
+    this.titleByAccount = false,
+    this.heroOrigin = EntityHero.ownList,
+    this.position = AppGroupPosition.single,
   });
 
-  static Widget skeleton() {
+  static Widget skeleton({AppGroupPosition position = AppGroupPosition.single}) {
     final dummy = RecurringDeposit.dummy;
-    return _RecurringDepositCardView(
+    return _RecurringDepositTile(
+      deposit: dummy,
       title: dummy.accountNo ?? t.common.loading,
       subtitle: dummy.accountNo ?? t.common.loading,
-      leadingLabel: dummy.avatarLabel,
-      installmentAmount: dummy.installmentAmount,
-      status: dummy.status,
       urgency: MaturityUrgency.normal,
       relativeTimeText: '',
-      maturityDate: dummy.maturityDate,
+      position: position,
     );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final title = (overrideTitle?.isNotEmpty == true ? overrideTitle : null) ??
-        (deposit.customerName?.isNotEmpty == true
-            ? deposit.customerName
-            : null) ??
-        deposit.accountNo ??
-        t.common.notProvided;
+    final accountNo = deposit.accountNo ?? t.common.notProvided;
+    final customerName = deposit.customerName ?? '';
 
-    final subtitle =
-        overrideSubtitle ?? (deposit.accountNo ?? t.common.notProvided);
-
-    return _RecurringDepositCardView(
-      title: title,
-      subtitle: subtitle,
-      leadingLabel: deposit.avatarLabel,
-      installmentAmount: deposit.installmentAmount,
-      status: deposit.status,
+    return _RecurringDepositTile(
+      deposit: deposit,
+      title: titleByAccount || customerName.isEmpty ? accountNo : customerName,
+      subtitle: titleByAccount ? '' : accountNo,
       urgency: deposit.maturityUrgency,
       relativeTimeText: deposit.maturityRelativeTime,
-      maturityDate: deposit.maturityDate,
-      onTap: () => RecurringDepositDetailRoute(deposit.id).push(context),
+      position: position,
+      heroTag: EntityHero.tagFrom(heroOrigin, deposit.id),
+      titleIsAccount: titleByAccount,
+      onTap: () => RecurringDepositDetailRoute(
+        deposit.id,
+        $extra: heroOrigin,
+      ).push(context),
       onEdit: () => RecurringDepositEditRoute(deposit.id).push(context),
       onDelete: () async {
         final confirmed = await AppDialogs.confirmDelete(
@@ -257,7 +95,7 @@ class RecurringDepositCard extends ConsumerWidget {
         final isActive = deposit.status == DepositStatus.active;
         final confirmed = await AppDialogs.confirmAction(
           context,
-          title: isActive ? t.common.close : t.common.reopen,
+          title: isActive ? t.common.closeDeposit : t.common.reopenDeposit,
           content: isActive
               ? t.recurringDeposits.closeDepositConfirmation
               : t.recurringDeposits.reopenDepositConfirmation,
@@ -279,6 +117,64 @@ class RecurringDepositCard extends ConsumerWidget {
           }
         }
       },
+    );
+  }
+}
+
+/// Maps a recurring deposit onto the shared [DepositListTile].
+class _RecurringDepositTile extends StatelessWidget {
+  const _RecurringDepositTile({
+    required this.deposit,
+    required this.title,
+    required this.subtitle,
+    required this.urgency,
+    required this.relativeTimeText,
+    required this.position,
+    this.heroTag,
+    this.titleIsAccount = false,
+    this.onTap,
+    this.onEdit,
+    this.onDelete,
+    this.onToggleStatus,
+  });
+
+  final Object? heroTag;
+  final bool titleIsAccount;
+
+  final RecurringDeposit deposit;
+  final String title;
+  final String subtitle;
+  final MaturityUrgency urgency;
+  final String relativeTimeText;
+  final AppGroupPosition position;
+  final VoidCallback? onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final VoidCallback? onToggleStatus;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return DepositListTile(
+      position: position,
+      heroTag: heroTag,
+      titleIsAccount: titleIsAccount,
+      title: title,
+      subtitle: subtitle,
+      avatarText: deposit.avatarLabel,
+      avatarShape: RecurringSchemeType.recurringDeposit.avatarShape,
+      avatarBackgroundColor: scheme.secondaryContainer,
+      avatarForegroundColor: scheme.onSecondaryContainer,
+      amount: deposit.installmentAmount,
+      amountColor: scheme.secondary,
+      status: deposit.status,
+      urgency: urgency,
+      relativeTimeText: relativeTimeText,
+      maturityDate: deposit.maturityDate,
+      onTap: onTap,
+      onEdit: onEdit,
+      onDelete: onDelete,
+      onToggleStatus: onToggleStatus,
     );
   }
 }

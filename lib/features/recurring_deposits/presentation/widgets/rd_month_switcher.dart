@@ -3,10 +3,18 @@ import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-/// One-line month navigator for the Monthly Hub: `‹  Mar 2026 ▾  ›`, with a small
-/// "Current month" text button only when the hub is looking at another month.
+/// Month navigator for the Monthly Hub: `‹  Mar 2026 ▾  ›`, with a "Current month" button
+/// only when the hub is looking at another month.
+///
+/// The month and that button share the space between the two arrows; when they do not fit
+/// side by side (large text, narrow window) the button drops under the month instead of
+/// squeezing it.
 /// Purely declarative: the caller decides what "current month" means and how a picked
 /// month is applied.
 class RDMonthSwitcher extends StatelessWidget {
@@ -19,6 +27,10 @@ class RDMonthSwitcher extends StatelessWidget {
 
   /// How far the "jump to month" picker may travel from the selected month.
   static const int _pickerYearSpan = 10;
+
+  /// On a wide window the switcher stays this wide and centred, so the arrows keep their
+  /// place next to the month they step instead of drifting to the window's edges.
+  static const double _maxWidth = AppDimensions.maxLoginWidth;
 
   const RDMonthSwitcher({
     super.key,
@@ -49,88 +61,120 @@ class RDMonthSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final ops = t.recurringDeposits.monthlyOperations;
     final monthLabel = DateFormat.yMMM(resolvedDateLocale()).format(selectedMonth);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingSm),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedArrowLeft01,
-              size: AppDimensions.iconSm,
-            ),
-            tooltip: ops.previousMonth,
-            onPressed: onPrevious,
+    // The theme shrinks icon buttons to 40dp on desktop; these stay a full touch target.
+    final stepStyle = IconButton.styleFrom(
+      minimumSize: const Size.square(AppDimensions.actionButtonSize),
+    );
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: _maxWidth),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.pageMargin,
           ),
-          Expanded(
-            child: Center(
-              child: Tooltip(
-                message: ops.toolbar.pickMonth,
-                child: InkWell(
-                  onTap: () => _pickMonth(context),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.paddingSm,
-                      vertical: AppDimensions.paddingXs,
+          child: Row(
+            children: [
+              IconButton.filledTonal(
+                style: stepStyle,
+                icon: const AppIcon(HugeIcons.strokeRoundedArrowLeft01),
+                tooltip: ops.previousMonth,
+                onPressed: onPrevious,
+              ),
+              Expanded(
+                child: OverflowBar(
+                  alignment: MainAxisAlignment.center,
+                  overflowAlignment: OverflowBarAlignment.center,
+                  spacing: AppDimensions.paddingXs,
+                  children: [
+                    _MonthTitle(
+                      label: monthLabel,
+                      tooltip: ops.toolbar.pickMonth,
+                      onTap: () => _pickMonth(context),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            monthLabel,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: scheme.onSurface,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        AppSpacings.gapXs,
-                        HugeIcon(
-                          icon: HugeIcons.strokeRoundedArrowDown01,
-                          size: AppDimensions.iconXs,
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ],
+                    if (!isCurrentMonth)
+                      AppButton.text(
+                        label: ops.currentMonth,
+                        onPressed: onResetToCurrent,
+                      ),
+                  ],
+                ),
+              ),
+              IconButton.filledTonal(
+                style: stepStyle,
+                icon: const AppIcon(HugeIcons.strokeRoundedArrowRight01),
+                tooltip: ops.nextMonth,
+                onPressed: onNext,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The month as a title that opens the month picker. The label shrinks rather than being
+/// cut: a month that reads "Apr 20…" is no use.
+class _MonthTitle extends StatelessWidget {
+  const _MonthTitle({
+    required this.label,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final String label;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        type: MaterialType.transparency,
+        shape: AppShapes.pill,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: AppDimensions.actionButtonSize,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingMd,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        style: AppTypography.emphasizedOf(context).titleLarge
+                            ?.copyWith(color: scheme.onSurface),
+                        maxLines: 1,
+                      ),
                     ),
                   ),
-                ),
+                  AppSpacings.gapXs,
+                  AppIcon(
+                    HugeIcons.strokeRoundedArrowDown01,
+                    size: AppDimensions.iconSm,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ],
               ),
             ),
           ),
-          if (!isCurrentMonth)
-            TextButton(
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingSm,
-                ),
-              ),
-              onPressed: onResetToCurrent,
-              child: Text(
-                ops.currentMonth,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: scheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          IconButton(
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedArrowRight01,
-              size: AppDimensions.iconSm,
-            ),
-            tooltip: ops.nextMonth,
-            onPressed: onNext,
-          ),
-        ],
+        ),
       ),
     );
   }

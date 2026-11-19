@@ -3,17 +3,26 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_surfaces.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
+import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
+import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-/// Pinned toolbar of the Monthly Hub: search, due-window segments and the
-/// group-by / select toggles. This is the only header widget that rebuilds on a keystroke.
+/// Pinned toolbar of the Monthly Hub: the search pill, which carries the group-by and
+/// select toggles the way the other list screens carry sort and filter, and the due-window
+/// choice on its own row so its three labels are never cut.
+/// This is the only header widget that rebuilds on a keystroke.
 class RDHubToolbar extends HookConsumerWidget {
   const RDHubToolbar({super.key});
 
+  /// The group-by and select toggles at the end of the search pill.
+  static const int _toggleCount = 2;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final scheme = Theme.of(context).colorScheme;
     final ops = t.recurringDeposits.monthlyOperations;
     final toolbar = ops.toolbar;
 
@@ -37,117 +46,83 @@ class RDHubToolbar extends HookConsumerWidget {
       return null;
     }, [searchQuery]);
 
+    // Opaque: the rows scroll underneath the pinned toolbar.
     return ColoredBox(
-      color: theme.colorScheme.surface,
+      color: scheme.page,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingLg,
-          vertical: AppDimensions.paddingXs,
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.pageMargin,
+          AppDimensions.paddingXs,
+          AppDimensions.pageMargin,
+          AppDimensions.paddingSm,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SearchBar(
-              controller: searchController,
-              hintText: ops.searchHint,
-              onChanged: filtersNotifier.setSearchQuery,
-              leading: HugeIcon(
-                icon: HugeIcons.strokeRoundedSearch01,
-                color: theme.colorScheme.onSurfaceVariant,
-                size: AppDimensions.iconMd,
-              ),
-              trailing: [
-                if (searchController.text.isNotEmpty)
-                  IconButton(
-                    tooltip: t.common.clear,
-                    onPressed: () {
-                      searchController.clear();
-                      filtersNotifier.setSearchQuery('');
-                    },
-                    icon: HugeIcon(
-                      icon: HugeIcons.strokeRoundedCancel01,
-                      color: theme.colorScheme.onSurfaceVariant,
-                      size: AppDimensions.iconMd,
-                    ),
-                  ),
-              ],
-            ),
-            AppSpacings.gapXs,
-            Row(
-              children: [
-                Expanded(
-                  child: SegmentedButton<RDDueWindowFilter>(
-                    showSelectedIcon: false,
-                    style: const ButtonStyle(
-                      visualDensity: VisualDensity.compact,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    segments: [
-                      ButtonSegment(
-                        value: RDDueWindowFilter.all,
-                        label: Text(toolbar.windowAll),
-                      ),
-                      ButtonSegment(
-                        value: RDDueWindowFilter.firstHalf,
-                        label: Text(toolbar.window15th(count: firstHalfCount)),
-                      ),
-                      ButtonSegment(
-                        value: RDDueWindowFilter.secondHalf,
-                        label: Text(toolbar.windowEom(count: secondHalfCount)),
-                      ),
-                    ],
-                    selected: {dueWindow},
-                    onSelectionChanged: (set) {
-                      final next = set.first;
-                      // Notifier toggles: re-selecting the active window clears it,
-                      // so only forward when the window actually changes.
-                      if (next != dueWindow) filtersNotifier.toggleDueWindow(next);
-                    },
-                  ),
+            LayoutBuilder(
+              builder: (context, constraints) => SearchBar(
+                controller: searchController,
+                hintText: searchHintThatFits(
+                  context,
+                  hint: ops.searchHint,
+                  barWidth: constraints.maxWidth,
+                  trailingButtons: _toggleCount,
                 ),
-                AppSpacings.gapXs,
-                IconButton(
-                  tooltip: toolbar.groupByCustomer,
-                  isSelected: groupByCustomer,
-                  style: IconButton.styleFrom(
-                    minimumSize: const Size(
-                      AppDimensions.minTapTarget,
-                      AppDimensions.minTapTarget,
-                    ),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  onPressed: () => filtersNotifier.toggleGroupByCustomer(),
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedUserGroup,
-                    size: AppDimensions.iconSm,
-                  ),
-                  selectedIcon: HugeIcon(
-                    icon: HugeIcons.strokeRoundedUserGroup,
-                    size: AppDimensions.iconSm,
-                    color: theme.colorScheme.primary,
-                  ),
+                onChanged: filtersNotifier.setSearchQuery,
+                leading: AppIcon(
+                  HugeIcons.strokeRoundedSearch01,
+                  color: scheme.onSurfaceVariant,
+                  size: AppDimensions.iconMd,
                 ),
-                IconButton(
-                  tooltip: isSelectionMode ? toolbar.exitSelectMode : toolbar.selectMode,
-                  isSelected: isSelectionMode,
-                  style: IconButton.styleFrom(
-                    minimumSize: const Size(
-                      AppDimensions.minTapTarget,
-                      AppDimensions.minTapTarget,
+                trailing: [
+                  if (searchController.text.isNotEmpty)
+                    IconButton(
+                      tooltip: t.common.clear,
+                      onPressed: () {
+                        searchController.clear();
+                        filtersNotifier.setSearchQuery('');
+                      },
+                      icon: AppIcon(
+                        HugeIcons.strokeRoundedCancel01,
+                        color: scheme.onSurfaceVariant,
+                        size: AppDimensions.iconMd,
+                      ),
                     ),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  _ToolbarToggle(
+                    tooltip: toolbar.groupByCustomer,
+                    isSelected: groupByCustomer,
+                    icon: HugeIcons.strokeRoundedUserGroup,
+                    onPressed: filtersNotifier.toggleGroupByCustomer,
                   ),
-                  onPressed: isSelectionMode ? selectionNotifier.exit : selectionNotifier.enter,
-                  icon: const HugeIcon(
+                  _ToolbarToggle(
+                    tooltip: isSelectionMode ? toolbar.exitSelectMode : toolbar.selectMode,
+                    isSelected: isSelectionMode,
                     icon: HugeIcons.strokeRoundedCheckList,
-                    size: AppDimensions.iconSm,
+                    selectedIcon: HugeIcons.strokeRoundedCheckmarkCircle02,
+                    onPressed: isSelectionMode ? selectionNotifier.exit : selectionNotifier.enter,
                   ),
-                  selectedIcon: HugeIcon(
-                    icon: HugeIcons.strokeRoundedCheckmarkCircle02,
-                    size: AppDimensions.iconSm,
-                    color: theme.colorScheme.primary,
-                  ),
+                ],
+              ),
+            ),
+            AppSpacings.gapSm,
+            AppButtonGroup<RDDueWindowFilter>(
+              selected: dueWindow,
+              // The notifier toggles: re-selecting the active window would clear it. The group
+              // reports a tap only when the window actually changes.
+              onChanged: filtersNotifier.toggleDueWindow,
+              segments: [
+                AppSegment(
+                  value: RDDueWindowFilter.all,
+                  label: toolbar.windowAll,
+                ),
+                AppSegment(
+                  value: RDDueWindowFilter.firstHalf,
+                  label: toolbar.window15th(count: firstHalfCount),
+                ),
+                AppSegment(
+                  value: RDDueWindowFilter.secondHalf,
+                  label: toolbar.windowEom(count: secondHalfCount),
                 ),
               ],
             ),
@@ -155,5 +130,69 @@ class RDHubToolbar extends HookConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+/// An on/off icon button inside the search pill. Off it is a plain icon, like its
+/// neighbours; on it sits on a filled container in the colours of a selected segment of
+/// the due-window group below, so the state does not depend on the icon's colour alone.
+class _ToolbarToggle extends StatelessWidget {
+  const _ToolbarToggle({
+    required this.tooltip,
+    required this.isSelected,
+    required this.icon,
+    this.selectedIcon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final bool isSelected;
+  final AppIconData icon;
+
+  /// Shown instead of [icon] while selected.
+  final AppIconData? selectedIcon;
+  final VoidCallback onPressed;
+
+  /// The Material icon button: 40dp to look at inside a 48dp touch target. The fill of a
+  /// toggle that is on is the 40dp, so two that are on side by side keep 8dp between them;
+  /// at 44dp with no padding they touched.
+  static const Size _visualSize = Size.square(AppDimensions.buttonHeightSm);
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final glyph = AppIcon(
+      isSelected ? selectedIcon ?? icon : icon,
+      size: AppDimensions.iconMd,
+    );
+
+    return isSelected
+        ? IconButton.filledTonal(
+            tooltip: tooltip,
+            isSelected: true,
+            // The search bar wraps its trailing widgets in an `IconTheme`, and `IconButton`
+            // takes that theme's colour as its foreground ahead of the variant's own
+            // default, which would draw this icon in `onSurfaceVariant` on the fill.
+            style: IconButton.styleFrom(
+              backgroundColor: scheme.secondary,
+              foregroundColor: scheme.onSecondary,
+              minimumSize: _visualSize,
+              maximumSize: _visualSize,
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
+            onPressed: onPressed,
+            icon: glyph,
+          )
+        : IconButton(
+            tooltip: tooltip,
+            isSelected: false,
+            style: IconButton.styleFrom(
+              minimumSize: _visualSize,
+              maximumSize: _visualSize,
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
+            onPressed: onPressed,
+            icon: glyph,
+          );
   }
 }

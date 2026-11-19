@@ -297,6 +297,18 @@ class OneTimeDepositsController extends _$OneTimeDepositsController {
   }
 }
 
+/// The list's record of a deposit, once the list has loaded it.
+///
+/// It is what the deposit's rows are built from, in the list and on its customer's
+/// screen: the deposit without its nominees, which only [oneTimeDepositById] fetches. A
+/// screen shows its head from this record until the full one arrives.
+@riverpod
+OneTimeDeposit? oneTimeDepositInList(Ref ref, String id) => ref
+    .watch(oneTimeDepositsControllerProvider)
+    .value
+    ?.where((deposit) => deposit.id == id)
+    .firstOrNull;
+
 @riverpod
 Stream<OneTimeDeposit> oneTimeDepositById(Ref ref, String id) {
   final repository = ref.watch(oneTimeDepositRepositoryProvider);

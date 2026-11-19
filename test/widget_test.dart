@@ -16,6 +16,8 @@ import 'package:postfolio/features/one_time_deposits/presentation/screens/one_ti
 import 'package:postfolio/features/recurring_deposits/presentation/screens/recurring_deposit_detail_screen.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
+import 'package:postfolio/core/widgets/layout/detail_components.dart';
+import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() {
@@ -189,20 +191,29 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      // Account No appears in the EntityDetailHeader title and the copyable
+      // Account No appears under the EntityDetailHeader's title and in the copyable
       // Account Information row.
       expect(find.text('TD123456'), findsNWidgets(2));
       expect(find.text('TD'), findsOneWidget);
       expect(find.text('5Y'), findsOneWidget);
       expect(find.text('Time Deposit'), findsOneWidget);
+      // The customer's name is the header's title, and the Customer row further down.
+      expect(
+        find.descendant(
+          of: find.byType(EntityDetailHeader),
+          matching: find.text('Shivanand A B'),
+        ),
+        findsOneWidget,
+      );
+      final customerRow = find.widgetWithText(DetailItem, 'Shivanand A B');
       await tester.scrollUntilVisible(
-        find.text('Shivanand A B'),
+        customerRow,
         200,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
-      expect(find.text('Shivanand A B'), findsOneWidget);
+      expect(customerRow, findsOneWidget);
     },
   );
 

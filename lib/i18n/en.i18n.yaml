@@ -35,6 +35,14 @@ common:
   add: "Add"
   close: "Close"
   reopen: "Reopen"
+  closeDeposit: "Close deposit"
+  reopenDeposit: "Reopen deposit"
+  maturesOn: "Matures ${date}"
+  maturedOn: "Matured ${date}"
+  unsavedChanges:
+    title: "Discard unsaved changes?"
+    content: "You have unsaved edits. Leave this form without saving?"
+    discard: "Discard"
   duration:
     termYears: "Term (Years)"
     termMonths: "Term (Months)"
@@ -137,6 +145,10 @@ nav:
   dashboard: "Dashboard"
   oneTimeDeposits: "One-Time"
   recurringDeposits: "Recurring"
+  # What a screen reader says for the Recurring destination while its badge shows.
+  recurringDepositsInArrears:
+    one: "Recurring, 1 account in arrears"
+    other: "Recurring, ${n} accounts in arrears"
   customers: "Customers"
 
 customers:
@@ -282,6 +294,11 @@ recurringDeposits:
     allSettledFor: "All settled for ${month}."
     noFilterResults: "No accounts match."
     undo: "Undo"
+    progress:
+      settledOf: "${settled} of ${total} settled"
+      semantics: "${settled} of ${total} accounts settled for ${month}"
+      settledTitle: "${month} is settled"
+      settledBody: "Every installment due this month is collected and deposited"
     kpis:
       toCollect: "To collect"
       inHand: "In hand"
@@ -386,7 +403,7 @@ recurringDeposits:
     installmentsTitle: "Installment Schedule"
     transactionsTitle: "Payment History"
     logPaymentTitle: "Collect"
-    collectTitle: "Collect from ${customer} · ${serial}"
+    collectTitle: "Collect from ${customer}"
     editPaymentTitle: "Edit Payment"
     paymentModeValue: "Payment Mode • ${mode}"
     paymentModes:
@@ -421,7 +438,7 @@ recurringDeposits:
         one: "1 month (${amount})"
         other: "${n} months (${amount})"
     depositTitle: "Deposit ${n}"
-    depositTitleFor: "Deposit ${n} · ${customer} · ${serial}"
+    depositTitleFor: "Deposit ${n} · ${customer}"
     depositThrough: "Deposited through #${month}"
     depositNothingYet: "Nothing deposited yet"
     depositReady:
@@ -510,8 +527,12 @@ recurringDeposits:
       allSettledHint: "Every month is collected and deposited."
       collect: "Collect"
       deposit: "Deposit"
-      readyToDeposit: "Collected · to deposit: ${count} months · ${amount}"
-      readyToDepositWithFee: "Collected · to deposit: ${count} months · ${amount} (incl. ${fee} fee)"
+      readyToDeposit:
+        one: "Collected · to deposit: 1 month · ${amount}"
+        other: "Collected · to deposit: ${n} months · ${amount}"
+      readyToDepositWithFee:
+        one: "Collected · to deposit: 1 month · ${amount} (incl. ${fee} fee)"
+        other: "Collected · to deposit: ${n} months · ${amount} (incl. ${fee} fee)"
       nothingReady: "Nothing collected to deposit yet"
       depositFromPocket: "Front from pocket"
       undoLastDeposit: "Undo last PO deposit"

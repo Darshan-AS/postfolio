@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -36,6 +37,8 @@ abstract final class AppFeedback {
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.maybeOf(context);
     if (messenger == null) return;
+    // Felt as well as read: the agent is often looking at the customer, not the phone.
+    HapticFeedback.lightImpact();
     final scheme = Theme.of(context).colorScheme;
     messenger.showSnackBar(
       SnackBar(

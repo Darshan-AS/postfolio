@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/providers/theme_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 
 class AccessibleThemeToggle extends ConsumerWidget {
   const AccessibleThemeToggle({super.key});
@@ -53,39 +54,19 @@ class AccessibleThemeToggle extends ConsumerWidget {
       AppThemeMode.accessibleSystem => HugeIcons.strokeRoundedEye,
     };
 
-    return MenuAnchor(
-      menuChildren: [
+    return AppMenu(
+      entries: [
         for (final opt in options)
-          MenuItemButton(
-            key: ValueKey(opt.key),
-            leadingIcon: HugeIcon(
-              icon: opt.icon,
-              size: AppDimensions.iconSm,
-              color: activeMode == opt.mode
-                  ? scheme.primary
-                  : scheme.onSurfaceVariant,
-            ),
-            trailingIcon: activeMode == opt.mode
-                ? HugeIcon(
-                    icon: HugeIcons.strokeRoundedTick02,
-                    size: AppDimensions.iconSm,
-                    color: scheme.primary,
-                  )
-                : null,
+          AppMenuEntry(
+            label: opt.label,
+            icon: HugeIcon(icon: opt.icon, size: AppDimensions.iconSm),
+            selected: activeMode == opt.mode,
             onPressed: () {
               ref.read(themeModeProvider.notifier).setThemeMode(opt.mode);
             },
-            child: Text(
-              opt.label,
-              style: TextStyle(
-                fontWeight: activeMode == opt.mode
-                    ? FontWeight.w700
-                    : FontWeight.w400,
-              ),
-            ),
           ),
       ],
-      builder: (context, controller, _) => IconButton(
+      anchorBuilder: (context, open) => IconButton(
         key: const ValueKey('theme_mode_selector_button'),
         isSelected: activeMode != AppThemeMode.system,
         tooltip: t.common.toggleAccessibleTheme,
@@ -101,13 +82,7 @@ class AccessibleThemeToggle extends ConsumerWidget {
               ? scheme.onPrimaryContainer
               : scheme.onSurfaceVariant,
         ),
-        onPressed: () {
-          if (controller.isOpen) {
-            controller.close();
-          } else {
-            controller.open();
-          }
-        },
+        onPressed: open,
       ),
     );
   }

@@ -5,7 +5,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/extensions/string_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
+import 'package:postfolio/core/widgets/expressive/app_group.dart';
+import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
 import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
+import 'package:postfolio/core/widgets/feedback/app_sheet_header.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
@@ -56,49 +60,54 @@ class CustomerSelectionField extends HookConsumerWidget {
               ? displayCustomer.cifNumber!
               : displayCustomer.phone?.toPhoneFormat());
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-      onTap: showSelectionSheet,
-      child: InputDecorator(
-        decoration: AppInputDecoration.m3(
-          context,
-          labelText: t.oneTimeDeposits.fields.customerId,
-          prefixIcon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedUser,
-            size: AppDimensions.iconMd,
-          ),
-          errorText: errorText,
-          isRequired: true,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                displayCustomer?.name ?? t.customers.selectCustomer,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: displayCustomer == null
-                      ? Theme.of(context).hintColor
-                      : Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-            ),
-            if (secondaryIdentifier != null && secondaryIdentifier.isNotEmpty) ...[
-              AppSpacings.gapSm,
-              Text(
-                secondaryIdentifier,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-            AppSpacings.gapXs,
-            const HugeIcon(
-              icon: HugeIcons.strokeRoundedArrowDown01,
+    return AppLabeledField(
+      labelText: t.oneTimeDeposits.fields.customerId,
+      isRequired: true,
+      builder: (context, label) => InkWell(
+        // The themed input corners, so the ripple stays inside the field.
+        borderRadius: BorderRadius.circular(AppShapes.large),
+        onTap: showSelectionSheet,
+        child: InputDecorator(
+          decoration: AppInputDecoration.m3(
+            context,
+            labelText: label,
+            prefixIcon: const HugeIcon(
+              icon: HugeIcons.strokeRoundedUser,
               size: AppDimensions.iconMd,
             ),
-          ],
+            errorText: errorText,
+            isRequired: true,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                // Wraps: a name cut with an ellipsis is not the name.
+                child: Text(
+                  displayCustomer?.name ?? t.customers.selectCustomer,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: displayCustomer == null
+                        ? Theme.of(context).hintColor
+                        : Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              if (secondaryIdentifier != null && secondaryIdentifier.isNotEmpty) ...[
+                AppSpacings.gapSm,
+                Text(
+                  secondaryIdentifier,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              AppSpacings.gapXs,
+              const HugeIcon(
+                icon: HugeIcons.strokeRoundedArrowDown01,
+                size: AppDimensions.iconMd,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -121,29 +130,12 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppDimensions.paddingLg,
+              AppDimensions.pageMargin,
               AppDimensions.paddingSm,
               AppDimensions.paddingSm,
               0,
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    t.customers.selectCustomer,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
-                IconButton(
-                  tooltip: t.common.close,
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedCancel01,
-                    size: AppDimensions.iconMd,
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
+            child: AppSheetHeader(title: t.customers.selectCustomer),
           ),
           _buildSearchBar(context, searchQuery),
           Expanded(
@@ -157,7 +149,7 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
                 ref,
                 error.toString(),
               ),
-              _ => const Center(child: CircularProgressIndicator()),
+              _ => const Center(child: AppLoadingIndicator()),
             },
           ),
         ],
@@ -170,7 +162,12 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
     ValueNotifier<String> searchQuery,
   ) {
     return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingLg),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.pageMargin,
+        AppDimensions.paddingSm,
+        AppDimensions.pageMargin,
+        AppDimensions.paddingMd,
+      ),
       child: TextField(
         decoration: AppInputDecoration.m3(
           context,
@@ -210,9 +207,10 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
   }
 
   Widget _buildCustomerList(List<Customer> customers) {
-    return ListView.builder(
+    return AppGroupListView(
       itemCount: customers.length,
-      itemBuilder: (context, index) {
+      bottomPadding: AppDimensions.paddingLg,
+      itemBuilder: (context, index, position) {
         final customer = customers[index];
         final subtitleParts = <String>[
           if (customer.cifNumber != null && customer.cifNumber!.trim().isNotEmpty)
@@ -221,13 +219,20 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
             customer.phone!.toPhoneFormat(),
         ];
         return EntityListTile(
+          position: position,
           leadingText: customer.name.isNotEmpty
               ? customer.name.substring(0, 1).toUpperCase()
               : '?',
+          leadingShape: AppAvatarShape.forPerson(customer.name),
           title: customer.name,
           subtitle: subtitleParts.isEmpty
               ? null
-              : Text(subtitleParts.join(' • ')),
+              : Text(
+                  subtitleParts.join(' • '),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
           onTap: () => Navigator.of(context).pop(customer),
         );
       },

@@ -9,10 +9,11 @@ import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_m
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
-import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
+import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
+import 'package:postfolio/core/widgets/expressive/app_fab.dart';
+import 'package:postfolio/core/widgets/layout/entity_list_body.dart';
 import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 import 'package:postfolio/core/widgets/feedback/app_sort_bottom_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_filter_bottom_sheet.dart';
@@ -64,6 +65,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     final viewMode = ref.watch(rDViewModeControllerProvider);
     final depositsState = ref.watch(filteredRecurringDepositsProvider);
     final criteria = ref.watch(recurringListCriteriaProvider);
+    final fab = useAppExtendedFabController(resetOn: criteria);
 
     int statusModifications = 0;
     if (!criteria.statusFilters.contains(DepositStatus.active)) {
@@ -83,41 +85,25 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     return Scaffold(
       appBar: ShellAppBar(
         title: t.recurringDeposits.title,
-        // The Accounts ⇄ Hub toggle lives in the app bar so it never eats list height.
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: AppDimensions.paddingSm),
-            child: SegmentedButton<RDViewMode>(
-              showSelectedIcon: false,
-              style: const ButtonStyle(
-                visualDensity: VisualDensity.compact,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              segments: [
-                ButtonSegment(
-                  value: RDViewMode.accounts,
-                  tooltip: t.recurringDeposits.views.accounts,
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedFolder01,
-                    size: AppDimensions.iconSm,
-                  ),
-                ),
-                ButtonSegment(
-                  value: RDViewMode.monthlyHub,
-                  tooltip: t.recurringDeposits.views.monthlyHub,
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedCalendar03,
-                    size: AppDimensions.iconSm,
-                  ),
-                ),
-              ],
-              selected: {viewMode},
-              onSelectionChanged: (set) => ref
-                  .read(rDViewModeControllerProvider.notifier)
-                  .setMode(set.first),
+        // The Accounts ⇄ Hub switch is the way into the app's main workflow, so it says
+        // what it switches to. It sits where the title was, which the navigation bar
+        // repeats, so it takes no height from the list.
+        titleControl: AppButtonGroup<RDViewMode>(
+          expand: false,
+          selected: viewMode,
+          onChanged: (mode) =>
+              ref.read(rDViewModeControllerProvider.notifier).setMode(mode),
+          segments: [
+            AppSegment(
+              value: RDViewMode.accounts,
+              label: t.recurringDeposits.views.accounts,
             ),
-          ),
-        ],
+            AppSegment(
+              value: RDViewMode.monthlyHub,
+              label: t.recurringDeposits.views.monthlyHub,
+            ),
+          ],
+        ),
       ),
       body: viewMode == RDViewMode.accounts
           ? _buildAccountsView(
@@ -126,18 +112,15 @@ class RecurringDepositsScreen extends HookConsumerWidget {
               depositsState,
               criteria,
               activeFilterCount,
+              fab,
             )
           : const RDMonthlyOperationsView(),
       floatingActionButton: showFab
-          ? FloatingActionButton.extended(
-              heroTag: null,
-              onPressed: () =>
-                  const RecurringDepositCreateRoute().push(context),
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedAdd01,
-                size: AppDimensions.iconMd,
-              ),
-              label: Text(t.recurringDeposits.newDeposit),
+          ? AppExtendedFab(
+              controller: fab,
+              label: t.recurringDeposits.newDeposit,
+              icon: HugeIcons.strokeRoundedAdd01,
+              onPressed: () => const RecurringDepositCreateRoute().push(context),
             )
           : null,
     );
@@ -149,6 +132,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     AsyncValue<List<RecurringDeposit>> depositsState,
     RDSearchCriteria criteria,
     int activeFilterCount,
+    AppExtendedFabController fab,
   ) {
     return Column(
       children: [
@@ -260,90 +244,26 @@ class RecurringDepositsScreen extends HookConsumerWidget {
           ),
           AppSpacings.gapMd,
           Expanded(
-            child: switch (depositsState) {
-              AsyncData(:final value) => _buildDataState(context, ref, value),
-              AsyncError(:final error) => ErrorStateView(
-                message: error.toString(),
-                onRetry: () =>
-                    ref.invalidate(recurringDepositsControllerProvider),
+            child: AppExtendedFabScrollArea(
+              controller: fab,
+              child: EntityListBody<RecurringDeposit>(
+                state: depositsState,
+                emptyMessage: t.recurringDeposits.noDepositsFound,
+                hasActiveFilters:
+                    criteria.searchQuery.isNotEmpty || activeFilterCount > 0,
+                onClearFilters: () =>
+                    ref.read(recurringListCriteriaProvider.notifier).clearAll(),
+                onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
+                onRefresh: () =>
+                    ref.refresh(recurringDepositsControllerProvider.future),
+                itemBuilder: (context, deposit, position) =>
+                    RecurringDepositCard(deposit: deposit, position: position),
+                skeletonBuilder: (position) =>
+                    RecurringDepositCard.skeleton(position: position),
               ),
-              _ => _buildLoadingState(),
-            },
+            ),
           ),
         ],
       );
-  }
-
-  Widget _buildDataState(
-    BuildContext context,
-    WidgetRef ref,
-    List<RecurringDeposit> deposits,
-  ) {
-    if (deposits.isEmpty) {
-      final criteria = ref.read(recurringListCriteriaProvider);
-      final isDefaultStatus =
-          criteria.statusFilters.length == 1 &&
-          criteria.statusFilters.contains(DepositStatus.active);
-      final hasFilters =
-          criteria.searchQuery.isNotEmpty ||
-          !isDefaultStatus ||
-          criteria.urgencyFilters.isNotEmpty;
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              hasFilters
-                  ? t.common.noResults
-                  : t.recurringDeposits.noDepositsFound,
-            ),
-            if (hasFilters) ...[
-              AppSpacings.gapMd,
-              TextButton.icon(
-                onPressed: () =>
-                    ref.read(recurringListCriteriaProvider.notifier).clearAll(),
-                icon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedFilterRemove,
-                  size: AppDimensions.iconSm,
-                ),
-                label: Text(t.common.clearFilters),
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-    return RefreshIndicator(
-      onRefresh: () => ref.refresh(recurringDepositsControllerProvider.future),
-      child: ListView.separated(
-        padding: const EdgeInsets.only(
-          bottom: AppDimensions.listBottomPaddingFAB,
-        ),
-        itemCount: deposits.length,
-        separatorBuilder: (context, index) =>
-            const Divider(height: AppDimensions.dividerHeight),
-        itemBuilder: (context, index) {
-          final deposit = deposits[index];
-          return RecurringDepositCard(deposit: deposit);
-        },
-      ),
-    );
-  }
-
-  Widget _buildLoadingState() {
-    return Skeletonizer(
-      enabled: true,
-      child: ListView.separated(
-        padding: const EdgeInsets.only(
-          bottom: AppDimensions.listBottomPaddingFAB,
-        ),
-        itemCount: 5,
-        separatorBuilder: (context, index) =>
-            const Divider(height: AppDimensions.dividerHeight),
-        itemBuilder: (context, index) {
-          return RecurringDepositCard.skeleton();
-        },
-      ),
-    );
   }
 }

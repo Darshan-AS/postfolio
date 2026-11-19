@@ -9,14 +9,20 @@ import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
 import 'package:postfolio/core/widgets/domain/nominees_detail_section.dart';
 import 'package:postfolio/core/widgets/domain/wealth_accumulation_grid.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
+import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
+import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
@@ -48,10 +54,14 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
   final String depositId;
   final String? initialTab;
 
+  /// Where the row that opened the screen is, when a row did (`EntityHero.tagFrom`).
+  final String? openedFrom;
+
   const RecurringDepositDetailScreen({
     super.key,
     required this.depositId,
     this.initialTab,
+    this.openedFrom,
   });
 
   @override
@@ -64,39 +74,61 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
     final activeTab = useState(tabFromRoute ?? RDDetailTab.info);
     final projectionAsync = ref.watch(rdLedgerProjectionProvider(depositId));
 
+    final record = ref.watch(recurringDepositByIdProvider(depositId));
+
     return AsyncSingleEntityBuilder<RecurringDeposit>(
-      state: ref.watch(recurringDepositByIdProvider(depositId)),
+      state: record,
+      // Opened from a row, the screen has the list's record of the deposit at once. It
+      // lacks only the nominees, so nothing here is a placeholder meanwhile: their section
+      // arrives with the full record.
+      seed: ref.watch(recurringDepositInListProvider(depositId)),
       notFoundMessage: t.recurringDeposits.depositNotFound,
       onRetry: () => ref.invalidate(recurringDepositByIdProvider(depositId)),
       dummyEntity: RecurringDeposit.dummy,
       builder: (deposit) {
+        // The list's record or the full one. The placeholder of a cold start is neither.
+        final isKnown = deposit.id == depositId;
+        // The avatar, the customer's name, the account number and the installment travel
+        // here from the row.
+        final heroTag = isKnown ? EntityHero.tagFrom(openedFrom, depositId) : null;
+        final accountNo = deposit.accountNo ?? t.common.notProvided;
         final theme = Theme.of(context);
         final tabs = t.recurringDeposits.detailTabs;
         final fields = t.recurringDeposits.fields;
-        final resolvedCustomerName = (deposit.customerName?.isNotEmpty ?? false)
+        final customerName = (deposit.customerName?.isNotEmpty ?? false)
             ? deposit.customerName!
-            : (ref.watch(customerByIdProvider(deposit.customerId)).value?.name ??
-                deposit.customerId);
+            : ref.watch(customerByIdProvider(deposit.customerId)).value?.name;
+        final resolvedCustomerName = customerName ?? deposit.customerId;
         final rateLabel = fields.ratePercent(rate: deposit.interestRate.toStringAsFixed(2));
 
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
-          customActions: [
-            IconButton(
+          onRefresh: () async {
+            // The account and the three streams its ledger is projected from.
+            ref.invalidate(recurringDepositByIdProvider(depositId));
+            ref.invalidate(rdTransactionsStreamProvider(depositId));
+            ref.invalidate(rdPoDepositsStreamProvider(depositId));
+            ref.invalidate(rdFeeAbsorptionsStreamProvider(depositId));
+            await ref.read(rdLedgerProjectionProvider(depositId).future);
+          },
+          // In the menu, with its label, as on the deposit's row in the list. It was a bare
+          // seal icon in the app bar.
+          menuActions: [
+            EntityAction(
               icon: HugeIcon(
                 icon: deposit.status == DepositStatus.active
                     ? HugeIcons.strokeRoundedCheckmarkBadge01
                     : HugeIcons.strokeRoundedArrowTurnBackward,
-                size: AppDimensions.iconMd,
+                size: AppDimensions.iconSm,
               ),
-              tooltip: deposit.status == DepositStatus.active
-                  ? t.common.close
-                  : t.common.reopen,
-              onPressed: () async {
+              label: deposit.status == DepositStatus.active
+                  ? t.common.closeDeposit
+                  : t.common.reopenDeposit,
+              onTap: () async {
                 final isActive = deposit.status == DepositStatus.active;
                 final confirmed = await AppDialogs.confirmAction(
                   context,
-                  title: isActive ? t.common.close : t.common.reopen,
+                  title: isActive ? t.common.closeDeposit : t.common.reopenDeposit,
                   content: isActive
                       ? t.recurringDeposits.closeDepositConfirmation
                       : t.recurringDeposits.reopenDepositConfirmation,
@@ -135,57 +167,55 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
             };
           },
           header: EntityDetailHeader(
+            heroTag: heroTag,
             avatarBackgroundColor: theme.colorScheme.secondaryContainer,
             avatarForegroundColor: theme.colorScheme.onSecondaryContainer,
             avatarText: deposit.avatarLabel,
-            title: deposit.accountNo ?? t.common.notProvided,
+            avatarShape: deposit.schemeType.avatarShape,
+            // Headed as its row in the list is: whose deposit it is, then which. A deposit
+            // without a named customer is titled by its number there too.
+            title: customerName ?? accountNo,
             subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
+                // An account number broken across two lines reads as two numbers.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: EntityHero(
+                    tag: heroTag,
+                    part: EntityHeroPart.subtitle,
+                    child: Text(
+                      accountNo,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
                 Text(
                   deposit.schemeType.displayName,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                AppSpacings.gapXs,
-                InkWell(
-                  onTap: () =>
+                // The way to the customer from any tab. The title already says the name.
+                AppButton.text(
+                  label: t.customers.customerDetails,
+                  icon: HugeIcons.strokeRoundedUser,
+                  size: AppButtonSize.extraSmall,
+                  flushStart: true,
+                  onPressed: () =>
                       CustomerDetailRoute(deposit.customerId).push(context),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.paddingXs,
-                      vertical: AppDimensions.paddingXxs,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        HugeIcon(
-                          icon: HugeIcons.strokeRoundedUser,
-                          size: AppDimensions.iconXs,
-                          color: theme.colorScheme.primary,
-                        ),
-                        AppSpacings.gapXs,
-                        Flexible(
-                          child: Text(
-                            resolvedCustomerName,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                AppSpacings.gapSm,
-                _LedgerProgress(
-                  projectionAsync: projectionAsync,
-                  totalMonths: deposit.totalMonths,
                 ),
               ],
+            ),
+            footer: _LedgerProgress(
+              projectionAsync: projectionAsync,
+              totalMonths: deposit.totalMonths,
             ),
             badge: StatusBadge(
               status: deposit.status.displayName,
@@ -193,40 +223,17 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
             ),
           ),
           body: [
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<RDDetailTab>(
-                segments: [
-                  ButtonSegment(
-                    value: RDDetailTab.info,
-                    label: Text(tabs.info),
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedInformationCircle,
-                      size: AppDimensions.iconSm,
-                    ),
-                  ),
-                  ButtonSegment(
-                    value: RDDetailTab.ledger,
-                    label: Text(tabs.ledger),
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedCalendar03,
-                      size: AppDimensions.iconSm,
-                    ),
-                  ),
-                  ButtonSegment(
-                    value: RDDetailTab.transactions,
-                    label: Text(tabs.transactions),
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedInvoice01,
-                      size: AppDimensions.iconSm,
-                    ),
-                  ),
-                ],
-                selected: {activeTab.value},
-                onSelectionChanged: (selection) {
-                  activeTab.value = selection.first;
-                },
-              ),
+            AppButtonGroup<RDDetailTab>(
+              selected: activeTab.value,
+              onChanged: (tab) => activeTab.value = tab,
+              segments: [
+                AppSegment(value: RDDetailTab.info, label: tabs.info),
+                AppSegment(value: RDDetailTab.ledger, label: tabs.ledger),
+                AppSegment(
+                  value: RDDetailTab.transactions,
+                  label: tabs.transactions,
+                ),
+              ],
             ),
             AppSpacings.gapLg,
             switch (activeTab.value) {
@@ -241,15 +248,15 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
               RDDetailTab.info => Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
+                  DetailStatRow(
                     children: [
                       DetailAmountCard(
                         title: t.recurringDeposits.fields.installmentAmount,
                         amount: deposit.installmentAmount,
                         backgroundColor: theme.colorScheme.secondaryContainer,
                         textColor: theme.colorScheme.onSecondaryContainer,
+                        heroTag: heroTag,
                       ),
-                      AppSpacings.gapLg,
                       DetailStatCard(
                         title: t.recurringDeposits.fields.interestRate,
                         value: rateLabel,
@@ -259,7 +266,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                       ),
                     ],
                   ),
-                  AppSpacings.gapXxl,
+                  AppSpacings.gapLg,
                   switch (deposit.projection) {
                     WealthAccumulation(
                       :final totalInvested,
@@ -273,7 +280,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                       ),
                     IncomeGeneration() => const SizedBox.shrink(),
                   },
-                  AppSpacings.gapXxl,
+                  AppSpacings.gapLg,
                   DetailSection(
                     title: t.recurringDeposits.sections.investmentDetails,
                     children: [
@@ -302,7 +309,6 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                         label: t.recurringDeposits.fields.startDate,
                         value: deposit.startDate.toAppFormat(),
                       ),
-                      const Divider(height: AppDimensions.dividerHeight),
                       DetailItem(
                         icon: const HugeIcon(
                           icon: HugeIcons.strokeRoundedCalendar03,
@@ -328,7 +334,6 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                           value: deposit.accountNo,
                           copyValue: deposit.accountNo,
                         ),
-                        const Divider(height: AppDimensions.dividerHeight),
                       ],
                       DetailItem(
                         icon: const HugeIcon(
@@ -339,7 +344,6 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                         value: deposit.serialNo ?? t.common.notProvided,
                         copyValue: deposit.serialNo,
                       ),
-                      const Divider(height: AppDimensions.dividerHeight),
                       DetailItem(
                         icon: const HugeIcon(
                           icon: HugeIcons.strokeRoundedUser,
@@ -410,21 +414,19 @@ class _LedgerProgress extends StatelessWidget {
       if (isSettled) (text: tabs.allSettled, color: scheme.primary),
     ];
 
+    final emphasized = AppTypography.emphasizedOf(context);
     final counterStyle = theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-          child: LinearProgressIndicator(
-            // Indeterminate only while the very first projection is loading.
-            value: isFirstLoad ? null : progress,
-            minHeight: AppDimensions.paddingXs,
-          ),
+        AppLinearProgress(
+          // Indeterminate only while the very first projection is loading.
+          value: isFirstLoad ? null : progress,
+          semanticsLabel: tabs.collectedThrough(n: paidThrough.toString()),
         ),
         AppSpacings.gapXs,
         Wrap(
-          alignment: WrapAlignment.center,
           spacing: AppDimensions.paddingMd,
           children: [
             Text(tabs.collectedThrough(n: paidThrough.toString()), style: counterStyle),
@@ -432,26 +434,19 @@ class _LedgerProgress extends StatelessWidget {
             if (frontedMonths > 0)
               Text(
                 tabs.monthsFronted(n: frontedMonths),
-                style: counterStyle?.copyWith(
-                  color: scheme.secondary,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: emphasized.bodySmall?.copyWith(color: scheme.secondary),
               ),
           ],
         ),
         if (moneyLines.isNotEmpty) ...[
           AppSpacings.gapXxs,
           Wrap(
-            alignment: WrapAlignment.center,
             spacing: AppDimensions.paddingSm,
             children: [
               for (final line in moneyLines)
                 Text(
                   line.text,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: line.color,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: emphasized.labelLarge?.copyWith(color: line.color),
                 ),
             ],
           ),

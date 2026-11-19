@@ -2,6 +2,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
+import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
@@ -41,6 +43,11 @@ class DashboardScreen extends ConsumerWidget {
       ]);
     }
 
+    // Sections carry the page margin themselves, so the scheme strip can scroll edge to edge.
+    const pageInsets = EdgeInsets.symmetric(
+      horizontal: AppDimensions.pageMargin,
+    );
+
     return Scaffold(
       appBar: ShellAppBar(
         title: t.nav.dashboard,
@@ -59,35 +66,34 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: RefreshIndicator(
+        child: AppRefreshIndicator(
           onRefresh: refreshAll,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(AppDimensions.paddingLg),
+            padding: const EdgeInsets.only(bottom: AppDimensions.paddingLg),
             child: Skeletonizer(
               enabled: isInitialLoading,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    t.dashboard.overview,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  Padding(
+                    padding: pageInsets,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        DetailSectionTitle(t.dashboard.overview),
+                        DashboardMetricsRow(metrics: metrics),
+                        AppSpacings.gapLg,
+                        DetailSectionTitle(t.dashboard.activeOtdsByScheme),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: AppDimensions.paddingMd),
-                  DashboardMetricsRow(metrics: metrics),
-                  const SizedBox(height: AppDimensions.paddingXl),
-                  Text(
-                    t.dashboard.activeOtdsByScheme,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.paddingSm),
                   DashboardSchemeBreakdown(metrics: metrics),
-                  const SizedBox(height: AppDimensions.paddingXl),
-                  const DashboardChartSection(),
+                  AppSpacings.gapXl,
+                  const Padding(
+                    padding: pageInsets,
+                    child: DashboardChartSection(),
+                  ),
                 ],
               ),
             ),

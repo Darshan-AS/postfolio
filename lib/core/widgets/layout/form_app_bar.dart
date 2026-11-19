@@ -1,54 +1,23 @@
-import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
 
+/// App bar of a create / edit form: back and the form's title. Saving is the button under
+/// the fields (`FormScreenBody`).
 class FormAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final bool isSaving;
-  final VoidCallback onSave;
   final VoidCallback? onBack;
 
-  const FormAppBar({
-    super.key,
-    required this.title,
-    required this.isSaving,
-    required this.onSave,
-    this.onBack,
-  });
+  const FormAppBar({super.key, required this.title, this.onBack});
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text(title),
+      title: AppBarTitle(title),
       leading: onBack != null ? BackButton(onPressed: onBack) : null,
-      actions: [
-        if (isSaving)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
-            child: Center(
-              child: SizedBox(
-                width: AppDimensions.iconMd,
-                height: AppDimensions.iconMd,
-                child: CircularProgressIndicator(
-                  strokeWidth: AppDimensions.strokeWidthSm,
-                ),
-              ),
-            ),
-          )
-        else
-          IconButton(
-            tooltip: t.common.confirm,
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedTick01,
-              size: AppDimensions.iconMd,
-            ),
-            onPressed: onSave,
-          ),
-      ],
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(AppDimensions.appBarHeight);
 }
