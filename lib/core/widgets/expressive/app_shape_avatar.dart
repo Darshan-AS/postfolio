@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
 
 /// Shapes from the official Material shape library ([MaterialShapes]) used for avatars and
 /// hero badges.
@@ -81,9 +82,14 @@ class AppShapeAvatar extends StatelessWidget {
     this.size = defaultSize,
     this.backgroundColor,
     this.foregroundColor,
+    this.opensFrom,
   });
 
   static const double defaultSize = AppDimensions.iconXl;
+
+  /// How long an avatar with [opensFrom] stays its first shape: the time a screen's
+  /// content takes to fade in, so that the turning is seen.
+  static const Duration _openWait = AppMotion.spatialFastDuration;
 
   final Widget child;
   final AppAvatarShape shape;
@@ -95,25 +101,58 @@ class AppShapeAvatar extends StatelessWidget {
   /// Colour for text and icons inside. Defaults to `onPrimaryContainer`.
   final Color? foregroundColor;
 
+  /// The shape the avatar opens from, once, when it is first shown: it turns into [shape]
+  /// and stays. For a screen's one mark, not for rows. The turning is the official shape
+  /// border's own (it blends two shapes); a device set to remove animations gets [shape]
+  /// at once.
+  final AppAvatarShape? opensFrom;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final foreground = foregroundColor ?? scheme.onPrimaryContainer;
+    final border = MaterialShapeBorder(shape: shape.polygon);
+    final content = IconTheme.merge(
+      data: IconThemeData(color: foreground),
+      child: DefaultTextStyle.merge(
+        style: TextStyle(color: foreground),
+        child: Center(child: child),
+      ),
+    );
 
+    // `Material` eases a changed shape in by itself. While the shape is given frame by
+    // frame that easing would trail behind it.
+    Widget surface(ShapeBorder shape, Widget? child, {bool frameByFrame = false}) => Material(
+      color: backgroundColor ?? scheme.primaryContainer,
+      shape: shape,
+      clipBehavior: Clip.antiAlias,
+      animationDuration: frameByFrame ? Duration.zero : kThemeChangeDuration,
+      child: child,
+    );
+
+    final from = opensFrom;
     return SizedBox.square(
       dimension: size,
-      child: Material(
-        color: backgroundColor ?? scheme.primaryContainer,
-        shape: MaterialShapeBorder(shape: shape.polygon),
-        clipBehavior: Clip.antiAlias,
-        child: IconTheme.merge(
-          data: IconThemeData(color: foreground),
-          child: DefaultTextStyle.merge(
-            style: TextStyle(color: foreground),
-            child: Center(child: child),
-          ),
-        ),
-      ),
+      child: from == null || MediaQuery.disableAnimationsOf(context)
+          ? surface(border, content)
+          : TweenAnimationBuilder<ShapeBorder?>(
+              tween: ShapeBorderTween(
+                begin: MaterialShapeBorder(shape: from.polygon),
+                end: border,
+              ),
+              duration: _openWait + AppMotion.spatialDuration,
+              // Between the two shapes all the way: an overshoot would ask for a shape
+              // past the second one.
+              curve: Interval(
+                _openWait.inMilliseconds /
+                    (_openWait + AppMotion.spatialDuration).inMilliseconds,
+                1,
+                curve: AppMotion.effectsCurve,
+              ),
+              child: content,
+              builder: (context, shape, child) =>
+                  surface(shape ?? border, child, frameByFrame: true),
+            ),
     );
   }
 }

@@ -26,6 +26,8 @@ class LoginScreen extends ConsumerWidget {
       // The brand mark on a large Material shape: the welcome's focal point.
       const AppShapeAvatar(
         shape: AppAvatarShape.softBurst,
+        // Opens from a circle as the screen arrives: once, then it is still.
+        opensFrom: AppAvatarShape.circle,
         size: AppDimensions.avatarXl,
         child: HugeIcon(
           icon: HugeIcons.strokeRoundedShield01,
