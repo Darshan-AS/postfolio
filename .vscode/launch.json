@@ -1,29 +1,42 @@
 {
+  // Every entry names its backend with a file in config/, so the name is always true:
+  //   config/local.json  the Supabase stack in Docker on this Mac (seed data)
+  //   config/prod.json   the hosted project with real customer data (git-ignored; copy
+  //                      config/prod.json.example and fill it in)
+  // .env is not consulted by these entries.
+  //
+  // "Local" entries first check that the local stack is running. The Android entries also
+  // forward port 54321 from the phone or emulator to this Mac (adb reverse): on Android,
+  // 127.0.0.1 is the device itself.
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Postfolio (Staging - Local Supabase)",
+      "name": "Local: Android (staging app)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
-      "args": [
+      "toolArgs": [
         "--flavor",
         "staging",
         "--dart-define-from-file=config/local.json"
-      ]
+      ],
+      "preLaunchTask": "Local stack: forward to Android (adb reverse)"
     },
     {
-      "name": "Postfolio (Prod - Current Device)",
+      "name": "Local: Android (staging app, profile)",
       "request": "launch",
       "type": "dart",
+      "flutterMode": "profile",
       "program": "lib/main.dart",
-      "args": [
+      "toolArgs": [
         "--flavor",
-        "prod"
-      ]
+        "staging",
+        "--dart-define-from-file=config/local.json"
+      ],
+      "preLaunchTask": "Local stack: forward to Android (adb reverse)"
     },
     {
-      "name": "Postfolio (Chrome - Local Supabase)",
+      "name": "Local: Chrome",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
@@ -31,36 +44,51 @@
       "toolArgs": [
         "--web-port=3000",
         "--dart-define-from-file=config/local.json"
-      ]
+      ],
+      "preLaunchTask": "Local stack: check it is running"
     },
     {
-      "name": "Postfolio (Chrome - Production)",
-      "request": "launch",
-      "type": "dart",
-      "program": "lib/main.dart",
-      "deviceId": "chrome",
-      "toolArgs": [
-        "--web-port=3000"
-      ]
-    },
-    {
-      "name": "Postfolio (macOS - Local Supabase)",
+      "name": "Local: macOS",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
       "deviceId": "macos",
       "toolArgs": [
         "--dart-define-from-file=config/local.json"
-      ]
+      ],
+      "preLaunchTask": "Local stack: check it is running"
     },
     {
-      "name": "Postfolio (iOS Simulator - Local Supabase)",
+      "name": "Local: iOS Simulator",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
       "deviceId": "ios",
       "toolArgs": [
         "--dart-define-from-file=config/local.json"
+      ],
+      "preLaunchTask": "Local stack: check it is running"
+    },
+    {
+      "name": "PRODUCTION: Android (prod app)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--flavor",
+        "prod",
+        "--dart-define-from-file=config/prod.json"
+      ]
+    },
+    {
+      "name": "PRODUCTION: Chrome",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--web-port=3000",
+        "--dart-define-from-file=config/prod.json"
       ]
     }
   ]
