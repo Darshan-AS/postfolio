@@ -1,10 +1,10 @@
 # Project Progress
 
 ## Current State
-**More of Expressive — on `feat/m3-expressive-ui` (PR #20), 2026-11-19.** Local, not pushed (M18 in `.agents/tasks.md`; `.agents/session_logs/2026-11-19_session_1.md` and part 7 of the log of 2026-11-18).
+**More of Expressive — on `feat/m3-expressive-ui` (PR #20), 2026-11-19.** Pushed (M18 in `.agents/tasks.md`; `.agents/session_logs/2026-11-19_session_1.md` and part 7 of the log of 2026-11-18).
 - **Built**: a light tap on every saved action; the Hub's figures count to their new value; a list's add button is its icon while the list is scrolled down; a Hub row's avatar turns over into its selection mark; the Recurring destination counts accounts in arrears; the Hub shows how far the month is and says when it is settled; the sign-in mark opens from a circle once.
 - **Decided by the owner**: button groups stay (no tabs, switch or filter chips); icon buttons stay the official ones; a month card on the dashboard is postponed.
-- **Not built, with reasons under M18**: a month picker (the package has none), the package's date picker (large text, screen reader) and expandable item (part of the held list), a Hub row that moves (needs a decision).
+- **Not built, with reasons under M18**: a month picker (the package has none), the package's date picker (large text, screen reader) and expandable item (part of the held list), a Hub row that moves (dropped by the owner).
 - **Rule added**: nothing on a screen animates without an end; the wavy progress bar does, so a standing measure is the flat one.
 - **Verification**: `dart analyze --fatal-infos` clean; 449 fast tests pass; coverage gate passes (domain & core 83.7%, controllers & providers 85.3%, data & repositories 47.8%, presentation UI & routing 79.1%, total 78.5%). Not run: iOS, a browser, the integration suite, TalkBack.
 
