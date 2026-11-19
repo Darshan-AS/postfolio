@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:postfolio/core/mocks/demo_data_source_provider.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
@@ -115,7 +116,9 @@ class FakeCustomerRepository implements CustomerRepository {
 @riverpod
 CustomerRepository customerRepository(Ref ref) {
   if (ref.watch(demoModeProvider)) {
+    final source = ref.watch(demoDataSourceProvider);
     final repo = FakeCustomerRepository(
+      customers: source.customers,
       hasLinkedDeposits: (customerId) {
         final otd = ref.read(oneTimeDepositRepositoryProvider);
         final rd = ref.read(recurringDepositRepositoryProvider);

@@ -40,17 +40,18 @@ void main() {
   final source = FakeDataSource();
   final ops = t.recurringDeposits.monthlyOperations;
 
-  /// The customer given a second account in [pumpHub], and one of those who keep one.
-  const twoAccounts = 'Deepika Sharma';
-  const oneAccount = 'Arjun Mehta';
+  /// The customer with two recurring deposits in [FakeDataSource], and one with a single RD.
+  const twoAccounts = 'Ramesh Hegde';
+  const oneAccount = 'Asha Kulkarni';
 
   Future<void> settle(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 250));
     await tester.pump(const Duration(milliseconds: 500));
   }
 
-  /// Pumps the Hub in a 360dp-wide window. The demo ledger is paid up to 27 Oct 2026, so
-  /// the default date shows a settled month and a date after that shows overdue accounts.
+  /// Pumps the Hub in a 360dp-wide window. [FakeDataSource] is anchored at 27 Oct 2026:
+  /// that default date shows every Hub state (settled, in hand, partial, unpaid, arrears,
+  /// fronted); June 2026 is a settled month; December 2026 puts every account in arrears.
   Future<ProviderContainer> pumpHub(
     WidgetTester tester, {
     double width = 360,
@@ -68,15 +69,10 @@ void main() {
     final ledger = FakeRDLedgerRepository(
       transactions: source.rdTransactions,
       poDeposits: source.rdPoDeposits,
+      absorptions: source.rdFeeAbsorptions,
     );
-    // Deepika Sharma holds two accounts here: one customer with a header, four without.
     final deposits = FakeRecurringDepositRepository(
-      deposits: [
-        ...source.recurringDeposits,
-        source.recurringDeposits
-            .firstWhere((d) => d.customerName == twoAccounts)
-            .copyWith(id: 'rd-second', serialNo: '6', accountNo: '100200306'),
-      ],
+      deposits: source.recurringDeposits,
     );
     addTearDown(ledger.dispose);
     addTearDown(deposits.dispose);
@@ -84,7 +80,9 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
-        clockProvider.overrideWithValue(() => today ?? DateTime(2026, 4, 20)),
+        clockProvider.overrideWithValue(
+          () => today ?? FakeDataSource.defaultReferenceDate,
+        ),
         customerRepositoryProvider.overrideWithValue(
           FakeCustomerRepository(customers: source.customers),
         ),
@@ -133,7 +131,7 @@ void main() {
     testWidgets(
       'due-window group, group-by and select toggles drive the Hub state',
       (tester) async {
-        final container = await pumpHub(tester);
+        final container = await pumpHub(tester, height: 3600);
         expect(find.byType(RDMonthlyOperationCard), findsWidgets);
         RDHubFiltersState filters() => container.read(rDHubFiltersProvider);
         final kpis = container.read(monthlyOperationsKpiProvider);
@@ -258,18 +256,23 @@ void main() {
     testWidgets(
       'switching to a settled month shows its statement without the arrival',
       (tester) async {
-        await pumpHub(tester, disableAnimations: false);
+        // June 2026 is fully settled; July 2026 has Harish Gowda unpaid.
+        await pumpHub(
+          tester,
+          disableAnimations: false,
+          today: DateTime(2026, 6, 20),
+        );
         final bar = find.byKey(const ValueKey('bar'));
         final statement = find.byKey(const ValueKey('settled'));
         expect(statement, findsOneWidget);
 
-        // May 2026 is still to come: nothing of it is settled.
+        // July 2026 has an unpaid account: bar shows instead of the settled statement.
         await tester.tap(find.byTooltip(ops.nextMonth));
         await settle(tester);
         expect(bar, findsOneWidget);
         expect(statement, findsNothing);
 
-        // Back to April. Whenever its statement is on screen, the bar it would replace in an
+        // Back to June. Whenever its statement is on screen, the bar it would replace in an
         // arrival is not.
         await tester.tap(find.byTooltip(ops.previousMonth));
         var seen = false;
@@ -326,20 +329,35 @@ void main() {
       'Select All fills the floating batch bar, which reports and clears the selection',
       (tester) async {
         // Animations on: the bar's entrance must come to rest.
-        final container = await pumpHub(tester, disableAnimations: false);
+        final container = await pumpHub(
+          tester,
+          height: 3600,
+          disableAnimations: false,
+        );
         await tester.pumpAndSettle();
         expect(find.byType(RDHubBatchBar), findsNothing);
 
-        // The one customer with two accounts: Select All ticks both.
+        // The customer with two accounts (Ramesh Hegde): Select All ticks both.
         final selectAll = find.text(ops.customerGroup.selectGroup);
         await tester.ensureVisible(selectAll);
         await tester.pumpAndSettle();
         await tester.tap(selectAll);
         await tester.pumpAndSettle();
 
+        expect(container.read(rDHubSelectionProvider).isSelectionMode, isTrue);
+        expect(container.read(rDHubSelectionProvider).count, 2);
+
+        // Also select Bharat Shetty (in hand, ready to deposit) so the batch bar shows a
+        // ready-to-deposit count and its Deposit action button.
+        final bharat = find.text('Bharat Shetty');
+        await tester.ensureVisible(bharat);
+        await tester.pumpAndSettle();
+        await tester.tap(bharat);
+        await tester.pumpAndSettle();
+
         final selection = container.read(rDHubSelectionProvider);
         expect(selection.isSelectionMode, isTrue);
-        expect(selection.count, 2);
+        expect(selection.count, 3);
 
         final summary = container.read(batchSelectionSummaryProvider);
         expect(summary.readyInstallments, greaterThan(0));
@@ -396,22 +414,22 @@ void main() {
         final container = await pumpHub(tester);
         DateTime month() => container.read(rDHubMonthProvider);
 
-        expect(month(), DateTime(2026, 4));
+        expect(month(), DateTime(2026, 10));
         expect(find.text(ops.currentMonth), findsNothing);
 
         await tester.tap(find.byTooltip(ops.nextMonth));
         await settle(tester);
-        expect(month(), DateTime(2026, 5));
+        expect(month(), DateTime(2026, 11));
         expect(find.text(ops.currentMonth), findsOneWidget);
 
         await tester.tap(find.text(ops.currentMonth));
         await settle(tester);
-        expect(month(), DateTime(2026, 4));
+        expect(month(), DateTime(2026, 10));
         expect(find.text(ops.currentMonth), findsNothing);
 
         await tester.tap(find.byTooltip(ops.previousMonth));
         await settle(tester);
-        expect(month(), DateTime(2026, 3));
+        expect(month(), DateTime(2026, 9));
 
         await tester.tap(find.byTooltip(ops.toolbar.pickMonth));
         await settle(tester);
@@ -426,7 +444,7 @@ void main() {
       'only a customer with several accounts gets a header; its rows are titled '
       'by account',
       (tester) async {
-        final container = await pumpHub(tester, height: 2400);
+        final container = await pumpHub(tester, height: 3600);
 
         // One account: the row carries the name, and nothing repeats it above.
         expect(find.text(oneAccount), findsOneWidget);
@@ -443,7 +461,8 @@ void main() {
               card.titleByAccount,
         ];
         expect(titles, [isTrue, isTrue]);
-        expect(find.textContaining('…0306'), findsOneWidget);
+        expect(find.textContaining('…0017'), findsOneWidget);
+        expect(find.textContaining('…0018'), findsOneWidget);
 
         // Ungrouped there is no header to carry the name, so every row does.
         container
@@ -647,7 +666,7 @@ void main() {
     );
 
     testWidgets('the blocks above the rows are 12dp apart', (tester) async {
-      await pumpHub(tester);
+      await pumpHub(tester, today: DateTime(2026, 6, 20));
 
       final switcher = tester.getRect(find.byType(RDMonthSwitcher));
       final tiles = tilesRect(tester);
@@ -659,7 +678,7 @@ void main() {
       const touchPadding =
           (kMinInteractiveDimension - AppDimensions.buttonHeightSm) / 2;
 
-      // The month's statement (April 2026 is settled here) is a block of its own.
+      // The month's statement (June 2026 is settled here) is a block of its own.
       final progress = tester.getRect(find.byKey(const ValueKey('settled')));
       expect(progress.top - switcher.bottom, AppDimensions.paddingMd);
       expect(tiles.top - progress.bottom, AppDimensions.paddingMd);
@@ -673,8 +692,8 @@ void main() {
     testWidgets(
       'with no progress block the tiles are 12dp under the switcher',
       (tester) async {
-        await pumpHub(tester);
-        // March 2026 is past and settled: it has nothing to say.
+        await pumpHub(tester, today: DateTime(2026, 6, 20));
+        // May 2026 is past and settled: it has nothing to say.
         await tester.tap(find.byTooltip(ops.previousMonth));
         await settle(tester);
         expect(find.byType(RDHubMonthProgress), findsOneWidget);

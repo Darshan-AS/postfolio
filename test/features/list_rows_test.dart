@@ -232,16 +232,21 @@ void main() {
       'on a customer\'s screen a deposit is titled by its account number, not '
       'by the scheme its avatar already names',
       (tester) async {
+        final holder = source.customers.firstWhere(
+          (c) =>
+              source.oneTimeDeposits.any((d) => d.customerId == c.id) &&
+              source.recurringDeposits.any((d) => d.customerId == c.id),
+        );
         await pumpScreen(
           tester,
-          CustomerDetailScreen(customerId: customer.id),
+          CustomerDetailScreen(customerId: holder.id),
           size: const Size(360, 2400),
         );
         final otd = source.oneTimeDeposits.firstWhere(
-          (d) => d.customerId == customer.id,
+          (d) => d.customerId == holder.id,
         );
         final rd = source.recurringDeposits.firstWhere(
-          (d) => d.customerId == customer.id,
+          (d) => d.customerId == holder.id,
         );
 
         final otdRow = find.byType(OneTimeDepositCard);
@@ -270,11 +275,11 @@ void main() {
         );
         // The customer is the screen: the rows do not repeat the name either.
         expect(
-          find.descendant(of: otdRow, matching: find.text(customer.name)),
+          find.descendant(of: otdRow, matching: find.text(holder.name)),
           findsNothing,
         );
         expect(
-          find.descendant(of: rdRow, matching: find.text(customer.name)),
+          find.descendant(of: rdRow, matching: find.text(holder.name)),
           findsNothing,
         );
       },

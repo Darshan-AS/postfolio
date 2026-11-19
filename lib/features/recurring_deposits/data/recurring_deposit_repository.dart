@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/mocks/demo_data_source_provider.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
@@ -129,14 +130,16 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 @riverpod
 RecurringDepositRepository recurringDepositRepository(Ref ref) {
   if (ref.watch(demoModeProvider)) {
-    final repo = FakeRecurringDepositRepository()
-      ..hasLedgerActivity = (rdId) {
-        final ledger = ref.read(rdLedgerRepositoryProvider);
-        return ledger is FakeRDLedgerRepository &&
-            (ledger.transactionsOf(rdId).isNotEmpty ||
-                ledger.poDepositsOf(rdId).isNotEmpty ||
-                ledger.absorptionsOf(rdId).isNotEmpty);
-      };
+    final source = ref.watch(demoDataSourceProvider);
+    final repo =
+        FakeRecurringDepositRepository(deposits: source.recurringDeposits)
+          ..hasLedgerActivity = (rdId) {
+            final ledger = ref.read(rdLedgerRepositoryProvider);
+            return ledger is FakeRDLedgerRepository &&
+                (ledger.transactionsOf(rdId).isNotEmpty ||
+                    ledger.poDepositsOf(rdId).isNotEmpty ||
+                    ledger.absorptionsOf(rdId).isNotEmpty);
+          };
     ref.onDispose(repo.dispose);
     return repo;
   }

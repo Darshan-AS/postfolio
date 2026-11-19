@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/mocks/demo_data_source_provider.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
@@ -140,7 +141,8 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
 @riverpod
 OneTimeDepositRepository oneTimeDepositRepository(Ref ref) {
   if (ref.watch(demoModeProvider)) {
-    final repo = FakeOneTimeDepositRepository();
+    final source = ref.watch(demoDataSourceProvider);
+    final repo = FakeOneTimeDepositRepository(deposits: source.oneTimeDeposits);
     ref.onDispose(repo.dispose);
     return repo;
   }
