@@ -7,7 +7,7 @@ This document provides instructions for setting up new development environments 
 If you are starting work on a new machine, follow these steps to get fully operational:
 
 ### A. Environment Prerequisites
-1.  **Flutter SDK**: Install the latest stable version.
+1.  **Flutter SDK**: Install the version named in `.fvmrc`. CI reads the same file, so a newer SDK on your machine can pass or fail checks that CI does not.
 2.  **Java JDK**: Required for Android Gradle builds. Ensure `JAVA_HOME` is set.
 3.  **Docker & Supabase CLI**: Required for running the local PostgreSQL 17 + Auth + Realtime stack (`supabase start`).
 4.  **Firebase CLI**: Install via `npm install -g firebase-tools` and login using `firebase login` (used for Firebase Hosting web deploys).
@@ -24,20 +24,40 @@ If you are starting work on a new machine, follow these steps to get fully opera
     ```
 
 ### C. Environment & Flavor Configuration (`Env`, `--dart-define-from-file` & `envied`)
-`Env` resolves runtime configuration with explicit `--dart-define` / `--dart-define-from-file` precedence and falls back to `.env` values obfuscated via `envied`:
-1. **Default `.env` Setup**:
+`Env` takes its values from `--dart-define-from-file=config/<backend>.json` when one is passed, and otherwise from `.env`, compiled into the app by `envied`.
+
+1. **One file per backend (what you run with day to day)**:
+
+   | File | Backend | In git |
+   | :--- | :--- | :--- |
+   | `config/local.json` | Local Supabase stack in Docker, seed data | Yes |
+   | `config/prod.json` | Hosted project, real customer data | No. Copy `config/prod.json.example` and fill it in from the Supabase dashboard and Google Cloud console |
+   | `config/staging.json` | A hosted staging project, if one is ever created | No. Template: `config/staging.json.example` |
+
+   Every VS Code launch entry passes one of these, and is named `Local: …` or `PRODUCTION: …`, so an entry cannot reach a backend other than the one in its name.
+2. **`.env` (the fallback, and what CI's release build uses)**:
    - Local stack: `cp .env.local .env` (or copy `.env.example` to `.env`).
-   - Production build: `cp .env.prod .env`.
-   - Compile `lib/core/env/env.g.dart` whenever `.env` changes:
+   - Production build without a config file: `cp .env.prod .env`.
+   - `.env` is read when code is generated, not when the app starts. After changing it, regenerate `lib/core/env/env.g.dart`:
      ```bash
      dart run build_runner build
      ```
-2. **Flavor Isolation (`staging` vs `prod`)**:
-   - `Env.assertFlavorSafe(flavor: appFlavor)` prevents the Android `staging` flavor (`dev.darshanas.postfolio.staging`) from accidentally connecting to production Supabase.
-   - To run `staging` against local Supabase without rewriting `.env`, pass the tracked `config/local.json` file (already wired in `.vscode/launch.json`):
+   - A run that passes no config file (`flutter run` on its own) uses these values, so it reaches whichever backend `.env` held when code was last generated.
+3. **Android and the local stack (`adb reverse`)**:
+   - `config/local.json` points the app at `http://127.0.0.1:54321`. On an Android phone or emulator that address is the device itself. Forward the port to this machine first:
      ```bash
+     adb reverse tcp:54321 tcp:54321
+     ```
+   - The `Local: Android (staging app)` and `Local: Android (staging app, profile)` launch entries run this for every connected device (USB or Wireless Debugging) before each launch. A device forgets the forwarding when it disconnects.
+   - The iOS Simulator shares this machine's network and needs nothing. A physical iPhone or iPad cannot use `adb reverse`; it would need this machine's network address passed as `--dart-define=SUPABASE_URL=http://<address>:54321`, which has not been tried.
+4. **Flavor Isolation (`staging` vs `prod`)**:
+   - The Android `staging` flavor (`dev.darshanas.postfolio.staging`, "Postfolio Staging", its own icon) installs beside the production app.
+   - `Env.assertFlavorSafe(flavor: appFlavor)` stops it from connecting to production Supabase. It runs against the local stack:
+     ```bash
+     adb reverse tcp:54321 tcp:54321
      flutter run --flavor staging --dart-define-from-file=config/local.json
      ```
+   - Add `--profile` (or use `Local: Android (staging app, profile)`) for smooth AOT animations, or `--release` for a standalone release build that stays installed on a phone. It reaches the local stack only while connected over ADB (USB or Wireless Debugging) with port 54321 forwarded; Demo Mode works without either.
    - For a remote staging Supabase project, copy `config/staging.json.example` to `config/staging.json` (git-ignored) and pass `--dart-define-from-file=config/staging.json`.
 
 ### D. Google Sign-In (Debug)
