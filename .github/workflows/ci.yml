@@ -22,14 +22,19 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Read the Pinned Flutter Version
+        id: sdk
+        run: |
+          version="$(jq -er .flutter .fvmrc)"
+          echo "flutter=$version" >> "$GITHUB_OUTPUT"
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          # Pinned to the SDK the code is developed and tested on. An unpinned 'stable' moved
-          # to 3.50, whose new deprecations fail `dart analyze --fatal-infos`. Bump on purpose,
-          # together with release.yml.
-          flutter-version: '3.47.2'
+          # The SDK the code is developed and tested on, pinned once in .fvmrc. An unpinned
+          # 'stable' moved to 3.50, whose new deprecations fail `dart analyze --fatal-infos`.
+          flutter-version: ${{ steps.sdk.outputs.flutter }}
           cache: true
 
       - name: Install Dependencies
@@ -47,13 +52,18 @@ jobs:
       - name: Run Code Generation (Slang & Build Runner)
         run: |
           dart run slang
-          dart run build_runner build --delete-conflicting-outputs
+          dart run build_runner build
+
+      - name: Check Formatting (Hand-Written Dart Files)
+        run: git ls-files -z '*.dart' | xargs -0 dart format --output=none --set-exit-if-changed
 
       - name: Run Strict Static Analysis
         run: dart analyze --fatal-infos
 
       - name: Run Fast Unit, Controller & Widget Tests With Coverage
-        run: flutter test --exclude-tags integration --coverage
+        # dart_test.yaml runs one test file at a time, for the integration suites that share a
+        # Supabase stack. These tests share nothing, so their files run side by side.
+        run: flutter test --exclude-tags integration --concurrency "$(nproc)" --coverage
 
       - name: Enforce DDD Layer & Total Coverage Ratchet
         run: dart run tool/check_coverage.dart --min-domain=80 --min-controllers=80 --min-data=42 --min-ui=67 --min-total=69
@@ -69,14 +79,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Read the Pinned Flutter Version
+        id: sdk
+        run: |
+          version="$(jq -er .flutter .fvmrc)"
+          echo "flutter=$version" >> "$GITHUB_OUTPUT"
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          # Pinned to the SDK the code is developed and tested on. An unpinned 'stable' moved
-          # to 3.50, whose new deprecations fail `dart analyze --fatal-infos`. Bump on purpose,
-          # together with release.yml.
-          flutter-version: '3.47.2'
+          flutter-version: ${{ steps.sdk.outputs.flutter }}
           cache: true
 
       - name: Set up Supabase CLI
@@ -103,7 +116,7 @@ jobs:
           GOOGLE_IOS_CLIENT_ID=ci-google-ios-client-id.apps.googleusercontent.com
           EOF
           dart run slang
-          dart run build_runner build --delete-conflicting-outputs
+          dart run build_runner build
 
       - name: Run Dart Supabase Integration & E2E Suites
         run: flutter test --tags integration
