@@ -38,7 +38,9 @@ class RDHubHeader extends ConsumerWidget {
       monthlyOperationItemsProvider.select((a) => a.isLoading),
     );
     final progress = ref.watch(
-      monthlyOperationsKpiProvider.select((k) => (settled: k.settledCount, total: k.totalCount)),
+      monthlyOperationsKpiProvider.select(
+        (k) => (settled: k.settledCount, total: k.totalCount),
+      ),
     );
 
     return Column(
@@ -281,7 +283,8 @@ class _KpiTile extends StatelessWidget {
   final String amount;
 
   /// The figure as a number, so that it counts to a new value (see [AnimatedFigure]).
-  final ({double value, String Function(double value) format, Object? of})? figure;
+  final ({double value, String Function(double value) format, Object? of})?
+  figure;
 
   /// Announced after the figure.
   final String caption;

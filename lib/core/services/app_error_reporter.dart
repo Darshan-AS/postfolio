@@ -11,30 +11,32 @@ class AppErrorReporter {
       required String platform,
       required String error,
       String? stackTrace,
-    }) send,
+    })
+    send,
     DateTime Function()? now,
     this.cooldown = const Duration(seconds: 60),
     this.maxReportsPerSession = 20,
-  })  : _send = send,
-        _now = now ?? DateTime.now;
+  }) : _send = send,
+       _now = now ?? DateTime.now;
 
   factory AppErrorReporter.supabase(SupabaseClient client) {
     return AppErrorReporter(
-      send: ({
-        required String platform,
-        required String error,
-        String? stackTrace,
-      }) async {
-        if (client.auth.currentSession == null) return;
-        await client.rpc(
-          'log_client_error',
-          params: {
-            'p_platform': platform,
-            'p_error': error,
-            'p_stack_trace': stackTrace,
+      send:
+          ({
+            required String platform,
+            required String error,
+            String? stackTrace,
+          }) async {
+            if (client.auth.currentSession == null) return;
+            await client.rpc(
+              'log_client_error',
+              params: {
+                'p_platform': platform,
+                'p_error': error,
+                'p_stack_trace': stackTrace,
+              },
+            );
           },
-        );
-      },
     );
   }
 
@@ -42,7 +44,8 @@ class AppErrorReporter {
     required String platform,
     required String error,
     String? stackTrace,
-  }) _send;
+  })
+  _send;
   final DateTime Function() _now;
   final Duration cooldown;
   final int maxReportsPerSession;
@@ -60,7 +63,8 @@ class AppErrorReporter {
     if (_sentCount >= maxReportsPerSession) return;
 
     final message = error.toString();
-    final signature = '${platform.trim()}|${message.length > 200 ? message.substring(0, 200) : message}';
+    final signature =
+        '${platform.trim()}|${message.length > 200 ? message.substring(0, 200) : message}';
     final timestamp = _now();
     final previous = _lastSentBySignature[signature];
     if (previous != null && timestamp.difference(previous) < cooldown) {

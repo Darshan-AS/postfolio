@@ -135,7 +135,10 @@ class InvestmentProjectionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (proj case final IncomeGeneration i) ...[
-                      amountRow(t.projection.estimatedMaturity, i.maturityAmount),
+                      amountRow(
+                        t.projection.estimatedMaturity,
+                        i.maturityAmount,
+                      ),
                       AppSpacings.gapSm,
                     ],
                     _ProjectionKeyValueRow(

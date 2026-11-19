@@ -30,6 +30,6 @@ Detailed technical conventions are modularized. Read these files when working on
 1. Read the "Handshake" files.
 2. Formulate a plan and update `tasks.md`.
 3. Execute changes using `replace_string_in_file`.
-4. Run `dart analyze` and tests.
+4. Run `dart format lib test tool`, `dart analyze --fatal-infos` and the fast tests (`flutter test --exclude-tags integration --concurrency 8`). CI fails on an unformatted file.
 5. Update `session_log.md` and `progress.md`.
 6. **Pre-Commit Check**: Verify commit messages against `rules/git.md` (Check for strict casing: `Feat` NOT `feat`).

@@ -27,13 +27,17 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
     // First run after migration: build summaries for RDs that have none yet.
     useEffect(() {
       Future.microtask(
-        () => ref.read(rDMonthlyOperationsActionsProvider.notifier).ensureSummaries(),
+        () => ref
+            .read(rDMonthlyOperationsActionsProvider.notifier)
+            .ensureSummaries(),
       );
       return null;
     }, const []);
 
     Future<void> onRefresh() async {
-      await ref.read(rDMonthlyOperationsActionsProvider.notifier).ensureSummaries(rebuildAll: true);
+      await ref
+          .read(rDMonthlyOperationsActionsProvider.notifier)
+          .ensureSummaries(rebuildAll: true);
       ref.invalidate(monthlyOperationItemsProvider);
     }
 

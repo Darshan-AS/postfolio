@@ -90,7 +90,9 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
         final isKnown = deposit.id == depositId;
         // The avatar, the customer's name, the account number and the installment travel
         // here from the row.
-        final heroTag = isKnown ? EntityHero.tagFrom(openedFrom, depositId) : null;
+        final heroTag = isKnown
+            ? EntityHero.tagFrom(openedFrom, depositId)
+            : null;
         final accountNo = deposit.accountNo ?? t.common.notProvided;
         final theme = Theme.of(context);
         final tabs = t.recurringDeposits.detailTabs;
@@ -99,7 +101,9 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
             ? deposit.customerName!
             : ref.watch(customerByIdProvider(deposit.customerId)).value?.name;
         final resolvedCustomerName = customerName ?? deposit.customerId;
-        final rateLabel = fields.ratePercent(rate: deposit.interestRate.toStringAsFixed(2));
+        final rateLabel = fields.ratePercent(
+          rate: deposit.interestRate.toStringAsFixed(2),
+        );
 
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
@@ -128,7 +132,9 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                 final isActive = deposit.status == DepositStatus.active;
                 final confirmed = await AppDialogs.confirmAction(
                   context,
-                  title: isActive ? t.common.closeDeposit : t.common.reopenDeposit,
+                  title: isActive
+                      ? t.common.closeDeposit
+                      : t.common.reopenDeposit,
                   content: isActive
                       ? t.recurringDeposits.closeDepositConfirmation
                       : t.recurringDeposits.reopenDepositConfirmation,
@@ -162,7 +168,9 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                 .deleteRecurringDeposit(depositId);
             return switch (result) {
               Failure(:final error) =>
-                t.recurringDeposits.failedToDeleteDeposit(error: error.toString()),
+                t.recurringDeposits.failedToDeleteDeposit(
+                  error: error.toString(),
+                ),
               Success() => null,
             };
           },
@@ -378,7 +386,10 @@ class _LedgerProgress extends StatelessWidget {
   final AsyncValue<RDLedgerProjection> projectionAsync;
   final int totalMonths;
 
-  const _LedgerProgress({required this.projectionAsync, required this.totalMonths});
+  const _LedgerProgress({
+    required this.projectionAsync,
+    required this.totalMonths,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -391,31 +402,46 @@ class _LedgerProgress extends StatelessWidget {
     final paidThrough = summary?.paidThroughNo ?? 0;
     final depositedThrough = summary?.depositedThroughNo ?? 0;
     final frontedMonths = depositedThrough - paidThrough;
-    final total = totalMonths > 0 ? totalMonths : (projection?.installments.length ?? 0);
+    final total = totalMonths > 0
+        ? totalMonths
+        : (projection?.installments.length ?? 0);
     final progress = total > 0 ? (paidThrough / total).clamp(0.0, 1.0) : 0.0;
 
     final owed = summary?.owedByCustomer ?? 0.0;
     final credit = summary?.customerCredit ?? 0.0;
     final receivable = summary?.receivable ?? 0.0;
     final feeDue = summary?.feeDue ?? 0.0;
-    final isSettled = projection != null && projection.nextDue == null && owed <= 0;
+    final isSettled =
+        projection != null && projection.nextDue == null && owed <= 0;
 
     final moneyLines = <({String text, Color color})>[
       if (owed > 0)
         (
           text: feeDue > 0
-              ? tabs.owesWithFee(amount: owed.toRupeeFormat(), fee: feeDue.toRupeeFormat())
+              ? tabs.owesWithFee(
+                  amount: owed.toRupeeFormat(),
+                  fee: feeDue.toRupeeFormat(),
+                )
               : tabs.owes(amount: owed.toRupeeFormat()),
           color: scheme.error,
         ),
-      if (credit > 0) (text: tabs.credit(amount: credit.toRupeeFormat()), color: scheme.primary),
+      if (credit > 0)
+        (
+          text: tabs.credit(amount: credit.toRupeeFormat()),
+          color: scheme.primary,
+        ),
       if (receivable > 0)
-        (text: tabs.receivable(amount: receivable.toRupeeFormat()), color: scheme.secondary),
+        (
+          text: tabs.receivable(amount: receivable.toRupeeFormat()),
+          color: scheme.secondary,
+        ),
       if (isSettled) (text: tabs.allSettled, color: scheme.primary),
     ];
 
     final emphasized = AppTypography.emphasizedOf(context);
-    final counterStyle = theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
+    final counterStyle = theme.textTheme.bodySmall?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -429,8 +455,14 @@ class _LedgerProgress extends StatelessWidget {
         Wrap(
           spacing: AppDimensions.paddingMd,
           children: [
-            Text(tabs.collectedThrough(n: paidThrough.toString()), style: counterStyle),
-            Text(tabs.atPo(n: depositedThrough.toString()), style: counterStyle),
+            Text(
+              tabs.collectedThrough(n: paidThrough.toString()),
+              style: counterStyle,
+            ),
+            Text(
+              tabs.atPo(n: depositedThrough.toString()),
+              style: counterStyle,
+            ),
             if (frontedMonths > 0)
               Text(
                 tabs.monthsFronted(n: frontedMonths),

@@ -4,10 +4,7 @@ import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 /// Tracks whether a form's live inputs have diverged from their initial baseline snapshot.
-bool useIsFormDirty(
-  List<Listenable> listenables,
-  String Function() snapshot,
-) {
+bool useIsFormDirty(List<Listenable> listenables, String Function() snapshot) {
   final baseline = useMemoized(snapshot, const []);
   final merged = useMemoized(() => Listenable.merge(listenables), listenables);
   useListenable(merged);

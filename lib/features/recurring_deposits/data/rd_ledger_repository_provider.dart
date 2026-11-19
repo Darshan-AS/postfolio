@@ -1,4 +1,4 @@
-import 'package:postfolio/core/mocks/fake_data_source.dart';
+import 'package:postfolio/core/mocks/demo_data_source_provider.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
@@ -15,10 +15,11 @@ part 'rd_ledger_repository_provider.g.dart';
 RDLedgerRepository rdLedgerRepository(Ref ref) {
   ref.watch(activeSessionKeyProvider);
   if (ref.watch(demoModeProvider)) {
-    final source = FakeDataSource();
+    final source = ref.watch(demoDataSourceProvider);
     final repo = FakeRDLedgerRepository(
       transactions: source.rdTransactions,
       poDeposits: source.rdPoDeposits,
+      absorptions: source.rdFeeAbsorptions,
     );
     ref.onDispose(repo.dispose);
     return repo;

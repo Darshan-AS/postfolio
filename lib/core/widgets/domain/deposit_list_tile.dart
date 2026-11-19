@@ -109,7 +109,9 @@ class DepositListTile extends StatelessWidget {
       position: position,
       heroTag: heroTag,
       // On the deposit's screen the account number is the line under the title.
-      titlePart: titleIsAccount ? EntityHeroPart.subtitle : EntityHeroPart.title,
+      titlePart: titleIsAccount
+          ? EntityHeroPart.subtitle
+          : EntityHeroPart.title,
       indicatorColor: indicatorColor,
       leadingText: avatarText,
       leadingSubtext: avatarSubtext,

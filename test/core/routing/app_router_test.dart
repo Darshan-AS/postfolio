@@ -34,9 +34,7 @@ void main() {
     prefs = await SharedPreferences.getInstance();
   });
 
-  ProviderContainer buildContainer({
-    required FakeAuthRepository authRepo,
-  }) {
+  ProviderContainer buildContainer({required FakeAuthRepository authRepo}) {
     const customer = Customer(
       id: 'cust-1',
       name: 'Ramesh Rao',
@@ -167,7 +165,10 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(router.state.matchedLocation, '/rd');
-        expect(container.read(rDViewModeControllerProvider), RDViewMode.monthlyHub);
+        expect(
+          container.read(rDViewModeControllerProvider),
+          RDViewMode.monthlyHub,
+        );
         expect(container.read(rDHubMonthProvider), DateTime(2026, 10, 1));
 
         // Open-redirect guard: external URL in ?redirect= falls back safely to /customers.
@@ -202,8 +203,9 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Ramesh Rao'), findsWidgets);
 
+        const rdRoute = RecurringDepositDetailRoute('rd-123', tab: 'schedule');
         // ignore: unawaited_futures
-        const RecurringDepositDetailRoute('rd-123', tab: 'schedule').push<void>(rootCtx);
+        rdRoute.push<void>(rootCtx);
         await tester.pumpAndSettle();
         expect(find.textContaining('99887766'), findsWidgets);
 
@@ -244,7 +246,9 @@ void main() {
                                 formCtx = ctx;
                                 return UnsavedChangesPopScope(
                                   isDirty: dirty,
-                                  child: const Scaffold(body: Text('Dirty Form Body')),
+                                  child: const Scaffold(
+                                    body: Text('Dirty Form Body'),
+                                  ),
                                 );
                               },
                             ),

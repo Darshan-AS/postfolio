@@ -58,11 +58,7 @@ class NomineesInputSection extends HookWidget {
       final defaultPct = nominees.isEmpty ? 100.0 : remainingBps / 100.0;
       onChanged([
         ...nominees,
-        Nominee(
-          name: '',
-          relationship: defaultRel,
-          percentage: defaultPct,
-        ),
+        Nominee(name: '', relationship: defaultRel, percentage: defaultPct),
       ]);
     }
 
@@ -169,8 +165,7 @@ class NomineesInputSection extends HookWidget {
                   ),
                   AppSpacings.gapSm,
                   AppLinearProgress(
-                    value:
-                        totalBps.value / BasisPoints.hundredPercent.value,
+                    value: totalBps.value / BasisPoints.hundredPercent.value,
                     color: allocation.accent,
                     semanticsLabel: allocatedSummary,
                   ),

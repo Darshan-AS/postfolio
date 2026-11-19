@@ -129,14 +129,12 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
   }
 
   var result = customerMap.isNotEmpty
-      ? asyncDeposits
-          .map((d) {
-            final liveName = customerMap[d.customerId];
-            return (liveName != null && liveName != d.customerName)
-                ? d.copyWith(customerName: liveName)
-                : d;
-          })
-          .toList()
+      ? asyncDeposits.map((d) {
+          final liveName = customerMap[d.customerId];
+          return (liveName != null && liveName != d.customerName)
+              ? d.copyWith(customerName: liveName)
+              : d;
+        }).toList()
       : asyncDeposits.toList();
 
   // Filters
@@ -162,7 +160,8 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
   if (criteria.searchQuery.isNotEmpty) {
     final query = criteria.searchQuery.toLowerCase().trim();
     result = result.where((d) {
-      final customerName = (d.customerName ?? customerMap[d.customerId])?.toLowerCase() ?? '';
+      final customerName =
+          (d.customerName ?? customerMap[d.customerId])?.toLowerCase() ?? '';
       return (d.accountNo?.toLowerCase().contains(query) ?? false) ||
           customerName.contains(query) ||
           d.schemeType.displayName.toLowerCase().contains(query);
@@ -192,8 +191,10 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
       break;
     case OTDSortField.name:
       result.sort((a, b) {
-        final nameA = (a.customerName ?? customerMap[a.customerId])?.toLowerCase() ?? '';
-        final nameB = (b.customerName ?? customerMap[b.customerId])?.toLowerCase() ?? '';
+        final nameA =
+            (a.customerName ?? customerMap[a.customerId])?.toLowerCase() ?? '';
+        final nameB =
+            (b.customerName ?? customerMap[b.customerId])?.toLowerCase() ?? '';
         final comp = nameA.compareTo(nameB);
         return isAsc ? comp : -comp;
       });

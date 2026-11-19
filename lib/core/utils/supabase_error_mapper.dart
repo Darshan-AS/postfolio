@@ -17,11 +17,16 @@ abstract final class SupabaseErrorMapper {
 
   static String describe(
     Object error, {
-    String fallback = 'Something went wrong while talking to the server. Please try again.',
+    String fallback =
+        'Something went wrong while talking to the server. Please try again.',
     StackTrace? stackTrace,
   }) {
     if (error is PostgrestException) {
-      return _describePostgrest(error, fallback: fallback, stackTrace: stackTrace);
+      return _describePostgrest(
+        error,
+        fallback: fallback,
+        stackTrace: stackTrace,
+      );
     }
     if (error is AuthException) {
       return _describeAuth(error);
@@ -37,7 +42,9 @@ abstract final class SupabaseErrorMapper {
       return '$unreadableDataMessage (record $reference)';
     }
     // Decoder errors raised outside `decodeRows` (e.g. the Realtime `.stream()` path).
-    if (error is ArgumentError || error is TypeError || error is FormatException) {
+    if (error is ArgumentError ||
+        error is TypeError ||
+        error is FormatException) {
       _report(error, stackTrace);
       return unreadableDataMessage;
     }

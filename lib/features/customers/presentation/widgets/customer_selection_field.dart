@@ -92,7 +92,8 @@ class CustomerSelectionField extends HookConsumerWidget {
                   ),
                 ),
               ),
-              if (secondaryIdentifier != null && secondaryIdentifier.isNotEmpty) ...[
+              if (secondaryIdentifier != null &&
+                  secondaryIdentifier.isNotEmpty) ...[
                 AppSpacings.gapSm,
                 Text(
                   secondaryIdentifier,
@@ -213,7 +214,8 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
       itemBuilder: (context, index, position) {
         final customer = customers[index];
         final subtitleParts = <String>[
-          if (customer.cifNumber != null && customer.cifNumber!.trim().isNotEmpty)
+          if (customer.cifNumber != null &&
+              customer.cifNumber!.trim().isNotEmpty)
             'CIF: ${customer.cifNumber}',
           if (customer.phone != null && customer.phone!.trim().isNotEmpty)
             customer.phone!.toPhoneFormat(),

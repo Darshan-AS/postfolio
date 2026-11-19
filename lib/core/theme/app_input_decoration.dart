@@ -113,12 +113,15 @@ class AppLabeledField extends StatelessWidget {
               text: labelText,
               children: [
                 if (isRequired)
-                  TextSpan(text: ' *', style: TextStyle(color: scheme.error)),
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(color: scheme.error),
+                  ),
               ],
             ),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ),
         builder(context, null),

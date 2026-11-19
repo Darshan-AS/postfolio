@@ -156,93 +156,96 @@ void main() {
       expect(find.byType(CustomerDetailScreen), findsOneWidget);
     }
 
-    testWidgets('a swipe on a detail screen shows the list and a release goes back', (
-      tester,
-    ) async {
-      final (:router, :handlesBack) = await pumpSignedIn(tester);
-      expect(router.location(), '/customers');
-      // At a tab's root the system answers the swipe with its back-to-home animation.
-      expect(handlesBack.last, isFalse);
+    testWidgets(
+      'a swipe on a detail screen shows the list and a release goes back',
+      (tester) async {
+        final (:router, :handlesBack) = await pumpSignedIn(tester);
+        expect(router.location(), '/customers');
+        // At a tab's root the system answers the swipe with its back-to-home animation.
+        expect(handlesBack.last, isFalse);
 
-      await openCustomer(tester);
-      expect(router.location(), '/customers/cust-1');
-      expect(handlesBack.last, isTrue);
+        await openCustomer(tester);
+        expect(router.location(), '/customers/cust-1');
+        expect(handlesBack.last, isTrue);
 
-      await _sendBack(tester, 'startBackGesture', _swipe(0));
-      await tester.pump();
-      await _sendBack(tester, 'updateBackGestureProgress', _swipe(0.6));
-      await tester.pump();
+        await _sendBack(tester, 'startBackGesture', _swipe(0));
+        await tester.pump();
+        await _sendBack(tester, 'updateBackGestureProgress', _swipe(0.6));
+        await tester.pump();
 
-      // The detail screen follows the finger: the route is mid-gesture, not popped yet.
-      expect(router.root().userGestureInProgress, isTrue);
-      expect(find.byType(CustomerDetailScreen), findsOneWidget);
-      expect(router.location(), '/customers/cust-1');
+        // The detail screen follows the finger: the route is mid-gesture, not popped yet.
+        expect(router.root().userGestureInProgress, isTrue);
+        expect(find.byType(CustomerDetailScreen), findsOneWidget);
+        expect(router.location(), '/customers/cust-1');
 
-      await _sendBack(tester, 'commitBackGesture');
-      await tester.pumpAndSettle();
+        await _sendBack(tester, 'commitBackGesture');
+        await tester.pumpAndSettle();
 
-      expect(router.root().userGestureInProgress, isFalse);
-      expect(find.byType(CustomerDetailScreen), findsNothing);
-      expect(router.location(), '/customers');
-      expect(handlesBack.last, isFalse);
+        expect(router.root().userGestureInProgress, isFalse);
+        expect(find.byType(CustomerDetailScreen), findsNothing);
+        expect(router.location(), '/customers');
+        expect(handlesBack.last, isFalse);
 
-      // The list is live again, not a frozen snapshot of the transition.
-      await openCustomer(tester);
-      expect(router.location(), '/customers/cust-1');
-    });
+        // The list is live again, not a frozen snapshot of the transition.
+        await openCustomer(tester);
+        expect(router.location(), '/customers/cust-1');
+      },
+    );
 
-    testWidgets('a swipe that is dragged back to the edge stays on the detail screen', (
-      tester,
-    ) async {
-      final (:router, :handlesBack) = await pumpSignedIn(tester);
-      await openCustomer(tester);
+    testWidgets(
+      'a swipe that is dragged back to the edge stays on the detail screen',
+      (tester) async {
+        final (:router, :handlesBack) = await pumpSignedIn(tester);
+        await openCustomer(tester);
 
-      await _sendBack(tester, 'startBackGesture', _swipe(0));
-      await tester.pump();
-      await _sendBack(tester, 'updateBackGestureProgress', _swipe(0.4));
-      await tester.pump();
-      expect(router.root().userGestureInProgress, isTrue);
-      await _sendBack(tester, 'cancelBackGesture');
-      await tester.pumpAndSettle();
+        await _sendBack(tester, 'startBackGesture', _swipe(0));
+        await tester.pump();
+        await _sendBack(tester, 'updateBackGestureProgress', _swipe(0.4));
+        await tester.pump();
+        expect(router.root().userGestureInProgress, isTrue);
+        await _sendBack(tester, 'cancelBackGesture');
+        await tester.pumpAndSettle();
 
-      expect(router.root().userGestureInProgress, isFalse);
-      expect(find.byType(CustomerDetailScreen), findsOneWidget);
-      expect(router.location(), '/customers/cust-1');
-      expect(handlesBack.last, isTrue);
+        expect(router.root().userGestureInProgress, isFalse);
+        expect(find.byType(CustomerDetailScreen), findsOneWidget);
+        expect(router.location(), '/customers/cust-1');
+        expect(handlesBack.last, isTrue);
 
-      // Still interactive: the app bar's back button returns to the list.
-      await tester.tap(find.byType(BackButton));
-      await tester.pumpAndSettle();
-      expect(router.location(), '/customers');
-    });
+        // Still interactive: the app bar's back button returns to the list.
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+        expect(router.location(), '/customers');
+      },
+    );
 
-    testWidgets('a swipe on a form with unsaved input asks before it discards', (
-      tester,
-    ) async {
-      final (:router, :handlesBack) = await pumpSignedIn(tester);
-      // ignore: unawaited_futures
-      const CustomerCreateRoute().push<void>(router.root().context);
-      await tester.pumpAndSettle();
-      expect(find.byType(CustomerFormScreen), findsOneWidget);
+    testWidgets(
+      'a swipe on a form with unsaved input asks before it discards',
+      (tester) async {
+        final (:router, :handlesBack) = await pumpSignedIn(tester);
+        // ignore: unawaited_futures
+        const CustomerCreateRoute().push<void>(router.root().context);
+        await tester.pumpAndSettle();
+        expect(find.byType(CustomerFormScreen), findsOneWidget);
 
-      await tester.enterText(find.byType(TextFormField).first, 'Sita');
-      await tester.pumpAndSettle();
-      // The app keeps the swipe so that it can ask first.
-      expect(handlesBack.last, isTrue);
+        await tester.enterText(find.byType(TextFormField).first, 'Sita');
+        await tester.pumpAndSettle();
+        // The app keeps the swipe so that it can ask first.
+        expect(handlesBack.last, isTrue);
 
-      await _sendBack(tester, 'startBackGesture', _swipe(0));
-      await tester.pump();
-      await _sendBack(tester, 'updateBackGestureProgress', _swipe(0.6));
-      await tester.pump();
-      // No preview of the list while the form refuses to pop.
-      expect(router.root().userGestureInProgress, isFalse);
+        await _sendBack(tester, 'startBackGesture', _swipe(0));
+        await tester.pump();
+        await _sendBack(tester, 'updateBackGestureProgress', _swipe(0.6));
+        await tester.pump();
+        // No preview of the list while the form refuses to pop.
+        expect(router.root().userGestureInProgress, isFalse);
 
-      await _sendBack(tester, 'commitBackGesture');
-      await tester.pumpAndSettle();
+        await _sendBack(tester, 'commitBackGesture');
+        await tester.pumpAndSettle();
 
-      expect(find.text(t.common.unsavedChanges.title), findsOneWidget);
-      expect(find.byType(CustomerFormScreen), findsOneWidget);
-    });
+        expect(find.text(t.common.unsavedChanges.title), findsOneWidget);
+        expect(find.byType(CustomerFormScreen), findsOneWidget);
+      },
+    );
 
     testWidgets('a swipe with a sheet open closes the sheet and nothing else', (
       tester,
@@ -265,28 +268,31 @@ void main() {
       expect(handlesBack.last, isFalse);
     });
 
-    testWidgets('a swipe with a row\'s menu open closes the menu and stays in the app', (
+    testWidgets(
+      'a swipe with a row\'s menu open closes the menu and stays in the app',
+      (tester) async {
+        final (:router, :handlesBack) = await pumpSignedIn(tester);
+        await tester.tap(find.byTooltip(t.common.moreOptions).first);
+        await tester.pumpAndSettle();
+        expect(find.text(t.common.delete), findsOneWidget);
+        // The official menu left this false: back went to the system and closed the app.
+        expect(handlesBack.last, isTrue);
+
+        await _sendBack(tester, 'startBackGesture', _swipe(0));
+        await tester.pump();
+        await _sendBack(tester, 'commitBackGesture');
+        await tester.pumpAndSettle();
+
+        expect(find.text(t.common.delete), findsNothing);
+        expect(find.byType(CustomersScreen), findsOneWidget);
+        expect(router.location(), '/customers');
+        expect(handlesBack.last, isFalse);
+      },
+    );
+
+    testWidgets('every tab root leaves the swipe to the system', (
       tester,
     ) async {
-      final (:router, :handlesBack) = await pumpSignedIn(tester);
-      await tester.tap(find.byTooltip(t.common.moreOptions).first);
-      await tester.pumpAndSettle();
-      expect(find.text(t.common.delete), findsOneWidget);
-      // The official menu left this false: back went to the system and closed the app.
-      expect(handlesBack.last, isTrue);
-
-      await _sendBack(tester, 'startBackGesture', _swipe(0));
-      await tester.pump();
-      await _sendBack(tester, 'commitBackGesture');
-      await tester.pumpAndSettle();
-
-      expect(find.text(t.common.delete), findsNothing);
-      expect(find.byType(CustomersScreen), findsOneWidget);
-      expect(router.location(), '/customers');
-      expect(handlesBack.last, isFalse);
-    });
-
-    testWidgets('every tab root leaves the swipe to the system', (tester) async {
       final (:router, :handlesBack) = await pumpSignedIn(tester);
 
       for (final label in [

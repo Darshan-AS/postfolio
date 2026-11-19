@@ -45,9 +45,7 @@ void main() {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
-          home: Scaffold(
-            body: CustomerCard(customer: customer),
-          ),
+          home: Scaffold(body: CustomerCard(customer: customer)),
         ),
       ),
     );
@@ -59,10 +57,7 @@ void main() {
   testWidgets('AsyncSingleEntityBuilder renders data state correctly', (
     WidgetTester tester,
   ) async {
-    const customer = Customer(
-      id: 'cust-1',
-      name: 'Test Customer',
-    );
+    const customer = Customer(id: 'cust-1', name: 'Test Customer');
 
     await tester.pumpWidget(
       MaterialApp(
@@ -181,9 +176,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            oneTimeDepositByIdProvider('otd-1').overrideWith(
-              (ref) => Stream.value(deposit),
-            ),
+            oneTimeDepositByIdProvider(
+              'otd-1',
+            ).overrideWith((ref) => Stream.value(deposit)),
           ],
           child: const MaterialApp(
             home: OneTimeDepositDetailScreen(depositId: 'otd-1'),
@@ -237,9 +232,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            recurringDepositByIdProvider('rd-1').overrideWith(
-              (ref) => Stream.value(deposit),
-            ),
+            recurringDepositByIdProvider(
+              'rd-1',
+            ).overrideWith((ref) => Stream.value(deposit)),
           ],
           child: const MaterialApp(
             home: RecurringDepositDetailScreen(depositId: 'rd-1'),

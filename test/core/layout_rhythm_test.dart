@@ -93,21 +93,27 @@ void main() {
     expect(tester.takeException(), isNull);
   }
 
-  testWidgets('a top-level app bar starts its title and ends its last icon on the page '
-      'margin', (tester) async {
-    await pumpScreen(tester, const CustomersScreen());
-    final bar = find.byType(AppBar);
+  testWidgets(
+    'a top-level app bar starts its title and ends its last icon on the page '
+    'margin',
+    (tester) async {
+      await pumpScreen(tester, const CustomersScreen());
+      final bar = find.byType(AppBar);
 
-    final title = tester.getRect(find.descendant(of: bar, matching: find.byType(AppBarTitle)));
-    expect(title.left, AppDimensions.pageMargin);
+      final title = tester.getRect(
+        find.descendant(of: bar, matching: find.byType(AppBarTitle)),
+      );
+      expect(title.left, AppDimensions.pageMargin);
 
-    final lastAction = tester.getRect(
-      find.descendant(of: bar, matching: find.byType(AccessibleThemeToggle)),
-    );
-    // The icon is centred in its button.
-    final iconRight = lastAction.right - (lastAction.width - AppDimensions.iconMd) / 2;
-    expect(phone.width - iconRight, AppDimensions.pageMargin);
-  });
+      final lastAction = tester.getRect(
+        find.descendant(of: bar, matching: find.byType(AccessibleThemeToggle)),
+      );
+      // The icon is centred in its button.
+      final iconRight =
+          lastAction.right - (lastAction.width - AppDimensions.iconMd) / 2;
+      expect(phone.width - iconRight, AppDimensions.pageMargin);
+    },
+  );
 
   group('detail rows', () {
     const copyLabel = 'Account No.';
@@ -131,18 +137,27 @@ void main() {
                     label: copyLabel,
                     value: '100200301',
                     copyValue: '100200301',
-                    icon: HugeIcon(icon: HugeIcons.strokeRoundedTicket01, size: 24),
+                    icon: HugeIcon(
+                      icon: HugeIcons.strokeRoundedTicket01,
+                      size: 24,
+                    ),
                   ),
                   DetailItem(
                     label: linkLabel,
                     value: 'Arjun Mehta',
-                    icon: const HugeIcon(icon: HugeIcons.strokeRoundedUser, size: 24),
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedUser,
+                      size: 24,
+                    ),
                     onTap: () {},
                   ),
                   const DetailItem(
                     label: plainLabel,
                     value: '10 Jan 2025',
-                    icon: HugeIcon(icon: HugeIcons.strokeRoundedCalendar01, size: 24),
+                    icon: HugeIcon(
+                      icon: HugeIcons.strokeRoundedCalendar01,
+                      size: 24,
+                    ),
                   ),
                 ],
               ),
@@ -155,19 +170,31 @@ void main() {
     Finder rowOf(String label) =>
         find.ancestor(of: find.text(label), matching: find.byType(DetailItem));
 
-    testWidgets('are one height, with or without a copy button', (tester) async {
+    testWidgets('are one height, with or without a copy button', (
+      tester,
+    ) async {
       await pumpRows(tester);
       for (final label in [copyLabel, linkLabel, plainLabel]) {
-        expect(tester.getSize(rowOf(label)).height, AppDimensions.rowMinHeight, reason: label);
+        expect(
+          tester.getSize(rowOf(label)).height,
+          AppDimensions.rowMinHeight,
+          reason: label,
+        );
       }
     });
 
-    testWidgets('a copy button and a chevron end their rows on the same axis', (tester) async {
+    testWidgets('a copy button and a chevron end their rows on the same axis', (
+      tester,
+    ) async {
       await pumpRows(tester);
 
-      final copy = tester.getRect(find.byKey(const ValueKey('copy_$copyLabel')));
+      final copy = tester.getRect(
+        find.byKey(const ValueKey('copy_$copyLabel')),
+      );
       final chevron = tester.getRect(
-        find.descendant(of: rowOf(linkLabel), matching: find.byType(HugeIcon)).last,
+        find
+            .descendant(of: rowOf(linkLabel), matching: find.byType(HugeIcon))
+            .last,
       );
       expect(copy.center.dx, chevron.center.dx);
       // A full touch target all the same.
@@ -175,7 +202,11 @@ void main() {
       // And the leading icons share theirs.
       final leading = [
         for (final label in [copyLabel, linkLabel, plainLabel])
-          tester.getRect(find.descendant(of: rowOf(label), matching: find.byType(HugeIcon)).first),
+          tester.getRect(
+            find
+                .descendant(of: rowOf(label), matching: find.byType(HugeIcon))
+                .first,
+          ),
       ];
       expect(leading.map((r) => r.left).toSet(), hasLength(1));
     });
@@ -201,32 +232,37 @@ void main() {
   });
 
   group('a detail screen\'s blocks are 16dp apart', () {
-    testWidgets('recurring deposit: the two figures, the projection, the first section', (
+    testWidgets(
+      'recurring deposit: the two figures, the projection, the first section',
+      (tester) async {
+        final rd = source.recurringDeposits.first;
+        await pumpScreen(
+          tester,
+          RecurringDepositDetailScreen(depositId: rd.id, initialTab: 'info'),
+          size: const Size(360, 2400),
+        );
+
+        final figures = tester.getRect(find.byType(DetailStatRow));
+        final projection = tester.getRect(find.byType(WealthAccumulationGrid));
+        final firstTitle = tester.getRect(
+          find.byType(DetailSectionTitle).first,
+        );
+        expect(projection.top - figures.bottom, AppDimensions.paddingLg);
+        expect(firstTitle.top - projection.bottom, AppDimensions.paddingLg);
+
+        // The two figures sit 8dp apart, like the tiles of the dashboard and the Hub.
+        final cards = [
+          for (final element in find.byType(DetailStatCard).evaluate())
+            tester.getRect(find.byWidget(element.widget)),
+        ]..sort((a, b) => a.left.compareTo(b.left));
+        expect(cards, hasLength(2));
+        expect(cards[1].left - cards[0].right, AppDimensions.paddingSm);
+      },
+    );
+
+    testWidgets('one-time deposit: the figures and the first section', (
       tester,
     ) async {
-      final rd = source.recurringDeposits.first;
-      await pumpScreen(
-        tester,
-        RecurringDepositDetailScreen(depositId: rd.id, initialTab: 'info'),
-        size: const Size(360, 2400),
-      );
-
-      final figures = tester.getRect(find.byType(DetailStatRow));
-      final projection = tester.getRect(find.byType(WealthAccumulationGrid));
-      final firstTitle = tester.getRect(find.byType(DetailSectionTitle).first);
-      expect(projection.top - figures.bottom, AppDimensions.paddingLg);
-      expect(firstTitle.top - projection.bottom, AppDimensions.paddingLg);
-
-      // The two figures sit 8dp apart, like the tiles of the dashboard and the Hub.
-      final cards = [
-        for (final element in find.byType(DetailStatCard).evaluate())
-          tester.getRect(find.byWidget(element.widget)),
-      ]..sort((a, b) => a.left.compareTo(b.left));
-      expect(cards, hasLength(2));
-      expect(cards[1].left - cards[0].right, AppDimensions.paddingSm);
-    });
-
-    testWidgets('one-time deposit: the figures and the first section', (tester) async {
       final otd = source.oneTimeDeposits.first;
       await pumpScreen(
         tester,
@@ -244,7 +280,10 @@ void main() {
       final lowest = above.map((r) => r.bottom).reduce((a, b) => a > b ? a : b);
       // The header's lines have heights that are not whole pixels; the sum can be off by
       // a rounding error.
-      expect(titleRect.top - lowest, moreOrLessEquals(AppDimensions.paddingLg, epsilon: 0.01));
+      expect(
+        titleRect.top - lowest,
+        moreOrLessEquals(AppDimensions.paddingLg, epsilon: 0.01),
+      );
     });
   });
 }

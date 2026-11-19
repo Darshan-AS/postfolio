@@ -102,36 +102,47 @@ void main() {
         t.oneTimeDeposits.closeDepositConfirmation,
       ),
     ]) {
-      testWidgets('$name: it is in the menu with its label, above Delete, and asks first', (
-        tester,
-      ) async {
-        await pumpScreen(tester, screen);
+      testWidgets(
+        '$name: it is in the menu with its label, above Delete, and asks first',
+        (tester) async {
+          await pumpScreen(tester, screen);
 
-        // Not an icon in the app bar any more.
-        expect(find.byTooltip(t.common.close), findsNothing);
-        expect(find.text(t.common.closeDeposit), findsNothing);
+          // Not an icon in the app bar any more.
+          expect(find.byTooltip(t.common.close), findsNothing);
+          expect(find.text(t.common.closeDeposit), findsNothing);
 
-        // The screen passes its reload to the scaffold.
-        expect(find.byType(AppRefreshIndicator), findsOneWidget);
+          // The screen passes its reload to the scaffold.
+          expect(find.byType(AppRefreshIndicator), findsOneWidget);
 
-        await tester.tap(find.byKey(const ValueKey('entity_detail_more_button')));
-        await tester.pumpAndSettle();
-        final close = find.text(t.common.closeDeposit);
-        final delete = find.text(t.common.delete);
-        expect(close, findsOneWidget);
-        expect(tester.getRect(close).bottom, lessThanOrEqualTo(tester.getRect(delete).top));
+          await tester.tap(
+            find.byKey(const ValueKey('entity_detail_more_button')),
+          );
+          await tester.pumpAndSettle();
+          final close = find.text(t.common.closeDeposit);
+          final delete = find.text(t.common.delete);
+          expect(close, findsOneWidget);
+          expect(
+            tester.getRect(close).bottom,
+            lessThanOrEqualTo(tester.getRect(delete).top),
+          );
 
-        await tester.tap(close);
-        await tester.pumpAndSettle();
-        expect(find.text(confirmation), findsOneWidget);
-      });
+          await tester.tap(close);
+          await tester.pumpAndSettle();
+          expect(find.text(confirmation), findsOneWidget);
+        },
+      );
     }
   });
 
   group('one-time deposit header', () {
     for (final deposit in source.oneTimeDeposits) {
-      testWidgets('${deposit.accountNo} says when it matures, under the scheme', (tester) async {
-        await pumpScreen(tester, OneTimeDepositDetailScreen(depositId: deposit.id));
+      testWidgets('${deposit.accountNo} says when it matures, under the scheme', (
+        tester,
+      ) async {
+        await pumpScreen(
+          tester,
+          OneTimeDepositDetailScreen(depositId: deposit.id),
+        );
 
         // The model decides whether it has matured; the header only words and colours it.
         final urgency = deposit.maturityUrgency;
@@ -158,7 +169,10 @@ void main() {
           of: header,
           matching: find.text(deposit.schemeType.displayName),
         );
-        expect(tester.getRect(line).top, greaterThanOrEqualTo(tester.getRect(name).bottom));
+        expect(
+          tester.getRect(line).top,
+          greaterThanOrEqualTo(tester.getRect(name).bottom),
+        );
         expect(tester.getRect(line).left, tester.getRect(name).left);
       });
     }
@@ -168,12 +182,21 @@ void main() {
     final receipts = source.rdTransactions[rd.id] ?? const [];
     final years = receipts.map((tx) => tx.paidDate.year).toSet();
 
-    testWidgets('are grouped by year, newest first, with no header per month', (tester) async {
+    testWidgets('are grouped by year, newest first, with no header per month', (
+      tester,
+    ) async {
       await pumpScreen(
         tester,
-        RecurringDepositDetailScreen(depositId: rd.id, initialTab: 'transactions'),
+        RecurringDepositDetailScreen(
+          depositId: rd.id,
+          initialTab: 'transactions',
+        ),
       );
-      expect(receipts.length, greaterThan(years.length), reason: 'fixture: several per year');
+      expect(
+        receipts.length,
+        greaterThan(years.length),
+        reason: 'fixture: several per year',
+      );
 
       final section = find.byType(RDTransactionsSection);
       expect(
@@ -182,7 +205,10 @@ void main() {
       );
       final headers = tester
           .widgetList<DetailSectionTitle>(
-            find.descendant(of: section, matching: find.byType(DetailSectionTitle)),
+            find.descendant(
+              of: section,
+              matching: find.byType(DetailSectionTitle),
+            ),
           )
           .map((header) => header.title)
           .toList();
@@ -190,13 +216,18 @@ void main() {
       expect(headers.where((h) => RegExp(r'^\D+ \d{4}$').hasMatch(h)), isEmpty);
       expect(
         headers.where((h) => RegExp(r'^\d{4}$').hasMatch(h)).toList(),
-        (years.toList()..sort((a, b) => b.compareTo(a))).map((y) => '$y').toList(),
+        (years.toList()..sort((a, b) => b.compareTo(a)))
+            .map((y) => '$y')
+            .toList(),
       );
 
       // Top to bottom the receipts run from the latest payment to the earliest.
       final tiles = tester
           .widgetList<RDTransactionTile>(
-            find.descendant(of: section, matching: find.byType(RDTransactionTile)),
+            find.descendant(
+              of: section,
+              matching: find.byType(RDTransactionTile),
+            ),
           )
           .map((tile) => tile.transaction.paidDate)
           .toList();
@@ -205,10 +236,15 @@ void main() {
       }
     });
 
-    testWidgets('the months a receipt was applied to are neutral labels', (tester) async {
+    testWidgets('the months a receipt was applied to are neutral labels', (
+      tester,
+    ) async {
       await pumpScreen(
         tester,
-        RecurringDepositDetailScreen(depositId: rd.id, initialTab: 'transactions'),
+        RecurringDepositDetailScreen(
+          depositId: rd.id,
+          initialTab: 'transactions',
+        ),
       );
       final scheme = AppTheme.lightTheme.colorScheme;
       final pills = tester.widgetList<Text>(

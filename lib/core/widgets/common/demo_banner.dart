@@ -29,29 +29,29 @@ class DemoBanner extends ConsumerWidget {
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,
       child: SafeArea(
-      bottom: false,
-      child: MaterialBanner(
-        leading: HugeIcon(
-          icon: HugeIcons.strokeRoundedInformationCircle,
-          size: AppDimensions.iconMd,
-          color: scheme.onTertiaryContainer,
-        ),
-        content: Text(
-          t.common.demoModeActive,
-          style: AppTypography.emphasizedOf(context).bodyMedium?.copyWith(
+        bottom: false,
+        child: MaterialBanner(
+          leading: HugeIcon(
+            icon: HugeIcons.strokeRoundedInformationCircle,
+            size: AppDimensions.iconMd,
             color: scheme.onTertiaryContainer,
           ),
-        ),
-        actions: [
-          AppButton.text(
-            key: const ValueKey('exit_demo_mode_button'),
-            label: t.common.exitDemoMode,
-            onPressed: () {
-              ref.read(demoModeProvider.notifier).disable();
-            },
+          content: Text(
+            t.common.demoModeActive,
+            style: AppTypography.emphasizedOf(
+              context,
+            ).bodyMedium?.copyWith(color: scheme.onTertiaryContainer),
           ),
-        ],
-      ),
+          actions: [
+            AppButton.text(
+              key: const ValueKey('exit_demo_mode_button'),
+              label: t.common.exitDemoMode,
+              onPressed: () {
+                ref.read(demoModeProvider.notifier).disable();
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

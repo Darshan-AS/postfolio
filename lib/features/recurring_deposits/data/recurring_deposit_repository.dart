@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/mocks/demo_data_source_provider.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
@@ -29,7 +30,7 @@ abstract class RecurringDepositRepository {
 /// `FakeRDLedgerRepository`; this class only knows about deposits.
 class FakeRecurringDepositRepository implements RecurringDepositRepository {
   FakeRecurringDepositRepository({List<RecurringDeposit>? deposits})
-      : _deposits = [...(deposits ?? FakeDataSource().recurringDeposits)];
+    : _deposits = [...(deposits ?? FakeDataSource().recurringDeposits)];
 
   final List<RecurringDeposit> _deposits;
   final _controller =
@@ -47,16 +48,21 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   void dispose() => _controller.close();
 
   @override
-  Stream<Result<List<RecurringDeposit>, String>> watchRecurringDeposits() async* {
+  Stream<Result<List<RecurringDeposit>, String>>
+  watchRecurringDeposits() async* {
     yield Success([..._deposits]);
     yield* _controller.stream;
   }
 
   @override
-  Stream<Result<RecurringDeposit, String>> watchRecurringDepositById(String id) async* {
+  Stream<Result<RecurringDeposit, String>> watchRecurringDepositById(
+    String id,
+  ) async* {
     Result<RecurringDeposit, String> lookup(List<RecurringDeposit> list) {
       final d = list.where((d) => d.id == id).firstOrNull;
-      return d == null ? const Failure('Recurring Deposit not found') : Success(d);
+      return d == null
+          ? const Failure('Recurring Deposit not found')
+          : Success(d);
     }
 
     yield lookup(_deposits);
@@ -69,11 +75,15 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   }
 
   @override
-  Future<Result<void, String>> saveRecurringDeposit(RecurringDeposit deposit) async {
+  Future<Result<void, String>> saveRecurringDeposit(
+    RecurringDeposit deposit,
+  ) async {
     final index = _deposits.indexWhere((d) => d.id == deposit.id);
     if (index == -1) {
       _deposits.add(
-        deposit.copyWith(id: deposit.id.isEmpty ? const Uuid().v7() : deposit.id),
+        deposit.copyWith(
+          id: deposit.id.isEmpty ? const Uuid().v7() : deposit.id,
+        ),
       );
     } else {
       final validation = RecurringDeposit.validateUpdate(
@@ -109,7 +119,9 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     }
     final before = _deposits.length;
     _deposits.removeWhere((d) => d.id == id);
-    if (_deposits.length == before) return const Failure('Recurring Deposit not found');
+    if (_deposits.length == before) {
+      return const Failure('Recurring Deposit not found');
+    }
     _emit();
     return const Success(null);
   }
@@ -118,14 +130,16 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
 @riverpod
 RecurringDepositRepository recurringDepositRepository(Ref ref) {
   if (ref.watch(demoModeProvider)) {
-    final repo = FakeRecurringDepositRepository()
-      ..hasLedgerActivity = (rdId) {
-        final ledger = ref.read(rdLedgerRepositoryProvider);
-        return ledger is FakeRDLedgerRepository &&
-            (ledger.transactionsOf(rdId).isNotEmpty ||
-                ledger.poDepositsOf(rdId).isNotEmpty ||
-                ledger.absorptionsOf(rdId).isNotEmpty);
-      };
+    final source = ref.watch(demoDataSourceProvider);
+    final repo =
+        FakeRecurringDepositRepository(deposits: source.recurringDeposits)
+          ..hasLedgerActivity = (rdId) {
+            final ledger = ref.read(rdLedgerRepositoryProvider);
+            return ledger is FakeRDLedgerRepository &&
+                (ledger.transactionsOf(rdId).isNotEmpty ||
+                    ledger.poDepositsOf(rdId).isNotEmpty ||
+                    ledger.absorptionsOf(rdId).isNotEmpty);
+          };
     ref.onDispose(repo.dispose);
     return repo;
   }

@@ -14,20 +14,21 @@ class SupabaseAuthRepository implements AuthRepository {
   SupabaseAuthRepository({
     required SupabaseClient supabaseClient,
     required GoogleSignIn googleSignIn,
-  })  : _supabaseClient = supabaseClient,
-        _googleSignIn = googleSignIn;
+  }) : _supabaseClient = supabaseClient,
+       _googleSignIn = googleSignIn;
 
   static AuthUser _mapUser(User user) => AuthUser(
-        id: user.id,
-        email: user.email,
-        displayName: user.userMetadata?['full_name'] as String?,
-        photoUrl: user.userMetadata?['avatar_url'] as String?,
-      );
+    id: user.id,
+    email: user.email,
+    displayName: user.userMetadata?['full_name'] as String?,
+    photoUrl: user.userMetadata?['avatar_url'] as String?,
+  );
 
   @override
   AuthUser? get currentUser {
     final user =
-        _supabaseClient.auth.currentSession?.user ?? _supabaseClient.auth.currentUser;
+        _supabaseClient.auth.currentSession?.user ??
+        _supabaseClient.auth.currentUser;
     return user == null ? null : _mapUser(user);
   }
 
@@ -80,15 +81,17 @@ class SupabaseAuthRepository implements AuthRepository {
 
       String? accessToken;
       try {
-        final scopesClient = await googleUser.authorizationClient.authorizationForScopes([]);
+        final scopesClient = await googleUser.authorizationClient
+            .authorizationForScopes([]);
         accessToken = scopesClient?.accessToken;
       } catch (_) {}
 
-      final AuthResponse response = await _supabaseClient.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
-        idToken: idToken,
-        accessToken: accessToken,
-      );
+      final AuthResponse response = await _supabaseClient.auth
+          .signInWithIdToken(
+            provider: OAuthProvider.google,
+            idToken: idToken,
+            accessToken: accessToken,
+          );
 
       final user = response.user;
       if (user == null) {
@@ -108,6 +111,31 @@ class SupabaseAuthRepository implements AuthRepository {
         SupabaseErrorMapper.describe(
           e,
           fallback: 'Google Sign-In could not be completed. Please try again.',
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Result<AuthUser, String>> signInWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _supabaseClient.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      final user = response.user;
+      if (user == null) {
+        return const Failure('Sign in failed, Supabase user is null');
+      }
+      return Success(_mapUser(user));
+    } catch (e) {
+      return Failure(
+        SupabaseErrorMapper.describe(
+          e,
+          fallback: 'Could not sign in. Please try again.',
         ),
       );
     }

@@ -23,7 +23,8 @@ String searchHintThatFits(
 
   final theme = SearchBarTheme.of(context);
   final inset =
-      theme.padding?.resolve(const {})?.horizontal ?? 2 * AppDimensions.paddingSm;
+      theme.padding?.resolve(const {})?.horizontal ??
+      2 * AppDimensions.paddingSm;
   // The bar insets its row and then the text field by the same amount; the leading icon
   // and each trailing icon button keep their own width.
   final room =
@@ -34,7 +35,9 @@ String searchHintThatFits(
   final painter = TextPainter(
     text: TextSpan(
       text: hint,
-      style: theme.hintStyle?.resolve(const {}) ?? Theme.of(context).textTheme.bodyLarge,
+      style:
+          theme.hintStyle?.resolve(const {}) ??
+          Theme.of(context).textTheme.bodyLarge,
     ),
     textDirection: Directionality.of(context),
     textScaler: MediaQuery.textScalerOf(context),

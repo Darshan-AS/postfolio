@@ -96,7 +96,9 @@ void main() {
   }
 
   Set<AppAvatarShape> shapesIn(WidgetTester tester, Finder scope) => tester
-      .widgetList<AppShapeAvatar>(find.descendant(of: scope, matching: find.byType(AppShapeAvatar)))
+      .widgetList<AppShapeAvatar>(
+        find.descendant(of: scope, matching: find.byType(AppShapeAvatar)),
+      )
       .map((avatar) => avatar.shape)
       .toSet();
 
@@ -112,61 +114,85 @@ void main() {
     expect(schemeShapes, isNot(contains(AppAvatarShape.neutral)));
   });
 
-  test('a person\'s shape comes from their name: always the same one, never a scheme\'s', () {
-    final names = [
-      for (final customer in source.customers) customer.name,
-      'A', 'Zoya', 'Venkateshwara Subramanian', 'ಕಿರಣ್', '',
-    ];
-    for (final name in names) {
-      final shape = AppAvatarShape.forPerson(name);
-      expect(AppAvatarShape.forPerson(name), shape);
-      expect(schemeShapes, isNot(contains(shape)), reason: name);
-      expect(shape, isNot(AppAvatarShape.neutral), reason: name);
-    }
-  });
+  test(
+    'a person\'s shape comes from their name: always the same one, never a scheme\'s',
+    () {
+      final names = [
+        for (final customer in source.customers) customer.name,
+        'A',
+        'Zoya',
+        'Venkateshwara Subramanian',
+        'ಕಿರಣ್',
+        '',
+      ];
+      for (final name in names) {
+        final shape = AppAvatarShape.forPerson(name);
+        expect(AppAvatarShape.forPerson(name), shape);
+        expect(schemeShapes, isNot(contains(shape)), reason: name);
+        expect(shape, isNot(AppAvatarShape.neutral), reason: name);
+      }
+    },
+  );
 
-  testWidgets('the customer list shows a mix of shapes, each customer their own', (
+  testWidgets(
+    'the customer list shows a mix of shapes, each customer their own',
+    (tester) async {
+      await pumpScreen(tester, const CustomersScreen());
+      final rows = find.byType(EntityListTile);
+      expect(rows, findsNWidgets(source.customers.length));
+
+      final shapes = shapesIn(tester, rows);
+      expect(shapes.length, greaterThan(1));
+      expect(shapes, {
+        for (final customer in source.customers)
+          AppAvatarShape.forPerson(customer.name),
+      });
+    },
+  );
+
+  testWidgets('a customer has the same shape on their own screen', (
     tester,
   ) async {
-    await pumpScreen(tester, const CustomersScreen());
-    final rows = find.byType(EntityListTile);
-    expect(rows, findsNWidgets(source.customers.length));
-
-    final shapes = shapesIn(tester, rows);
-    expect(shapes.length, greaterThan(1));
-    expect(shapes, {for (final customer in source.customers) AppAvatarShape.forPerson(customer.name)});
-  });
-
-  testWidgets('a customer has the same shape on their own screen', (tester) async {
     final customer = source.customers.first;
     await pumpScreen(tester, CustomerDetailScreen(customerId: customer.id));
-    expect(
-      shapesIn(tester, find.byType(EntityDetailHeader)),
-      {AppAvatarShape.forPerson(customer.name)},
-    );
+    expect(shapesIn(tester, find.byType(EntityDetailHeader)), {
+      AppAvatarShape.forPerson(customer.name),
+    });
   });
 
   for (final (name, now) in [
     ('a settled month', DateTime(2026, 4, 20)),
     ('a month with arrears', DateTime(2026, 10, 20)),
   ]) {
-    testWidgets('Monthly Hub rows have the recurring scheme\'s shape whatever their status '
-        '($name)', (tester) async {
-      await pumpScreen(tester, const RecurringDepositsScreen(initialView: 'hub'), now: now);
-      final rows = find.descendant(
-        of: find.byType(RDMonthlyOperationsView),
-        matching: find.byType(EntityListTile),
-      );
-      expect(rows, findsWidgets);
-      expect(shapesIn(tester, rows), {rdShape});
-    });
+    testWidgets(
+      'Monthly Hub rows have the recurring scheme\'s shape whatever their status '
+      '($name)',
+      (tester) async {
+        await pumpScreen(
+          tester,
+          const RecurringDepositsScreen(initialView: 'hub'),
+          now: now,
+        );
+        final rows = find.descendant(
+          of: find.byType(RDMonthlyOperationsView),
+          matching: find.byType(EntityListTile),
+        );
+        expect(rows, findsWidgets);
+        expect(shapesIn(tester, rows), {rdShape});
+      },
+    );
   }
 
-  testWidgets('a payment\'s avatar is the plain shape: its mode is the icon', (tester) async {
+  testWidgets('a payment\'s avatar is the plain shape: its mode is the icon', (
+    tester,
+  ) async {
     final rd = source.recurringDeposits.first;
     await pumpScreen(
       tester,
-      RecurringDepositDetailScreen(depositId: rd.id, initialTab: 'transactions'),
+      RecurringDepositDetailScreen(
+        depositId: rd.id,
+        initialTab: 'transactions',
+      ),
     );
     final tiles = tester.widgetList<AppShapeAvatar>(
       find.descendant(

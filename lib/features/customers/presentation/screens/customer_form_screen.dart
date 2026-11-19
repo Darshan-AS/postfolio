@@ -269,16 +269,15 @@ Widget _buildSavingsBank({
           icon: HugeIcons.strokeRoundedBank,
           size: AppDimensions.iconMd,
         ),
-        validator: (val) => Customer.validateSavingsAccount(val, nominees.value),
+        validator: (val) =>
+            Customer.validateSavingsAccount(val, nominees.value),
         textInputAction: TextInputAction.next,
       ),
     ],
   );
 }
 
-Widget _buildNotes({
-  required TextEditingController notesController,
-}) {
+Widget _buildNotes({required TextEditingController notesController}) {
   return FormSection(
     title: t.customers.fields.notes,
     children: [

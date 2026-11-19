@@ -146,7 +146,9 @@ List<ChartDataPoint> dashboardChartSeries(Ref ref) {
   final filteredOtds = filter == null
       ? otds
       : otds.where((d) => d.schemeType == filter).toList();
-  final includedRds = (includeRds && filter == null) ? rds : const <RecurringDeposit>[];
+  final includedRds = (includeRds && filter == null)
+      ? rds
+      : const <RecurringDeposit>[];
 
   if (selectedYear == null) {
     final Map<int, double> amountByYear = {};

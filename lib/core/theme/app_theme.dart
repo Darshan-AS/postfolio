@@ -4,7 +4,8 @@ import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_surfaces.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/theme/app_widget_themes.dart';
-import 'package:skeletonizer/skeletonizer.dart' show ShimmerEffect, SkeletonizerConfigData;
+import 'package:skeletonizer/skeletonizer.dart'
+    show ShimmerEffect, SkeletonizerConfigData;
 
 /// The app's Material 3 Expressive theme.
 ///
@@ -21,11 +22,12 @@ class AppTheme {
   ///
   /// The `vibrant` variant keeps the primary colour close to the brand seed while containers
   /// stay pastel. The default variant (`tonalSpot`) mutes the seed to a slate blue.
-  static ColorScheme _brandScheme(Brightness brightness) => ColorScheme.fromSeed(
-    brightness: brightness,
-    seedColor: _seedColor,
-    dynamicSchemeVariant: DynamicSchemeVariant.vibrant,
-  );
+  static ColorScheme _brandScheme(Brightness brightness) =>
+      ColorScheme.fromSeed(
+        brightness: brightness,
+        seedColor: _seedColor,
+        dynamicSchemeVariant: DynamicSchemeVariant.vibrant,
+      );
 
   static const PageTransitionsBuilder _desktopPageTransition =
       SharedAxisPageTransitionsBuilder(
@@ -71,12 +73,10 @@ class AppTheme {
     ColorScheme colorScheme, {
     AppFinancialColors? financialColors,
   }) {
-    final base = ThemeData(
-      useMaterial3: true,
-      colorScheme: colorScheme,
-    );
+    final base = ThemeData(useMaterial3: true, colorScheme: colorScheme);
     final effectiveFinancial =
-        financialColors ?? AppFinancialColors.forBrightness(colorScheme.brightness);
+        financialColors ??
+        AppFinancialColors.forBrightness(colorScheme.brightness);
     // `ThemeData.textTheme` holds colours and the font family only; sizes are merged in per
     // locale by `Theme.of`. Component themes replace a widget's default style rather than
     // merge with it, so the styles handed to them need the sizes too.
@@ -96,21 +96,39 @@ class AppTheme {
         colorScheme,
       ),
       cardTheme: AppWidgetThemes.cardTheme(colorScheme),
-      elevatedButtonTheme: AppWidgetThemes.elevatedButtonTheme(colorScheme, emphasized),
-      filledButtonTheme: AppWidgetThemes.filledButtonTheme(colorScheme, emphasized),
-      outlinedButtonTheme: AppWidgetThemes.outlinedButtonTheme(colorScheme, emphasized),
+      elevatedButtonTheme: AppWidgetThemes.elevatedButtonTheme(
+        colorScheme,
+        emphasized,
+      ),
+      filledButtonTheme: AppWidgetThemes.filledButtonTheme(
+        colorScheme,
+        emphasized,
+      ),
+      outlinedButtonTheme: AppWidgetThemes.outlinedButtonTheme(
+        colorScheme,
+        emphasized,
+      ),
       textButtonTheme: AppWidgetThemes.textButtonTheme(colorScheme, emphasized),
-      segmentedButtonTheme: AppWidgetThemes.segmentedButtonTheme(colorScheme, emphasized),
+      segmentedButtonTheme: AppWidgetThemes.segmentedButtonTheme(
+        colorScheme,
+        emphasized,
+      ),
       inputDecorationTheme: AppWidgetThemes.inputDecorationTheme(colorScheme),
       iconButtonTheme: AppWidgetThemes.iconButtonTheme(colorScheme),
-      searchBarTheme: AppWidgetThemes.searchBarTheme(colorScheme, sizedTextTheme),
+      searchBarTheme: AppWidgetThemes.searchBarTheme(
+        colorScheme,
+        sizedTextTheme,
+      ),
       chipTheme: AppWidgetThemes.chipTheme(colorScheme, emphasized),
       expansionTileTheme: AppWidgetThemes.expansionTileTheme(colorScheme),
       snackBarTheme: AppWidgetThemes.snackBarTheme(colorScheme),
       dialogTheme: AppWidgetThemes.dialogTheme(colorScheme, emphasized),
       bottomSheetTheme: AppWidgetThemes.bottomSheetTheme(colorScheme),
       menuTheme: AppWidgetThemes.menuTheme(colorScheme),
-      menuButtonTheme: AppWidgetThemes.menuButtonTheme(colorScheme, sizedTextTheme),
+      menuButtonTheme: AppWidgetThemes.menuButtonTheme(
+        colorScheme,
+        sizedTextTheme,
+      ),
       datePickerTheme: AppWidgetThemes.datePickerTheme(colorScheme),
       bannerTheme: AppWidgetThemes.bannerTheme(colorScheme),
       radioTheme: AppWidgetThemes.radioTheme(colorScheme),
@@ -118,24 +136,30 @@ class AppTheme {
   }
 
   static ThemeData get lightTheme {
-    return buildTheme(_brandScheme(Brightness.light), financialColors: AppFinancialColors.light);
+    return buildTheme(
+      _brandScheme(Brightness.light),
+      financialColors: AppFinancialColors.light,
+    );
   }
 
   static ThemeData get darkTheme {
-    return buildTheme(_brandScheme(Brightness.dark), financialColors: AppFinancialColors.dark);
+    return buildTheme(
+      _brandScheme(Brightness.dark),
+      financialColors: AppFinancialColors.dark,
+    );
   }
 
   static ThemeData get accessibleLightTheme {
     final colorScheme = _brandScheme(Brightness.light).copyWith(
-          error: const Color(0xFFB80F57),
-          errorContainer: const Color(0xFFFCE4EC),
-          onError: Colors.white,
-          onErrorContainer: const Color(0xFF7A0938),
-          tertiary: const Color(0xFFB84A00),
-          tertiaryContainer: const Color(0xFFFFE2CC),
-          onTertiary: Colors.white,
-          onTertiaryContainer: const Color(0xFF6B2900),
-        );
+      error: const Color(0xFFB80F57),
+      errorContainer: const Color(0xFFFCE4EC),
+      onError: Colors.white,
+      onErrorContainer: const Color(0xFF7A0938),
+      tertiary: const Color(0xFFB84A00),
+      tertiaryContainer: const Color(0xFFFFE2CC),
+      onTertiary: Colors.white,
+      onTertiaryContainer: const Color(0xFF6B2900),
+    );
     return buildTheme(
       colorScheme,
       financialColors: AppFinancialColors.accessibleLight,
@@ -144,15 +168,15 @@ class AppTheme {
 
   static ThemeData get accessibleDarkTheme {
     final colorScheme = _brandScheme(Brightness.dark).copyWith(
-          error: const Color(0xFFF48FB1),
-          errorContainer: const Color(0xFF5E092C),
-          onError: const Color(0xFF4A0420),
-          onErrorContainer: const Color(0xFFFDD5E5),
-          tertiary: const Color(0xFFFFCA28),
-          tertiaryContainer: const Color(0xFF522100),
-          onTertiary: const Color(0xFF3E1900),
-          onTertiaryContainer: const Color(0xFFFFD8BD),
-        );
+      error: const Color(0xFFF48FB1),
+      errorContainer: const Color(0xFF5E092C),
+      onError: const Color(0xFF4A0420),
+      onErrorContainer: const Color(0xFFFDD5E5),
+      tertiary: const Color(0xFFFFCA28),
+      tertiaryContainer: const Color(0xFF522100),
+      onTertiary: const Color(0xFF3E1900),
+      onTertiaryContainer: const Color(0xFFFFD8BD),
+    );
     return buildTheme(
       colorScheme,
       financialColors: AppFinancialColors.accessibleDark,

@@ -55,7 +55,9 @@ class SupabaseCustomerRepository implements CustomerRepository {
                 .select()
                 .eq('id', id)
                 .maybeSingle();
-            if (data == null) return const Failure<Customer, String>('Customer not found');
+            if (data == null) {
+              return const Failure<Customer, String>('Customer not found');
+            }
             if (data['agent_id'] != _agentId) {
               return const Failure<Customer, String>('Unauthorized');
             }
@@ -92,20 +94,30 @@ class SupabaseCustomerRepository implements CustomerRepository {
 
   Future<Result<void, String>> _saveCustomer(Customer customer) async {
     try {
-      await _supabaseClient.rpc('save_customer_with_sb_account', params: {
-        'p_id': customer.id,
-        'p_name': customer.name,
-        'p_phone': customer.phone,
-        'p_email': customer.email,
-        'p_address': customer.address,
-        'p_cif_number': customer.cifNumber,
-        'p_date_of_birth': customer.dateOfBirth?.toIso8601String().split('T').first,
-        'p_aadhaar_number': customer.aadhaarNumber,
-        'p_pan_number': customer.panNumber,
-        'p_notes': customer.notes,
-        'p_sb_account_number': customer.savingsAccount?.accountNumber,
-        'p_nominees': customer.savingsAccount?.nominees.map((n) => n.toJson()).toList() ?? [],
-      });
+      await _supabaseClient.rpc(
+        'save_customer_with_sb_account',
+        params: {
+          'p_id': customer.id,
+          'p_name': customer.name,
+          'p_phone': customer.phone,
+          'p_email': customer.email,
+          'p_address': customer.address,
+          'p_cif_number': customer.cifNumber,
+          'p_date_of_birth': customer.dateOfBirth
+              ?.toIso8601String()
+              .split('T')
+              .first,
+          'p_aadhaar_number': customer.aadhaarNumber,
+          'p_pan_number': customer.panNumber,
+          'p_notes': customer.notes,
+          'p_sb_account_number': customer.savingsAccount?.accountNumber,
+          'p_nominees':
+              customer.savingsAccount?.nominees
+                  .map((n) => n.toJson())
+                  .toList() ??
+              [],
+        },
+      );
       _localMutations.add(null);
       return const Success(null);
     } catch (e) {

@@ -85,7 +85,9 @@ class AppSortBottomSheet<T> extends StatelessWidget {
                               fieldLabelBuilder(field),
                               style: isSelected
                                   ? emphasized.bodyLarge?.copyWith(
-                                      color: theme.colorScheme.onSecondaryContainer,
+                                      color: theme
+                                          .colorScheme
+                                          .onSecondaryContainer,
                                     )
                                   : theme.textTheme.bodyLarge,
                             ),
@@ -110,11 +112,17 @@ class AppSortBottomSheet<T> extends StatelessWidget {
               segments: [
                 AppSegment(
                   value: SortDirection.asc,
-                  label: directionLabelBuilder(selectedField, SortDirection.asc),
+                  label: directionLabelBuilder(
+                    selectedField,
+                    SortDirection.asc,
+                  ),
                 ),
                 AppSegment(
                   value: SortDirection.desc,
-                  label: directionLabelBuilder(selectedField, SortDirection.desc),
+                  label: directionLabelBuilder(
+                    selectedField,
+                    SortDirection.desc,
+                  ),
                 ),
               ],
             ),

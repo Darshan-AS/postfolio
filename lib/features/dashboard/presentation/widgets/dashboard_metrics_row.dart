@@ -32,8 +32,7 @@ class DashboardMetricsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final tileWidth =
-        _minTileWidth * MediaQuery.textScalerOf(context).scale(1);
+    final tileWidth = _minTileWidth * MediaQuery.textScalerOf(context).scale(1);
 
     return LayoutBuilder(
       builder: (context, constraints) {

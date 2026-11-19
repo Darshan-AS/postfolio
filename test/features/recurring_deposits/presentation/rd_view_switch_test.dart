@@ -26,7 +26,10 @@ void main() {
   final source = FakeDataSource();
   final views = t.recurringDeposits.views;
 
-  Future<ProviderContainer> pumpScreen(WidgetTester tester, {double textScale = 1.0}) async {
+  Future<ProviderContainer> pumpScreen(
+    WidgetTester tester, {
+    double textScale = 1.0,
+  }) async {
     tester.view.physicalSize = const Size(360, 800) * 2;
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.reset);
@@ -83,51 +86,56 @@ void main() {
   }
 
   final viewSwitch = find.byType(AppButtonGroup<RDViewMode>);
-  Finder label(String text) => find.descendant(of: viewSwitch, matching: find.text(text));
+  Finder label(String text) =>
+      find.descendant(of: viewSwitch, matching: find.text(text));
 
-  testWidgets('both views are named in the app bar, and a tap switches between them', (
-    tester,
-  ) async {
-    final container = await pumpScreen(tester);
-    RDViewMode mode() => container.read(rDViewModeControllerProvider);
+  testWidgets(
+    'both views are named in the app bar, and a tap switches between them',
+    (tester) async {
+      final container = await pumpScreen(tester);
+      RDViewMode mode() => container.read(rDViewModeControllerProvider);
 
-    expect(label(views.accounts), findsOneWidget);
-    expect(label(views.monthlyHub), findsOneWidget);
-    expect(
-      find.ancestor(of: viewSwitch, matching: find.byType(AppBar)),
-      findsOneWidget,
-    );
+      expect(label(views.accounts), findsOneWidget);
+      expect(label(views.monthlyHub), findsOneWidget);
+      expect(
+        find.ancestor(of: viewSwitch, matching: find.byType(AppBar)),
+        findsOneWidget,
+      );
 
-    expect(mode(), RDViewMode.accounts);
-    expect(find.byType(RDMonthlyOperationsView), findsNothing);
+      expect(mode(), RDViewMode.accounts);
+      expect(find.byType(RDMonthlyOperationsView), findsNothing);
 
-    await tester.tap(label(views.monthlyHub));
-    await tester.pump(const Duration(milliseconds: 250));
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(mode(), RDViewMode.monthlyHub);
-    expect(find.byType(RDMonthlyOperationsView), findsOneWidget);
+      await tester.tap(label(views.monthlyHub));
+      await tester.pump(const Duration(milliseconds: 250));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(mode(), RDViewMode.monthlyHub);
+      expect(find.byType(RDMonthlyOperationsView), findsOneWidget);
 
-    await tester.tap(label(views.accounts));
-    await tester.pump(const Duration(milliseconds: 250));
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(mode(), RDViewMode.accounts);
-    expect(find.byType(RDMonthlyOperationsView), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
+      await tester.tap(label(views.accounts));
+      await tester.pump(const Duration(milliseconds: 250));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(mode(), RDViewMode.accounts);
+      expect(find.byType(RDMonthlyOperationsView), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   for (final textScale in const [1.0, 1.3, 2.0]) {
-    testWidgets('at ${textScale}x text the switch stays inside the bar, clear of the theme '
-        'button', (tester) async {
-      await pumpScreen(tester, textScale: textScale);
-      expect(tester.takeException(), isNull);
+    testWidgets(
+      'at ${textScale}x text the switch stays inside the bar, clear of the theme '
+      'button',
+      (tester) async {
+        await pumpScreen(tester, textScale: textScale);
+        expect(tester.takeException(), isNull);
 
-      final bar = tester.getRect(find.byType(AppBar));
-      final control = tester.getRect(viewSwitch);
-      final theme = tester.getRect(find.byType(AccessibleThemeToggle));
-      expect(control.left, greaterThanOrEqualTo(bar.left));
-      expect(control.right, lessThanOrEqualTo(theme.left));
-      expect(control.top, greaterThanOrEqualTo(bar.top));
-      expect(control.bottom, lessThanOrEqualTo(bar.bottom));
-    });
+        final bar = tester.getRect(find.byType(AppBar));
+        final control = tester.getRect(viewSwitch);
+        final theme = tester.getRect(find.byType(AccessibleThemeToggle));
+        expect(control.left, greaterThanOrEqualTo(bar.left));
+        expect(control.right, lessThanOrEqualTo(theme.left));
+        expect(control.top, greaterThanOrEqualTo(bar.top));
+        expect(control.bottom, lessThanOrEqualTo(bar.bottom));
+      },
+    );
   }
 }

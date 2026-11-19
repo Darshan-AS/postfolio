@@ -82,19 +82,22 @@ class RDHubFilters extends _$RDHubFilters {
     return const RDHubFiltersState();
   }
 
-  void setStatus(RDMonthlyFilter filter) => state = state.copyWith(status: filter);
+  void setStatus(RDMonthlyFilter filter) =>
+      state = state.copyWith(status: filter);
 
   /// Tapping the active window again clears it.
   void toggleDueWindow(RDDueWindowFilter filter) => state = state.copyWith(
-        dueWindow: state.dueWindow == filter ? RDDueWindowFilter.all : filter,
-      );
+    dueWindow: state.dueWindow == filter ? RDDueWindowFilter.all : filter,
+  );
 
   void toggleGroupByCustomer([bool? value]) =>
       state = state.copyWith(groupByCustomer: value ?? !state.groupByCustomer);
 
-  void setSearchQuery(String query) => state = state.copyWith(searchQuery: query);
+  void setSearchQuery(String query) =>
+      state = state.copyWith(searchQuery: query);
 
-  void clear() => state = RDHubFiltersState(groupByCustomer: state.groupByCustomer);
+  void clear() =>
+      state = RDHubFiltersState(groupByCustomer: state.groupByCustomer);
 }
 
 @freezed
@@ -134,14 +137,16 @@ class RDHubSelection extends _$RDHubSelection {
   }
 
   void selectAll(Iterable<String> ids) => state = state.copyWith(
-        installmentIds: {...state.installmentIds, ...ids},
-        isSelectionMode: true,
-      );
+    installmentIds: {...state.installmentIds, ...ids},
+    isSelectionMode: true,
+  );
 
   void deselectAll(Iterable<String> ids) {
     final remove = ids.toSet();
     state = state.copyWith(
-      installmentIds: state.installmentIds.where((id) => !remove.contains(id)).toSet(),
+      installmentIds: state.installmentIds
+          .where((id) => !remove.contains(id))
+          .toSet(),
     );
   }
 }
@@ -153,7 +158,9 @@ class RDHubSelection extends _$RDHubSelection {
 /// Operation rows for the selected month, built from per-RD summaries (one row per RD) —
 /// no schedule hydration, no fact streams, no network.
 @riverpod
-Future<UnmodifiableListView<RDMonthlyOperationItem>> monthlyOperationItems(Ref ref) async {
+Future<UnmodifiableListView<RDMonthlyOperationItem>> monthlyOperationItems(
+  Ref ref,
+) async {
   final month = ref.watch(rDHubMonthProvider);
   final now = ref.watch(currentDateProvider);
   final deposits = await ref.watch(recurringDepositsControllerProvider.future);
@@ -184,22 +191,28 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> monthlyOperationItems(Ref r
     final no = RDScheduleFactory.installmentNoFor(deposit.startDate, month);
     if (no < 1 || no > deposit.totalMonths) continue;
 
-    final summary = summaries[deposit.id] ?? RDLedgerSummary.pristine(deposit, now);
+    final summary =
+        summaries[deposit.id] ?? RDLedgerSummary.pristine(deposit, now);
     final installment = summary.installmentFor(deposit, no, now);
     final allPriors = summary.priorOpenInstallments(deposit, no, now);
     // On future-month planning views, suppress un-matured current/upcoming months so healthy
     // accounts stay calm, while keeping genuinely past-due arrears (`dueDate < now`) visible.
     final priors = isFutureMonth
-        ? [for (final p in allPriors) if (p.dueDate.isBefore(now)) p]
+        ? [
+            for (final p in allPriors)
+              if (p.dueDate.isBefore(now)) p,
+          ]
         : allPriors;
 
-    items.add(RDMonthlyOperationItem(
-      deposit: deposit,
-      installment: installment,
-      summary: summary,
-      priorOpen: priors,
-      hasSummary: summaries.containsKey(deposit.id),
-    ));
+    items.add(
+      RDMonthlyOperationItem(
+        deposit: deposit,
+        installment: installment,
+        summary: summary,
+        priorOpen: priors,
+        hasSummary: summaries.containsKey(deposit.id),
+      ),
+    );
   }
   return UnmodifiableListView(items);
 }
@@ -208,7 +221,10 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> monthlyOperationItems(Ref r
 @riverpod
 Future<List<String>> rdIdsMissingSummary(Ref ref) async {
   final items = await ref.watch(monthlyOperationItemsProvider.future);
-  return [for (final i in items) if (!i.hasSummary) i.deposit.id];
+  return [
+    for (final i in items)
+      if (!i.hasSummary) i.deposit.id,
+  ];
 }
 
 @freezed
@@ -233,7 +249,8 @@ sealed class RDMonthlyKpiSummary with _$RDMonthlyKpiSummary {
 @riverpod
 RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
   final items =
-      ref.watch(monthlyOperationItemsProvider).value ?? const <RDMonthlyOperationItem>[];
+      ref.watch(monthlyOperationItemsProvider).value ??
+      const <RDMonthlyOperationItem>[];
   final now = ref.watch(currentDateProvider);
   final month = ref.watch(rDHubMonthProvider);
   final isFutureMonth = month.isAfter(now.toMonthStart());
@@ -265,7 +282,8 @@ RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
     }
     if (item.hasOverdueDebt(now)) {
       s = s.copyWith(
-        overdueAmount: s.overdueAmount +
+        overdueAmount:
+            s.overdueAmount +
             (isFutureMonth ? item.priorOverdueAmount : item.totalOutstanding),
         overdueCount: s.overdueCount + 1,
       );
@@ -285,13 +303,16 @@ sealed class RDAgentFloatSummary with _$RDAgentFloatSummary {
   const factory RDAgentFloatSummary({
     /// Collected but not yet deposited — physical cash (capped at ₹20k per PO lot).
     @Default(0.0) double cashInHandCash,
+
     /// Collected but not yet deposited — UPI / bank / cheque.
     @Default(0.0) double cashInHandDigital,
     @Default(0) int cashInHandAccounts,
+
     /// Fronted at the PO and not yet recovered from customers.
     @Default(0.0) double receivableAmount,
     @Default(0) int receivableAccounts,
     @Default(0.0) double absorbedFeesTotal,
+
     /// Accounts with 2+ unsettled past-due months.
     @Default(0) int arrearsAccounts,
   }) = _RDAgentFloatSummary;
@@ -308,7 +329,9 @@ RDAgentFloatSummary globalAgentFloat(Ref ref) {
   final summaries = ref.watch(rdLedgerSummariesProvider).value ?? const {};
   final deposits = ref.watch(recurringDepositsControllerProvider).value;
   final now = ref.watch(currentDateProvider);
-  final byId = {for (final d in deposits ?? const <RecurringDeposit>[]) d.id: d};
+  final byId = {
+    for (final d in deposits ?? const <RecurringDeposit>[]) d.id: d,
+  };
 
   var s = const RDAgentFloatSummary();
   for (final summary in summaries.values) {
@@ -327,7 +350,9 @@ RDAgentFloatSummary globalAgentFloat(Ref ref) {
         receivableAccounts: s.receivableAccounts + 1,
       );
     }
-    s = s.copyWith(absorbedFeesTotal: s.absorbedFeesTotal + summary.absorbedTotal);
+    s = s.copyWith(
+      absorbedFeesTotal: s.absorbedFeesTotal + summary.absorbedTotal,
+    );
     // Evaluate arrears as of today: the cached count is only as fresh as the last write.
     if (summary.arrearsCountAsOf(deposit, now) >= 2) {
       s = s.copyWith(arrearsAccounts: s.arrearsAccounts + 1);
@@ -337,7 +362,9 @@ RDAgentFloatSummary globalAgentFloat(Ref ref) {
 }
 
 @riverpod
-Future<UnmodifiableListView<RDMonthlyOperationItem>> filteredMonthlyOperations(Ref ref) async {
+Future<UnmodifiableListView<RDMonthlyOperationItem>> filteredMonthlyOperations(
+  Ref ref,
+) async {
   final filters = ref.watch(rDHubFiltersProvider);
   final month = ref.watch(rDHubMonthProvider);
   final now = ref.watch(clockProvider)().toDateOnly();
@@ -351,7 +378,8 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> filteredMonthlyOperations(R
       RDMonthlyFilter.readyForPo => item.isReadyForPo,
       RDMonthlyFilter.settled => item.isSettled,
       RDMonthlyFilter.overdue => !isFutureMonth && item.hasOverdueDebt(now),
-      RDMonthlyFilter.fronted => item.isFrontedByAgent || item.summary.receivable > 0,
+      RDMonthlyFilter.fronted =>
+        item.isFrontedByAgent || item.summary.receivable > 0,
     };
     if (!matchesStatus) return false;
     return switch (filters.dueWindow) {
@@ -377,7 +405,9 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> filteredMonthlyOperations(R
       if (filters.groupByCustomer) {
         final byName = (a.deposit.customerName ?? a.deposit.customerId)
             .toLowerCase()
-            .compareTo((b.deposit.customerName ?? b.deposit.customerId).toLowerCase());
+            .compareTo(
+              (b.deposit.customerName ?? b.deposit.customerId).toLowerCase(),
+            );
         if (byName != 0) return byName;
         final byId = a.deposit.customerId.compareTo(b.deposit.customerId);
         if (byId != 0) return byId;
@@ -418,7 +448,10 @@ Future<List<RDCustomerGroup>> groupedMonthlyOperations(Ref ref) async {
         customerId: e.key,
         customerName: e.value.first.deposit.customerName ?? e.key,
         items: e.value,
-        monthlyTotal: e.value.fold(0.0, (s, i) => s + i.installment.installmentAmount),
+        monthlyTotal: e.value.fold(
+          0.0,
+          (s, i) => s + i.installment.installmentAmount,
+        ),
       ),
   ];
 }
@@ -431,10 +464,14 @@ Future<List<RDCustomerGroup>> groupedMonthlyOperations(Ref ref) async {
 sealed class RDBatchSelectionSummary with _$RDBatchSelectionSummary {
   const factory RDBatchSelectionSummary({
     @Default(<RDMonthlyOperationItem>[]) List<RDMonthlyOperationItem> items,
+
     /// Accounts with at least one collected-but-undeposited month.
-    @Default(<RDMonthlyOperationItem>[]) List<RDMonthlyOperationItem> depositable,
+    @Default(<RDMonthlyOperationItem>[])
+    List<RDMonthlyOperationItem> depositable,
+
     /// Accounts whose selected month is the latest deposited one (undo-able).
-    @Default(<RDMonthlyOperationItem>[]) List<RDMonthlyOperationItem> revertible,
+    @Default(<RDMonthlyOperationItem>[])
+    List<RDMonthlyOperationItem> revertible,
   }) = _RDBatchSelectionSummary;
 
   const RDBatchSelectionSummary._();
@@ -442,22 +479,30 @@ sealed class RDBatchSelectionSummary with _$RDBatchSelectionSummary {
   int get count => items.length;
   int get readyInstallments =>
       depositable.fold(0, (s, i) => s + i.readyForPoCount);
-  double get totalAmount => items.fold(0.0, (s, i) => s + i.installment.dueAmount);
+  double get totalAmount =>
+      items.fold(0.0, (s, i) => s + i.installment.dueAmount);
 }
 
 @riverpod
 RDBatchSelectionSummary batchSelectionSummary(Ref ref) {
   final ids = ref.watch(rDHubSelectionProvider.select((s) => s.installmentIds));
   final items =
-      ref.watch(monthlyOperationItemsProvider).value ?? const <RDMonthlyOperationItem>[];
+      ref.watch(monthlyOperationItemsProvider).value ??
+      const <RDMonthlyOperationItem>[];
   final selected = <RDMonthlyOperationItem>[
     for (final i in items)
       if (ids.contains(i.installment.id)) i,
   ];
   return RDBatchSelectionSummary(
     items: selected,
-    depositable: [for (final i in selected) if (i.readyForPoCount > 0) i],
-    revertible: [for (final i in selected) if (i.isLatestDeposited) i],
+    depositable: [
+      for (final i in selected)
+        if (i.readyForPoCount > 0) i,
+    ],
+    revertible: [
+      for (final i in selected)
+        if (i.isLatestDeposited) i,
+    ],
   );
 }
 
@@ -471,7 +516,8 @@ class RDMonthlyOperationsActions extends _$RDMonthlyOperationsActions {
   @override
   void build() {}
 
-  RDLedgerController get _ledger => ref.read(rDLedgerControllerProvider.notifier);
+  RDLedgerController get _ledger =>
+      ref.read(rDLedgerControllerProvider.notifier);
 
   Future<Result<void, String>> undoLatestDeposit(RDMonthlyOperationItem item) =>
       _ledger.undoLatestPoDeposit(item.deposit.id);
@@ -479,7 +525,9 @@ class RDMonthlyOperationsActions extends _$RDMonthlyOperationsActions {
   /// Agent pays the remaining fee of [item]'s month from pocket (only when that closes the month).
   Future<Result<void, String>> absorbRemainingFee(RDMonthlyOperationItem item) {
     final amount = item.installment.absorbableFee;
-    if (amount <= 0) return Future.value(const Failure('Nothing to absorb on this month.'));
+    if (amount <= 0) {
+      return Future.value(const Failure('Nothing to absorb on this month.'));
+    }
     return _ledger.absorbFee(
       rdId: item.deposit.id,
       installmentNo: item.installment.installmentNo,
@@ -489,7 +537,7 @@ class RDMonthlyOperationsActions extends _$RDMonthlyOperationsActions {
 
   /// Everything the payment sheet needs to open pre-filled for [item].
   Future<Result<({List<RDInstallment> schedule, double initialAmount}), String>>
-      prepareLogPayment(RDMonthlyOperationItem item) async {
+  prepareLogPayment(RDMonthlyOperationItem item) async {
     final provider = rdLedgerProjectionProvider(item.deposit.id);
     final sub = ref.listen(provider, (_, _) {});
     try {
@@ -516,6 +564,8 @@ class RDMonthlyOperationsActions extends _$RDMonthlyOperationsActions {
         if (rebuildAll || !i.hasSummary) i.deposit,
     ];
     if (deposits.isEmpty) return;
-    await ref.read(rDLedgerControllerProvider.notifier).rebuildSummaries(deposits);
+    await ref
+        .read(rDLedgerControllerProvider.notifier)
+        .rebuildSummaries(deposits);
   }
 }

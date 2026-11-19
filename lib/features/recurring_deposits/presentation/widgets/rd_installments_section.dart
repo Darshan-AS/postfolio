@@ -52,28 +52,30 @@ class RDInstallmentsSection extends HookConsumerWidget {
     // --- providers -------------------------------------------------------------------
     final projectionAsync = ref.watch(rdLedgerProjectionProvider(deposit.id));
     final latestPoDeposit = ref.watch(
-      rdLedgerFactsProvider(deposit.id).select((async) => async.value?.latestPoDeposit),
+      rdLedgerFactsProvider(
+        deposit.id,
+      ).select((async) => async.value?.latestPoDeposit),
     );
     final now = ref.watch(clockProvider)();
     final isBusy = ref.watch(rDLedgerControllerProvider).isLoading;
     final theme = Theme.of(context);
 
     Widget loaded(RDLedgerProjection projection) => _Passbook(
-          rdId: deposit.id,
-          projection: projection,
-          latestPoDeposit: latestPoDeposit,
-          now: now,
-          isBusy: isBusy,
-        );
+      rdId: deposit.id,
+      projection: projection,
+      latestPoDeposit: latestPoDeposit,
+      now: now,
+      isBusy: isBusy,
+    );
 
     final content = switch (projectionAsync) {
       AsyncData(:final value) => loaded(value),
       // A re-projection in flight (e.g. after a write) keeps the previous frame visible.
       AsyncLoading(:final value?) => loaded(value),
       AsyncError(:final error) => ErrorStateView(
-          message: error.toString(),
-          onRetry: () => ref.invalidate(rdLedgerProjectionProvider(deposit.id)),
-        ),
+        message: error.toString(),
+        onRetry: () => ref.invalidate(rdLedgerProjectionProvider(deposit.id)),
+      ),
       AsyncLoading() => const _PassbookSkeleton(),
     };
 
@@ -243,7 +245,9 @@ class _EmptyPassbook extends StatelessWidget {
           AppButton(
             label: ledger.passbook.collect,
             icon: HugeIcons.strokeRoundedCoins01,
-            onPressed: isBusy ? null : () => showRDLogPaymentSheet(context, rdId: rdId),
+            onPressed: isBusy
+                ? null
+                : () => showRDLogPaymentSheet(context, rdId: rdId),
           ),
         ],
       ),
@@ -264,13 +268,13 @@ class _PassbookSkeleton extends StatelessWidget {
     final ledger = t.recurringDeposits.ledger;
 
     Widget card({required double radius, required Widget child}) => Material(
-          color: scheme.raised,
-          shape: AppShapes.rounded(radius),
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.paddingLg),
-            child: child,
-          ),
-        );
+      color: scheme.raised,
+      shape: AppShapes.rounded(radius),
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
+        child: child,
+      ),
+    );
 
     return Skeletonizer(
       enabled: true,
@@ -282,11 +286,20 @@ class _PassbookSkeleton extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(ledger.passbook.nextDue, style: theme.textTheme.labelLarge),
+                Text(
+                  ledger.passbook.nextDue,
+                  style: theme.textTheme.labelLarge,
+                ),
                 AppSpacings.gapXs,
-                Text(ledger.installmentsTitle, style: theme.textTheme.titleMedium),
+                Text(
+                  ledger.installmentsTitle,
+                  style: theme.textTheme.titleMedium,
+                ),
                 AppSpacings.gapMd,
-                Text(ledger.passbook.collect, style: theme.textTheme.headlineMedium),
+                Text(
+                  ledger.passbook.collect,
+                  style: theme.textTheme.headlineMedium,
+                ),
               ],
             ),
           ),

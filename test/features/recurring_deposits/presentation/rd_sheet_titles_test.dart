@@ -40,30 +40,49 @@ void main() {
     expect(rdAccountIdentity(rd), identity);
     expect(rdAccountIdentity(rd.copyWith(serialNo: null)), 'A/c …6655');
     expect(rdAccountIdentity(rd.copyWith(serialNo: '')), 'A/c …6655');
-    expect(rdAccountIdentity(rd.copyWith(accountNo: '123')), 'Sl 12 • A/c …123');
+    expect(
+      rdAccountIdentity(rd.copyWith(accountNo: '123')),
+      'Sl 12 • A/c …123',
+    );
   });
 
   test('the titles name the customer and do not end in a serial', () {
     final ledger = t.recurringDeposits.ledger;
-    expect(ledger.collectTitle(customer: 'Anita Sharma'), 'Collect from Anita Sharma');
-    expect(ledger.depositTitleFor(n: '2', customer: 'Anita Sharma'), 'Deposit 2 · Anita Sharma');
+    expect(
+      ledger.collectTitle(customer: 'Anita Sharma'),
+      'Collect from Anita Sharma',
+    );
+    expect(
+      ledger.depositTitleFor(n: '2', customer: 'Anita Sharma'),
+      'Deposit 2 · Anita Sharma',
+    );
   });
 
-  testWidgets('the header draws the account under the title, on the same edge', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.lightTheme,
-        home: Scaffold(
-          body: RDSheetHeader(title: 'Collect from Anita Sharma', subtitle: identity, onClose: () {}),
+  testWidgets(
+    'the header draws the account under the title, on the same edge',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: Scaffold(
+            body: RDSheetHeader(
+              title: 'Collect from Anita Sharma',
+              subtitle: identity,
+              onClose: () {},
+            ),
+          ),
         ),
-      ),
-    );
-    final title = tester.getRect(find.text('Collect from Anita Sharma'));
-    final line = tester.getRect(find.text(identity));
-    expect(line.top, greaterThanOrEqualTo(title.bottom));
-    expect(line.left, title.left);
-    expect(line.right, lessThanOrEqualTo(tester.getRect(find.byTooltip(t.common.close)).left));
-  });
+      );
+      final title = tester.getRect(find.text('Collect from Anita Sharma'));
+      final line = tester.getRect(find.text(identity));
+      expect(line.top, greaterThanOrEqualTo(title.bottom));
+      expect(line.left, title.left);
+      expect(
+        line.right,
+        lessThanOrEqualTo(tester.getRect(find.byTooltip(t.common.close)).left),
+      );
+    },
+  );
 
   Future<void> openSheet(
     WidgetTester tester,
@@ -77,7 +96,9 @@ void main() {
       overrides: [
         clockProvider.overrideWithValue(() => DateTime(2026, 3, 10)),
         customerRepositoryProvider.overrideWithValue(
-          FakeCustomerRepository(customers: const [Customer(id: 'cust-1', name: 'Anita Sharma')]),
+          FakeCustomerRepository(
+            customers: const [Customer(id: 'cust-1', name: 'Anita Sharma')],
+          ),
         ),
         recurringDepositRepositoryProvider.overrideWithValue(
           FakeRecurringDepositRepository(deposits: [rd]),
@@ -95,7 +116,10 @@ void main() {
           home: Builder(
             builder: (context) => Scaffold(
               body: Center(
-                child: TextButton(onPressed: () => open(context), child: const Text('open')),
+                child: TextButton(
+                  onPressed: () => open(context),
+                  child: const Text('open'),
+                ),
               ),
             ),
           ),
@@ -106,28 +130,49 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('the collect sheet: "Collect from Anita Sharma", then the account', (tester) async {
-    await openSheet(tester, (context) => showRDLogPaymentSheet(context, rdId: rd.id));
+  testWidgets(
+    'the collect sheet: "Collect from Anita Sharma", then the account',
+    (tester) async {
+      await openSheet(
+        tester,
+        (context) => showRDLogPaymentSheet(context, rdId: rd.id),
+      );
 
-    final header = find.byType(RDSheetHeader);
-    expect(
-      find.descendant(of: header, matching: find.text('Collect from Anita Sharma')),
-      findsOneWidget,
-    );
-    expect(find.descendant(of: header, matching: find.text(identity)), findsOneWidget);
-  });
+      final header = find.byType(RDSheetHeader);
+      expect(
+        find.descendant(
+          of: header,
+          matching: find.text('Collect from Anita Sharma'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: header, matching: find.text(identity)),
+        findsOneWidget,
+      );
+    },
+  );
 
-  testWidgets('the deposit sheet: "Deposit 1 · Anita Sharma", then the account', (tester) async {
-    await openSheet(
-      tester,
-      (context) => showRDDepositSheet(context, rdId: rd.id, initialCount: 1),
-    );
+  testWidgets(
+    'the deposit sheet: "Deposit 1 · Anita Sharma", then the account',
+    (tester) async {
+      await openSheet(
+        tester,
+        (context) => showRDDepositSheet(context, rdId: rd.id, initialCount: 1),
+      );
 
-    final header = find.byType(RDSheetHeader);
-    expect(
-      find.descendant(of: header, matching: find.text('Deposit 1 · Anita Sharma')),
-      findsOneWidget,
-    );
-    expect(find.descendant(of: header, matching: find.text(identity)), findsOneWidget);
-  });
+      final header = find.byType(RDSheetHeader);
+      expect(
+        find.descendant(
+          of: header,
+          matching: find.text('Deposit 1 · Anita Sharma'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: header, matching: find.text(identity)),
+        findsOneWidget,
+      );
+    },
+  );
 }

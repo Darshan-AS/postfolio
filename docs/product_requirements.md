@@ -49,10 +49,9 @@
 * **Models:** `freezed` for strict immutability.
 * **Routing:** `go_router`.
 
-### 3.2 Offline-First Database Strategy
-* **Backend:** Firebase Firestore.
-* **Requirement:** The app must work perfectly deep in a rural village with zero internet. Firestore's offline persistence will be heavily relied upon.
-* All data writes update the local cache immediately and sync to the cloud when the network is restored.
+### 3.2 Database & Persistence Strategy
+* **Backend:** Supabase (PostgreSQL 17 with Row-Level Security and Supabase Auth; see `docs/architecture.md` for the current schema and RPC design).
+* **Offline-First (Future Phase):** Reliable operation in low-connectivity rural areas remains a product goal, to be built via a local-first cache and sync layer on top of Supabase rather than the retired Firestore stack.
 
 ### 3.3 Math & Calculation Principles
 * Never store calculated fields (e.g., "Current Balance" or "Total Commission") in the database if they can be derived.

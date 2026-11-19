@@ -118,14 +118,12 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
   }
 
   var result = customerMap.isNotEmpty
-      ? asyncDeposits
-          .map((d) {
-            final liveName = customerMap[d.customerId];
-            return (liveName != null && liveName != d.customerName)
-                ? d.copyWith(customerName: liveName)
-                : d;
-          })
-          .toList()
+      ? asyncDeposits.map((d) {
+          final liveName = customerMap[d.customerId];
+          return (liveName != null && liveName != d.customerName)
+              ? d.copyWith(customerName: liveName)
+              : d;
+        }).toList()
       : asyncDeposits.toList();
 
   // Filters
@@ -145,7 +143,8 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
   if (criteria.searchQuery.isNotEmpty) {
     final query = criteria.searchQuery.toLowerCase().trim();
     result = result.where((d) {
-      final customerName = (d.customerName ?? customerMap[d.customerId])?.toLowerCase() ?? '';
+      final customerName =
+          (d.customerName ?? customerMap[d.customerId])?.toLowerCase() ?? '';
       return (d.accountNo?.toLowerCase().contains(query) ?? false) ||
           customerName.contains(query) ||
           d.schemeType.displayName.toLowerCase().contains(query) ||
@@ -182,8 +181,10 @@ Future<UnmodifiableListView<RecurringDeposit>> filteredRecurringDeposits(
       break;
     case RDSortField.name:
       result.sort((a, b) {
-        final nameA = (a.customerName ?? customerMap[a.customerId])?.toLowerCase() ?? '';
-        final nameB = (b.customerName ?? customerMap[b.customerId])?.toLowerCase() ?? '';
+        final nameA =
+            (a.customerName ?? customerMap[a.customerId])?.toLowerCase() ?? '';
+        final nameB =
+            (b.customerName ?? customerMap[b.customerId])?.toLowerCase() ?? '';
         final comp = nameA.compareTo(nameB);
         return isAsc ? comp : -comp;
       });
@@ -292,7 +293,9 @@ class RecurringDepositsController extends _$RecurringDepositsController {
             case Success(:final value):
               isLocked = value;
             case Failure():
-              return Failure(t.recurringDeposits.fields.financialTermsUnverified);
+              return Failure(
+                t.recurringDeposits.fields.financialTermsUnverified,
+              );
           }
           final lockCheck = RecurringDeposit.validateUpdate(
             existing: existing,
@@ -319,20 +322,22 @@ class RecurringDepositsController extends _$RecurringDepositsController {
 
   /// Whether [deposit] has any ledger fact, from one direct read. A failed read is returned
   /// as a `Failure` — the caller must not treat "unknown" as "no activity".
-  Future<Result<bool, String>> _hasLedgerActivity(RecurringDeposit deposit) async {
-    final raw = await ref
-        .read(rdLedgerRepositoryProvider)
-        .fetchRawFactsForRds([deposit.id]);
+  Future<Result<bool, String>> _hasLedgerActivity(
+    RecurringDeposit deposit,
+  ) async {
+    final raw = await ref.read(rdLedgerRepositoryProvider).fetchRawFactsForRds([
+      deposit.id,
+    ]);
     return switch (raw) {
       Failure(:final error) => Failure(error),
       Success(value: final bundles) => Success(
-          RDLedgerFacts(
-            deposit: deposit,
-            transactions: bundles[deposit.id]?.transactions ?? const [],
-            poDeposits: bundles[deposit.id]?.poDeposits ?? const [],
-            absorptions: bundles[deposit.id]?.absorptions ?? const [],
-          ).isFinancialTermsLocked,
-        ),
+        RDLedgerFacts(
+          deposit: deposit,
+          transactions: bundles[deposit.id]?.transactions ?? const [],
+          poDeposits: bundles[deposit.id]?.poDeposits ?? const [],
+          absorptions: bundles[deposit.id]?.absorptions ?? const [],
+        ).isFinancialTermsLocked,
+      ),
     };
   }
 

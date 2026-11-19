@@ -28,12 +28,24 @@ class RDHubToolbar extends HookConsumerWidget {
 
     final filtersNotifier = ref.read(rDHubFiltersProvider.notifier);
     final selectionNotifier = ref.read(rDHubSelectionProvider.notifier);
-    final searchQuery = ref.watch(rDHubFiltersProvider.select((s) => s.searchQuery));
-    final dueWindow = ref.watch(rDHubFiltersProvider.select((s) => s.dueWindow));
-    final groupByCustomer = ref.watch(rDHubFiltersProvider.select((s) => s.groupByCustomer));
-    final isSelectionMode = ref.watch(rDHubSelectionProvider.select((s) => s.isSelectionMode));
-    final firstHalfCount = ref.watch(monthlyOperationsKpiProvider.select((k) => k.firstHalfCount));
-    final secondHalfCount = ref.watch(monthlyOperationsKpiProvider.select((k) => k.secondHalfCount));
+    final searchQuery = ref.watch(
+      rDHubFiltersProvider.select((s) => s.searchQuery),
+    );
+    final dueWindow = ref.watch(
+      rDHubFiltersProvider.select((s) => s.dueWindow),
+    );
+    final groupByCustomer = ref.watch(
+      rDHubFiltersProvider.select((s) => s.groupByCustomer),
+    );
+    final isSelectionMode = ref.watch(
+      rDHubSelectionProvider.select((s) => s.isSelectionMode),
+    );
+    final firstHalfCount = ref.watch(
+      monthlyOperationsKpiProvider.select((k) => k.firstHalfCount),
+    );
+    final secondHalfCount = ref.watch(
+      monthlyOperationsKpiProvider.select((k) => k.secondHalfCount),
+    );
 
     final searchController = useTextEditingController(text: searchQuery);
     useListenable(searchController);
@@ -96,11 +108,15 @@ class RDHubToolbar extends HookConsumerWidget {
                     onPressed: filtersNotifier.toggleGroupByCustomer,
                   ),
                   _ToolbarToggle(
-                    tooltip: isSelectionMode ? toolbar.exitSelectMode : toolbar.selectMode,
+                    tooltip: isSelectionMode
+                        ? toolbar.exitSelectMode
+                        : toolbar.selectMode,
                     isSelected: isSelectionMode,
                     icon: HugeIcons.strokeRoundedCheckList,
                     selectedIcon: HugeIcons.strokeRoundedCheckmarkCircle02,
-                    onPressed: isSelectionMode ? selectionNotifier.exit : selectionNotifier.enter,
+                    onPressed: isSelectionMode
+                        ? selectionNotifier.exit
+                        : selectionNotifier.enter,
                   ),
                 ],
               ),

@@ -4,7 +4,11 @@
 /// Carries the row's id and the original [cause], so the failure can be traced to one record
 /// instead of surfacing as an anonymous "something went wrong".
 class RowDecodeException implements Exception {
-  const RowDecodeException({required this.rowId, required this.cause, this.stackTrace});
+  const RowDecodeException({
+    required this.rowId,
+    required this.cause,
+    this.stackTrace,
+  });
 
   /// Primary key of the row that failed, when the row has one.
   final String? rowId;
@@ -12,7 +16,8 @@ class RowDecodeException implements Exception {
   final StackTrace? stackTrace;
 
   @override
-  String toString() => 'RowDecodeException(row ${rowId ?? 'without id'}): $cause';
+  String toString() =>
+      'RowDecodeException(row ${rowId ?? 'without id'}): $cause';
 }
 
 /// Decodes [rows] with [fromJson], one row at a time.

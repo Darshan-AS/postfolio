@@ -39,7 +39,9 @@ class RecurringDepositCard extends ConsumerWidget {
     this.position = AppGroupPosition.single,
   });
 
-  static Widget skeleton({AppGroupPosition position = AppGroupPosition.single}) {
+  static Widget skeleton({
+    AppGroupPosition position = AppGroupPosition.single,
+  }) {
     final dummy = RecurringDeposit.dummy;
     return _RecurringDepositTile(
       deposit: dummy,

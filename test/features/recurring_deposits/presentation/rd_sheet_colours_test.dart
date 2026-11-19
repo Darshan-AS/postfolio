@@ -35,65 +35,75 @@ void main() {
     startDate: DateTime(2026, 1, 5),
   );
 
-  for (final (name, theme) in [('light', AppTheme.lightTheme), ('dark', AppTheme.darkTheme)]) {
-    testWidgets('$name: the from-pocket line on the deposit sheet is the fronted colour', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(360, 800) * 2;
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(tester.view.reset);
+  for (final (name, theme) in [
+    ('light', AppTheme.lightTheme),
+    ('dark', AppTheme.darkTheme),
+  ]) {
+    testWidgets(
+      '$name: the from-pocket line on the deposit sheet is the fronted colour',
+      (tester) async {
+        tester.view.physicalSize = const Size(360, 800) * 2;
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(tester.view.reset);
 
-      final container = ProviderContainer(
-        overrides: [
-          clockProvider.overrideWithValue(() => today),
-          customerRepositoryProvider.overrideWithValue(
-            FakeCustomerRepository(
-              customers: const [Customer(id: 'cust-1', name: 'Anita Sharma')],
+        final container = ProviderContainer(
+          overrides: [
+            clockProvider.overrideWithValue(() => today),
+            customerRepositoryProvider.overrideWithValue(
+              FakeCustomerRepository(
+                customers: const [Customer(id: 'cust-1', name: 'Anita Sharma')],
+              ),
             ),
-          ),
-          recurringDepositRepositoryProvider.overrideWithValue(
-            FakeRecurringDepositRepository(deposits: [rd]),
-          ),
-          rdLedgerRepositoryProvider.overrideWithValue(FakeRDLedgerRepository()),
-        ],
-      );
-      addTearDown(container.dispose);
+            recurringDepositRepositoryProvider.overrideWithValue(
+              FakeRecurringDepositRepository(deposits: [rd]),
+            ),
+            rdLedgerRepositoryProvider.overrideWithValue(
+              FakeRDLedgerRepository(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: MaterialApp(
-            theme: theme,
-            home: Builder(
-              builder: (context) => Scaffold(
-                body: Center(
-                  child: TextButton(
-                    onPressed: () => showRDDepositSheet(context, rdId: rd.id, initialCount: 1),
-                    child: const Text('open'),
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              theme: theme,
+              home: Builder(
+                builder: (context) => Scaffold(
+                  body: Center(
+                    child: TextButton(
+                      onPressed: () => showRDDepositSheet(
+                        context,
+                        rdId: rd.id,
+                        initialCount: 1,
+                      ),
+                      child: const Text('open'),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
+        );
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
 
-      final sheet = find.byType(BottomSheet);
-      expect(sheet, findsOneWidget);
-      final context = tester.element(sheet);
-      final scheme = Theme.of(context).colorScheme;
-      final fronted = AppFinancialColors.of(context).fronted.onContainer;
+        final sheet = find.byType(BottomSheet);
+        expect(sheet, findsOneWidget);
+        final context = tester.element(sheet);
+        final scheme = Theme.of(context).colorScheme;
+        final fronted = AppFinancialColors.of(context).fronted.onContainer;
 
-      final colours = [
-        for (final text in tester.widgetList<Text>(
-          find.descendant(of: sheet, matching: find.byType(Text)),
-        ))
-          text.style?.color,
-      ];
-      expect(colours, contains(fronted));
-      expect(colours, isNot(contains(scheme.error)));
-    });
+        final colours = [
+          for (final text in tester.widgetList<Text>(
+            find.descendant(of: sheet, matching: find.byType(Text)),
+          ))
+            text.style?.color,
+        ];
+        expect(colours, contains(fronted));
+        expect(colours, isNot(contains(scheme.error)));
+      },
+    );
   }
 }

@@ -45,7 +45,8 @@ NomineeFormState useNomineeFormState({
     if (nameController.text != nominee.name) {
       nameController.text = nominee.name;
     }
-    if (customRelationshipController.text != (nominee.customRelationship ?? '')) {
+    if (customRelationshipController.text !=
+        (nominee.customRelationship ?? '')) {
       customRelationshipController.text = nominee.customRelationship ?? '';
     }
     if (relationshipState.value != nominee.relationship) {

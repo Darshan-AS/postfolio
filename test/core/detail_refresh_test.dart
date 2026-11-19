@@ -10,7 +10,10 @@ void main() {
     await LocaleSettings.setLocale(AppLocale.en);
   });
 
-  Future<void> pumpDetail(WidgetTester tester, {Future<void> Function()? onRefresh}) async {
+  Future<void> pumpDetail(
+    WidgetTester tester, {
+    Future<void> Function()? onRefresh,
+  }) async {
     tester.view.physicalSize = const Size(360, 800) * 2;
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.reset);
@@ -25,7 +28,10 @@ void main() {
           deleteDialogTitle: 'Delete',
           deleteDialogContent: 'Delete this customer?',
           onRefresh: onRefresh,
-          header: const EntityDetailHeader(title: 'Ramesh Rao', avatarText: 'R'),
+          header: const EntityDetailHeader(
+            title: 'Ramesh Rao',
+            avatarText: 'R',
+          ),
           // Shorter than the screen: there is nothing to scroll, only to pull.
           body: const [Text('One line')],
         ),
@@ -34,19 +40,25 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('pulling a detail screen down reloads it, even when it is short', (tester) async {
-    var reloads = 0;
-    await pumpDetail(tester, onRefresh: () async => reloads++);
+  testWidgets(
+    'pulling a detail screen down reloads it, even when it is short',
+    (tester) async {
+      var reloads = 0;
+      await pumpDetail(tester, onRefresh: () async => reloads++);
 
-    await tester.drag(find.text('One line'), const Offset(0, 400));
-    await tester.pumpAndSettle();
+      await tester.drag(find.text('One line'), const Offset(0, 400));
+      await tester.pumpAndSettle();
 
-    expect(reloads, 1);
-    expect(find.text('One line'), findsOneWidget);
-  });
+      expect(reloads, 1);
+      expect(find.text('One line'), findsOneWidget);
+    },
+  );
 
-  testWidgets('a detail screen with nothing to reload has no refresh indicator', (tester) async {
-    await pumpDetail(tester);
-    expect(find.byType(AppRefreshIndicator), findsNothing);
-  });
+  testWidgets(
+    'a detail screen with nothing to reload has no refresh indicator',
+    (tester) async {
+      await pumpDetail(tester);
+      expect(find.byType(AppRefreshIndicator), findsNothing);
+    },
+  );
 }

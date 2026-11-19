@@ -15,13 +15,19 @@ void main() {
   /// not always the shape it was last given.
   ShapeBorder shapeOf(WidgetTester tester) {
     final surface = tester.widget<PhysicalShape>(
-      find.descendant(of: find.byType(AppShapeAvatar), matching: find.byType(PhysicalShape)),
+      find.descendant(
+        of: find.byType(AppShapeAvatar),
+        matching: find.byType(PhysicalShape),
+      ),
     );
     return (surface.clipper as ShapeBorderClipper).shape;
   }
 
-  Matcher isShape(AppAvatarShape shape) =>
-      isA<MaterialShapeBorder>().having((border) => border.shape, 'shape', shape.polygon);
+  Matcher isShape(AppAvatarShape shape) => isA<MaterialShapeBorder>().having(
+    (border) => border.shape,
+    'shape',
+    shape.polygon,
+  );
 
   Future<void> pumpAvatar(
     WidgetTester tester, {
@@ -31,7 +37,9 @@ void main() {
     MaterialApp(
       theme: AppTheme.lightTheme,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(disableAnimations: disableAnimations),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(disableAnimations: disableAnimations),
         child: child!,
       ),
       home: Scaffold(
@@ -46,68 +54,83 @@ void main() {
     ),
   );
 
-  testWidgets('an avatar that opens from a shape starts as it, turns into its own and stays', (
-    tester,
-  ) async {
-    await pumpAvatar(tester, opensFrom: AppAvatarShape.circle);
-    expect(shapeOf(tester), isShape(AppAvatarShape.circle));
+  testWidgets(
+    'an avatar that opens from a shape starts as it, turns into its own and stays',
+    (tester) async {
+      await pumpAvatar(tester, opensFrom: AppAvatarShape.circle);
+      expect(shapeOf(tester), isShape(AppAvatarShape.circle));
 
-    // It waits while the screen's content fades in, so that the turning is seen.
-    await tester.pump(AppMotion.spatialFastDuration ~/ 2);
-    expect(shapeOf(tester), isShape(AppAvatarShape.circle));
+      // It waits while the screen's content fades in, so that the turning is seen.
+      await tester.pump(AppMotion.spatialFastDuration ~/ 2);
+      expect(shapeOf(tester), isShape(AppAvatarShape.circle));
 
-    // Then a blend of the two shapes, which is neither.
-    await tester.pump(AppMotion.spatialFastDuration);
-    expect(shapeOf(tester), isNot(isA<MaterialShapeBorder>()));
+      // Then a blend of the two shapes, which is neither.
+      await tester.pump(AppMotion.spatialFastDuration);
+      expect(shapeOf(tester), isNot(isA<MaterialShapeBorder>()));
 
-    // The turning ends when its time is up, with the avatar's own shape drawn: nothing
-    // trails behind it.
-    await tester.pump(AppMotion.spatialDuration);
-    expect(shapeOf(tester), isShape(AppAvatarShape.softBurst));
-    await tester.pumpAndSettle();
-    expect(shapeOf(tester), isShape(AppAvatarShape.softBurst));
-  });
+      // The turning ends when its time is up, with the avatar's own shape drawn: nothing
+      // trails behind it.
+      await tester.pump(AppMotion.spatialDuration);
+      expect(shapeOf(tester), isShape(AppAvatarShape.softBurst));
+      await tester.pumpAndSettle();
+      expect(shapeOf(tester), isShape(AppAvatarShape.softBurst));
+    },
+  );
 
-  testWidgets('a device set to remove animations gets the avatar\'s own shape at once', (
-    tester,
-  ) async {
-    await pumpAvatar(tester, opensFrom: AppAvatarShape.circle, disableAnimations: true);
-    expect(shapeOf(tester), isShape(AppAvatarShape.softBurst));
-    // Nothing is left running that would turn it.
-    expect(
-      find.byWidgetPredicate((widget) => widget is TweenAnimationBuilder<ShapeBorder?>),
-      findsNothing,
-    );
-  });
+  testWidgets(
+    'a device set to remove animations gets the avatar\'s own shape at once',
+    (tester) async {
+      await pumpAvatar(
+        tester,
+        opensFrom: AppAvatarShape.circle,
+        disableAnimations: true,
+      );
+      expect(shapeOf(tester), isShape(AppAvatarShape.softBurst));
+      // Nothing is left running that would turn it.
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is TweenAnimationBuilder<ShapeBorder?>,
+        ),
+        findsNothing,
+      );
+    },
+  );
 
-  testWidgets('an avatar with nothing to open from is its own shape from the first frame', (
-    tester,
-  ) async {
-    await pumpAvatar(tester);
-    expect(shapeOf(tester), isShape(AppAvatarShape.softBurst));
-  });
+  testWidgets(
+    'an avatar with nothing to open from is its own shape from the first frame',
+    (tester) async {
+      await pumpAvatar(tester);
+      expect(shapeOf(tester), isShape(AppAvatarShape.softBurst));
+    },
+  );
 
-  testWidgets('the sign-in mark opens from a circle as the screen arrives, and the screen '
-      'comes to rest', (tester) async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    final authRepo = FakeAuthRepository();
-    addTearDown(authRepo.dispose);
+  testWidgets(
+    'the sign-in mark opens from a circle as the screen arrives, and the screen '
+    'comes to rest',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final authRepo = FakeAuthRepository();
+      addTearDown(authRepo.dispose);
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(prefs),
-          authRepositoryProvider.overrideWithValue(authRepo),
-        ],
-        child: MaterialApp(theme: AppTheme.lightTheme, home: const LoginScreen()),
-      ),
-    );
-    expect(shapeOf(tester), isShape(AppAvatarShape.circle));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            authRepositoryProvider.overrideWithValue(authRepo),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: const LoginScreen(),
+          ),
+        ),
+      );
+      expect(shapeOf(tester), isShape(AppAvatarShape.circle));
 
-    // An animation that never ends would time out here.
-    await tester.pumpAndSettle();
-    expect(shapeOf(tester), isShape(AppAvatarShape.softBurst));
-    expect(tester.takeException(), isNull);
-  });
+      // An animation that never ends would time out here.
+      await tester.pumpAndSettle();
+      expect(shapeOf(tester), isShape(AppAvatarShape.softBurst));
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

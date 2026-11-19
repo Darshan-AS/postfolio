@@ -73,6 +73,7 @@ class DepositDraftState {
 
   final void Function(int value) setCount;
   final void Function(double? value) setFeeOverride;
+
   /// Records the deposit and returns it as stored. Calling it again re-sends the same
   /// deposit; it never records a second one.
   final Future<Result<RDPoDeposit, String>> Function() submit;
@@ -80,7 +81,8 @@ class DepositDraftState {
 
   bool get isLoaded => facts.hasValue && projection.hasValue;
   bool get isAllDeposited => isLoaded && remaining == 0;
-  bool get canSubmit => isLoaded && !isSubmitting && count >= 1 && count <= remaining;
+  bool get canSubmit =>
+      isLoaded && !isSubmitting && count >= 1 && count <= remaining;
   bool get canDecrement => count > 1;
   bool get canIncrement => count < remaining;
   bool get isFrontingFromPocket => fromPocket > 0;
@@ -116,17 +118,14 @@ DepositDraftState useDepositDraft(
   final requested = countInput.value ?? (readyCount > 0 ? readyCount : 1);
   final count = remaining == 0 ? 0 : requested.clamp(1, remaining);
 
-  final baseQuote = useMemoized<({double amount, double fee})?>(
-    () {
-      if (factsValue == null || count == 0) return null;
-      return projector.quoteNextDeposit(
-        factsValue,
-        count: count,
-        depositedOn: depositedOn.value,
-      );
-    },
-    [factsValue, projector, count, depositedOn.value],
-  );
+  final baseQuote = useMemoized<({double amount, double fee})?>(() {
+    if (factsValue == null || count == 0) return null;
+    return projector.quoteNextDeposit(
+      factsValue,
+      count: count,
+      depositedOn: depositedOn.value,
+    );
+  }, [factsValue, projector, count, depositedOn.value]);
 
   final quote = useMemoized<({double amount, double fee})?>(
     () {
@@ -140,23 +139,34 @@ DepositDraftState useDepositDraft(
         feeOverride: override,
       );
     },
-    [factsValue, projector, baseQuote, count, depositedOn.value, feeOverrideState.value],
+    [
+      factsValue,
+      projector,
+      baseQuote,
+      count,
+      depositedOn.value,
+      feeOverrideState.value,
+    ],
   );
 
-  final fromPocket = useMemoized<double>(
-    () {
-      if (projectionValue == null || quote == null || count == 0) return 0.0;
-      var customerPaidPaise = 0;
-      for (var no = depositedThroughNo + 1; no <= depositedThroughNo + count; no++) {
-        customerPaidPaise += Money.toPaise(
-          projectionValue.byNo(no)?.customerPaidAmount ?? 0.0,
-        );
-      }
-      final pocketPaise = math.max(0, Money.toPaise(quote.amount) - customerPaidPaise);
-      return Money.toRupees(pocketPaise);
-    },
-    [projectionValue, depositedThroughNo, count, quote],
-  );
+  final fromPocket = useMemoized<double>(() {
+    if (projectionValue == null || quote == null || count == 0) return 0.0;
+    var customerPaidPaise = 0;
+    for (
+      var no = depositedThroughNo + 1;
+      no <= depositedThroughNo + count;
+      no++
+    ) {
+      customerPaidPaise += Money.toPaise(
+        projectionValue.byNo(no)?.customerPaidAmount ?? 0.0,
+      );
+    }
+    final pocketPaise = math.max(
+      0,
+      Money.toPaise(quote.amount) - customerPaidPaise,
+    );
+    return Money.toRupees(pocketPaise);
+  }, [projectionValue, depositedThroughNo, count, quote]);
 
   // Date range: never before the last PO visit (sequential ledger), never after today.
   final startDate = factsValue?.deposit.startDate.toDateOnly();
@@ -175,12 +185,12 @@ DepositDraftState useDepositDraft(
   final eventId = useMemoized(() => const Uuid().v7());
 
   Future<Result<RDPoDeposit, String>> submit() => ledger.depositNextToPo(
-        rdId: rdId,
-        count: count,
-        depositedOn: depositedOn.value,
-        feeOverride: feeOverrideState.value,
-        eventId: eventId,
-      );
+    rdId: rdId,
+    count: count,
+    depositedOn: depositedOn.value,
+    feeOverride: feeOverrideState.value,
+    eventId: eventId,
+  );
 
   Future<Result<void, String>> undo() => ledger.undoLatestPoDeposit(rdId);
 

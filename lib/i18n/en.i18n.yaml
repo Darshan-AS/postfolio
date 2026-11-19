@@ -78,6 +78,7 @@ common:
   moreOptions: "More options"
   noResults: "No results found"
   demoModeActive: "Demo Mode Active. Data is not saved to the cloud."
+  localBackendActive: "Local Supabase (seed data)"
 
 sorting:
   title: "Sort By"
@@ -623,6 +624,7 @@ auth:
   welcome: "Welcome to Postfolio"
   signInSubtitle: "Sign in to manage your deposits securely"
   signInWithGoogle: "Sign in with Google"
+  signInAsSeededAgent: "Sign in as seeded agent"
   tryDemoMode: "Try Demo Mode"
   signOut: "Sign Out"
 

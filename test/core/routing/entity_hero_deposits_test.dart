@@ -30,34 +30,41 @@ void main() {
   );
 
   /// A widget that is drawn above both screens while it travels: one that is on no screen.
-  Finder aloftWhere(bool Function(Widget widget) test) => find.byElementPredicate((element) {
-    if (!test(element.widget)) return false;
-    var onAScreen = false;
-    element.visitAncestorElements((ancestor) {
-      onAScreen = ancestor.widget is Scaffold;
-      return !onAScreen;
-    });
-    return !onAScreen;
-  });
+  Finder aloftWhere(bool Function(Widget widget) test) =>
+      find.byElementPredicate((element) {
+        if (!test(element.widget)) return false;
+        var onAScreen = false;
+        element.visitAncestorElements((ancestor) {
+          onAScreen = ancestor.widget is Scaffold;
+          return !onAScreen;
+        });
+        return !onAScreen;
+      });
 
   /// The copy of [text] that is on its way.
-  Finder aloft(String text) => aloftWhere((widget) => widget is Text && widget.data == text);
+  Finder aloft(String text) =>
+      aloftWhere((widget) => widget is Text && widget.data == text);
 
   /// The form of the avatar that is on its way: 0 as in a row, 1 as at the head of a
   /// screen.
-  double avatarForm(WidgetTester tester) =>
-      tester.widget<EntityAvatar>(aloftWhere((widget) => widget is EntityAvatar)).prominence;
+  double avatarForm(WidgetTester tester) => tester
+      .widget<EntityAvatar>(aloftWhere((widget) => widget is EntityAvatar))
+      .prominence;
 
   /// The size of the font [text] is drawn in.
   double fontSize(WidgetTester tester, Finder text) => tester
-      .widget<RichText>(find.descendant(of: text, matching: find.byType(RichText)))
+      .widget<RichText>(
+        find.descendant(of: text, matching: find.byType(RichText)),
+      )
       .text
       .style!
       .fontSize!;
 
   /// The head of the screen of type [T], and a part inside it.
-  Finder headOf<T extends Widget>() =>
-      find.descendant(of: find.byType(T), matching: find.byType(EntityDetailHeader));
+  Finder headOf<T extends Widget>() => find.descendant(
+    of: find.byType(T),
+    matching: find.byType(EntityDetailHeader),
+  );
   Finder inHeadOf<T extends Widget>(Finder part) =>
       find.descendant(of: headOf<T>(), matching: part);
 
@@ -71,7 +78,9 @@ void main() {
       deposits: [rameshTimeDeposit],
       delay: Duration.zero,
     ),
-    recurringDeposits: FakeRecurringDepositRepository(deposits: [rameshRecurringDeposit]),
+    recurringDeposits: FakeRecurringDepositRepository(
+      deposits: [rameshRecurringDeposit],
+    ),
   );
 
   Future<void> openTab(WidgetTester tester, String label) async {
@@ -108,7 +117,8 @@ void main() {
   }) async {
     final name = rameshRao.name;
     Finder inRow(Finder part) => find.descendant(of: row, matching: part);
-    Finder onScreen(Finder part) => find.descendant(of: find.byType(S), matching: part);
+    Finder onScreen(Finder part) =>
+        find.descendant(of: find.byType(S), matching: part);
 
     final rowAvatar = tester.getRect(inRow(avatar()));
     final rowAccountSize = fontSize(tester, inRow(find.text(accountNo)));
@@ -138,7 +148,10 @@ void main() {
     }
     // The number and the amount are growing from the row's size of font to the screen's.
     if (accountOnOneLine) {
-      expect(fontSize(tester, inFlight(accountNo)), greaterThan(rowAccountSize));
+      expect(
+        fontSize(tester, inFlight(accountNo)),
+        greaterThan(rowAccountSize),
+      );
     }
     expect(fontSize(tester, inFlight(amount)), greaterThan(rowAmountSize));
 
@@ -170,7 +183,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 280));
     expect(avatarForm(tester), lessThan(0.05));
     if (accountOnOneLine) {
-      expect(fontSize(tester, inFlight(accountNo)), closeTo(rowAccountSize, 0.5));
+      expect(
+        fontSize(tester, inFlight(accountNo)),
+        closeTo(rowAccountSize, 0.5),
+      );
     }
     expect(fontSize(tester, inFlight(amount)), closeTo(rowAmountSize, 0.5));
 
@@ -194,7 +210,9 @@ void main() {
     );
   });
 
-  testWidgets('from the one-time list, a deposit that grows to maturity', (tester) async {
+  testWidgets('from the one-time list, a deposit that grows to maturity', (
+    tester,
+  ) async {
     // Its screen leads with the sum invested, where a time deposit's leads with the
     // principal locked in: the amount lands in the first figure of either.
     final router = await pumpSignedInApp(
@@ -230,7 +248,9 @@ void main() {
     );
   });
 
-  testWidgets('from the deposit\'s row on its customer\'s screen', (tester) async {
+  testWidgets('from the deposit\'s row on its customer\'s screen', (
+    tester,
+  ) async {
     final router = await pumpWithDeposits(tester);
     await tester.tap(find.text(rameshRao.name));
     await tester.pumpAndSettle();
@@ -239,7 +259,11 @@ void main() {
       of: find.byType(CustomerDetailScreen),
       matching: find.byType(OneTimeDepositCard),
     );
-    await tester.scrollUntilVisible(row, 300, scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(
+      row,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
 
     await expectRoundTrip<OneTimeDepositDetailScreen>(
@@ -259,7 +283,9 @@ void main() {
     );
   });
 
-  testWidgets('the full record arriving on the way does not end the amount\'s trip', (tester) async {
+  testWidgets('the full record arriving on the way does not end the amount\'s trip', (
+    tester,
+  ) async {
     final deposits = LateOneTimeDepositRepository();
     await pumpSignedInApp(tester, oneTimeDeposits: deposits);
     await openTab(tester, 'One-Time');
@@ -276,7 +302,9 @@ void main() {
     expect(
       find.descendant(
         of: screen,
-        matching: find.byWidgetPredicate((widget) => widget is Skeletonizer && widget.enabled),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Skeletonizer && widget.enabled,
+        ),
       ),
       findsNothing,
     );
@@ -287,15 +315,23 @@ void main() {
 
     // Still one copy, on its way. Its place on the screen fills when that copy lands.
     expect(inFlight(amount), findsOneWidget);
-    expect(find.descendant(of: screen, matching: find.text(amount)), findsNothing);
+    expect(
+      find.descendant(of: screen, matching: find.text(amount)),
+      findsNothing,
+    );
 
     await rest(tester);
     expect(inFlight(amount), findsNothing);
-    expect(find.descendant(of: screen, matching: find.text(amount)), findsOneWidget);
+    expect(
+      find.descendant(of: screen, matching: find.text(amount)),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a row in a tab out of view sends nothing to the customer\'s screen', (tester) async {
+  testWidgets('a row in a tab out of view sends nothing to the customer\'s screen', (
+    tester,
+  ) async {
     // The customer's full record stays out, as it does for a moment from a server: the
     // screen keeps the shape of its first frame for the whole transition.
     final customers = LateCustomerRepository();
@@ -304,10 +340,14 @@ void main() {
     await openTab(tester, 'One-Time');
     await openTab(tester, 'Customers');
     expect(find.byType(OneTimeDepositCard), findsNothing);
-    expect(find.byType(OneTimeDepositCard, skipOffstage: false), findsOneWidget);
+    expect(
+      find.byType(OneTimeDepositCard, skipOffstage: false),
+      findsOneWidget,
+    );
 
     // Tall enough for the customer's deposits to be built with the screen's first frame.
-    tester.view.physicalSize = const Size(412, 2400) * tester.view.devicePixelRatio;
+    tester.view.physicalSize =
+        const Size(412, 2400) * tester.view.devicePixelRatio;
     await tester.pump();
 
     await tapAndTakeOff(tester, find.text(rameshRao.name));
@@ -319,7 +359,10 @@ void main() {
       matching: find.byType(OneTimeDepositCard),
     );
     expect(rowOnScreen, findsOneWidget);
-    expect(find.descendant(of: rowOnScreen, matching: avatar()), findsOneWidget);
+    expect(
+      find.descendant(of: rowOnScreen, matching: avatar()),
+      findsOneWidget,
+    );
 
     customers.answer();
     await tester.pumpAndSettle();

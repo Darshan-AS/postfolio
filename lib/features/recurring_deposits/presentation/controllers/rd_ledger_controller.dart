@@ -33,9 +33,9 @@ class RDLedgerException implements Exception {
 }
 
 T _unwrap<T>(Result<T, String> result) => switch (result) {
-      Success(:final value) => value,
-      Failure(:final error) => throw RDLedgerException(error),
-    };
+  Success(:final value) => value,
+  Failure(:final error) => throw RDLedgerException(error),
+};
 
 /// Injected projector (lets tests swap rules).
 @Riverpod(keepAlive: true)
@@ -53,15 +53,22 @@ Stream<List<RDPoDeposit>> rdPoDepositsStream(Ref ref, String rdId) =>
 
 @riverpod
 Stream<List<RDFeeAbsorption>> rdFeeAbsorptionsStream(Ref ref, String rdId) =>
-    ref.watch(rdLedgerRepositoryProvider).watchFeeAbsorptions(rdId).map(_unwrap);
+    ref
+        .watch(rdLedgerRepositoryProvider)
+        .watchFeeAbsorptions(rdId)
+        .map(_unwrap);
 
 /// All facts for one RD. Re-emits whenever any underlying stream changes.
 @riverpod
 Future<RDLedgerFacts> rdLedgerFacts(Ref ref, String rdId) async {
   final deposit = await ref.watch(recurringDepositByIdProvider(rdId).future);
-  final transactions = await ref.watch(rdTransactionsStreamProvider(rdId).future);
+  final transactions = await ref.watch(
+    rdTransactionsStreamProvider(rdId).future,
+  );
   final poDeposits = await ref.watch(rdPoDepositsStreamProvider(rdId).future);
-  final absorptions = await ref.watch(rdFeeAbsorptionsStreamProvider(rdId).future);
+  final absorptions = await ref.watch(
+    rdFeeAbsorptionsStreamProvider(rdId).future,
+  );
   return RDLedgerFacts(
     deposit: deposit,
     transactions: transactions,
@@ -86,15 +93,18 @@ Future<List<RDInstallment>> rdInstallments(Ref ref, String rdId) async =>
 /// Financial terms are frozen once the ledger has activity.
 @riverpod
 Future<bool> rdIsFinancialTermsLocked(Ref ref, String rdId) async =>
-    (await ref.watch(rdLedgerFactsProvider(rdId).future)).isFinancialTermsLocked;
+    (await ref.watch(
+      rdLedgerFactsProvider(rdId).future,
+    )).isFinancialTermsLocked;
 
 /// Agent-wide summary cache (one row per RD) powering the Monthly Hub.
 @Riverpod(keepAlive: true)
 Stream<Map<String, RDLedgerSummary>> rdLedgerSummaries(Ref ref) {
   ref.watch(activeSessionKeyProvider);
-  return ref.watch(rdLedgerRepositoryProvider).watchSummaries().map(
-        (r) => {for (final s in _unwrap(r)) s.rdId: s},
-      );
+  return ref
+      .watch(rdLedgerRepositoryProvider)
+      .watchSummaries()
+      .map((r) => {for (final s in _unwrap(r)) s.rdId: s});
 }
 
 // --- Payment draft ----------------------------------------------------------------------------
@@ -110,14 +120,13 @@ typedef RDPaymentDraft = ({
 
 extension RDPaymentDraftX on RDPaymentDraft {
   RDTransaction toTransaction({String? id}) => RDTransaction(
-        id: id ?? transactionId ?? const Uuid().v7(),
-        rdId: rdId,
-        paidDate: paidDate.toDateOnly(),
-        amount: amount,
-        paymentMode: paymentMode,
-      );
+    id: id ?? transactionId ?? const Uuid().v7(),
+    rdId: rdId,
+    paidDate: paidDate.toDateOnly(),
+    amount: amount,
+    paymentMode: paymentMode,
+  );
 }
-
 
 // --- Mutations --------------------------------------------------------------------------------
 
@@ -171,15 +180,14 @@ class RDLedgerController extends _$RDLedgerController {
   Future<Result<void, String>> deletePayment({
     required String rdId,
     required String transactionId,
-  }) =>
-      _commitFor(
-        rdId,
-        (_) => Success(
-          RDLedgerChange(
-            deleteTransactions: [(rdId: rdId, transactionId: transactionId)],
-          ),
-        ),
-      );
+  }) => _commitFor(
+    rdId,
+    (_) => Success(
+      RDLedgerChange(
+        deleteTransactions: [(rdId: rdId, transactionId: transactionId)],
+      ),
+    ),
+  );
 
   // --- Post Office deposits ----------------------------------------------------------------
 
@@ -200,31 +208,35 @@ class RDLedgerController extends _$RDLedgerController {
     String? batchId,
     double? feeOverride,
     String? eventId,
-  }) =>
-      _exclusive(() async {
-        final facts = (await _fetchFactsFor({rdId}))[rdId];
-        if (facts == null) return const Failure('This account no longer exists.');
-        final planned = ref.read(rdLedgerProjectorProvider).planPoDeposit(
-              facts,
-              id: eventId ?? const Uuid().v7(),
-              count: count,
-              depositedOn: depositedOn ?? ref.read(clockProvider)(),
-              feeOverride: feeOverride,
-              batchId: batchId,
-            );
-        switch (planned) {
-          case Failure():
-            return planned;
-          case Success(value: final event):
-            // Inserting an event that is already stored changes nothing, so a retry only
-            // rewrites the summary.
-            final written = await _commit(RDLedgerChange(insertPoDeposits: [event]), [facts]);
-            return switch (written) {
-              Failure(:final error) => Failure(error),
-              Success() => Success(event),
-            };
-        }
-      });
+  }) => _exclusive(() async {
+    final facts = (await _fetchFactsFor({rdId}))[rdId];
+    if (facts == null) return const Failure('This account no longer exists.');
+    final planned = ref
+        .read(rdLedgerProjectorProvider)
+        .planPoDeposit(
+          facts,
+          id: eventId ?? const Uuid().v7(),
+          count: count,
+          depositedOn: depositedOn ?? ref.read(clockProvider)(),
+          feeOverride: feeOverride,
+          batchId: batchId,
+        );
+    switch (planned) {
+      case Failure():
+        return planned;
+      case Success(value: final event):
+        // Inserting an event that is already stored changes nothing, so a retry only
+        // rewrites the summary.
+        final written = await _commit(
+          RDLedgerChange(insertPoDeposits: [event]),
+          [facts],
+        );
+        return switch (written) {
+          Failure(:final error) => Failure(error),
+          Success() => Success(event),
+        };
+    }
+  });
 
   /// The id of the PO event that visit [batchId] records on account [rdId]. Deterministic,
   /// so re-sending the same visit targets the same rows instead of creating new ones.
@@ -242,7 +254,9 @@ class RDLedgerController extends _$RDLedgerController {
     DateTime? depositedOn,
     String? batchId,
   }) {
-    if (lines.isEmpty) return Future.value(const Failure('Nothing to deposit.'));
+    if (lines.isEmpty) {
+      return Future.value(const Failure('Nothing to deposit.'));
+    }
     final rdIds = {for (final line in lines) line.rdId};
     if (rdIds.length != lines.length) {
       return Future.value(
@@ -293,9 +307,12 @@ class RDLedgerController extends _$RDLedgerController {
 
   /// Undoes the most recent PO visit for [rdId]. Earlier visits are immutable because the
   /// Post Office ledger is sequential.
-  Future<Result<void, String>> undoLatestPoDeposit(String rdId) => _commitFor(rdId, (facts) {
+  Future<Result<void, String>> undoLatestPoDeposit(String rdId) =>
+      _commitFor(rdId, (facts) {
         final latest = facts.latestPoDeposit;
-        if (latest == null) return const Failure('No Post Office deposit to undo.');
+        if (latest == null) {
+          return const Failure('No Post Office deposit to undo.');
+        }
         return Success(
           RDLedgerChange(deletePoDeposits: [(rdId: rdId, eventId: latest.id)]),
         );
@@ -307,16 +324,21 @@ class RDLedgerController extends _$RDLedgerController {
   /// The visit can only be undone while it is still the latest deposit on every account it
   /// covers ([RDLedgerFacts.validateBatchUndo]). Undoing a visit that is already gone is a
   /// success.
-  Future<Result<void, String>> undoBatch(String batchId) => _exclusive(() async {
+  Future<Result<void, String>> undoBatch(String batchId) =>
+      _exclusive(() async {
         final events = _unwrap(
-          await ref.read(rdLedgerRepositoryProvider).fetchPoDepositsByBatch(batchId),
+          await ref
+              .read(rdLedgerRepositoryProvider)
+              .fetchPoDepositsByBatch(batchId),
         );
         if (events.isEmpty) return const Success(null);
 
         final rdIds = {for (final e in events) e.rdId};
         final factsByRd = await _fetchFactsFor(rdIds);
         if (factsByRd.length != rdIds.length) {
-          return const Failure('An account in this visit could not be loaded. Please try again.');
+          return const Failure(
+            'An account in this visit could not be loaded. Please try again.',
+          );
         }
         final error = RDLedgerFacts.validateBatchUndo(
           batchId: batchId,
@@ -326,7 +348,9 @@ class RDLedgerController extends _$RDLedgerController {
 
         return _commit(
           RDLedgerChange(
-            deletePoDeposits: [for (final e in events) (rdId: e.rdId, eventId: e.id)],
+            deletePoDeposits: [
+              for (final e in events) (rdId: e.rdId, eventId: e.id),
+            ],
           ),
           factsByRd.values,
         );
@@ -359,15 +383,14 @@ class RDLedgerController extends _$RDLedgerController {
   Future<Result<void, String>> clearAbsorbedFee({
     required String rdId,
     required int installmentNo,
-  }) =>
-      _commitFor(
-        rdId,
-        (_) => Success(
-          RDLedgerChange(
-            deleteFeeAbsorptions: [(rdId: rdId, installmentNo: installmentNo)],
-          ),
-        ),
-      );
+  }) => _commitFor(
+    rdId,
+    (_) => Success(
+      RDLedgerChange(
+        deleteFeeAbsorptions: [(rdId: rdId, installmentNo: installmentNo)],
+      ),
+    ),
+  );
 
   // --- Summary cache rebuilds (no fact changes) --------------------------------------------
 
@@ -377,7 +400,9 @@ class RDLedgerController extends _$RDLedgerController {
     try {
       final facts = (await _fetchFactsFor({rdId}))[rdId];
       if (facts == null) return const Failure('This account no longer exists.');
-      return await ref.read(rdLedgerRepositoryProvider).upsertSummaries([_summaryOf(facts)]);
+      return await ref.read(rdLedgerRepositoryProvider).upsertSummaries([
+        _summaryOf(facts),
+      ]);
     } on RDLedgerException catch (e) {
       return Failure(e.message);
     }
@@ -423,17 +448,16 @@ class RDLedgerController extends _$RDLedgerController {
   Future<Result<void, String>> _commitFor(
     String rdId,
     Result<RDLedgerChange, String> Function(RDLedgerFacts facts) plan,
-  ) =>
-      _exclusive(() async {
-        final facts = (await _fetchFactsFor({rdId}))[rdId];
-        if (facts == null) return const Failure('This account no longer exists.');
-        switch (plan(facts)) {
-          case Failure(:final error):
-            return Failure(error);
-          case Success(value: final change):
-            return _commit(change, [facts]);
-        }
-      });
+  ) => _exclusive(() async {
+    final facts = (await _fetchFactsFor({rdId}))[rdId];
+    if (facts == null) return const Failure('This account no longer exists.');
+    switch (plan(facts)) {
+      case Failure(:final error):
+        return Failure(error);
+      case Success(value: final change):
+        return _commit(change, [facts]);
+    }
+  });
 
   /// Stores [change] together with the summaries of [factsBefore] as they will be once the
   /// change is applied. An empty change still rewrites the summaries, which is how a retry
@@ -441,10 +465,13 @@ class RDLedgerController extends _$RDLedgerController {
   Future<Result<void, String>> _commit(
     RDLedgerChange change,
     Iterable<RDLedgerFacts> factsBefore,
-  ) =>
-      ref.read(rdLedgerRepositoryProvider).applyChange(
+  ) => ref
+      .read(rdLedgerRepositoryProvider)
+      .applyChange(
         change,
-        summaries: [for (final facts in factsBefore) _summaryOf(change.applyTo(facts))],
+        summaries: [
+          for (final facts in factsBefore) _summaryOf(change.applyTo(facts)),
+        ],
       );
 
   /// Runs [operation] as the one ledger write in flight. A second write started meanwhile is
@@ -471,7 +498,9 @@ class RDLedgerController extends _$RDLedgerController {
           context: ErrorDescription('while writing to the RD ledger'),
         ),
       );
-      return const Failure('The ledger could not be updated. Please try again.');
+      return const Failure(
+        'The ledger could not be updated. Please try again.',
+      );
     } finally {
       if (ref.mounted) state = const AsyncData(null);
     }
@@ -503,9 +532,9 @@ class RDLedgerController extends _$RDLedgerController {
   /// otherwise reads the single account, or loads the list for a multi-account write.
   Future<Map<String, RecurringDeposit>> _depositsFor(Set<String> rdIds) async {
     Map<String, RecurringDeposit> pick(Iterable<RecurringDeposit> deposits) => {
-          for (final d in deposits)
-            if (rdIds.contains(d.id)) d.id: d,
-        };
+      for (final d in deposits)
+        if (rdIds.contains(d.id)) d.id: d,
+    };
 
     if (ref.exists(recurringDepositsControllerProvider)) {
       final loaded = ref.read(recurringDepositsControllerProvider).value;

@@ -2,10 +2,15 @@
     "cSpell.words": [
         "aadhaar",
         "dartz",
-        "Firestore",
-        "flutterfire",
         "Postfolio",
         "Riverpod",
         "subclassing"
-    ]
+    ],
+    "search.exclude": {
+        "**/*.g.dart": true,
+        "**/*.freezed.dart": true
+    },
+    "[dart]": {
+        "editor.formatOnSave": true
+    }
 }

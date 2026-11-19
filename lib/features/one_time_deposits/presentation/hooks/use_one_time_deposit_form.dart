@@ -158,7 +158,8 @@ OneTimeDepositFormState useOneTimeDepositForm({
   final currentPrincipal =
       double.tryParse(cleanedPrincipalStr) ??
       amountFormatter.getUnformattedValue().toDouble();
-  final currentRate = double.tryParse(interestRateController.text.trim()) ?? 0.0;
+  final currentRate =
+      double.tryParse(interestRateController.text.trim()) ?? 0.0;
 
   final projection = useMemoized(
     () {

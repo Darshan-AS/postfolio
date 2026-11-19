@@ -35,7 +35,9 @@ class RDStatusPill extends StatelessWidget {
             AppIcon(
               visual.icon,
               // The glyph is part of the label: it grows with the text beside it.
-              size: MediaQuery.textScalerOf(context).scale(AppDimensions.iconXs),
+              size: MediaQuery.textScalerOf(
+                context,
+              ).scale(AppDimensions.iconXs),
               color: visual.foreground,
             ),
             AppSpacings.gapXs,

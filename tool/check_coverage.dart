@@ -33,7 +33,9 @@ void main(List<String> args) {
   final file = File(lcovPath);
   if (!file.existsSync()) {
     stderr.writeln('Coverage file not found: $lcovPath');
-    stderr.writeln('Run `flutter test --exclude-tags integration --coverage` first.');
+    stderr.writeln(
+      'Run `flutter test --exclude-tags integration --coverage` first.',
+    );
     exit(2);
   }
 
@@ -58,7 +60,10 @@ void main(List<String> args) {
     if (path != null && !_isExcluded(path) && fileFound > 0) {
       final bucket = _classify(path);
       final prev = buckets[bucket]!;
-      buckets[bucket] = (hit: prev.hit + fileHit, found: prev.found + fileFound);
+      buckets[bucket] = (
+        hit: prev.hit + fileHit,
+        found: prev.found + fileFound,
+      );
     }
     currentFile = null;
     fileHit = 0;
@@ -86,7 +91,9 @@ void main(List<String> args) {
 
   var totalHit = 0;
   var totalFound = 0;
-  stdout.writeln('--- Postfolio Hand-Written Coverage (excluding *.g.dart / *.freezed.dart) ---');
+  stdout.writeln(
+    '--- Postfolio Hand-Written Coverage (excluding *.g.dart / *.freezed.dart) ---',
+  );
   for (final entry in buckets.entries) {
     totalHit += entry.value.hit;
     totalFound += entry.value.found;

@@ -72,7 +72,9 @@ sealed class RDInstallment with _$RDInstallment {
   double get absorbableFee {
     if (isOpeningBaseline || isCustomerSettled || !isPartiallyPaid) return 0.0;
     final remaining = outstandingAmount;
-    return Money.toPaise(remaining) <= Money.toPaise(customerFeeDue) ? remaining : 0.0;
+    return Money.toPaise(remaining) <= Money.toPaise(customerFeeDue)
+        ? remaining
+        : 0.0;
   }
 
   /// Remaining customer balance on this month.
@@ -90,7 +92,8 @@ sealed class RDInstallment with _$RDInstallment {
   bool get isPoDeposited => poDepositedOn != null;
 
   /// The agent fronted this month at the PO and the customer still owes on it.
-  bool get isFrontedByAgent => isPoDeposited && !isCustomerSettled && !isOpeningBaseline;
+  bool get isFrontedByAgent =>
+      isPoDeposited && !isCustomerSettled && !isOpeningBaseline;
 
   /// Completely done: customer paid and PO deposited.
   bool get isFullySettled => isCustomerSettled && isPoDeposited;
@@ -109,12 +112,18 @@ sealed class RDInstallment with _$RDInstallment {
       evaluationDate.toDateOnly() == dueDate.toDateOnly();
 
   int overdueDaysAt(DateTime evaluationDate) {
-    final diff = evaluationDate.toDateOnly().difference(dueDate.toDateOnly()).inDays;
+    final diff = evaluationDate
+        .toDateOnly()
+        .difference(dueDate.toDateOnly())
+        .inDays;
     return diff > 0 ? diff : 0;
   }
 
   int daysUntilDueAt(DateTime evaluationDate) {
-    final diff = dueDate.toDateOnly().difference(evaluationDate.toDateOnly()).inDays;
+    final diff = dueDate
+        .toDateOnly()
+        .difference(evaluationDate.toDateOnly())
+        .inDays;
     return diff > 0 ? diff : 0;
   }
 

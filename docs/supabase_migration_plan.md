@@ -1,5 +1,7 @@
 # Postfolio: Firebase to Supabase Migration Plan
 
+> **Historical document:** This migration was completed in v2.4 (Firebase Auth and Cloud Firestore have been removed). For the current architecture, see [architecture.md](architecture.md).
+
 ## 1. Executive Summary & Architectural Decisions
 
 This document outlines the strategy for migrating Postfolio from Firebase (NoSQL) to Supabase (PostgreSQL). The migration focuses on solving NoSQL quota limitations and setting a robust foundation for heavy relational data, such as RD tracking and advanced dashboard aggregations.

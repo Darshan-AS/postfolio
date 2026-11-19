@@ -18,6 +18,10 @@ abstract final class Env {
     defaultValue: false,
   );
 
+  /// True when this build talks to the Supabase stack on the developer's machine
+  /// (`--dart-define-from-file=config/local.json`). Never true in a release that CI builds.
+  static const bool isLocalBackend = useEmulator || appEnv == 'local';
+
   static const String _localSupabaseUrl = 'http://127.0.0.1:54321';
   static const String _localSupabaseAnonKey =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
@@ -35,16 +39,21 @@ abstract final class Env {
   @EnviedField(varName: 'GOOGLE_IOS_CLIENT_ID')
   static const String _enviedGoogleIosClientId = _Env._enviedGoogleIosClientId;
 
-  static const String _definedSupabaseUrl = String.fromEnvironment('SUPABASE_URL');
-  static const String _definedSupabaseKey =
-      String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
-  static const String _definedGoogleWebClientId =
-      String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
-  static const String _definedGoogleIosClientId =
-      String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
+  static const String _definedSupabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+  );
+  static const String _definedSupabaseKey = String.fromEnvironment(
+    'SUPABASE_PUBLISHABLE_KEY',
+  );
+  static const String _definedGoogleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+  );
+  static const String _definedGoogleIosClientId = String.fromEnvironment(
+    'GOOGLE_IOS_CLIENT_ID',
+  );
 
   static String get supabaseUrl {
-    if (useEmulator || appEnv == 'local') {
+    if (isLocalBackend) {
       return _definedSupabaseUrl.isNotEmpty
           ? _definedSupabaseUrl
           : _localSupabaseUrl;
@@ -55,7 +64,7 @@ abstract final class Env {
   }
 
   static String get supabasePublishableKey {
-    if (useEmulator || appEnv == 'local') {
+    if (isLocalBackend) {
       return _definedSupabaseKey.isNotEmpty
           ? _definedSupabaseKey
           : _localSupabaseAnonKey;
@@ -65,15 +74,13 @@ abstract final class Env {
         : _enviedSupabasePublishableKey;
   }
 
-  static String get googleWebClientId =>
-      _definedGoogleWebClientId.isNotEmpty
-          ? _definedGoogleWebClientId
-          : _enviedGoogleWebClientId;
+  static String get googleWebClientId => _definedGoogleWebClientId.isNotEmpty
+      ? _definedGoogleWebClientId
+      : _enviedGoogleWebClientId;
 
-  static String get googleIosClientId =>
-      _definedGoogleIosClientId.isNotEmpty
-          ? _definedGoogleIosClientId
-          : _enviedGoogleIosClientId;
+  static String get googleIosClientId => _definedGoogleIosClientId.isNotEmpty
+      ? _definedGoogleIosClientId
+      : _enviedGoogleIosClientId;
 
   /// Prevents the `staging` app flavor from accidentally connecting to production Supabase.
   static void assertFlavorSafe({

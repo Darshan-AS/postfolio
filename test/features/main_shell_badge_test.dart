@@ -23,7 +23,9 @@ void main() {
   Future<int> pumpOn(WidgetTester tester, DateTime today) async {
     await pumpSignedInApp(
       tester,
-      recurringDeposits: FakeRecurringDepositRepository(deposits: source.recurringDeposits),
+      recurringDeposits: FakeRecurringDepositRepository(
+        deposits: source.recurringDeposits,
+      ),
       ledger: FakeRDLedgerRepository(
         transactions: source.rdTransactions,
         poDeposits: source.rdPoDeposits,
@@ -43,11 +45,15 @@ void main() {
     await tester.tap(inBar(find.text(t.nav.dashboard)));
     await settle();
 
-    final container = ProviderScope.containerOf(tester.element(find.byType(AppNavigationBar)));
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(AppNavigationBar)),
+    );
     return container.read(globalAgentFloatProvider).arrearsAccounts;
   }
 
-  testWidgets('accounts in arrears are counted on the Recurring destination', (tester) async {
+  testWidgets('accounts in arrears are counted on the Recurring destination', (
+    tester,
+  ) async {
     final semantics = tester.ensureSemantics();
     final arrears = await pumpOn(tester, DateTime(2027, 2, 10));
     expect(arrears, greaterThan(0));
@@ -55,7 +61,9 @@ void main() {
     expect(inBar(find.text('$arrears')), findsOneWidget);
     // The number alone says nothing to a screen reader: the destination says what it counts.
     expect(
-      tester.getSemantics(find.bySemanticsLabel(t.nav.recurringDepositsInArrears(n: arrears))),
+      tester.getSemantics(
+        find.bySemanticsLabel(t.nav.recurringDepositsInArrears(n: arrears)),
+      ),
       matchesSemantics(
         label: t.nav.recurringDepositsInArrears(n: arrears),
         hasSelectedState: true,
@@ -66,7 +74,9 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('with no account in arrears the destination has no badge', (tester) async {
+  testWidgets('with no account in arrears the destination has no badge', (
+    tester,
+  ) async {
     final semantics = tester.ensureSemantics();
     final arrears = await pumpOn(tester, DateTime(2026, 4, 20));
     expect(arrears, 0);

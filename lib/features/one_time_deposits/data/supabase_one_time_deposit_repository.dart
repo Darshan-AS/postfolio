@@ -37,7 +37,8 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
       localMutations: _localMutations.stream,
       shouldRefetch: (payload) {
         final type =
-            payload.newRecord['account_type'] ?? payload.oldRecord['account_type'];
+            payload.newRecord['account_type'] ??
+            payload.oldRecord['account_type'];
         return type == null || type == 'OTD';
       },
       fetchAll: () => SupabasePaginatedQuery.fetchAllPages<OneTimeDeposit>(
@@ -81,12 +82,16 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
   }
 
   @override
-  Future<Result<void, String>> createOneTimeDeposit(OneTimeDeposit deposit) async {
+  Future<Result<void, String>> createOneTimeDeposit(
+    OneTimeDeposit deposit,
+  ) async {
     return _saveOneTimeDeposit(deposit);
   }
 
   @override
-  Future<Result<void, String>> updateOneTimeDeposit(OneTimeDeposit deposit) async {
+  Future<Result<void, String>> updateOneTimeDeposit(
+    OneTimeDeposit deposit,
+  ) async {
     return _saveOneTimeDeposit(deposit);
   }
 
@@ -119,22 +124,27 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
     }
   }
 
-  Future<Result<void, String>> _saveOneTimeDeposit(OneTimeDeposit deposit) async {
+  Future<Result<void, String>> _saveOneTimeDeposit(
+    OneTimeDeposit deposit,
+  ) async {
     try {
       final json = deposit.toJson();
-      await _supabaseClient.rpc('save_one_time_deposit', params: {
-        'p_id': deposit.id,
-        'p_customer_id': deposit.customerId,
-        'p_status': json['status'],
-        'p_scheme_type': json['scheme_type'],
-        'p_account_no': deposit.accountNo,
-        'p_principal_amount': deposit.principalAmount,
-        'p_interest_rate': deposit.interestRate,
-        'p_term_years': deposit.termYears,
-        'p_term_months': deposit.termMonths,
-        'p_start_date': deposit.startDate.toIso8601String().split('T').first,
-        'p_nominees': deposit.nominees.map((n) => n.toJson()).toList(),
-      });
+      await _supabaseClient.rpc(
+        'save_one_time_deposit',
+        params: {
+          'p_id': deposit.id,
+          'p_customer_id': deposit.customerId,
+          'p_status': json['status'],
+          'p_scheme_type': json['scheme_type'],
+          'p_account_no': deposit.accountNo,
+          'p_principal_amount': deposit.principalAmount,
+          'p_interest_rate': deposit.interestRate,
+          'p_term_years': deposit.termYears,
+          'p_term_months': deposit.termMonths,
+          'p_start_date': deposit.startDate.toIso8601String().split('T').first,
+          'p_nominees': deposit.nominees.map((n) => n.toJson()).toList(),
+        },
+      );
       _localMutations.add(null);
       return const Success(null);
     } catch (e) {

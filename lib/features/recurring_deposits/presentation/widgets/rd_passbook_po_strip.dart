@@ -61,10 +61,15 @@ class RDPassbookPoStrip extends ConsumerWidget {
     );
     if (confirmed != true || !context.mounted) return;
 
-    final result =
-        await ref.read(rDLedgerControllerProvider.notifier).undoLatestPoDeposit(rdId);
+    final result = await ref
+        .read(rDLedgerControllerProvider.notifier)
+        .undoLatestPoDeposit(rdId);
     if (!context.mounted) return;
-    AppFeedback.showResult(context, result, successMessage: passbook.undoLastDepositSuccess);
+    AppFeedback.showResult(
+      context,
+      result,
+      successMessage: passbook.undoLastDepositSuccess,
+    );
   }
 
   /// Above this text scale the label needs the full width, so the actions move to a row of
@@ -84,15 +89,15 @@ class RDPassbookPoStrip extends ConsumerWidget {
     final label = !hasReady
         ? passbook.nothingReady
         : readiness.readyFee > 0
-            ? passbook.readyToDepositWithFee(
-                n: readiness.readyCount,
-                amount: readiness.readyAmount.toRupeeFormat(),
-                fee: readiness.readyFee.toRupeeFormat(),
-              )
-            : passbook.readyToDeposit(
-                n: readiness.readyCount,
-                amount: readiness.readyAmount.toRupeeFormat(),
-              );
+        ? passbook.readyToDepositWithFee(
+            n: readiness.readyCount,
+            amount: readiness.readyAmount.toRupeeFormat(),
+            fee: readiness.readyFee.toRupeeFormat(),
+          )
+        : passbook.readyToDeposit(
+            n: readiness.readyCount,
+            amount: readiness.readyAmount.toRupeeFormat(),
+          );
 
     // The tile stays on the raised tone either way; months waiting for the Post Office
     // are signalled by the tinted icon, the heavier label and the enabled button.
@@ -104,10 +109,12 @@ class RDPassbookPoStrip extends ConsumerWidget {
     final labelText = Text(
       label,
       style: hasReady
-          ? AppTypography.emphasizedOf(context).bodyMedium?.copyWith(
-              color: scheme.onSurface,
-            )
-          : theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+          ? AppTypography.emphasizedOf(
+              context,
+            ).bodyMedium?.copyWith(color: scheme.onSurface)
+          : theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
     );
     final deposit = AppButton.tonal(
       label: passbook.deposit,
@@ -115,10 +122,10 @@ class RDPassbookPoStrip extends ConsumerWidget {
       onPressed: isBusy || !hasReady
           ? null
           : () => showRDDepositSheet(
-                context,
-                rdId: rdId,
-                initialCount: readiness.readyCount,
-              ),
+              context,
+              rdId: rdId,
+              initialCount: readiness.readyCount,
+            ),
     );
     final menu = AppMenu(
       entries: [
@@ -130,10 +137,10 @@ class RDPassbookPoStrip extends ConsumerWidget {
           ),
           onPressed: canDepositFromPocket
               ? () => showRDDepositSheet(
-                    context,
-                    rdId: rdId,
-                    initialCount: readiness.readyCount + 1,
-                  )
+                  context,
+                  rdId: rdId,
+                  initialCount: readiness.readyCount + 1,
+                )
               : null,
         ),
         AppMenuEntry(

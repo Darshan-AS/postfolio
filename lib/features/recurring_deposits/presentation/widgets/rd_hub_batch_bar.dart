@@ -77,9 +77,9 @@ class RDHubBatchBar extends ConsumerWidget {
             ready: readyInstallments,
             amount: summary.totalAmount.toRupeeFormat(),
           ),
-          style: AppTypography.emphasizedOf(context).titleSmall?.copyWith(
-            color: scheme.onPrimaryContainer,
-          ),
+          style: AppTypography.emphasizedOf(
+            context,
+          ).titleSmall?.copyWith(color: scheme.onPrimaryContainer),
         ),
         if (readyInstallments == 0)
           Text(
@@ -122,7 +122,11 @@ class RDHubBatchBar extends ConsumerWidget {
               clear,
               AppSpacings.gapXs,
               Flexible(child: description),
-              if (action != null) ...[AppSpacings.gapMd, action] else AppSpacings.gapLg,
+              if (action != null) ...[
+                AppSpacings.gapMd,
+                action,
+              ] else
+                AppSpacings.gapLg,
             ],
           );
 

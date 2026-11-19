@@ -82,7 +82,8 @@ final rameshRecurringDeposit = RecurringDeposit(
 /// A customer repository whose full record of a customer arrives only when the test says
 /// so, as it does from a server. The list answers at once.
 class LateCustomerRepository extends FakeCustomerRepository {
-  LateCustomerRepository() : super(customers: const [rameshRao], delay: Duration.zero);
+  LateCustomerRepository()
+    : super(customers: const [rameshRao], delay: Duration.zero);
 
   final Completer<void> _answered = Completer<void>();
 
@@ -106,7 +107,9 @@ class LateOneTimeDepositRepository extends FakeOneTimeDepositRepository {
   void answer() => _answered.complete();
 
   @override
-  Stream<Result<OneTimeDeposit, String>> watchOneTimeDepositById(String id) async* {
+  Stream<Result<OneTimeDeposit, String>> watchOneTimeDepositById(
+    String id,
+  ) async* {
     await _answered.future;
     yield* super.watchOneTimeDepositById(id);
   }
@@ -151,7 +154,8 @@ Future<AppRouter> pumpSignedInApp(
       displayName: 'Agent',
     ),
   );
-  final rdRepo = recurringDeposits ?? FakeRecurringDepositRepository(deposits: const []);
+  final rdRepo =
+      recurringDeposits ?? FakeRecurringDepositRepository(deposits: const []);
   final ledgerRepo = ledger ?? FakeRDLedgerRepository();
   final container = ProviderContainer(
     overrides: [
@@ -160,11 +164,17 @@ Future<AppRouter> pumpSignedInApp(
       authRepositoryProvider.overrideWithValue(authRepo),
       customerRepositoryProvider.overrideWithValue(
         customers ??
-            FakeCustomerRepository(customers: const [rameshRao], delay: Duration.zero),
+            FakeCustomerRepository(
+              customers: const [rameshRao],
+              delay: Duration.zero,
+            ),
       ),
       oneTimeDepositRepositoryProvider.overrideWithValue(
         oneTimeDeposits ??
-            FakeOneTimeDepositRepository(deposits: const [], delay: Duration.zero),
+            FakeOneTimeDepositRepository(
+              deposits: const [],
+              delay: Duration.zero,
+            ),
       ),
       recurringDepositRepositoryProvider.overrideWithValue(rdRepo),
       rdLedgerRepositoryProvider.overrideWithValue(ledgerRepo),
@@ -190,7 +200,9 @@ Future<AppRouter> pumpSignedInApp(
           theme: AppTheme.lightTheme,
           routerConfig: router,
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(disableAnimations: disableAnimations),
+            data: MediaQuery.of(
+              context,
+            ).copyWith(disableAnimations: disableAnimations),
             child: child!,
           ),
           localizationsDelegates: const [

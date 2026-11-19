@@ -48,7 +48,10 @@ class _StateMessage extends StatelessWidget {
           shape: shape,
           backgroundColor: badgeColor,
           foregroundColor: iconColor,
-          child: AppIcon(icon, size: AppDimensions.iconXl - AppDimensions.paddingSm),
+          child: AppIcon(
+            icon,
+            size: AppDimensions.iconXl - AppDimensions.paddingSm,
+          ),
         ),
         AppSpacings.gapLg,
         Text(
@@ -60,7 +63,11 @@ class _StateMessage extends StatelessWidget {
         ),
         if (onAction != null && actionLabel != null) ...[
           AppSpacings.gapLg,
-          AppButton.tonal(label: actionLabel!, icon: actionIcon, onPressed: onAction),
+          AppButton.tonal(
+            label: actionLabel!,
+            icon: actionIcon,
+            onPressed: onAction,
+          ),
         ],
       ],
     );
@@ -72,7 +79,10 @@ class _StateMessage extends StatelessWidget {
             ? column
             : column
                   .animate()
-                  .fade(duration: AppAnimations.slow, curve: AppAnimations.defaultCurve)
+                  .fade(
+                    duration: AppAnimations.slow,
+                    curve: AppAnimations.defaultCurve,
+                  )
                   .scale(
                     begin: const Offset(0.9, 0.9),
                     end: const Offset(1, 1),

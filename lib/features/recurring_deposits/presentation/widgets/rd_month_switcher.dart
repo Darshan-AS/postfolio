@@ -62,7 +62,9 @@ class RDMonthSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ops = t.recurringDeposits.monthlyOperations;
-    final monthLabel = DateFormat.yMMM(resolvedDateLocale()).format(selectedMonth);
+    final monthLabel = DateFormat.yMMM(
+      resolvedDateLocale(),
+    ).format(selectedMonth);
 
     // The theme shrinks icon buttons to 40dp on desktop; these stay a full touch target.
     final stepStyle = IconButton.styleFrom(
@@ -158,8 +160,9 @@ class _MonthTitle extends StatelessWidget {
                       fit: BoxFit.scaleDown,
                       child: Text(
                         label,
-                        style: AppTypography.emphasizedOf(context).titleLarge
-                            ?.copyWith(color: scheme.onSurface),
+                        style: AppTypography.emphasizedOf(
+                          context,
+                        ).titleLarge?.copyWith(color: scheme.onSurface),
                         maxLines: 1,
                       ),
                     ),

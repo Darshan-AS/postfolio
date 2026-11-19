@@ -43,13 +43,13 @@ sealed class RDLedgerChange with _$RDLedgerChange {
 
   /// Every account this change touches.
   Set<String> get rdIds => {
-        for (final t in upsertTransactions) t.rdId,
-        for (final t in deleteTransactions) t.rdId,
-        for (final e in insertPoDeposits) e.rdId,
-        for (final e in deletePoDeposits) e.rdId,
-        for (final a in upsertFeeAbsorptions) a.rdId,
-        for (final a in deleteFeeAbsorptions) a.rdId,
-      };
+    for (final t in upsertTransactions) t.rdId,
+    for (final t in deleteTransactions) t.rdId,
+    for (final e in insertPoDeposits) e.rdId,
+    for (final e in deletePoDeposits) e.rdId,
+    for (final a in upsertFeeAbsorptions) a.rdId,
+    for (final a in deleteFeeAbsorptions) a.rdId,
+  };
 
   /// The facts of `facts.deposit` once this change is stored. Parts addressed to other
   /// accounts are ignored, and applying the change again yields the same facts.
@@ -104,7 +104,8 @@ sealed class RDLedgerChange with _$RDLedgerChange {
     final existingMonths = {for (final a in facts.absorptions) a.installmentNo};
     final absorptions = <RDFeeAbsorption>[
       for (final a in facts.absorptions)
-        if (!deletedMonths.contains(a.installmentNo)) upsertedMonths[a.installmentNo] ?? a,
+        if (!deletedMonths.contains(a.installmentNo))
+          upsertedMonths[a.installmentNo] ?? a,
       for (final a in upsertedMonths.values)
         if (!existingMonths.contains(a.installmentNo) &&
             !deletedMonths.contains(a.installmentNo))

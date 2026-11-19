@@ -1,0 +1,580 @@
+# Project Progress: Archive
+
+*Moved out of `.agents/progress.md` on 2026-11-19, unchanged and in the original order (newest first). It covers release 2.3.1+22 and everything before it. Not part of the session handshake; read it when a question needs that history.*
+
+**Previous: Release 2.3.1+22 (2026-11-10).** v2.3.0+21 shipped the RD ledger (Android via App Distribution + GitHub Release; web deploy initially blocked by a Firebase Hosting IAM error, fixed the same day). Hosted Supabase has `20261110000000_rd_ledger.sql` applied and all 766 RDs baselined (one-off SQL, not a migration). v2.3.1+22 fixes the onboarding-terms fields being disabled on edit and reorders the RD detail tabs (Info → Passbook → Transactions). Web serves 2.3.1+22. Still owed: one Android device pass.
+
+**Schema note (2026-11-10):** the RD ledger ships as a single migration, `supabase/migrations/20261110000000_rd_ledger.sql`, which creates only the final facts-only sequential schema. The intermediate migrations referenced in the historical sections below (`20260903…`, `20260905…`, `20260912…`, `20261025…`, `20261027…`, `20261028…`) were never applied to a remote project and no longer exist on the branch; they survive only under git tag `ledger-history-pre-rewrite`.
+
+**RD Ledger UI (Phase 8 Complete)** — driven by the agent-workflow interview in `docs/rd_ledger_ui_improvement_plan.md`:
+- **Hub row**: customer name first; `Sl N · A/c …last4 · due`; the primary figure is `owes ₹X` (+ fee/arrears caption); full-width `Collect ₹X` (opens the prefilled sheet) or `Deposit N` footer button; overflow: Front from pocket (deposit sheet), Absorb remaining fee (single `absorbableFee` rule), Undo last PO deposit.
+- **Hub header**: 2×2 grid of the four agreed numbers — To collect, In hand (cash/UPI; opens the PO visit planner), Receivable, Arrears — each a filter, skeletonised as one block; one-line month switcher; Accounts⇄Hub toggle in the app bar; group-by-customer on by default; serial-first search.
+- **PO visit planner** (`RDPoVisitPlanner`, `rd_po_visit_sheet.dart`): what gets keyed into the DOP portal — per account N installments · ₹ incl. fee on the chosen date, cash vs UPI totals, >₹20k cash-lot grouping, per-line "+ front" from pocket with a pocket subtotal, one `batch_id` per visit and "Undo visit" (`undoBatch`).
+- **Sheets**: identity in titles ("Collect from Ramesh · 12", "Deposit 2 · Ramesh · 12"), toasts with Undo, Retry on errors, payment modes labelled.
+- **Passbook/detail**: "Collected through #N / At PO #M (+ months fronted)", 56dp-safe tiles, inspector rows named "Default fee (customer) / (charged at PO) / Fee you bore".
+- **Accessibility**: Semantics on rows/tiles/checkboxes, tooltips everywhere, ≥44dp write buttons, distinct container colour per status. Tests: 73 passing.
+- **Deferred by decision**: household lump-sum split, one-tap collect without sheet, Today dashboard, arrears screen, receipts.
+
+**Previous: RD Ledger — Sequential Ledger (Phase 7 Complete, on top of Phase 6)** — rules confirmed with agents (`rd_ledger_usecases_agreed.md`):
+- **Both ledgers are sequential.** Customer money fills months in order (a partial sits on the earliest open month, overpayment becomes `customerCredit`); PO deposits are events "deposited the next N installments on <date>" (`rd_po_deposits(id, deposited_on, installment_count, fee_paid, amount, batch_id)`), exactly as the DOP agent portal records them. Only the latest PO event can be undone.
+- **One due amount per month** = installment + default fee − fee absorbed by the agent. No split modes. Two fees are tracked per month: the customer's (fixed when they finished paying) and the PO's (fixed at the deposit date); the gap is `agentDelayCost`.
+- **Fee absorption** (`rd_fee_absorptions`) replaces waivers: the agent pays from pocket, the PO still receives the fee; offered at collection time ("Absorb remaining ₹X").
+- **Opening receivable** on onboarding; repaid first from subsequent payments.
+- **Summary cache** = counters (`paidThroughNo`, `depositedThroughNo`), `owedByCustomer`, `receivable` (fronted), cash in hand split cash/digital, `absorbedTotal`, `delayCostTotal`, `arrearsCount`.
+- **UI**: Hub row has a single action (Collect / Deposit (N)); float strip = to collect, cash in hand (cash/digital), receivable, arrears accounts; "Deposit all ready" strip with date picker. Detail is a passbook (next-due line, PO strip, yearly month list, inspector sheet, PO visit history). Payment sheet = amount + mode + date; deposit sheet quotes the counter amount for the next N months.
+- **Extensibility hooks only**: `collection_id` on transactions (household lump sums), `batch_id` + `amount` on PO events (lots / C-number, commission), rebate and discontinuation deferred.
+- **Tests**: 71 passing (domain tables, fake repo, controllers, screen smoke, e2e on the local stack).
+
+**Previous: RD Ledger — Facts-Only Redesign (Phase 6, Steps 1–7 Complete)** — supersedes the sparse `rd_installments` / allocation-lineage design described in the sections below:
+- **Truth = facts.** The only persisted ledger data are `rd_transactions` (customer payments), `rd_po_deposits` (PK `rd_id, installment_no`) and `rd_fee_waivers`. `rd_installments`, `rd_payment_allocations`, the monthly-operations SQL view and all ledger RPCs were dropped in `supabase/migrations/20261027000000_facts_only_rd_ledger.sql` (CHECK constraints + ownership-checked RLS on every fact table; verified by `supabase/tests/rd_ledger_facts_rls.sql`).
+- **One projection.** `RDLedgerProjector.project(facts, asOf)` (`lib/features/recurring_deposits/domain/`) derives the 60-month schedule, per-transaction allocations, accrued default fees (grow until principal is settled, then freeze), `customerCredit` (overflow is never dropped) and the hub `RDLedgerSummary`. Preview, record, edit and delete all use the same function. Money is integer paise; dates are calendar days (`RDLedgerRules`, `Money`, `DateOnlyConverter`).
+- **Read model.** `RDInstallment` is a projected value (never written). `RDInstallmentDisplayStatus` + `rd_installment_status_theme.dart` are the single source of colour/icon/label for every widget.
+- **Data.** `RDLedgerRepository` (Supabase / Fake / explicit Unsupported) exposes bounded per-RD fact streams, an agent-wide `rd_ledger_summary` stream (1 row per RD, rebuildable cache) and plain writes. `RecurringDepositRepository` is back to deposit CRUD.
+- **State.** `rdLedgerFacts/Projection(rdId)`, keepAlive `RDLedgerController` (busy flag, `Result` returns, summary refresh after each write, `rebuildSummary`), hub split into `RDHubMonth` / `RDHubFilters` / `RDHubSelection` (union select) with `select()`-friendly derived providers; rows come from summaries, `ensureSummaries()` backfills missing rows on first load.
+- **UI.** Payment sheets on `usePaymentDraft` (live projection preview, quick amounts, hidden split selector, inline validation, `AppAdaptiveSheet`); hub decomposed into header/toolbar/list/batch bar with undo on PO deposit and a real batch total; detail screen on the projection with 44dp accessible heatmap, route-driven tabs, Manage PO in both modes, swipe-to-delete receipts; `AppFeedback.showResult` on every write.
+- **Tests.** `test/features/recurring_deposits/{domain,data,presentation}` — 58 passing (projector table tests, fake repo, controller + hub providers). Legacy `RDLedgerService` tests removed with the service.
+- **Known follow-ups.** Historic-month status in the hub is "as of today" (summary-based); fee rule versioning (`effectiveFrom`) not yet modelled; summary write happens client-side after the fact write (stale-badge-until-next-write under concurrent devices, never wrong money).
+
+---
+
+## Previous State (superseded by Phase 6)
+**RD Ledger & Monthly Hub UI/UX Redesign (Phase 4.7 — Stages 1–4 Complete)**:
+- **Stage 1 (Macro Hub Sliver Layout & 3-Stage Pipeline)**:
+  - Refactored `RDMonthlyOperationsView` from a static `Column` into a `CustomScrollView` with a collapsible header (`SliverToBoxAdapter`) and a pinned sticky toolbar (`PinnedHeaderSliver`), reclaiming ~85% of viewport height when scrolling without fixed-extent layout overflow.
+  - Redesigned `RDMonthlyKpiRow` into a full-width 3-Stage Interactive Pipeline (`1. Collect` with inline `Overdue` badge $\rightarrow$ `2. PO Queue` $\rightarrow$ `3. Settled`), removed duplicate status filter chips from the toolbar, and added a contextual `PO Queue` ready banner with 1-tap `Select Ready`.
+- **Stage 2 (Smart 2-Step Pipeline Card)**:
+  - Streamlined `RDMonthlyOperationCard` and `RDCheckpointsRow` into a compact 2-line subtitle with a directional `Customer -> PO` 2-step status pill (`Customer -> PO Ready` / `PO`), displaying fraction amounts (`Customer: ₹X/₹Y` or `Fee: ₹X/₹Y`) only when an installment or fee is partially paid.
+- **Stage 3 (Tabbed RD Detail Screen & Matrix/List Toggle)**:
+  - Upgraded `RecurringDepositDetailScreen` with an interactive customer link & maturity summary in `EntityDetailHeader` and a 3-tab `SegmentedButton<RDDetailTab>` (`Schedule`, `Transactions`, `Account Info`) so the active RD ledger is front-and-center without scrolling past 6 static metadata cards.
+  - Added a `[ Matrix | Yearly List ]` `SegmentedButton` in `RDInstallmentsSection` (with direct `Year 1`–`Year 5` accordions that auto-expand unsettled years and all years during `Manage PO`) so the 60-month Heatmap + Month Inspector and the 60-row Yearly Accordion + PO Multi-Select coexist cleanly without vertical duplication.
+- **Stage 4 (Per-Month Allocation Chips on Transaction Receipts)**:
+  - Added `RDLedgerService.computeAllocationsByTransaction` and rendered per-month principal and fee allocation chips (`Inst #N: ₹X`, `Fee #N: ₹Y`) directly on each `RDTransactionTile` in `RDTransactionsSection`.
+
+**RD Ledger Architecture Redesign (Option 1+ — Stages 1–4 & Phase 5 Complete)**:
+- **Phase 5 Migration Script Backfill (`run_supabase_migration.dart` & `RDLedgerService`)**:
+  - Added `RDLedgerService.calculateInitialPaidInstallments` to compute the chronological `initial_paid_installments` onboarding baseline for legacy/migrated RD accounts (preserving explicit overrides, settling all months for closed RDs, and counting elapsed prior calendar months for active RDs).
+  - Updated `lib/run_supabase_migration.dart` to backfill `'initial_paid_installments'` on `recurring_deposits` during Firestore-to-Supabase migration, leveraging Option 1+ sparse hydration so zero dummy rows need to be inserted into `rd_installments`.
+- **Post Office Agent Workflow Enhancements (Stage 4)**:
+  - Added India Post statutory deadline window filtering (`RDDueWindowFilter`: `Due 15th` vs `Due EOM`) with live counters in `RDMonthlyOperationsController` and `RDMonthlyOperationsView`.
+  - Added Household / Customer Grouping (`groupByCustomer` toggle) in the Monthly Hub with customer summary headers (`N accounts • ₹X/mo`) and 1-tap `Select All` per household.
+  - Added Cross-Month Global Agent Float (`globalAgentFloatProvider` & `RDAgentFloatSummary`) computing `undepositedCashAmount` (`Cash in Hand`) and `pocketAdvancesAmount` (`PO Advances`) across all sparse installments.
+- **Dumb Widgets & Presentation Decomposition (Stage 3)**:
+  - Added pure domain getters (`isCurrentMonthOverdue`, `hasPriorArrears`, `effectiveTotalPayable`, `hasDivergentPending`, `isFirstHalfDue`, `initialPaymentAmount`, `initialPaymentSplitMode`) to `RDMonthlyOperationItem`.
+  - Moved `prepareLogPayment(RDMonthlyOperationItem)` into `RDMonthlyOperationsController` with zero-latency in-memory hydration fallback.
+  - Extracted `RDCheckpointsRow` and `RDOperationActionButton` in `RDMonthlyOperationCard` and consolidated 5 confirmation dialogs in `RDMonthlyOperationsView` using `AppDialogs.confirmAction`.
+- **Zero-Latency Monthly Hub Hydration & Deterministic Clock (Stage 2)**:
+  - Created injectable `clockProvider` (`lib/core/providers/clock_provider.dart`) replacing scattered `DateTime.now()` calls across `RDMonthlyOperationsController`, `RDMonthlyOperationsView`, and `RDMonthlyOperationCard` (`evaluationDate`).
+  - Refactored `rawMonthlyOperationsStream` in `RDMonthlyOperationsController` to hydrate monthly operations and prior carryover arrears in memory using `RDLedgerService.hydrateSchedule` over `rdAllSparseInstallmentsStreamProvider` and `recurringDepositsControllerProvider`, eliminating network roundtrips and skeleton loading flashes when switching months (`< Prev | Next >`).
+- **Sparse `rd_installments` + Normalized `rd_payment_allocations` (`20261025000000_sparse_rd_ledger_and_allocations.sql`)**:
+  - Created `public.rd_payment_allocations` (`transaction_id REFERENCES rd_transactions(id) ON DELETE CASCADE`, `rd_id`, `installment_no`, `principal_amount`, `late_fee_amount`) and added `split_mode` to `rd_transactions` plus `installment_no` and `po_batch_id` to `rd_installments`.
+  - Replaced procedural `FOR v_elem IN ... LOOP` updates in Postgres RPCs with set-based `upsert_and_prune_rd_installments`, automatically pruning untouched post-onboarding baseline rows and eliminating 60-row upfront insertions on RD creation/update.
+- **Deterministic Schedule Hydration & Replay Pool Overflow (`RDLedgerService`)**:
+  - Added deterministic UUIDv5 installment IDs (`deterministicInstallmentId`), `hydrateSchedule`, `hydrateInstallmentForMonth`, `extractSparseInstallments`, and `diffSchedules`.
+  - Fixed replay pool overflow in `allocateCustomerPayment` / `recomputeScheduleFromTransactions` so unused fee/principal pools automatically overflow into remaining obligations when earlier transactions are edited or deleted.
+
+**RD Ledger Feature Rebased onto `main` (`v2.2.1+20`)**:
+- Rebased all 16 commits of `feature/rd-ledger-domain-modeling` cleanly onto `main` (`b61c427`, `v2.2.1+20`), preserving 100% of `main`'s performance optimizations, domain enhancements, and UI changes alongside the RD Ledger & Macro Monthly Operations Hub:
+  - **Single-Entity Watchers & List Column Projections**: Preserved `watchRecurringDepositById(id)`, `recurringDepositByIdProvider`, `AsyncSingleEntityBuilder`, and lightweight `_listColumns` (including `initial_paid_installments`) alongside unified `saveRecurringDeposit(deposit, {schedule})` and all RD ledger repository methods.
+  - **Official Post Office Rate Schedule (`PostalRateService`)**: Integrated `postalRateService` and `initialPaidInstallments` in `RecurringDeposit.create` / `RecurringDeposit.update`, `RecurringDepositsController`, and `useRecurringDepositForm` (keeping `Start Date -> Duration -> Interest Rate -> Initial Paid Installments` field ordering with `isFinancialTermsLocked` protection).
+  - **`AppDurationInput` & `EntityListTile`**: Preserved `main`'s editable `yearsController` + `monthsController` Row for `TenureInputType.derived` (KVP) with `enabled` support across all inputs, and merged `EntityListTile`'s `leadingSubtext` optical spacing with `leading`, `onLongPress`, and `isSelected`.
+  - **Avatar Convention**: Kept `#<serialNo>` (`deposit.avatarLabel`) on the Accounts tab (`RecurringDepositCard`) and `RecurringDepositDetailScreen`, while retaining the installment sequence badge (`#N`) in the avatar and `(${serialNo}) ${accountNo}` in the subtitle on `RDMonthlyOperationCard` in the Monthly Operations Hub.
+  - **Slang 4.19.0 & Test Suite**: Removed duplicate keys in `lib/i18n/en.i18n.yaml`, regenerated Slang and `build_runner` artifacts, updated date-relative fixtures in `test/rd_monthly_operations_test.dart`, and verified `dart analyze --fatal-infos` (0 issues) and all 68 unit/widget tests pass.
+
+**RD Ledger Feature - Macro Monthly Operations Hub (Phase 4.5)**:
+- **Top Navigation Switcher (`SegmentedButton`)**: Added `SegmentedButton<RDViewMode>` (`[ Accounts | Monthly Hub ]`) into `RecurringDepositsScreen`, toggling between the accounts list and the macro monthly operational command center.
+- **Calendar Month Switcher (`RDMonthSwitcher`)**: Month navigation with prev/next buttons, formatted display ("September 2026"), and a dynamic quick-reset chip (`[ ↺ Current Month ]`) that appears whenever viewing past or future months.
+- **Monthly Operations KPI Row (`RDMonthlyKpiRow`)**: Real-time aggregated cards calculating *To Collect* (with customer counts), *Ready for PO* (with deposit count), *Settled* (fully collected and deposited), and *Overdue* (overdue counts). Tapping any KPI card instantly activates its corresponding filter.
+- **Filter Chips**: Horizontal scrollable chips (`All`, `To Collect`, `Ready for PO`, `Settled`, `Overdue`) with dynamic counts.
+- **High-Density Operation Card (`RDMonthlyOperationCard`)**:
+  - Customer name, account number, serial number, and installment number (#N).
+  - Urgency badge for overdue accounts (`Overdue (X prior months)` in bold error styling).
+  - Contextual status badges: `Customer Paid`, `Ready for PO`, `Settled`, `PO Advanced`, `Pending`.
+  - Contextual 1-tap **"Log Payment"** button that pre-fills `RDLogPaymentSheet` with the exact installment amount + pending default fees.
+  - Contextual 1-tap **"Deposit to PO"** button.
+  - Multi-select mode with checkboxes and floating/bottom batch action button (`Deposit to PO (N)`).
+  - Tapping the card body routes to `RecurringDepositDetailRoute` for full 60-month micro-view drill-down.
+- **Harmonized Operation Tile (`RDMonthlyOperationCard` & `EntityListTile`)**:
+  - Re-architected using `EntityListTile` to follow the exact visual rhythm of the Accounts tab (`RecurringDepositCard`), preserving muscle memory.
+  - Enhanced `EntityListTile` with `leading` override and `isSelected` background state while maintaining 100% backward compatibility.
+  - Structure:
+    - **Leading**: Installment sequence badge (`#N`) in a `CircleAvatar` (or checkmark for settled), which seamlessly morphs into a `Checkbox` when an account is `Ready for PO` or in selection mode.
+    - **Title**: Customer name (bold, identical to Accounts tab).
+    - **Subtitle**: Line 1 shows `(SerialNo) AccountNo` (exact same string format as `RecurringDepositCard`); Line 2 shows Due date, overdue days urgency, prior overdue badge, and default fee.
+    - **Indicator Color**: Color-coded left edge bar (Red for overdue, Yellow for Ready for PO, Green for Settled).
+    - **Trailing**: Total payable amount (bold titleMedium) + compact 1-tap action button (`[ ⚡ Log ]` prefilling payment sheet, `[ 🏢 PO ]` depositing to PO, or `[ ✓ Settled ]` badge).
+  - High density: 2x screen density (~80px vs ~160px), displaying 6–7 accounts per screen on mobile without scrolling.
+  - Switched `RDMonthlyOperationsView` to `ListView.separated` with `Divider(height: AppDimensions.dividerHeight)` and `RDMonthlyOperationCard.skeleton()`.
+- **Database & CDC Streaming**:
+  - Added migration `20260912000000_rd_monthly_operations_view.sql` creating `rd_monthly_operations_view` with subqueries for prior overdue counts and amounts.
+  - Streamed `rd_installments` CDC in `SupabaseRecurringDepositRepository` and added `watchInstallmentsForMonth` to `RecurringDepositRepository`.
+  - Added full reactive mock broadcasting for monthly schedules in `FakeRecurringDepositRepository`.
+- **Domain & State Architecture**:
+  - Built `RDMonthlyOperationItem` Freezed domain model with pure status/payable getters.
+  - Built `RDMonthlyOperationsController` Riverpod notifier managing selected month, view mode, active filter, and multi-selection state.
+  - Added localized keys in `en.i18n.yaml` under `recurringDeposits.views` and `recurringDeposits.monthlyOperations`.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues) and 100% passing Chrome test suite (25/25 tests across all test suites, including dedicated `rd_monthly_operations_test.dart`).
+- **Prior Arrears & Carryover Overdue Flow Complete**:
+  - Enhanced repository contract with `getUnpaidInstallmentsBefore(DateTime date)` implemented across `SupabaseRecurringDepositRepository` and `FakeRecurringDepositRepository`.
+  - Updated `rawMonthlyOperationsStream` in `RDMonthlyOperationsController` to query prior unpaid installments before the selected month, compute `priorOverdueCount` and `priorOverdueAmount`, and supply them to `RDMonthlyOperationItem`.
+  - Fully lights up carryover overdue indicators when navigating to any month with previous unpaid installments: top alert banner (`Review Overdue`), card red indicator, subtitle `+N Past Due (₹X)` badge, `Total Due` amount, and contextual `[ ⚡ Pay All (₹X) ]` button.
+- **Button High-Contrast Polish**:
+  - Explicitly assigned high-contrast foreground and background colors to `HugeIcon` and `Text` on action buttons in `RDMonthlyOperationCard` and `RDMonthlyOperationsView`, resolving low-contrast text on error and primary button backgrounds.
+- **Future Months Advance Planning Mode**:
+  - Differentiated between active operations (current month) and advance planning (future months).
+  - Gated prior unpaid installments and overdue debt in domain (`RDMonthlyOperationItem.isUpcoming(now)` and `hasOverdueDebt(now)`), controllers, and KPI cards when viewing future calendar months.
+  - Future months suppress false red overdue flags, zero out overdue count in KPIs, display an informational planning banner (`🗓️ Upcoming schedule & advance planning for [Month Year]`), and render calm tonal `[ 🪙 Advance Pay ]` buttons on pending accounts.
+- **Log Payment Debug Freeze Fix**:
+  - Resolved unhandled `StateError` where `ref.read(rdInstallmentsStreamProvider.future)` in `RDMonthlyOperationsView` was disposed by Riverpod during loading state because no active widget listened to the autoDispose provider.
+  - Added dedicated one-shot `getRDInstallments(rdId)` method on `RecurringDepositRepository` implemented across Supabase, Fake, and Firestore repositories, decoupling ephemeral UI sheet opening from autoDispose streaming.
+- **Option 1 Layout (Monthly Amount, Total Pending, and Default Fees)**:
+  - Anchored baseline monthly installment amount (`₹X /mo`) in trailing top-right to preserve visual parity and muscle memory with the Accounts tab (`RecurringDepositCard`).
+  - Conditionally displays `Total Due: ₹X` right beneath the monthly amount whenever pending balance diverges (prior arrears, default fees, partial payments), and avoids redundant clutter for normal on-time installments.
+  - Subtitle surfaces due date, `+N Past Due` chip, and a prominent `Fee: ₹X` badge whenever default fees exist.
+  - Extended domain model `RDMonthlyOperationItem` with `priorOverdueFee` and `totalDefaultFee(DateTime now)`.
+- **Post Office Agent Workflow & UX Polish (Avatar Uniformity, Advance to PO, and PO Reversal)**:
+  - **Strict Avatar Uniformity**: Eliminated spontaneous checkboxes on Ready for PO cards; browse mode strictly displays circular `#N` avatar or checkmark across all cards. Checkbox is rendered exclusively when selection mode is active.
+  - **Dedicated Selection Mode**: Added `[ ◩ Select ]` action chip in filter header and wired long-press on cards to activate selection.
+  - **Advance to PO from Pocket**: Contextual 3-dot overflow menu allows agents to advance payments to the Post Office from pocket before customer collection. Renders purple `[ PO Advanced ]` badge with tertiary edge indicator and primary action becomes `[ ⚡ Collect (₹X) ]`. Batch PO deposit transparently displays breakdown between customer collections and pocket advances.
+  - **PO Reversal**: Single-card "Revert PO Deposit" action in overflow menu and "Revert PO (N)" batch action bar button with confirmation dialogs.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 22 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+- **Checkpoints Strip ("Filled vs. Hollow" Visual Hierarchy - Option 1)**:
+  - Added a glanceable, 3-entity checkpoint strip (`_buildCheckpointsRow`) to `RDMonthlyOperationCard`:
+    - **Entity Consistency**: Words stay fixed as `Cash` and `PO` (rather than changing between "Paid" vs "Pending"), completely eliminating the need to read text.
+    - **Completed / Actionable**: Solid filled pills with bold icons (`[ ✓ Cash ]`, `[ ✓ PO ]`, `[ ⚡ PO Adv ]`, `[ ! Cash ]`).
+    - **Pending / Waiting**: Hollow / outlined ghost pills (`color: Colors.transparent`, `border: Border.all(color: outlineVariant)`), light clock icons, muted text (`[ ○ Cash ]`, `[ ○ PO ]`).
+    - **Default Fee (Conditional)**: Only shown when relevant (solid error fill for owed `[ ⚠️ Fee: ₹X ]`, solid primary fill for paid `[ ✓ Fee ]`, muted for waived `[ Fee Waived ]`, and completely hidden when 0/none).
+  - Fixed "Collect Fee" button prefill to default to `PaymentSplitMode.feesOnly` when principal is settled and fees are pending.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 50/50 tests pass across the entire repository, including 29 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+- **Checkpoints Strip ("True Literal" Option 1: Strict Lifecycle + Fraction Split Everywhere)**:
+  - Implemented a unified, glanceable 3-entity checkpoint strip (`_buildCheckpointsRow`) in `RDMonthlyOperationCard`:
+    - **Strict Lifecycle Rule**: Solid fill = 100% Settled / Resolved; Hollow / Outlined = Incomplete / Action Required.
+    - **True Literal Fraction Split**: ALWAYS displays `${paid}/${total}` for BOTH Cash and Fee across ALL lifecycle states:
+      - **Cash Checkpoint**:
+        - 100% Settled: Solid Primary `[ ✓ Cash: ₹1,000/₹1,000 ]`
+        - Partial (On-Time): Hollow Primary `[ 🪙 Cash: ₹400/₹1,000 ]`
+        - Partial (Overdue): Hollow Error `[ 🪙 Cash: ₹400/₹1,000 ]`
+        - 0% Paid (Overdue): Hollow Error `[ ! Cash: ₹0/₹1,000 ]`
+        - 0% Paid (On-Time Pending): Hollow Neutral `[ ○ Cash: ₹0/₹1,000 ]`
+      - **PO Checkpoint**:
+        - 0% Deposited: Hollow Neutral `[ ○ PO ]`
+        - 100% Deposited: Solid Primary `[ ✓ PO ]`
+        - 100% Pocket Advanced: Solid Tertiary `[ ⚡ PO Adv ]`
+      - **Fee Checkpoint (Conditional)**:
+        - Only shown when `item.hasDefaultFee(now)` is true (completely suppressed if 0 fee accrued).
+        - Waived: Solid Neutral `[ Fee Waived ]`
+        - 100% Paid: Solid Primary `[ ✓ Fee: ₹20/₹20 ]`
+        - Partial Paid: Hollow Error `[ ⚠️ Fee: ₹10/₹20 ]`
+        - 0% Paid (Owed): Hollow Error `[ ⚠️ Fee: ₹0/₹20 ]`
+    - **Localization (`en.i18n.yaml`)**: Centralized into `checkpoints` map (`cash: "Cash: ${paid}/${total}"`, `po: "PO"`, `poAdvanced: "PO Adv"`, `fee: "Fee: ${paid}/${total}"`, `feeWaived: "Fee Waived"`).
+    - Fixed "Collect Fee" button prefill to default to `PaymentSplitMode.feesOnly` when principal is settled and fees are pending.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 56/56 tests pass across the entire repository, including 35 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+- **Verification**: 100% clean static analysis (`flutter analyze --fatal-infos` returns 0 issues), standard `dart format` applied, 100% passing Chrome test suite (all 56/56 tests pass across the entire repository, including 35 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`, exit code 0).
+- **Default Fee Pending Surfacing & Operational Partitioning**:
+  - Accounts with customer principal and PO deposited but an unresolved default fee (`isFeePending`) are surfaced under the **`To Collect`** operational filter and counter.
+  - Symmetrical partition: `To Collect` (unpaid customer principal, PO advanced, and pending fees) + `Ready for PO` (customer paid, PO pending) + `Settled` (100% reconciled) sums to total accounts.
+  - High-density card (`RDMonthlyOperationCard`):
+    - Subtitle shows `Fee: ₹X` badge.
+    - Trailing column shows `Fee Due: ₹X`.
+    - Primary action button renders contextual **`[ ⚡ Collect Fee (₹X) ]`** prefilling payment sheet.
+    - 3-dot overflow menu features **`Forgive Default Fee`** with confirmation dialog calling `toggleLateFeeWaiver`.
+- **Verification**: 100% clean static analysis (`dart analyze --fatal-infos` returns 0 issues), 100% passing Chrome test suite (all 45 tests across all test suites, including 24 tests in `test/rd_monthly_operations_test.dart`), and clean Flutter web release build (`flutter build web --no-tree-shake-icons`).
+- **Glanceable Checkpoints Bar & Conditional Default Fee (Option A Implementation)**:
+  - Addressed card glanceability by introducing a structured 3-tier subtitle hierarchy and a dedicated Checkpoint Strip (`_buildCheckpointsRow`) in `RDMonthlyOperationCard`:
+    - **Tier 1**: Serial and account number (`(Sl #01) 1234567890`).
+    - **Tier 2**: Due date and prior arrears badge (if any).
+    - **Tier 3 (The Checkpoint Strip)**:
+      - **Customer Checkpoint**: `[ ✓ Cust Paid ]` (primaryContainer / checkmark), `[ ! Cust Overdue ]` (errorContainer / alert), `[ 🪙 Cust: ₹X ]` (tonal primary / coins for partial payments), or `[ ⏳ Cust Pending ]` (surfaceContainerHighest / clock).
+      - **Post Office Checkpoint**: `[ ⚡ Advanced to PO ]` (tertiaryContainer / flash), `[ ✓ PO Deposited ]` (primaryContainer / checkmark), or `[ ⏳ PO Pending ]` (surfaceContainerHighest / clock).
+      - **Default Fee Checkpoint (Conditional)**:
+        - Completely suppressed when no default fee exists (preserving clean, noise-free cards for on-time accounts).
+        - `[ ⚠️ Fee: ₹X ]`: Prominent errorContainer badge when fee is owed.
+        - `[ ✓ Fee Paid ]`: Primary container badge when default fee was paid by customer.
+        - `[ Fee Waived ]`: Surface container highest badge when forgiven by agent.
+  - Added pure domain helper `hasDefaultFee(DateTime now)` on `RDMonthlyOperationItem`.
+  - Added localized Slang keys under `recurringDeposits.monthlyOperations.card.checkpoints`.
+  - Verification: 100% clean static analysis (`dart analyze --fatal-infos` 0 issues), all 49 Chrome tests passing (28 tests in `rd_monthly_operations_test.dart` + 21 across other suites), and clean Flutter web release build.
+  - Fixed "Collect Fee" button prefill: `RDLogPaymentSheet` now accepts optional `initialSplitMode`, and automatically defaults to `PaymentSplitMode.feesOnly` when only default fees are pending. `RDMonthlyOperationsView` now explicitly pre-fills the fee amount and selects `feesOnly` split mode when tapping "Collect Fee".
+  - Verification: 100% clean static analysis (`dart analyze --fatal-infos` 0 issues), all 50 Chrome tests passing (29 tests in `rd_monthly_operations_test.dart` + 21 across other suites), and clean Flutter web release build.
+
+**RD Ledger Feature - Micro-View Overhaul: Heatmap, Hero Card, Inspector & Yearly Accordion (Phase 4.4)**:
+- **`RDNextDueHeroCard`**: Anchored at the top of the RD ledger. Chronologically pinpoints the next pending installment, urgency badge (overdue days/due in days), total payable, and 1-tap "Log Next Payment" button pre-filling `RDLogPaymentSheet`. Displays congratulatory completion card when all 60 installments are settled.
+- **`RDInstallmentHeatmap`**: Built custom pure Flutter 60-month tenure matrix (Years 1 to 5 x Months 1 to 12) with 0 third-party packages. Color codes discrete domain states: Settled (primary), Ready for PO (secondary), Advanced to PO (tertiary), Overdue / Fee Pending (error), Upcoming (surfaceContainerHighest). Responsive across all mobile viewports without horizontal scrolling. Features tactile active selection ring and tooltip.
+- **`RDMonthInspectorCard`**: Directly beneath the heatmap. Noise-Free Guarantee: completely suppresses fee row when default fee is ₹0. Surfaces principal, default fee (if applicable), and PO deposit status. Embeds 1-tap payment, PO deposit action, and fee waiver toggle menu.
+- **`_RDYearlyScheduleAccordion`**: Replaced 60-row uncollapsed list with expandable yearly accordion (`Year 1 (12/12 Settled)`, etc.), preserving selection mode and PO deposit controls intact.
+- **`_RDYearlyScheduleAccordion`**: Replaced 60-row uncollapsed list with expandable yearly accordion (`Year 1 (12/12 Settled)`, etc.), preserving selection mode and PO deposit controls intact. Fixed horizontal overflow on narrow cards by wrapping `RDInstallmentTile` badges in responsive `Wrap`, wrapping subtitle texts in `Expanded`, adding stable `PageStorageKey`s, and guarding Crashlytics against web execution in `lib/main.dart`.
+- **Verification**: `dart analyze` passes with 0 issues. Slang translations compiled with 100% success.
+
+**RD Ledger Feature - Fee Waivers, Dual Tracking & Split Allocations (Phase 4.2)**:
+- **Dual-Track Balance Modeling**: Decoupled monthly installment principal from default fees. Extended `rd_installments` with `paid_late_fee` and `is_late_fee_waived`, and `rd_transactions` with `installment_amount` and `late_fee_amount`.
+- **Domain Model Computations (`RDInstallment`)**: Implemented pure domain getters (`outstandingPrincipal`, `effectiveLateFee`, `outstandingLateFee`, `outstandingAmount`, `isInstallmentPaid`, `isLateFeeResolved`, and `isFullySettled`).
+- **Two-Pass Chronological Allocation (`RDLedgerService.allocateCustomerPayment`)**:
+  - Dynamically assesses 1% per defaulted month on overdue installments.
+  - Automatically checks `totalPendingLateFees` before splitting pools: whole installments allocate to base principal, leaving default fees pending when round amounts are collected.
+  - Explicit split support: `installmentComponent` and `lateFeeComponent`.
+- **Recomputation & Fee Waiver Persistence (`RDLedgerService.recomputeScheduleFromTransactions`)**: Preserves `isLateFeeWaived` across transaction deletions/edits, and deterministically replays transactions respecting split components.
+- **Database Migrations (In-Place Updates)**:
+  - `supabase/migrations/20260903000000_rd_ledger_feature.sql`: Added columns to tables and updated RPCs `save_recurring_deposit`, `record_rd_customer_payment_allocated`; added `toggle_rd_late_fee_waiver` RPC.
+  - `supabase/migrations/20260905000000_rd_transaction_mutations.sql`: Updated `delete_rd_transaction` and `update_rd_transaction` to handle split components, `paid_late_fee`, and `is_late_fee_waived`.
+- **Repository & Riverpod Controllers**:
+  - Added `toggleLateFeeWaiver` to `RecurringDepositRepository`, `SupabaseRecurringDepositRepository`, and `FakeRecurringDepositRepository`.
+  - Exposed `toggleLateFeeWaiver` in `RDLedgerController`.
+- **Material 3 UI Polish (`RecurringDepositDetailScreen`)**:
+  - Installment rows show `Collected (Fee Pending)` status, separate paid/pending breakdown for principal vs default fee, and `MenuAnchor` action to "Forgive Default Fee" / "Reinstate Default Fee".
+  - `_LogPaymentBottomSheet` and `_EditPaymentBottomSheet` feature split selector (`Installments Only`, `Include Fees`, `Fees Only`, `Custom`), quick preset chips, and detailed multi-line allocation preview.
+- **Verification**: `dart analyze` passes with 0 issues. Both test suites (`test/rd_ledger_service_recalculation_test.dart` and `test/recurring_deposit_ledger_update_test.dart`) pass 100% (14/14 tests).
+- **Domain Refactoring (`RDLedgerService`)**:
+  - Decomposed monolithic procedural methods into pure, focused single-responsibility helper functions (`_assessOverdueLateFees`, `_calculatePendingLateFees`, `_resolveSplitPools`, `_allocatePrincipalPool`, `_allocateLateFeePool`, `_buildBaselineSchedule`, and `_chronologicalTxOrder`).
+  - Refactored `recomputeScheduleFromTransactions` to an elegant, declarative functional `fold` pattern over chronological transactions.
+- **Material 3 UI Polish, Localization & Modularization (`RecurringDepositDetailScreen`)**:
+  - Full Slang localization via `t.recurringDeposits.ledger`: eliminated all hardcoded/raw strings across dialogs, snackbars, split modes, preset chips, preview rows, and installment badges.
+  - Complete `HugeIcons` compliance: replaced all Material `Icons.*` with corresponding `HugeIcons.*` exclusively.
+  - No Magic Numbers: standardized all paddings, margins, gaps, and micro-icons using `AppDimensions` (including new `iconXs: 12.0`) and `AppSpacings`.
+  - Standardized all paddings, margins, gaps, and micro-icons using `AppDimensions` (including `iconXs: 12.0`) and `AppSpacings`.
+  - Decomposed 2,068-line screen into modular presentation widgets: `RDInstallmentsSection`, `RDInstallmentTile`, `RDInstallmentKpiRow`, `RDInstallmentActionBar`, `RDTransactionsSection`, `RDTransactionTile`, `RDLogPaymentSheet`, `RDEditPaymentSheet`, `PaymentSplitSelector`, `CustomSplitFields`, and `RDAllocationPreviewCard`.
+- **Ledger UX Polish & Dynamic Fee Assessment**:
+  - Future installment subtitle text color now uses neutral theme color (`theme.colorScheme.onSurfaceVariant`, regular weight); only overdue installments are highlighted in red (`theme.colorScheme.error`, bold).
+  - Added `dynamicLateFeeAt`, `outstandingLateFeeAt`, and `outstandingAmountAt` to `RDInstallment` to dynamically compute overdue penalties before payment transactions exist.
+  - Subtitle explicitly reflects waived default fee status (`customerOwesPrincipalWaived`: "Customer owes: ₹X (Default Fee Waived)").
+  - Overdue installments without previous payments now surface the 3-dot fee forgiveness action menu and pending fee badges dynamically.
+- **Option 2 Enforcement (Restricting Forgiveness to Unpaid Default Fees)**:
+  - UI 3-dot menu conditionally hides "Forgive Default Fee" when `paidLateFee >= displayedLateFee && displayedLateFee > 0`.
+  - Both repository (`FakeRecurringDepositRepository`) and database RPC (`toggle_rd_late_fee_waiver` in PostgreSQL migration `20260903000000_rd_ledger_feature.sql`) strictly guard against waiving paid fees, rejecting with descriptive error to edit the payment transaction.
+- **Already Paid Installments / Baseline Safety (Option A)**:
+  - Guaranteed that installments settled prior to onboarding (`initialPaidInstallments`) never incur default fees when subsequent payments are made (`_assessOverdueLateFees` checks `inst.isOverdueAt(paidDate)`).
+  - Opening baseline installments are immutable against PO reversal: checkboxes are disabled (`onChanged: null`) with explanatory tooltip (`t.recurringDeposits.ledger.actions.baselineImmutableTooltip`), and excluded from selection pools.
+- **Verification**: `dart analyze` passes with 0 issues. Local database reset with `npx supabase db reset` completed with exit code 0. Chrome test suite passes 100% (21/21 tests across all test suites).
+
+
+
+**RD Ledger Feature - Transaction Mutations & PO Settlement Reversals (Phase 4.1)**:
+- **Domain Allocation Replay Engine (`RDLedgerService.recomputeScheduleFromTransactions`)**: Engineered a pure, testable recalculation engine that resets installment customer payment states (respecting opening baseline and preserving PO settlement state) and sequentially replays all surviving transactions to recalculate customer paid amounts, statuses, and late fees deterministically.
+- **Atomic Database RPCs (`20260905000000_rd_transaction_mutations.sql`)**: Created PostgreSQL stored procedures `delete_rd_transaction` and `update_rd_transaction` enforcing agent ownership (`assert_account_owner`), row-level security, and atomic multi-table updates across `rd_transactions` and `rd_installments`.
+- **Repository Signatures & Fake Persistence**: Added `deleteCustomerPayment` and `updateCustomerPayment` to `RecurringDepositRepository`, fully implemented in `SupabaseRecurringDepositRepository` and `FakeRecurringDepositRepository` with reactive stream broadcasting.
+- **Application Orchestration (`RDLedgerController`)**: Added `deleteCustomerPayment`, `updateCustomerPayment`, and `revertPoPayments` to orchestrate domain recalculations and repository persistence cleanly.
+- **Material 3 UI Polish (`RecurringDepositDetailScreen`)**:
+  - Payment History: Added `MenuAnchor` actions on each transaction row for "Edit Payment" (opening `_EditPaymentBottomSheet` with live reactive allocation preview) and "Delete Payment" (with confirmation dialog).
+  - Installment Ledger: Reused the selection mode UI to provide dual action controls: `Deposit (N)` for pending installments and `Revert (N)` with confirmation dialog for mistakenly marked PO deposits, allowing any installment row to be selected.
+- **Unit & Domain Tests**: Created comprehensive unit tests in `test/rd_ledger_service_recalculation_test.dart` and integration tests in `test/recurring_deposit_ledger_update_test.dart`.
+
+**RD Ledger Feature - Installment Schedule Update Fix & Clean DDD Save Unification**:
+- **Resolved Stale Installment Schedule on Update**: Fixed the issue where editing start date, amount, tenure, or initial paid installments on an RD without payment transactions left `rd_installments` referring to old dates/amounts.
+- **Unified Repository Write Pipeline (`saveRecurringDeposit`)**: Replaced split `createRecurringDeposit` and `updateRecurringDeposit` methods across all repository implementations (`RecurringDepositRepository`, `SupabaseRecurringDepositRepository`, `FakeRecurringDepositRepository`, `FirestoreRecurringDepositRepository`) with a single, atomic `saveRecurringDeposit(deposit, {schedule})` method, aligning with the idempotent Postgres `save_recurring_deposit` RPC.
+- **Clean Application Orchestration (`RecurringDepositsController`)**: Simplified controller logic to eliminate branching: whenever `hasTransactions` is false (for new deposits or edits without recorded payments), `RDLedgerService.generateInitialSchedule` is invoked and the resulting schedule is passed to `repository.saveRecurringDeposit`.
+- **Decoupled Repositories from Domain Logic**: Pre-seeded all mock installments directly in `FakeDataSource` at bootstrap, completely removing lazy runtime `RDLedgerService` calls and unused imports from `FakeRecurringDepositRepository`.
+- **Database Safety Guard**: Enhanced `save_recurring_deposit` RPC in PostgreSQL migration `20260903000000_rd_ledger_feature.sql` to execute `DELETE FROM public.rd_installments WHERE rd_id = p_id;` when `NOT EXISTS (SELECT 1 FROM public.rd_transactions WHERE rd_id = p_id)` before inserting the updated schedule, preventing orphaned calendar dates.
+
+**RD Ledger Feature - Robust Financial Guardrails & Validation Complete (Phase 4 Polish & Architecture Safeguards)**:
+- **Form Screen Guard (`RecurringDepositFormScreen`)**: Implemented robust UI locking in `useRecurringDepositForm` and `_RecurringDepositForm` by checking for existing payment transactions (`hasTransactions`). When payments exist, financial terms are completely disabled/greyed out (`installmentAmount`, `startDate`, `term (years/months)`, `initialPaidInstallments`), keeping administrative fields like `accountNumber`, `serialNumber`, `nominees`, and `status` editable.
+- **Helpful Alert Badge**: Added a visually prominent error-container themed notice banner at the top of the Investment Details section in the form screen: *"Financial terms cannot be modified after payments have been recorded."*
+- **Domain Validation**: Created a pure, centralized validation rule `RecurringDeposit.validateUpdate` in the domain model to prevent any save or update operations from changing financial parameters if active payments have been recorded.
+- **Backend RPC Safety**: Modified the database procedural function `save_recurring_deposit` inside PostgreSQL migration `20260903000000_rd_ledger_feature.sql` to explicitly assert that no updates can touch `installment_amount` and `start_date` if `rd_transactions` records are linked to the deposit, throwing a robust, human-friendly exception if violated.
+- **Unified Clean Architecture Enforcement**: Integrated the validation flow consistently across presentation (form hooks, alert banner), application (controllers), domain models, and repositories (fake and Supabase) to guarantee comprehensive coverage against accidental edits or direct API manipulation.
+- **Verified Stability**: Achieved 100% clean static analysis (`flutter analyze` returns 0 issues) and 100% passing test suite.
+
+**RD Ledger Feature - Phase 4 Complete (Interactive Inline Collapsible Ledger UI, Onboarding Baseline, & Domain/Constraint Alignment)**:
+- Designed and built standard Material 3 collapsible ledger segments in `RecurringDepositDetailScreen` for monthly schedules, raw transaction logs, and interactive chronological payment log sheets.
+- Added support for onboarding baseline via `initialPaidInstallments`: payments before the specified threshold are automatically marked settled prior to onboarding.
+- Standardized domain modeling with `validateInitialPaidInstallments` integrated directly with the central Slang localization system (`en.i18n.yaml` translation files).
+- Decoupled `RDLedgerService` and `isNew` boolean flags from repositories; orchestrated ledger schedule generation cleanly in `RecurringDepositsController` to respect Clean Architecture boundaries.
+- Standardized enums (`RDInstallmentStatus`, `RDPoStatus`, and `RDPaymentMode`) on default camelCase `@JsonEnum()` to maintain parity across the codebase, and removed database-level `CHECK` and `DEFAULT` constraints from the PostgreSQL migration to match, resolving any check constraint violations cleanly.
+- Implemented full 3x2 state matrix handling agent pre-payments to the Post Office: enabled PO deposit selection for all unpaid PO installments, added purple `Advanced to PO` & `Advance Partially Repaid` badges with comprehensive breakdown indicators (`Customer owes: ₹X (Balance: ₹Y + Default Fee: ₹Z)`), and added summary KPI cards for `Pending at PO` and `Advanced (Receivable)`.
+- Updated default/late fee calculation in `RDInstallment` and `RDLedgerService` to compute cumulative $1\% \times \text{months defaulted}$ dynamically in accordance with Post Office rules.
+- Verified 100% clean static analysis (`flutter analyze` - 0 issues) and 100% passing tests (`flutter test`).
+
+**RD Ledger Feature - Phase 1, 2 & 3 Complete (Relational Muscle, Pure Dart Domain Modeling, Repository Signatures, & Riverpod State Providers)**:
+- Designed and built a high-performance relational database migration in `supabase/migrations/20260903000000_rd_ledger_feature.sql` implementing `rd_installments` monthly schedules and adding payment mode tracking to `rd_transactions`.
+- Structured constraints to enforce data integrity: set up foreign keys with cascades, and standard indexes.
+- Adopted a pure **"Brain & Muscle"** architecture: decoupled trigger-based business rules from the DB. Built lightweight, versatile database RPC functions (`save_recurring_deposit`, `record_rd_customer_payment_allocated`, `record_rd_po_payments`) supporting transaction logging and bulk schedule updates, ensuring calculations can be run client-side for immediate user previews while preserving atomic, single-roundtrip server writes.
+- Defined Freezed domain models (`RDInstallment`, `RDTransaction`) as well as type-safe ledger enums (`RDInstallmentStatus`, `RDPoStatus`, `RDPaymentMode`) in Dart, cleanly compiling them via `build_runner`.
+- Engineered a calendar-drift-safe chronological allocation service (`RDLedgerService`) in Dart (the "Brain") that handles 1% PO late-fee capping and calculation dynamically.
+- Integrated the new `initialPaidInstallments` onboarding/backfill parameter into the parent `RecurringDeposit` domain model, updated `SupabaseRecurringDepositRepository` to generate initial ledger schedules automatically on creation/saves, resolved function overloading via `DROP FUNCTION` on schema reset, and verified that 100% of integration and unit tests pass cleanly.
+- Fully implemented concrete ledger repository methods in `SupabaseRecurringDepositRepository` utilizing real-time CDC streams and Postgres RPC parameters (`record_rd_customer_payment_allocated`, `record_rd_po_payments`).
+- Implemented robust in-memory ledger state and CDC-mocking stream providers in `FakeRecurringDepositRepository` for flawless offline Demo Mode functionality.
+- Created `rdInstallmentsStreamProvider` and `rdTransactionsStreamProvider` to stream real-time ledger data reactively down to the UI.
+- Built a unified `RDLedgerController` to handle side-effects such as logging customer payments and PO deposits, automatically computing payment allocations and triggering atomic DB writes.
+- Verified local schema compilation with 100% success via local emulator reset (`npx supabase db reset`).
+
+**Release v2.2.1+20 Prepared**:
+- Bumped application version in `pubspec.yaml` from `2.2.0+19` to `2.2.1+20` and updated `CHANGELOG.md` summarizing the deposit list & detail avatar overhaul (`TD` + tenure sublabel, `MIS`, `NSC`, `KVP`, and RD `#<serialNo>`), optical spacing improvements, and polished scheme display names.
+- Validated zero analysis issues (`flutter analyze`) and passing unit/widget test suites (`16/16` passed).
+
+**Deposit List & Detail Avatars Overhaul (OTD Scheme/Term & RD Serial Number) Completed**:
+- Replaced the repetitive generic money icon in `OneTimeDepositCard` and `OneTimeDepositDetailScreen` with `deposit.schemeType.shortName` (`TD`, `MIS`, `NSC`, `KVP`) and optional Slang-localized `deposit.schemeTermLabel` (`t.common.duration.yearShort(n: termYears)` -> `1Y`, `2Y`, `3Y`, `5Y` for Time Deposits) inside the circular avatar.
+- Replaced the repetitive transaction icon in `RecurringDepositCard` and `RecurringDepositDetailScreen` with `deposit.avatarLabel` (`#<serialNo>` using `t.format.countSymbol` when present, falling back to `RD`) inside the circular avatar, decluttering the card subtitle to show only the account number and surfacing the RD serial number in the detail header.
+- Added `leadingSubtext` to `EntityListTile` and `avatarText` / `avatarSubtext` to `EntityDetailHeader` with `TextHeightBehavior` and explicit vertical spacing (`AppSpacings.gapXxs` / `AppSpacings.gapXs`), along with `paddingXxs`, `lineHeightTight`, and `radiusDetailAvatar` in `AppDimensions`, adhering strictly to project conventions (zero magic numbers or hardcoded strings).
+- Polished scheme display names in `lib/i18n/en.i18n.yaml` (`Time Deposit`, `Monthly Income Scheme`, `National Savings Certificate`, `Kisan Vikas Patra`, `Recurring Deposit`) to eliminate redundant parenthetical acronym suffixes (`(TD)`, `(KVP)`, `(RD)`) next to scheme avatars and segmented buttons.
+
+**Release v2.2.0+19 Prepared**:
+- Bumped application version in `pubspec.yaml` from `2.1.0+18` to `2.2.0+19` and updated `CHANGELOG.md` summarizing the official Post Office rate schedule (`PostalRateService`), KVP maturity accuracy fix, Contractual Snapshot pattern, and Docker database backup documentation.
+- Validated zero analysis issues (`dart analyze --fatal-infos`) and passing unit/widget test suites (`16/16` passed).
+
+**Manual Full Database Backup via Docker Completed & Failed CI Backup Cleaned Up**:
+- Documented manual full database backup and restore commands (complete DDL schema + data rows) using official PostgreSQL 17 Docker container (`postgres:17 pg_dump` and `psql`) in `docs/setup_guide.md`, including Session Pooler IPv4 routing guidance.
+- Hardened `.gitignore` to prevent sensitive database dumps (`*.dump`, `full_backup*.sql`, `postfolio_backup*.sql`) from being committed to the public repository.
+- Reverted/reset the 4 previous commits attempting automated GitHub Actions backups to Firebase Storage (which failed due to Firebase requiring the Blaze plan for Cloud Storage buckets and public repo artifact security constraints).
+
+**Official Post Office Rate Schedule (`PostalRateService`), KVP Maturity Accuracy & Editable Override Completed**:
+- Resolved the KVP maturity date +1 month overshoot (`9Y 6M` / `114` months instead of official `9Y 5M` / `113` months at `7.6%`) and the detail screen banner vs. field mismatch (`9Y 0M` stored in DB vs. dynamically calculated banner).
+- Created `@freezed sealed class PostalSchemeTerms` (`lib/core/models/postal_scheme_terms.dart`) and `@riverpod PostalRateService` (`lib/core/services/postal_rate_service.dart`) using Dart 3 Records for the Ministry of Finance / Department of Posts historical circular schedules (`2000-03-01` to Present) across `KVP`, `NSC`, `MIS`, `TD` (1/2/3/5Y), and `RD`.
+- Updated `ProjectionCalculator`, `OneTimeDeposit.create`, `RecurringDeposit.create`, and deposit controllers (`OneTimeDepositsController`, `RecurringDepositsController`) so all OTD and RD investments only require `startDate` (and `1Y/2Y/3Y/5Y` for `TD`) to resolve official `interestRate`, `termYears`, `termMonths`, `maturityDate`, and `maturityAmount` via `postalRateServiceProvider`.
+- Updated `useOneTimeDepositForm`, `useRecurringDepositForm`, `OneTimeDepositFormScreen`, `RecurringDepositFormScreen`, and `AppDurationInput` (`TenureInputType.derived`) so picking a `startDate` (or switching scheme/TD tenure) automatically populates `Interest Rate (%)` and `Term (Years / Months)` from `PostalRateService`, while keeping both `Interest Rate (%)` and KVP `Term (Years)` / `Term (Months)` editable in the UI for newly announced Post Office circulars or custom passbook overrides.
+- Enforced the Contractual Snapshot pattern on `OneTimeDeposit` and `RecurringDeposit`: `PostalRateService` resolves terms at creation/form time, the agreed contractual terms (`interestRate`, `termYears`, `termMonths`) are persisted to the DB, and read operations strictly trust the stored DB snapshot without read-time service overrides.
+- Added comprehensive unit test suite in `test/post_office_rate_schedule_and_kvp_test.dart` (7 tests covering historical circular lookups, KVP `7.6%` -> `113m` / `7.7%` -> `112m`, contractual snapshot fidelity, and manual override preservation).
+
+**Web OAuth Dynamic Redirect Fix for Production Domains**:
+- Fixed Google login redirect on `https://postfolio.darshanas.dev` where login redirected to `http://localhost:3000/?code=...` due to `redirectTo` being null in non-emulator environments.
+- Updated `SupabaseAuthRepository.signInWithGoogle()` on Web to pass `redirectTo: ${Uri.base.origin}/login`, dynamically resolving to the active deployment domain.
+
+**CI/CD Java 21 & Android Lint Fix for v2.1.0+18 Release**:
+- Fixed GitHub Actions release pipeline failure where AGP 9.3.0 and Kotlin lint invoked `List.removeLast()` (a Java 21 API), causing `NoSuchMethodError` under Java 17 during `:firebase_core:lintVitalAnalyzeRelease`.
+- Upgraded Java version to `21` in `.github/workflows/release.yml`.
+- Added `lint { abortOnError = false; checkReleaseBuilds = false }` to `android/app/build.gradle.kts` to protect release builds against third-party plugin lint crashes.
+
+**Single Deposit Detail Providers & Watchers (Phase 2 Optimization) Completed**:
+- Implemented `watchOneTimeDepositById` and `watchRecurringDepositById` in `OneTimeDepositRepository` and `RecurringDepositRepository` across Supabase, Firestore, and Fake repositories. In Supabase, the watcher queries `one_time_deposit_details_view` and `recurring_deposit_details_view` directly by ID when change events occur on `account_identities`.
+- Added `@riverpod` family stream providers `oneTimeDepositById` and `recurringDepositById` in `one_time_deposits_controller.dart` and `recurring_deposits_controller.dart`.
+- Refactored `OneTimeDepositDetailScreen` and `RecurringDepositDetailScreen` to use `AsyncSingleEntityBuilder`, eliminating whole-list subscriptions when opening deposit detail views.
+- Refactored `OneTimeDepositFormScreen` and `RecurringDepositFormScreen` edit mode (`depositId != null`) to use `AsyncSingleEntityBuilder` with single deposit providers, avoiding whole-list subscriptions during edit operations.
+- Enhanced `toggleDepositStatus` across controllers to support optional direct deposit entities and fallback to single-entity fetching without crashing if list controllers have not been loaded.
+- Verified 100% clean static analysis (`flutter analyze`, 0 issues) and passing widget tests (9/9 passed).
+
+**Deposit Cards & Form Streams Optimization (N+1 Elimination) Completed**:
+- Refactored `OneTimeDepositCard` and `RecurringDepositCard` to eliminate `ref.watch(customerByIdProvider(deposit.customerId))` and unused imports. Card titles resolve directly from pre-joined `deposit.customerName` (falling back to account number / localized placeholder), preventing 300+ spawned customer WebSocket subscriptions and view queries when scrolling deposit lists.
+- Refactored `filteredOneTimeDeposits` and `filteredRecurringDeposits` fallback mapping to directly copy the resolved customer names into deposit entities (`d.copyWith(customerName: customerMap[d.customerId])`), ensuring non-null names across the entire UI pipeline even if views are not pre-joined.
+- Updated `OneTimeDepositDetailScreen` and `RecurringDepositDetailScreen` to prefer `deposit.customerName` prior to falling back to single customer watch.
+- Updated `OneTimeDepositFormScreen` and `RecurringDepositFormScreen` to bypass list controller streams when creating new deposits (`depositId == null`).
+- Added widget test coverage in `test/widget_test.dart` for cards and creation forms (7/7 tests passing, 0 analysis issues).
+
+**Customer List CDC Stream Optimization & Lazy Detail Loading Completed**:
+- Refactored `watchCustomers()` in `SupabaseCustomerRepository` to stream directly from the base `customers` table with `.eq('agent_id', _agentId)`. Removed `.asyncMap(...)` which previously executed 749 lateral joins and `get_account_nominees` calls on `customer_details_view` per CDC mutation event.
+- Added `AsyncSingleEntityBuilder<T>` to `async_entity_builder.dart` for individual entity views.
+- Updated `CustomerDetailScreen` and `CustomerFormScreen` (in edit mode) to watch `customerByIdProvider(customerId)` on demand, loading full view details with savings account and nominees strictly for the requested customer.
+- Form creation mode (`customerId == null`) renders immediately without subscribing to customer list providers.
+- Verified 100% clean static analysis (`flutter analyze`, 0 issues) and passing widget tests (3/3 passed).
+
+**DDD Auth User Decoupling & Ubiquitous Language Refactor Completed**:
+- Refactored `AppUser` to `AuthUser` in the authentication domain context (`lib/features/auth/domain/auth_user.dart`) to strictly represent lightweight session identities. This aligns with Bounded Context design principles by preventing the core business `Agent` domain from being polluted with technical authentication details.
+- Avoided name collisions with Supabase Flutter's exported `AuthUser` by utilizing `hide AuthUser` on the Supabase import inside `SupabaseAuthRepository`.
+- Renamed all occurrences of technical `_userId` and `userId` inside all `CustomerRepository`, `OneTimeDepositRepository`, and `RecurringDepositRepository` implementations to ubiquitous, business-centric terms: `_agentId` and `agentId`. This strictly maps the persistence and presentation layers to real-world business entities (`agent_profiles` / `agent_id`).
+- Regenerated all required boilerplate with code-generation and verified that 100% of static analysis checks (`flutter analyze`) and unit tests (`flutter test`) pass cleanly.
+
+**P2 Optimization - Filter Real-Time CDC Streams by Agent ID Completed**:
+- Updated `watchCustomers()` stream in `SupabaseCustomerRepository` to filter real-time CDC updates using `.eq('agent_id', _userId)`.
+- Updated `watchOneTimeDeposits()` stream in `SupabaseOneTimeDepositRepository` to filter real-time CDC updates using `.eq('agent_id', _userId)`.
+- Updated `watchRecurringDeposits()` stream in `SupabaseRecurringDepositRepository` to filter real-time CDC updates using `.eq('agent_id', _userId)`.
+- This ensures only relevant real-time mutations are streamed to the client, drastically decreasing network egress, client-side message processing overhead, and memory load on shared tables.
+- Passed 100% of static analysis checks (`flutter analyze`) and unit tests (`flutter test`).
+
+**P1 Optimization - Server-Side Joins for Deposit Customer Names Completed**:
+- Created database migration `supabase/migrations/20260902000000_p1_server_side_joins.sql` to join `customers` in `one_time_deposit_details_view` and `recurring_deposit_details_view`, returning pre-joined `customer_name`.
+- Added `customerName` field to `BaseDeposit` interface, and `@JsonKey(includeFromJson: true, includeToJson: false) String? customerName` to Freezed models `OneTimeDeposit` and `RecurringDeposit` to read joining values but ignore them in client-side inserts/updates.
+- Upgraded Riverpod list controllers `filteredOneTimeDeposits` and `filteredRecurringDeposits` with zero-overhead fallback mechanisms that fetch customer maps only when `customerName` is missing, allowing optimal Supabase performance while preserving full Firebase compatibility.
+- Verified 100% clean compilation via `flutter analyze` and passing unit tests.
+
+**Standalone Material/Cupertino Migration Complete**:
+- Added `material_ui` (1.1.0) and `cupertino_ui` (1.0.1) as direct dependencies to decouple the app UI framework.
+- Upgraded `dynamic_color` to `^2.1.0` to correctly align and resolve `ColorScheme` dynamic colors under `material_ui` across platforms.
+- Migrated 54 codebase files to the new `material_ui` design widgets system using automated `dart fix --apply --code=migrate_design_widgets`.
+- Cleaned up redundant/unused legacy imports (`package:flutter/material.dart` as `legacy`) inside `lib/main.dart`.
+- Passed 100% of static analysis checks (`flutter analyze`) with 0 warnings/errors.
+- Verified 100% pass on the entire unit test suite (`flutter test`, 4/4 passed).
+
+**Major Dependency Upgrades & New Features Leveraged**:
+- Upgraded direct dependencies to major releases: `go_router` (^18.0.0), `csv` (^8.0.0), `animations` (^3.0.0), `freezed` (^4.0.1).
+- **Leveraged Android 14+ Predictive Back Gestures**: Configured `PredictiveBackPageTransitionsBuilder` on Android in `lib/core/theme/app_theme.dart` for native swipe-to-pop back navigation.
+- **Leveraged Freezed 4 / Dart 3 Destructuring**: Updated `login_screen.dart` with `if (authState case AuthStateError(:final message))` pattern matching.
+- **CSV 8.0 Engine Upgrade**: Updated `lib/run_migration.dart` to use `csv` 8.0's stream-ready `Csv(lineDelimiter: '\n').decode(rawData)`.
+- Re-ran code generation (`dart run build_runner build --delete-conflicting-outputs`), generating 57 outputs.
+- Verified zero analysis issues (`flutter analyze`) and all unit tests passing (`flutter test`, 4/4 passed).
+
+**Flutter SDK Upgrade (v3.47.2) & Dependency Baseline Update**:
+- Upgraded Flutter SDK to **3.47.2** (Dart 3.13.2, DevTools 2.60.0).
+- Ran `flutter pub upgrade` updating 103 dependencies to latest compatible versions (`cloud_firestore` 6.9.0, `firebase_core` 4.14.0, `supabase_flutter` 2.17.2, `go_router` 17.5.0, `intl` 0.20.3, `slang` 4.19.0).
+- Re-ran code generation (`dart run build_runner build --delete-conflicting-outputs`), updating 57 generated artifacts.
+- Verified 100% clean static analysis (`flutter analyze`) and all tests passing (`flutter test`, 4/4 passed).
+
+**Release Prepared (v2.0.0+17) & CI/CD Pipeline Updated**:
+- Bumped app version to **v2.0.0+17** in `pubspec.yaml` and documented changes in `CHANGELOG.md`.
+- Evaluated git commits since `v1.6.0+16` (Major release type due to Supabase migration, CQRS architecture, and Android build flavors).
+- Updated GitHub Actions workflow (`.github/workflows/release.yml`) to inject repository secrets into `.env`, run `build_runner` for `env.g.dart`, and target `--flavor prod`.
+- Verified pre-release validation: 100% clean static analysis (`flutter analyze`) and all tests passing (`flutter test`).
+
+**Git Hygiene & Sensitive File Tracking Cleanup**:
+- Updated `.gitignore` to explicitly ignore generated environment files (`lib/core/env/env.g.dart`) and include `.env.example` template tracking (`!.env.example`).
+- Removed `lib/core/env/env.g.dart` from Git index tracking (`git rm --cached`).
+- Audited git commit history for `lib/core/env/env.g.dart` (contained local emulator keys / dummy values).
+
+**Android Product Flavors & Staging Launcher Icon Setup**:
+- Configured Android Product Flavors in `android/app/build.gradle.kts`:
+  - `staging`: Application ID suffix `.staging` (`dev.darshanas.postfolio.staging`), app name "Postfolio Staging".
+  - `prod`: Base Application ID (`dev.darshanas.postfolio`), app name "Postfolio".
+- Configured dynamic application label `@string/app_name` in `android/app/src/main/AndroidManifest.xml`.
+- Configured distinguishing app launcher icons for `staging` vs `prod` using `flutter_launcher_icons`:
+  - `staging`: Features a vibrant orange background banner and corner ribbon with clear "STAGING" and "STAGE" branding in `android/app/src/staging/res/mipmap-*/ic_launcher.png`.
+  - `prod`: Uses clean base branding in `android/app/src/prod/res/mipmap-*/ic_launcher.png`.
+- Configured dedicated VS Code launch targets in `.vscode/launch.json` for Staging and Production across physical devices and Android emulators.
+- Set up system JDK to Java 21 (`/usr/lib/jvm/java-21-openjdk-amd64`) in `~/.zshrc` to resolve Gradle build compatibility with Java 25.
+- Created and committed dedicated feature branch `feature/android-build-flavors`.
+- Deployed production Firestore security rules (`firestore.rules`) to `postfolio-app` via Firebase CLI.
+
+**Supabase Migration - Phase 4 Live Migration & Setup Complete**:
+- **High-Fidelity Migration Screen**: Built a robust, admin-focused data migrator utility in `lib/run_supabase_migration.dart`.
+  - Integrates direct administrative schema-level database migrations from Firebase Firestore to local/production Supabase.
+  - Automatically provisions Supabase Auth users using the Service Role Admin client, maintaining verified states and linking them to `agent_profiles` with `legacy_firebase_uid`.
+  - Performs multi-stage, transactional data mapping of nested collection schemas (Customers, SB accounts, OTDs, RDs, and Nominees) to normalized relational Postgres tables.
+  - **Bulk Migration Optimizer**: Redesigned and optimized the migration run loop using a high-speed batching strategy. Rather than executing thousands of sequential individual HTTP insert requests inside nested loops (causing extensive N+1 network overhead), it accumulates entities into in-memory lists and performs bulk inserts chunked at 200 records in correct dependency order (Customers -> Account Identities -> Child Tables -> Nominees). This improves migration speeds for bulk files by 100x to 1000x while keeping UI rendering smooth by only printing chunking progress.
+  - Supports full administrative safety controls, live step-by-step progress/error console reporting, and full database purge execution.
+- **VS Code Integration**: Configured dedicated launch targets inside `.vscode/launch.json` for running the Supabase Migrator tool in both Emulator and Production configurations with 1-click execution.
+- Verified 100% clean static analysis (`flutter analyze`) and successful testing (`flutter test` passes 4/4).
+
+**Supabase Migration - Option 2 CQRS Architecture, Security Audit & Schema Normalization Implemented**:
+- Standardized local development origin configurations to `localhost` (`http://localhost:3000`) instead of `127.0.0.1` across `supabase/config.toml` and `SupabaseAuthRepository` to resolve white-screen connection crashes in Chrome debug mode.
+- Refactored and optimized Supabase migrations (`20260626000000` through `20260802000002`):
+  - Removed redundant `customer_id` from deposit tables, standardizing on `account_identities` as the single FK source of truth.
+  - Added FK & RLS query performance indexes across `user_roles`, `customers`, `account_identities`, `nominees`, and `rd_transactions`.
+  - Added tenant isolation ownership checks (`agent_id = v_agent_id`) and `SET search_path = public` to all `SECURITY DEFINER` RPCs (`save_customer_with_sb_account`, `save_one_time_deposit`, `save_recurring_deposit`).
+  - Refactored `20260626000000_initial_schema.sql` using clean code patterns: consolidated child table RLS policies using `FOR ALL`, and automated `updated_at` trigger attachment and RLS enabling loops via PL/pgSQL.
+  - Extracted DRY helper functions for SQL migration operations (`assert_authenticated`, `assert_customer_owner`, `assert_account_owner`, `get_account_nominees`, `replace_account_nominees`) to simplify views and RPC procedures while keeping business logic in the app layer.
+  - Implemented unified, polymorphic helper `upsert_account_identity(...)` to encapsulate parent identity resolution across all customer savings accounts, OTDs, and RDs, DRYing up database orchestration.
+  - Added RLS DELETE policy on `agent_profiles` (`Users can delete own profile`) allowing authenticated users and test teardown hooks to purge test profiles and cascaded records.
+  - Added automatic test teardown hooks (`addTearDown`) across Supabase repository integration test files to clean up test agent profiles and cascaded records, leaving the database clean after test runs.
+  - Revoked write privileges on public tables from the `anon` role.
+  - Added `rd_transactions` to `REPLICA IDENTITY FULL` and `supabase_realtime` publication.
+- GoRouter Root Route & OAuth Parameter Handling:
+  - Added fallback `GoRoute(path: '/', redirect: ...)` to handle OAuth redirects landing on `http://127.0.0.1:3000/?code=...` and forward parameters to `/login` to prevent missing route exceptions.
+- CQRS Data Persistence Pattern:
+  - `customer_details_view`, `one_time_deposit_details_view`, and `recurring_deposit_details_view` for pre-joined reads.
+  - RPC stored procedures for 100% atomic multi-table writes in 1 network roundtrip.
+  - Repositories stream base table CDC change events and map through `asyncMap` view queries for real-time UI updates.
+- Verified 100% test pass (`flutter test`) and clean static analysis (`flutter analyze`).
+
+- **Phase 1 Complete**:
+    - Initialized Supabase CLI and started local emulators.
+    - Defined and applied initial Postgres schema (`agent_profiles`, `customers`, `deposits`, etc.) with RLS policies.
+    - Added `supabase_flutter` and `envied` dependencies.
+    - Fixed schema column alignment (`percentage` instead of `share_percentage` for `nominees`).
+    - Fixed deposit amount editing persistence across `SupabaseRecurringDepositRepository` and `SupabaseOneTimeDepositRepository` by cleaning immutable payload fields (`id`, `created_at`, `updated_at`) and robustly extracting raw numeric input from formatted currency text fields in forms.
+    - Validated zero issues with `flutter analyze` and `flutter test`.
+    - Configured environment variable management with `Env` class and `.env` file.
+    - Created `supabase/seed.sql` for local testing.
+    - Updated documentation (`README.md`, `tasks.md`, `docs/supabase_migration_plan.md`) for Option 2 data persistence architecture.
+- Bumped app version to **v1.6.0+16** and updated `CHANGELOG.md`.
+- Successfully validated codebase with `flutter analyze` and `flutter test` (100% pass).
+- Migrated Application ID from `com.example.postfolio` to `dev.darshanas.postfolio` across Android, iOS, macOS, and Linux.
+- Added a multiline "Notes" text feature to the Customer model to serve as a scratch space for unstructured metadata. Integrated it into the Customer Form and displayed it on the Customer Details screen.
+- Implemented automatic migration of invalid legacy nominees to customer notes in the migration tool.
+- Successfully built the release Android App Bundle (`.aab`) for v1.5.1+15. (Previous milestone)
+- Initiated **Phase 2: App Icons & Branding** (Currently skipped for internal testing).
+- Fixed Kotlin DSL syntax errors in `android/app/build.gradle.kts` and corrected the keystore path in `android/key.properties`.
+- Generated placeholder files for Play Store publication, including `android/key.properties`, `docs/store_assets/README.md`, and `docs/legal/privacy_policy.md`.
+- Configured Android app signing in `build.gradle.kts` to use the release keystore properties.
+- Defined publication checklist in `tasks.md`.
+- Migrated Application ID from `com.example.postfolio` to `dev.darshanas.postfolio` across Android, iOS, macOS, and Linux.
+- Added a multiline "Notes" text feature to the Customer model to serve as a scratch space for unstructured metadata. Integrated it into the Customer Form and displayed it on the Customer Details screen.
+- Refactored currency formatting in deposit forms by centralizing `CurrencyTextInputFormatter` inside hooks, eliminating `replaceAll` hacky string manipulations, fixing numerical precision bugs, and stripping redundant prefix symbols for a cleaner UI.
+- Fixed an issue where the sort and filter badges incorrectly displayed on fresh logins by aligning `StorageService` default values with domain models.
+- Set up core architecture with Riverpod, Freezed, and standard thematic elements.
+- Enabled Firestore Offline Persistence for the Web platform to support cache reading and reduce billable quota hits.
+- Integrated Firebase Auth and Google Sign-In into the core domain layer (`AppUser`, `AuthState`).
+- Configured GoRouter with reactive routing, enforcing redirect rules using an auth-based listenable.
+- Built a functional `AuthRepository` and `AuthController` employing native Dart 3 features for exception handling.
+- Implemented robust `HugeIcon` usage throughout the UI, standardizing visual sizes for list tiles, app bars, detail views, and forms.
+- Migrated the UI layer entirely to `flutter_hooks` and `hooks_riverpod` to eliminate `StatefulWidget` boilerplate and enforce a strictly functional, React-like paradigm for ephemeral UI state.
+- Initiated transition to automatic domain mathematical calculations for Small Savings Schemes. 
+- Unified Floating Action Button (FAB) styles across list and detail pages to ensure visual consistency and correct theme inheritance.
+- Created strictly typed, immutable models (`InvestmentProjection`, `PayoutFrequency`) and functional pure utilities (`ProjectionCalculator`) to handle complex interest and compounding math dynamically.
+- Refactored `BaseDeposit`, `OneTimeDeposit` and `RecurringDeposit` models. Removed stored `maturityDate` and `maturityAmount` fields and replaced them with dynamic getters leveraging the `ProjectionCalculator` to ensure functional purity.
+- Implemented `InvestmentProjectionCard` with live native `TweenAnimationBuilder` counting animations and `flutter_animate` transitions, integrating it directly into `OneTimeDepositFormScreen` and `RecurringDepositFormScreen`.
+- Refined projection UI and mathematical domain logic for MIS, TD, and KVP schemes: decoupled total return from principal maturity for payout schemes, and introduced a prominent "Doubles In" calendar metric for KVP.
+- Standardized date formatting across the application using Slang's `intl` integration and a centralized `DateTimeFormatting` extension to prevent ambiguous format errors.
+- Addressed text truncation issues in Entity tiles by allowing names to wrap across multiple lines and vertically stacking account numbers with their respective maturity dates.
+- Unified Deposit Detail screens to dynamically display projection metrics (Total Invested, Total Interest, Payout Frequency) using Dart 3 pattern matching against the `InvestmentProjection` sealed class.
+- Upgraded the Deposit Status selection in form screens from a standard dropdown to an intuitive `SegmentedButton` using a newly created `AppSegmentedButtonField`.
+- Refactored `Nominee` relationship from raw strings to a strongly-typed `NomineeRelationship` enum, utilizing `@JsonEnum` and `slang` map code generation for boilerplate-free JSON and localization handling.
+- Optimized UI architecture by unifying Deposit Cards into single smart `ConsumerWidget`s (`OneTimeDepositCard` and `RecurringDepositCard`). Eliminated wrapper components and resolved skeleton loader restrictions by implementing a pure internal layout view (`_OneTimeDepositCardView`) and a `.skeleton()` factory, entirely removing the messy `isDummy` conditionals from the domain logic while maintaining Pragmatic Composition.
+- Implemented Quick Actions (Close/Reopen) directly on deposit cards and detail views to optimize UX for status toggling.
+- Upgraded `NomineesInputSection` to use `AppDropdownField` for predefined relationships with a fallback dynamic text field for 'Other'.
+- Surfaced the exact absolute maturity date into the `EntityListTile` subtitle beneath the account number for both `OneTimeDepositCard` and `RecurringDepositCard`, providing better immediate context without cluttering the financial trailing column.
+- Replaced binary `isFixedTenure` boolean with a strict `TenureInputType` enum (`singleFixed`, `fixedOptions`, `derived`) to enforce domain rules and completely eliminate arbitrary free-text custom tenures, successfully fixing the mismatch in KVP's dynamic tenure projections.
+- Standardized `LoginScreen` to use theme dimensions and `flutter_animate` transitions, and added a Sign Out button to `DashboardScreen` and `MainShellScaffold` using Slang localized strings.
+- Refactored Form Screens (`RecurringDeposit`, `OneTimeDeposit`, `Customer`) to reduce `build` method length and complexity.
+- Introduced `FormSectionHeader` to standardize section headers and reduce repetitive styling code.
+- Replaced the custom `Material` layout in `DemoBanner` with the official Flutter `MaterialBanner` widget, dropping explicit colors to fix a visual crossfade lag issue during theme toggling.
+- Refactored all Form routing to utilize temporal push/pop navigation in accordance with the official GoRouter guidelines, removing manual `PopScope` blocking to correctly support predictive back gestures.
+- Fixed convention violations where inline filtering was used instead of dedicated providers (e.g., `customerByIdProvider`).
+- Migrated `OneTimeDepositRepository` and `RecurringDepositRepository` to `cloud_firestore` with real-time stream sync, utilizing UUID generation for client-side offline support.
+- Fully implemented Demo Mode with a toggle on the login page allowing users to skip authentication and use fake repository data for demonstration purposes. Ensured UI strings use Slang `t` conventions. Users can exit demo mode by logging out from the dashboard.
+- Secured Firestore data by scoping repository queries directly to the authenticated user's ID (`users/{userId}/...`), resolving data leakage across users.
+- Improved UX by allowing users to navigate directly to the customer detail screen from deposit details.
+- Implemented contextual deposit creation from the Customer Detail screen using a Material 3 Speed Dial FAB, with automatic pre-filling of customer data and return-navigation.
+- Standardized deposit icons across the entire application for visual consistency.
+- Added strict domain validation to `Nominee` model to ensure that percentage allocations exactly sum to 100%, and centralized this logic across `SavingsAccount`, `OneTimeDeposit`, and `RecurringDeposit`.
+- Configured **Firebase Emulator** support for Firestore (port 8080) and Authentication (port 9099).
+- Added a dedicated `USE_EMULATOR` flag logic in `main.dart` for seamless local development.
+- Developed a comprehensive **Migration Tool** (`lib/run_migration.dart`) that parses legacy CSV data (Customers, Deposits, RD) and bootstraps the local Firestore emulator environment.
+- Fixed a critical Firestore document path error in the migration script by sanitizing account numbers containing slashes before using them as document IDs.
+- Fixed migration script deduplication logic to correctly handle and migrate rows with empty account numbers instead of incorrectly marking them as duplicates.
+- Enhanced the migration tool with real-time statistics tracking and a summary UI showing CSV totals, migration counts, and skip reasons.
+- Integrated the migration tool with the Authentication emulator to allow local testing of authenticated scopes.
+- Updated project documentation (`README.md`) with comprehensive emulator setup, multi-machine Google Sign-In instructions, and environment cleanup steps.
+- Standardized repository authentication guards to use `StateError` and improved error handling across data layers.
+- Fixed a Demo Mode data inconsistency where `FakeDataSource` was assigning random `DepositStatus` values irrespective of chronological maturity dates, preventing accurate date-based sorting. Mock deposits are now constrained to prevent future dates from erroneously appearing as "matured" or "overdue".
+- Updated the dashboard chart tooltip to display full monetary amounts instead of compact numbers for better precision when inspecting data points.
+- Implemented month-level drill-down functionality in the Dashboard's Financial Year chart, allowing users to tap on a year to view deposits distributed across its 12 months (April to March) with a dedicated clear button to return to the yearly view.
+- Fixed a startup crash/debugger pause occurring on unauthenticated launch by ensuring repositories handle the unauthenticated state gracefully during route resolution.
+- Resolved Google Sign-In "Account reauth failed" on Android by registering the machine-specific SHA-1 fingerprint and updating the project configuration via FlutterFire CLI.
+- Configured Linux environment shell profile (`.zshrc`) with correct paths for Flutter and Dart global tools.
+- Refactored project guidelines and agent instructions into a modular, platform-agnostic system in `.agents/rules/`.
+- Enforced strict Conventional Commits formatting and behavioral boundaries to prevent unsolicited agent commit suggestions.
+- Bumped app version to 1.0.4+5 and updated release pipeline documentation for keystore decoding.
+- Standardized primitive formatting using pure Dart extensions (`toRupeeFormat()`, `toPhoneFormat()`, `toAadhaarFormat()`, `toPanFormat()`) across the UI layer, aligning with the project's declarative conventions and keeping widgets dumb.
+- Updated the accessibility theme toggle across all main screens to use the universal standard `Icons.contrast` from the Material library, replacing ambiguous iconography and implementing a clear selected background state.
+- Extracted and centralized duplicated `AppBar` across main navigation screens into `ShellAppBar`, which accepts a dynamic list of custom actions (`actions`) rather than hardcoded booleans, enabling dynamic trailing widgets alongside the persistent `AccessibleThemeToggle`.
+- Localized raw strings in projection grids (`WealthAccumulationGrid` and `IncomeGenerationGrid`) using `slang` and the `.i18n.yaml` framework.
+- Refactored large form widgets (`_OneTimeDepositForm`, `_RecurringDepositForm`, `_CustomerForm`) by extracting complex state initializations, projection calculations, and save logic into pure `flutter_hooks` (`useOneTimeDepositForm`, `useRecurringDepositForm`, `useCustomerForm`), adhering to DRY principles and decoupling business/state logic from declarative UI layouts.
+- Abstracted `NomineesInputSection` logic into a reusable `useNomineeFormState` hook.
+- Extracted large grid components (`WealthAccumulationGrid`, `IncomeGenerationGrid`) from `detail_components.dart` into their own dedicated widget files.
+- Added dynamic bottom padding to the `ListView` in `EntityDetailScaffold` to prevent the `FloatingActionButton` from overlapping with scrollable content when reaching the bottom of the list.
+- Added `dynamic_color` package and implemented Material Monet dynamic theming support in `main.dart`.
+- Updated default sorting of Recurring Deposits to use Serial Number (Increasing) based on user preference.
+- Refactored sorting system to a type-safe Composite Model: decoupled `SortField` and `SortDirection` enums.
+- Updated `AppSortBottomSheet` to a "Dumb Widget" pattern, receiving typed properties and directions, and added a "Reset" button to restore defaults.
+- Moved direction mapping logic into domain enums, making `AppSortBottomSheet` a strictly generic UI component.
+- Standardized all feature search criteria and controllers to use the new architecture and added `clearSort` methods.
+- Hardened agent instructions in `AGENTS.md` and `git.md` with a "Pre-Commit Check" and explicit "STRICT CAPITALIZATION" warnings to ensure consistent commit formatting across sessions.
+- Conducted a comprehensive Flutter UI/UX audit resulting in ~85% Material 3 compliance validation.
+- Eliminated hardcoded generic colors (`Colors.green`, `Colors.white`, `Colors.transparent`) in migration and detail screens in favor of standard Material 3 semantic roles (`colorScheme.tertiary`, `colorScheme.error`).
+- Registered official `SnackBarThemeData` (enforcing floating behavior globally), `ExpansionTileThemeData` (M3 standard colors), and `RadioThemeData` into the centralized `AppTheme`.
+- Replaced the legacy `PopupMenuButton` widget in `EntityListTile` with the official Material 3 `MenuAnchor` for proper menu alignment and modern interaction patterns.
+- Introduced the `animations` package and enabled `SharedAxisPageTransitionsBuilder` across Android, iOS, and macOS platforms to supply polished horizontal M3 page transitions.
+- Enforced `showDragHandle: true` on `CustomerSelectionSheet` to match other bottom sheets.
+- Updated `AlertDialog` instances in `app_dialogs.dart` to use the Material 3 `icon` property, enabling standard M3 center-aligned dialog styles.
+- Standardized `FloatingActionButton.extended` across main list views (`CustomersScreen`, `OneTimeDepositsScreen`, `RecurringDepositsScreen`) to remain in a static extended state for consistent visibility.
+- Established an agnostic AI agent customization framework in `.agents/`, including a dedicated `release-manager` skill and agent persona to automate versioning and pre-release validation.
+- Integrated `SharedPreferences` within a custom `StorageService` to persist implicit user preferences (Themes, List Sorting, List Filters).
+- Standardized UI bottom sheets (`AppSortBottomSheet`, `AppFilterBottomSheet`), standardizing their "Clear" actions to prevent abrupt closures and migrating the Sort sheet from `flutter_hooks` to a purely reactive Riverpod `Consumer` pattern.
+
+## Releases
+- **v2.4.0+23 (2026-11-16)**: v2.4 stabilization — security and data-loss fixes, storage hardening migration, atomic RD ledger writes, pagination past 1,000 rows, exact money and dates, counter-fee overrides, theme and accessibility polish, legacy Firebase data/auth removal, CI gate.
+- **v2.2.1+20 (2026-10-10)**: Overhauled deposit list and detail avatars (`TD` + tenure sublabel, `MIS`, `NSC`, `KVP`, and RD `#<serialNo>`), refined avatar subtext optical spacing, and polished scheme display names.
+- **v2.2.0+19 (2026-10-10)**: Official Post Office historical rate schedule (`PostalRateService`), KVP maturity accuracy fix (`113` months at `7.6%`), Contractual Snapshot pattern, and Docker database backup documentation.
+- **v2.1.0+18 (2026-10-08)**: High-performance CDC streaming stabilization, N+1 deposit card watcher elimination, nominee lateral query pruning, single-entity lazy detail providers, standalone Material/Cupertino packages, DDD AuthUser refactoring, and Flutter SDK baseline upgrade.
+- **v2.0.0+17 (2026-09-02)**: CQRS architecture, parallel Supabase repositories, visual migrator tool, Android build flavors (staging/prod), and initial Supabase CDC streams.
+- **v1.6.0+16 (2026-06-26)**: Application ID migration, nominee migration fix, and Supabase roadmap.
+- **v1.5.1+15 (2026-06-07)**: Added multiline notes field to customer profiles. Formatted currency strings with numeric word translation. Show full amount in dashboard chart tooltips.
+- **v1.5.0+14 (2026-06-07)**: Built analytics dashboard with interactive charts and Financial Year mappings. Enabled Firestore Web offline persistence. Standardized SchemeType UI to Segmented Buttons and restored predictive back gestures on forms.
+- **v1.4.0+13 (2026-06-03)**: Type-safe composite sorting, persisted user preferences, Material 3 UI/UX improvements, and release manager skill.
+- Started Phase 2 of Supabase Migration (Lift & Shift): Enforced snake_case serialization, updated TimestampConverter for dual-db support, and created abstract interfaces for all repositories.
+- Created parallel Supabase repositories (Auth, Customer, OTD, RD) and implemented Riverpod toggles based on Env.useSupabase.
+- Fixed Google Sign-In assertion failure on Supabase Web by routing web authentication through `supabaseClient.auth.signInWithOAuth(OAuthProvider.google)` and bypassing the legacy `google_sign_in` flow on web.
+- Configured local Supabase emulator to support Google Sign-In by adding the `[auth.external.google]` block in `config.toml`.
+- Updated `.vscode/launch.json` to bind Flutter Web to `localhost:3000` to match Supabase's `site_url`.
+- Explicitly set `redirectTo: http://127.0.0.1:3000` inside `supabaseClient.auth.signInWithOAuth()` to ensure Supabase Auth redirects back to the correct host/port on Flutter Web.
+- Configured Supabase Google OAuth to automatically determine `redirectTo` based on the `USE_EMULATOR` flag.
+- Added `--dart-define=USE_EMULATOR=true` to the `Postfolio (Chrome)` launch configuration to ensure Supabase knows when to override `redirectTo` for local development.
+- Configured Flutter Web to use Path URL Strategy instead of Hash Routing by invoking `usePathUrlStrategy()` in `main.dart`, allowing OAuth providers to correctly pass `?code=` back to the app without causing route parse failures or white screens.
+- Updated `GoRouter` redirect logic to preserve query parameters (`?code=...`) when redirecting unauthenticated users to `/login`, preventing Flutter from stripping Supabase's OAuth callback payload.
+- Resolved `flutter pub get` duplicate key error in `pubspec.yaml` caused by malformed automated edits and successfully added `flutter_web_plugins` dependency to enable `usePathUrlStrategy()`.
+- Fixed column naming mismatches (`account_number` -> `account_no`) and added missing `customer_id` columns on `recurring_deposits` and `one_time_deposits` in `supabase/migrations/20260626000000_initial_schema.sql` to match Dart model serialization.
+- Added nominee creation and update handling in `SupabaseRecurringDepositRepository` and `SupabaseOneTimeDepositRepository`.
+- Re-applied migrations with `npx supabase db reset`.

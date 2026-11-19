@@ -83,9 +83,9 @@ class RDMonthInspectorSheet extends ConsumerWidget {
       AsyncData(:final value) => loaded(value),
       AsyncLoading(:final value?) => loaded(value),
       AsyncError(:final error) => ErrorStateView(
-          message: error.toString(),
-          onRetry: () => ref.invalidate(rdLedgerProjectionProvider(rdId)),
-        ),
+        message: error.toString(),
+        onRetry: () => ref.invalidate(rdLedgerProjectionProvider(rdId)),
+      ),
       AsyncLoading() => const _InspectorSkeleton(),
     };
 
@@ -137,12 +137,17 @@ class _InspectorBody extends ConsumerWidget {
     final confirmed = await AppDialogs.confirmAction(
       context,
       title: inspector.absorbFeeTitle,
-      content: inspector.absorbFeeContent(amount: amount.toRupeeFormat(), month: monthNo),
+      content: inspector.absorbFeeContent(
+        amount: amount.toRupeeFormat(),
+        month: monthNo,
+      ),
       confirmText: inspector.absorbRemainingFee(amount: amount.toRupeeFormat()),
     );
     if (confirmed != true || !context.mounted) return;
 
-    final result = await ref.read(rDLedgerControllerProvider.notifier).absorbFee(
+    final result = await ref
+        .read(rDLedgerControllerProvider.notifier)
+        .absorbFee(
           rdId: rdId,
           installmentNo: inst.installmentNo,
           amount: amount,
@@ -160,10 +165,9 @@ class _InspectorBody extends ConsumerWidget {
 
   Future<void> _clearAbsorbedFee(BuildContext context, WidgetRef ref) async {
     final inspector = t.recurringDeposits.ledger.inspector;
-    final result = await ref.read(rDLedgerControllerProvider.notifier).clearAbsorbedFee(
-          rdId: rdId,
-          installmentNo: installment.installmentNo,
-        );
+    final result = await ref
+        .read(rDLedgerControllerProvider.notifier)
+        .clearAbsorbedFee(rdId: rdId, installmentNo: installment.installmentNo);
     if (!context.mounted) return;
     AppFeedback.showResult(
       context,
@@ -232,7 +236,9 @@ class _InspectorBody extends ConsumerWidget {
         trailing: inst.outstandingAmount > 0
             ? passbook.owes(amount: inst.outstandingAmount.toRupeeFormat())
             : inspector.paid,
-        trailingColor: inst.outstandingAmount > 0 ? visual.foreground : scheme.primary,
+        trailingColor: inst.outstandingAmount > 0
+            ? visual.foreground
+            : scheme.primary,
       ),
       // No "deposited on" row when there is no date — the status chip already says so.
       if (depositedOn != null)
@@ -256,7 +262,9 @@ class _InspectorBody extends ConsumerWidget {
         ),
       if (canAbsorbFee)
         AppButton.outlined(
-          label: inspector.absorbRemainingFee(amount: inst.absorbableFee.toRupeeFormat()),
+          label: inspector.absorbRemainingFee(
+            amount: inst.absorbableFee.toRupeeFormat(),
+          ),
           icon: HugeIcons.strokeRoundedWallet02,
           expand: true,
           onPressed: isBusy ? null : () => _absorbRemainingFee(context, ref),
@@ -296,10 +304,14 @@ class _InspectorBody extends ConsumerWidget {
         if (showCollectHint) ...[
           AppSpacings.gapSm,
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingLg,
+            ),
             child: Text(
               inspector.collectHint(month: nextDueNo.toString()),
-              style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
           ),
         ],
@@ -345,7 +357,9 @@ class _MetricRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
           ),
           AppSpacings.gapXxs,
           Row(

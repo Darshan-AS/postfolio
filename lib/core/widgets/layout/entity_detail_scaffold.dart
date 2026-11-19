@@ -11,14 +11,17 @@ import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
-import 'package:postfolio/core/widgets/layout/entity_list_tile.dart' show EntityAction;
+import 'package:postfolio/core/widgets/layout/entity_list_tile.dart'
+    show EntityAction;
 import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
 import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 
-export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart' show AppAvatarShape;
-export 'package:postfolio/core/widgets/layout/entity_list_tile.dart' show EntityAction;
+export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart'
+    show AppAvatarShape;
+export 'package:postfolio/core/widgets/layout/entity_list_tile.dart'
+    show EntityAction;
 
 class EntityDetailScaffold extends StatelessWidget {
   final String appBarTitle;
@@ -122,7 +125,11 @@ class EntityDetailScaffold extends StatelessWidget {
         AppMenu(
           entries: [
             for (final action in menuActions)
-              AppMenuEntry(label: action.label, icon: action.icon, onPressed: action.onTap),
+              AppMenuEntry(
+                label: action.label,
+                icon: action.icon,
+                onPressed: action.onTap,
+              ),
             AppMenuEntry(
               label: t.common.delete,
               icon: const HugeIcon(
@@ -160,7 +167,9 @@ class EntityDetailScaffold extends StatelessWidget {
       for (final section in body)
         EntityHeroFollower(
           tag: heroTag,
-          child: bodyLoading ? Skeletonizer(enabled: true, child: section) : section,
+          child: bodyLoading
+              ? Skeletonizer(enabled: true, child: section)
+              : section,
         ),
     ];
     final animatedItems = disableAnimations
@@ -205,7 +214,9 @@ class EntityDetailScaffold extends StatelessWidget {
       ],
     );
 
-    return onRefresh == null ? list : AppRefreshIndicator(onRefresh: onRefresh, child: list);
+    return onRefresh == null
+        ? list
+        : AppRefreshIndicator(onRefresh: onRefresh, child: list);
   }
 }
 
@@ -287,14 +298,20 @@ class EntityDetailHeader extends StatelessWidget {
             Expanded(
               child: stacked
                   // Aligned, so the title's box is as wide as the title and no wider.
-                  ? Align(alignment: AlignmentDirectional.centerStart, child: titleText)
+                  ? Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: titleText,
+                    )
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [titleText, ?waiting(subtitle)],
                     ),
             ),
-            if (badge != null && !stacked) ...[AppSpacings.gapSm, ?waiting(badge)],
+            if (badge != null && !stacked) ...[
+              AppSpacings.gapSm,
+              ?waiting(badge),
+            ],
           ],
         ),
         if (stacked)
@@ -332,8 +349,10 @@ class EntityDetailHeader extends StatelessWidget {
     return AppShapeAvatar(
       size: AppDimensions.avatarLg,
       shape: avatarShape,
-      backgroundColor: avatarBackgroundColor ?? theme.colorScheme.primaryContainer,
-      foregroundColor: avatarForegroundColor ?? theme.colorScheme.onPrimaryContainer,
+      backgroundColor:
+          avatarBackgroundColor ?? theme.colorScheme.primaryContainer,
+      foregroundColor:
+          avatarForegroundColor ?? theme.colorScheme.onPrimaryContainer,
       child: avatarChild ?? const SizedBox.shrink(),
     );
   }

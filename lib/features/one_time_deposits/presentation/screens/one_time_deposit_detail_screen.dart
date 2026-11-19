@@ -32,7 +32,11 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
   /// Where the row that opened the screen is, when a row did (`EntityHero.tagFrom`).
   final String? openedFrom;
 
-  const OneTimeDepositDetailScreen({super.key, required this.depositId, this.openedFrom});
+  const OneTimeDepositDetailScreen({
+    super.key,
+    required this.depositId,
+    this.openedFrom,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,7 +56,9 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
         final isKnown = deposit.id == depositId;
         // The avatar, the customer's name, the account number and the amount travel here
         // from the row.
-        final heroTag = isKnown ? EntityHero.tagFrom(openedFrom, depositId) : null;
+        final heroTag = isKnown
+            ? EntityHero.tagFrom(openedFrom, depositId)
+            : null;
         final accountNo = deposit.accountNo ?? t.common.notProvided;
         final customerName = (deposit.customerName?.isNotEmpty ?? false)
             ? deposit.customerName!
@@ -61,7 +67,8 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
 
         return EntityDetailScaffold(
           appBarTitle: t.common.depositDetails,
-          onRefresh: () => ref.refresh(oneTimeDepositByIdProvider(depositId).future),
+          onRefresh: () =>
+              ref.refresh(oneTimeDepositByIdProvider(depositId).future),
           // In the menu, with its label, as on the deposit's row in the list. It was a bare
           // seal icon in the app bar.
           menuActions: [
@@ -79,7 +86,9 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 final isActive = deposit.status == DepositStatus.active;
                 final confirmed = await AppDialogs.confirmAction(
                   context,
-                  title: isActive ? t.common.closeDeposit : t.common.reopenDeposit,
+                  title: isActive
+                      ? t.common.closeDeposit
+                      : t.common.reopenDeposit,
                   content: isActive
                       ? t.oneTimeDeposits.closeDepositConfirmation
                       : t.oneTimeDeposits.reopenDepositConfirmation,
@@ -143,13 +152,17 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                       accountNo,
                       maxLines: 1,
                       softWrap: false,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: supporting),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.copyWith(color: supporting),
                     ),
                   ),
                 ),
                 Text(
                   deposit.schemeType.displayName,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: supporting),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: supporting),
                 ),
                 // The date the screen is most often opened for; it was only in the
                 // Timeline group, half a screen down.
@@ -248,7 +261,8 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
             DetailSection(
               title: t.oneTimeDeposits.sections.accountInformation,
               children: [
-                if (deposit.accountNo != null && deposit.accountNo!.isNotEmpty) ...[
+                if (deposit.accountNo != null &&
+                    deposit.accountNo!.isNotEmpty) ...[
                   DetailItem(
                     icon: const HugeIcon(
                       icon: HugeIcons.strokeRoundedTicket01,
@@ -268,10 +282,10 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   value: (deposit.customerName?.isNotEmpty ?? false)
                       ? deposit.customerName!
                       : (ref
-                              .watch(customerByIdProvider(deposit.customerId))
-                              .value
-                              ?.name ??
-                          deposit.customerId),
+                                .watch(customerByIdProvider(deposit.customerId))
+                                .value
+                                ?.name ??
+                            deposit.customerId),
                   onTap: () =>
                       CustomerDetailRoute(deposit.customerId).push(context),
                 ),
@@ -311,7 +325,9 @@ class _MaturityLine extends StatelessWidget {
       urgency == MaturityUrgency.matured
           ? t.common.maturedOn(date: date)
           : t.common.maturesOn(date: date),
-      style: AppTypography.emphasizedOf(context).bodyMedium?.copyWith(color: color),
+      style: AppTypography.emphasizedOf(
+        context,
+      ).bodyMedium?.copyWith(color: color),
     );
   }
 }

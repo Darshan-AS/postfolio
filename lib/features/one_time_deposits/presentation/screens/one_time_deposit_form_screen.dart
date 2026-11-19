@@ -35,9 +35,7 @@ class OneTimeDepositFormScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (depositId == null) {
-      return _OneTimeDepositForm(
-        initialCustomerId: initialCustomerId,
-      );
+      return _OneTimeDepositForm(initialCustomerId: initialCustomerId);
     }
     return AsyncSingleEntityBuilder<OneTimeDeposit>(
       state: ref.watch(oneTimeDepositByIdProvider(depositId!)),
@@ -131,7 +129,8 @@ class _OneTimeDepositForm extends HookConsumerWidget {
                         selectedScheme: state.selectedScheme,
                         selectedTermYears: state.selectedTermYears,
                         selectedTermMonths: state.selectedTermMonths,
-                        principalAmountController: state.principalAmountController,
+                        principalAmountController:
+                            state.principalAmountController,
                         interestRateController: state.interestRateController,
                         startDate: state.startDate,
                         startDateController: state.startDateController,
@@ -189,8 +188,7 @@ Widget _buildAccountInformation({
         labelText: t.oneTimeDeposits.fields.status,
         segments: DepositStatus.values
             .map(
-              (status) =>
-                  AppSegment(value: status, label: status.displayName),
+              (status) => AppSegment(value: status, label: status.displayName),
             )
             .toList(),
         onChanged: (status) {
@@ -224,9 +222,7 @@ Widget _buildInvestmentDetails(
         value: selectedScheme.value,
         labelText: t.oneTimeDeposits.fields.schemeType,
         segments: OneTimeSchemeType.values
-            .map(
-              (scheme) => AppSegment(value: scheme, label: scheme.shortName),
-            )
+            .map((scheme) => AppSegment(value: scheme, label: scheme.shortName))
             .toList(),
         onChanged: state.onSchemeChanged,
         prefixIcon: const HugeIcon(
@@ -287,7 +283,9 @@ Widget _buildInvestmentDetails(
         allowedTenuresInYears: selectedScheme.value.allowedTenuresInYears,
         selectedYears: selectedTermYears.value,
         selectedMonths: selectedTermMonths.value,
-        derivedString: projection is WealthAccumulation ? projection.note : null,
+        derivedString: projection is WealthAccumulation
+            ? projection.note
+            : null,
         onChanged: state.onDurationChanged,
       ),
       AppSpacings.gapLg,

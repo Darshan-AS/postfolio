@@ -1,10 +1,13 @@
-# Several suites (supabase_*_test.dart) talk to the shared local Supabase stack
-# (one GoTrue, one realtime server). Run suites serially so their sign-ups and channel
-# subscriptions never race; the whole suite still finishes in ~12s.
+# The integration suites (supabase_*_test.dart) share one local Supabase stack: one GoTrue,
+# one Realtime server. A bare `flutter test` therefore runs test files one at a time, so
+# their sign-ups and channel subscriptions never race.
+#
+# The fast suite shares nothing between files. Pass --concurrency to run its files side by
+# side; the flag overrides the value below (340 tests: 68 s at 1, 22 s at 14).
 #
 # Fast unit/controller/widget loop (no Docker required):
-#   flutter test --exclude-tags integration
-# Real Supabase stack integration & E2E suites only:
+#   flutter test --exclude-tags integration --concurrency 8
+# Real Supabase stack integration & E2E suites only, one file at a time:
 #   flutter test --tags integration
 concurrency: 1
 

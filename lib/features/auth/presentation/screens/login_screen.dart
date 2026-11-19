@@ -92,6 +92,24 @@ class LoginScreen extends ConsumerWidget {
                           .signInWithGoogle();
                     },
                   ),
+                  // Only in a build that talks to the local Supabase stack: one tap signs in
+                  // as the agent the seed file creates, who owns the seed data.
+                  if (ref.watch(seededAgentSignInAvailableProvider)) ...[
+                    AppSpacings.gapSm,
+                    AppButton.tonal(
+                      label: t.auth.signInAsSeededAgent,
+                      icon: HugeIcons.strokeRoundedDatabase,
+                      size: AppButtonSize.medium,
+                      expand: true,
+                      onPressed: isSigningIn
+                          ? null
+                          : () {
+                              ref
+                                  .read(authControllerProvider.notifier)
+                                  .signInAsSeededAgent();
+                            },
+                    ),
+                  ],
                   AppSpacings.gapSm,
                   Center(
                     child: AppButton.text(

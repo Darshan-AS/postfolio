@@ -170,8 +170,10 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                     criteria.searchQuery.isNotEmpty || activeFilterCount > 0,
                 onClearFilters: () =>
                     ref.read(oneTimeListCriteriaProvider.notifier).clearAll(),
-                onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
-                onRefresh: () => ref.refresh(oneTimeDepositsControllerProvider.future),
+                onRetry: () =>
+                    ref.invalidate(oneTimeDepositsControllerProvider),
+                onRefresh: () =>
+                    ref.refresh(oneTimeDepositsControllerProvider.future),
                 itemBuilder: (context, deposit, position) =>
                     OneTimeDepositCard(deposit: deposit, position: position),
                 skeletonBuilder: (position) =>

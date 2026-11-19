@@ -40,17 +40,18 @@ void main() {
   final source = FakeDataSource();
   final ops = t.recurringDeposits.monthlyOperations;
 
-  /// The customer given a second account in [pumpHub], and one of those who keep one.
-  const twoAccounts = 'Deepika Sharma';
-  const oneAccount = 'Arjun Mehta';
+  /// The customer with two recurring deposits in [FakeDataSource], and one with a single RD.
+  const twoAccounts = 'Ramesh Hegde';
+  const oneAccount = 'Asha Kulkarni';
 
   Future<void> settle(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 250));
     await tester.pump(const Duration(milliseconds: 500));
   }
 
-  /// Pumps the Hub in a 360dp-wide window. The demo ledger is paid up to 27 Oct 2026, so
-  /// the default date shows a settled month and a date after that shows overdue accounts.
+  /// Pumps the Hub in a 360dp-wide window. [FakeDataSource] is anchored at 27 Oct 2026:
+  /// that default date shows every Hub state (settled, in hand, partial, unpaid, arrears,
+  /// fronted); June 2026 is a settled month; December 2026 puts every account in arrears.
   Future<ProviderContainer> pumpHub(
     WidgetTester tester, {
     double width = 360,
@@ -68,15 +69,10 @@ void main() {
     final ledger = FakeRDLedgerRepository(
       transactions: source.rdTransactions,
       poDeposits: source.rdPoDeposits,
+      absorptions: source.rdFeeAbsorptions,
     );
-    // Deepika Sharma holds two accounts here: one customer with a header, four without.
     final deposits = FakeRecurringDepositRepository(
-      deposits: [
-        ...source.recurringDeposits,
-        source.recurringDeposits
-            .firstWhere((d) => d.customerName == twoAccounts)
-            .copyWith(id: 'rd-second', serialNo: '6', accountNo: '100200306'),
-      ],
+      deposits: source.recurringDeposits,
     );
     addTearDown(ledger.dispose);
     addTearDown(deposits.dispose);
@@ -84,7 +80,9 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
-        clockProvider.overrideWithValue(() => today ?? DateTime(2026, 4, 20)),
+        clockProvider.overrideWithValue(
+          () => today ?? FakeDataSource.defaultReferenceDate,
+        ),
         customerRepositoryProvider.overrideWithValue(
           FakeCustomerRepository(customers: source.customers),
         ),
@@ -133,7 +131,7 @@ void main() {
     testWidgets(
       'due-window group, group-by and select toggles drive the Hub state',
       (tester) async {
-        final container = await pumpHub(tester);
+        final container = await pumpHub(tester, height: 3600);
         expect(find.byType(RDMonthlyOperationCard), findsWidgets);
         RDHubFiltersState filters() => container.read(rDHubFiltersProvider);
         final kpis = container.read(monthlyOperationsKpiProvider);
@@ -182,51 +180,55 @@ void main() {
       },
     );
 
-    testWidgets('in selection mode a row\'s avatar is its selection mark: a checkbox to a '
-        'screen reader, ticked by a tap on the row', (tester) async {
-      final semantics = tester.ensureSemantics();
-      final container = await pumpHub(tester);
-      final label = ops.card.selectRow(name: oneAccount);
-      expect(selectionMarks(), findsNothing);
-      expect(find.bySemanticsLabel(label), findsNothing);
+    testWidgets(
+      'in selection mode a row\'s avatar is its selection mark: a checkbox to a '
+      'screen reader, ticked by a tap on the row',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        final container = await pumpHub(tester);
+        final label = ops.card.selectRow(name: oneAccount);
+        expect(selectionMarks(), findsNothing);
+        expect(find.bySemanticsLabel(label), findsNothing);
 
-      await tester.tap(find.byTooltip(ops.toolbar.selectMode));
-      await settle(tester);
+        await tester.tap(find.byTooltip(ops.toolbar.selectMode));
+        await settle(tester);
 
-      SemanticsNode mark() => tester.getSemantics(find.bySemanticsLabel(label));
-      expect(
-        mark(),
-        matchesSemantics(
-          label: label,
-          hasCheckedState: true,
-          hasEnabledState: true,
-          isEnabled: true,
-          hasTapAction: true,
-        ),
-      );
+        SemanticsNode mark() =>
+            tester.getSemantics(find.bySemanticsLabel(label));
+        expect(
+          mark(),
+          matchesSemantics(
+            label: label,
+            hasCheckedState: true,
+            hasEnabledState: true,
+            isEnabled: true,
+            hasTapAction: true,
+          ),
+        );
 
-      await tester.tap(find.text(oneAccount));
-      await settle(tester);
-      expect(container.read(rDHubSelectionProvider).count, 1);
-      expect(
-        mark(),
-        matchesSemantics(
-          label: label,
-          hasCheckedState: true,
-          isChecked: true,
-          hasEnabledState: true,
-          isEnabled: true,
-          hasTapAction: true,
-        ),
-      );
+        await tester.tap(find.text(oneAccount));
+        await settle(tester);
+        expect(container.read(rDHubSelectionProvider).count, 1);
+        expect(
+          mark(),
+          matchesSemantics(
+            label: label,
+            hasCheckedState: true,
+            isChecked: true,
+            hasEnabledState: true,
+            isEnabled: true,
+            hasTapAction: true,
+          ),
+        );
 
-      // The mark itself can be acted on, as the checkbox it replaces could.
-      mark().owner!.performAction(mark().id, SemanticsAction.tap);
-      await settle(tester);
-      expect(container.read(rDHubSelectionProvider).count, 0);
-      expect(tester.takeException(), isNull);
-      semantics.dispose();
-    });
+        // The mark itself can be acted on, as the checkbox it replaces could.
+        mark().owner!.performAction(mark().id, SemanticsAction.tap);
+        await settle(tester);
+        expect(container.read(rDHubSelectionProvider).count, 0);
+        expect(tester.takeException(), isNull);
+        semantics.dispose();
+      },
+    );
 
     testWidgets('the avatar takes time to turn over', (tester) async {
       await pumpHub(tester, disableAnimations: false);
@@ -239,44 +241,51 @@ void main() {
       expect(selectionMarks(), findsWidgets);
     });
 
-    testWidgets('on a device that removes animations the mark is there in the next frame', (
-      tester,
-    ) async {
-      await pumpHub(tester);
-      await tester.tap(find.byTooltip(ops.toolbar.selectMode));
-      await tester.pump();
-      await tester.pump();
-      expect(selectionMarks(), findsWidgets);
-      expect(tester.takeException(), isNull);
-    });
+    testWidgets(
+      'on a device that removes animations the mark is there in the next frame',
+      (tester) async {
+        await pumpHub(tester);
+        await tester.tap(find.byTooltip(ops.toolbar.selectMode));
+        await tester.pump();
+        await tester.pump();
+        expect(selectionMarks(), findsWidgets);
+        expect(tester.takeException(), isNull);
+      },
+    );
 
-    testWidgets('switching to a settled month shows its statement without the arrival', (
-      tester,
-    ) async {
-      await pumpHub(tester, disableAnimations: false);
-      final bar = find.byKey(const ValueKey('bar'));
-      final statement = find.byKey(const ValueKey('settled'));
-      expect(statement, findsOneWidget);
+    testWidgets(
+      'switching to a settled month shows its statement without the arrival',
+      (tester) async {
+        // June 2026 is fully settled; July 2026 has Harish Gowda unpaid.
+        await pumpHub(
+          tester,
+          disableAnimations: false,
+          today: DateTime(2026, 6, 20),
+        );
+        final bar = find.byKey(const ValueKey('bar'));
+        final statement = find.byKey(const ValueKey('settled'));
+        expect(statement, findsOneWidget);
 
-      // May 2026 is still to come: nothing of it is settled.
-      await tester.tap(find.byTooltip(ops.nextMonth));
-      await settle(tester);
-      expect(bar, findsOneWidget);
-      expect(statement, findsNothing);
+        // July 2026 has an unpaid account: bar shows instead of the settled statement.
+        await tester.tap(find.byTooltip(ops.nextMonth));
+        await settle(tester);
+        expect(bar, findsOneWidget);
+        expect(statement, findsNothing);
 
-      // Back to April. Whenever its statement is on screen, the bar it would replace in an
-      // arrival is not.
-      await tester.tap(find.byTooltip(ops.previousMonth));
-      var seen = false;
-      for (var frame = 0; frame < 30; frame++) {
-        await tester.pump(const Duration(milliseconds: 20));
-        if (statement.evaluate().isNotEmpty) {
-          seen = true;
-          expect(bar, findsNothing, reason: 'frame $frame');
+        // Back to June. Whenever its statement is on screen, the bar it would replace in an
+        // arrival is not.
+        await tester.tap(find.byTooltip(ops.previousMonth));
+        var seen = false;
+        for (var frame = 0; frame < 30; frame++) {
+          await tester.pump(const Duration(milliseconds: 20));
+          if (statement.evaluate().isNotEmpty) {
+            seen = true;
+            expect(bar, findsNothing, reason: 'frame $frame');
+          }
         }
-      }
-      expect(seen, isTrue);
-    });
+        expect(seen, isTrue);
+      },
+    );
 
     testWidgets(
       'a header tile filters the list and turns into a filled tile while selected',
@@ -320,20 +329,35 @@ void main() {
       'Select All fills the floating batch bar, which reports and clears the selection',
       (tester) async {
         // Animations on: the bar's entrance must come to rest.
-        final container = await pumpHub(tester, disableAnimations: false);
+        final container = await pumpHub(
+          tester,
+          height: 3600,
+          disableAnimations: false,
+        );
         await tester.pumpAndSettle();
         expect(find.byType(RDHubBatchBar), findsNothing);
 
-        // The one customer with two accounts: Select All ticks both.
+        // The customer with two accounts (Ramesh Hegde): Select All ticks both.
         final selectAll = find.text(ops.customerGroup.selectGroup);
         await tester.ensureVisible(selectAll);
         await tester.pumpAndSettle();
         await tester.tap(selectAll);
         await tester.pumpAndSettle();
 
+        expect(container.read(rDHubSelectionProvider).isSelectionMode, isTrue);
+        expect(container.read(rDHubSelectionProvider).count, 2);
+
+        // Also select Bharat Shetty (in hand, ready to deposit) so the batch bar shows a
+        // ready-to-deposit count and its Deposit action button.
+        final bharat = find.text('Bharat Shetty');
+        await tester.ensureVisible(bharat);
+        await tester.pumpAndSettle();
+        await tester.tap(bharat);
+        await tester.pumpAndSettle();
+
         final selection = container.read(rDHubSelectionProvider);
         expect(selection.isSelectionMode, isTrue);
-        expect(selection.count, 2);
+        expect(selection.count, 3);
 
         final summary = container.read(batchSelectionSummaryProvider);
         expect(summary.readyInstallments, greaterThan(0));
@@ -390,22 +414,22 @@ void main() {
         final container = await pumpHub(tester);
         DateTime month() => container.read(rDHubMonthProvider);
 
-        expect(month(), DateTime(2026, 4));
+        expect(month(), DateTime(2026, 10));
         expect(find.text(ops.currentMonth), findsNothing);
 
         await tester.tap(find.byTooltip(ops.nextMonth));
         await settle(tester);
-        expect(month(), DateTime(2026, 5));
+        expect(month(), DateTime(2026, 11));
         expect(find.text(ops.currentMonth), findsOneWidget);
 
         await tester.tap(find.text(ops.currentMonth));
         await settle(tester);
-        expect(month(), DateTime(2026, 4));
+        expect(month(), DateTime(2026, 10));
         expect(find.text(ops.currentMonth), findsNothing);
 
         await tester.tap(find.byTooltip(ops.previousMonth));
         await settle(tester);
-        expect(month(), DateTime(2026, 3));
+        expect(month(), DateTime(2026, 9));
 
         await tester.tap(find.byTooltip(ops.toolbar.pickMonth));
         await settle(tester);
@@ -416,39 +440,53 @@ void main() {
   });
 
   group('Monthly Hub layout', () {
-    testWidgets('only a customer with several accounts gets a header; its rows are titled '
-        'by account', (tester) async {
-      final container = await pumpHub(tester, height: 2400);
+    testWidgets(
+      'only a customer with several accounts gets a header; its rows are titled '
+      'by account',
+      (tester) async {
+        final container = await pumpHub(tester, height: 3600);
 
-      // One account: the row carries the name, and nothing repeats it above.
-      expect(find.text(oneAccount), findsOneWidget);
-      expect(find.textContaining('$oneAccount •'), findsNothing);
+        // One account: the row carries the name, and nothing repeats it above.
+        expect(find.text(oneAccount), findsOneWidget);
+        expect(find.textContaining('$oneAccount •'), findsNothing);
 
-      // Two accounts: the name is in the header only, and each row says which account.
-      expect(find.textContaining('$twoAccounts •'), findsOneWidget);
-      expect(find.text(twoAccounts), findsNothing);
-      final titles = [
-        for (final card in tester.widgetList<RDMonthlyOperationCard>(
-          find.byType(RDMonthlyOperationCard),
-        ))
-          if (card.item.deposit.customerName == twoAccounts) card.titleByAccount,
-      ];
-      expect(titles, [isTrue, isTrue]);
-      expect(find.textContaining('…0306'), findsOneWidget);
+        // Two accounts: the name is in the header only, and each row says which account.
+        expect(find.textContaining('$twoAccounts •'), findsOneWidget);
+        expect(find.text(twoAccounts), findsNothing);
+        final titles = [
+          for (final card in tester.widgetList<RDMonthlyOperationCard>(
+            find.byType(RDMonthlyOperationCard),
+          ))
+            if (card.item.deposit.customerName == twoAccounts)
+              card.titleByAccount,
+        ];
+        expect(titles, [isTrue, isTrue]);
+        expect(find.textContaining('…0017'), findsOneWidget);
+        expect(find.textContaining('…0018'), findsOneWidget);
 
-      // Ungrouped there is no header to carry the name, so every row does.
-      container.read(rDHubFiltersProvider.notifier).toggleGroupByCustomer(false);
-      await settle(tester);
-      expect(find.text(twoAccounts), findsNWidgets(2));
-      expect(find.textContaining('$twoAccounts •'), findsNothing);
-    });
+        // Ungrouped there is no header to carry the name, so every row does.
+        container
+            .read(rDHubFiltersProvider.notifier)
+            .toggleGroupByCustomer(false);
+        await settle(tester);
+        expect(find.text(twoAccounts), findsNWidgets(2));
+        expect(find.textContaining('$twoAccounts •'), findsNothing);
+      },
+    );
 
-    testWidgets('a row shows the amount to collect once, on its button', (tester) async {
+    testWidgets('a row shows the amount to collect once, on its button', (
+      tester,
+    ) async {
       await pumpHub(tester, height: 2400, today: DateTime(2026, 12, 20));
 
       final cards = tester
-          .widgetList<RDMonthlyOperationCard>(find.byType(RDMonthlyOperationCard))
-          .where((card) => card.item.isCustomerPending && card.item.totalOutstanding > 0)
+          .widgetList<RDMonthlyOperationCard>(
+            find.byType(RDMonthlyOperationCard),
+          )
+          .where(
+            (card) =>
+                card.item.isCustomerPending && card.item.totalOutstanding > 0,
+          )
           .toList();
       expect(cards, isNotEmpty);
 
@@ -458,7 +496,11 @@ void main() {
           of: find.byWidget(card),
           matching: find.textContaining(amount),
         );
-        expect(inRow, findsOneWidget, reason: '$amount in ${card.item.deposit.accountNo}');
+        expect(
+          inRow,
+          findsOneWidget,
+          reason: '$amount in ${card.item.deposit.accountNo}',
+        );
         expect(
           tester.widget<Text>(inRow).data,
           ops.card.collect(amount: amount),
@@ -466,7 +508,9 @@ void main() {
       }
     });
 
-    testWidgets('the status pill and the action share one line', (tester) async {
+    testWidgets('the status pill and the action share one line', (
+      tester,
+    ) async {
       await pumpHub(tester, height: 2400, today: DateTime(2026, 12, 20));
 
       final card = find.byType(RDMonthlyOperationCard).first;
@@ -474,35 +518,46 @@ void main() {
         find.descendant(of: card, matching: find.byType(RDStatusPill)),
       );
       final action = tester.getRect(
-        find.descendant(of: card, matching: find.byType(RDOperationActionButton)),
+        find.descendant(
+          of: card,
+          matching: find.byType(RDOperationActionButton),
+        ),
       );
       expect(action.left, greaterThan(pill.right));
       expect(action.center.dy, closeTo(pill.center.dy, 1));
       // Touch target of the action, though it hugs its label.
       expect(action.height, greaterThanOrEqualTo(48));
       // Nothing but the caption may follow that line: the action no longer has its own.
-      expect(tester.getRect(card).bottom - action.bottom, lessThan(action.height));
-    });
-
-    testWidgets('Collect is the main action in the brand colour even in arrears; Deposit '
-        'is tonal', (tester) async {
-      // December: every account is in arrears.
-      await pumpHub(tester, height: 2400, today: DateTime(2026, 12, 20));
-      final collect = tester.widgetList<AppButton>(
-        find.descendant(
-          of: find.byType(RDOperationActionButton),
-          matching: find.byType(AppButton),
-        ),
+      expect(
+        tester.getRect(card).bottom - action.bottom,
+        lessThan(action.height),
       );
-      expect(collect, isNotEmpty);
-      for (final button in collect) {
-        expect(button.variant, AppButtonVariant.filled, reason: button.label);
-        expect(button.isDestructive, isFalse, reason: button.label);
-        expect(button.backgroundColor, isNull, reason: button.label);
-      }
     });
 
-    testWidgets('a Deposit action is tonal, whatever the status of its row', (tester) async {
+    testWidgets(
+      'Collect is the main action in the brand colour even in arrears; Deposit '
+      'is tonal',
+      (tester) async {
+        // December: every account is in arrears.
+        await pumpHub(tester, height: 2400, today: DateTime(2026, 12, 20));
+        final collect = tester.widgetList<AppButton>(
+          find.descendant(
+            of: find.byType(RDOperationActionButton),
+            matching: find.byType(AppButton),
+          ),
+        );
+        expect(collect, isNotEmpty);
+        for (final button in collect) {
+          expect(button.variant, AppButtonVariant.filled, reason: button.label);
+          expect(button.isDestructive, isFalse, reason: button.label);
+          expect(button.backgroundColor, isNull, reason: button.label);
+        }
+      },
+    );
+
+    testWidgets('a Deposit action is tonal, whatever the status of its row', (
+      tester,
+    ) async {
       // April: some accounts are settled with money waiting for the Post Office.
       await pumpHub(tester, height: 2400);
       final deposits = tester
@@ -512,7 +567,11 @@ void main() {
               matching: find.byType(AppButton),
             ),
           )
-          .where((button) => button.label.startsWith(ops.card.deposit(count: 1).split(' ').first))
+          .where(
+            (button) => button.label.startsWith(
+              ops.card.deposit(count: 1).split(' ').first,
+            ),
+          )
           .toList();
       expect(deposits, isNotEmpty);
       for (final button in deposits) {
@@ -521,7 +580,9 @@ void main() {
       }
     });
 
-    testWidgets('the four header tiles take under 150dp of a 360dp phone', (tester) async {
+    testWidgets('the four header tiles take under 150dp of a 360dp phone', (
+      tester,
+    ) async {
       await pumpHub(tester);
 
       final tiles = [
@@ -532,7 +593,10 @@ void main() {
           ops.kpis.arrears,
         ])
           tester.getRect(
-            find.ancestor(of: find.text(label), matching: find.byType(AppGroupTile)),
+            find.ancestor(
+              of: find.text(label),
+              matching: find.byType(AppGroupTile),
+            ),
           ),
       ];
       final top = tiles.map((r) => r.top).reduce((a, b) => a < b ? a : b);
@@ -558,92 +622,119 @@ void main() {
           ops.kpis.arrears,
         ])
           tester.getRect(
-            find.ancestor(of: find.text(label), matching: find.byType(AppGroupTile)),
+            find.ancestor(
+              of: find.text(label),
+              matching: find.byType(AppGroupTile),
+            ),
           ),
       ];
       return tiles.reduce((a, b) => a.expandToInclude(b));
     }
 
-    testWidgets('the status pill is at the same height in a row with a button and in a row '
-        'without one', (tester) async {
-      // April: settled rows, which have no button, and rows waiting for the Post Office.
-      await pumpHub(tester, width: roomy, height: 2400);
+    testWidgets(
+      'the status pill is at the same height in a row with a button and in a row '
+      'without one',
+      (tester) async {
+        // April: settled rows, which have no button, and rows waiting for the Post Office.
+        await pumpHub(tester, width: roomy, height: 2400);
 
-      final withButton = <double>[];
-      final withoutButton = <double>[];
-      for (final element in find.byType(RDMonthlyOperationCard).evaluate()) {
-        final card = find.byWidget(element.widget);
-        final pill = tester.getRect(
-          find.descendant(of: card, matching: find.byType(RDStatusPill)),
-        );
-        final hasButton = find
-            .descendant(of: card, matching: find.byType(RDOperationActionButton))
-            .evaluate()
-            .isNotEmpty;
-        (hasButton ? withButton : withoutButton).add(pill.top - tester.getRect(card).top);
-      }
-      expect(withButton, isNotEmpty);
-      expect(withoutButton, isNotEmpty);
+        final withButton = <double>[];
+        final withoutButton = <double>[];
+        for (final element in find.byType(RDMonthlyOperationCard).evaluate()) {
+          final card = find.byWidget(element.widget);
+          final pill = tester.getRect(
+            find.descendant(of: card, matching: find.byType(RDStatusPill)),
+          );
+          final hasButton = find
+              .descendant(
+                of: card,
+                matching: find.byType(RDOperationActionButton),
+              )
+              .evaluate()
+              .isNotEmpty;
+          (hasButton ? withButton : withoutButton).add(
+            pill.top - tester.getRect(card).top,
+          );
+        }
+        expect(withButton, isNotEmpty);
+        expect(withoutButton, isNotEmpty);
 
-      final all = [...withButton, ...withoutButton]..sort();
-      // The button's touch padding had put its row's pill 8dp lower.
-      expect(all.last - all.first, lessThanOrEqualTo(2));
-    });
+        final all = [...withButton, ...withoutButton]..sort();
+        // The button's touch padding had put its row's pill 8dp lower.
+        expect(all.last - all.first, lessThanOrEqualTo(2));
+      },
+    );
 
     testWidgets('the blocks above the rows are 12dp apart', (tester) async {
-      await pumpHub(tester);
+      await pumpHub(tester, today: DateTime(2026, 6, 20));
 
       final switcher = tester.getRect(find.byType(RDMonthSwitcher));
       final tiles = tilesRect(tester);
       final search = tester.getRect(find.byType(SearchBar));
-      final dueWindow = tester.getRect(find.byType(AppButtonGroup<RDDueWindowFilter>));
+      final dueWindow = tester.getRect(
+        find.byType(AppButtonGroup<RDDueWindowFilter>),
+      );
       // A 40dp pill sits 4dp inside its 48dp touch target.
-      const touchPadding = (kMinInteractiveDimension - AppDimensions.buttonHeightSm) / 2;
+      const touchPadding =
+          (kMinInteractiveDimension - AppDimensions.buttonHeightSm) / 2;
 
-      // The month's statement (April 2026 is settled here) is a block of its own.
+      // The month's statement (June 2026 is settled here) is a block of its own.
       final progress = tester.getRect(find.byKey(const ValueKey('settled')));
       expect(progress.top - switcher.bottom, AppDimensions.paddingMd);
       expect(tiles.top - progress.bottom, AppDimensions.paddingMd);
       expect(search.top - tiles.bottom, AppDimensions.paddingMd);
-      expect(dueWindow.top + touchPadding - search.bottom, AppDimensions.paddingMd);
-    });
-
-    testWidgets('with no progress block the tiles are 12dp under the switcher', (tester) async {
-      await pumpHub(tester);
-      // March 2026 is past and settled: it has nothing to say.
-      await tester.tap(find.byTooltip(ops.previousMonth));
-      await settle(tester);
-      expect(find.byType(RDHubMonthProgress), findsOneWidget);
-      expect(tester.getSize(find.byType(RDHubMonthProgress)).height, 0);
-
-      final switcher = tester.getRect(find.byType(RDMonthSwitcher));
-      expect(tilesRect(tester).top - switcher.bottom, AppDimensions.paddingMd);
-    });
-
-    testWidgets('a tile\'s text starts on the edge a row\'s avatar and pill start on', (
-      tester,
-    ) async {
-      await pumpHub(tester, height: 1600);
-
-      final card = find.byType(RDMonthlyOperationCard).first;
-      final pill = tester.getRect(
-        find.descendant(of: card, matching: find.byType(RDStatusPill)),
+      expect(
+        dueWindow.top + touchPadding - search.bottom,
+        AppDimensions.paddingMd,
       );
-      expect(pill.left, 2 * AppDimensions.pageMargin);
-      for (final label in [ops.kpis.toCollect, ops.kpis.receivable]) {
-        expect(tester.getRect(find.text(label)).left, pill.left);
-      }
     });
 
-    testWidgets('where the search hint does not fit, the pill shows the short one', (
+    testWidgets(
+      'with no progress block the tiles are 12dp under the switcher',
+      (tester) async {
+        await pumpHub(tester, today: DateTime(2026, 6, 20));
+        // May 2026 is past and settled: it has nothing to say.
+        await tester.tap(find.byTooltip(ops.previousMonth));
+        await settle(tester);
+        expect(find.byType(RDHubMonthProgress), findsOneWidget);
+        expect(tester.getSize(find.byType(RDHubMonthProgress)).height, 0);
+
+        final switcher = tester.getRect(find.byType(RDMonthSwitcher));
+        expect(
+          tilesRect(tester).top - switcher.bottom,
+          AppDimensions.paddingMd,
+        );
+      },
+    );
+
+    testWidgets(
+      'a tile\'s text starts on the edge a row\'s avatar and pill start on',
+      (tester) async {
+        await pumpHub(tester, height: 1600);
+
+        final card = find.byType(RDMonthlyOperationCard).first;
+        final pill = tester.getRect(
+          find.descendant(of: card, matching: find.byType(RDStatusPill)),
+        );
+        expect(pill.left, 2 * AppDimensions.pageMargin);
+        for (final label in [ops.kpis.toCollect, ops.kpis.receivable]) {
+          expect(tester.getRect(find.text(label)).left, pill.left);
+        }
+      },
+    );
+
+    testWidgets(
+      'where the search hint does not fit, the pill shows the short one',
+      (tester) async {
+        await pumpHub(tester);
+        expect(find.text(t.common.search), findsOneWidget);
+        expect(find.text(ops.searchHint), findsNothing);
+      },
+    );
+
+    testWidgets('where the search hint fits, it is shown whole', (
       tester,
     ) async {
-      await pumpHub(tester);
-      expect(find.text(t.common.search), findsOneWidget);
-      expect(find.text(ops.searchHint), findsNothing);
-    });
-
-    testWidgets('where the search hint fits, it is shown whole', (tester) async {
       await pumpHub(tester, width: roomy);
       final hint = find.text(ops.searchHint);
       expect(hint, findsOneWidget);
@@ -653,48 +744,66 @@ void main() {
       expect(paragraph.didExceedMaxLines, isFalse);
     });
 
-    testWidgets('two toggles that are on keep a gap between them, inside the search pill', (
-      tester,
-    ) async {
-      final container = await pumpHub(tester);
-      container.read(rDHubSelectionProvider.notifier).enter();
-      await settle(tester);
+    testWidgets(
+      'two toggles that are on keep a gap between them, inside the search pill',
+      (tester) async {
+        final container = await pumpHub(tester);
+        container.read(rDHubSelectionProvider.notifier).enter();
+        await settle(tester);
 
-      Rect fillOf(String tooltip) => tester.getRect(
-        // The button's own surface: the nearest one around its icon.
-        find.ancestor(of: find.byTooltip(tooltip), matching: find.byType(Material)).first,
-      );
-      final group = fillOf(ops.toolbar.groupByCustomer);
-      final select = fillOf(ops.toolbar.exitSelectMode);
-      final search = tester.getRect(find.byType(SearchBar));
+        Rect fillOf(String tooltip) => tester.getRect(
+          // The button's own surface: the nearest one around its icon.
+          find
+              .ancestor(
+                of: find.byTooltip(tooltip),
+                matching: find.byType(Material),
+              )
+              .first,
+        );
+        final group = fillOf(ops.toolbar.groupByCustomer);
+        final select = fillOf(ops.toolbar.exitSelectMode);
+        final search = tester.getRect(find.byType(SearchBar));
 
-      expect(group.size, const Size.square(AppDimensions.buttonHeightSm));
-      expect(select.size, group.size);
-      expect(select.left - group.right, greaterThanOrEqualTo(AppDimensions.paddingSm));
-      expect(group.top - search.top, greaterThanOrEqualTo(AppDimensions.paddingSm));
-      expect(search.bottom - group.bottom, greaterThanOrEqualTo(AppDimensions.paddingSm));
-    });
+        expect(group.size, const Size.square(AppDimensions.buttonHeightSm));
+        expect(select.size, group.size);
+        expect(
+          select.left - group.right,
+          greaterThanOrEqualTo(AppDimensions.paddingSm),
+        );
+        expect(
+          group.top - search.top,
+          greaterThanOrEqualTo(AppDimensions.paddingSm),
+        );
+        expect(
+          search.bottom - group.bottom,
+          greaterThanOrEqualTo(AppDimensions.paddingSm),
+        );
+      },
+    );
 
-    testWidgets('the batch bar\'s button is as far from the bar\'s end as from its top', (
-      tester,
-    ) async {
-      final container = await pumpHub(tester, width: roomy);
-      final items = await container.read(monthlyOperationItemsProvider.future);
-      container.read(rDHubSelectionProvider.notifier).selectAll([
-        for (final i in items) i.installment.id,
-      ]);
-      await settle(tester);
+    testWidgets(
+      'the batch bar\'s button is as far from the bar\'s end as from its top',
+      (tester) async {
+        final container = await pumpHub(tester, width: roomy);
+        final items = await container.read(
+          monthlyOperationItemsProvider.future,
+        );
+        container.read(rDHubSelectionProvider.notifier).selectAll([
+          for (final i in items) i.installment.id,
+        ]);
+        await settle(tester);
 
-      final barFinder = find.byType(RDHubBatchBar);
-      final bar = tester.getRect(
-        find.descendant(of: barFinder, matching: find.byType(Material)).first,
-      );
-      final button = tester.getRect(
-        find.descendant(of: barFinder, matching: find.byType(AppButton)),
-      );
-      final aboveTheButton = (bar.height - AppDimensions.buttonHeightSm) / 2;
-      expect(bar.right - button.right, aboveTheButton);
-    });
+        final barFinder = find.byType(RDHubBatchBar);
+        final bar = tester.getRect(
+          find.descendant(of: barFinder, matching: find.byType(Material)).first,
+        );
+        final button = tester.getRect(
+          find.descendant(of: barFinder, matching: find.byType(AppButton)),
+        );
+        final aboveTheButton = (bar.height - AppDimensions.buttonHeightSm) / 2;
+        expect(bar.right - button.right, aboveTheButton);
+      },
+    );
   });
 
   // The window is tall on purpose. At 2.0x text the header's four full-width tiles fill an

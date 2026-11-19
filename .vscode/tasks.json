@@ -2,9 +2,97 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Start Local Supabase Stack",
+      "label": "Local stack: start",
       "type": "shell",
       "command": "supabase start",
+      "problemMatcher": []
+    },
+    {
+      "label": "Local stack: stop",
+      "type": "shell",
+      "command": "supabase stop",
+      "problemMatcher": []
+    },
+    {
+      "label": "Local stack: reset database (migrations + seed)",
+      "type": "shell",
+      "command": "supabase db reset",
+      "problemMatcher": []
+    },
+    {
+      // Runs before every "Local" launch entry.
+      "label": "Local stack: check it is running",
+      "type": "shell",
+      "command": "curl -fsS --max-time 3 -o /dev/null http://127.0.0.1:54321/auth/v1/health || { echo 'Local Supabase is not running. Run the task \"Local stack: start\" (supabase start), then launch again.'; exit 1; }",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      // Runs before the "Local: Android" launch entries. On Android, 127.0.0.1 is the device
+      // itself, so port 54321 is forwarded to this Mac on every connected phone and
+      // emulator. A device forgets the forwarding when it disconnects.
+      "label": "Local stack: forward to Android (adb reverse)",
+      "type": "shell",
+      "dependsOn": [
+        "Local stack: check it is running"
+      ],
+      "command": "adb devices | awk 'NR > 1 && $2 == \"device\" { print $1 }' | while read -r device; do adb -s \"$device\" reverse tcp:54321 tcp:54321 > /dev/null && echo \"Port 54321 on $device now reaches the local stack on this Mac.\"; done",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate code (Slang, then build_runner)",
+      "type": "shell",
+      "command": "dart run slang && dart run build_runner build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate code on save (build_runner watch)",
+      "type": "shell",
+      "command": "dart run build_runner watch",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      // dart_test.yaml runs one test file at a time for the integration suites; the fast
+      // suite shares nothing, so --concurrency runs its files side by side.
+      "label": "Test: fast suite (no Docker)",
+      "type": "shell",
+      "command": "flutter test --exclude-tags integration --concurrency \"$(getconf _NPROCESSORS_ONLN)\"",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: integration suites (local stack)",
+      "type": "shell",
+      "command": "flutter test --tags integration",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: SQL contracts (local stack)",
+      "type": "shell",
+      "command": "docker exec -i supabase_db_postfolio psql -v ON_ERROR_STOP=1 -U postgres -d postgres -f - < supabase/tests/rd_ledger_facts_rls.sql",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      // Matches the PR CI gate: format check, strict analyzer, and parallel fast tests.
+      "label": "Check: pre-PR gate (format + analyze + fast tests)",
+      "type": "shell",
+      "command": "git ls-files -z '*.dart' | xargs -0 dart format --output=none --set-exit-if-changed && dart analyze --fatal-infos && flutter test --exclude-tags integration --concurrency \"$(getconf _NPROCESSORS_ONLN)\"",
+      "group": "test",
       "problemMatcher": []
     }
   ]

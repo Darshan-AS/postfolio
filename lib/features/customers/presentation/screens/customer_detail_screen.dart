@@ -38,7 +38,11 @@ class CustomerDetailScreen extends ConsumerWidget {
   /// Where the row that opened the screen is, when a row did (`EntityHero.tagFrom`).
   final String? openedFrom;
 
-  const CustomerDetailScreen({super.key, required this.customerId, this.openedFrom});
+  const CustomerDetailScreen({
+    super.key,
+    required this.customerId,
+    this.openedFrom,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,7 +62,9 @@ class CustomerDetailScreen extends ConsumerWidget {
       builder: (customer) {
         // The list's record or the full one. The placeholder of a cold start is neither.
         final isKnown = customer.id == customerId;
-        final heroTag = isKnown ? EntityHero.tagFrom(openedFrom, customerId) : null;
+        final heroTag = isKnown
+            ? EntityHero.tagFrom(openedFrom, customerId)
+            : null;
 
         return EntityDetailScaffold(
           appBarTitle: t.customers.customerDetails,
@@ -192,7 +198,8 @@ class CustomerDetailScreen extends ConsumerWidget {
                 nominees: customer.savingsAccount!.nominees,
               ),
             ],
-            if (customer.notes != null && customer.notes!.trim().isNotEmpty) ...[
+            if (customer.notes != null &&
+                customer.notes!.trim().isNotEmpty) ...[
               AppSpacings.gapLg,
               _buildNotes(customer),
             ],
@@ -210,7 +217,8 @@ Widget _buildPersonalInfo(
   WidgetRef ref,
   Customer customer,
 ) {
-  final hasAddress = customer.address != null && customer.address!.trim().isNotEmpty;
+  final hasAddress =
+      customer.address != null && customer.address!.trim().isNotEmpty;
   final items = <Widget>[
     DetailItem(
       icon: const HugeIcon(
@@ -220,7 +228,9 @@ Widget _buildPersonalInfo(
       label: t.customers.fields.homeAddress,
       value: customer.address ?? t.common.notProvided,
       onTap: hasAddress
-          ? () => ref.read(intentServiceProvider).launchMapSearch(customer.address!)
+          ? () => ref
+                .read(intentServiceProvider)
+                .launchMapSearch(customer.address!)
           : null,
     ),
     if (customer.dateOfBirth != null)
@@ -254,14 +264,15 @@ Widget _buildNotes(Customer customer) {
             child: SizedBox(
               width: double.infinity,
               child: Text(
-                (customer.notes != null && customer.notes!.isNotEmpty) 
-                    ? customer.notes! 
+                (customer.notes != null && customer.notes!.isNotEmpty)
+                    ? customer.notes!
                     : t.common.notProvided,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: (customer.notes != null && customer.notes!.isNotEmpty)
                       ? Theme.of(context).colorScheme.onSurface
                       : Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontStyle: (customer.notes != null && customer.notes!.isNotEmpty)
+                  fontStyle:
+                      (customer.notes != null && customer.notes!.isNotEmpty)
                       ? FontStyle.normal
                       : FontStyle.italic,
                 ),
@@ -270,7 +281,7 @@ Widget _buildNotes(Customer customer) {
           ),
         ],
       );
-    }
+    },
   );
 }
 

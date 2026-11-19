@@ -102,7 +102,9 @@ class CustomerCard extends ConsumerWidget {
     this.position = AppGroupPosition.single,
   });
 
-  static Widget skeleton({AppGroupPosition position = AppGroupPosition.single}) {
+  static Widget skeleton({
+    AppGroupPosition position = AppGroupPosition.single,
+  }) {
     final dummy = Customer.dummy;
     return _CustomerCardView(
       name: dummy.name,
