@@ -1,12 +1,12 @@
 # Project Progress
 
 ## Current State
-**More of Expressive, started — on `feat/m3-expressive-ui` (PR #20), 2026-11-18.** Local, not pushed (M18 in `.agents/tasks.md`; part 7 of `.agents/session_logs/2026-11-18_session_1.md`).
-- **Review** against the Material 3 Expressive guidance (read through search summaries): the app is in line on most of it; the gaps are a hero moment, the name in the app bar on long screens, and action sizes. None of those is decided.
-- **Built**: a light tap on every saved action and the platform's feedback on a long press that starts a selection; the Hub's figures count to their new value.
-- **Rendered and dropped**: tabs and a switch in place of button groups. Filter chips for the Hub's date ranges are open.
-- **To build** (approved): month picker, shrinking FAB, selection flip, the month's progress and its "settled" moment, the sign-in shape, a navigation badge, the package date picker and expandable item, a Hub row that moves.
-- **Verification**: `dart analyze --fatal-infos` clean; 425 fast tests pass; coverage gate passes (domain & core 83.7%, controllers & providers 85.3%, data & repositories 47.8%, presentation UI & routing 78.7%, total 78.2%). Not run: a device, iOS, a browser, the integration suite, TalkBack.
+**More of Expressive — on `feat/m3-expressive-ui` (PR #20), 2026-11-19.** Local, not pushed (M18 in `.agents/tasks.md`; `.agents/session_logs/2026-11-19_session_1.md` and part 7 of the log of 2026-11-18).
+- **Built**: a light tap on every saved action; the Hub's figures count to their new value; a list's add button is its icon while the list is scrolled down; a Hub row's avatar turns over into its selection mark; the Recurring destination counts accounts in arrears; the Hub shows how far the month is and says when it is settled; the sign-in mark opens from a circle once.
+- **Decided by the owner**: button groups stay (no tabs, switch or filter chips); icon buttons stay the official ones; a month card on the dashboard is postponed.
+- **Not built, with reasons under M18**: a month picker (the package has none), the package's date picker (large text, screen reader) and expandable item (part of the held list), a Hub row that moves (needs a decision).
+- **Rule added**: nothing on a screen animates without an end; the wavy progress bar does, so a standing measure is the flat one.
+- **Verification**: `dart analyze --fatal-infos` clean; 449 fast tests pass; coverage gate passes (domain & core 83.7%, controllers & providers 85.3%, data & repositories 47.8%, presentation UI & routing 79.1%, total 78.5%). Not run: iOS, a browser, the integration suite, TalkBack.
 
 **Chips, and parts that travel from a row to its screen — on `feat/m3-expressive-ui` (PR #20), 2026-11-18.** M17 in `.agents/tasks.md`; log `.agents/session_logs/2026-11-18_session_1.md` (six parts).
 - **Quick amounts**: the collect sheet's quick amounts are official chips again, without a tick, so choosing one moves nothing.
