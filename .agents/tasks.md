@@ -150,7 +150,7 @@
 - [ ] **Palette**: the brand scheme now uses `DynamicSchemeVariant.vibrant` (`lib/core/theme/app_theme.dart`). Keep it, or go back to the default variant in that one line.
 - [x] **Strings**: "1 months" on the passbook, the hard-coded unsaved-changes dialog and the field labels cut at 2.0x text are fixed.
 - [ ] **Hub at 2.0x text**: the four header tiles take a line each, so the first row starts below the fold on an 800dp screen. The alternative is a 2×2 grid with smaller figures.
-- [ ] **Rebuild `chore/dev-experience`** on this branch's new tip (it is stacked on the tip from before the spacing and motion passes).
+- [x] **Rebuild `chore/dev-experience`** on `main` (`d097a9e`, after PR #20 merged): done on 2026-11-19 (`.agents/session_logs/2026-11-19_session_2.md`).
 - [ ] **Critique items still open** (details in `.agents/session_logs/2026-11-16_session_1.md`). Adding Slang keys needs no discussion, so the string ones are plain work:
   - Deferred by the owner: responsive UI, desktop included, will be its own branch. (The desktop test in `test/ui/accessibility_and_layout_invariants_test.dart` asserts a full-width search bar and flush-right row menus.)
   - To do, with new strings: labelled fee and fronting controls on the visit sheet; what the "6" in "5 / 6" on the dashboard is; a "Plan visit" button in place of the "In hand" tile's second job; the monthly payout as the headline of a Monthly Income Scheme deposit.
@@ -175,6 +175,22 @@
   - Where the owner wanted them: chips for the collect sheet's quick amounts (done with the official chip, M17), a split button for Deposit on the passbook strip, the toolbar for the Hub's batch bar.
   - Owner, 2026-11-18: no split button of our own. It comes from the package or not at all.
 - [ ] **`material_ui` Expressive coverage**: when the official package ships an Expressive button group, FAB menu, navigation bar or loading indicator, move that `App*` wrapper onto it and drop the community widget.
+
+## 🧰 Development experience (2026-11-16, rebased on `main` 2026-11-19 — done on branch, awaiting owner review)
+*Branch `chore/dev-experience`, rebased onto `main` (`d097a9e`, PR #20 merged). Logs in `.agents/session_logs/2026-11-16_session_3.md` and `.agents/session_logs/2026-11-19_session_2.md`.*
+- [x] Format all 242 tracked hand-written Dart files; CI fails on an unformatted one.
+- [x] Pin the Flutter version once (`.fvmrc`); run fast tests in parallel in both `ci.yml` and `release.yml`; drop removed `--delete-conflicting-outputs`.
+- [x] Launch entries that name their backend (including `Local: Android (staging app, profile)` for AOT animation checks); `adb reverse` for Android (USB or Wireless Debugging); `config/prod.json.example`.
+- [x] "Sign in as seeded agent" for builds on the local stack.
+- [x] Seed data: 21 customers, one situation each, dates relative to the reset, checked by `test/supabase_seed_scenarios_test.dart`.
+- [x] README and setup guide: backends, Android forwarding (USB or Wireless Debugging), profile mode, and the staging app beside production.
+- [x] Archive `progress.md` and `tasks.md` history from before v2.4 (preserving post-v2.4 items like M15 Predictive Back); delete stale `rebuild/dev-experience` and `spike/hero-morph` branches.
+- Decided by the owner: no Makefile, no `doctor` script, no git hooks. The staging app uses the local stack over ADB; no hosted staging project for now.
+- [ ] See the two workflows pass on GitHub: `ci.yml` on the pull request, `release.yml` once by hand with the deploy option off before the next tag.
+- [ ] Try on Pixel 11 from VS Code: `Local: Android (staging app)` and `Local: Android (staging app, profile)` entries, the seeded-agent button, and the staging app beside production.
+- [ ] Try the iOS Simulator, macOS and `PRODUCTION:` entries; none was run.
+- [ ] Demo Mode fixtures still use fixed dates (27 Oct 2026); give them the seed's situations.
+- [ ] The Android emulator's storage is 94% full; the debug build does not install on it.
 
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)
 - [ ] **1. Statutory Rulebook & Circular Reference Docs (`docs/india_post_schemes_policy.md`)**: Compile authoritative citations across `G.S.R. 916(E)`–`922(E)` (National Savings RD, TD, MIS, KVP, NSC Rules 2019 & subsequent Gazette amendments), DOP SB Orders, Finacle CBS / DOP Agent Portal behavior, and MPKBY / SAS agency rules.
