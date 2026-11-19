@@ -67,7 +67,7 @@
 - [x] Merge PR #18 with a merge commit (not squash) once CI is green.
 - [x] Full hosted backup → `supabase db push` → tag `v2.4.0+23` (R8 Play Core rule added in PR #19 after the first tag run failed; tag moved to `99868b9`).
 - [ ] Owner: smoke-test the released web build and the release APK on a device; testers update from 2.3.1.
-- [ ] After release: move to Flutter 3.50 (import `GlobalCupertinoLocalizations` from `cupertino_ui`) and raise the pin; configure the backup workflow secrets, run it once and rehearse a restore; pin the Supabase CLI version in `ci.yml` (`latest` hit a GitHub rate limit once).
+- [ ] After release: move to Flutter 3.50 (import `GlobalCupertinoLocalizations` from `cupertino_ui`) and raise the pin; configure the backup workflow secrets, run it once and rehearse a restore. *(Supabase CLI pin in `ci.yml` done on `chore/dev-experience`.)*
 
 ## 🎨 Material 3 Expressive Redesign (Approved 2026-11-15 — Done on the branch, awaiting owner review)
 *Branch `feat/m3-expressive-ui`. Started on `refactor/v2.4-stabilization`; rebased onto `main` on 2026-11-16, after PR #18 (v2.4.0+23) was merged. Research and log in `.agents/session_logs/2026-11-15_session_1.md`.*
@@ -178,18 +178,17 @@
 
 ## 🧰 Development experience (2026-11-16, rebased on `main` 2026-11-19 — done on branch, awaiting owner review)
 *Branch `chore/dev-experience`, rebased onto `main` (`d097a9e`, PR #20 merged). Logs in `.agents/session_logs/2026-11-16_session_3.md` and `.agents/session_logs/2026-11-19_session_2.md`.*
-- [x] Format all 242 tracked hand-written Dart files; CI fails on an unformatted one.
-- [x] Pin the Flutter version once (`.fvmrc`); run fast tests in parallel in both `ci.yml` and `release.yml`; drop removed `--delete-conflicting-outputs`.
-- [x] Launch entries that name their backend (including `Local: Android (staging app, profile)` for AOT animation checks); `adb reverse` for Android (USB or Wireless Debugging); `config/prod.json.example`.
-- [x] "Sign in as seeded agent" for builds on the local stack.
-- [x] Seed data: 21 customers, one situation each, dates relative to the reset, checked by `test/supabase_seed_scenarios_test.dart`.
-- [x] README and setup guide: backends, Android forwarding (USB or Wireless Debugging), profile mode, and the staging app beside production.
+- [x] Format all 246 tracked hand-written Dart files; CI fails on an unformatted one.
+- [x] Pin the Flutter version once (`.fvmrc`); pin Supabase CLI (`v2.117.0` on `supabase/setup-cli@v3`) in `ci.yml`; run fast tests in parallel in both `ci.yml` and `release.yml`; drop removed `--delete-conflicting-outputs`.
+- [x] Launch entries that name their backend (including `Local: Android (staging app, profile)` for AOT animation checks); `adb reverse` for Android (USB or Wireless Debugging); `config/prod.json.example`; one-click pre-PR check task in `tasks.json`.
+- [x] "Sign in as seeded agent" and compact `LocalBackendBanner` ("Local Supabase (seed data)") for builds on the local stack.
+- [x] Seed data & Demo Mode parity: 21 customers, one situation each, dates relative to today in both `supabase/seed.sql` (checked by `test/supabase_seed_scenarios_test.dart`) and `FakeDataSource.forDate` via `demoDataSourceProvider` (checked across 8 boundary dates in `test/core/fake_data_source_scenarios_test.dart`).
+- [x] README, setup guide, privacy policy, and PRD: backends, Android forwarding (USB or Wireless Debugging), profile mode, staging app beside production, and retired Firestore references cleaned up.
 - [x] Archive `progress.md` and `tasks.md` history from before v2.4 (preserving post-v2.4 items like M15 Predictive Back); delete stale `rebuild/dev-experience` and `spike/hero-morph` branches.
 - Decided by the owner: no Makefile, no `doctor` script, no git hooks. The staging app uses the local stack over ADB; no hosted staging project for now.
 - [ ] See the two workflows pass on GitHub: `ci.yml` on the pull request, `release.yml` once by hand with the deploy option off before the next tag.
-- [ ] Try on Pixel 11 from VS Code: `Local: Android (staging app)` and `Local: Android (staging app, profile)` entries, the seeded-agent button, and the staging app beside production.
+- [ ] Try on Pixel 11 from VS Code: `Local: Android (staging app)` and `Local: Android (staging app, profile)` entries, the seeded-agent button, `LocalBackendBanner`, and the staging app beside production.
 - [ ] Try the iOS Simulator, macOS and `PRODUCTION:` entries; none was run.
-- [ ] Demo Mode fixtures still use fixed dates (27 Oct 2026); give them the seed's situations.
 - [ ] The Android emulator's storage is 94% full; the debug build does not install on it.
 
 ## 📜 Upcoming Milestone: India Post Policy & Domain Audit (`v2.5`)
