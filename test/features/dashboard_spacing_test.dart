@@ -30,7 +30,10 @@ import 'package:skeletonizer/skeletonizer.dart' show SkeletonizerConfig;
 void main() {
   final source = FakeDataSource();
 
-  Future<void> pumpDashboard(WidgetTester tester, {required double width}) async {
+  Future<void> pumpDashboard(
+    WidgetTester tester, {
+    required double width,
+  }) async {
     tester.view.physicalSize = Size(width, 1600) * 2;
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.reset);
@@ -91,67 +94,95 @@ void main() {
   List<Rect> pillRects(WidgetTester tester) {
     final pills = find.descendant(
       of: find.byType(DashboardSchemeBreakdown),
-      matching: find.byWidgetPredicate((w) => w is Material && w.shape is StadiumBorder),
+      matching: find.byWidgetPredicate(
+        (w) => w is Material && w.shape is StadiumBorder,
+      ),
     );
-    return [for (final element in pills.evaluate()) tester.getRect(find.byWidget(element.widget))]
-      ..sort((a, b) => a.left.compareTo(b.left));
+    return [
+      for (final element in pills.evaluate())
+        tester.getRect(find.byWidget(element.widget)),
+    ]..sort((a, b) => a.left.compareTo(b.left));
   }
 
   group('scheme strip', () {
     for (final width in const [360.0, 412.0]) {
-      testWidgets('on a ${width.toInt()}dp phone about half of the next pill shows at the '
-          'edge, and no pill ends on it', (tester) async {
-        await pumpDashboard(tester, width: width);
-        final pills = pillRects(tester);
-        expect(pills.length, greaterThan(2), reason: 'fixture: several schemes');
+      testWidgets(
+        'on a ${width.toInt()}dp phone about half of the next pill shows at the '
+        'edge, and no pill ends on it',
+        (tester) async {
+          await pumpDashboard(tester, width: width);
+          final pills = pillRects(tester);
+          expect(
+            pills.length,
+            greaterThan(2),
+            reason: 'fixture: several schemes',
+          );
 
-        expect(pills.first.left, AppDimensions.pageMargin);
-        final cut = pills.where((p) => p.left < width && p.right > width).toList();
-        expect(cut, hasLength(1), reason: 'one pill runs off the edge');
-        final showing = (width - cut.single.left) / cut.single.width;
-        expect(showing, inInclusiveRange(0.4, 0.6));
+          expect(pills.first.left, AppDimensions.pageMargin);
+          final cut = pills
+              .where((p) => p.left < width && p.right > width)
+              .toList();
+          expect(cut, hasLength(1), reason: 'one pill runs off the edge');
+          final showing = (width - cut.single.left) / cut.single.width;
+          expect(showing, inInclusiveRange(0.4, 0.6));
 
-        for (final pill in pills) {
-          // Ending on the edge, or a hair inside it, is what looked cut off.
-          expect((pill.right - width).abs(), greaterThan(AppDimensions.paddingSm));
-        }
-        // All the same width, so the strip scrolls in even steps.
-        expect(pills.map((p) => p.width.round()).toSet(), hasLength(1));
-      });
+          for (final pill in pills) {
+            // Ending on the edge, or a hair inside it, is what looked cut off.
+            expect(
+              (pill.right - width).abs(),
+              greaterThan(AppDimensions.paddingSm),
+            );
+          }
+          // All the same width, so the strip scrolls in even steps.
+          expect(pills.map((p) => p.width.round()).toSet(), hasLength(1));
+        },
+      );
     }
 
-    testWidgets('when every pill fits they share the width between the margins', (
-      tester,
-    ) async {
-      const width = 1100.0;
-      await pumpDashboard(tester, width: width);
-      final pills = pillRects(tester);
-      expect(pills.length, greaterThan(2));
+    testWidgets(
+      'when every pill fits they share the width between the margins',
+      (tester) async {
+        const width = 1100.0;
+        await pumpDashboard(tester, width: width);
+        final pills = pillRects(tester);
+        expect(pills.length, greaterThan(2));
 
-      expect(pills.first.left, AppDimensions.pageMargin);
-      expect(pills.last.right, width - AppDimensions.pageMargin);
-      expect(pills.map((p) => p.width.round()).toSet(), hasLength(1));
-      for (var i = 1; i < pills.length; i++) {
-        expect(pills[i].left - pills[i - 1].right, AppDimensions.paddingSm);
-      }
-    });
+        expect(pills.first.left, AppDimensions.pageMargin);
+        expect(pills.last.right, width - AppDimensions.pageMargin);
+        expect(pills.map((p) => p.width.round()).toSet(), hasLength(1));
+        for (var i = 1; i < pills.length; i++) {
+          expect(pills[i].left - pills[i - 1].right, AppDimensions.paddingSm);
+        }
+      },
+    );
   });
 
-  testWidgets('the chart\'s rows of controls are the same distance apart', (tester) async {
+  testWidgets('the chart\'s rows of controls are the same distance apart', (
+    tester,
+  ) async {
     // Wide enough that the test font's title stays on the line of the first control.
     await pumpDashboard(tester, width: 700);
     final card = find.byType(DashboardChartSection);
 
     final aggregation = tester.getRect(
-      find.descendant(of: card, matching: find.byType(AppButtonGroup<ChartAggregation>)),
+      find.descendant(
+        of: card,
+        matching: find.byType(AppButtonGroup<ChartAggregation>),
+      ),
     );
     final scheme = tester.getRect(
-      find.descendant(of: card, matching: find.byType(AppButtonGroup<OneTimeSchemeType?>)),
+      find.descendant(
+        of: card,
+        matching: find.byType(AppButtonGroup<OneTimeSchemeType?>),
+      ),
     );
     final includeRds = tester.getRect(
       find.descendant(
         of: card,
-        matching: find.widgetWithText(AppButton, t.dashboard.includeRecurringDeposits),
+        matching: find.widgetWithText(
+          AppButton,
+          t.dashboard.includeRecurringDeposits,
+        ),
       ),
     );
 
@@ -163,21 +194,24 @@ void main() {
     }
   });
 
-  testWidgets('the tall overview tile is inset the same from its top as from its side', (
-    tester,
-  ) async {
-    await pumpDashboard(tester, width: 360);
+  testWidgets(
+    'the tall overview tile is inset the same from its top as from its side',
+    (tester) async {
+      await pumpDashboard(tester, width: 360);
 
-    // Only the tall tile has a shape badge.
-    final badge = find.descendant(
-      of: find.byType(DashboardMetricsRow),
-      matching: find.byType(AppShapeAvatar),
-    );
-    expect(badge, findsOneWidget);
-    final tile = tester.getRect(find.ancestor(of: badge, matching: find.byType(Material)).first);
-    final badgeRect = tester.getRect(badge);
+      // Only the tall tile has a shape badge.
+      final badge = find.descendant(
+        of: find.byType(DashboardMetricsRow),
+        matching: find.byType(AppShapeAvatar),
+      );
+      expect(badge, findsOneWidget);
+      final tile = tester.getRect(
+        find.ancestor(of: badge, matching: find.byType(Material)).first,
+      );
+      final badgeRect = tester.getRect(badge);
 
-    expect(badgeRect.left - tile.left, AppDimensions.paddingLg);
-    expect(badgeRect.top - tile.top, AppDimensions.paddingLg);
-  });
+      expect(badgeRect.left - tile.left, AppDimensions.paddingLg);
+      expect(badgeRect.top - tile.top, AppDimensions.paddingLg);
+    },
+  );
 }

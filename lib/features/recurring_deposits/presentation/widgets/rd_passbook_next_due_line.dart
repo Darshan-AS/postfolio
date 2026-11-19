@@ -93,7 +93,9 @@ class RDPassbookNextDueLine extends StatelessWidget {
       );
     }
 
-    final visual = inst.displayStatusAt(now).visual(scheme, financial: financial);
+    final visual = inst
+        .displayStatusAt(now)
+        .visual(scheme, financial: financial);
     final stacked =
         MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
 

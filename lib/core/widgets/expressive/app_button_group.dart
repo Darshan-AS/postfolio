@@ -107,7 +107,9 @@ class AppButtonGroup<T> extends StatelessWidget {
             ? () {
                 // A single-select group always has a choice, so its selected segment
                 // does nothing; in a multi-select group the same tap deselects.
-                if (selectedValues != null || !isSelected) _onPressed(item.value);
+                if (selectedValues != null || !isSelected) {
+                  _onPressed(item.value);
+                }
               }
             : null,
         isSelected: isSelected,

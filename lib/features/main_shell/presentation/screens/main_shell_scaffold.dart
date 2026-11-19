@@ -39,7 +39,9 @@ class MainShellScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDemoMode = ref.watch(demoModeProvider);
     // Accounts two or more months behind, from the one-row-per-account summary cache.
-    final arrears = ref.watch(globalAgentFloatProvider.select((float) => float.arrearsAccounts));
+    final arrears = ref.watch(
+      globalAgentFloatProvider.select((float) => float.arrearsAccounts),
+    );
 
     final destinations = [
       AppDestination(
@@ -54,7 +56,9 @@ class MainShellScaffold extends ConsumerWidget {
         icon: HugeIcons.strokeRoundedTransaction,
         label: t.nav.recurringDeposits,
         badgeCount: arrears > 0 ? arrears : null,
-        badgeSemanticLabel: arrears > 0 ? t.nav.recurringDepositsInArrears(n: arrears) : null,
+        badgeSemanticLabel: arrears > 0
+            ? t.nav.recurringDepositsInArrears(n: arrears)
+            : null,
       ),
       AppDestination(
         icon: HugeIcons.strokeRoundedUserMultiple,
@@ -104,7 +108,9 @@ class MainShellScaffold extends ConsumerWidget {
                               size: AppDimensions.iconMd,
                             ),
                             onPressed: () {
-                              ref.read(authControllerProvider.notifier).signOut();
+                              ref
+                                  .read(authControllerProvider.notifier)
+                                  .signOut();
                             },
                             tooltip: t.auth.signOut,
                           ),

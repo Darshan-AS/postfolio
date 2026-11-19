@@ -23,7 +23,9 @@ sealed class RDLedgerFacts with _$RDLedgerFacts {
 
   /// Monotonic token used to detect a stale cached summary.
   int get version =>
-      transactions.length * 1000003 + poDeposits.length * 1009 + absorptions.length;
+      transactions.length * 1000003 +
+      poDeposits.length * 1009 +
+      absorptions.length;
 
   bool get hasTransactions => transactions.isNotEmpty;
   bool get hasPoDeposits => poDeposits.isNotEmpty;
@@ -34,7 +36,8 @@ sealed class RDLedgerFacts with _$RDLedgerFacts {
       hasTransactions || hasPoDeposits || hasFeeAbsorptions;
 
   /// PO deposit events in the order the Post Office applied them.
-  List<RDPoDeposit> get poDepositsInOrder => [...poDeposits]..sort(comparePoDeposits);
+  List<RDPoDeposit> get poDepositsInOrder =>
+      [...poDeposits]..sort(comparePoDeposits);
 
   /// The only PO event that may be undone.
   RDPoDeposit? get latestPoDeposit =>

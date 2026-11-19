@@ -107,8 +107,10 @@ class PaymentDraftState {
   final Future<Result<void, String>> Function() undo;
 
   bool get isEditing => existing != null;
-  bool get canSubmit => !isSubmitting && validationError == null && preview != null;
-  bool get canAbsorbFee => !isEditing && absorbableFee > 0 && absorbableInstallmentNo != null;
+  bool get canSubmit =>
+      !isSubmitting && validationError == null && preview != null;
+  bool get canAbsorbFee =>
+      !isEditing && absorbableFee > 0 && absorbableInstallmentNo != null;
 
   /// Allocation slices of the draft transaction inside [preview] (empty until previewable).
   List<RDAllocationSlice> get previewSlices =>
@@ -125,7 +127,8 @@ class PaymentDraftState {
   }
 
   /// Whether [quick] matches the current amount (for chip selection).
-  bool isQuickAmountSelected(RDQuickAmount quick) => Money.equals(amount, quick.amount);
+  bool isQuickAmountSelected(RDQuickAmount quick) =>
+      Money.equals(amount, quick.amount);
 }
 
 /// Result of [PaymentDraftState.submit]: the payment write and (optionally) the fee
@@ -142,8 +145,9 @@ typedef PaymentSubmitOutcome = ({
 const String rdDraftPreviewTransactionId = '__draft_preview__';
 const int _maxQuickMonths = 3;
 
-String _formatAmount(double value) =>
-    value == value.truncateToDouble() ? value.toInt().toString() : value.toStringAsFixed(2);
+String _formatAmount(double value) => value == value.truncateToDouble()
+    ? value.toInt().toString()
+    : value.toStringAsFixed(2);
 
 double? _parseAmount(String text) {
   final trimmed = text.trim();
@@ -170,10 +174,14 @@ PaymentDraftState usePaymentDraft(
   final amountController = useTextEditingController(
     text: existing != null
         ? _formatAmount(existing.amount)
-        : (initialAmount != null && initialAmount > 0 ? _formatAmount(initialAmount) : ''),
+        : (initialAmount != null && initialAmount > 0
+              ? _formatAmount(initialAmount)
+              : ''),
   );
   final paidDate = useState<DateTime>(existing?.paidDate.toDateOnly() ?? today);
-  final paymentMode = useState<RDPaymentMode>(existing?.paymentMode ?? RDPaymentMode.cash);
+  final paymentMode = useState<RDPaymentMode>(
+    existing?.paymentMode ?? RDPaymentMode.cash,
+  );
   final absorbFeeChecked = useState<bool>(false);
 
   useListenable(amountController);
@@ -184,16 +192,15 @@ PaymentDraftState usePaymentDraft(
   // --- Projections ----------------------------------------------------------------------
   final factsValue = facts.value;
 
-  final factsWithoutExisting = useMemoized<RDLedgerFacts?>(
-    () {
-      if (factsValue == null) return null;
-      if (existing == null) return factsValue;
-      return factsValue.copyWith(
-        transactions: factsValue.transactions.where((t) => t.id != existing.id).toList(),
-      );
-    },
-    [factsValue, existing?.id],
-  );
+  final factsWithoutExisting = useMemoized<RDLedgerFacts?>(() {
+    if (factsValue == null) return null;
+    if (existing == null) return factsValue;
+    return factsValue.copyWith(
+      transactions: factsValue.transactions
+          .where((t) => t.id != existing.id)
+          .toList(),
+    );
+  }, [factsValue, existing?.id]);
 
   final baseline = useMemoized<RDLedgerProjection?>(
     () => factsWithoutExisting == null
@@ -247,75 +254,72 @@ PaymentDraftState usePaymentDraft(
     ],
   );
 
-  final previewDelta = useMemoized<List<RDPreviewMonthDelta>>(
-    () {
-      if (baseline == null || preview == null) return const [];
-      final deltas = <RDPreviewMonthDelta>[];
-      final count = baseline.installments.length < preview.installments.length
-          ? baseline.installments.length
-          : preview.installments.length;
-      for (var i = 0; i < count; i++) {
-        final before = baseline.installments[i];
-        final after = preview.installments[i];
-        if (!Money.equals(before.customerPaidAmount, after.customerPaidAmount)) {
-          deltas.add((before: before, after: after));
-        }
+  final previewDelta = useMemoized<List<RDPreviewMonthDelta>>(() {
+    if (baseline == null || preview == null) return const [];
+    final deltas = <RDPreviewMonthDelta>[];
+    final count = baseline.installments.length < preview.installments.length
+        ? baseline.installments.length
+        : preview.installments.length;
+    for (var i = 0; i < count; i++) {
+      final before = baseline.installments[i];
+      final after = preview.installments[i];
+      if (!Money.equals(before.customerPaidAmount, after.customerPaidAmount)) {
+        deltas.add((before: before, after: after));
       }
-      return List.unmodifiable(deltas);
-    },
-    [baseline, preview],
-  );
+    }
+    return List.unmodifiable(deltas);
+  }, [baseline, preview]);
 
   // --- Absorbable fee ---------------------------------------------------------------------
   // The one absorb rule lives on the installment: after the draft, the earliest open month
   // tells us exactly how much fee (never principal) the agent could cover to close it.
-  final ({double amount, int? installmentNo}) absorbable = useMemoized(
-    () {
-      final next = preview?.nextDue;
-      if (next == null) return (amount: 0.0, installmentNo: null);
-      final fee = next.absorbableFee;
-      if (Money.toPaise(fee) <= 0) return (amount: 0.0, installmentNo: null);
-      return (amount: fee, installmentNo: next.installmentNo);
-    },
-    [preview],
-  );
+  final ({double amount, int? installmentNo}) absorbable = useMemoized(() {
+    final next = preview?.nextDue;
+    if (next == null) return (amount: 0.0, installmentNo: null);
+    final fee = next.absorbableFee;
+    if (Money.toPaise(fee) <= 0) return (amount: 0.0, installmentNo: null);
+    return (amount: fee, installmentNo: next.installmentNo);
+  }, [preview]);
 
   // --- Quick amounts --------------------------------------------------------------------
-  final quickAmounts = useMemoized<List<RDQuickAmount>>(
-    () {
-      if (baseline == null) return const [];
-      final candidates = <RDQuickAmount>[];
-      final owed = baseline.summary.owedByCustomer;
-      if (owed > 0) {
-        candidates.add((label: ledger.chips.dueNow(amount: owed.toRupeeFormat()), amount: owed));
-      }
-      final open = baseline.customerPending;
-      var running = 0.0;
-      for (var n = 1; n <= _maxQuickMonths && n <= open.length; n++) {
-        running += open[n - 1].outstandingAmount;
-        candidates.add((
-          label: ledger.chips.months(n: n, amount: running.toRupeeFormat()),
-          amount: running,
-        ));
-      }
-      final seen = <int>{};
-      return List.unmodifiable([
-        for (final c in candidates)
-          if (c.amount > 0 && seen.add(Money.toPaise(c.amount))) c,
-      ]);
-    },
-    [baseline],
-  );
+  final quickAmounts = useMemoized<List<RDQuickAmount>>(() {
+    if (baseline == null) return const [];
+    final candidates = <RDQuickAmount>[];
+    final owed = baseline.summary.owedByCustomer;
+    if (owed > 0) {
+      candidates.add((
+        label: ledger.chips.dueNow(amount: owed.toRupeeFormat()),
+        amount: owed,
+      ));
+    }
+    final open = baseline.customerPending;
+    var running = 0.0;
+    for (var n = 1; n <= _maxQuickMonths && n <= open.length; n++) {
+      running += open[n - 1].outstandingAmount;
+      candidates.add((
+        label: ledger.chips.months(n: n, amount: running.toRupeeFormat()),
+        amount: running,
+      ));
+    }
+    final seen = <int>{};
+    return List.unmodifiable([
+      for (final c in candidates)
+        if (c.amount > 0 && seen.add(Money.toPaise(c.amount))) c,
+    ]);
+  }, [baseline]);
 
   // --- Dirty tracking (edit mode) --------------------------------------------------------
-  final isDirty = existing != null &&
+  final isDirty =
+      existing != null &&
       (!Money.equals(existing.amount, amount) ||
           existing.paidDate.toDateOnly() != paidDate.value ||
           existing.paymentMode != paymentMode.value);
 
   // --- Date limits ----------------------------------------------------------------------
   final startDate = factsValue?.deposit.startDate.toDateOnly();
-  final firstDate = startDate != null && !startDate.isAfter(today) ? startDate : today;
+  final firstDate = startDate != null && !startDate.isAfter(today)
+      ? startDate
+      : today;
 
   // --- Actions --------------------------------------------------------------------------
   void applyQuickAmount(RDQuickAmount quick) {
@@ -327,8 +331,12 @@ PaymentDraftState usePaymentDraft(
   final notifier = ref.read(rDLedgerControllerProvider.notifier);
 
   Future<PaymentSubmitOutcome> submit() async {
-    PaymentSubmitOutcome only(Result<void, String> payment) =>
-        (payment: payment, absorption: null, absorbedAmount: 0.0, absorbedInstallmentNo: null);
+    PaymentSubmitOutcome only(Result<void, String> payment) => (
+      payment: payment,
+      absorption: null,
+      absorbedAmount: 0.0,
+      absorbedInstallmentNo: null,
+    );
 
     if (validationError != null) return only(Failure(validationError));
 
@@ -345,7 +353,9 @@ PaymentDraftState usePaymentDraft(
     final payment = await notifier.recordPayment(draft);
     final absorbNo = absorbable.installmentNo;
     final shouldAbsorb =
-        payment is Success<void, String> && absorbFeeChecked.value && absorbNo != null;
+        payment is Success<void, String> &&
+        absorbFeeChecked.value &&
+        absorbNo != null;
     if (!shouldAbsorb) return only(payment);
 
     final absorption = await notifier.absorbFee(
@@ -383,7 +393,8 @@ PaymentDraftState usePaymentDraft(
     absorbableInstallmentNo: absorbable.installmentNo,
     isSubmitting: isSubmitting,
     isDirty: isDirty,
-    hasInitialPrefill: existing != null || (initialAmount != null && initialAmount > 0),
+    hasInitialPrefill:
+        existing != null || (initialAmount != null && initialAmount > 0),
     firstDate: firstDate,
     lastDate: today,
     applyQuickAmount: applyQuickAmount,

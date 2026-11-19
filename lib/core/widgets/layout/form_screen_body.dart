@@ -44,7 +44,9 @@ class FormScreenBody extends StatelessWidget {
               child: Center(
                 heightFactor: 1,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: AppDimensions.maxFormWidth),
+                  constraints: const BoxConstraints(
+                    maxWidth: AppDimensions.maxFormWidth,
+                  ),
                   child: AppButton(
                     label: isSaving ? t.common.saving : t.common.confirm,
                     icon: HugeIcons.strokeRoundedTick01,

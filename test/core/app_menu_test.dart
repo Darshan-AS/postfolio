@@ -25,9 +25,12 @@ void main() {
 
     for (final file in sources) {
       final source = file.readAsStringSync();
-      for (final match in RegExp(r'\b(MenuAnchor|PopupMenuButton|M3EMenu)\b').allMatches(source)) {
+      for (final match in RegExp(
+        r'\b(MenuAnchor|PopupMenuButton|M3EMenu)\b',
+      ).allMatches(source)) {
         if (file.path.endsWith('expressive/app_menu.dart')) continue;
-        final line = '\n'.allMatches(source.substring(0, match.start)).length + 1;
+        final line =
+            '\n'.allMatches(source.substring(0, match.start)).length + 1;
         direct.add('${file.path}:$line');
       }
     }
@@ -50,7 +53,9 @@ void main() {
         MaterialApp(
           theme: AppTheme.lightTheme,
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
             child: child!,
           ),
           home: Scaffold(
@@ -68,7 +73,9 @@ void main() {
                         ),
                         isDestructive: index == 1,
                         // The last entry is disabled.
-                        onPressed: index == labels.length - 1 ? null : () => chosen.add(label),
+                        onPressed: index == labels.length - 1
+                            ? null
+                            : () => chosen.add(label),
                       ),
                   ],
                   anchorBuilder: (context, open) => IconButton(
@@ -93,7 +100,9 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('opens from its anchor, reports a choice and closes', (tester) async {
+    testWidgets('opens from its anchor, reports a choice and closes', (
+      tester,
+    ) async {
       final chosen = await pumpMenu(tester);
       expect(find.text('Edit payment'), findsNothing);
 
@@ -107,7 +116,9 @@ void main() {
       expect(find.text('Edit payment'), findsNothing);
     });
 
-    testWidgets('a disabled entry does nothing and a tap outside closes', (tester) async {
+    testWidgets('a disabled entry does nothing and a tap outside closes', (
+      tester,
+    ) async {
       final chosen = await pumpMenu(tester);
       await open(tester);
 
@@ -134,7 +145,9 @@ void main() {
       expect(find.text('Screen'), findsOneWidget);
     });
 
-    testWidgets('a screen reader gets each entry as a button it can press', (tester) async {
+    testWidgets('a screen reader gets each entry as a button it can press', (
+      tester,
+    ) async {
       final handle = tester.ensureSemantics();
       await pumpMenu(tester);
       await open(tester);
@@ -157,7 +170,10 @@ void main() {
       await open(tester);
 
       final paragraph = tester.renderObject<RenderParagraph>(
-        find.descendant(of: find.text(labels.first), matching: find.byType(RichText)),
+        find.descendant(
+          of: find.text(labels.first),
+          matching: find.byType(RichText),
+        ),
       );
       expect(paragraph.didExceedMaxLines, isFalse);
       expect(paragraph.size.width, greaterThan(224));
@@ -169,7 +185,11 @@ void main() {
       await pumpMenu(
         tester,
         textScale: 2.0,
-        labels: [passbook.depositFromPocket, passbook.undoLastDeposit, t.common.closeDeposit],
+        labels: [
+          passbook.depositFromPocket,
+          passbook.undoLastDeposit,
+          t.common.closeDeposit,
+        ],
       );
       await open(tester);
 

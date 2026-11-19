@@ -17,12 +17,13 @@ void main() {
   // order; a later migration that redefines a constraint wins.
   final constraints = <String, Set<String>>{};
   setUpAll(() {
-    final files = Directory('supabase/migrations')
-        .listSync()
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.sql'))
-        .toList()
-      ..sort((a, b) => a.path.compareTo(b.path));
+    final files =
+        Directory('supabase/migrations')
+            .listSync()
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.sql'))
+            .toList()
+          ..sort((a, b) => a.path.compareTo(b.path));
     final definition = RegExp(
       r'ADD CONSTRAINT (\w+)\s+CHECK \(\s*\w+ IN \(([^)]*)\)\s*\)',
       multiLine: true,
@@ -39,51 +40,77 @@ void main() {
 
   final day = DateTime(2026, 1, 15);
 
-  String otdWire(String key, {OneTimeSchemeType? scheme, DepositStatus? status}) =>
+  String otdWire(
+    String key, {
+    OneTimeSchemeType? scheme,
+    DepositStatus? status,
+  }) =>
       OneTimeDeposit(
-        id: 'x',
-        principalAmount: 1000,
-        termYears: 5,
-        termMonths: 0,
-        interestRate: 7.5,
-        customerId: 'c',
-        schemeType: scheme ?? OneTimeSchemeType.timeDeposit,
-        startDate: day,
-        status: status ?? DepositStatus.active,
-      ).toJson()[key] as String;
+            id: 'x',
+            principalAmount: 1000,
+            termYears: 5,
+            termMonths: 0,
+            interestRate: 7.5,
+            customerId: 'c',
+            schemeType: scheme ?? OneTimeSchemeType.timeDeposit,
+            startDate: day,
+            status: status ?? DepositStatus.active,
+          ).toJson()[key]
+          as String;
 
-  String rdWire(String key, {RecurringSchemeType? scheme, DepositStatus? status}) =>
+  String rdWire(
+    String key, {
+    RecurringSchemeType? scheme,
+    DepositStatus? status,
+  }) =>
       RecurringDeposit(
-        id: 'x',
-        installmentAmount: 1000,
-        termYears: 5,
-        termMonths: 0,
-        interestRate: 6.7,
-        customerId: 'c',
-        schemeType: scheme ?? RecurringSchemeType.recurringDeposit,
-        startDate: day,
-        status: status ?? DepositStatus.active,
-      ).toJson()[key] as String;
+            id: 'x',
+            installmentAmount: 1000,
+            termYears: 5,
+            termMonths: 0,
+            interestRate: 6.7,
+            customerId: 'c',
+            schemeType: scheme ?? RecurringSchemeType.recurringDeposit,
+            startDate: day,
+            status: status ?? DepositStatus.active,
+          ).toJson()[key]
+          as String;
 
   final cases = <String, Set<String> Function()>{
-    'one_time_deposits_status_check': () =>
-        {for (final s in DepositStatus.values) otdWire('status', status: s)},
-    'recurring_deposits_status_check': () =>
-        {for (final s in DepositStatus.values) rdWire('status', status: s)},
-    'one_time_deposits_scheme_type_check': () =>
-        {for (final s in OneTimeSchemeType.values) otdWire('scheme_type', scheme: s)},
-    'recurring_deposits_scheme_type_check': () =>
-        {for (final s in RecurringSchemeType.values) rdWire('scheme_type', scheme: s)},
+    'one_time_deposits_status_check': () => {
+      for (final s in DepositStatus.values) otdWire('status', status: s),
+    },
+    'recurring_deposits_status_check': () => {
+      for (final s in DepositStatus.values) rdWire('status', status: s),
+    },
+    'one_time_deposits_scheme_type_check': () => {
+      for (final s in OneTimeSchemeType.values)
+        otdWire('scheme_type', scheme: s),
+    },
+    'recurring_deposits_scheme_type_check': () => {
+      for (final s in RecurringSchemeType.values)
+        rdWire('scheme_type', scheme: s),
+    },
     'nominees_relationship_check': () => {
-          for (final r in NomineeRelationship.values)
-            Nominee(name: 'n', relationship: r, percentage: 100).toJson()['relationship']
-                as String,
-        },
+      for (final r in NomineeRelationship.values)
+        Nominee(
+              name: 'n',
+              relationship: r,
+              percentage: 100,
+            ).toJson()['relationship']
+            as String,
+    },
     'rd_transactions_payment_mode_check': () => {
-          for (final m in RDPaymentMode.values)
-            RDTransaction(id: 't', rdId: 'r', paidDate: day, amount: 1, paymentMode: m)
-                .toJson()['payment_mode'] as String,
-        },
+      for (final m in RDPaymentMode.values)
+        RDTransaction(
+              id: 't',
+              rdId: 'r',
+              paidDate: day,
+              amount: 1,
+              paymentMode: m,
+            ).toJson()['payment_mode']
+            as String,
+    },
   };
 
   for (final entry in cases.entries) {
@@ -91,7 +118,8 @@ void main() {
       expect(
         constraints[entry.key],
         isNotNull,
-        reason: 'no `ADD CONSTRAINT ${entry.key} CHECK (... IN (...))` found in supabase/migrations',
+        reason:
+            'no `ADD CONSTRAINT ${entry.key} CHECK (... IN (...))` found in supabase/migrations',
       );
       expect(constraints[entry.key], entry.value());
     });

@@ -48,14 +48,15 @@ class EntityAvatar extends StatelessWidget {
   );
 
   /// The avatar [t] of the way from its form in [row] to its form at [head].
-  static EntityAvatar between(EntityAvatar row, EntityAvatar head, double t) => EntityAvatar(
-    text: head.text,
-    subtext: head.subtext,
-    shape: head.shape,
-    backgroundColor: head.backgroundColor,
-    foregroundColor: head.foregroundColor,
-    prominence: lerpDouble(row.prominence, head.prominence, t)!,
-  );
+  static EntityAvatar between(EntityAvatar row, EntityAvatar head, double t) =>
+      EntityAvatar(
+        text: head.text,
+        subtext: head.subtext,
+        shape: head.shape,
+        backgroundColor: head.backgroundColor,
+        foregroundColor: head.foregroundColor,
+        prominence: lerpDouble(row.prominence, head.prominence, t)!,
+      );
 
   /// [row] at 0, [head] at 1, and the two blended in between.
   TextStyle? _style(TextStyle? row, TextStyle? head) => switch (prominence) {
@@ -64,12 +65,14 @@ class EntityAvatar extends StatelessWidget {
     _ => TextStyle.lerp(row, head, prominence),
   };
 
-  double _dimension(double row, double head) => lerpDouble(row, head, prominence)!;
+  double _dimension(double row, double head) =>
+      lerpDouble(row, head, prominence)!;
 
   @override
   Widget build(BuildContext context) {
     final emphasized = AppTypography.emphasizedOf(context);
-    final foreground = foregroundColor ?? Theme.of(context).colorScheme.onPrimaryContainer;
+    final foreground =
+        foregroundColor ?? Theme.of(context).colorScheme.onPrimaryContainer;
     final muted = foreground.withValues(alpha: AppDimensions.opacityMuted);
     final subtext = this.subtext;
     final hasSubtext = subtext != null && subtext.isNotEmpty;
@@ -80,7 +83,9 @@ class EntityAvatar extends StatelessWidget {
       backgroundColor: backgroundColor,
       foregroundColor: foreground,
       child: Padding(
-        padding: EdgeInsets.all(_dimension(AppDimensions.paddingSm, AppDimensions.paddingMd)),
+        padding: EdgeInsets.all(
+          _dimension(AppDimensions.paddingSm, AppDimensions.paddingMd),
+        ),
         // Whatever the text, it stays inside the shape.
         child: FittedBox(
           fit: BoxFit.scaleDown,
@@ -93,10 +98,13 @@ class EntityAvatar extends StatelessWidget {
                 textHeightBehavior: _noLeading,
                 style: _style(
                   // In a row an initial is larger than a code of several letters.
-                  (text.length == 1 ? emphasized.titleLarge : emphasized.titleSmall)?.copyWith(
-                    height: hasSubtext ? _rowLineHeight : null,
-                    color: foreground,
-                  ),
+                  (text.length == 1
+                          ? emphasized.titleLarge
+                          : emphasized.titleSmall)
+                      ?.copyWith(
+                        height: hasSubtext ? _rowLineHeight : null,
+                        color: foreground,
+                      ),
                   emphasized.displaySmall?.copyWith(
                     height: hasSubtext ? AppDimensions.lineHeightTight : null,
                     color: foreground,
@@ -104,7 +112,12 @@ class EntityAvatar extends StatelessWidget {
                 ),
               ),
               if (hasSubtext) ...[
-                SizedBox(height: _dimension(AppDimensions.paddingXxs, AppDimensions.paddingXs)),
+                SizedBox(
+                  height: _dimension(
+                    AppDimensions.paddingXxs,
+                    AppDimensions.paddingXs,
+                  ),
+                ),
                 Text(
                   subtext,
                   textHeightBehavior: _noLeading,

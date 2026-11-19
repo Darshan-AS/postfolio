@@ -64,8 +64,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '143378829514',
     projectId: 'postfolio-app',
     storageBucket: 'postfolio-app.firebasestorage.app',
-    androidClientId: '143378829514-g9dcitgo5kd8r3kg68u4spgqc1l8h9uv.apps.googleusercontent.com',
-    iosClientId: '143378829514-8no69brlamqrr9omemjjjv6k1b9jrtk1.apps.googleusercontent.com',
+    androidClientId:
+        '143378829514-g9dcitgo5kd8r3kg68u4spgqc1l8h9uv.apps.googleusercontent.com',
+    iosClientId:
+        '143378829514-8no69brlamqrr9omemjjjv6k1b9jrtk1.apps.googleusercontent.com',
     iosBundleId: 'dev.darshanas.postfolio',
   );
 
@@ -75,8 +77,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '143378829514',
     projectId: 'postfolio-app',
     storageBucket: 'postfolio-app.firebasestorage.app',
-    androidClientId: '143378829514-g9dcitgo5kd8r3kg68u4spgqc1l8h9uv.apps.googleusercontent.com',
-    iosClientId: '143378829514-8no69brlamqrr9omemjjjv6k1b9jrtk1.apps.googleusercontent.com',
+    androidClientId:
+        '143378829514-g9dcitgo5kd8r3kg68u4spgqc1l8h9uv.apps.googleusercontent.com',
+    iosClientId:
+        '143378829514-8no69brlamqrr9omemjjjv6k1b9jrtk1.apps.googleusercontent.com',
     iosBundleId: 'dev.darshanas.postfolio',
   );
 
@@ -89,5 +93,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'postfolio-app.firebasestorage.app',
     measurementId: 'G-NG5X5NGZMG',
   );
-
 }

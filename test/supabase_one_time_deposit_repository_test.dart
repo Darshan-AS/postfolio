@@ -14,126 +14,147 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:uuid/uuid.dart';
 
 void main() {
-  test('Test SupabaseOneTimeDepositRepository create, update amount, and watch', () async {
-    final client = SupabaseClient(
-      'http://127.0.0.1:54321',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0',
-      authOptions: const AuthClientOptions(authFlowType: AuthFlowType.implicit),
-    );
-
-    final authRes = await client.auth.signUp(
-      email: 'testagent_otd_${DateTime.now().millisecondsSinceEpoch}@example.com',
-      password: 'password123',
-    );
-
-    final user = authRes.user ?? client.auth.currentUser;
-    expect(user, isNotNull);
-
-    // Register cleanup hook to delete test agent profile and cascaded records
-    addTearDown(() async {
-      await client.from('agent_profiles').delete().eq('id', user!.id);
-    });
-
-    await client.from('agent_profiles').upsert({
-      'id': user!.id,
-      'name': 'Test Agent OTD',
-      'email': user.email,
-    });
-
-    final customerRepo = SupabaseCustomerRepository(client);
-    final customerId = const Uuid().v4();
-    final customerRes = Customer.create(
-      id: customerId,
-      name: 'OTD Customer Test',
-      phone: '9876543210',
-    );
-    final customer = (customerRes as Success<Customer, String>).value;
-    await customerRepo.createCustomer(customer);
-
-    final otdRepo = SupabaseOneTimeDepositRepository(client);
-    final otdId = const Uuid().v4();
-
-    final otdCreateRes = OneTimeDeposit.create(
-      id: otdId,
-      accountNo: 'TD1001',
-      principalAmount: 50000.0,
-      termYears: 5,
-      termMonths: 0,
-      interestRate: 7.5,
-      customerId: customerId,
-      schemeType: OneTimeSchemeType.timeDeposit,
-      startDate: DateTime(2025, 1, 1),
-      nominees: const [
-        Nominee(
-          name: 'OTD Nominee',
-          relationship: NomineeRelationship.wife,
-          percentage: 100.0,
+  test(
+    'Test SupabaseOneTimeDepositRepository create, update amount, and watch',
+    () async {
+      final client = SupabaseClient(
+        'http://127.0.0.1:54321',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0',
+        authOptions: const AuthClientOptions(
+          authFlowType: AuthFlowType.implicit,
         ),
-      ],
-    );
+      );
 
-    expect(otdCreateRes, isA<Success<OneTimeDeposit, String>>());
-    final otd = (otdCreateRes as Success<OneTimeDeposit, String>).value;
+      final authRes = await client.auth.signUp(
+        email:
+            'testagent_otd_${DateTime.now().millisecondsSinceEpoch}@example.com',
+        password: 'password123',
+      );
 
-    final createResult = await otdRepo.createOneTimeDeposit(otd);
-    expect(createResult, isA<Success<void, String>>());
+      final user = authRes.user ?? client.auth.currentUser;
+      expect(user, isNotNull);
 
-    // Verify initial OTD in DB
-    final initialDbData = await client.from('one_time_deposits').select().eq('id', otdId).single();
-    expect((initialDbData['principal_amount'] as num).toDouble(), 50000.0);
+      // Register cleanup hook to delete test agent profile and cascaded records
+      addTearDown(() async {
+        await client.from('agent_profiles').delete().eq('id', user!.id);
+      });
 
-    // Update OTD with new principal amount 100000.0
-    final otdUpdateRes = OneTimeDeposit.create(
-      id: otdId,
-      accountNo: 'TD1001',
-      principalAmount: 100000.0,
-      termYears: 5,
-      termMonths: 0,
-      interestRate: 7.5,
-      customerId: customerId,
-      schemeType: OneTimeSchemeType.timeDeposit,
-      startDate: DateTime(2025, 1, 1),
-      nominees: const [
-        Nominee(
-          name: 'OTD Nominee',
-          relationship: NomineeRelationship.wife,
-          percentage: 100.0,
-        ),
-      ],
-    );
-    final updatedOtd = (otdUpdateRes as Success<OneTimeDeposit, String>).value;
+      await client.from('agent_profiles').upsert({
+        'id': user!.id,
+        'name': 'Test Agent OTD',
+        'email': user.email,
+      });
 
-    final updateResult = await otdRepo.updateOneTimeDeposit(updatedOtd);
-    expect(updateResult, isA<Success<void, String>>());
+      final customerRepo = SupabaseCustomerRepository(client);
+      final customerId = const Uuid().v4();
+      final customerRes = Customer.create(
+        id: customerId,
+        name: 'OTD Customer Test',
+        phone: '9876543210',
+      );
+      final customer = (customerRes as Success<Customer, String>).value;
+      await customerRepo.createCustomer(customer);
 
-    // Verify updated OTD in DB directly
-    final updatedDbData = await client.from('one_time_deposits').select().eq('id', otdId).single();
-    expect((updatedDbData['principal_amount'] as num).toDouble(), 100000.0);
+      final otdRepo = SupabaseOneTimeDepositRepository(client);
+      final otdId = const Uuid().v4();
 
-    // Watch OTDs list (lightweight list projection omits nominees per P2.4)
-    final watchResult = await otdRepo.watchOneTimeDeposits().first;
-    expect(watchResult, isA<Success<List<OneTimeDeposit>, String>>());
-    final watchedList = (watchResult as Success<List<OneTimeDeposit>, String>).value;
-    final watchedOtd = watchedList.firstWhere((o) => o.id == otdId);
-    expect(watchedOtd.principalAmount, 100000.0);
-    expect(watchedOtd.nominees, isEmpty);
+      final otdCreateRes = OneTimeDeposit.create(
+        id: otdId,
+        accountNo: 'TD1001',
+        principalAmount: 50000.0,
+        termYears: 5,
+        termMonths: 0,
+        interestRate: 7.5,
+        customerId: customerId,
+        schemeType: OneTimeSchemeType.timeDeposit,
+        startDate: DateTime(2025, 1, 1),
+        nominees: const [
+          Nominee(
+            name: 'OTD Nominee',
+            relationship: NomineeRelationship.wife,
+            percentage: 100.0,
+          ),
+        ],
+      );
 
-    // Watch single OTD by ID (full detail projection includes nominees)
-    final detailResult = await otdRepo.watchOneTimeDepositById(otdId).first;
-    expect(detailResult, isA<Success<OneTimeDeposit?, String>>());
-    final detailOtd = (detailResult as Success<OneTimeDeposit?, String>).value!;
-    expect(detailOtd.principalAmount, 100000.0);
-    expect(detailOtd.nominees.length, 1);
-    expect(detailOtd.nominees.first.name, 'OTD Nominee');
+      expect(otdCreateRes, isA<Success<OneTimeDeposit, String>>());
+      final otd = (otdCreateRes as Success<OneTimeDeposit, String>).value;
 
-    // Toggle status via atomic RPC (must preserve nominees even though list view omitted them)
-    final closeRes = await otdRepo.updateDepositStatus(otdId, DepositStatus.closed);
-    expect(closeRes, isA<Success<void, String>>());
-    final closedDetail =
-        (await otdRepo.watchOneTimeDepositById(otdId).first as Success<OneTimeDeposit, String>)
-            .value;
-    expect(closedDetail.status, DepositStatus.closed);
-    expect(closedDetail.nominees.length, 1);
-    expect(closedDetail.nominees.first.name, 'OTD Nominee');
-  });
+      final createResult = await otdRepo.createOneTimeDeposit(otd);
+      expect(createResult, isA<Success<void, String>>());
+
+      // Verify initial OTD in DB
+      final initialDbData = await client
+          .from('one_time_deposits')
+          .select()
+          .eq('id', otdId)
+          .single();
+      expect((initialDbData['principal_amount'] as num).toDouble(), 50000.0);
+
+      // Update OTD with new principal amount 100000.0
+      final otdUpdateRes = OneTimeDeposit.create(
+        id: otdId,
+        accountNo: 'TD1001',
+        principalAmount: 100000.0,
+        termYears: 5,
+        termMonths: 0,
+        interestRate: 7.5,
+        customerId: customerId,
+        schemeType: OneTimeSchemeType.timeDeposit,
+        startDate: DateTime(2025, 1, 1),
+        nominees: const [
+          Nominee(
+            name: 'OTD Nominee',
+            relationship: NomineeRelationship.wife,
+            percentage: 100.0,
+          ),
+        ],
+      );
+      final updatedOtd =
+          (otdUpdateRes as Success<OneTimeDeposit, String>).value;
+
+      final updateResult = await otdRepo.updateOneTimeDeposit(updatedOtd);
+      expect(updateResult, isA<Success<void, String>>());
+
+      // Verify updated OTD in DB directly
+      final updatedDbData = await client
+          .from('one_time_deposits')
+          .select()
+          .eq('id', otdId)
+          .single();
+      expect((updatedDbData['principal_amount'] as num).toDouble(), 100000.0);
+
+      // Watch OTDs list (lightweight list projection omits nominees per P2.4)
+      final watchResult = await otdRepo.watchOneTimeDeposits().first;
+      expect(watchResult, isA<Success<List<OneTimeDeposit>, String>>());
+      final watchedList =
+          (watchResult as Success<List<OneTimeDeposit>, String>).value;
+      final watchedOtd = watchedList.firstWhere((o) => o.id == otdId);
+      expect(watchedOtd.principalAmount, 100000.0);
+      expect(watchedOtd.nominees, isEmpty);
+
+      // Watch single OTD by ID (full detail projection includes nominees)
+      final detailResult = await otdRepo.watchOneTimeDepositById(otdId).first;
+      expect(detailResult, isA<Success<OneTimeDeposit?, String>>());
+      final detailOtd =
+          (detailResult as Success<OneTimeDeposit?, String>).value!;
+      expect(detailOtd.principalAmount, 100000.0);
+      expect(detailOtd.nominees.length, 1);
+      expect(detailOtd.nominees.first.name, 'OTD Nominee');
+
+      // Toggle status via atomic RPC (must preserve nominees even though list view omitted them)
+      final closeRes = await otdRepo.updateDepositStatus(
+        otdId,
+        DepositStatus.closed,
+      );
+      expect(closeRes, isA<Success<void, String>>());
+      final closedDetail =
+          (await otdRepo.watchOneTimeDepositById(otdId).first
+                  as Success<OneTimeDeposit, String>)
+              .value;
+      expect(closedDetail.status, DepositStatus.closed);
+      expect(closedDetail.nominees.length, 1);
+      expect(closedDetail.nominees.first.name, 'OTD Nominee');
+    },
+  );
 }

@@ -39,7 +39,10 @@ abstract final class RDScheduleFactory {
     required int installmentNo,
     RDLedgerRules rules = RDLedgerRules.standard,
   }) {
-    final installmentDate = installmentDateFor(deposit.startDate, installmentNo);
+    final installmentDate = installmentDateFor(
+      deposit.startDate,
+      installmentNo,
+    );
     final dueDate = rules.dueDateFor(deposit.startDate, installmentDate);
     final isOpeningBaseline = installmentNo <= deposit.initialPaidInstallments;
 
@@ -60,11 +63,10 @@ abstract final class RDScheduleFactory {
   static List<RDInstallment> baselineSchedule(
     RecurringDeposit deposit, {
     RDLedgerRules rules = RDLedgerRules.standard,
-  }) =>
-      [
-        for (var no = 1; no <= deposit.totalMonths; no++)
-          baselineInstallment(deposit: deposit, installmentNo: no, rules: rules),
-      ];
+  }) => [
+    for (var no = 1; no <= deposit.totalMonths; no++)
+      baselineInstallment(deposit: deposit, installmentNo: no, rules: rules),
+  ];
 
   /// Whether [deposit] has an installment falling in the calendar month of [month].
   static bool coversMonth(RecurringDeposit deposit, DateTime month) {

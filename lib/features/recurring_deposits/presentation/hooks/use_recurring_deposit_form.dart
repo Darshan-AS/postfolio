@@ -94,7 +94,8 @@ RecurringDepositFormState useRecurringDepositForm({
       : const AsyncValue<bool>.data(false);
   // Fail safe: until the ledger facts have loaded, treat the terms as locked so a
   // half-loaded form can never edit an account that already has activity.
-  final isFinancialTermsLockLoading = isLockedAsync.isLoading && !isLockedAsync.hasValue;
+  final isFinancialTermsLockLoading =
+      isLockedAsync.isLoading && !isLockedAsync.hasValue;
   final isFinancialTermsLocked = switch (isLockedAsync) {
     AsyncData(:final value) => value,
     AsyncLoading(:final value?) => value,
@@ -135,9 +136,7 @@ RecurringDepositFormState useRecurringDepositForm({
     text: deposit?.initialPaidInstallments.toString() ?? '0',
   );
   final openingReceivableController = useTextEditingController(
-    text: deposit != null
-        ? deposit.openingReceivable.toStringAsFixed(0)
-        : '',
+    text: deposit != null ? deposit.openingReceivable.toStringAsFixed(0) : '',
   );
 
   final selectedCustomerId = useState<String?>(
@@ -189,7 +188,8 @@ RecurringDepositFormState useRecurringDepositForm({
   final currentInstallment =
       double.tryParse(cleanedInstallmentStr) ??
       amountFormatter.getUnformattedValue().toDouble();
-  final currentRate = double.tryParse(interestRateController.text.trim()) ?? 0.0;
+  final currentRate =
+      double.tryParse(interestRateController.text.trim()) ?? 0.0;
 
   final projection = useMemoized(
     () {
@@ -214,11 +214,8 @@ RecurringDepositFormState useRecurringDepositForm({
     required RecurringSchemeType scheme,
     required DateTime date,
   }) {
-    final PostalSchemeTerms terms =
-        postalRateService.resolveRecurringSchemeTerms(
-          schemeType: scheme,
-          startDate: date,
-        );
+    final PostalSchemeTerms terms = postalRateService
+        .resolveRecurringSchemeTerms(schemeType: scheme, startDate: date);
     interestRateController.text = terms.interestRate.toStringAsFixed(2);
     selectedTermYears.value = terms.termYears;
     selectedTermMonths.value = terms.termMonths;
@@ -238,7 +235,10 @@ RecurringDepositFormState useRecurringDepositForm({
   Future<void> save() async {
     if (formKey.currentState!.validate()) {
       if (selectedCustomerId.value == null) {
-        AppFeedback.showError(context, t.recurringDeposits.selectCustomerPrompt);
+        AppFeedback.showError(
+          context,
+          t.recurringDeposits.selectCustomerPrompt,
+        );
         return;
       }
 

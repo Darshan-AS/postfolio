@@ -7,5 +7,6 @@ abstract final class RDHubLayout {
   /// header tiles, a row's status and figure, a customer header and its button, the batch
   /// bar and its action. The threshold is the app-wide one, at which `AppButtonGroup` also
   /// stacks its segments, so the whole Hub changes shape together.
-  static bool isLargeText(BuildContext context) => AppDimensions.isLargeText(context);
+  static bool isLargeText(BuildContext context) =>
+      AppDimensions.isLargeText(context);
 }

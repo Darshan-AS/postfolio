@@ -44,7 +44,10 @@ class RDYearlyAccordion extends HookWidget {
 
   static const int _monthsPerYear = 12;
 
-  static List<_YearBucket> _bucket(List<RDInstallment> installments, DateTime now) {
+  static List<_YearBucket> _bucket(
+    List<RDInstallment> installments,
+    DateTime now,
+  ) {
     final numYears = (installments.length / _monthsPerYear).ceil();
     final buckets = <_YearBucket>[];
     for (var y = 0; y < numYears; y++) {
@@ -70,7 +73,10 @@ class RDYearlyAccordion extends HookWidget {
   @override
   Widget build(BuildContext context) {
     // Bucketing walks every month; do it once per projection / clock tick, not per frame.
-    final years = useMemoized(() => _bucket(installments, now), [installments, now]);
+    final years = useMemoized(() => _bucket(installments, now), [
+      installments,
+      now,
+    ]);
     final numYears = years.length;
     // With nothing due, the final year (where the last activity sits) is the "current" one.
     final currentYearIndex = nextDueNo == null
@@ -160,7 +166,9 @@ class _YearSection extends HookWidget {
                         ? HugeIcons.strokeRoundedCheckmarkBadge01
                         : HugeIcons.strokeRoundedCalendar03,
                     size: AppDimensions.iconMd,
-                    color: isYearSettled ? scheme.primary : scheme.onSurfaceVariant,
+                    color: isYearSettled
+                        ? scheme.primary
+                        : scheme.onSurfaceVariant,
                   ),
                   AppSpacings.gapMd,
                   Expanded(
@@ -170,9 +178,12 @@ class _YearSection extends HookWidget {
                         settled: bucket.settledCount.toString(),
                         total: installments.length.toString(),
                       ),
-                      style: AppTypography.emphasizedOf(context).titleSmall?.copyWith(
-                        color: isYearSettled ? scheme.primary : scheme.onSurface,
-                      ),
+                      style: AppTypography.emphasizedOf(context).titleSmall
+                          ?.copyWith(
+                            color: isYearSettled
+                                ? scheme.primary
+                                : scheme.onSurface,
+                          ),
                     ),
                   ),
                   AppSpacings.gapSm,
@@ -196,7 +207,9 @@ class _YearSection extends HookWidget {
         // The months unroll from under the header and roll back up into it; a closed year
         // builds none of its rows.
         AnimatedSwitcher(
-          duration: disableAnimations ? Duration.zero : AppMotion.spatialFastDuration,
+          duration: disableAnimations
+              ? Duration.zero
+              : AppMotion.spatialFastDuration,
           switchInCurve: AppMotion.spatialFastCurve,
           switchOutCurve: AppMotion.spatialFastCurve.flipped,
           transitionBuilder: (child, animation) => SizeTransition(

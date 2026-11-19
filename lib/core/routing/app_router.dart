@@ -74,10 +74,7 @@ GoRouter goRouter(Ref ref) {
         final query = state.uri.queryParameters;
         // Preserve OAuth PKCE callback params (`?code=...` / `?error=...`) directly on /login.
         if (query.containsKey('code') || query.containsKey('error')) {
-          return Uri(
-            path: AppRoutes.login,
-            queryParameters: query,
-          ).toString();
+          return Uri(path: AppRoutes.login, queryParameters: query).toString();
         }
         final requested = state.uri.toString();
         if (requested != '/' && requested != AppRoutes.customers) {
@@ -227,7 +224,8 @@ class OneTimeDepositsRoute extends GoRouteData with $OneTimeDepositsRoute {
 
 class OneTimeDepositCreateRoute extends GoRouteData
     with $OneTimeDepositCreateRoute {
-  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   final String? customerId;
   const OneTimeDepositCreateRoute({this.customerId});
@@ -240,7 +238,8 @@ class OneTimeDepositCreateRoute extends GoRouteData
 
 class OneTimeDepositDetailRoute extends GoRouteData
     with $OneTimeDepositDetailRoute {
-  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   final String otdId;
 
@@ -256,7 +255,8 @@ class OneTimeDepositDetailRoute extends GoRouteData
 
 class OneTimeDepositEditRoute extends GoRouteData
     with $OneTimeDepositEditRoute {
-  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   final String otdId;
   const OneTimeDepositEditRoute(this.otdId);
@@ -280,7 +280,8 @@ class RecurringDepositsRoute extends GoRouteData with $RecurringDepositsRoute {
 
 class RecurringDepositCreateRoute extends GoRouteData
     with $RecurringDepositCreateRoute {
-  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   final String? customerId;
   const RecurringDepositCreateRoute({this.customerId});
@@ -293,7 +294,8 @@ class RecurringDepositCreateRoute extends GoRouteData
 
 class RecurringDepositDetailRoute extends GoRouteData
     with $RecurringDepositDetailRoute {
-  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   final String rdId;
   final String? tab;
@@ -314,7 +316,8 @@ class RecurringDepositDetailRoute extends GoRouteData
 
 class RecurringDepositEditRoute extends GoRouteData
     with $RecurringDepositEditRoute {
-  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   final String rdId;
   const RecurringDepositEditRoute(this.rdId);
@@ -335,7 +338,8 @@ class CustomersRoute extends GoRouteData with $CustomersRoute {
 }
 
 class CustomerCreateRoute extends GoRouteData with $CustomerCreateRoute {
-  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   const CustomerCreateRoute();
 
@@ -346,7 +350,8 @@ class CustomerCreateRoute extends GoRouteData with $CustomerCreateRoute {
 }
 
 class CustomerDetailRoute extends GoRouteData with $CustomerDetailRoute {
-  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   final String customerId;
 
@@ -361,7 +366,8 @@ class CustomerDetailRoute extends GoRouteData with $CustomerDetailRoute {
 }
 
 class CustomerEditRoute extends GoRouteData with $CustomerEditRoute {
-  static final GlobalKey<NavigatorState> $parentNavigatorKey = _rootNavigatorKey;
+  static final GlobalKey<NavigatorState> $parentNavigatorKey =
+      _rootNavigatorKey;
 
   final String customerId;
   const CustomerEditRoute(this.customerId);

@@ -59,8 +59,12 @@ final class RDLedgerProjector {
     final poFeeP = List<int>.filled(n + 1, 0);
     final absorbedP = List<int>.filled(n + 1, 0);
 
-    int feeAt(int no, DateTime day) => Money.toPaise(rules.defaultFeeFor(
-        deposit.installmentAmount, rules.defaultedMonths(schedule[no - 1].dueDate, day)));
+    int feeAt(int no, DateTime day) => Money.toPaise(
+      rules.defaultFeeFor(
+        deposit.installmentAmount,
+        rules.defaultedMonths(schedule[no - 1].dueDate, day),
+      ),
+    );
 
     var depositedThrough = baselineCount;
     for (final ev in facts.poDepositsInOrder) {
@@ -68,7 +72,9 @@ final class RDLedgerProjector {
       final covered = <int>[];
       for (var k = 0; k < ev.installmentCount; k++) {
         if (depositedThrough >= n) {
-          warnings.add('PO deposit ${ev.id} exceeds the schedule; extra installments ignored');
+          warnings.add(
+            'PO deposit ${ev.id} exceeds the schedule; extra installments ignored',
+          );
           break;
         }
         depositedThrough++;
@@ -117,7 +123,9 @@ final class RDLedgerProjector {
       if (a.installmentNo >= 1 && a.installmentNo <= n) {
         absorbedP[a.installmentNo] += Money.toPaise(a.amount);
       } else {
-        warnings.add('Fee absorption for #${a.installmentNo} is outside the schedule');
+        warnings.add(
+          'Fee absorption for #${a.installmentNo} is outside the schedule',
+        );
       }
     }
     for (var no = depositedThrough + 1; no <= n; no++) {
@@ -164,7 +172,9 @@ final class RDLedgerProjector {
         final r = pool < openingLeft ? pool : openingLeft;
         openingLeft -= r;
         pool -= r;
-        slices.add(RDAllocationSlice(installmentNo: 0, amount: Money.toRupees(r)));
+        slices.add(
+          RDAllocationSlice(installmentNo: 0, amount: Money.toRupees(r)),
+        );
       }
 
       while (pool > 0 && pointer <= n) {
@@ -177,7 +187,12 @@ final class RDLedgerProjector {
         final applied = pool < need ? pool : need;
         paidP[pointer] += applied;
         pool -= applied;
-        slices.add(RDAllocationSlice(installmentNo: pointer, amount: Money.toRupees(applied)));
+        slices.add(
+          RDAllocationSlice(
+            installmentNo: pointer,
+            amount: Money.toRupees(applied),
+          ),
+        );
         if (depositedOn[pointer] == null) {
           if (tx.paymentMode.isCash) {
             cashInHandCash += applied;
@@ -199,7 +214,13 @@ final class RDLedgerProjector {
         } else {
           cashInHandDigital += pool;
         }
-        slices.add(RDAllocationSlice(installmentNo: 0, amount: Money.toRupees(pool), isCredit: true));
+        slices.add(
+          RDAllocationSlice(
+            installmentNo: 0,
+            amount: Money.toRupees(pool),
+            isCredit: true,
+          ),
+        );
       }
       allocations[tx.id] = slices;
     }
@@ -208,8 +229,9 @@ final class RDLedgerProjector {
     // or asOfDay when still undeposited.
     for (var no = baselineCount + 1; no <= n; no++) {
       if (!settledAt[no]) {
-        customerFeeP[no] =
-            depositedOn[no] != null ? poFeeP[no] : feeAt(no, asOfDay);
+        customerFeeP[no] = depositedOn[no] != null
+            ? poFeeP[no]
+            : feeAt(no, asOfDay);
       }
       if (absorbedP[no] > customerFeeP[no]) absorbedP[no] = customerFeeP[no];
     }
@@ -268,16 +290,18 @@ final class RDLedgerProjector {
       }
 
       if (paidP[no] > 0 || isDeposited || absorbedP[no] > 0) {
-        openItems.add(RDOpenItem(
-          installmentNo: no,
-          paid: Money.toRupees(paidP[no]),
-          customerFee: Money.toRupees(customerFeeP[no]),
-          isSettled: settled,
-          poFee: isDeposited ? Money.toRupees(poFeeP[no]) : 0.0,
-          absorbedFee: Money.toRupees(absorbedP[no]),
-          poDepositedOn: depositedOn[no],
-          poBatchId: batchOf[no],
-        ));
+        openItems.add(
+          RDOpenItem(
+            installmentNo: no,
+            paid: Money.toRupees(paidP[no]),
+            customerFee: Money.toRupees(customerFeeP[no]),
+            isSettled: settled,
+            poFee: isDeposited ? Money.toRupees(poFeeP[no]) : 0.0,
+            absorbedFee: Money.toRupees(absorbedP[no]),
+            poDepositedOn: depositedOn[no],
+            poBatchId: batchOf[no],
+          ),
+        );
       }
     }
     owedP = (owedP - creditP).clamp(0, 1 << 62);
@@ -353,10 +377,16 @@ final class RDLedgerProjector {
     for (var k = 0; k < count && through + 1 + k <= n; k++) {
       final no = through + 1 + k;
       final due = rules.dueDateFor(
-          deposit.startDate, RDScheduleFactory.installmentDateFor(deposit.startDate, no));
+        deposit.startDate,
+        RDScheduleFactory.installmentDateFor(deposit.startDate, no),
+      );
       principal += amountP;
       fee += Money.toPaise(
-          rules.defaultFeeFor(deposit.installmentAmount, rules.defaultedMonths(due, depositedOn)));
+        rules.defaultFeeFor(
+          deposit.installmentAmount,
+          rules.defaultedMonths(due, depositedOn),
+        ),
+      );
     }
     if (feeOverride != null) {
       final overrideP = Money.toPaise(feeOverride);

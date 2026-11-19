@@ -39,21 +39,31 @@ void main() async {
   );
 
   if (_supportsCrashlytics) {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
     PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true).ignore();
+      FirebaseCrashlytics.instance
+          .recordError(error, stack, fatal: true)
+          .ignore();
       return true;
     };
     // Errors a repository turned into a generic message (unreadable rows, unknown database
     // codes) are handled, not crashes: record them as non-fatal so the cause is not lost.
     SupabaseErrorMapper.onUnexpected = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: false).ignore();
+      FirebaseCrashlytics.instance
+          .recordError(error, stack, fatal: false)
+          .ignore();
     };
   } else if (kIsWeb) {
     final webReporter = AppErrorReporter.supabase(Supabase.instance.client);
     SupabaseErrorMapper.onUnexpected = (error, stack) {
-      webReporter.reportUnawaited(platform: 'web', error: error, stackTrace: stack);
+      webReporter.reportUnawaited(
+        platform: 'web',
+        error: error,
+        stackTrace: stack,
+      );
     };
     final previousOnError = FlutterError.onError;
     FlutterError.onError = (details) {

@@ -25,17 +25,12 @@ typedef RDStatusVisual = ({
 extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
   RDStatusVisual visualOf(BuildContext context) {
     final theme = Theme.of(context);
-    return visual(
-      theme.colorScheme,
-      financial: AppFinancialColors.of(context),
-    );
+    return visual(theme.colorScheme, financial: AppFinancialColors.of(context));
   }
 
-  RDStatusVisual visual(
-    ColorScheme scheme, {
-    AppFinancialColors? financial,
-  }) {
-    final palette = financial ?? AppFinancialColors.forBrightness(scheme.brightness);
+  RDStatusVisual visual(ColorScheme scheme, {AppFinancialColors? financial}) {
+    final palette =
+        financial ?? AppFinancialColors.forBrightness(scheme.brightness);
     final s = t.recurringDeposits.ledger.statuses;
     return switch (this) {
       RDInstallmentDisplayStatus.baseline => (
@@ -110,11 +105,9 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
 
   /// High-contrast solid accent colour (`>= 3:1` against surface) for left-edge indicator bars
   /// and active status markers.
-  Color accent(
-    ColorScheme scheme, {
-    AppFinancialColors? financial,
-  }) {
-    final palette = financial ?? AppFinancialColors.forBrightness(scheme.brightness);
+  Color accent(ColorScheme scheme, {AppFinancialColors? financial}) {
+    final palette =
+        financial ?? AppFinancialColors.forBrightness(scheme.brightness);
     return switch (this) {
       RDInstallmentDisplayStatus.settled => palette.settled.accent,
       RDInstallmentDisplayStatus.collectedPendingPo => palette.inHand.accent,

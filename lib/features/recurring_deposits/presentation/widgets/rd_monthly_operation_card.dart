@@ -134,7 +134,9 @@ class RDMonthlyOperationCard extends StatelessWidget {
           Flexible(
             child: AppButton(
               onPressed: null,
-              label: card.collect(amount: dummy.installmentAmount.toRupeeFormat()),
+              label: card.collect(
+                amount: dummy.installmentAmount.toRupeeFormat(),
+              ),
             ),
           ),
         ],
@@ -190,7 +192,8 @@ class RDMonthlyOperationCard extends StatelessWidget {
     // The pill describes the *account* the agent is standing in front of, not just this
     // month: carried-over arrears outrank "Upcoming" / "Due today".
     final arrearsMonths =
-        item.priorOverdueCount + (item.isOverdue(now) && item.isCustomerPending ? 1 : 0);
+        item.priorOverdueCount +
+        (item.isOverdue(now) && item.isCustomerPending ? 1 : 0);
     final financial = AppFinancialColors.of(context);
     final inArrears = item.hasPriorArrears && status.isCustomerPending;
     final RDStatusVisual visual;
@@ -203,7 +206,9 @@ class RDMonthlyOperationCard extends StatelessWidget {
         foreground: overdue.foreground,
         background: overdue.background,
         icon: overdue.icon,
-        label: t.recurringDeposits.monthlyOperations.card.arrearsPill(n: arrearsMonths),
+        label: t.recurringDeposits.monthlyOperations.card.arrearsPill(
+          n: arrearsMonths,
+        ),
         outline: overdue.outline,
         emphasized: true,
       );
@@ -240,7 +245,8 @@ class RDMonthlyOperationCard extends StatelessWidget {
 
     // "Collect ₹X" is the figure. A Deposit button has none, so there the figure leads
     // the caption; a row with no action shows it where the action would be.
-    final figureInCaption = hasAction && !item.isCustomerPending && money != null;
+    final figureInCaption =
+        hasAction && !item.isCustomerPending && money != null;
     final captionParts = [
       if (figureInCaption) money.headline,
       ...?money?.captionParts,
@@ -280,8 +286,14 @@ class RDMonthlyOperationCard extends StatelessWidget {
           excludeSemantics: true,
           child: AppSelectionFlip(
             selected: isSelected,
-            selectedChild: _SelectionMark(shape: deposit.schemeType.avatarShape, isSelected: true),
-            child: _SelectionMark(shape: deposit.schemeType.avatarShape, isSelected: false),
+            selectedChild: _SelectionMark(
+              shape: deposit.schemeType.avatarShape,
+              isSelected: true,
+            ),
+            child: _SelectionMark(
+              shape: deposit.schemeType.avatarShape,
+              isSelected: false,
+            ),
           ),
         ),
         child: _InstallmentAvatar(
@@ -437,7 +449,9 @@ class _SelectionMark extends StatelessWidget {
       backgroundColor: isSelected ? scheme.primary : scheme.inset,
       foregroundColor: isSelected ? scheme.onPrimary : scheme.onSurfaceVariant,
       child: AppIcon(
-        isSelected ? HugeIcons.strokeRoundedTick02 : HugeIcons.strokeRoundedCircle,
+        isSelected
+            ? HugeIcons.strokeRoundedTick02
+            : HugeIcons.strokeRoundedCircle,
         size: AppDimensions.iconMd,
       ),
     );
@@ -484,10 +498,13 @@ class _InstallmentAvatar extends StatelessWidget {
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  t.recurringDeposits.monthlyOperations.card.monthNo(n: installmentNumber.toString()),
+                  t.recurringDeposits.monthlyOperations.card.monthNo(
+                    n: installmentNumber.toString(),
+                  ),
                   maxLines: 1,
-                  style: AppTypography.emphasizedOf(context).labelLarge
-                      ?.copyWith(color: foreground),
+                  style: AppTypography.emphasizedOf(
+                    context,
+                  ).labelLarge?.copyWith(color: foreground),
                 ),
               ),
             ),
@@ -552,7 +569,10 @@ class _IdentityLine extends StatelessWidget {
     final emphasized = AppTypography.emphasizedOf(context);
     final card = t.recurringDeposits.monthlyOperations.card;
     final due = card.due(
-      date: DateFormat(_dueDatePattern, resolvedDateLocale()).format(installment.dueDate),
+      date: DateFormat(
+        _dueDatePattern,
+        resolvedDateLocale(),
+      ).format(installment.dueDate),
     );
     final alert = emphasized.bodySmall?.copyWith(
       color: theme.colorScheme.error,
@@ -561,7 +581,10 @@ class _IdentityLine extends StatelessWidget {
     if (status == RDInstallmentDisplayStatus.overdue) {
       final days = installment.overdueDaysAt(now);
       return (
-        card.dueOverdue(due: due, late: card.overdueDays(days: days < 1 ? 1 : days)),
+        card.dueOverdue(
+          due: due,
+          late: card.overdueDays(days: days < 1 ? 1 : days),
+        ),
         alert,
       );
     }

@@ -38,7 +38,8 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
       localMutations: _localMutations.stream,
       shouldRefetch: (payload) {
         final type =
-            payload.newRecord['account_type'] ?? payload.oldRecord['account_type'];
+            payload.newRecord['account_type'] ??
+            payload.oldRecord['account_type'];
         return type == null || type == 'RD';
       },
       fetchAll: () => SupabasePaginatedQuery.fetchAllPages<RecurringDeposit>(
@@ -84,7 +85,9 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   }
 
   @override
-  Future<Result<void, String>> saveRecurringDeposit(RecurringDeposit deposit) async {
+  Future<Result<void, String>> saveRecurringDeposit(
+    RecurringDeposit deposit,
+  ) async {
     return _saveRecurringDeposit(deposit);
   }
 
@@ -116,7 +119,9 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
     }
   }
 
-  Future<Result<void, String>> _saveRecurringDeposit(RecurringDeposit deposit) async {
+  Future<Result<void, String>> _saveRecurringDeposit(
+    RecurringDeposit deposit,
+  ) async {
     try {
       final json = deposit.toJson();
       await _supabaseClient.rpc(

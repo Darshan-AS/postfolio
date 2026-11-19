@@ -24,7 +24,8 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
 
   /// Summaries this client has just stored. [watchSummaries] expects Realtime to deliver
   /// them and loads the list itself if it does not.
-  final _localSummaryWrites = StreamController<List<RDLedgerSummary>>.broadcast();
+  final _localSummaryWrites =
+      StreamController<List<RDLedgerSummary>>.broadcast();
 
   static const _transactions = 'rd_transactions';
   static const _poDeposits = 'rd_po_deposits';
@@ -56,12 +57,13 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
           .map((rows) => _mapRows(rows, RDPoDeposit.fromJson));
 
   @override
-  Stream<Result<List<RDFeeAbsorption>, String>> watchFeeAbsorptions(String rdId) =>
-      _client
-          .from(_feeAbsorptions)
-          .stream(primaryKey: ['rd_id', 'installment_no'])
-          .eq('rd_id', rdId)
-          .map((rows) => _mapRows(rows, RDFeeAbsorption.fromJson));
+  Stream<Result<List<RDFeeAbsorption>, String>> watchFeeAbsorptions(
+    String rdId,
+  ) => _client
+      .from(_feeAbsorptions)
+      .stream(primaryKey: ['rd_id', 'installment_no'])
+      .eq('rd_id', rdId)
+      .map((rows) => _mapRows(rows, RDFeeAbsorption.fromJson));
 
   /// Largest `rd_id IN (...)` list sent in one request (keeps the URL well under limits).
   static const _rdIdChunkSize = 100;
@@ -208,7 +210,9 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
   }
 
   @override
-  Future<Result<List<RDPoDeposit>, String>> fetchPoDepositsByBatch(String batchId) async {
+  Future<Result<List<RDPoDeposit>, String>> fetchPoDepositsByBatch(
+    String batchId,
+  ) async {
     try {
       final agentId = _agentId;
       final events = await SupabasePaginatedQuery.fetchAllPages<RDPoDeposit>(
@@ -230,18 +234,16 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
   // --- Writes -----------------------------------------------------------------------------
 
   @override
-  Future<Result<void, String>> upsertSummaries(List<RDLedgerSummary> summaries) =>
-      summaries.isEmpty
-          ? Future.value(const Success(null))
-          : _guard(() async {
-              await _client.from(_summaries).upsert(
-                [
-                  for (final s in summaries) _summaryRow(s)..['agent_id'] = _agentId,
-                ],
-                onConflict: 'rd_id',
-              );
-              _localSummaryWrites.add(summaries);
-            });
+  Future<Result<void, String>> upsertSummaries(
+    List<RDLedgerSummary> summaries,
+  ) => summaries.isEmpty
+      ? Future.value(const Success(null))
+      : _guard(() async {
+          await _client.from(_summaries).upsert([
+            for (final s in summaries) _summaryRow(s)..['agent_id'] = _agentId,
+          ], onConflict: 'rd_id');
+          _localSummaryWrites.add(summaries);
+        });
 
   /// One request, one database transaction (`public.apply_rd_ledger_change`): the facts in
   /// [change] and the [summaries] projected from them are stored together or not at all.
@@ -266,13 +268,15 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
             for (final d in change.deleteTransactions) d.transactionId,
           ],
           'p_insert_po_deposits': [
-            for (final e in change.insertPoDeposits) e.toJson()..remove('created_at'),
+            for (final e in change.insertPoDeposits)
+              e.toJson()..remove('created_at'),
           ],
           'p_delete_po_deposit_ids': [
             for (final d in change.deletePoDeposits) d.eventId,
           ],
           'p_upsert_fee_absorptions': [
-            for (final a in change.upsertFeeAbsorptions) a.toJson()..remove('created_at'),
+            for (final a in change.upsertFeeAbsorptions)
+              a.toJson()..remove('created_at'),
           ],
           'p_delete_fee_absorptions': [
             for (final d in change.deleteFeeAbsorptions)

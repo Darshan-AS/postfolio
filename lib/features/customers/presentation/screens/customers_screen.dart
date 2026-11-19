@@ -103,7 +103,8 @@ class CustomersScreen extends HookConsumerWidget {
                 },
                 itemBuilder: (context, customer, position) =>
                     CustomerCard(customer: customer, position: position),
-                skeletonBuilder: (position) => CustomerCard.skeleton(position: position),
+                skeletonBuilder: (position) =>
+                    CustomerCard.skeleton(position: position),
               ),
             ),
           ),

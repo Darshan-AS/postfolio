@@ -43,9 +43,13 @@ class RecurringDepositsScreen extends HookConsumerWidget {
       if (initialView != null || initialMonth != null) {
         Future.microtask(() {
           if (initialView == 'hub') {
-            ref.read(rDViewModeControllerProvider.notifier).setMode(RDViewMode.monthlyHub);
+            ref
+                .read(rDViewModeControllerProvider.notifier)
+                .setMode(RDViewMode.monthlyHub);
           } else if (initialView == 'accounts') {
-            ref.read(rDViewModeControllerProvider.notifier).setMode(RDViewMode.accounts);
+            ref
+                .read(rDViewModeControllerProvider.notifier)
+                .setMode(RDViewMode.accounts);
           }
           if (initialMonth != null) {
             final match = _yearMonthPattern.firstMatch(initialMonth!.trim());
@@ -53,7 +57,9 @@ class RecurringDepositsScreen extends HookConsumerWidget {
               final year = int.parse(match.group(1)!);
               final month = int.parse(match.group(2)!);
               if (month >= 1 && month <= 12) {
-                ref.read(rDHubMonthProvider.notifier).setMonth(DateTime(year, month));
+                ref
+                    .read(rDHubMonthProvider.notifier)
+                    .setMonth(DateTime(year, month));
               }
             }
           }
@@ -120,7 +126,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
               controller: fab,
               label: t.recurringDeposits.newDeposit,
               icon: HugeIcons.strokeRoundedAdd01,
-              onPressed: () => const RecurringDepositCreateRoute().push(context),
+              onPressed: () =>
+                  const RecurringDepositCreateRoute().push(context),
             )
           : null,
     );
@@ -144,126 +151,123 @@ class RecurringDepositsScreen extends HookConsumerWidget {
               .read(recurringListCriteriaProvider.notifier)
               .updateSearch(val),
           trailing: [
-              IconButton(
-                tooltip: t.sorting.title,
-                icon: Badge(
-                  isLabelVisible:
-                      criteria.sortField != RDSortField.serialNo ||
-                      criteria.sortDirection != SortDirection.asc,
-                  smallSize: AppDimensions.badgeSizeSm,
-                  child: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedSorting01,
-                    size: AppDimensions.iconMd,
-                  ),
+            IconButton(
+              tooltip: t.sorting.title,
+              icon: Badge(
+                isLabelVisible:
+                    criteria.sortField != RDSortField.serialNo ||
+                    criteria.sortDirection != SortDirection.asc,
+                smallSize: AppDimensions.badgeSizeSm,
+                child: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedSorting01,
+                  size: AppDimensions.iconMd,
                 ),
-                onPressed: () {
-                  AppSortBottomSheet.show(
-                    context: context,
-                    builder: (context) => Consumer(
-                      builder: (context, ref, _) {
-                        final criteria = ref.watch(
-                          recurringListCriteriaProvider,
-                        );
-                        return AppSortBottomSheet<RDSortField>(
-                          title: t.sorting.title,
-                          fields: RDSortField.values,
-                          selectedField: criteria.sortField,
-                          selectedDirection: criteria.sortDirection,
-                          fieldLabelBuilder: (f) => f.label,
-                          directionLabelBuilder: (f, d) => f.directionLabel(d),
-                          onSelected: (field, direction) {
-                            ref
-                                .read(recurringListCriteriaProvider.notifier)
-                                .updateSortField(field);
-                            ref
-                                .read(recurringListCriteriaProvider.notifier)
-                                .updateSortDirection(direction);
-                          },
-                          onReset: () => ref
-                              .read(recurringListCriteriaProvider.notifier)
-                              .clearSort(),
-                        );
-                      },
-                    ),
-                  );
-                },
               ),
-              IconButton(
-                tooltip: t.filters.title,
-                icon: Badge(
-                  isLabelVisible: activeFilterCount > 0,
-                  label: Text('$activeFilterCount'),
-                  child: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedFilter,
-                    size: AppDimensions.iconMd,
+              onPressed: () {
+                AppSortBottomSheet.show(
+                  context: context,
+                  builder: (context) => Consumer(
+                    builder: (context, ref, _) {
+                      final criteria = ref.watch(recurringListCriteriaProvider);
+                      return AppSortBottomSheet<RDSortField>(
+                        title: t.sorting.title,
+                        fields: RDSortField.values,
+                        selectedField: criteria.sortField,
+                        selectedDirection: criteria.sortDirection,
+                        fieldLabelBuilder: (f) => f.label,
+                        directionLabelBuilder: (f, d) => f.directionLabel(d),
+                        onSelected: (field, direction) {
+                          ref
+                              .read(recurringListCriteriaProvider.notifier)
+                              .updateSortField(field);
+                          ref
+                              .read(recurringListCriteriaProvider.notifier)
+                              .updateSortDirection(direction);
+                        },
+                        onReset: () => ref
+                            .read(recurringListCriteriaProvider.notifier)
+                            .clearSort(),
+                      );
+                    },
                   ),
+                );
+              },
+            ),
+            IconButton(
+              tooltip: t.filters.title,
+              icon: Badge(
+                isLabelVisible: activeFilterCount > 0,
+                label: Text('$activeFilterCount'),
+                child: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedFilter,
+                  size: AppDimensions.iconMd,
                 ),
-                onPressed: () {
-                  AppFilterBottomSheet.show(
-                    context: context,
-                    builder: (context) => Consumer(
-                      builder: (context, ref, child) {
-                        final criteria = ref.watch(
-                          recurringListCriteriaProvider,
-                        );
-                        return AppFilterBottomSheet(
-                          title: t.filters.title,
-                          onClearAll: () => ref
-                              .read(recurringListCriteriaProvider.notifier)
-                              .clearFilters(),
-                          filterSections: [
-                            AppFilterSection<MaturityUrgency>(
-                              title: t.filters.sections.urgency,
-                              options: const [
-                                MaturityUrgency.matured,
-                                MaturityUrgency.maturingSoon,
-                              ],
-                              selectedOptions: criteria.urgencyFilters,
-                              labelBuilder: (urgency) => urgency.displayName,
-                              onSelected: (urgency) => ref
-                                  .read(recurringListCriteriaProvider.notifier)
-                                  .toggleUrgencyFilter(urgency),
-                            ),
-                            AppFilterSection<DepositStatus>(
-                              title: t.filters.sections.status,
-                              options: DepositStatus.values,
-                              selectedOptions: criteria.statusFilters,
-                              labelBuilder: (status) => status.displayName,
-                              onSelected: (status) => ref
-                                  .read(recurringListCriteriaProvider.notifier)
-                                  .toggleFilter(status),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  );
-                },
               ),
-            ],
-          ),
-          AppSpacings.gapMd,
-          Expanded(
-            child: AppExtendedFabScrollArea(
-              controller: fab,
-              child: EntityListBody<RecurringDeposit>(
-                state: depositsState,
-                emptyMessage: t.recurringDeposits.noDepositsFound,
-                hasActiveFilters:
-                    criteria.searchQuery.isNotEmpty || activeFilterCount > 0,
-                onClearFilters: () =>
-                    ref.read(recurringListCriteriaProvider.notifier).clearAll(),
-                onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
-                onRefresh: () =>
-                    ref.refresh(recurringDepositsControllerProvider.future),
-                itemBuilder: (context, deposit, position) =>
-                    RecurringDepositCard(deposit: deposit, position: position),
-                skeletonBuilder: (position) =>
-                    RecurringDepositCard.skeleton(position: position),
-              ),
+              onPressed: () {
+                AppFilterBottomSheet.show(
+                  context: context,
+                  builder: (context) => Consumer(
+                    builder: (context, ref, child) {
+                      final criteria = ref.watch(recurringListCriteriaProvider);
+                      return AppFilterBottomSheet(
+                        title: t.filters.title,
+                        onClearAll: () => ref
+                            .read(recurringListCriteriaProvider.notifier)
+                            .clearFilters(),
+                        filterSections: [
+                          AppFilterSection<MaturityUrgency>(
+                            title: t.filters.sections.urgency,
+                            options: const [
+                              MaturityUrgency.matured,
+                              MaturityUrgency.maturingSoon,
+                            ],
+                            selectedOptions: criteria.urgencyFilters,
+                            labelBuilder: (urgency) => urgency.displayName,
+                            onSelected: (urgency) => ref
+                                .read(recurringListCriteriaProvider.notifier)
+                                .toggleUrgencyFilter(urgency),
+                          ),
+                          AppFilterSection<DepositStatus>(
+                            title: t.filters.sections.status,
+                            options: DepositStatus.values,
+                            selectedOptions: criteria.statusFilters,
+                            labelBuilder: (status) => status.displayName,
+                            onSelected: (status) => ref
+                                .read(recurringListCriteriaProvider.notifier)
+                                .toggleFilter(status),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        AppSpacings.gapMd,
+        Expanded(
+          child: AppExtendedFabScrollArea(
+            controller: fab,
+            child: EntityListBody<RecurringDeposit>(
+              state: depositsState,
+              emptyMessage: t.recurringDeposits.noDepositsFound,
+              hasActiveFilters:
+                  criteria.searchQuery.isNotEmpty || activeFilterCount > 0,
+              onClearFilters: () =>
+                  ref.read(recurringListCriteriaProvider.notifier).clearAll(),
+              onRetry: () =>
+                  ref.invalidate(recurringDepositsControllerProvider),
+              onRefresh: () =>
+                  ref.refresh(recurringDepositsControllerProvider.future),
+              itemBuilder: (context, deposit, position) =>
+                  RecurringDepositCard(deposit: deposit, position: position),
+              skeletonBuilder: (position) =>
+                  RecurringDepositCard.skeleton(position: position),
             ),
           ),
-        ],
-      );
+        ),
+      ],
+    );
   }
 }

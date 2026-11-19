@@ -30,7 +30,12 @@ final Object _releasedScreen = Object();
 /// in a row. Anything else (a name on two lines) is the screen's copy, the larger of the
 /// two, scaled to the box on its way.
 class EntityHero extends StatelessWidget {
-  const EntityHero({super.key, required this.tag, required this.part, required this.child});
+  const EntityHero({
+    super.key,
+    required this.tag,
+    required this.part,
+    required this.child,
+  });
 
   /// Identifies the entity and the row. Null where nothing travels: a placeholder, or a
   /// screen that no row opened.
@@ -49,7 +54,8 @@ class EntityHero extends StatelessWidget {
   /// on the two screens of one transition. The head pairs only with the row that opened
   /// it: the row hands its origin to the route it pushes (`$extra`), and the screen builds
   /// its tag from that. A screen opened any other way has no origin and so no tag.
-  static Object? tagFrom(String? origin, String id) => origin == null ? null : (origin, id);
+  static Object? tagFrom(String? origin, String id) =>
+      origin == null ? null : (origin, id);
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +65,10 @@ class EntityHero extends StatelessWidget {
 
     // Detail screens are pages of the root navigator, and a back swipe is its gesture.
     final ValueListenable<bool> backSwipe =
-        Navigator.maybeOf(context, rootNavigator: true)?.userGestureInProgressNotifier ??
+        Navigator.maybeOf(
+          context,
+          rootNavigator: true,
+        )?.userGestureInProgressNotifier ??
         const AlwaysStoppedAnimation(false);
     return ValueListenableBuilder<bool>(
       valueListenable: backSwipe,
@@ -85,7 +94,9 @@ class EntityHero extends StatelessWidget {
   static Tween<Rect?> _path(Rect? begin, Rect? end) {
     final Object? screen = Zone.current[_releasedScreen];
     return MaterialRectArcTween(
-      begin: begin != null && screen is Matrix4 ? MatrixUtils.transformRect(screen, begin) : begin,
+      begin: begin != null && screen is Matrix4
+          ? MatrixUtils.transformRect(screen, begin)
+          : begin,
       end: end,
     );
   }
@@ -109,12 +120,16 @@ class EntityHero extends StatelessWidget {
         atScreen.data != null &&
         _isOneLine(onScreen, atScreen) &&
         _isOneLine(inRow, atRow)) {
-      final (_, part) = (onScreen.widget as Hero).tag as (Object, EntityHeroPart);
+      final (_, part) =
+          (onScreen.widget as Hero).tag as (Object, EntityHeroPart);
       // The route's animation is at 0 with the row and at 1 with the screen, whichever
       // way the parts are going.
       return DefaultTextStyleTransition(
         style: animation.drive(
-          TextStyleTween(begin: _styleOf(inRow, atRow), end: _styleOf(onScreen, atScreen)),
+          TextStyleTween(
+            begin: _styleOf(inRow, atRow),
+            end: _styleOf(onScreen, atScreen),
+          ),
         ),
         child: Align(
           // An amount ends its line at both places; everything else starts it.
@@ -134,8 +149,9 @@ class EntityHero extends StatelessWidget {
     if (atScreen is EntityAvatar && atRow is EntityAvatar) {
       return AnimatedBuilder(
         animation: animation,
-        builder: (context, _) =>
-            FittedBox(child: EntityAvatar.between(atRow, atScreen, animation.value)),
+        builder: (context, _) => FittedBox(
+          child: EntityAvatar.between(atRow, atScreen, animation.value),
+        ),
       );
     }
 
@@ -154,7 +170,9 @@ class EntityHero extends StatelessWidget {
   /// The style [text] is drawn in at [context], complete, so that two of them can be
   /// blended.
   static TextStyle _styleOf(BuildContext context, Text text) =>
-      DefaultTextStyle.of(context).style.merge(text.style).copyWith(inherit: false);
+      DefaultTextStyle.of(
+        context,
+      ).style.merge(text.style).copyWith(inherit: false);
 
   /// Whether [text] takes one line at [context]. Two lines are at least two and a half
   /// times the font's size tall, one line at most one and a half.
@@ -184,7 +202,9 @@ class EntityHeroBackSwipe extends NavigatorObserver {
     final navigator = this.navigator;
     // A pop by the back button is the framework's to handle.
     if (navigator == null || !navigator.userGestureInProgress) return;
-    if (route is! ModalRoute || !_exitRestartsWhenLetGo(navigator.context)) return;
+    if (route is! ModalRoute || !_exitRestartsWhenLetGo(navigator.context)) {
+      return;
+    }
     final controller = HeroControllerScope.maybeOf(navigator.context);
     final screen = route.subtreeContext?.findRenderObject();
     if (controller == null || screen == null) return;
@@ -194,7 +214,9 @@ class EntityHeroBackSwipe extends NavigatorObserver {
       // back. They ask for their way inside this call ([EntityHero._path]).
       () => controller.didStartUserGesture(route, previousRoute),
       zoneValues: {
-        _releasedScreen: screen.getTransformTo(navigator.context.findRenderObject()),
+        _releasedScreen: screen.getTransformTo(
+          navigator.context.findRenderObject(),
+        ),
       },
     );
   }
@@ -247,7 +269,8 @@ class EntityHeroFollower extends StatelessWidget {
       builder: (context, child) {
         // A back swipe moves the screen's transition with the finger, and nothing travels
         // until it is let go. From then on the screen's exit is playing.
-        final isDragged = backSwipe.value && transition.status != AnimationStatus.reverse;
+        final isDragged =
+            backSwipe.value && transition.status != AnimationStatus.reverse;
         return FadeTransition(
           opacity: isDragged ? kAlwaysCompleteAnimation : afterLanding,
           child: child,

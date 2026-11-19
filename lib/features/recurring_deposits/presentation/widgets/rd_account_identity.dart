@@ -15,5 +15,8 @@ String rdAccountIdentity(RecurringDeposit deposit) {
   final serialNo = deposit.serialNo;
   return serialNo == null || serialNo.isEmpty
       ? account
-      : card.identity(serial: card.serial(serialNo: serialNo), account: account);
+      : card.identity(
+          serial: card.serial(serialNo: serialNo),
+          account: account,
+        );
 }

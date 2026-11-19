@@ -68,11 +68,15 @@ void main() {
     expect(find.byType(RecurringDepositsScreen), findsOneWidget);
   });
 
-  testWidgets('Monthly Hub builds, backfills summaries and settles', (tester) async {
+  testWidgets('Monthly Hub builds, backfills summaries and settles', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1600, 2400);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(app(const Scaffold(body: RDMonthlyOperationsView())));
+    await tester.pumpWidget(
+      app(const Scaffold(body: RDMonthlyOperationsView())),
+    );
     await tester.pumpAndSettle(const Duration(seconds: 2));
     expect(tester.takeException(), isNull);
     final container = ProviderScope.containerOf(
@@ -80,7 +84,11 @@ void main() {
     );
     final items = await container.read(monthlyOperationItemsProvider.future);
     expect(items, isNotEmpty);
-    expect(items.every((i) => i.hasSummary), isTrue, reason: 'ensureSummaries ran');
+    expect(
+      items.every((i) => i.hasSummary),
+      isTrue,
+      reason: 'ensureSummaries ran',
+    );
   });
 
   testWidgets('RD detail screen builds and settles', (tester) async {
@@ -88,7 +96,9 @@ void main() {
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
     final rd = FakeDataSource().recurringDeposits.first;
-    await tester.pumpWidget(app(RecurringDepositDetailScreen(depositId: rd.id)));
+    await tester.pumpWidget(
+      app(RecurringDepositDetailScreen(depositId: rd.id)),
+    );
     await tester.pumpAndSettle(const Duration(seconds: 2));
     expect(tester.takeException(), isNull);
   });
@@ -102,8 +112,9 @@ void main() {
       return tester.widget<AppTextField>(finder).enabled;
     }
 
-    testWidgets('stay editable on an existing RD without ledger facts',
-        (tester) async {
+    testWidgets('stay editable on an existing RD without ledger facts', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1600, 2400);
       tester.view.devicePixelRatio = 2;
       addTearDown(tester.view.reset);
@@ -114,7 +125,10 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 2));
       expect(tester.takeException(), isNull);
       expect(
-        await isEnabled(tester, t.recurringDeposits.fields.initialPaidInstallments),
+        await isEnabled(
+          tester,
+          t.recurringDeposits.fields.initialPaidInstallments,
+        ),
         isTrue,
       );
       expect(
@@ -131,11 +145,16 @@ void main() {
       final rd = source.recurringDeposits.firstWhere(
         (d) => (source.rdTransactions[d.id] ?? const []).isNotEmpty,
       );
-      await tester.pumpWidget(app(RecurringDepositFormScreen(depositId: rd.id)));
+      await tester.pumpWidget(
+        app(RecurringDepositFormScreen(depositId: rd.id)),
+      );
       await tester.pumpAndSettle(const Duration(seconds: 2));
       expect(tester.takeException(), isNull);
       expect(
-        await isEnabled(tester, t.recurringDeposits.fields.initialPaidInstallments),
+        await isEnabled(
+          tester,
+          t.recurringDeposits.fields.initialPaidInstallments,
+        ),
         isFalse,
       );
     });

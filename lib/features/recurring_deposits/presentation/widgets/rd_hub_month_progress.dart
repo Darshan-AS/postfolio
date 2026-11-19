@@ -50,7 +50,12 @@ class RDHubMonthProgress extends StatelessWidget {
 
     final content = isSettled
         ? _Settled(key: const ValueKey('settled'), month: month)
-        : _Bar(key: const ValueKey('bar'), month: month, settled: settled, total: total);
+        : _Bar(
+            key: const ValueKey('bar'),
+            month: month,
+            settled: settled,
+            total: total,
+          );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -68,10 +73,16 @@ class RDHubMonthProgress extends StatelessWidget {
               child: AnimatedSwitcher(
                 duration: AppMotion.spatialDuration,
                 transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: CurvedAnimation(parent: animation, curve: AppMotion.effectsCurve),
+                  opacity: CurvedAnimation(
+                    parent: animation,
+                    curve: AppMotion.effectsCurve,
+                  ),
                   child: ScaleTransition(
                     scale: Tween<double>(begin: _entranceScale, end: 1).animate(
-                      CurvedAnimation(parent: animation, curve: AppMotion.spatialCurve),
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: AppMotion.spatialCurve,
+                      ),
                     ),
                     child: child,
                   ),
@@ -83,10 +94,16 @@ class RDHubMonthProgress extends StatelessWidget {
   }
 }
 
-String _monthName(DateTime month) => DateFormat.MMMM(resolvedDateLocale()).format(month);
+String _monthName(DateTime month) =>
+    DateFormat.MMMM(resolvedDateLocale()).format(month);
 
 class _Bar extends StatelessWidget {
-  const _Bar({super.key, required this.month, required this.settled, required this.total});
+  const _Bar({
+    super.key,
+    required this.month,
+    required this.settled,
+    required this.total,
+  });
 
   final DateTime month;
   final int settled;
@@ -99,7 +116,11 @@ class _Bar extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: strings.semantics(settled: settled, total: total, month: _monthName(month)),
+      label: strings.semantics(
+        settled: settled,
+        total: total,
+        month: _monthName(month),
+      ),
       excludeSemantics: true,
       child: Row(
         children: [
@@ -109,9 +130,9 @@ class _Bar extends StatelessWidget {
           Flexible(
             child: Text(
               strings.settledOf(settled: settled, total: total),
-              style: AppTypography.emphasizedOf(context).labelLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              style: AppTypography.emphasizedOf(
+                context,
+              ).labelLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               textAlign: TextAlign.end,
             ),
           ),
@@ -146,7 +167,10 @@ class _Settled extends StatelessWidget {
                 size: AppDimensions.avatarMd,
                 backgroundColor: visual.foreground,
                 foregroundColor: visual.background,
-                child: const AppIcon(HugeIcons.strokeRoundedTick02, size: AppDimensions.iconMd),
+                child: const AppIcon(
+                  HugeIcons.strokeRoundedTick02,
+                  size: AppDimensions.iconMd,
+                ),
               ),
               AppSpacings.gapMd,
               Expanded(
@@ -155,13 +179,15 @@ class _Settled extends StatelessWidget {
                   children: [
                     Text(
                       strings.settledTitle(month: _monthName(month)),
-                      style: AppTypography.emphasizedOf(context).titleLarge?.copyWith(
-                        color: visual.foreground,
-                      ),
+                      style: AppTypography.emphasizedOf(
+                        context,
+                      ).titleLarge?.copyWith(color: visual.foreground),
                     ),
                     Text(
                       strings.settledBody,
-                      style: theme.textTheme.bodyMedium?.copyWith(color: visual.foreground),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: visual.foreground,
+                      ),
                     ),
                   ],
                 ),

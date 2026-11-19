@@ -12,7 +12,10 @@ void main() {
 
   /// A screen inside a nested navigator, as a tab's screens are, with a button that asks
   /// for a delete confirmation and records the answer.
-  Future<List<bool?>> pumpScreen(WidgetTester tester, {double textScale = 1.0}) async {
+  Future<List<bool?>> pumpScreen(
+    WidgetTester tester, {
+    double textScale = 1.0,
+  }) async {
     tester.view.physicalSize = const Size(360, 800) * 2;
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.reset);
@@ -22,11 +25,16 @@ void main() {
       MaterialApp(
         theme: AppTheme.lightTheme,
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
         home: Scaffold(
-          bottomNavigationBar: const SizedBox(height: 80, child: Text('navigation bar')),
+          bottomNavigationBar: const SizedBox(
+            height: 80,
+            child: Text('navigation bar'),
+          ),
           body: Navigator(
             onGenerateRoute: (_) => MaterialPageRoute<void>(
               builder: (context) => Center(
@@ -35,7 +43,8 @@ void main() {
                     await AppDialogs.confirmDelete(
                       context,
                       title: 'Delete customer?',
-                      content: 'Their deposits are deleted with them. This cannot be undone.',
+                      content:
+                          'Their deposits are deleted with them. This cannot be undone.',
                     ),
                   ),
                   child: const Text('ask'),
@@ -70,7 +79,9 @@ void main() {
     expect(answers, [true, false]);
   });
 
-  testWidgets('back closes it without an answer and the screen stays', (tester) async {
+  testWidgets('back closes it without an answer and the screen stays', (
+    tester,
+  ) async {
     final answers = await pumpScreen(tester);
     await ask(tester);
 
@@ -82,7 +93,9 @@ void main() {
     expect(answers, [null]);
   });
 
-  testWidgets('it opens over the navigation bar, not inside the tab', (tester) async {
+  testWidgets('it opens over the navigation bar, not inside the tab', (
+    tester,
+  ) async {
     await pumpScreen(tester);
     await ask(tester);
 
@@ -92,34 +105,41 @@ void main() {
     expect(find.text('Delete customer?'), findsNothing);
   });
 
-  testWidgets('a screen reader gets the title as the dialog\'s name and both buttons', (
-    tester,
-  ) async {
-    final handle = tester.ensureSemantics();
-    await pumpScreen(tester);
-    await ask(tester);
+  testWidgets(
+    'a screen reader gets the title as the dialog\'s name and both buttons',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpScreen(tester);
+      await ask(tester);
 
-    final root = tester.binding.renderViews.first.owner!.semanticsOwner!.rootSemanticsNode!;
-    final named = <String>[];
-    void visit(SemanticsNode node) {
-      final data = node.getSemanticsData();
-      if (data.flagsCollection.namesRoute) named.add(data.label);
-      node.visitChildren((child) {
-        visit(child);
-        return true;
-      });
-    }
+      final root = tester
+          .binding
+          .renderViews
+          .first
+          .owner!
+          .semanticsOwner!
+          .rootSemanticsNode!;
+      final named = <String>[];
+      void visit(SemanticsNode node) {
+        final data = node.getSemanticsData();
+        if (data.flagsCollection.namesRoute) named.add(data.label);
+        node.visitChildren((child) {
+          visit(child);
+          return true;
+        });
+      }
 
-    visit(root);
-    expect(named, contains('Delete customer?'));
+      visit(root);
+      expect(named, contains('Delete customer?'));
 
-    for (final label in [t.common.cancel, t.common.delete]) {
-      final data = tester.getSemantics(find.text(label)).getSemanticsData();
-      expect(data.flagsCollection.isButton, isTrue, reason: label);
-      expect(data.hasAction(SemanticsAction.tap), isTrue, reason: label);
-    }
-    handle.dispose();
-  });
+      for (final label in [t.common.cancel, t.common.delete]) {
+        final data = tester.getSemantics(find.text(label)).getSemanticsData();
+        expect(data.flagsCollection.isButton, isTrue, reason: label);
+        expect(data.hasAction(SemanticsAction.tap), isTrue, reason: label);
+      }
+      handle.dispose();
+    },
+  );
 
   testWidgets('nothing overflows at 2.0x text', (tester) async {
     await pumpScreen(tester, textScale: 2.0);

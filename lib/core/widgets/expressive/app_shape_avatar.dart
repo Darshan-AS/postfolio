@@ -122,7 +122,11 @@ class AppShapeAvatar extends StatelessWidget {
 
     // `Material` eases a changed shape in by itself. While the shape is given frame by
     // frame that easing would trail behind it.
-    Widget surface(ShapeBorder shape, Widget? child, {bool frameByFrame = false}) => Material(
+    Widget surface(
+      ShapeBorder shape,
+      Widget? child, {
+      bool frameByFrame = false,
+    }) => Material(
       color: backgroundColor ?? scheme.primaryContainer,
       shape: shape,
       clipBehavior: Clip.antiAlias,

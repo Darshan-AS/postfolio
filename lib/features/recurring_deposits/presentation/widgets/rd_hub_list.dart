@@ -36,7 +36,9 @@ class RDHubList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final groupByCustomer = ref.watch(rDHubFiltersProvider.select((s) => s.groupByCustomer));
+    final groupByCustomer = ref.watch(
+      rDHubFiltersProvider.select((s) => s.groupByCustomer),
+    );
     final now = ref.watch(clockProvider)();
 
     // The room under the last row clears the floating batch bar, which grows with the text.
@@ -44,52 +46,57 @@ class RDHubList extends ConsumerWidget {
       AppDimensions.pageMargin,
       0,
       AppDimensions.pageMargin,
-      MediaQuery.textScalerOf(context).scale(AppDimensions.listBottomPaddingFAB),
+      MediaQuery.textScalerOf(
+        context,
+      ).scale(AppDimensions.listBottomPaddingFAB),
     );
 
     if (groupByCustomer) {
       return switch (ref.watch(groupedMonthlyOperationsProvider)) {
-        AsyncData(:final value) => value.isEmpty
-            ? const _EmptySliver()
-            : SliverPadding(
-                padding: padding,
-                sliver: SliverList.builder(
-                  itemCount: value.length,
-                  itemBuilder: (context, index) {
-                    final group = value[index];
-                    return _CustomerGroup(
-                      key: ValueKey('group-${group.customerId}'),
-                      group: group,
-                      now: now,
-                      isFirst: index == 0,
-                    );
-                  },
+        AsyncData(:final value) =>
+          value.isEmpty
+              ? const _EmptySliver()
+              : SliverPadding(
+                  padding: padding,
+                  sliver: SliverList.builder(
+                    itemCount: value.length,
+                    itemBuilder: (context, index) {
+                      final group = value[index];
+                      return _CustomerGroup(
+                        key: ValueKey('group-${group.customerId}'),
+                        group: group,
+                        now: now,
+                        isFirst: index == 0,
+                      );
+                    },
+                  ),
                 ),
-              ),
         AsyncError(:final error) => _ErrorSliver(error: error),
         AsyncLoading() => _LoadingSliver(padding: padding),
       };
     }
 
     return switch (ref.watch(filteredMonthlyOperationsProvider)) {
-      AsyncData(:final value) => value.isEmpty
-          ? const _EmptySliver()
-          : SliverPadding(
-              padding: padding,
-              sliver: SliverList.separated(
-                itemCount: value.length,
-                separatorBuilder: (context, index) => const SizedBox(height: AppShapes.groupGap),
-                itemBuilder: (context, index) {
-                  final item = value[index];
-                  return _RDHubRow(
-                    key: ValueKey(item.installment.id),
-                    item: item,
-                    now: now,
-                    position: AppGroupPosition.at(index, value.length),
-                  );
-                },
+      AsyncData(:final value) =>
+        value.isEmpty
+            ? const _EmptySliver()
+            : SliverPadding(
+                padding: padding,
+                sliver: SliverList.separated(
+                  itemCount: value.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: AppShapes.groupGap),
+                  itemBuilder: (context, index) {
+                    final item = value[index];
+                    return _RDHubRow(
+                      key: ValueKey(item.installment.id),
+                      item: item,
+                      now: now,
+                      position: AppGroupPosition.at(index, value.length),
+                    );
+                  },
+                ),
               ),
-            ),
       AsyncError(:final error) => _ErrorSliver(error: error),
       AsyncLoading() => _LoadingSliver(padding: padding),
     };
@@ -167,7 +174,8 @@ class _LoadingSliver extends StatelessWidget {
       padding: padding,
       sliver: SliverList.separated(
         itemCount: _skeletonRowCount,
-        separatorBuilder: (context, index) => const SizedBox(height: AppShapes.groupGap),
+        separatorBuilder: (context, index) =>
+            const SizedBox(height: AppShapes.groupGap),
         itemBuilder: (context, index) => Skeletonizer(
           enabled: true,
           child: RDMonthlyOperationCard.skeleton(
@@ -191,24 +199,38 @@ class _EmptySliver extends ConsumerWidget {
     final ops = t.recurringDeposits.monthlyOperations;
     final filters = ref.watch(rDHubFiltersProvider);
     final month = ref.watch(rDHubMonthProvider);
-    final totalCount = ref.watch(monthlyOperationsKpiProvider.select((k) => k.totalCount));
-    final toCollectCount =
-        ref.watch(monthlyOperationsKpiProvider.select((k) => k.toCollectCount));
+    final totalCount = ref.watch(
+      monthlyOperationsKpiProvider.select((k) => k.totalCount),
+    );
+    final toCollectCount = ref.watch(
+      monthlyOperationsKpiProvider.select((k) => k.toCollectCount),
+    );
     final monthLabel = DateFormat.yMMM(resolvedDateLocale()).format(month);
 
     final hasFilters = filters.hasActiveFilters;
-    final isCollectFilter = filters.status == RDMonthlyFilter.toCollect ||
+    final isCollectFilter =
+        filters.status == RDMonthlyFilter.toCollect ||
         filters.status == RDMonthlyFilter.overdue;
     final onlyStatusFilter =
-        filters.searchQuery.isEmpty && filters.dueWindow == RDDueWindowFilter.all;
+        filters.searchQuery.isEmpty &&
+        filters.dueWindow == RDDueWindowFilter.all;
     final allSettled =
-        totalCount > 0 && toCollectCount == 0 && isCollectFilter && onlyStatusFilter;
+        totalCount > 0 &&
+        toCollectCount == 0 &&
+        isCollectFilter &&
+        onlyStatusFilter;
 
     final (message, icon) = totalCount == 0
-        ? (ops.noInstallmentsIn(month: monthLabel), HugeIcons.strokeRoundedInbox)
+        ? (
+            ops.noInstallmentsIn(month: monthLabel),
+            HugeIcons.strokeRoundedInbox,
+          )
         : allSettled
-            ? (ops.allSettledFor(month: monthLabel), HugeIcons.strokeRoundedCheckmarkBadge01)
-            : (ops.noFilterResults, HugeIcons.strokeRoundedSearchRemove);
+        ? (
+            ops.allSettledFor(month: monthLabel),
+            HugeIcons.strokeRoundedCheckmarkBadge01,
+          )
+        : (ops.noFilterResults, HugeIcons.strokeRoundedSearchRemove);
 
     return SliverFillRemaining(
       hasScrollBody: false,
@@ -217,7 +239,9 @@ class _EmptySliver extends ConsumerWidget {
         icon: icon,
         actionLabel: t.common.clearFilters,
         actionIcon: HugeIcons.strokeRoundedFilterRemove,
-        onAction: hasFilters ? ref.read(rDHubFiltersProvider.notifier).clear : null,
+        onAction: hasFilters
+            ? ref.read(rDHubFiltersProvider.notifier).clear
+            : null,
       ),
     );
   }
@@ -251,9 +275,9 @@ class _CustomerGroupHeader extends ConsumerWidget {
               n: group.items.length,
               amount: group.monthlyTotal.toRupeeFormat(),
             ),
-            style: AppTypography.emphasizedOf(context).labelLarge?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
+            style: AppTypography.emphasizedOf(
+              context,
+            ).labelLarge?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ),
       ],
@@ -262,9 +286,9 @@ class _CustomerGroupHeader extends ConsumerWidget {
       message: groupStrings.selectGroupFor(name: group.customerName),
       child: AppButton.text(
         label: groupStrings.selectGroup,
-        onPressed: () => ref
-            .read(rDHubSelectionProvider.notifier)
-            .selectAll([for (final i in group.items) i.installment.id]),
+        onPressed: () => ref.read(rDHubSelectionProvider.notifier).selectAll([
+          for (final i in group.items) i.installment.id,
+        ]),
       ),
     );
 
@@ -277,7 +301,12 @@ class _CustomerGroupHeader extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [title, selectAll],
             )
-          : Row(children: [Expanded(child: title), selectAll]),
+          : Row(
+              children: [
+                Expanded(child: title),
+                selectAll,
+              ],
+            ),
     );
   }
 }
@@ -308,9 +337,15 @@ class _RDHubRow extends ConsumerWidget {
     final card = t.recurringDeposits.monthlyOperations.card;
     final installmentNo = item.installmentNumber.toString();
 
-    final isSelectionMode = ref.watch(rDHubSelectionProvider.select((s) => s.isSelectionMode));
-    final isSelected = ref.watch(rDHubSelectionProvider.select((s) => s.contains(id)));
-    final isBusy = ref.watch(rDLedgerControllerProvider.select((a) => a.isLoading));
+    final isSelectionMode = ref.watch(
+      rDHubSelectionProvider.select((s) => s.isSelectionMode),
+    );
+    final isSelected = ref.watch(
+      rDHubSelectionProvider.select((s) => s.contains(id)),
+    );
+    final isBusy = ref.watch(
+      rDLedgerControllerProvider.select((a) => a.isLoading),
+    );
     final selection = ref.read(rDHubSelectionProvider.notifier);
     final actions = ref.read(rDMonthlyOperationsActionsProvider.notifier);
 
@@ -372,7 +407,10 @@ class _RDHubRow extends ConsumerWidget {
       final confirmed = await AppDialogs.confirmAction(
         context,
         title: card.absorbFeeConfirmTitle,
-        content: card.absorbFeeConfirmMessage(installment: installmentNo, amount: fee),
+        content: card.absorbFeeConfirmMessage(
+          installment: installmentNo,
+          amount: fee,
+        ),
         confirmText: t.common.confirm,
       );
       if (confirmed != true || !context.mounted) return;
@@ -381,32 +419,40 @@ class _RDHubRow extends ConsumerWidget {
       AppFeedback.showResult(
         context,
         result,
-        successMessage: card.absorbFeeSuccess(installment: installmentNo, amount: fee),
+        successMessage: card.absorbFeeSuccess(
+          installment: installmentNo,
+          amount: fee,
+        ),
       );
     }
 
     final status = item.displayStatus(now);
     final statusLabel = status.visualOf(context).label;
-    final customerName = item.deposit.customerName ?? t.recurringDeposits.unnamedCustomer;
+    final customerName =
+        item.deposit.customerName ?? t.recurringDeposits.unnamedCustomer;
     final serial = item.deposit.serialNo ?? t.common.notProvided;
     final overdueDays = item.installment.overdueDaysAt(now);
     // One sentence per row for screen readers: who, which account, where it stands.
     final semanticLabel = !item.isCustomerPending
-        ? card.semanticsSettled(name: customerName, serial: serial, status: statusLabel)
+        ? card.semanticsSettled(
+            name: customerName,
+            serial: serial,
+            status: statusLabel,
+          )
         : item.isOverdue(now) && overdueDays > 0
-            ? card.semanticsOverdue(
-                name: customerName,
-                serial: serial,
-                status: statusLabel,
-                amount: item.totalOutstanding.toRupeeFormat(),
-                days: overdueDays.toString(),
-              )
-            : card.semantics(
-                name: customerName,
-                serial: serial,
-                status: statusLabel,
-                amount: item.totalOutstanding.toRupeeFormat(),
-              );
+        ? card.semanticsOverdue(
+            name: customerName,
+            serial: serial,
+            status: statusLabel,
+            amount: item.totalOutstanding.toRupeeFormat(),
+            days: overdueDays.toString(),
+          )
+        : card.semantics(
+            name: customerName,
+            serial: serial,
+            status: statusLabel,
+            amount: item.totalOutstanding.toRupeeFormat(),
+          );
 
     // `container` (not `MergeSemantics`): the row gets its own labelled node while the
     // Collect / Deposit buttons and the overflow menu stay individually reachable.

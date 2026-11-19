@@ -64,7 +64,9 @@ class DateOnlyConverter implements JsonConverter<DateTime, Object?> {
       final parsed = DateTime.fromMillisecondsSinceEpoch(json);
       return DateTime(parsed.year, parsed.month, parsed.day);
     }
-    throw FormatException('Expected ISO date string for DateOnlyConverter, got $json');
+    throw FormatException(
+      'Expected ISO date string for DateOnlyConverter, got $json',
+    );
   }
 
   @override

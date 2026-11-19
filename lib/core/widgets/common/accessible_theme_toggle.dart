@@ -15,37 +15,40 @@ class AccessibleThemeToggle extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final strings = t.common.theme;
 
-    final options = <({
-      AppThemeMode mode,
-      String key,
-      String label,
-      List<List<dynamic>> icon,
-    })>[
-      (
-        mode: AppThemeMode.system,
-        key: 'theme_mode_system',
-        label: strings.system,
-        icon: HugeIcons.strokeRoundedSmartPhone01,
-      ),
-      (
-        mode: AppThemeMode.light,
-        key: 'theme_mode_light',
-        label: strings.light,
-        icon: HugeIcons.strokeRoundedSun03,
-      ),
-      (
-        mode: AppThemeMode.dark,
-        key: 'theme_mode_dark',
-        label: strings.dark,
-        icon: HugeIcons.strokeRoundedMoon02,
-      ),
-      (
-        mode: AppThemeMode.accessibleSystem,
-        key: 'theme_mode_accessible',
-        label: strings.accessible,
-        icon: HugeIcons.strokeRoundedEye,
-      ),
-    ];
+    final options =
+        <
+          ({
+            AppThemeMode mode,
+            String key,
+            String label,
+            List<List<dynamic>> icon,
+          })
+        >[
+          (
+            mode: AppThemeMode.system,
+            key: 'theme_mode_system',
+            label: strings.system,
+            icon: HugeIcons.strokeRoundedSmartPhone01,
+          ),
+          (
+            mode: AppThemeMode.light,
+            key: 'theme_mode_light',
+            label: strings.light,
+            icon: HugeIcons.strokeRoundedSun03,
+          ),
+          (
+            mode: AppThemeMode.dark,
+            key: 'theme_mode_dark',
+            label: strings.dark,
+            icon: HugeIcons.strokeRoundedMoon02,
+          ),
+          (
+            mode: AppThemeMode.accessibleSystem,
+            key: 'theme_mode_accessible',
+            label: strings.accessible,
+            icon: HugeIcons.strokeRoundedEye,
+          ),
+        ];
 
     final activeIcon = switch (activeMode) {
       AppThemeMode.system => HugeIcons.strokeRoundedSmartPhone01,

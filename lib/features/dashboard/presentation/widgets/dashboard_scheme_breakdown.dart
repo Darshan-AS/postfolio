@@ -55,7 +55,11 @@ class DashboardSchemeBreakdown extends StatelessWidget {
 
     final pills = [
       for (final entry in schemes)
-        _SchemePill(scheme: entry.scheme, active: entry.active, total: entry.total),
+        _SchemePill(
+          scheme: entry.scheme,
+          active: entry.active,
+          total: entry.total,
+        ),
     ];
 
     return LayoutBuilder(
@@ -65,7 +69,9 @@ class DashboardSchemeBreakdown extends StatelessWidget {
 
         if (count * naturalWidth + (count - 1) * _gap <= room) {
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.pageMargin),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.pageMargin,
+            ),
             child: Row(
               children: [
                 for (var i = 0; i < count; i++) ...[
@@ -92,7 +98,9 @@ class DashboardSchemeBreakdown extends StatelessWidget {
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.pageMargin),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.pageMargin,
+          ),
           child: Row(
             children: [
               for (var i = 0; i < count; i++) ...[
@@ -131,9 +139,9 @@ class _SchemePill extends StatelessWidget {
     final theme = Theme.of(context);
     return TextSpan(
       text: '$active',
-      style: AppTypography.emphasizedOf(context).titleLarge?.copyWith(
-        color: theme.colorScheme.onSurface,
-      ),
+      style: AppTypography.emphasizedOf(
+        context,
+      ).titleLarge?.copyWith(color: theme.colorScheme.onSurface),
       children: [
         TextSpan(
           text: '${t.format.fractionSeparator}$total',

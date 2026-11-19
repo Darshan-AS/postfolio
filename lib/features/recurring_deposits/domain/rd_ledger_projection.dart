@@ -29,11 +29,14 @@ sealed class RDPoReadiness with _$RDPoReadiness {
   const factory RDPoReadiness({
     /// Months collected in full and not yet deposited (contiguous).
     @Default(0) int readyCount,
+
     /// Sum of those months' due amounts (installment + fee) at the given deposit date.
     @Default(0.0) double readyAmount,
     @Default(0.0) double readyFee,
+
     /// The first month that is not yet deposited, if any.
     int? nextInstallmentNo,
+
     /// Whether the next undeposited month is only partially collected.
     @Default(0.0) double partialShortfall,
   }) = _RDPoReadiness;
@@ -62,8 +65,8 @@ sealed class RDLedgerProjection with _$RDLedgerProjection {
 
   RDInstallment? byNo(int installmentNo) =>
       installmentNo >= 1 && installmentNo <= installments.length
-          ? installments[installmentNo - 1]
-          : null;
+      ? installments[installmentNo - 1]
+      : null;
 
   /// First month the customer still owes on, or null when fully paid.
   RDInstallment? get nextDue =>
@@ -74,21 +77,30 @@ sealed class RDLedgerProjection with _$RDLedgerProjection {
   List<RDInstallment> get readyForPo =>
       installments.where((i) => i.isReadyForPo).toList(growable: false);
 
-  List<RDInstallment> get customerPending =>
-      installments.where((i) => !i.isCustomerSettled && !i.isOpeningBaseline).toList(growable: false);
+  List<RDInstallment> get customerPending => installments
+      .where((i) => !i.isCustomerSettled && !i.isOpeningBaseline)
+      .toList(growable: false);
 
   /// Months past due that the customer has not settled.
   List<RDInstallment> get arrears => installments
-      .where((i) => !i.isOpeningBaseline && !i.isCustomerSettled && i.dueDate.isBefore(asOf))
+      .where(
+        (i) =>
+            !i.isOpeningBaseline &&
+            !i.isCustomerSettled &&
+            i.dueDate.isBefore(asOf),
+      )
       .toList(growable: false);
 
-  double get totalCollected =>
-      installments.fold(0.0, (s, i) => s + (i.isOpeningBaseline ? 0 : i.customerPaidAmount));
+  double get totalCollected => installments.fold(
+    0.0,
+    (s, i) => s + (i.isOpeningBaseline ? 0 : i.customerPaidAmount),
+  );
 
   /// Amount the **Collect** sheet should prefill: everything owed (opening receivable,
   /// fronted months, arrears); when nothing is owed yet, the next month's outstanding.
-  double? get collectPrefillAmount =>
-      summary.owedByCustomer > 0 ? summary.owedByCustomer : nextDue?.outstandingAmount;
+  double? get collectPrefillAmount => summary.owedByCustomer > 0
+      ? summary.owedByCustomer
+      : nextDue?.outstandingAmount;
 
   /// The month after the ready block, when the customer has not covered it — i.e. the
   /// month the agent may front from pocket in the next PO visit.
@@ -101,10 +113,10 @@ sealed class RDLedgerProjection with _$RDLedgerProjection {
   bool get canFrontFromPocket => frontableInstallment != null;
 
   /// Groups payments by calendar month, newest month (and newest payment) first.
-  static List<({DateTime month, List<RDTransaction> items})> groupTransactionsByMonth(
-    List<RDTransaction> transactions,
-  ) {
-    final sorted = [...transactions]..sort((a, b) => b.paidDate.compareTo(a.paidDate));
+  static List<({DateTime month, List<RDTransaction> items})>
+  groupTransactionsByMonth(List<RDTransaction> transactions) {
+    final sorted = [...transactions]
+      ..sort((a, b) => b.paidDate.compareTo(a.paidDate));
     final groups = <({DateTime month, List<RDTransaction> items})>[];
     for (final tx in sorted) {
       final month = DateTime(tx.paidDate.year, tx.paidDate.month);

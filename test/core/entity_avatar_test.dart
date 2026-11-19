@@ -29,11 +29,14 @@ void main() {
   }
 
   TextStyle styleOf(WidgetTester tester, String text) => tester
-      .widget<RichText>(find.descendant(of: find.text(text), matching: find.byType(RichText)))
+      .widget<RichText>(
+        find.descendant(of: find.text(text), matching: find.byType(RichText)),
+      )
       .text
       .style!;
 
-  double sizeOf(WidgetTester tester) => tester.getSize(find.byType(AppShapeAvatar)).width;
+  double sizeOf(WidgetTester tester) =>
+      tester.getSize(find.byType(AppShapeAvatar)).width;
 
   testWidgets('in a row: small, an initial larger than a code', (tester) async {
     final emphasized = await pumpAvatar(tester, const EntityAvatar(text: 'R'));
@@ -45,36 +48,44 @@ void main() {
     expect(styleOf(tester, '5Y').fontSize, AppDimensions.fontXs);
   });
 
-  testWidgets('at the head of a screen: larger, and its letters larger for its size', (
+  testWidgets(
+    'at the head of a screen: larger, and its letters larger for its size',
+    (tester) async {
+      final emphasized = await pumpAvatar(
+        tester,
+        const EntityAvatar(text: 'TD', subtext: '5Y', prominence: 1),
+      );
+      expect(sizeOf(tester), AppDimensions.avatarLg);
+      expect(styleOf(tester, 'TD').fontSize, emphasized.displaySmall!.fontSize);
+      expect(styleOf(tester, '5Y').fontSize, emphasized.titleMedium!.fontSize);
+
+      // A larger share of the avatar than in a row: the two forms are not one drawing at
+      // two scales, which is why the avatar changes form on its way and is not just scaled.
+      final atHead =
+          emphasized.displaySmall!.fontSize! / AppDimensions.avatarLg;
+      final inRow = emphasized.titleSmall!.fontSize! / AppDimensions.avatarMd;
+      expect(atHead, greaterThan(inRow * 1.5));
+    },
+  );
+
+  testWidgets('between the two: every measure is between its two ends', (
     tester,
   ) async {
-    final emphasized = await pumpAvatar(
-      tester,
-      const EntityAvatar(text: 'TD', subtext: '5Y', prominence: 1),
-    );
-    expect(sizeOf(tester), AppDimensions.avatarLg);
-    expect(styleOf(tester, 'TD').fontSize, emphasized.displaySmall!.fontSize);
-    expect(styleOf(tester, '5Y').fontSize, emphasized.titleMedium!.fontSize);
-
-    // A larger share of the avatar than in a row: the two forms are not one drawing at
-    // two scales, which is why the avatar changes form on its way and is not just scaled.
-    final atHead = emphasized.displaySmall!.fontSize! / AppDimensions.avatarLg;
-    final inRow = emphasized.titleSmall!.fontSize! / AppDimensions.avatarMd;
-    expect(atHead, greaterThan(inRow * 1.5));
-  });
-
-  testWidgets('between the two: every measure is between its two ends', (tester) async {
     const row = EntityAvatar(text: 'TD', subtext: '5Y');
     const head = EntityAvatar(text: 'TD', subtext: '5Y', prominence: 1);
 
-    final emphasized = await pumpAvatar(tester, EntityAvatar.between(row, head, 0.5));
+    final emphasized = await pumpAvatar(
+      tester,
+      EntityAvatar.between(row, head, 0.5),
+    );
     expect(
       sizeOf(tester),
       (AppDimensions.avatarMd + AppDimensions.avatarLg) / 2,
     );
     expect(
       styleOf(tester, 'TD').fontSize,
-      (emphasized.titleSmall!.fontSize! + emphasized.displaySmall!.fontSize!) / 2,
+      (emphasized.titleSmall!.fontSize! + emphasized.displaySmall!.fontSize!) /
+          2,
     );
     expect(
       styleOf(tester, '5Y').fontSize,

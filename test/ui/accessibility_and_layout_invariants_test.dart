@@ -44,7 +44,10 @@ void main() {
       (name: 'LoginScreen', build: () => const LoginScreen()),
       (name: 'DashboardScreen', build: () => const DashboardScreen()),
       (name: 'CustomersScreen', build: () => const CustomersScreen()),
-      (name: 'OneTimeDepositsScreen', build: () => const OneTimeDepositsScreen()),
+      (
+        name: 'OneTimeDepositsScreen',
+        build: () => const OneTimeDepositsScreen(),
+      ),
       (
         name: 'RecurringDepositsScreen (Accounts)',
         build: () => const RecurringDepositsScreen(initialView: 'accounts'),
@@ -63,10 +66,8 @@ void main() {
       ),
       (
         name: 'RecurringDepositDetailScreen (Info)',
-        build: () => RecurringDepositDetailScreen(
-          depositId: rd.id,
-          initialTab: 'info',
-        ),
+        build: () =>
+            RecurringDepositDetailScreen(depositId: rd.id, initialTab: 'info'),
       ),
       (
         name: 'RecurringDepositDetailScreen (Passbook)',
@@ -82,10 +83,7 @@ void main() {
           initialTab: 'transactions',
         ),
       ),
-      (
-        name: 'CustomerFormScreen',
-        build: () => const CustomerFormScreen(),
-      ),
+      (name: 'CustomerFormScreen', build: () => const CustomerFormScreen()),
       (
         name: 'OneTimeDepositFormScreen',
         build: () => const OneTimeDepositFormScreen(),
@@ -128,10 +126,14 @@ void main() {
                   FakeCustomerRepository(customers: source.customers),
                 ),
                 oneTimeDepositRepositoryProvider.overrideWithValue(
-                  FakeOneTimeDepositRepository(deposits: source.oneTimeDeposits),
+                  FakeOneTimeDepositRepository(
+                    deposits: source.oneTimeDeposits,
+                  ),
                 ),
                 recurringDepositRepositoryProvider.overrideWithValue(
-                  FakeRecurringDepositRepository(deposits: source.recurringDeposits),
+                  FakeRecurringDepositRepository(
+                    deposits: source.recurringDeposits,
+                  ),
                 ),
                 rdLedgerRepositoryProvider.overrideWithValue(
                   FakeRDLedgerRepository(
@@ -284,7 +286,10 @@ void main() {
         final searchBarTops = <String, double>{};
 
         for (final entry in <({String name, Widget screen})>[
-          (name: 'OneTimeDepositsScreen', screen: const OneTimeDepositsScreen()),
+          (
+            name: 'OneTimeDepositsScreen',
+            screen: const OneTimeDepositsScreen(),
+          ),
           (
             name: 'RecurringDepositsScreen',
             screen: const RecurringDepositsScreen(initialView: 'accounts'),
@@ -325,7 +330,8 @@ void main() {
         expect(
           searchBarTops['RecurringDepositsScreen'],
           equals(searchBarTops['OneTimeDepositsScreen']),
-          reason: 'SearchBar vertical offset should not jump between OTD and RD tabs',
+          reason:
+              'SearchBar vertical offset should not jump between OTD and RD tabs',
         );
         expect(
           searchBarTops['CustomersScreen'],
@@ -418,7 +424,8 @@ void main() {
         expect(
           projRect.right - tester.getRect(projMoney.first).right,
           lessThanOrEqualTo(24.0),
-          reason: 'InvestmentProjectionCard value floated in center instead of flush-right',
+          reason:
+              'InvestmentProjectionCard value floated in center instead of flush-right',
         );
       },
     );

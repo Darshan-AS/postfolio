@@ -59,7 +59,9 @@ class RDInstallmentTile extends StatelessWidget {
       amountLabel = inst.installmentAmount.toRupeeFormat();
       amountColor = scheme.onSurfaceVariant;
     } else if (inst.isFrontedByAgent) {
-      amountLabel = passbook.owes(amount: inst.outstandingAmount.toRupeeFormat());
+      amountLabel = passbook.owes(
+        amount: inst.outstandingAmount.toRupeeFormat(),
+      );
       amountColor = visual.foreground;
     } else if (inst.isCustomerSettled) {
       amountLabel = passbook.amountPaid(amount: inst.dueAmount.toRupeeFormat());
@@ -75,7 +77,9 @@ class RDInstallmentTile extends StatelessWidget {
         amount: inst.dueAmount.toRupeeFormat(),
         fee: inst.customerFeeDue.toRupeeFormat(),
       );
-      amountColor = status.isCustomerPending ? visual.foreground : scheme.onSurface;
+      amountColor = status.isCustomerPending
+          ? visual.foreground
+          : scheme.onSurface;
     } else {
       amountLabel = inst.dueAmount.toRupeeFormat();
       amountColor = scheme.onSurface;
@@ -109,7 +113,9 @@ class RDInstallmentTile extends StatelessWidget {
     );
     final due = Text(
       passbook.dueOn(date: inst.dueDate.toAppFormat()),
-      style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: scheme.onSurfaceVariant,
+      ),
     );
     final pill = RDStatusPill(visual: visual);
 

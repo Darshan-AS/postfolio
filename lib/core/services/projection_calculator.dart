@@ -104,7 +104,10 @@ class ProjectionCalculator {
         principal * (pow(1 + quarterlyInterestRate, _quartersInYear) - 1);
     final totalInterestEarned = annualPayout * termYears;
 
-    final maturityDate = startDate.toLocalDate().addYears(termYears).toDateTime();
+    final maturityDate = startDate
+        .toLocalDate()
+        .addYears(termYears)
+        .toDateTime();
 
     return InvestmentProjection.incomeGeneration(
       totalInvested: principal,
@@ -145,7 +148,10 @@ class ProjectionCalculator {
     final totalMonths = resolvedYears * _monthsInYear;
     final totalInterestEarned = monthlyPayout * totalMonths;
 
-    final maturityDate = startDate.toLocalDate().addYears(resolvedYears).toDateTime();
+    final maturityDate = startDate
+        .toLocalDate()
+        .addYears(resolvedYears)
+        .toDateTime();
 
     return InvestmentProjection.incomeGeneration(
       totalInvested: principal,
@@ -186,7 +192,10 @@ class ProjectionCalculator {
         principal * pow(1 + decimalInterestRate, resolvedYears);
     final totalInterestEarned = maturityAmount - principal;
 
-    final maturityDate = startDate.toLocalDate().addYears(resolvedYears).toDateTime();
+    final maturityDate = startDate
+        .toLocalDate()
+        .addYears(resolvedYears)
+        .toDateTime();
 
     return InvestmentProjection.wealthAccumulation(
       totalInvested: principal,

@@ -69,20 +69,18 @@ void main() {
       expect(find.text('Detail'), findsOneWidget);
     }
 
-    testWidgets(
-      'on iOS a screen is swiped back from the left edge',
-      (tester) async {
-        await pumpDetailOverList(tester);
+    testWidgets('on iOS a screen is swiped back from the left edge', (
+      tester,
+    ) async {
+      await pumpDetailOverList(tester);
 
-        // An iPhone has no back button: the edge swipe is the system's way back.
-        await tester.dragFrom(const Offset(4, 300), const Offset(600, 0));
-        await tester.pumpAndSettle();
+      // An iPhone has no back button: the edge swipe is the system's way back.
+      await tester.dragFrom(const Offset(4, 300), const Offset(600, 0));
+      await tester.pumpAndSettle();
 
-        expect(find.text('Detail'), findsNothing);
-        expect(find.text('List'), findsOneWidget);
-      },
-      variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-    );
+      expect(find.text('Detail'), findsNothing);
+      expect(find.text('List'), findsOneWidget);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
     testWidgets(
       'on a desktop a drag from the left edge is not a way back',

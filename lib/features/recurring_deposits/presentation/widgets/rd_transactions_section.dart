@@ -51,14 +51,14 @@ class RDTransactionsSection extends HookConsumerWidget {
     final ledger = t.recurringDeposits.ledger;
 
     Widget history() => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _RDTransactionsContent(rdId: deposit.id, isBusy: isBusy),
-            AppSpacings.gapLg,
-            _RDPoVisitsList(rdId: deposit.id, isBusy: isBusy),
-          ],
-        );
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _RDTransactionsContent(rdId: deposit.id, isBusy: isBusy),
+        AppSpacings.gapLg,
+        _RDPoVisitsList(rdId: deposit.id, isBusy: isBusy),
+      ],
+    );
 
     if (isEmbeddedTab) {
       return Column(
@@ -67,7 +67,9 @@ class RDTransactionsSection extends HookConsumerWidget {
         children: [
           Padding(
             // Lines the title up with the text inside the tiles below it.
-            padding: const EdgeInsetsDirectional.only(start: AppDimensions.paddingLg),
+            padding: const EdgeInsetsDirectional.only(
+              start: AppDimensions.paddingLg,
+            ),
             // Title and action share a line when they fit; the button drops below otherwise.
             child: Wrap(
               alignment: WrapAlignment.spaceBetween,
@@ -75,10 +77,7 @@ class RDTransactionsSection extends HookConsumerWidget {
               spacing: AppDimensions.paddingSm,
               runSpacing: AppDimensions.paddingSm,
               children: [
-                Text(
-                  ledger.transactionsTitle,
-                  style: emphasized.titleLarge,
-                ),
+                Text(ledger.transactionsTitle, style: emphasized.titleLarge),
                 AppButton.tonal(
                   label: ledger.passbook.collect,
                   icon: HugeIcons.strokeRoundedCoins01,
@@ -153,28 +152,28 @@ class _RDTransactionsContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final transactionsAsync = ref.watch(rdTransactionsStreamProvider(rdId));
     final allocationsByTx = ref.watch(
-      rdLedgerProjectionProvider(rdId).select(
-        (async) => async.value?.allocationsByTransaction ?? const {},
-      ),
+      rdLedgerProjectionProvider(
+        rdId,
+      ).select((async) => async.value?.allocationsByTransaction ?? const {}),
     );
 
     return switch (transactionsAsync) {
       AsyncData(:final value) => _TransactionList(
-          rdId: rdId,
-          transactions: value,
-          allocationsByTx: allocationsByTx,
-          isBusy: isBusy,
-        ),
+        rdId: rdId,
+        transactions: value,
+        allocationsByTx: allocationsByTx,
+        isBusy: isBusy,
+      ),
       AsyncLoading(:final value?) => _TransactionList(
-          rdId: rdId,
-          transactions: value,
-          allocationsByTx: allocationsByTx,
-          isBusy: isBusy,
-        ),
+        rdId: rdId,
+        transactions: value,
+        allocationsByTx: allocationsByTx,
+        isBusy: isBusy,
+      ),
       AsyncError(:final error) => ErrorStateView(
-          message: error.toString(),
-          onRetry: () => ref.invalidate(rdTransactionsStreamProvider(rdId)),
-        ),
+        message: error.toString(),
+        onRetry: () => ref.invalidate(rdTransactionsStreamProvider(rdId)),
+      ),
       AsyncLoading() => const _TransactionsSkeleton(),
     };
   }
@@ -229,7 +228,9 @@ class _TransactionList extends StatelessWidget {
             AppButton(
               label: ledger.passbook.collect,
               icon: HugeIcons.strokeRoundedCoins01,
-              onPressed: isBusy ? null : () => showRDLogPaymentSheet(context, rdId: rdId),
+              onPressed: isBusy
+                  ? null
+                  : () => showRDLogPaymentSheet(context, rdId: rdId),
             ),
           ],
         ),
@@ -239,7 +240,9 @@ class _TransactionList extends StatelessWidget {
     // Newest first, a run of grouped tiles per year. A header per month is, for a payment
     // made every month, a header per receipt, above a receipt that already says its date.
     final groups = <({int year, List<RDTransaction> items})>[];
-    for (final month in RDLedgerProjection.groupTransactionsByMonth(transactions)) {
+    for (final month in RDLedgerProjection.groupTransactionsByMonth(
+      transactions,
+    )) {
       if (groups.isEmpty || groups.last.year != month.month.year) {
         groups.add((year: month.month.year, items: <RDTransaction>[]));
       }
@@ -313,7 +316,11 @@ class RDTransactionTile extends ConsumerWidget {
         .read(rDLedgerControllerProvider.notifier)
         .deletePayment(rdId: rdId, transactionId: tx.id);
     if (!context.mounted) return;
-    AppFeedback.showResult(context, result, successMessage: ledger.paymentDeleted);
+    AppFeedback.showResult(
+      context,
+      result,
+      successMessage: ledger.paymentDeleted,
+    );
   }
 
   @override
@@ -417,7 +424,11 @@ class RDTransactionTile extends ConsumerWidget {
                     icon: HugeIcons.strokeRoundedEdit02,
                     size: AppDimensions.iconSm,
                   ),
-                  onPressed: () => showRDEditPaymentSheet(context, rdId: rdId, transaction: tx),
+                  onPressed: () => showRDEditPaymentSheet(
+                    context,
+                    rdId: rdId,
+                    transaction: tx,
+                  ),
                 ),
                 AppMenuEntry(
                   label: ledger.actions.deletePayment,
@@ -468,7 +479,9 @@ class RDTransactionTile extends ConsumerWidget {
           child: Align(
             alignment: AlignmentDirectional.centerEnd,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingLg,
+              ),
               child: HugeIcon(
                 icon: HugeIcons.strokeRoundedDelete02,
                 size: AppDimensions.iconMd,
@@ -559,10 +572,15 @@ class _RDPoVisitsList extends ConsumerWidget {
     );
     if (confirmed != true || !context.mounted) return;
 
-    final result =
-        await ref.read(rDLedgerControllerProvider.notifier).undoLatestPoDeposit(rdId);
+    final result = await ref
+        .read(rDLedgerControllerProvider.notifier)
+        .undoLatestPoDeposit(rdId);
     if (!context.mounted) return;
-    AppFeedback.showResult(context, result, successMessage: passbook.undoLastDepositSuccess);
+    AppFeedback.showResult(
+      context,
+      result,
+      successMessage: passbook.undoLastDepositSuccess,
+    );
   }
 
   @override
@@ -585,9 +603,9 @@ class _RDPoVisitsList extends ConsumerWidget {
         MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
 
     Widget undo(RDPoDeposit visit) => AppButton.text(
-          label: t.recurringDeposits.ledger.actions.undo,
-          onPressed: isBusy ? null : () => _undoLatest(context, ref, visit),
-        );
+      label: t.recurringDeposits.ledger.actions.undo,
+      onPressed: isBusy ? null : () => _undoLatest(context, ref, visit),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -600,7 +618,9 @@ class _RDPoVisitsList extends ConsumerWidget {
               padding: const EdgeInsets.all(AppDimensions.paddingLg),
               child: Text(
                 passbook.noPoVisits,
-                style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
             ),
           )
@@ -689,7 +709,10 @@ class _TransactionsSkeleton extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(ledger.paymentAmount, style: theme.textTheme.titleMedium),
+                        Text(
+                          ledger.paymentAmount,
+                          style: theme.textTheme.titleMedium,
+                        ),
                         AppSpacings.gapXxs,
                         Text(ledger.paymentDate),
                       ],

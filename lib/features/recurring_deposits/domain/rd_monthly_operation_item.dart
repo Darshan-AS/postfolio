@@ -16,6 +16,7 @@ sealed class RDMonthlyOperationItem with _$RDMonthlyOperationItem {
     required RecurringDeposit deposit,
     required RDInstallment installment,
     required RDLedgerSummary summary,
+
     /// Months before this one the customer still owes on (arrears carried into this month).
     @Default(<RDInstallment>[]) List<RDInstallment> priorOpen,
     @Default(true) bool hasSummary,
@@ -29,27 +30,35 @@ sealed class RDMonthlyOperationItem with _$RDMonthlyOperationItem {
   bool get isSettled => installment.isFullySettled;
   bool get isReadyForPo => installment.isReadyForPo;
   bool get isFrontedByAgent => installment.isFrontedByAgent;
-  bool get isCustomerPending => !installment.isCustomerSettled && !installment.isOpeningBaseline;
+  bool get isCustomerPending =>
+      !installment.isCustomerSettled && !installment.isOpeningBaseline;
   bool isOverdue(DateTime now) => installment.isOverdueAt(now);
 
   int get priorOverdueCount => priorOpen.length;
-  double get priorOverdueAmount => priorOpen.fold(0.0, (s, p) => s + p.outstandingAmount);
+  double get priorOverdueAmount =>
+      priorOpen.fold(0.0, (s, p) => s + p.outstandingAmount);
   bool get hasPriorArrears => priorOpen.isNotEmpty;
 
   /// What the customer must pay to bring the account up to date through this month.
   double get totalOutstanding =>
-      priorOverdueAmount + installment.outstandingAmount + summary.openingReceivableLeft;
+      priorOverdueAmount +
+      installment.outstandingAmount +
+      summary.openingReceivableLeft;
 
   /// Fee component of [totalOutstanding] (informational).
   double get totalFeeDue =>
-      priorOpen.fold(0.0, (s, p) => s + p.customerFeeDue) + installment.customerFeeDue;
+      priorOpen.fold(0.0, (s, p) => s + p.customerFeeDue) +
+      installment.customerFeeDue;
 
   bool hasOverdueDebt(DateTime now) =>
       hasPriorArrears || (installment.isOverdueAt(now) && isCustomerPending);
 
   bool isUpcoming(DateTime now) {
     final m = DateTime(now.year, now.month);
-    final t = DateTime(installment.installmentDate.year, installment.installmentDate.month);
+    final t = DateTime(
+      installment.installmentDate.year,
+      installment.installmentDate.month,
+    );
     return t.isAfter(m);
   }
 

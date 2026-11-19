@@ -254,7 +254,9 @@ class AppButton extends StatelessWidget {
     }
 
     if (flushStart) {
-      final towardsStart = Directionality.of(context) == TextDirection.ltr ? -1.0 : 1.0;
+      final towardsStart = Directionality.of(context) == TextDirection.ltr
+          ? -1.0
+          : 1.0;
       labelled = Transform.translate(
         offset: Offset(towardsStart * _leadingSpace, 0),
         child: labelled,

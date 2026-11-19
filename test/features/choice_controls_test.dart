@@ -39,7 +39,9 @@ void main() {
   }
 
   Tristate selectedFlag(WidgetTester tester, Finder inside) => tester
-      .getSemantics(find.ancestor(of: inside, matching: find.byType(MergeSemantics)).first)
+      .getSemantics(
+        find.ancestor(of: inside, matching: find.byType(MergeSemantics)).first,
+      )
       .getSemanticsData()
       .flagsCollection
       .isSelected;
@@ -50,8 +52,12 @@ void main() {
     const mis = OneTimeSchemeType.monthlyIncomeScheme;
 
     final schemeGroup = find.byType(AppButtonGroup<OneTimeSchemeType?>);
-    Finder option(String label) => find.descendant(of: schemeGroup, matching: find.text(label));
-    final includeRds = find.widgetWithText(AppButton, t.dashboard.includeRecurringDeposits);
+    Finder option(String label) =>
+        find.descendant(of: schemeGroup, matching: find.text(label));
+    final includeRds = find.widgetWithText(
+      AppButton,
+      t.dashboard.includeRecurringDeposits,
+    );
 
     /// The dashboard in a window tall enough to show the whole chart card.
     Future<ProviderContainer> pumpDashboard(
@@ -66,7 +72,10 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       final authRepo = FakeAuthRepository(
-        initialUser: const AuthUser(id: 'agent-1', email: 'agent@postfolio.dev'),
+        initialUser: const AuthUser(
+          id: 'agent-1',
+          email: 'agent@postfolio.dev',
+        ),
       );
       addTearDown(authRepo.dispose);
       final container = ProviderContainer(
@@ -104,7 +113,9 @@ void main() {
                 disableAnimations: true,
               ),
               child: SkeletonizerConfig(
-                data: AppTheme.skeletonizerConfig(Theme.of(context).colorScheme),
+                data: AppTheme.skeletonizerConfig(
+                  Theme.of(context).colorScheme,
+                ),
                 child: child!,
               ),
             ),
@@ -117,107 +128,117 @@ void main() {
       return container;
     }
 
-    testWidgets('a scheme replaces All, and the same scheme again goes back to All', (
-      tester,
-    ) async {
-      final semantics = tester.ensureSemantics();
-      final container = await pumpDashboard(tester);
-      OneTimeSchemeType? filter() => container.read(dashboardChartFilterProvider);
+    testWidgets(
+      'a scheme replaces All, and the same scheme again goes back to All',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        final container = await pumpDashboard(tester);
+        OneTimeSchemeType? filter() =>
+            container.read(dashboardChartFilterProvider);
 
-      expect(filter(), isNull);
-      expect(selectedFlag(tester, option(t.dashboard.all)), Tristate.isTrue);
-      expect(selectedFlag(tester, option(td.shortName)), Tristate.isFalse);
+        expect(filter(), isNull);
+        expect(selectedFlag(tester, option(t.dashboard.all)), Tristate.isTrue);
+        expect(selectedFlag(tester, option(td.shortName)), Tristate.isFalse);
 
-      await tester.tap(option(td.shortName));
-      await settle(tester);
-      expect(filter(), td);
-      expect(selectedFlag(tester, option(td.shortName)), Tristate.isTrue);
-      expect(selectedFlag(tester, option(t.dashboard.all)), Tristate.isFalse);
+        await tester.tap(option(td.shortName));
+        await settle(tester);
+        expect(filter(), td);
+        expect(selectedFlag(tester, option(td.shortName)), Tristate.isTrue);
+        expect(selectedFlag(tester, option(t.dashboard.all)), Tristate.isFalse);
 
-      await tester.tap(option(mis.shortName));
-      await settle(tester);
-      expect(filter(), mis);
-      expect(selectedFlag(tester, option(td.shortName)), Tristate.isFalse);
+        await tester.tap(option(mis.shortName));
+        await settle(tester);
+        expect(filter(), mis);
+        expect(selectedFlag(tester, option(td.shortName)), Tristate.isFalse);
 
-      await tester.tap(option(mis.shortName));
-      await settle(tester);
-      expect(filter(), isNull);
-      expect(selectedFlag(tester, option(t.dashboard.all)), Tristate.isTrue);
+        await tester.tap(option(mis.shortName));
+        await settle(tester);
+        expect(filter(), isNull);
+        expect(selectedFlag(tester, option(t.dashboard.all)), Tristate.isTrue);
 
-      // All is already chosen: tapping it changes nothing.
-      await tester.tap(option(t.dashboard.all));
-      await settle(tester);
-      expect(filter(), isNull);
-      expect(tester.takeException(), isNull);
-      semantics.dispose();
-    });
+        // All is already chosen: tapping it changes nothing.
+        await tester.tap(option(t.dashboard.all));
+        await settle(tester);
+        expect(filter(), isNull);
+        expect(tester.takeException(), isNull);
+        semantics.dispose();
+      },
+    );
 
-    testWidgets('Include RDs switches only while All is chosen, and is remembered', (
-      tester,
-    ) async {
-      final container = await pumpDashboard(tester);
-      bool included() => container.read(dashboardChartIncludeRdsProvider);
-      AppButton button() => tester.widget<AppButton>(includeRds);
+    testWidgets(
+      'Include RDs switches only while All is chosen, and is remembered',
+      (tester) async {
+        final container = await pumpDashboard(tester);
+        bool included() => container.read(dashboardChartIncludeRdsProvider);
+        AppButton button() => tester.widget<AppButton>(includeRds);
 
-      expect(included(), isFalse);
-      expect(button().selected, isFalse);
-      expect(button().onPressed, isNotNull);
+        expect(included(), isFalse);
+        expect(button().selected, isFalse);
+        expect(button().onPressed, isNotNull);
 
-      await tester.tap(includeRds);
-      await settle(tester);
-      expect(included(), isTrue);
-      expect(button().selected, isTrue);
+        await tester.tap(includeRds);
+        await settle(tester);
+        expect(included(), isTrue);
+        expect(button().selected, isTrue);
 
-      // Under one scheme the switch is off and cannot be pressed.
-      await tester.tap(option(td.shortName));
-      await settle(tester);
-      expect(button().onPressed, isNull);
-      expect(button().selected, isFalse);
-      await tester.tap(includeRds, warnIfMissed: false);
-      await settle(tester);
-      expect(included(), isTrue);
+        // Under one scheme the switch is off and cannot be pressed.
+        await tester.tap(option(td.shortName));
+        await settle(tester);
+        expect(button().onPressed, isNull);
+        expect(button().selected, isFalse);
+        await tester.tap(includeRds, warnIfMissed: false);
+        await settle(tester);
+        expect(included(), isTrue);
 
-      // Back on All it shows the choice made before.
-      await tester.tap(option(t.dashboard.all));
-      await settle(tester);
-      expect(button().onPressed, isNotNull);
-      expect(button().selected, isTrue);
+        // Back on All it shows the choice made before.
+        await tester.tap(option(t.dashboard.all));
+        await settle(tester);
+        expect(button().onPressed, isNotNull);
+        expect(button().selected, isTrue);
 
-      await tester.tap(includeRds);
-      await settle(tester);
-      expect(included(), isFalse);
-      expect(button().selected, isFalse);
-    });
+        await tester.tap(includeRds);
+        await settle(tester);
+        expect(included(), isFalse);
+        expect(button().selected, isFalse);
+      },
+    );
 
     for (final textScale in const [1.0, 1.3, 2.0]) {
-      testWidgets('every option is inside a 360dp window at ${textScale}x text', (
-        tester,
-      ) async {
-        await pumpDashboard(tester, textScale: textScale, height: 2400);
-        expect(tester.takeException(), isNull);
+      testWidgets(
+        'every option is inside a 360dp window at ${textScale}x text',
+        (tester) async {
+          await pumpDashboard(tester, textScale: textScale, height: 2400);
+          expect(tester.takeException(), isNull);
 
-        final labels = [
-          t.dashboard.all,
-          for (final scheme in OneTimeSchemeType.values) scheme.shortName,
-        ];
-        for (final label in labels) {
-          final rect = tester.getRect(option(label));
-          expect(rect.left, greaterThanOrEqualTo(0), reason: label);
-          expect(rect.right, lessThanOrEqualTo(360), reason: label);
-        }
-        final toggle = tester.getRect(includeRds);
-        expect(toggle.left, greaterThanOrEqualTo(0));
-        expect(toggle.right, lessThanOrEqualTo(360));
-        expect(toggle.height, greaterThanOrEqualTo(48));
-      });
+          final labels = [
+            t.dashboard.all,
+            for (final scheme in OneTimeSchemeType.values) scheme.shortName,
+          ];
+          for (final label in labels) {
+            final rect = tester.getRect(option(label));
+            expect(rect.left, greaterThanOrEqualTo(0), reason: label);
+            expect(rect.right, lessThanOrEqualTo(360), reason: label);
+          }
+          final toggle = tester.getRect(includeRds);
+          expect(toggle.left, greaterThanOrEqualTo(0));
+          expect(toggle.right, lessThanOrEqualTo(360));
+          expect(toggle.height, greaterThanOrEqualTo(48));
+        },
+      );
     }
   });
 
   group('Dashboard chart axis', () {
     // The labels on the value axis stop growing at 1.3x text. Their column was a fixed
     // 40dp, so at large text "₹10L" lost its unit and read "₹10".
-    for (final (textScale, factor) in const [(1.0, 1.0), (1.3, 1.3), (2.0, 1.3)]) {
-      testWidgets('the value column is ${factor}x wide at ${textScale}x text', (tester) async {
+    for (final (textScale, factor) in const [
+      (1.0, 1.0),
+      (1.3, 1.3),
+      (2.0, 1.3),
+    ]) {
+      testWidgets('the value column is ${factor}x wide at ${textScale}x text', (
+        tester,
+      ) async {
         tester.view.physicalSize = const Size(360, 2400) * 2;
         tester.view.devicePixelRatio = 2.0;
         addTearDown(tester.view.reset);
@@ -225,7 +246,10 @@ void main() {
         SharedPreferences.setMockInitialValues({});
         final prefs = await SharedPreferences.getInstance();
         final authRepo = FakeAuthRepository(
-          initialUser: const AuthUser(id: 'agent-1', email: 'agent@postfolio.dev'),
+          initialUser: const AuthUser(
+            id: 'agent-1',
+            email: 'agent@postfolio.dev',
+          ),
         );
         addTearDown(authRepo.dispose);
         final container = ProviderContainer(
@@ -240,7 +264,9 @@ void main() {
               FakeOneTimeDepositRepository(deposits: source.oneTimeDeposits),
             ),
             recurringDepositRepositoryProvider.overrideWithValue(
-              FakeRecurringDepositRepository(deposits: source.recurringDeposits),
+              FakeRecurringDepositRepository(
+                deposits: source.recurringDeposits,
+              ),
             ),
             rdLedgerRepositoryProvider.overrideWithValue(
               FakeRDLedgerRepository(
@@ -263,7 +289,9 @@ void main() {
                   disableAnimations: true,
                 ),
                 child: SkeletonizerConfig(
-                  data: AppTheme.skeletonizerConfig(Theme.of(context).colorScheme),
+                  data: AppTheme.skeletonizerConfig(
+                    Theme.of(context).colorScheme,
+                  ),
                   child: child!,
                 ),
               ),
@@ -301,7 +329,10 @@ void main() {
       startDate: DateTime(2026, 1, 5),
     );
 
-    Future<void> openCollectSheet(WidgetTester tester, {double textScale = 1.0}) async {
+    Future<void> openCollectSheet(
+      WidgetTester tester, {
+      double textScale = 1.0,
+    }) async {
       tester.view.physicalSize = const Size(360, 800) * 2;
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.reset);
@@ -317,7 +348,9 @@ void main() {
           recurringDepositRepositoryProvider.overrideWithValue(
             FakeRecurringDepositRepository(deposits: [rd]),
           ),
-          rdLedgerRepositoryProvider.overrideWithValue(FakeRDLedgerRepository()),
+          rdLedgerRepositoryProvider.overrideWithValue(
+            FakeRDLedgerRepository(),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -328,16 +361,17 @@ void main() {
           child: MaterialApp(
             theme: AppTheme.lightTheme,
             builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                textScaler: TextScaler.linear(textScale),
-              ),
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(textScale)),
               child: child!,
             ),
             home: Builder(
               builder: (context) => Scaffold(
                 body: Center(
                   child: TextButton(
-                    onPressed: () => showRDLogPaymentSheet(context, rdId: rd.id),
+                    onPressed: () =>
+                        showRDLogPaymentSheet(context, rdId: rd.id),
                     child: const Text('open'),
                   ),
                 ),
@@ -353,13 +387,17 @@ void main() {
     List<ChoiceChip> quickAmounts(WidgetTester tester) =>
         tester.widgetList<ChoiceChip>(find.byType(ChoiceChip)).toList();
 
-    String labelOf(ChoiceChip chip) => ((chip.label as FittedBox).child! as Text).data!;
+    String labelOf(ChoiceChip chip) =>
+        ((chip.label as FittedBox).child! as Text).data!;
 
     List<Rect> chipRects(WidgetTester tester) => [
-      for (final chip in quickAmounts(tester)) tester.getRect(find.byWidget(chip)),
+      for (final chip in quickAmounts(tester))
+        tester.getRect(find.byWidget(chip)),
     ];
 
-    testWidgets('one is marked when the amount is exactly its amount', (tester) async {
+    testWidgets('one is marked when the amount is exactly its amount', (
+      tester,
+    ) async {
       await openCollectSheet(tester);
 
       final before = quickAmounts(tester);
@@ -371,14 +409,20 @@ void main() {
       await tester.tap(find.text(first));
       await tester.pumpAndSettle();
       expect(
-        [for (final chip in quickAmounts(tester)) if (chip.selected) labelOf(chip)],
+        [
+          for (final chip in quickAmounts(tester))
+            if (chip.selected) labelOf(chip),
+        ],
         [first],
       );
 
       await tester.tap(find.text(second));
       await tester.pumpAndSettle();
       expect(
-        [for (final chip in quickAmounts(tester)) if (chip.selected) labelOf(chip)],
+        [
+          for (final chip in quickAmounts(tester))
+            if (chip.selected) labelOf(chip),
+        ],
         [second],
       );
 
@@ -403,13 +447,23 @@ void main() {
             expect(paragraph.didExceedMaxLines, isFalse, reason: labelOf(chip));
             expect(
               paragraph.size.width,
-              greaterThanOrEqualTo(paragraph.getMaxIntrinsicWidth(double.infinity) - 0.5),
+              greaterThanOrEqualTo(
+                paragraph.getMaxIntrinsicWidth(double.infinity) - 0.5,
+              ),
               reason: labelOf(chip),
             );
             final box = tester.getRect(find.byWidget(chip));
             final painted = tester.getRect(label);
-            expect(painted.left, greaterThanOrEqualTo(box.left), reason: labelOf(chip));
-            expect(painted.right, lessThanOrEqualTo(box.right), reason: labelOf(chip));
+            expect(
+              painted.left,
+              greaterThanOrEqualTo(box.left),
+              reason: labelOf(chip),
+            );
+            expect(
+              painted.right,
+              lessThanOrEqualTo(box.right),
+              reason: labelOf(chip),
+            );
             expect(box.height, greaterThanOrEqualTo(48), reason: labelOf(chip));
             expect(box.left, greaterThanOrEqualTo(0), reason: labelOf(chip));
             expect(box.right, lessThanOrEqualTo(360), reason: labelOf(chip));
@@ -456,7 +510,9 @@ void main() {
       }
     });
 
-    testWidgets('a screen reader gets each as a button with its state', (tester) async {
+    testWidgets('a screen reader gets each as a button with its state', (
+      tester,
+    ) async {
       final handle = tester.ensureSemantics();
       await openCollectSheet(tester);
 
@@ -465,10 +521,16 @@ void main() {
       await tester.pumpAndSettle();
 
       for (final chip in quickAmounts(tester)) {
-        final data = tester.getSemantics(find.byWidget(chip)).getSemanticsData();
+        final data = tester
+            .getSemantics(find.byWidget(chip))
+            .getSemanticsData();
         expect(data.label, labelOf(chip));
         expect(data.flagsCollection.isButton, isTrue, reason: labelOf(chip));
-        expect(data.hasAction(SemanticsAction.tap), isTrue, reason: labelOf(chip));
+        expect(
+          data.hasAction(SemanticsAction.tap),
+          isTrue,
+          reason: labelOf(chip),
+        );
         expect(
           data.flagsCollection.isSelected,
           labelOf(chip) == first ? Tristate.isTrue : Tristate.isFalse,

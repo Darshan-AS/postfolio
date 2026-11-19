@@ -10,8 +10,10 @@ import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 
-export 'package:postfolio/core/widgets/expressive/app_group.dart' show AppGroupPosition;
-export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart' show AppAvatarShape;
+export 'package:postfolio/core/widgets/expressive/app_group.dart'
+    show AppGroupPosition;
+export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart'
+    show AppAvatarShape;
 
 class EntityAction {
   final String label;
@@ -141,7 +143,8 @@ class EntityListTile extends StatelessWidget {
     final hasActionButtons = inlineActions.isNotEmpty || menuActions.isNotEmpty;
     // Beside a trailing block the title is left with a third of a phone's width, which at
     // large text is five letters. There the trailing block takes a line of its own below.
-    final trailingBelow = trailing != null && AppDimensions.isLargeText(context);
+    final trailingBelow =
+        trailing != null && AppDimensions.isLargeText(context);
     final rightPadding = hasActionButtons
         ? AppDimensions.paddingNone
         : AppDimensions.paddingLg;
@@ -321,8 +324,10 @@ class EntityListTile extends StatelessWidget {
     return AppShapeAvatar(
       size: AppDimensions.avatarMd,
       shape: leadingShape,
-      backgroundColor: leadingBackgroundColor ?? theme.colorScheme.primaryContainer,
-      foregroundColor: leadingForegroundColor ?? theme.colorScheme.onPrimaryContainer,
+      backgroundColor:
+          leadingBackgroundColor ?? theme.colorScheme.primaryContainer,
+      foregroundColor:
+          leadingForegroundColor ?? theme.colorScheme.onPrimaryContainer,
       child: leadingIcon ?? const SizedBox.shrink(),
     );
   }

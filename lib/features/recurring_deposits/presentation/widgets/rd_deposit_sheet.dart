@@ -32,15 +32,14 @@ Future<bool?> showRDDepositSheet(
   BuildContext context, {
   required String rdId,
   int? initialCount,
-}) =>
-    AppAdaptiveSheet.show<bool>(
-      context,
-      builder: (_) => _DepositForm(
-        rdId: rdId,
-        initialCount: initialCount,
-        hostContext: context,
-      ),
-    );
+}) => AppAdaptiveSheet.show<bool>(
+  context,
+  builder: (_) => _DepositForm(
+    rdId: rdId,
+    initialCount: initialCount,
+    hostContext: context,
+  ),
+);
 
 class _DepositForm extends HookConsumerWidget {
   const _DepositForm({
@@ -79,7 +78,9 @@ class _DepositForm extends HookConsumerWidget {
         case Success(value: final saved):
           // The toast describes the deposit as stored. After a retry that is what the first
           // attempt saved, even if the sheet has since moved on to the following months.
-          final installments = ledger.installmentsCount(n: saved.installmentCount);
+          final installments = ledger.installmentsCount(
+            n: saved.installmentCount,
+          );
           final successMessage = saved.feePaid > 0
               ? ledger.depositDoneWithFee(
                   installments: installments,
@@ -197,7 +198,9 @@ class _DepositBody extends HookWidget {
             through: throughText,
             ready: ledger.depositReady(n: draft.readyCount),
           ),
-          style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
         ),
         AppSpacings.gapLg,
         RDSheetSectionLabel(ledger.depositCount),
@@ -211,34 +214,39 @@ class _DepositBody extends HookWidget {
           key: const ValueKey('deposit_counter_fee_override_field'),
           controller: feeController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-          decoration: AppInputDecoration.m3(
-            context,
-            labelText: ledger.counterFeeOverrideLabel,
-            hintText: ledger.counterFeeOverrideHint(
-              amount: draft.statutoryFee.toRupeeFormat(),
-            ),
-            // Not beside the hint, which would then read "₹Formula: ₹60".
-            prefixText: feeController.text.isEmpty ? null : t.format.currencySymbol,
-          ).copyWith(
-            // The label is long. Kept floating, it fits on the field's edge and leaves the
-            // inside to the hint, which states the fee the formula gives.
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-            hintMaxLines: _feeHintMaxLines,
-            suffixIcon: draft.feeOverride != null
-                ? IconButton(
-                    tooltip: t.common.clear,
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedCancel01,
-                      size: AppDimensions.iconSm,
-                    ),
-                    onPressed: () {
-                      feeController.clear();
-                      draft.setFeeOverride(null);
-                    },
-                  )
-                : null,
-          ),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+          ],
+          decoration:
+              AppInputDecoration.m3(
+                context,
+                labelText: ledger.counterFeeOverrideLabel,
+                hintText: ledger.counterFeeOverrideHint(
+                  amount: draft.statutoryFee.toRupeeFormat(),
+                ),
+                // Not beside the hint, which would then read "₹Formula: ₹60".
+                prefixText: feeController.text.isEmpty
+                    ? null
+                    : t.format.currencySymbol,
+              ).copyWith(
+                // The label is long. Kept floating, it fits on the field's edge and leaves the
+                // inside to the hint, which states the fee the formula gives.
+                floatingLabelBehavior: FloatingLabelBehavior.always,
+                hintMaxLines: _feeHintMaxLines,
+                suffixIcon: draft.feeOverride != null
+                    ? IconButton(
+                        tooltip: t.common.clear,
+                        icon: const HugeIcon(
+                          icon: HugeIcons.strokeRoundedCancel01,
+                          size: AppDimensions.iconSm,
+                        ),
+                        onPressed: () {
+                          feeController.clear();
+                          draft.setFeeOverride(null);
+                        },
+                      )
+                    : null,
+              ),
           onChanged: (raw) {
             final trimmed = raw.trim();
             if (trimmed.isEmpty) {
@@ -264,10 +272,16 @@ class _DepositBody extends HookWidget {
                           amount: quote.amount.toRupeeFormat(),
                           fee: quote.fee.toRupeeFormat(),
                         )
-                      : ledger.depositQuoteNoFee(amount: quote.amount.toRupeeFormat()),
-                  style: emphasized.titleMedium?.copyWith(color: scheme.onSurfaceVariant),
+                      : ledger.depositQuoteNoFee(
+                          amount: quote.amount.toRupeeFormat(),
+                        ),
+                  style: emphasized.titleMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                   figure: quote.amount.toRupeeFormat(),
-                  figureStyle: emphasized.headlineMedium?.copyWith(color: scheme.onSurface),
+                  figureStyle: emphasized.headlineMedium?.copyWith(
+                    color: scheme.onSurface,
+                  ),
                 ),
                 if (draft.isFrontingFromPocket) ...[
                   AppSpacings.gapSm,
@@ -279,7 +293,9 @@ class _DepositBody extends HookWidget {
                       HugeIcon(
                         icon: HugeIcons.strokeRoundedWallet02,
                         size: AppDimensions.iconSm,
-                        color: AppFinancialColors.of(context).fronted.onContainer,
+                        color: AppFinancialColors.of(
+                          context,
+                        ).fronted.onContainer,
                       ),
                       AppSpacings.gapSm,
                       Expanded(
@@ -288,7 +304,9 @@ class _DepositBody extends HookWidget {
                             amount: draft.fromPocket.toRupeeFormat(),
                           ),
                           style: emphasized.bodySmall?.copyWith(
-                            color: AppFinancialColors.of(context).fronted.onContainer,
+                            color: AppFinancialColors.of(
+                              context,
+                            ).fronted.onContainer,
                           ),
                         ),
                       ),
@@ -326,7 +344,9 @@ class _CountStepper extends StatelessWidget {
           children: [
             IconButton.filledTonal(
               tooltip: ledger.depositDecrement,
-              onPressed: draft.canDecrement ? () => draft.setCount(draft.count - 1) : null,
+              onPressed: draft.canDecrement
+                  ? () => draft.setCount(draft.count - 1)
+                  : null,
               icon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedMinusSign,
                 size: AppDimensions.iconMd,
@@ -355,7 +375,9 @@ class _CountStepper extends StatelessWidget {
             ),
             IconButton.filledTonal(
               tooltip: ledger.depositIncrement,
-              onPressed: draft.canIncrement ? () => draft.setCount(draft.count + 1) : null,
+              onPressed: draft.canIncrement
+                  ? () => draft.setCount(draft.count + 1)
+                  : null,
               icon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedPlusSign,
                 size: AppDimensions.iconMd,

@@ -38,7 +38,9 @@ class OneTimeDepositCard extends ConsumerWidget {
     this.position = AppGroupPosition.single,
   });
 
-  static Widget skeleton({AppGroupPosition position = AppGroupPosition.single}) {
+  static Widget skeleton({
+    AppGroupPosition position = AppGroupPosition.single,
+  }) {
     final dummy = OneTimeDeposit.dummy;
     return _OneTimeDepositTile(
       deposit: dummy,

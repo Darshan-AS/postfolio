@@ -26,9 +26,8 @@ abstract final class SupabasePaginatedQuery {
   /// switch). Whenever the channel becomes subscribed *again*, [onResubscribed] is called so
   /// the list is fetched afresh. The first subscribe is skipped: the initial snapshot is
   /// already on its way.
-  static void Function(RealtimeSubscribeStatus status, [Object? error]) refetchOnResubscribe(
-    void Function() onResubscribed,
-  ) {
+  static void Function(RealtimeSubscribeStatus status, [Object? error])
+  refetchOnResubscribe(void Function() onResubscribed) {
     var wasSubscribed = false;
     return (status, [error]) {
       if (status != RealtimeSubscribeStatus.subscribed) return;
@@ -40,7 +39,8 @@ abstract final class SupabasePaginatedQuery {
   /// Fetches all pages from a deterministic `.order(...)` + `.range(from, to)` query
   /// so agent collections safely scale past PostgREST's 1,000-row `max-rows` cap.
   static Future<List<T>> fetchAllPages<T>({
-    required Future<List<Map<String, dynamic>>> Function(int from, int to) fetchPage,
+    required Future<List<Map<String, dynamic>>> Function(int from, int to)
+    fetchPage,
     required T Function(Map<String, dynamic>) fromJson,
     int pageSize = defaultPageSize,
     String idColumn = 'id',
@@ -59,14 +59,14 @@ abstract final class SupabasePaginatedQuery {
 
   /// Fetches all raw JSON map pages using `.range(from, to)`.
   static Future<List<Map<String, dynamic>>> fetchAllRawPages({
-    required Future<List<Map<String, dynamic>>> Function(int from, int to) fetchPage,
+    required Future<List<Map<String, dynamic>>> Function(int from, int to)
+    fetchPage,
     int pageSize = defaultPageSize,
-  }) =>
-      fetchAllPages<Map<String, dynamic>>(
-        fetchPage: fetchPage,
-        fromJson: (row) => row,
-        pageSize: pageSize,
-      );
+  }) => fetchAllPages<Map<String, dynamic>>(
+    fetchPage: fetchPage,
+    fromJson: (row) => row,
+    pageSize: pageSize,
+  );
 
   /// Coordinates an immediate [fetchAll] snapshot plus debounced, coalesced reloads
   /// from [invalidations], guaranteeing that invalidations arriving mid-flight trigger
@@ -93,7 +93,8 @@ abstract final class SupabasePaginatedQuery {
     var disposed = false;
     var fetching = false;
     var pendingRefetch = false;
-    var failedAttempts = 0; // consecutive failures since the last success or invalidation
+    var failedAttempts =
+        0; // consecutive failures since the last success or invalidation
     var hasData = false; // a snapshot has been delivered
     var failureShown = false; // the latest emission is a Failure
 
@@ -123,7 +124,11 @@ abstract final class SupabasePaginatedQuery {
             final retriesLeft = failedAttempts <= retryDelays.length;
             if ((!hasData || !retriesLeft) && !failureShown) {
               failureShown = true;
-              emit(Failure(SupabaseErrorMapper.describe(error, stackTrace: stackTrace)));
+              emit(
+                Failure(
+                  SupabaseErrorMapper.describe(error, stackTrace: stackTrace),
+                ),
+              );
             }
             if (retriesLeft && !pendingRefetch && !disposed) {
               retryTimer = Timer(retryDelays[failedAttempts - 1], () {
@@ -179,7 +184,8 @@ abstract final class SupabasePaginatedQuery {
     required Set<String> columns,
     required T Function(Map<String, dynamic>) fromJson,
   }) {
-    final isUpsert = payload.eventType == PostgresChangeEvent.insert ||
+    final isUpsert =
+        payload.eventType == PostgresChangeEvent.insert ||
         payload.eventType == PostgresChangeEvent.update;
     if (!isUpsert || payload.errors != null || columns.isEmpty) return null;
     final row = payload.newRecord;
@@ -305,7 +311,9 @@ abstract final class SupabasePaginatedQuery {
     controller = StreamController<Result<List<T>, String>>(
       onListen: () {
         if (upserts != null) sources.add(upserts.listen(onUpsert));
-        if (invalidations != null) sources.add(invalidations.listen((_) => reload()));
+        if (invalidations != null) {
+          sources.add(invalidations.listen((_) => reload()));
+        }
         if (writes != null) sources.add(writes.listen(onWritten));
         loaded = watchDebouncedCollection<T>(
           fetchAll: load,
@@ -341,7 +349,8 @@ abstract final class SupabasePaginatedQuery {
     required String table,
     required String filterColumn,
     required String filterValue,
-    required Future<List<Map<String, dynamic>>> Function(int from, int to) fetchPage,
+    required Future<List<Map<String, dynamic>>> Function(int from, int to)
+    fetchPage,
     required T Function(Map<String, dynamic>) fromJson,
     required String keyColumn,
     required String Function(T row) keyOf,
@@ -376,7 +385,11 @@ abstract final class SupabasePaginatedQuery {
                 value: filterValue,
               ),
               callback: (payload) {
-                final row = completeRowOf<T>(payload, columns: columns, fromJson: fromJson);
+                final row = completeRowOf<T>(
+                  payload,
+                  columns: columns,
+                  fromJson: fromJson,
+                );
                 if (row == null) {
                   invalidate();
                 } else if (!upserts.isClosed) {

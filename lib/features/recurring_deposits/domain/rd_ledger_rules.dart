@@ -23,7 +23,11 @@ final class RDLedgerRules {
   /// Resolves the statutory due date for an installment falling in [installmentMonth].
   DateTime dueDateFor(DateTime startDate, DateTime installmentMonth) {
     if (startDate.day <= dueDayCutoff) {
-      return DateTime(installmentMonth.year, installmentMonth.month, dueDayCutoff);
+      return DateTime(
+        installmentMonth.year,
+        installmentMonth.month,
+        dueDayCutoff,
+      );
     }
     return DateTime(installmentMonth.year, installmentMonth.month + 1, 0);
   }
@@ -49,8 +53,10 @@ final class RDLedgerRules {
     if (months <= 0) return 0.0;
     final amountPaise = Money.toPaise(installmentAmount);
     // (amount / 100) * ratePer100 * months, expressed in paise, then ceil to whole rupees.
-    final feePaise = amountPaise * defaultFeeRupeesPer100PerMonth * months ~/ 100;
-    final remainder = amountPaise * defaultFeeRupeesPer100PerMonth * months % 100;
+    final feePaise =
+        amountPaise * defaultFeeRupeesPer100PerMonth * months ~/ 100;
+    final remainder =
+        amountPaise * defaultFeeRupeesPer100PerMonth * months % 100;
     final exactPaise = feePaise + (remainder > 0 ? 1 : 0);
     return Money.ceilToRupees(exactPaise).toDouble();
   }

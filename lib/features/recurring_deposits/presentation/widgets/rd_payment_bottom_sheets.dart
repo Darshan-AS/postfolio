@@ -31,19 +31,20 @@ import 'package:postfolio/i18n/strings.g.dart';
 /// Single source of truth for the payment-mode glyphs and short labels used across the sheets.
 extension RDPaymentModeIcon on RDPaymentMode {
   List<List<dynamic>> get icon => switch (this) {
-        RDPaymentMode.cash => HugeIcons.strokeRoundedCoins01,
-        RDPaymentMode.upi => HugeIcons.strokeRoundedCreditCard,
-        RDPaymentMode.cheque => HugeIcons.strokeRoundedTicket01,
-        RDPaymentMode.bankTransfer => HugeIcons.strokeRoundedBank,
-      };
+    RDPaymentMode.cash => HugeIcons.strokeRoundedCoins01,
+    RDPaymentMode.upi => HugeIcons.strokeRoundedCreditCard,
+    RDPaymentMode.cheque => HugeIcons.strokeRoundedTicket01,
+    RDPaymentMode.bankTransfer => HugeIcons.strokeRoundedBank,
+  };
 
   /// One-word label that fits a button-group segment next to the glyph.
   String get shortLabel => switch (this) {
-        RDPaymentMode.cash => t.recurringDeposits.ledger.paymentModes.cash,
-        RDPaymentMode.upi => t.recurringDeposits.ledger.paymentModes.upi,
-        RDPaymentMode.cheque => t.recurringDeposits.ledger.paymentModes.cheque,
-        RDPaymentMode.bankTransfer => t.recurringDeposits.ledger.paymentModes.bankTransfer,
-      };
+    RDPaymentMode.cash => t.recurringDeposits.ledger.paymentModes.cash,
+    RDPaymentMode.upi => t.recurringDeposits.ledger.paymentModes.upi,
+    RDPaymentMode.cheque => t.recurringDeposits.ledger.paymentModes.cheque,
+    RDPaymentMode.bankTransfer =>
+      t.recurringDeposits.ledger.paymentModes.bankTransfer,
+  };
 }
 
 /// Opens the "collect customer payment" sheet. Resolves `true` when a payment was recorded.
@@ -51,30 +52,25 @@ Future<bool?> showRDLogPaymentSheet(
   BuildContext context, {
   required String rdId,
   double? initialAmount,
-}) =>
-    AppAdaptiveSheet.show<bool>(
-      context,
-      builder: (_) => _PaymentForm(
-        rdId: rdId,
-        initialAmount: initialAmount,
-        hostContext: context,
-      ),
-    );
+}) => AppAdaptiveSheet.show<bool>(
+  context,
+  builder: (_) => _PaymentForm(
+    rdId: rdId,
+    initialAmount: initialAmount,
+    hostContext: context,
+  ),
+);
 
 /// Opens the "edit customer payment" sheet. Resolves `true` when the payment was updated.
 Future<bool?> showRDEditPaymentSheet(
   BuildContext context, {
   required String rdId,
   required RDTransaction transaction,
-}) =>
-    AppAdaptiveSheet.show<bool>(
-      context,
-      builder: (_) => _PaymentForm(
-        rdId: rdId,
-        existing: transaction,
-        hostContext: context,
-      ),
-    );
+}) => AppAdaptiveSheet.show<bool>(
+  context,
+  builder: (_) =>
+      _PaymentForm(rdId: rdId, existing: transaction, hostContext: context),
+);
 
 // --- Form ---------------------------------------------------------------------------------
 
@@ -110,14 +106,16 @@ class _PaymentForm extends HookConsumerWidget {
     final title = isEditing
         ? ledger.editPaymentTitle
         : (customer != null && customer.isNotEmpty)
-            ? ledger.collectTitle(customer: customer)
-            : ledger.logPaymentTitle;
+        ? ledger.collectTitle(customer: customer)
+        : ledger.logPaymentTitle;
 
     String collectedMessage() {
       final who = customer ?? t.recurringDeposits.depositNotFound;
       final amount = draft.amount.toRupeeFormat();
       final month = draft.firstAllocatedMonth;
-      if (month == null) return ledger.collectedNoMonth(amount: amount, customer: who);
+      if (month == null) {
+        return ledger.collectedNoMonth(amount: amount, customer: who);
+      }
       final rawLocale = LocaleSettings.currentLocale.languageTag;
       String locale = 'en_US';
       try {
@@ -134,7 +132,9 @@ class _PaymentForm extends HookConsumerWidget {
     Future<void> handleSubmit() async {
       // Resolve the toast copy before the write: the preview is derived from facts that
       // change the moment the payment lands.
-      final successMessage = isEditing ? ledger.paymentUpdated : collectedMessage();
+      final successMessage = isEditing
+          ? ledger.paymentUpdated
+          : collectedMessage();
       final outcome = await draft.submit();
       if (!context.mounted) return;
       if (outcome.payment is Success<void, String>) {
@@ -144,7 +144,9 @@ class _PaymentForm extends HookConsumerWidget {
           hostContext,
           outcome.payment,
           successMessage: successMessage,
-          undoLabel: isEditing ? null : t.recurringDeposits.monthlyOperations.undo,
+          undoLabel: isEditing
+              ? null
+              : t.recurringDeposits.monthlyOperations.undo,
           onUndo: isEditing
               ? null
               : () async {
@@ -170,7 +172,11 @@ class _PaymentForm extends HookConsumerWidget {
         }
         return;
       }
-      AppFeedback.showResult(context, outcome.payment, successMessage: successMessage);
+      AppFeedback.showResult(
+        context,
+        outcome.payment,
+        successMessage: successMessage,
+      );
     }
 
     // Edit: confirm when the saved payment was changed. Create: confirm when an amount was
@@ -185,7 +191,9 @@ class _PaymentForm extends HookConsumerWidget {
       final discard = await AppDialogs.confirmAction(
         context,
         title: ledger.discardChangesTitle,
-        content: isEditing ? ledger.discardChangesContent : ledger.discardAmountContent,
+        content: isEditing
+            ? ledger.discardChangesContent
+            : ledger.discardAmountContent,
         confirmText: ledger.discard,
       );
       if (discard == true && context.mounted) {
@@ -211,8 +219,8 @@ class _PaymentForm extends HookConsumerWidget {
     final submitLabel = isEditing
         ? ledger.saveChanges
         : draft.amount > 0
-            ? ledger.collectSubmit(amount: draft.amount.toRupeeFormat())
-            : ledger.recordPayment;
+        ? ledger.collectSubmit(amount: draft.amount.toRupeeFormat())
+        : ledger.recordPayment;
 
     return PopScope<bool>(
       canPop: !hasUnsavedInput,
@@ -262,9 +270,10 @@ class _FormBody extends StatelessWidget {
     final ledger = t.recurringDeposits.ledger;
     final amountText = draft.amountController.text.trim();
     final amountError =
-        amountText.isNotEmpty && draft.validationError == ledger.enterValidAmount
-            ? ledger.enterValidAmount
-            : null;
+        amountText.isNotEmpty &&
+            draft.validationError == ledger.enterValidAmount
+        ? ledger.enterValidAmount
+        : null;
     // The amount is the hero of the sheet: the field is set in a headline role.
     final amountStyle = rdSheetLargeType(
       context,
@@ -278,18 +287,23 @@ class _FormBody extends StatelessWidget {
           controller: draft.amountController,
           autofocus: !draft.hasInitialPrefill,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+          ],
           textInputAction: TextInputAction.done,
           style: amountStyle,
-          decoration: AppInputDecoration.m3(
-            context,
-            labelText: ledger.paymentAmount,
-            prefixText: t.format.currencySymbol,
-            isRequired: true,
-            errorText: amountError,
-          ).copyWith(
-            prefixStyle: amountStyle?.copyWith(color: scheme.onSurfaceVariant),
-          ),
+          decoration:
+              AppInputDecoration.m3(
+                context,
+                labelText: ledger.paymentAmount,
+                prefixText: t.format.currencySymbol,
+                isRequired: true,
+                errorText: amountError,
+              ).copyWith(
+                prefixStyle: amountStyle?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
         ),
         if (draft.quickAmounts.isNotEmpty) ...[
           AppSpacings.gapSm,
@@ -299,13 +313,18 @@ class _FormBody extends StatelessWidget {
           // a gap of their own.
           Wrap(
             spacing: AppDimensions.paddingSm,
-            runSpacing: AppDimensions.isLargeText(context) ? AppDimensions.paddingSm : 0,
+            runSpacing: AppDimensions.isLargeText(context)
+                ? AppDimensions.paddingSm
+                : 0,
             children: [
               for (final quick in draft.quickAmounts)
                 ChoiceChip(
                   // As on a button: the label carries an amount, so one that does not
                   // fit shrinks. A chip would cut it.
-                  label: FittedBox(fit: BoxFit.scaleDown, child: Text(quick.label)),
+                  label: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(quick.label),
+                  ),
                   selected: draft.isQuickAmountSelected(quick),
                   onSelected: (_) => draft.applyQuickAmount(quick),
                 ),
@@ -335,7 +354,9 @@ class _FormBody extends StatelessWidget {
         AppSpacings.gapLg,
         _PaidDateTile(
           draft: draft,
-          position: draft.canAbsorbFee ? AppGroupPosition.first : AppGroupPosition.single,
+          position: draft.canAbsorbFee
+              ? AppGroupPosition.first
+              : AppGroupPosition.single,
         ),
         if (draft.canAbsorbFee) ...[
           const SizedBox(height: AppShapes.groupGap),
@@ -498,7 +519,9 @@ class RDAllocationPreviewCard extends StatelessWidget {
           if (previewValue == null)
             Text(
               isRecalculation ? strings.recalculatedHint : strings.hint,
-              style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             )
           else ...[
             Text(_summaryLine(previewValue), style: emphasized.bodyMedium),
@@ -521,8 +544,12 @@ class RDAllocationPreviewCard extends StatelessWidget {
                   AppSpacings.gapSm,
                   Expanded(
                     child: Text(
-                      strings.credit(amount: previewValue.customerCredit.toRupeeFormat()),
-                      style: emphasized.bodySmall?.copyWith(color: scheme.primary),
+                      strings.credit(
+                        amount: previewValue.customerCredit.toRupeeFormat(),
+                      ),
+                      style: emphasized.bodySmall?.copyWith(
+                        color: scheme.primary,
+                      ),
                     ),
                   ),
                 ],
@@ -536,8 +563,9 @@ class RDAllocationPreviewCard extends StatelessWidget {
 
   String _summaryLine(RDLedgerProjection previewValue) {
     final strings = t.recurringDeposits.ledger.preview;
-    final slices = previewValue
-            .allocationsByTransaction[transactionId ?? rdDraftPreviewTransactionId] ??
+    final slices =
+        previewValue.allocationsByTransaction[transactionId ??
+            rdDraftPreviewTransactionId] ??
         const [];
     if (slices.isEmpty) return strings.summaryNoChange;
 
@@ -547,15 +575,21 @@ class RDAllocationPreviewCard extends StatelessWidget {
       if (slice.isCredit) {
         credit += slice.amount;
       } else if (slice.isOpeningReceivable) {
-        parts.add(strings.summaryOpeningPart(amount: slice.amount.toRupeeFormat()));
+        parts.add(
+          strings.summaryOpeningPart(amount: slice.amount.toRupeeFormat()),
+        );
       } else {
-        parts.add(strings.summaryMonthPart(
-          month: slice.installmentNo.toString(),
-          amount: slice.amount.toRupeeFormat(),
-        ));
+        parts.add(
+          strings.summaryMonthPart(
+            month: slice.installmentNo.toString(),
+            amount: slice.amount.toRupeeFormat(),
+          ),
+        );
       }
     }
-    if (credit > 0) parts.add(strings.summaryCreditPart(amount: credit.toRupeeFormat()));
+    if (credit > 0) {
+      parts.add(strings.summaryCreditPart(amount: credit.toRupeeFormat()));
+    }
     return strings.summaryLine(
       amount: amount.toRupeeFormat(),
       parts: parts.join(strings.summaryPartsSeparator),
@@ -602,7 +636,9 @@ class _PreviewMonthRow extends StatelessWidget {
               AppSpacings.gapXs,
               Text(
                 strings.monthLabel(month: after.installmentNo.toString()),
-                style: emphasized.labelMedium?.copyWith(color: visual.foreground),
+                style: emphasized.labelMedium?.copyWith(
+                  color: visual.foreground,
+                ),
               ),
             ],
           ),
@@ -622,11 +658,15 @@ class _PreviewMonthRow extends StatelessWidget {
               if (after.customerFeeDue > 0)
                 Text(
                   strings.monthFee(fee: after.customerFeeDue.toRupeeFormat()),
-                  style: theme.textTheme.bodySmall?.copyWith(color: scheme.error),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.error,
+                  ),
                 ),
               Text(
                 visual.label,
-                style: theme.textTheme.labelMedium?.copyWith(color: visual.foreground),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: visual.foreground,
+                ),
               ),
             ],
           ),

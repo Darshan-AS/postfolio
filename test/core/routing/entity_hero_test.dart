@@ -37,7 +37,9 @@ void main() {
 
   /// The size of the font [text] is drawn in.
   double fontSize(WidgetTester tester, Finder text) => tester
-      .widget<RichText>(find.descendant(of: text, matching: find.byType(RichText)))
+      .widget<RichText>(
+        find.descendant(of: text, matching: find.byType(RichText)),
+      )
       .text
       .style!
       .fontSize!;
@@ -51,8 +53,14 @@ void main() {
 
   /// How much of a part of the head that does not travel is drawn: 0 none of it, 1 all.
   double shown(WidgetTester tester, Finder part) {
-    final follower = find.ancestor(of: part, matching: find.byType(EntityHeroFollower));
-    final fade = find.descendant(of: follower, matching: find.byType(FadeTransition));
+    final follower = find.ancestor(
+      of: part,
+      matching: find.byType(EntityHeroFollower),
+    );
+    final fade = find.descendant(
+      of: follower,
+      matching: find.byType(FadeTransition),
+    );
     return tester.widget<FadeTransition>(fade.first).opacity.value;
   }
 
@@ -69,7 +77,9 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('they travel from the row to the head of the screen', (tester) async {
+  testWidgets('they travel from the row to the head of the screen', (
+    tester,
+  ) async {
     final router = await pumpSignedInApp(tester);
     final rowAvatar = tester.getRect(avatar());
     final rowName = tester.getRect(find.text(name));
@@ -83,7 +93,10 @@ void main() {
 
     // The screen is a page of the router from the start, with its URL.
     expect(router.location(), '/customers/cust-1');
-    expect(find.byType(CustomerDetailScreen, skipOffstage: false), findsOneWidget);
+    expect(
+      find.byType(CustomerDetailScreen, skipOffstage: false),
+      findsOneWidget,
+    );
 
     // On the way: one of each, and the avatar is between its two sizes and places.
     await expectOneOfEach(tester);
@@ -177,12 +190,17 @@ void main() {
   });
 
   group('a back swipe', () {
-    Future<void> send(WidgetTester tester, String method, [Map<String, Object?>? arguments]) =>
-        tester.binding.defaultBinaryMessenger.handlePlatformMessage(
-          'flutter/backgesture',
-          const StandardMethodCodec().encodeMethodCall(MethodCall(method, arguments)),
-          (_) {},
-        );
+    Future<void> send(
+      WidgetTester tester,
+      String method, [
+      Map<String, Object?>? arguments,
+    ]) => tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+      'flutter/backgesture',
+      const StandardMethodCodec().encodeMethodCall(
+        MethodCall(method, arguments),
+      ),
+      (_) {},
+    );
     Map<String, Object?> swipe(double progress) => {
       'touchOffset': <double>[5, 300],
       'progress': progress,
@@ -190,8 +208,10 @@ void main() {
     };
 
     /// The avatar at the head of the screen that is being swiped away.
-    Finder headAvatar() =>
-        find.descendant(of: find.byType(EntityDetailHeader), matching: avatar());
+    Finder headAvatar() => find.descendant(
+      of: find.byType(EntityDetailHeader),
+      matching: avatar(),
+    );
 
     /// Opens the customer's screen from its row and drags a back swipe [progress] of the
     /// way. Returns where the row's avatar was.
@@ -207,161 +227,174 @@ void main() {
       return rowAvatar;
     }
 
-    testWidgets('while it is dragged the screen shrinks whole and nothing travels', (
-      tester,
-    ) async {
-      final router = await pumpSignedInApp(tester);
-      await openAndDrag(tester, 0.6);
-
-      // Both screens are in view with their own copies: the row's and the screen's.
-      expect(router.root().userGestureInProgress, isTrue);
-      expect(avatar(), findsNWidgets(2));
-      expect(find.text(name), findsNWidgets(2));
-      // The screen follows the finger whole: its avatar is drawn smaller than at rest,
-      // and nothing has to keep out of anything's way.
-      expect(tester.getRect(headAvatar()).width, lessThan(AppDimensions.avatarLg));
-      expect(shown(tester, email()), 1);
-      expect(shown(tester, call()), 1);
-      expect(shown(tester, section()), 1);
-    });
-
-    testWidgets('when it is let go the parts travel from where the screen had them', (
-      tester,
-    ) async {
-      final router = await pumpSignedInApp(tester);
-      final rowAvatar = await openAndDrag(tester, 0.5);
-      final dragged = tester.getRect(headAvatar());
-
-      await send(tester, 'commitBackGesture');
-      await tester.pump();
-
-      // One of each again: the parts have left the screen. They start where the shrunken
-      // screen had them, not where the screen has them at rest.
-      await expectOneOfEach(tester);
-      final released = tester.getRect(avatar());
-      expect(released.top, closeTo(dragged.top, 1));
-      expect(released.left, closeTo(dragged.left, 1));
-      expect(released.width, closeTo(dragged.width, 1));
-
-      // On the way to the row, and the rest of the screen is out of the way.
-      await tester.pump(const Duration(milliseconds: 150));
-      await expectOneOfEach(tester);
-      final flying = tester.getRect(avatar());
-      expect(flying.top, greaterThan(released.top));
-      expect(flying.top, lessThan(rowAvatar.top));
-      expect(shown(tester, email()), 0);
-      expect(shown(tester, call()), 0);
-
-      await tester.pumpAndSettle();
-      expect(router.location(), '/customers');
-      expect(tester.getRect(avatar()), rowAvatar);
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('when it is dragged back to the edge nothing travels and the screen stays', (
-      tester,
-    ) async {
-      final router = await pumpSignedInApp(tester);
-      await openAndDrag(tester, 0.5);
-
-      await send(tester, 'cancelBackGesture');
-      await tester.pump();
-      expect(avatar(), findsNWidgets(2));
-      expect(shown(tester, email()), 1);
-
-      await tester.pumpAndSettle();
-      expect(router.location(), '/customers/${rameshRao.id}');
-      expect(tester.getRect(headAvatar()).width, AppDimensions.avatarLg);
-      expect(shown(tester, email()), 1);
-      expect(shown(tester, section()), 1);
-      expect(tester.takeException(), isNull);
-    });
-
     testWidgets(
-      'on iOS the swipe from the edge carries no parts',
+      'while it is dragged the screen shrinks whole and nothing travels',
       (tester) async {
-        // Its transition carries on from where the finger left it. Parts sent off at that
-        // moment would jump, so they sit this swipe out.
         final router = await pumpSignedInApp(tester);
-        await openFromRow(tester);
-        await tester.pumpAndSettle();
+        await openAndDrag(tester, 0.6);
 
-        final gesture = await tester.startGesture(const Offset(4, 300));
-        for (var i = 0; i < 6; i++) {
-          await gesture.moveBy(const Offset(50, 0));
-          await tester.pump(const Duration(milliseconds: 16));
-        }
-        expect(avatar(), findsNWidgets(2));
+        // Both screens are in view with their own copies: the row's and the screen's.
         expect(router.root().userGestureInProgress, isTrue);
-
-        await gesture.up();
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 50));
-        // Each screen still has its own copy: nothing is drawn above them.
         expect(avatar(), findsNWidgets(2));
         expect(find.text(name), findsNWidgets(2));
+        // The screen follows the finger whole: its avatar is drawn smaller than at rest,
+        // and nothing has to keep out of anything's way.
+        expect(
+          tester.getRect(headAvatar()).width,
+          lessThan(AppDimensions.avatarLg),
+        );
+        expect(shown(tester, email()), 1);
+        expect(shown(tester, call()), 1);
+        expect(shown(tester, section()), 1);
+      },
+    );
+
+    testWidgets(
+      'when it is let go the parts travel from where the screen had them',
+      (tester) async {
+        final router = await pumpSignedInApp(tester);
+        final rowAvatar = await openAndDrag(tester, 0.5);
+        final dragged = tester.getRect(headAvatar());
+
+        await send(tester, 'commitBackGesture');
+        await tester.pump();
+
+        // One of each again: the parts have left the screen. They start where the shrunken
+        // screen had them, not where the screen has them at rest.
+        await expectOneOfEach(tester);
+        final released = tester.getRect(avatar());
+        expect(released.top, closeTo(dragged.top, 1));
+        expect(released.left, closeTo(dragged.left, 1));
+        expect(released.width, closeTo(dragged.width, 1));
+
+        // On the way to the row, and the rest of the screen is out of the way.
+        await tester.pump(const Duration(milliseconds: 150));
+        await expectOneOfEach(tester);
+        final flying = tester.getRect(avatar());
+        expect(flying.top, greaterThan(released.top));
+        expect(flying.top, lessThan(rowAvatar.top));
+        expect(shown(tester, email()), 0);
+        expect(shown(tester, call()), 0);
 
         await tester.pumpAndSettle();
         expect(router.location(), '/customers');
-        expect(avatar(), findsOneWidget);
+        expect(tester.getRect(avatar()), rowAvatar);
         expect(tester.takeException(), isNull);
       },
-      variant: TargetPlatformVariant.only(TargetPlatform.iOS),
     );
+
+    testWidgets(
+      'when it is dragged back to the edge nothing travels and the screen stays',
+      (tester) async {
+        final router = await pumpSignedInApp(tester);
+        await openAndDrag(tester, 0.5);
+
+        await send(tester, 'cancelBackGesture');
+        await tester.pump();
+        expect(avatar(), findsNWidgets(2));
+        expect(shown(tester, email()), 1);
+
+        await tester.pumpAndSettle();
+        expect(router.location(), '/customers/${rameshRao.id}');
+        expect(tester.getRect(headAvatar()).width, AppDimensions.avatarLg);
+        expect(shown(tester, email()), 1);
+        expect(shown(tester, section()), 1);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets('on iOS the swipe from the edge carries no parts', (
+      tester,
+    ) async {
+      // Its transition carries on from where the finger left it. Parts sent off at that
+      // moment would jump, so they sit this swipe out.
+      final router = await pumpSignedInApp(tester);
+      await openFromRow(tester);
+      await tester.pumpAndSettle();
+
+      final gesture = await tester.startGesture(const Offset(4, 300));
+      for (var i = 0; i < 6; i++) {
+        await gesture.moveBy(const Offset(50, 0));
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(avatar(), findsNWidgets(2));
+      expect(router.root().userGestureInProgress, isTrue);
+
+      await gesture.up();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      // Each screen still has its own copy: nothing is drawn above them.
+      expect(avatar(), findsNWidgets(2));
+      expect(find.text(name), findsNWidgets(2));
+
+      await tester.pumpAndSettle();
+      expect(router.location(), '/customers');
+      expect(avatar(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
   });
 
   group('while the full record loads', () {
-    testWidgets('the head of the screen is the customer at once and the rest a placeholder', (
+    testWidgets(
+      'the head of the screen is the customer at once and the rest a placeholder',
+      (tester) async {
+        final customers = LateCustomerRepository();
+        await pumpSignedInApp(tester, customers: customers);
+
+        // The screen's first frame, before anything has set out for it.
+        await tester.tap(find.text(name));
+        await tester.pump();
+        final screen = find.byType(CustomerDetailScreen, skipOffstage: false);
+        final header = find.byType(EntityDetailHeader, skipOffstage: false);
+        // `Skeletonizer` is built through a factory, so it cannot be found by type.
+        final placeholder = find.byWidgetPredicate(
+          (widget) => widget is Skeletonizer && widget.enabled,
+          skipOffstage: false,
+        );
+        Finder placeholders() => find.descendant(
+          of: screen,
+          matching: placeholder,
+          skipOffstage: false,
+        );
+
+        // The list's record: the name is the customer's, not the cold start's stand-in.
+        expect(
+          find.descendant(
+            of: header,
+            matching: find.text(name, skipOffstage: false),
+            skipOffstage: false,
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.text(Customer.dummy.name, skipOffstage: false),
+          findsNothing,
+        );
+        // What the list's record cannot vouch for is drawn as a placeholder, the head is not.
+        expect(placeholders(), findsWidgets);
+        expect(find.ancestor(of: header, matching: placeholder), findsNothing);
+
+        // Long enough to land. A placeholder shimmers for as long as it shows, so the screen
+        // does not settle.
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        await expectOneOfEach(tester);
+        expect(placeholders(), findsWidgets);
+        final head = tester.element(find.byType(EntityDetailHeader));
+
+        customers.answer();
+        await tester.pumpAndSettle();
+
+        // The full record: nothing is a placeholder, and the head was rebuilt in place.
+        expect(placeholders(), findsNothing);
+        expect(tester.element(find.byType(EntityDetailHeader)), same(head));
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets('a record that arrives mid-flight does not leave two copies', (
       tester,
     ) async {
-      final customers = LateCustomerRepository();
-      await pumpSignedInApp(tester, customers: customers);
-
-      // The screen's first frame, before anything has set out for it.
-      await tester.tap(find.text(name));
-      await tester.pump();
-      final screen = find.byType(CustomerDetailScreen, skipOffstage: false);
-      final header = find.byType(EntityDetailHeader, skipOffstage: false);
-      // `Skeletonizer` is built through a factory, so it cannot be found by type.
-      final placeholder = find.byWidgetPredicate(
-        (widget) => widget is Skeletonizer && widget.enabled,
-        skipOffstage: false,
-      );
-      Finder placeholders() =>
-          find.descendant(of: screen, matching: placeholder, skipOffstage: false);
-
-      // The list's record: the name is the customer's, not the cold start's stand-in.
-      expect(
-        find.descendant(
-          of: header,
-          matching: find.text(name, skipOffstage: false),
-          skipOffstage: false,
-        ),
-        findsOneWidget,
-      );
-      expect(find.text(Customer.dummy.name, skipOffstage: false), findsNothing);
-      // What the list's record cannot vouch for is drawn as a placeholder, the head is not.
-      expect(placeholders(), findsWidgets);
-      expect(find.ancestor(of: header, matching: placeholder), findsNothing);
-
-      // Long enough to land. A placeholder shimmers for as long as it shows, so the screen
-      // does not settle.
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
-      await expectOneOfEach(tester);
-      expect(placeholders(), findsWidgets);
-      final head = tester.element(find.byType(EntityDetailHeader));
-
-      customers.answer();
-      await tester.pumpAndSettle();
-
-      // The full record: nothing is a placeholder, and the head was rebuilt in place.
-      expect(placeholders(), findsNothing);
-      expect(tester.element(find.byType(EntityDetailHeader)), same(head));
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('a record that arrives mid-flight does not leave two copies', (tester) async {
       final customers = LateCustomerRepository();
       await pumpSignedInApp(tester, customers: customers);
 
@@ -382,7 +415,9 @@ void main() {
     });
   });
 
-  testWidgets('a screen that no row opened: nothing travels and nothing waits', (tester) async {
+  testWidgets('a screen that no row opened: nothing travels and nothing waits', (
+    tester,
+  ) async {
     final router = await pumpSignedInApp(tester);
 
     // By its URL, as a link opens it. The row is in view all the same.
@@ -400,7 +435,10 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(EntityHeroFollower),
-          matching: find.ancestor(of: part, matching: find.byType(FadeTransition)),
+          matching: find.ancestor(
+            of: part,
+            matching: find.byType(FadeTransition),
+          ),
         ),
         findsNothing,
       );
@@ -410,7 +448,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a device set to remove animations gets no travelling parts', (tester) async {
+  testWidgets('a device set to remove animations gets no travelling parts', (
+    tester,
+  ) async {
     final router = await pumpSignedInApp(tester, disableAnimations: true);
     Finder travelling() => find.byWidgetPredicate(
       (widget) => widget is Hero && widget.tag is (Object, EntityHeroPart),
@@ -428,12 +468,18 @@ void main() {
     expect(
       find.descendant(
         of: find.byType(EntityHeroFollower),
-        matching: find.ancestor(of: email(), matching: find.byType(FadeTransition)),
+        matching: find.ancestor(
+          of: email(),
+          matching: find.byType(FadeTransition),
+        ),
       ),
       findsNothing,
     );
     expect(
-      find.descendant(of: find.byType(EntityDetailHeader), matching: find.text(name)),
+      find.descendant(
+        of: find.byType(EntityDetailHeader),
+        matching: find.text(name),
+      ),
       findsOneWidget,
     );
   });

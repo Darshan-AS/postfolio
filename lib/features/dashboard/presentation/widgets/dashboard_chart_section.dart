@@ -277,9 +277,9 @@ class DashboardChartSection extends HookConsumerWidget {
                     );
               return BarTooltipItem(
                 '${dp.label}\n$valueStr',
-                AppTypography.emphasizedOf(context).labelLarge!.copyWith(
-                  color: colorScheme.onInverseSurface,
-                ),
+                AppTypography.emphasizedOf(
+                  context,
+                ).labelLarge!.copyWith(color: colorScheme.onInverseSurface),
               );
             },
           ),
@@ -318,7 +318,8 @@ class DashboardChartSection extends HookConsumerWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: AppDimensions.chartYAxisReservedSize * axisTextScale,
+              reservedSize:
+                  AppDimensions.chartYAxisReservedSize * axisTextScale,
               getTitlesWidget: (double value, TitleMeta meta) {
                 if (value == 0 || value == maxY) {
                   return const SizedBox.shrink();

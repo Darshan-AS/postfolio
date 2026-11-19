@@ -36,7 +36,10 @@ void main() {
           ),
           bottomNavigationBar: GestureDetector(
             onTap: () => barTaps++,
-            child: const SizedBox(height: 80, child: Center(child: Text('Bar'))),
+            child: const SizedBox(
+              height: 80,
+              child: Center(child: Text('Bar')),
+            ),
           ),
         ),
       ),

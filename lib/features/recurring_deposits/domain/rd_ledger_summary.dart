@@ -19,9 +19,11 @@ sealed class RDOpenItem with _$RDOpenItem {
   const factory RDOpenItem({
     required int installmentNo,
     @Default(0.0) double paid,
+
     /// Customer fee; authoritative once [isSettled], otherwise recomputed dynamically.
     @Default(0.0) double customerFee,
     @Default(false) bool isSettled,
+
     /// PO fee fixed at the deposit date; `0` while undeposited (computed dynamically).
     @Default(0.0) double poFee,
     @Default(0.0) double absorbedFee,
@@ -47,25 +49,32 @@ sealed class RDLedgerSummary with _$RDLedgerSummary {
     required String rdId,
     required int factsVersion,
     @DateOnlyConverter() required DateTime projectedOn,
+
     /// Last month (1-based) the customer has fully paid, counting consecutively from #1.
     @Default(0) int paidThroughNo,
+
     /// Last month deposited at the Post Office (always consecutive from #1).
     @Default(0) int depositedThroughNo,
     int? nextDueNo,
     @Default(0.0) double customerCredit,
     @Default(0.0) double openingReceivableLeft,
+
     /// Everything the customer currently owes the agent (opening receivable + fronted months
     /// + overdue undeposited months), net of credit.
     @Default(0.0) double owedByCustomer,
+
     /// Money the agent has fronted at the PO and not yet recovered from the customer.
     @Default(0.0) double receivable,
     @Default(0.0) double cashInHandCash,
     @Default(0.0) double cashInHandDigital,
     @Default(0.0) double absorbedTotal,
+
     /// Extra PO fee the agent bears for depositing later than the customer paid.
     @Default(0.0) double delayCostTotal,
+
     /// Months past their due date on which the customer has not settled.
     @Default(0) int arrearsCount,
+
     /// Fee component of [owedByCustomer] (informational).
     @Default(0.0) double feeDue,
     @Default(<RDOpenItem>[]) List<RDOpenItem> openItems,
@@ -104,8 +113,9 @@ sealed class RDLedgerSummary with _$RDLedgerSummary {
   }
 
   /// Months collected in full but not yet deposited (contiguous after [depositedThroughNo]).
-  int get readyForPoCount =>
-      paidThroughNo > depositedThroughNo ? paidThroughNo - depositedThroughNo : 0;
+  int get readyForPoCount => paidThroughNo > depositedThroughNo
+      ? paidThroughNo - depositedThroughNo
+      : 0;
 
   RDOpenItem? openItemFor(int installmentNo) {
     for (final item in openItems) {
@@ -132,7 +142,9 @@ sealed class RDLedgerSummary with _$RDLedgerSummary {
     final item = openItemFor(installmentNo);
     final deposited = item?.poDepositedOn;
     double feeAt(DateTime d) => rules.defaultFeeFor(
-        base.installmentAmount, rules.defaultedMonths(base.dueDate, d));
+      base.installmentAmount,
+      rules.defaultedMonths(base.dueDate, d),
+    );
 
     final poFee = deposited != null ? item!.poFee : feeAt(asOf);
     final customerFee = (item?.isSettled ?? false)

@@ -24,13 +24,17 @@ abstract interface class RDLedgerRepository {
   // --- Facts (per RD & batch reads) -------------------------------------------------------
   Stream<Result<List<RDTransaction>, String>> watchTransactions(String rdId);
   Stream<Result<List<RDPoDeposit>, String>> watchPoDeposits(String rdId);
-  Stream<Result<List<RDFeeAbsorption>, String>> watchFeeAbsorptions(String rdId);
+  Stream<Result<List<RDFeeAbsorption>, String>> watchFeeAbsorptions(
+    String rdId,
+  );
   Future<Result<Map<String, RDRawFactsBundle>, String>> fetchRawFactsForRds(
     List<String> rdIds,
   );
 
   /// Every PO event recorded under one visit (`batch_id`), across accounts.
-  Future<Result<List<RDPoDeposit>, String>> fetchPoDepositsByBatch(String batchId);
+  Future<Result<List<RDPoDeposit>, String>> fetchPoDepositsByBatch(
+    String batchId,
+  );
 
   // --- Cache (agent-wide, one row per RD) -------------------------------------------------
   Stream<Result<List<RDLedgerSummary>, String>> watchSummaries();
@@ -57,6 +61,7 @@ extension RDLedgerRepositoryShorthands on RDLedgerRepository {
   Future<Result<void, String>> addPoDeposit(RDPoDeposit event) =>
       applyChange(RDLedgerChange(insertPoDeposits: [event]));
 
-  Future<Result<void, String>> upsertFeeAbsorption(RDFeeAbsorption absorption) =>
-      applyChange(RDLedgerChange(upsertFeeAbsorptions: [absorption]));
+  Future<Result<void, String>> upsertFeeAbsorption(
+    RDFeeAbsorption absorption,
+  ) => applyChange(RDLedgerChange(upsertFeeAbsorptions: [absorption]));
 }

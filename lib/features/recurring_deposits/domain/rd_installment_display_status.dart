@@ -32,16 +32,21 @@ enum RDInstallmentDisplayStatus {
 
   /// Customer still owes money on this month.
   bool get isCustomerPending => switch (this) {
-        baseline || settled || collectedPendingPo => false,
-        partiallyPaid || frontedByAgent || overdue || dueToday || upcoming => true,
-      };
+    baseline || settled || collectedPendingPo => false,
+    partiallyPaid || frontedByAgent || overdue || dueToday || upcoming => true,
+  };
 
   /// Collected money for this month is physically with the agent.
-  bool get isCashWithAgent => this == collectedPendingPo || this == partiallyPaid;
+  bool get isCashWithAgent =>
+      this == collectedPendingPo || this == partiallyPaid;
 
   /// Already at the Post Office.
   bool get isDeposited => switch (this) {
-        baseline || settled || frontedByAgent => true,
-        collectedPendingPo || partiallyPaid || overdue || dueToday || upcoming => false,
-      };
+    baseline || settled || frontedByAgent => true,
+    collectedPendingPo ||
+    partiallyPaid ||
+    overdue ||
+    dueToday ||
+    upcoming => false,
+  };
 }

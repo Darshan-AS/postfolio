@@ -23,7 +23,8 @@ import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_sh
 import 'package:postfolio/i18n/strings.g.dart';
 
 /// Opens the Post Office visit planner bound to `rDPoVisitPlannerProvider`.
-Future<void> showRDPoVisitPlanner(BuildContext context) => AppAdaptiveSheet.show<void>(
+Future<void> showRDPoVisitPlanner(BuildContext context) =>
+    AppAdaptiveSheet.show<void>(
       context,
       builder: (_) => _PoVisitPlannerSheet(hostContext: context),
     );
@@ -61,10 +62,14 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
     Future<void> pickDate() async {
       final lookback = DateTime(today.year - _lookbackYears, today.month);
       final floor = plan.earliestAllowedDate;
-      final firstDate = floor != null && floor.isAfter(lookback) ? floor : lookback;
+      final firstDate = floor != null && floor.isAfter(lookback)
+          ? floor
+          : lookback;
       final selected = await showDatePicker(
         context: context,
-        initialDate: plan.depositedOn.isBefore(firstDate) ? firstDate : plan.depositedOn,
+        initialDate: plan.depositedOn.isBefore(firstDate)
+            ? firstDate
+            : plan.depositedOn,
         firstDate: firstDate.isAfter(today) ? today : firstDate,
         lastDate: today,
       );
@@ -75,7 +80,9 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
     Future<void> record() async {
       final successMessage = visit.success(
         installments: visit.installmentsCount(n: installmentCount),
-        accounts: t.recurringDeposits.monthlyOperations.kpis.accountsCount(n: plan.accountCount),
+        accounts: t.recurringDeposits.monthlyOperations.kpis.accountsCount(
+          n: plan.accountCount,
+        ),
       );
       failure.value = null;
       final result = await planner.record();
@@ -93,7 +100,11 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
             onUndo: () async {
               final undone = await planner.undoVisit(batchId);
               if (!hostContext.mounted) return;
-              AppFeedback.showResult(hostContext, undone, successMessage: visit.undone);
+              AppFeedback.showResult(
+                hostContext,
+                undone,
+                successMessage: visit.undone,
+              );
             },
           );
         case Failure(:final error):
@@ -113,7 +124,8 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
           // With room to spare the totals stay pinned above the action, always in view
           // while the agent ticks lines. On a short window, with the keyboard up or at a
           // large text size they would crowd the lines out, so they end the list instead.
-          final pinTotals = constraints.maxHeight >=
+          final pinTotals =
+              constraints.maxHeight >=
               MediaQuery.textScalerOf(context).scale(_pinTotalsMinHeight);
 
           return Column(
@@ -141,7 +153,9 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
                           children: [
                             RDSheetPickerTile(
                               icon: HugeIcons.strokeRoundedCalendar01,
-                              label: visit.date(date: plan.depositedOn.toAppFormat()),
+                              label: visit.date(
+                                date: plan.depositedOn.toAppFormat(),
+                              ),
                               onTap: isBusy ? null : pickDate,
                               position: AppGroupPosition.first,
                             ),
@@ -150,7 +164,9 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
                               position: AppGroupPosition.last,
                               child: SwitchListTile(
                                 value: plan.includeUnready,
-                                onChanged: isBusy ? null : planner.setIncludeUnready,
+                                onChanged: isBusy
+                                    ? null
+                                    : planner.setIncludeUnready,
                                 title: Text(
                                   visit.includeUnready,
                                   style: theme.textTheme.bodyMedium,
@@ -190,12 +206,19 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
                           itemBuilder: (context, index) => _VisitLineTile(
                             key: ValueKey(plan.lines[index].rdId),
                             line: plan.lines[index],
-                            position: AppGroupPosition.at(index, plan.lines.length),
+                            position: AppGroupPosition.at(
+                              index,
+                              plan.lines.length,
+                            ),
                             isBusy: isBusy,
-                            onToggle: () => planner.toggleIncluded(plan.lines[index].rdId),
-                            onFront: (n) => planner.setFronted(plan.lines[index].rdId, n),
-                            onFeeOverride: (fee) =>
-                                planner.setFeeOverride(plan.lines[index].rdId, fee),
+                            onToggle: () =>
+                                planner.toggleIncluded(plan.lines[index].rdId),
+                            onFront: (n) =>
+                                planner.setFronted(plan.lines[index].rdId, n),
+                            onFeeOverride: (fee) => planner.setFeeOverride(
+                              plan.lines[index].rdId,
+                              fee,
+                            ),
                           ),
                         ),
                       ),
@@ -227,7 +250,9 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
                   if (pinTotals) ...[totals, AppSpacings.gapMd],
                   RDSheetPrimaryAction(
                     label: visit.submit(
-                      installments: visit.installmentsCount(n: installmentCount),
+                      installments: visit.installmentsCount(
+                        n: installmentCount,
+                      ),
                       amount: plan.totalAmount.toRupeeFormat(),
                     ),
                     icon: HugeIcons.strokeRoundedBuilding03,
@@ -263,7 +288,9 @@ class _TotalsBlock extends StatelessWidget {
     final totalLine = plan.totalFee > 0
         ? visit.totalWithFee(amount: total, fee: plan.totalFee.toRupeeFormat())
         : visit.total(amount: total);
-    final caption = theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant);
+    final caption = theme.textTheme.bodyMedium?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
 
     return RDSheetBlock(
       child: Column(
@@ -278,9 +305,13 @@ class _TotalsBlock extends StatelessWidget {
           ),
           RDSheetFigure(
             totalLine,
-            style: emphasized.titleMedium?.copyWith(color: scheme.onSurfaceVariant),
+            style: emphasized.titleMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
             figure: total,
-            figureStyle: emphasized.headlineMedium?.copyWith(color: scheme.onSurface),
+            figureStyle: emphasized.headlineMedium?.copyWith(
+              color: scheme.onSurface,
+            ),
           ),
           RDSheetFigure(
             visit.byMode(
@@ -302,7 +333,9 @@ class _TotalsBlock extends StatelessWidget {
                 AppSpacings.gapXs,
                 Flexible(
                   child: RDSheetFigure(
-                    visit.fromPocket(amount: plan.totalFromPocket.toRupeeFormat()),
+                    visit.fromPocket(
+                      amount: plan.totalFromPocket.toRupeeFormat(),
+                    ),
                     style: emphasized.bodyMedium?.copyWith(
                       color: AppFinancialColors.of(context).fronted.onContainer,
                     ),
@@ -345,9 +378,9 @@ class _CashLotsWarning extends StatelessWidget {
               Expanded(
                 child: Text(
                   visit.cashLotWarning,
-                  style: AppTypography.emphasizedOf(context).bodyMedium?.copyWith(
-                    color: warning.onContainer,
-                  ),
+                  style: AppTypography.emphasizedOf(
+                    context,
+                  ).bodyMedium?.copyWith(color: warning.onContainer),
                 ),
               ),
             ],
@@ -360,7 +393,9 @@ class _CashLotsWarning extends StatelessWidget {
                 amount: lot.cashAmount.toRupeeFormat(),
                 count: kpis.accountsCount(n: lot.rdIds.length),
               ),
-              style: theme.textTheme.bodyMedium?.copyWith(color: warning.onContainer),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: warning.onContainer,
+              ),
             ),
         ],
       ),
@@ -385,7 +420,9 @@ class _FailureTile extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: theme.textTheme.bodyMedium?.copyWith(color: overdue.onContainer),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: overdue.onContainer,
+              ),
             ),
           ),
           AppSpacings.gapSm,
@@ -439,7 +476,9 @@ class _VisitLineTile extends HookWidget {
 
     final showFeeEditor = useState<bool>(line.feeOverride != null);
     final feeController = useTextEditingController(
-      text: line.feeOverride != null ? line.feeOverride!.toStringAsFixed(0) : '',
+      text: line.feeOverride != null
+          ? line.feeOverride!.toStringAsFixed(0)
+          : '',
     );
 
     final accountNo = deposit.accountNo ?? '';
@@ -452,7 +491,8 @@ class _VisitLineTile extends HookWidget {
 
     final muted = !line.included;
     final titleColor = muted ? scheme.onSurfaceVariant : scheme.onSurface;
-    final customerName = deposit.customerName ?? t.recurringDeposits.depositNotFound;
+    final customerName =
+        deposit.customerName ?? t.recurringDeposits.depositNotFound;
 
     // Counter-fee toggle, then "front one month less" / "one more".
     final controls = Wrap(
@@ -465,9 +505,13 @@ class _VisitLineTile extends HookWidget {
           icon: HugeIcon(
             icon: HugeIcons.strokeRoundedPercent,
             size: AppDimensions.iconMd,
-            color: line.feeOverride != null ? scheme.primary : scheme.onSurfaceVariant,
+            color: line.feeOverride != null
+                ? scheme.primary
+                : scheme.onSurfaceVariant,
           ),
-          onPressed: isBusy ? null : () => showFeeEditor.value = !showFeeEditor.value,
+          onPressed: isBusy
+              ? null
+              : () => showFeeEditor.value = !showFeeEditor.value,
         ),
         AppButton.text(
           label: visit.frontLess,
@@ -493,7 +537,9 @@ class _VisitLineTile extends HookWidget {
       children: [
         Text(
           visit.lineSubtitle(serial: serial, last4: last4),
-          style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
         ),
         if (line.fromPocket > 0)
           RDSheetFigure(
@@ -543,7 +589,9 @@ class _VisitLineTile extends HookWidget {
                           children: [
                             Text(
                               customerName,
-                              style: emphasized.titleSmall?.copyWith(color: titleColor),
+                              style: emphasized.titleSmall?.copyWith(
+                                color: titleColor,
+                              ),
                               maxLines: _nameMaxLines,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -552,7 +600,9 @@ class _VisitLineTile extends HookWidget {
                                 count: line.count,
                                 amount: line.amount.toRupeeFormat(),
                               ),
-                              style: emphasized.titleSmall?.copyWith(color: titleColor),
+                              style: emphasized.titleSmall?.copyWith(
+                                color: titleColor,
+                              ),
                             ),
                           ],
                         ),
@@ -561,9 +611,11 @@ class _VisitLineTile extends HookWidget {
                       // them where they do not.
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          final inline = constraints.maxWidth >=
-                              MediaQuery.textScalerOf(context)
-                                  .scale(_inlineControlsMinWidth);
+                          final inline =
+                              constraints.maxWidth >=
+                              MediaQuery.textScalerOf(
+                                context,
+                              ).scale(_inlineControlsMinWidth);
                           return inline
                               ? Row(
                                   children: [
@@ -572,7 +624,8 @@ class _VisitLineTile extends HookWidget {
                                   ],
                                 )
                               : Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   mainAxisSize: MainAxisSize.min,
                                   children: [account, controls],
                                 );
@@ -595,28 +648,33 @@ class _VisitLineTile extends HookWidget {
                   key: ValueKey('visit_fee_input_${line.rdId}'),
                   controller: feeController,
                   enabled: !isBusy,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-                  decoration: AppInputDecoration.m3(
-                    context,
-                    labelText: visit.counterFeeLabel,
-                    prefixText: t.format.currencySymbol,
-                  ).copyWith(
-                    isDense: true,
-                    suffixIcon: line.feeOverride != null
-                        ? IconButton(
-                            tooltip: t.common.clear,
-                            icon: const HugeIcon(
-                              icon: HugeIcons.strokeRoundedCancel01,
-                              size: AppDimensions.iconSm,
-                            ),
-                            onPressed: () {
-                              feeController.clear();
-                              onFeeOverride(null);
-                            },
-                          )
-                        : null,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
                   ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
+                  decoration:
+                      AppInputDecoration.m3(
+                        context,
+                        labelText: visit.counterFeeLabel,
+                        prefixText: t.format.currencySymbol,
+                      ).copyWith(
+                        isDense: true,
+                        suffixIcon: line.feeOverride != null
+                            ? IconButton(
+                                tooltip: t.common.clear,
+                                icon: const HugeIcon(
+                                  icon: HugeIcons.strokeRoundedCancel01,
+                                  size: AppDimensions.iconSm,
+                                ),
+                                onPressed: () {
+                                  feeController.clear();
+                                  onFeeOverride(null);
+                                },
+                              )
+                            : null,
+                      ),
                   onChanged: (raw) {
                     final trimmed = raw.trim();
                     if (trimmed.isEmpty) {

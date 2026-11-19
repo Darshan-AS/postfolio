@@ -31,9 +31,9 @@ class DetailSectionTitle extends StatelessWidget {
       ),
       child: Text(
         title,
-        style: AppTypography.emphasizedOf(context).titleSmall?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-        ),
+        style: AppTypography.emphasizedOf(
+          context,
+        ).titleSmall?.copyWith(color: Theme.of(context).colorScheme.primary),
       ),
     );
   }
@@ -106,7 +106,8 @@ class DetailItem extends StatelessWidget {
     // A copy button ends its row 4dp from the edge: its icon is then centred where a
     // chevron is, 28dp in. With the row's 16dp it sat 12dp further in than the chevron of
     // the row above it.
-    final endsWithCopy = effectiveCopy != null && trailing == null && onTap == null;
+    final endsWithCopy =
+        effectiveCopy != null && trailing == null && onTap == null;
 
     Widget content = ConstrainedBox(
       // One height for every row. A row with a copy button was 72dp and its neighbours
@@ -145,9 +146,10 @@ class DetailItem extends StatelessWidget {
                   AppSpacings.gapXs,
                   Text(
                     displayValue,
-                    style: AppTypography.emphasizedOf(context).bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
+                    style: AppTypography.emphasizedOf(context).bodyLarge
+                        ?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                   ),
                 ],
               ),
@@ -264,9 +266,9 @@ class DetailStatCard extends StatelessWidget {
                 child: Text(
                   value,
                   maxLines: 1,
-                  style: AppTypography.emphasizedOf(context).headlineSmall?.copyWith(
-                    color: fg,
-                  ),
+                  style: AppTypography.emphasizedOf(
+                    context,
+                  ).headlineSmall?.copyWith(color: fg),
                 ),
               ),
             ),
@@ -374,9 +376,8 @@ class StatusBadge extends StatelessWidget {
       ),
       child: Text(
         displayText,
-        style: (compact ? emphasized.labelSmall : emphasized.labelMedium)?.copyWith(
-          color: fgColor,
-        ),
+        style: (compact ? emphasized.labelSmall : emphasized.labelMedium)
+            ?.copyWith(color: fgColor),
       ),
     );
   }
@@ -430,9 +431,8 @@ class KvpMultiplierBanner extends StatelessWidget {
                 ),
                 Text(
                   doublesInText,
-                  style: AppTypography.emphasizedOf(context).titleLarge?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
+                  style: AppTypography.emphasizedOf(context).titleLarge
+                      ?.copyWith(color: theme.colorScheme.onPrimaryContainer),
                 ),
               ],
             ),

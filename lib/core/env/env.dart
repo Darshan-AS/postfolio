@@ -35,13 +35,18 @@ abstract final class Env {
   @EnviedField(varName: 'GOOGLE_IOS_CLIENT_ID')
   static const String _enviedGoogleIosClientId = _Env._enviedGoogleIosClientId;
 
-  static const String _definedSupabaseUrl = String.fromEnvironment('SUPABASE_URL');
-  static const String _definedSupabaseKey =
-      String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
-  static const String _definedGoogleWebClientId =
-      String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
-  static const String _definedGoogleIosClientId =
-      String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
+  static const String _definedSupabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+  );
+  static const String _definedSupabaseKey = String.fromEnvironment(
+    'SUPABASE_PUBLISHABLE_KEY',
+  );
+  static const String _definedGoogleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+  );
+  static const String _definedGoogleIosClientId = String.fromEnvironment(
+    'GOOGLE_IOS_CLIENT_ID',
+  );
 
   static String get supabaseUrl {
     if (useEmulator || appEnv == 'local') {
@@ -65,15 +70,13 @@ abstract final class Env {
         : _enviedSupabasePublishableKey;
   }
 
-  static String get googleWebClientId =>
-      _definedGoogleWebClientId.isNotEmpty
-          ? _definedGoogleWebClientId
-          : _enviedGoogleWebClientId;
+  static String get googleWebClientId => _definedGoogleWebClientId.isNotEmpty
+      ? _definedGoogleWebClientId
+      : _enviedGoogleWebClientId;
 
-  static String get googleIosClientId =>
-      _definedGoogleIosClientId.isNotEmpty
-          ? _definedGoogleIosClientId
-          : _enviedGoogleIosClientId;
+  static String get googleIosClientId => _definedGoogleIosClientId.isNotEmpty
+      ? _definedGoogleIosClientId
+      : _enviedGoogleIosClientId;
 
   /// Prevents the `staging` app flavor from accidentally connecting to production Supabase.
   static void assertFlavorSafe({

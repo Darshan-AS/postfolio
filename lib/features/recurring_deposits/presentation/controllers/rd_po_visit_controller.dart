@@ -26,18 +26,24 @@ sealed class RDPoVisitLine with _$RDPoVisitLine {
 
   const factory RDPoVisitLine({
     required RDMonthlyOperationItem item,
+
     /// Collected-but-undeposited months (what the customer has paid for).
     required int readyCount,
+
     /// Extra months the agent chose to front from pocket (0 or more).
     @Default(0) int frontedCount,
     @Default(true) bool included,
+
     /// Optional explicit fee charged at the PO counter (e.g. `0` when a holiday extended due date).
     double? feeOverride,
+
     /// Counter quote for `readyCount + frontedCount` months on the chosen date.
     @Default(0.0) double amount,
     @Default(0.0) double fee,
+
     /// Portion of [amount] not covered by customer money (customer still owes it).
     @Default(0.0) double fromPocket,
+
     /// Customer money for the ready months, by mode (from the summary cache).
     @Default(0.0) double cashPortion,
     @Default(0.0) double digitalPortion,
@@ -63,22 +69,29 @@ sealed class RDPoVisitPlan with _$RDPoVisitPlan {
     required String visitId,
     required DateTime depositedOn,
     @Default(<RDPoVisitLine>[]) List<RDPoVisitLine> lines,
+
     /// Whether accounts with nothing collected are listed (so the agent can front them).
     @Default(false) bool includeUnready,
+
     /// The accounts this visit was opened for (the rows ticked in the Hub). `null` means the
     /// visit was opened without a selection and covers every account in the Hub.
     /// [lines] is always a subset of this scope.
     Set<String>? scopeRdIds,
   }) = _RDPoVisitPlan;
 
-  Iterable<RDPoVisitLine> get included => lines.where((l) => l.included && l.count > 0);
+  Iterable<RDPoVisitLine> get included =>
+      lines.where((l) => l.included && l.count > 0);
   int get accountCount => included.length;
   int get installmentCount => included.fold(0, (s, l) => s + l.count);
-  double get totalAmount => Money.round(included.fold(0.0, (s, l) => s + l.amount));
+  double get totalAmount =>
+      Money.round(included.fold(0.0, (s, l) => s + l.amount));
   double get totalFee => Money.round(included.fold(0.0, (s, l) => s + l.fee));
-  double get totalFromPocket => Money.round(included.fold(0.0, (s, l) => s + l.fromPocket));
-  double get totalCash => Money.round(included.fold(0.0, (s, l) => s + l.cashPortion));
-  double get totalDigital => Money.round(included.fold(0.0, (s, l) => s + l.digitalPortion));
+  double get totalFromPocket =>
+      Money.round(included.fold(0.0, (s, l) => s + l.fromPocket));
+  double get totalCash =>
+      Money.round(included.fold(0.0, (s, l) => s + l.cashPortion));
+  double get totalDigital =>
+      Money.round(included.fold(0.0, (s, l) => s + l.digitalPortion));
 
   /// Greedy ≤₹20k grouping of the cash portion, in list order (display-only guidance).
   List<RDPoCashLot> get cashLots {
@@ -90,7 +103,11 @@ sealed class RDPoVisitPlan with _$RDPoVisitPlan {
       final c = Money.toPaise(l.cashPortion);
       if (c <= 0) continue;
       if (sum > 0 && sum + c > limit) {
-        lots.add((index: lots.length + 1, rdIds: current, cashAmount: Money.toRupees(sum)));
+        lots.add((
+          index: lots.length + 1,
+          rdIds: current,
+          cashAmount: Money.toRupees(sum),
+        ));
         current = <String>[];
         sum = 0;
       }
@@ -98,12 +115,17 @@ sealed class RDPoVisitPlan with _$RDPoVisitPlan {
       sum += c;
     }
     if (sum > 0) {
-      lots.add((index: lots.length + 1, rdIds: current, cashAmount: Money.toRupees(sum)));
+      lots.add((
+        index: lots.length + 1,
+        rdIds: current,
+        cashAmount: Money.toRupees(sum),
+      ));
     }
     return lots;
   }
 
-  bool get exceedsSingleCashLot => Money.toPaise(totalCash) > Money.toPaise(kPoCashLotLimit);
+  bool get exceedsSingleCashLot =>
+      Money.toPaise(totalCash) > Money.toPaise(kPoCashLotLimit);
 
   /// Earliest date this visit may carry: the Post Office ledger is sequential, so a visit
   /// cannot be dated before any included account's last recorded visit.
@@ -141,7 +163,9 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
       visitId: const Uuid().v7(),
       depositedOn: state.depositedOn,
       includeUnready: includeUnready,
-      scopeRdIds: scoped == null ? null : {for (final i in scoped) i.deposit.id},
+      scopeRdIds: scoped == null
+          ? null
+          : {for (final i in scoped) i.deposit.id},
       lines: _linesFor(
         scoped ?? _hubItems(),
         includeUnready: includeUnready,
@@ -172,22 +196,29 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
     );
   }
 
-  void toggleIncluded(String rdId) => _update(rdId, (l) => l.copyWith(included: !l.included));
+  void toggleIncluded(String rdId) =>
+      _update(rdId, (l) => l.copyWith(included: !l.included));
 
   void setFronted(String rdId, int frontedCount) => _update(
-        rdId,
-        (l) => _quote(l.copyWith(frontedCount: frontedCount < 0 ? 0 : frontedCount, included: true)),
-      );
+    rdId,
+    (l) => _quote(
+      l.copyWith(
+        frontedCount: frontedCount < 0 ? 0 : frontedCount,
+        included: true,
+      ),
+    ),
+  );
 
   void setFeeOverride(String rdId, double? feeOverride) => _update(
-        rdId,
-        (l) => _quote(
-          l.copyWith(
-            feeOverride:
-                feeOverride == null ? null : (feeOverride < 0 ? 0.0 : Money.round(feeOverride)),
-          ),
-        ),
-      );
+    rdId,
+    (l) => _quote(
+      l.copyWith(
+        feeOverride: feeOverride == null
+            ? null
+            : (feeOverride < 0 ? 0.0 : Money.round(feeOverride)),
+      ),
+    ),
+  );
 
   /// Validates every included account upfront and commits the entire PO visit batch atomically.
   ///
@@ -196,15 +227,23 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
   /// the plan gets a fresh identity, so recording the planner again is a new visit.
   Future<Result<String, String>> record() async {
     final plan = state;
-    final result = await ref.read(rDLedgerControllerProvider.notifier).depositBatchToPo(
-      lines: [
-        for (final line in plan.included)
-          (rdId: line.rdId, count: line.count, feeOverride: line.feeOverride),
-      ],
-      depositedOn: plan.depositedOn,
-      batchId: plan.visitId,
-    );
-    if (result is Success<String, String> && ref.mounted && state.visitId == plan.visitId) {
+    final result = await ref
+        .read(rDLedgerControllerProvider.notifier)
+        .depositBatchToPo(
+          lines: [
+            for (final line in plan.included)
+              (
+                rdId: line.rdId,
+                count: line.count,
+                feeOverride: line.feeOverride,
+              ),
+          ],
+          depositedOn: plan.depositedOn,
+          batchId: plan.visitId,
+        );
+    if (result is Success<String, String> &&
+        ref.mounted &&
+        state.visitId == plan.visitId) {
       state = state.copyWith(visitId: const Uuid().v7());
     }
     return result;
@@ -216,7 +255,8 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
   // --- internals -------------------------------------------------------------------------
 
   List<RDMonthlyOperationItem> _hubItems() =>
-      ref.read(monthlyOperationItemsProvider).value ?? const <RDMonthlyOperationItem>[];
+      ref.read(monthlyOperationItemsProvider).value ??
+      const <RDMonthlyOperationItem>[];
 
   /// Fresh Hub rows restricted to the visit's scope. If the Hub is not loaded, falls back to
   /// the rows already in the plan: the scope can only ever narrow, never widen.
@@ -225,30 +265,33 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
     final hub = ref.read(monthlyOperationItemsProvider).value;
     if (hub == null) return [for (final l in state.lines) l.item];
     if (scope == null) return hub;
-    return [for (final i in hub) if (scope.contains(i.deposit.id)) i];
+    return [
+      for (final i in hub)
+        if (scope.contains(i.deposit.id)) i,
+    ];
   }
 
   List<RDPoVisitLine> _linesFor(
     List<RDMonthlyOperationItem> candidates, {
     required bool includeUnready,
     required Map<String, RDPoVisitLine> previous,
-  }) =>
-      [
-        for (final item in candidates)
-          if (item.readyForPoCount > 0 ||
-              includeUnready ||
-              (previous[item.deposit.id]?.frontedCount ?? 0) > 0)
-            _quote(
-              RDPoVisitLine(
-                item: item,
-                readyCount: item.readyForPoCount,
-                frontedCount: previous[item.deposit.id]?.frontedCount ?? 0,
-                included:
-                    previous[item.deposit.id]?.included ?? (item.readyForPoCount > 0),
-                feeOverride: previous[item.deposit.id]?.feeOverride,
-              ),
-            ),
-      ];
+  }) => [
+    for (final item in candidates)
+      if (item.readyForPoCount > 0 ||
+          includeUnready ||
+          (previous[item.deposit.id]?.frontedCount ?? 0) > 0)
+        _quote(
+          RDPoVisitLine(
+            item: item,
+            readyCount: item.readyForPoCount,
+            frontedCount: previous[item.deposit.id]?.frontedCount ?? 0,
+            included:
+                previous[item.deposit.id]?.included ??
+                (item.readyForPoCount > 0),
+            feeOverride: previous[item.deposit.id]?.feeOverride,
+          ),
+        ),
+  ];
 
   void _update(String rdId, RDPoVisitLine Function(RDPoVisitLine) f) {
     state = state.copyWith(
@@ -264,8 +307,9 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
     final through = summary.depositedThroughNo;
     final amountP = Money.toPaise(deposit.installmentAmount);
 
-    final coveredCount =
-        (through + line.count <= n) ? line.count : (n - through).clamp(0, n);
+    final coveredCount = (through + line.count <= n)
+        ? line.count
+        : (n - through).clamp(0, n);
     final ruleFees = <int>[];
     for (var k = 1; k <= coveredCount; k++) {
       final no = through + k;
@@ -275,7 +319,10 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
       );
       ruleFees.add(
         Money.toPaise(
-          _rules.defaultFeeFor(deposit.installmentAmount, _rules.defaultedMonths(due, day)),
+          _rules.defaultFeeFor(
+            deposit.installmentAmount,
+            _rules.defaultedMonths(due, day),
+          ),
         ),
       );
     }
@@ -314,7 +361,9 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
       if (k > line.readyCount) {
         final no = through + k;
         final inst = summary.installmentFor(deposit, no, day);
-        pocket += (amountP + monthFees[k - 1]) - Money.toPaise(inst.customerPaidAmount);
+        pocket +=
+            (amountP + monthFees[k - 1]) -
+            Money.toPaise(inst.customerPaidAmount);
       }
     }
     if (pocket < 0) pocket = 0;
@@ -323,7 +372,9 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
     final heldDigital = Money.toPaise(summary.cashInHandDigital);
     final readyAmount = (amount - pocket).clamp(0, amount);
     final held = heldCash + heldDigital;
-    final cashShare = held == 0 ? readyAmount : (readyAmount * heldCash ~/ held);
+    final cashShare = held == 0
+        ? readyAmount
+        : (readyAmount * heldCash ~/ held);
     return line.copyWith(
       amount: Money.toRupees(amount),
       fee: Money.toRupees(fee),

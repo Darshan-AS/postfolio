@@ -41,7 +41,11 @@ class AppMenuEntry {
 /// a label that does not fit. Here the menu is as wide as its longest label needs, up to the
 /// window's width, so a label is cut only when it is wider than the screen.
 class AppMenu extends StatefulWidget {
-  const AppMenu({super.key, required this.entries, required this.anchorBuilder});
+  const AppMenu({
+    super.key,
+    required this.entries,
+    required this.anchorBuilder,
+  });
 
   final List<AppMenuEntry> entries;
   final Widget Function(BuildContext context, VoidCallback open) anchorBuilder;
@@ -91,7 +95,9 @@ class _AppMenuState extends State<AppMenu> {
       )..layout();
       final icon = entry.icon == null ? 0.0 : _iconRoom + theme.iconGap;
       // The current entry of a menu that picks one ends with a tick.
-      final tick = entry.selected == null ? 0.0 : theme.iconSize + theme.iconGap;
+      final tick = entry.selected == null
+          ? 0.0
+          : theme.iconSize + theme.iconGap;
       widest = math.max(widest, painter.width + icon + tick);
       painter.dispose();
     }
@@ -108,12 +114,19 @@ class _AppMenuState extends State<AppMenu> {
 
   Future<void> _open() async {
     final anchorContext = _anchorKey.currentContext;
-    final anchor = anchorContext == null ? null : m3eOverlayRectFor(anchorContext);
+    final anchor = anchorContext == null
+        ? null
+        : m3eOverlayRectFor(anchorContext);
     if (_isOpen || anchor == null) return;
 
-    final theme = M3ETheme.of(context).menuTheme.metricsFor(M3EMenuVariant.vertical);
+    final theme = M3ETheme.of(
+      context,
+    ).menuTheme.metricsFor(M3EMenuVariant.vertical);
     final room = MediaQuery.sizeOf(context).width - 2 * _edgeGap;
-    final width = math.max(theme.minWidth, math.min(_widthFor(context, theme), room));
+    final width = math.max(
+      theme.minWidth,
+      math.min(_widthFor(context, theme), room),
+    );
 
     setState(() => _isOpen = true);
     await showM3EMenu<Object>(
@@ -140,10 +153,16 @@ class _AppMenuState extends State<AppMenu> {
       onPopInvokedWithResult: (didPop, _) {
         // `pop` takes the route's newest local history entry, which is the menu, and the
         // route stays. Checked first: without an entry it would pop the screen.
-        if (didPop || !(ModalRoute.of(context)?.willHandlePopInternally ?? false)) return;
+        if (didPop ||
+            !(ModalRoute.of(context)?.willHandlePopInternally ?? false)) {
+          return;
+        }
         Navigator.of(context).pop();
       },
-      child: KeyedSubtree(key: _anchorKey, child: widget.anchorBuilder(context, _open)),
+      child: KeyedSubtree(
+        key: _anchorKey,
+        child: widget.anchorBuilder(context, _open),
+      ),
     );
   }
 }
@@ -163,7 +182,11 @@ class _EntryBody extends StatelessWidget {
       children: [
         if (icon != null) ...[icon, SizedBox(width: gap)],
         Flexible(
-          child: Text(entry.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          child: Text(
+            entry.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -172,7 +195,10 @@ class _EntryBody extends StatelessWidget {
       final error = Theme.of(context).colorScheme.error;
       body = IconTheme.merge(
         data: IconThemeData(color: error),
-        child: DefaultTextStyle.merge(style: TextStyle(color: error), child: body),
+        child: DefaultTextStyle.merge(
+          style: TextStyle(color: error),
+          child: body,
+        ),
       );
     }
     return body;

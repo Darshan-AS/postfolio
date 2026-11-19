@@ -56,7 +56,8 @@ class FakeAuthRepository implements AuthRepository {
   @override
   Future<Result<AuthUser, String>> signInWithGoogle() async {
     if (signInError != null) return Failure(signInError!);
-    final user = _currentUser ??
+    final user =
+        _currentUser ??
         const AuthUser(
           id: 'fake-agent-1',
           email: 'agent@postfolio.com',

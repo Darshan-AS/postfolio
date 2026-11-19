@@ -486,10 +486,7 @@ class PostalRateService {
   ///    [interestRate], returns the circular's exact notified tenure.
   /// 2. Otherwise checks the official Post Office rate-to-months lookup table.
   /// 3. Falls back to the compound interest doubling formula for custom rates.
-  int calculateKvpTermMonths(
-    double interestRate, {
-    DateTime? startDate,
-  }) {
+  int calculateKvpTermMonths(double interestRate, {DateTime? startDate}) {
     if (interestRate <= 0) {
       if (startDate != null) {
         final period = _resolvePeriod(startDate);

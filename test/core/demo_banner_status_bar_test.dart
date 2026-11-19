@@ -20,7 +20,9 @@ void main() {
     ('light', AppTheme.lightTheme, Brightness.dark),
     ('dark', AppTheme.darkTheme, Brightness.light),
   ]) {
-    testWidgets('the demo banner asks for $name-theme status bar icons', (tester) async {
+    testWidgets('the demo banner asks for $name-theme status bar icons', (
+      tester,
+    ) async {
       SharedPreferences.setMockInitialValues({'demo_mode_enabled': true});
       final prefs = await SharedPreferences.getInstance();
       final container = ProviderContainer(
@@ -60,7 +62,10 @@ void main() {
 
       scrim.value = true;
       await tester.pumpAndSettle();
-      expect(SystemChrome.latestStyle?.statusBarIconBrightness, Brightness.light);
+      expect(
+        SystemChrome.latestStyle?.statusBarIconBrightness,
+        Brightness.light,
+      );
 
       // The scrim goes; the banner's own request is what is left.
       scrim.value = false;

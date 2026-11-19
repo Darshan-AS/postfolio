@@ -34,6 +34,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     @Default([]) List<Nominee> nominees,
     @Default(DepositStatus.active) DepositStatus status,
     @Default(0) int initialPaidInstallments,
+
     /// Amount the customer already owed the agent at onboarding (months the agent had
     /// fronted before the app existed). Repaid first out of subsequent customer payments.
     @Default(0.0) double openingReceivable,
@@ -243,7 +244,8 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     required RecurringDeposit updated,
     required bool hasPayments,
   }) {
-    if (hasPayments && financialTermsChanged(existing: existing, updated: updated)) {
+    if (hasPayments &&
+        financialTermsChanged(existing: existing, updated: updated)) {
       return Failure(t.recurringDeposits.fields.financialTermsLocked);
     }
     return const Success(null);

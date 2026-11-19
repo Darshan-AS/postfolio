@@ -8,7 +8,8 @@ import 'package:postfolio/core/theme/app_surfaces.dart';
 import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 
-export 'package:postfolio/core/widgets/expressive/app_button_group.dart' show AppSegment;
+export 'package:postfolio/core/widgets/expressive/app_button_group.dart'
+    show AppSegment;
 
 /// Uppercases ASCII characters as the user types (e.g. PAN numbers).
 class UpperCaseTextFormatter extends TextInputFormatter {

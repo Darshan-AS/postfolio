@@ -20,9 +20,15 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
     Map<String, List<RDPoDeposit>>? poDeposits,
     Map<String, List<RDFeeAbsorption>>? absorptions,
     this.failWith,
-  })  : _transactions = {for (final e in (transactions ?? {}).entries) e.key: [...e.value]},
-        _poDeposits = {for (final e in (poDeposits ?? {}).entries) e.key: [...e.value]},
-        _absorptions = {for (final e in (absorptions ?? {}).entries) e.key: [...e.value]};
+  }) : _transactions = {
+         for (final e in (transactions ?? {}).entries) e.key: [...e.value],
+       },
+       _poDeposits = {
+         for (final e in (poDeposits ?? {}).entries) e.key: [...e.value],
+       },
+       _absorptions = {
+         for (final e in (absorptions ?? {}).entries) e.key: [...e.value],
+       };
 
   /// When set, every write fails with this message and stores nothing.
   String? failWith;
@@ -50,9 +56,12 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   final Map<String, List<RDFeeAbsorption>> _absorptions;
   final Map<String, RDLedgerSummary> _summaries = {};
 
-  final _txControllers = <String, StreamController<Result<List<RDTransaction>, String>>>{};
-  final _poControllers = <String, StreamController<Result<List<RDPoDeposit>, String>>>{};
-  final _absorptionControllers = <String, StreamController<Result<List<RDFeeAbsorption>, String>>>{};
+  final _txControllers =
+      <String, StreamController<Result<List<RDTransaction>, String>>>{};
+  final _poControllers =
+      <String, StreamController<Result<List<RDPoDeposit>, String>>>{};
+  final _absorptionControllers =
+      <String, StreamController<Result<List<RDFeeAbsorption>, String>>>{};
   final _summaryController =
       StreamController<Result<List<RDLedgerSummary>, String>>.broadcast();
 
@@ -65,9 +74,12 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   int streamOpenCount = 0;
 
   // --- Test inspection ----------------------------------------------------------------------
-  List<RDTransaction> transactionsOf(String rdId) => List.unmodifiable(_transactions[rdId] ?? const []);
-  List<RDPoDeposit> poDepositsOf(String rdId) => List.unmodifiable(_poDeposits[rdId] ?? const []);
-  List<RDFeeAbsorption> absorptionsOf(String rdId) => List.unmodifiable(_absorptions[rdId] ?? const []);
+  List<RDTransaction> transactionsOf(String rdId) =>
+      List.unmodifiable(_transactions[rdId] ?? const []);
+  List<RDPoDeposit> poDepositsOf(String rdId) =>
+      List.unmodifiable(_poDeposits[rdId] ?? const []);
+  List<RDFeeAbsorption> absorptionsOf(String rdId) =>
+      List.unmodifiable(_absorptions[rdId] ?? const []);
   RDLedgerSummary? summaryOf(String rdId) => _summaries[rdId];
 
   // --- Reads --------------------------------------------------------------------------------
@@ -81,8 +93,13 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
       _watch(_poControllers, rdId, () => _poDeposits[rdId] ?? const []);
 
   @override
-  Stream<Result<List<RDFeeAbsorption>, String>> watchFeeAbsorptions(String rdId) =>
-      _watch(_absorptionControllers, rdId, () => _absorptions[rdId] ?? const []);
+  Stream<Result<List<RDFeeAbsorption>, String>> watchFeeAbsorptions(
+    String rdId,
+  ) => _watch(
+    _absorptionControllers,
+    rdId,
+    () => _absorptions[rdId] ?? const [],
+  );
 
   @override
   Future<Result<Map<String, RDRawFactsBundle>, String>> fetchRawFactsForRds(
@@ -93,15 +110,23 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
     return Success({
       for (final id in rdIds)
         id: (
-          transactions: List<RDTransaction>.unmodifiable(_transactions[id] ?? const []),
-          poDeposits: List<RDPoDeposit>.unmodifiable(_poDeposits[id] ?? const []),
-          absorptions: List<RDFeeAbsorption>.unmodifiable(_absorptions[id] ?? const []),
+          transactions: List<RDTransaction>.unmodifiable(
+            _transactions[id] ?? const [],
+          ),
+          poDeposits: List<RDPoDeposit>.unmodifiable(
+            _poDeposits[id] ?? const [],
+          ),
+          absorptions: List<RDFeeAbsorption>.unmodifiable(
+            _absorptions[id] ?? const [],
+          ),
         ),
     });
   }
 
   @override
-  Future<Result<List<RDPoDeposit>, String>> fetchPoDepositsByBatch(String batchId) async {
+  Future<Result<List<RDPoDeposit>, String>> fetchPoDepositsByBatch(
+    String batchId,
+  ) async {
     if (failReadsWith != null) return Failure(failReadsWith!);
     return Success([
       for (final events in _poDeposits.values)
@@ -119,7 +144,9 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
   // --- Writes -------------------------------------------------------------------------------
 
   @override
-  Future<Result<void, String>> upsertSummaries(List<RDLedgerSummary> summaries) async {
+  Future<Result<void, String>> upsertSummaries(
+    List<RDLedgerSummary> summaries,
+  ) async {
     if (failWith != null) return Failure(failWith!);
     if (failSummaryWith != null) return Failure(failSummaryWith!);
     if (summaries.isEmpty) return const Success(null);
@@ -137,7 +164,9 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
     final latency = writeLatency;
     if (latency != null) await Future<void>.delayed(latency);
     // One transaction: if any part cannot be stored, nothing is.
-    if (summaries.isNotEmpty && failSummaryWith != null) return Failure(failSummaryWith!);
+    if (summaries.isNotEmpty && failSummaryWith != null) {
+      return Failure(failSummaryWith!);
+    }
     applyChangeCallCount++;
 
     final now = DateTime.now();
@@ -154,7 +183,9 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
       poTouched.add(d.rdId);
     }
     for (final d in change.deleteFeeAbsorptions) {
-      _absorptions[d.rdId]?.removeWhere((a) => a.installmentNo == d.installmentNo);
+      _absorptions[d.rdId]?.removeWhere(
+        (a) => a.installmentNo == d.installmentNo,
+      );
       absorptionTouched.add(d.rdId);
     }
     for (final t in change.upsertTransactions) {
@@ -183,14 +214,19 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
     }
 
     for (final rdId in txTouched) {
-      _txControllers[rdId]?.add(Success(List.unmodifiable(_transactions[rdId] ?? const [])));
+      _txControllers[rdId]?.add(
+        Success(List.unmodifiable(_transactions[rdId] ?? const [])),
+      );
     }
     for (final rdId in poTouched) {
-      _poControllers[rdId]?.add(Success(List.unmodifiable(_poDeposits[rdId] ?? const [])));
+      _poControllers[rdId]?.add(
+        Success(List.unmodifiable(_poDeposits[rdId] ?? const [])),
+      );
     }
     for (final rdId in absorptionTouched) {
-      _absorptionControllers[rdId]
-          ?.add(Success(List.unmodifiable(_absorptions[rdId] ?? const [])));
+      _absorptionControllers[rdId]?.add(
+        Success(List.unmodifiable(_absorptions[rdId] ?? const [])),
+      );
     }
     if (summaries.isNotEmpty) _storeSummaries(summaries);
 

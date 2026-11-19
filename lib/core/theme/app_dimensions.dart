@@ -59,6 +59,7 @@ class AppDimensions {
   /// The widest a full-width button grows. In a phone-wide row it fills the row; in a wider
   /// one it stays a button instead of becoming a bar.
   static const double buttonMaxWidth = 360.0;
+
   /// Minimum interactive target size (Material accessibility guideline).
   static const double minTapTarget = 44.0;
 

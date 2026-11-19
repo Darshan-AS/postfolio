@@ -111,15 +111,16 @@ sealed class Nominee with _$Nominee {
 
   /// Trims whitespace on nominee fields at save boundaries so typing spaces in UI inputs
   /// stays natural without persisting trailing spaces.
-  static List<Nominee> sanitizeAll(List<Nominee> nominees) => List.unmodifiable([
-    for (final n in nominees)
-      n.copyWith(
-        name: n.name.trim(),
-        customRelationship: n.relationship == NomineeRelationship.other
-            ? n.customRelationship?.trim()
-            : null,
-      ),
-  ]);
+  static List<Nominee> sanitizeAll(List<Nominee> nominees) =>
+      List.unmodifiable([
+        for (final n in nominees)
+          n.copyWith(
+            name: n.name.trim(),
+            customRelationship: n.relationship == NomineeRelationship.other
+                ? n.customRelationship?.trim()
+                : null,
+          ),
+      ]);
 
   static Result<Nominee, String> create({
     required String name,
