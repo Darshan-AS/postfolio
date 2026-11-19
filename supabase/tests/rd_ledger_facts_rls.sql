@@ -677,7 +677,8 @@ BEGIN
   FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
   WHERE n.nspname = 'public' AND has_function_privilege('authenticated', p.oid, 'execute');
   ASSERT v_authenticated =
-    'apply_rd_ledger_change, delete_customer, is_admin, log_client_error, owns_account, '
+    'apply_rd_ledger_change, delete_customer, is_admin, list_agents_for_admin, '
+    'log_admin_acting_as_event, log_client_error, owns_account, '
     'save_customer_with_sb_account, save_one_time_deposit, save_recurring_deposit, set_deposit_status',
     format('CASE 19b FAILED: unexpected functions executable by authenticated: %s', v_authenticated);
 END $$;
@@ -692,6 +693,23 @@ BEGIN
   WHERE n.nspname = 'public' AND c.relkind = 'r' AND NOT c.relrowsecurity;
   ASSERT v_without_rls IS NULL,
     format('CASE 19c FAILED: tables in public without RLS: %s', v_without_rls);
+END $$;
+
+-- 19d. Zero overloaded functions in `public` (prevents PostgREST overload ambiguity).
+DO $$
+DECLARE
+  v_overloaded TEXT;
+BEGIN
+  SELECT string_agg(proname, ', ' ORDER BY proname) INTO v_overloaded
+  FROM (
+    SELECT p.proname
+    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+    GROUP BY p.proname
+    HAVING count(*) > 1
+  ) dup;
+  ASSERT v_overloaded IS NULL,
+    format('CASE 19d FAILED: overloaded functions in public: %s', v_overloaded);
 END $$;
 
 \echo '== CASE 20: delete_customer removes a customer with its savings account, or nothing at all'
@@ -886,4 +904,452 @@ BEGIN
 END $$;
 ROLLBACK;
 
-\echo '== ALL 21 SQL CONTRACT ASSERTIONS PASSED =='
+\echo '== CASE 22: Admin acting-as CRUD, cross-agent isolation, and audit logging'
+BEGIN;
+INSERT INTO auth.users (instance_id,id,aud,role,email,raw_user_meta_data,confirmation_token,recovery_token,email_change_token_new,email_change)
+VALUES
+  ('00000000-0000-0000-0000-000000000000','dddddddd-0000-4000-8000-000000000002','authenticated','authenticated','other-agent@example.com','{}','','','',''),
+  ('00000000-0000-4000-0000-000000000000','eeeeeeee-0000-4000-8000-000000000003','authenticated','authenticated','admin-actor@example.com','{}','','','','')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.user_roles (user_id, role)
+VALUES ('eeeeeeee-0000-4000-8000-000000000003', 'admin')
+ON CONFLICT (user_id, role) DO NOTHING;
+
+SELECT set_config('test.target_owner', :'owner', true) \gset junk
+SELECT set_config('test.target_rd', :'rd_id', true) \gset junk
+SELECT set_config('test.target_customer', :'customer_id', true) \gset junk
+
+-- 22a. Non-admin cannot pass p_agent_id of another agent to any write RPC, list agents, or log admin events.
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'other', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+DECLARE
+  v_owner UUID := current_setting('test.target_owner')::uuid;
+  v_rd UUID := current_setting('test.target_rd')::uuid;
+  v_cust UUID := current_setting('test.target_customer')::uuid;
+  v_caught BOOLEAN;
+BEGIN
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.save_customer_with_sb_account(
+      p_id => 'cccccccc-0000-4000-8000-000000000022',
+      p_name => 'Unauthorized Customer',
+      p_phone => '9999999999',
+      p_agent_id => v_owner
+    );
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22a FAILED: non-admin saved customer for another agent';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.save_one_time_deposit(
+      p_id => gen_random_uuid(), p_customer_id => v_cust, p_status => 'active',
+      p_scheme_type => 'timeDeposit', p_principal_amount => 1000, p_interest_rate => 7.5,
+      p_term_years => 5, p_term_months => 0, p_start_date => '2026-09-01',
+      p_nominees => '[]'::jsonb, p_agent_id => v_owner
+    );
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22a FAILED: non-admin saved OTD for another agent';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.save_recurring_deposit(
+      p_id => gen_random_uuid(), p_customer_id => v_cust, p_status => 'active',
+      p_scheme_type => 'recurringDeposit', p_installment_amount => 1000, p_interest_rate => 6.7,
+      p_term_years => 5, p_term_months => 0, p_start_date => '2026-09-01',
+      p_nominees => '[]'::jsonb, p_initial_paid_installments => 0, p_opening_receivable => 0,
+      p_agent_id => v_owner
+    );
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22a FAILED: non-admin saved RD for another agent';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.set_deposit_status(v_rd, 'closed', v_owner);
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22a FAILED: non-admin changed deposit status for another agent';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.delete_customer(v_cust, v_owner);
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22a FAILED: non-admin deleted customer for another agent';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.apply_rd_ledger_change(
+      p_upsert_transactions => jsonb_build_array(jsonb_build_object(
+        'id', 'aaaaaaaa-0000-4000-8000-000000000022', 'rd_id', v_rd,
+        'paid_date', '2026-09-01', 'amount', 500, 'payment_mode', 'cash')),
+      p_agent_id => v_owner
+    );
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22a FAILED: non-admin wrote ledger for another agent';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM * FROM public.list_agents_for_admin();
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22a FAILED: non-admin listed agents';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.log_admin_acting_as_event(v_owner, 'start');
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22a FAILED: non-admin logged acting-as event';
+END $$;
+
+-- 22b. Admin acting as target owner can CRUD customer, OTD, RD, status, and ledger;
+--      rows are stamped with target owner's agent_id and audit logs record admin_id.
+SELECT set_config('request.jwt.claims', json_build_object('sub', 'eeeeeeee-0000-4000-8000-000000000003', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+DECLARE
+  v_owner UUID := current_setting('test.target_owner')::uuid;
+  v_other UUID := 'dddddddd-0000-4000-8000-000000000002'::uuid;
+  v_admin UUID := 'eeeeeeee-0000-4000-8000-000000000003'::uuid;
+  v_rd UUID := current_setting('test.target_rd')::uuid;
+  v_cust UUID := 'cccccccc-0000-4000-8000-000000000022';
+  v_otd UUID := 'cccccccc-0000-4000-8000-000000000023';
+  v_new_rd UUID := 'cccccccc-0000-4000-8000-000000000024';
+  v_other_cust UUID := 'cccccccc-0000-4000-8000-000000000025';
+  v_other_rd UUID := 'cccccccc-0000-4000-8000-000000000026';
+  v_tx UUID := 'aaaaaaaa-0000-4000-8000-000000000022';
+  v_po UUID := 'bbbbbbbb-0000-4000-8000-000000000022';
+  v_missing_agent UUID := gen_random_uuid();
+  v_caught BOOLEAN;
+BEGIN
+  -- Admin can list agents.
+  ASSERT (SELECT count(*) FROM public.list_agents_for_admin()) >= 2,
+    'CASE 22b FAILED: admin could not list agents';
+
+  -- Admin logs session start; invalid action rejected by CHECK.
+  PERFORM public.log_admin_acting_as_event(v_owner, 'start');
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.log_admin_acting_as_event(v_owner, 'invalid_action');
+  EXCEPTION WHEN check_violation THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22b FAILED: invalid audit action was stored';
+
+  -- Admin creates customer + SB for target owner.
+  PERFORM public.save_customer_with_sb_account(
+    p_id => v_cust, p_name => 'Admin Created Customer', p_phone => '9876500022',
+    p_sb_account_number => 'SB-ADM-22', p_nominees => '[{"name":"Nom","relationship":"Son","percentage":100}]'::jsonb,
+    p_agent_id => v_owner
+  );
+  ASSERT EXISTS (SELECT 1 FROM public.customers WHERE id = v_cust AND agent_id = v_owner),
+    'CASE 22b FAILED: customer was not stamped with target owner agent_id';
+  ASSERT EXISTS (
+    SELECT 1 FROM public.account_identities
+    WHERE customer_id = v_cust AND account_type = 'SB' AND agent_id = v_owner
+  ), 'CASE 22b FAILED: SB account identity was not stamped with target owner agent_id';
+
+  -- Admin creates OTD + toggles status for target owner.
+  PERFORM public.save_one_time_deposit(
+    p_id => v_otd, p_customer_id => v_cust, p_status => 'active',
+    p_scheme_type => 'timeDeposit', p_account_no => 'OTD-ADM-22',
+    p_principal_amount => 10000, p_interest_rate => 7.5, p_term_years => 5, p_term_months => 0,
+    p_start_date => '2026-09-01', p_nominees => '[]'::jsonb, p_agent_id => v_owner
+  );
+  PERFORM public.set_deposit_status(v_otd, 'closed', v_owner);
+  ASSERT (SELECT status FROM public.one_time_deposits WHERE id = v_otd) = 'closed',
+    'CASE 22b FAILED: admin could not toggle deposit status';
+
+  -- Admin creates RD for target owner.
+  PERFORM public.save_recurring_deposit(
+    p_id => v_new_rd, p_customer_id => v_cust, p_status => 'active',
+    p_scheme_type => 'recurringDeposit', p_account_no => 'RD-ADM-22', p_serial_no => '22',
+    p_installment_amount => 1000, p_interest_rate => 6.7, p_term_years => 5, p_term_months => 0,
+    p_start_date => '2026-09-01', p_nominees => '[]'::jsonb,
+    p_initial_paid_installments => 0, p_opening_receivable => 0, p_agent_id => v_owner
+  );
+  ASSERT EXISTS (
+    SELECT 1 FROM public.account_identities WHERE id = v_new_rd AND account_type = 'RD' AND agent_id = v_owner
+  ), 'CASE 22b FAILED: RD was not stamped with target owner agent_id';
+
+  -- Admin writes ledger facts (tx + PO deposit + absorption) + summary for target owner's RD.
+  PERFORM public.apply_rd_ledger_change(
+    p_upsert_transactions => jsonb_build_array(jsonb_build_object(
+      'id', v_tx, 'rd_id', v_rd, 'paid_date', '2026-09-01', 'amount', 600, 'payment_mode', 'upi')),
+    p_insert_po_deposits => jsonb_build_array(jsonb_build_object(
+      'id', v_po, 'rd_id', v_rd, 'deposited_on', '2026-09-02', 'installment_count', 1, 'amount', 600)),
+    p_upsert_fee_absorptions => jsonb_build_array(jsonb_build_object(
+      'rd_id', v_rd, 'installment_no', 58, 'amount', 10, 'absorbed_on', '2026-09-02')),
+    p_summaries => jsonb_build_array(jsonb_build_object(
+      'rd_id', v_rd, 'facts_version', 901, 'projected_on', '2026-09-01')),
+    p_agent_id => v_owner
+  );
+  ASSERT EXISTS (SELECT 1 FROM public.rd_transactions WHERE id = v_tx AND agent_id = v_owner),
+    'CASE 22b FAILED: ledger tx was not stamped with target owner agent_id';
+  ASSERT EXISTS (SELECT 1 FROM public.rd_po_deposits WHERE id = v_po AND agent_id = v_owner),
+    'CASE 22b FAILED: ledger PO deposit was not stamped with target owner agent_id';
+  ASSERT EXISTS (
+    SELECT 1 FROM public.rd_fee_absorptions WHERE rd_id = v_rd AND installment_no = 58 AND agent_id = v_owner
+  ), 'CASE 22b FAILED: ledger fee absorption was not stamped with target owner agent_id';
+  ASSERT (SELECT facts_version FROM public.rd_ledger_summary WHERE rd_id = v_rd) = 901,
+    'CASE 22b FAILED: ledger summary was not updated by admin';
+
+  -- Direct rd_ledger_summary upsert (used by ensureSummaries when edits unlocked) enforces owner match.
+  INSERT INTO public.rd_ledger_summary (rd_id, agent_id, facts_version, projected_on, open_items)
+    VALUES (v_rd, v_owner, 902, '2026-09-02', '[]'::jsonb)
+    ON CONFLICT (rd_id) DO UPDATE SET facts_version = EXCLUDED.facts_version;
+  ASSERT (SELECT facts_version FROM public.rd_ledger_summary WHERE rd_id = v_rd) = 902,
+    'CASE 22b FAILED: admin direct rd_ledger_summary upsert for owner failed';
+
+  v_caught := FALSE;
+  BEGIN
+    INSERT INTO public.rd_ledger_summary (rd_id, agent_id, facts_version, projected_on, open_items)
+      VALUES (v_rd, v_admin, 903, '2026-09-02', '[]'::jsonb)
+      ON CONFLICT (rd_id) DO UPDATE SET agent_id = EXCLUDED.agent_id, facts_version = EXCLUDED.facts_version;
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22b FAILED: admin stamped own agent_id onto target owner rd_ledger_summary';
+
+  -- 22c. Cross-agent isolation & unknown target agent validation.
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.apply_rd_ledger_change(
+      p_upsert_transactions => jsonb_build_array(jsonb_build_object(
+        'id', 'aaaaaaaa-0000-4000-8000-000000000029', 'rd_id', v_rd,
+        'paid_date', '2026-09-02', 'amount', 100, 'payment_mode', 'cash')),
+      p_agent_id => v_other
+    );
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22c FAILED: admin stamped mismatched agent_id onto another agent RD';
+
+  -- Cross-agent PK collision on rd_transactions ON CONFLICT DO UPDATE must fail with 42501.
+  PERFORM public.save_customer_with_sb_account(
+    p_id => v_other_cust, p_name => 'Other Agent Customer', p_phone => '9876500025',
+    p_agent_id => v_other
+  );
+  PERFORM public.save_recurring_deposit(
+    p_id => v_other_rd, p_customer_id => v_other_cust, p_status => 'active',
+    p_scheme_type => 'recurringDeposit', p_account_no => 'RD-OTH-26', p_serial_no => '26',
+    p_installment_amount => 500, p_interest_rate => 6.7, p_term_years => 5, p_term_months => 0,
+    p_start_date => '2026-09-01', p_nominees => '[]'::jsonb,
+    p_initial_paid_installments => 0, p_opening_receivable => 0, p_agent_id => v_other
+  );
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.apply_rd_ledger_change(
+      p_upsert_transactions => jsonb_build_array(jsonb_build_object(
+        'id', v_tx, 'rd_id', v_other_rd,
+        'paid_date', '2026-09-03', 'amount', 9999, 'payment_mode', 'cash')),
+      p_agent_id => v_other
+    );
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22c FAILED: cross-agent rd_transactions PK collision overwrote another agent tx';
+  ASSERT (SELECT amount FROM public.rd_transactions WHERE id = v_tx) = 600,
+    'CASE 22c FAILED: target owner tx amount was mutated by cross-agent collision';
+
+  -- Cross-agent save/status calls with mismatched p_agent_id must fail with 42501.
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.save_customer_with_sb_account(
+      p_id => v_cust, p_name => 'Hijacked', p_phone => '9876500022', p_agent_id => v_other
+    );
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22c FAILED: admin updated v_owner customer while acting as v_other';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.save_one_time_deposit(
+      p_id => gen_random_uuid(), p_customer_id => v_cust, p_status => 'active',
+      p_scheme_type => 'timeDeposit', p_principal_amount => 5000, p_interest_rate => 7.5,
+      p_term_years => 5, p_term_months => 0, p_start_date => '2026-09-01',
+      p_nominees => '[]'::jsonb, p_agent_id => v_other
+    );
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22c FAILED: admin attached OTD to v_owner customer while acting as v_other';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.save_recurring_deposit(
+      p_id => gen_random_uuid(), p_customer_id => v_cust, p_status => 'active',
+      p_scheme_type => 'recurringDeposit', p_installment_amount => 1000, p_interest_rate => 6.7,
+      p_term_years => 5, p_term_months => 0, p_start_date => '2026-09-01',
+      p_nominees => '[]'::jsonb, p_initial_paid_installments => 0, p_opening_receivable => 0,
+      p_agent_id => v_other
+    );
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22c FAILED: admin attached RD to v_owner customer while acting as v_other';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.set_deposit_status(v_otd, 'active', v_other);
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22c FAILED: admin updated v_owner deposit status while acting as v_other';
+
+  -- Unknown p_agent_id must raise no_data_found (P0002) consistently across RPCs.
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.save_customer_with_sb_account(
+      p_id => gen_random_uuid(), p_name => 'Ghost', p_agent_id => v_missing_agent
+    );
+  EXCEPTION WHEN no_data_found THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22c FAILED: save_customer_with_sb_account did not raise no_data_found for missing target agent';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.delete_customer(v_cust, v_missing_agent);
+  EXCEPTION WHEN no_data_found THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22c FAILED: delete_customer did not raise no_data_found for missing target agent';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.apply_rd_ledger_change(p_agent_id => v_missing_agent);
+  EXCEPTION WHEN no_data_found THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22c FAILED: apply_rd_ledger_change did not raise no_data_found for missing target agent';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.log_admin_acting_as_event(v_missing_agent, 'start');
+  EXCEPTION WHEN no_data_found THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22c FAILED: log_admin_acting_as_event did not raise no_data_found for missing target agent';
+
+  -- Deleting OTD & empty RD then customer as target owner succeeds; wrong p_agent_id is a no-op with no audit row.
+  DELETE FROM public.account_identities WHERE id IN (v_otd, v_new_rd) AND agent_id = v_owner;
+  PERFORM public.delete_customer(v_cust, v_other);
+  ASSERT EXISTS (SELECT 1 FROM public.customers WHERE id = v_cust),
+    'CASE 22c FAILED: delete_customer with wrong p_agent_id deleted target customer';
+  ASSERT NOT EXISTS (
+    SELECT 1 FROM public.admin_audit_logs
+    WHERE target_agent_id = v_other AND action = 'rpc:delete_customer' AND record_id = v_cust
+  ), 'CASE 22c FAILED: no-op delete_customer wrote a misleading audit row';
+
+  PERFORM public.delete_customer(v_cust, v_owner);
+  ASSERT NOT EXISTS (SELECT 1 FROM public.customers WHERE id = v_cust),
+    'CASE 22b FAILED: admin could not delete customer for target owner';
+
+  -- 22d. Audit trail recorded admin_id (not target) for session & RPC mutations, and direct mutations are blocked.
+  ASSERT EXISTS (
+    SELECT 1 FROM public.admin_audit_logs
+    WHERE admin_id = v_admin AND target_agent_id = v_owner AND action = 'start'
+  ), 'CASE 22d FAILED: start audit row missing';
+  ASSERT EXISTS (
+    SELECT 1 FROM public.admin_audit_logs
+    WHERE admin_id = v_admin AND target_agent_id = v_owner AND action = 'rpc:save_customer_with_sb_account' AND record_id = v_cust
+  ), 'CASE 22d FAILED: save_customer audit row missing';
+  ASSERT EXISTS (
+    SELECT 1 FROM public.admin_audit_logs
+    WHERE admin_id = v_admin AND target_agent_id = v_owner AND action = 'rpc:save_one_time_deposit' AND record_id = v_otd
+  ), 'CASE 22d FAILED: save_one_time_deposit audit row missing';
+  ASSERT EXISTS (
+    SELECT 1 FROM public.admin_audit_logs
+    WHERE admin_id = v_admin AND target_agent_id = v_owner AND action = 'rpc:save_recurring_deposit' AND record_id = v_new_rd
+  ), 'CASE 22d FAILED: save_recurring_deposit audit row missing';
+  ASSERT EXISTS (
+    SELECT 1 FROM public.admin_audit_logs
+    WHERE admin_id = v_admin AND target_agent_id = v_owner AND action = 'rpc:set_deposit_status' AND record_id = v_otd
+  ), 'CASE 22d FAILED: set_deposit_status audit row missing';
+  ASSERT EXISTS (
+    SELECT 1 FROM public.admin_audit_logs
+    WHERE admin_id = v_admin AND target_agent_id = v_owner AND action = 'rpc:apply_rd_ledger_change'
+  ), 'CASE 22d FAILED: ledger rpc audit row missing';
+  ASSERT EXISTS (
+    SELECT 1 FROM public.admin_audit_logs
+    WHERE admin_id = v_admin AND target_agent_id = v_owner AND action = 'rpc:delete_customer' AND record_id = v_cust
+  ), 'CASE 22d FAILED: delete_customer audit row missing';
+
+  v_caught := FALSE;
+  BEGIN
+    INSERT INTO public.admin_audit_logs (admin_id, target_agent_id, action)
+    VALUES (v_admin, v_owner, 'start');
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22d FAILED: authenticated directly inserted into admin_audit_logs';
+
+  v_caught := FALSE;
+  BEGIN
+    UPDATE public.admin_audit_logs SET action = 'end' WHERE target_agent_id = v_owner;
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22d FAILED: authenticated directly updated admin_audit_logs';
+
+  v_caught := FALSE;
+  BEGIN
+    DELETE FROM public.admin_audit_logs WHERE target_agent_id = v_owner;
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22d FAILED: authenticated directly deleted from admin_audit_logs';
+
+  v_caught := FALSE;
+  BEGIN
+    TRUNCATE TABLE public.admin_audit_logs;
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22d FAILED: authenticated truncated admin_audit_logs';
+END $$;
+
+-- 22e. Non-admin cannot read admin_audit_logs, and anon is blocked from admin RPCs & audit table.
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'other', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+BEGIN
+  ASSERT (SELECT count(*) FROM public.admin_audit_logs) = 0,
+    'CASE 22e FAILED: non-admin read rows from admin_audit_logs';
+END $$;
+
+SET LOCAL ROLE anon;
+DO $$
+DECLARE
+  v_owner UUID := current_setting('test.target_owner')::uuid;
+  v_caught BOOLEAN;
+BEGIN
+  v_caught := FALSE;
+  BEGIN
+    PERFORM * FROM public.list_agents_for_admin();
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22e FAILED: anon executed list_agents_for_admin';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM public.log_admin_acting_as_event(v_owner, 'start');
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22e FAILED: anon executed log_admin_acting_as_event';
+
+  v_caught := FALSE;
+  BEGIN
+    PERFORM count(*) FROM public.admin_audit_logs;
+  EXCEPTION WHEN insufficient_privilege THEN v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 22e FAILED: anon read admin_audit_logs';
+END $$;
+
+-- 22f. ON UPDATE CASCADE on admin_audit_logs.target_agent_id supports JIT profile linking.
+RESET ROLE;
+INSERT INTO auth.users (instance_id,id,aud,role,email,raw_user_meta_data,confirmation_token,recovery_token,email_change_token_new,email_change)
+VALUES ('00000000-0000-0000-0000-000000000000','eeeeeeee-0000-4000-8000-000000000098','authenticated','authenticated','relocated-audit@example.com','{}','','','','')
+ON CONFLICT (id) DO NOTHING;
+DELETE FROM public.agent_profiles WHERE id = 'eeeeeeee-0000-4000-8000-000000000098';
+UPDATE public.agent_profiles SET id = 'eeeeeeee-0000-4000-8000-000000000098' WHERE id = :'owner';
+DO $$
+BEGIN
+  ASSERT EXISTS (
+    SELECT 1 FROM public.admin_audit_logs
+    WHERE target_agent_id = 'eeeeeeee-0000-4000-8000-000000000098' AND action = 'start'
+  ), 'CASE 22f FAILED: agent_profiles.id update did not cascade to admin_audit_logs.target_agent_id';
+END $$;
+ROLLBACK;
+
+\echo '== ALL 22 SQL CONTRACT ASSERTIONS PASSED =='

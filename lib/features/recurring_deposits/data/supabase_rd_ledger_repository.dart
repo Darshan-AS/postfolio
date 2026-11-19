@@ -18,9 +18,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// one RD never triggers a refetch for another. Every fact write goes through one database
 /// function ([applyChange]).
 class SupabaseRDLedgerRepository implements RDLedgerRepository {
-  SupabaseRDLedgerRepository(this._client);
+  SupabaseRDLedgerRepository(this._client, {String? effectiveAgentId})
+    : _effectiveAgentId = effectiveAgentId;
 
   final SupabaseClient _client;
+  final String? _effectiveAgentId;
 
   /// Summaries this client has just stored. [watchSummaries] expects Realtime to deliver
   /// them and loads the list itself if it does not.
@@ -33,9 +35,24 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
   static const _summaries = 'rd_ledger_summary';
 
   String get _agentId {
+    final override = _effectiveAgentId;
+    if (override != null && override.isNotEmpty) return override;
     final user = _client.auth.currentUser;
     if (user == null) throw StateError('Agent not authenticated');
     return user.id;
+  }
+
+  bool get _isActingAsOther {
+    final override = _effectiveAgentId;
+    if (override == null || override.isEmpty) return false;
+    final currentUserId = _client.auth.currentUser?.id;
+    return currentUserId == null || override != currentUserId;
+  }
+
+  void dispose() {
+    if (!_localSummaryWrites.isClosed) {
+      unawaited(_localSummaryWrites.close());
+    }
   }
 
   // --- Reads ------------------------------------------------------------------------------
@@ -180,11 +197,12 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
 
   @override
   Stream<Result<List<RDLedgerSummary>, String>> watchSummaries() {
-    final user = _client.auth.currentUser;
-    if (user == null) {
+    final agentId = (_effectiveAgentId != null && _effectiveAgentId.isNotEmpty)
+        ? _effectiveAgentId
+        : _client.auth.currentUser?.id;
+    if (agentId == null) {
       return Stream.value(const Success(<RDLedgerSummary>[]));
     }
-    final agentId = user.id;
     // One row per account, kept current from Realtime rows: a payment on one account must
     // not reload every account's summary.
     return SupabasePaginatedQuery.watchKeyedTable<RDLedgerSummary>(
@@ -236,19 +254,22 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
   @override
   Future<Result<void, String>> upsertSummaries(
     List<RDLedgerSummary> summaries,
-  ) => summaries.isEmpty
-      ? Future.value(const Success(null))
-      : _guard(() async {
-          await _client.from(_summaries).upsert([
-            for (final s in summaries) _summaryRow(s)..['agent_id'] = _agentId,
-          ], onConflict: 'rd_id');
-          _localSummaryWrites.add(summaries);
-        });
+  ) {
+    if (summaries.isEmpty) return Future.value(const Success(null));
+    return _guard(() async {
+      final agentId = _agentId;
+      await _client.from(_summaries).upsert([
+        for (final s in summaries) _summaryRow(s)..['agent_id'] = agentId,
+      ], onConflict: 'rd_id');
+      if (!_localSummaryWrites.isClosed) _localSummaryWrites.add(summaries);
+    });
+  }
 
   /// One request, one database transaction (`public.apply_rd_ledger_change`): the facts in
   /// [change] and the [summaries] projected from them are stored together or not at all.
   /// The function runs with the caller's privileges, so row-level security applies to every
-  /// statement, and it stamps `agent_id` from the session rather than trusting the payload.
+  /// statement, and it stamps `agent_id` from the session (or authorized `p_agent_id` when
+  /// an admin acts on another agent's account) rather than trusting row payloads.
   @override
   Future<Result<void, String>> applyChange(
     RDLedgerChange change, {
@@ -258,11 +279,11 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
       return Future.value(const Success(null));
     }
     return _guard(() async {
-      await _client.rpc(
+      await _client.rpc<dynamic>(
         'apply_rd_ledger_change',
         params: {
           'p_upsert_transactions': [
-            for (final t in change.upsertTransactions) _transactionRow(t),
+            for (final tx in change.upsertTransactions) _transactionRow(tx),
           ],
           'p_delete_transaction_ids': [
             for (final d in change.deleteTransactions) d.transactionId,
@@ -283,9 +304,12 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
               {'rd_id': d.rdId, 'installment_no': d.installmentNo},
           ],
           'p_summaries': [for (final s in summaries) _summaryRow(s)],
+          if (_isActingAsOther) 'p_agent_id': _agentId,
         },
       );
-      if (summaries.isNotEmpty) _localSummaryWrites.add(summaries);
+      if (summaries.isNotEmpty && !_localSummaryWrites.isClosed) {
+        _localSummaryWrites.add(summaries);
+      }
     });
   }
 

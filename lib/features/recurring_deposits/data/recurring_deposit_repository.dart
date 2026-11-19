@@ -6,6 +6,7 @@ import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
 import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
 import 'package:postfolio/features/recurring_deposits/data/supabase_recurring_deposit_repository.dart';
@@ -143,5 +144,10 @@ RecurringDepositRepository recurringDepositRepository(Ref ref) {
     ref.onDispose(repo.dispose);
     return repo;
   }
-  return SupabaseRecurringDepositRepository(ref.watch(supabaseClientProvider));
+  final repo = SupabaseRecurringDepositRepository(
+    ref.watch(supabaseClientProvider),
+    effectiveAgentId: ref.watch(effectiveAgentIdProvider),
+  );
+  ref.onDispose(repo.dispose);
+  return repo;
 }

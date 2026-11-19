@@ -6,6 +6,7 @@ import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
 import 'package:postfolio/features/one_time_deposits/data/supabase_one_time_deposit_repository.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -146,5 +147,10 @@ OneTimeDepositRepository oneTimeDepositRepository(Ref ref) {
     ref.onDispose(repo.dispose);
     return repo;
   }
-  return SupabaseOneTimeDepositRepository(ref.watch(supabaseClientProvider));
+  final repo = SupabaseOneTimeDepositRepository(
+    ref.watch(supabaseClientProvider),
+    effectiveAgentId: ref.watch(effectiveAgentIdProvider),
+  );
+  ref.onDispose(repo.dispose);
+  return repo;
 }

@@ -1,10 +1,13 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
+import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
+import 'package:postfolio/features/admin/presentation/widgets/admin_agent_picker_sheet.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/dashboard/presentation/widgets/dashboard_chart_section.dart';
@@ -32,6 +35,7 @@ class DashboardScreen extends ConsumerWidget {
             !ref.watch(recurringDepositsControllerProvider).hasValue);
 
     Future<void> refreshAll() async {
+      ref.invalidate(isAdminProvider);
       ref.invalidate(customersControllerProvider);
       ref.invalidate(oneTimeDepositsControllerProvider);
       ref.invalidate(recurringDepositsControllerProvider);
@@ -47,12 +51,27 @@ class DashboardScreen extends ConsumerWidget {
     const pageInsets = EdgeInsets.symmetric(
       horizontal: AppDimensions.pageMargin,
     );
+    final isMobile =
+        MediaQuery.sizeOf(context).width < AppDimensions.breakpointTablet;
+    final isAdmin = ref.watch(isAdminProvider).value ?? false;
+    final isDemoMode = ref.watch(demoModeProvider);
+    final showSwitchAccount = isMobile && isAdmin && !isDemoMode;
 
     return Scaffold(
       appBar: ShellAppBar(
         title: t.nav.dashboard,
         actions: [
-          if (MediaQuery.sizeOf(context).width < AppDimensions.breakpointTablet)
+          if (showSwitchAccount)
+            IconButton(
+              key: const ValueKey('admin_switch_account_button'),
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedUserSwitch,
+                size: AppDimensions.iconMd,
+              ),
+              onPressed: () => AdminAgentPickerSheet.show(context),
+              tooltip: t.admin.switchAccount,
+            ),
+          if (isMobile)
             IconButton(
               icon: const HugeIcon(
                 icon: HugeIcons.strokeRoundedLogout01,

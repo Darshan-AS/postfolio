@@ -10,14 +10,33 @@ import 'package:postfolio/core/utils/supabase_paginated_query.dart';
 
 class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
   final SupabaseClient _supabaseClient;
+  final String? _effectiveAgentId;
   final _localMutations = StreamController<void>.broadcast();
 
-  SupabaseOneTimeDepositRepository(this._supabaseClient);
+  SupabaseOneTimeDepositRepository(
+    this._supabaseClient, {
+    String? effectiveAgentId,
+  }) : _effectiveAgentId = effectiveAgentId;
 
   String get _agentId {
+    final override = _effectiveAgentId;
+    if (override != null && override.isNotEmpty) return override;
     final user = _supabaseClient.auth.currentUser;
     if (user == null) throw StateError('Agent not authenticated');
     return user.id;
+  }
+
+  bool get _isActingAsOther {
+    final override = _effectiveAgentId;
+    if (override == null || override.isEmpty) return false;
+    final currentUserId = _supabaseClient.auth.currentUser?.id;
+    return currentUserId == null || override != currentUserId;
+  }
+
+  void dispose() {
+    if (!_localMutations.isClosed) {
+      unawaited(_localMutations.close());
+    }
   }
 
   static const _listColumns =
@@ -101,11 +120,15 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
     DepositStatus status,
   ) async {
     try {
-      await _supabaseClient.rpc(
+      await _supabaseClient.rpc<dynamic>(
         'set_deposit_status',
-        params: {'p_id': id, 'p_status': status.name},
+        params: {
+          'p_id': id,
+          'p_status': status.name,
+          if (_isActingAsOther) 'p_agent_id': _agentId,
+        },
       );
-      _localMutations.add(null);
+      if (!_localMutations.isClosed) _localMutations.add(null);
       return const Success(null);
     } catch (e) {
       return Failure(SupabaseErrorMapper.describe(e));
@@ -116,8 +139,12 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
   Future<Result<void, String>> deleteOneTimeDeposit(String id) async {
     try {
       // Deleting from account_identities will cascade to one_time_deposits
-      await _supabaseClient.from('account_identities').delete().eq('id', id);
-      _localMutations.add(null);
+      await _supabaseClient
+          .from('account_identities')
+          .delete()
+          .eq('id', id)
+          .eq('agent_id', _agentId);
+      if (!_localMutations.isClosed) _localMutations.add(null);
       return const Success(null);
     } catch (e) {
       return Failure(SupabaseErrorMapper.describe(e));
@@ -129,7 +156,7 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
   ) async {
     try {
       final json = deposit.toJson();
-      await _supabaseClient.rpc(
+      await _supabaseClient.rpc<dynamic>(
         'save_one_time_deposit',
         params: {
           'p_id': deposit.id,
@@ -143,9 +170,10 @@ class SupabaseOneTimeDepositRepository implements OneTimeDepositRepository {
           'p_term_months': deposit.termMonths,
           'p_start_date': deposit.startDate.toIso8601String().split('T').first,
           'p_nominees': deposit.nominees.map((n) => n.toJson()).toList(),
+          if (_isActingAsOther) 'p_agent_id': _agentId,
         },
       );
-      _localMutations.add(null);
+      if (!_localMutations.isClosed) _localMutations.add(null);
       return const Success(null);
     } catch (e) {
       return Failure(SupabaseErrorMapper.describe(e));

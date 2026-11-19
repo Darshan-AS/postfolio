@@ -636,3 +636,14 @@ projections:
   payoutTitle: "${frequency} Payout"
   lifetimeInterestEarned: "Lifetime Interest Earned"
   lifetimeInterestDescription: "Over the full term, before returning the principal."
+
+admin:
+  switchAccount: "Switch Account"
+  pickerTitle: "Act As Another Account"
+  searchAgentsHint: "Search by name, email, or agency code"
+  noOtherAgents: "No other agent accounts found"
+  currentAccountBadge: "Active"
+  yourAccountBadge: "You"
+  actingAs: "Acting as $name"
+  exitActingAs: "Exit"
+  loadAgentsError: "Could not load agent accounts"

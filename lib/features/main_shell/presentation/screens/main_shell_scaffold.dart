@@ -6,6 +6,8 @@ import 'package:postfolio/core/widgets/common/demo_banner.dart';
 import 'package:postfolio/core/widgets/common/local_backend_banner.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/widgets/expressive/app_navigation.dart';
+import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
+import 'package:postfolio/features/admin/presentation/widgets/admin_agent_picker_sheet.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -41,6 +43,8 @@ class MainShellScaffold extends ConsumerWidget {
     final isDemoMode = ref.watch(demoModeProvider);
     final hasTopBanner =
         isDemoMode || ref.watch(localBackendBannerVisibleProvider);
+    final isAdmin = ref.watch(isAdminProvider).value ?? false;
+    final showSwitchAccount = isAdmin && !isDemoMode;
     // Accounts two or more months behind, from the one-row-per-account summary cache.
     final arrears = ref.watch(
       globalAgentFloatProvider.select((float) => float.arrearsAccounts),
@@ -106,17 +110,37 @@ class MainShellScaffold extends ConsumerWidget {
                           padding: const EdgeInsets.only(
                             bottom: AppDimensions.paddingLg,
                           ),
-                          child: IconButton(
-                            icon: const HugeIcon(
-                              icon: HugeIcons.strokeRoundedLogout01,
-                              size: AppDimensions.iconMd,
-                            ),
-                            onPressed: () {
-                              ref
-                                  .read(authControllerProvider.notifier)
-                                  .signOut();
-                            },
-                            tooltip: t.auth.signOut,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (showSwitchAccount) ...[
+                                IconButton(
+                                  key: const ValueKey(
+                                    'admin_switch_account_button',
+                                  ),
+                                  icon: const HugeIcon(
+                                    icon: HugeIcons.strokeRoundedUserSwitch,
+                                    size: AppDimensions.iconMd,
+                                  ),
+                                  onPressed: () =>
+                                      AdminAgentPickerSheet.show(context),
+                                  tooltip: t.admin.switchAccount,
+                                ),
+                                AppSpacings.gapSm,
+                              ],
+                              IconButton(
+                                icon: const HugeIcon(
+                                  icon: HugeIcons.strokeRoundedLogout01,
+                                  size: AppDimensions.iconMd,
+                                ),
+                                onPressed: () {
+                                  ref
+                                      .read(authControllerProvider.notifier)
+                                      .signOut();
+                                },
+                                tooltip: t.auth.signOut,
+                              ),
+                            ],
                           ),
                         ),
                       ),

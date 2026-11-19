@@ -2,6 +2,7 @@ import 'package:postfolio/core/mocks/demo_data_source_provider.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
+import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
 import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/supabase_rd_ledger_repository.dart';
@@ -24,5 +25,10 @@ RDLedgerRepository rdLedgerRepository(Ref ref) {
     ref.onDispose(repo.dispose);
     return repo;
   }
-  return SupabaseRDLedgerRepository(ref.watch(supabaseClientProvider));
+  final repo = SupabaseRDLedgerRepository(
+    ref.watch(supabaseClientProvider),
+    effectiveAgentId: ref.watch(effectiveAgentIdProvider),
+  );
+  ref.onDispose(repo.dispose);
+  return repo;
 }

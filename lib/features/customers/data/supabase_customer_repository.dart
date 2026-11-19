@@ -9,14 +9,31 @@ import 'package:postfolio/core/utils/supabase_paginated_query.dart';
 
 class SupabaseCustomerRepository implements CustomerRepository {
   final SupabaseClient _supabaseClient;
+  final String? _effectiveAgentId;
   final _localMutations = StreamController<void>.broadcast();
 
-  SupabaseCustomerRepository(this._supabaseClient);
+  SupabaseCustomerRepository(this._supabaseClient, {String? effectiveAgentId})
+    : _effectiveAgentId = effectiveAgentId;
 
   String get _agentId {
+    final override = _effectiveAgentId;
+    if (override != null && override.isNotEmpty) return override;
     final user = _supabaseClient.auth.currentUser;
     if (user == null) throw StateError('Agent not authenticated');
     return user.id;
+  }
+
+  bool get _isActingAsOther {
+    final override = _effectiveAgentId;
+    if (override == null || override.isEmpty) return false;
+    final currentUserId = _supabaseClient.auth.currentUser?.id;
+    return currentUserId == null || override != currentUserId;
+  }
+
+  void dispose() {
+    if (!_localMutations.isClosed) {
+      unawaited(_localMutations.close());
+    }
   }
 
   @override
@@ -84,8 +101,11 @@ class SupabaseCustomerRepository implements CustomerRepository {
       // One request, one transaction: the customer and its savings account go together.
       // A customer who still owns an OTD/RD is refused by the database (23503) and nothing
       // is removed.
-      await _supabaseClient.rpc('delete_customer', params: {'p_id': id});
-      _localMutations.add(null);
+      await _supabaseClient.rpc<dynamic>(
+        'delete_customer',
+        params: {'p_id': id, if (_isActingAsOther) 'p_agent_id': _agentId},
+      );
+      if (!_localMutations.isClosed) _localMutations.add(null);
       return const Success(null);
     } catch (e) {
       return Failure(SupabaseErrorMapper.describe(e));
@@ -94,7 +114,7 @@ class SupabaseCustomerRepository implements CustomerRepository {
 
   Future<Result<void, String>> _saveCustomer(Customer customer) async {
     try {
-      await _supabaseClient.rpc(
+      await _supabaseClient.rpc<dynamic>(
         'save_customer_with_sb_account',
         params: {
           'p_id': customer.id,
@@ -116,9 +136,10 @@ class SupabaseCustomerRepository implements CustomerRepository {
                   .map((n) => n.toJson())
                   .toList() ??
               [],
+          if (_isActingAsOther) 'p_agent_id': _agentId,
         },
       );
-      _localMutations.add(null);
+      if (!_localMutations.isClosed) _localMutations.add(null);
       return const Success(null);
     } catch (e) {
       return Failure(SupabaseErrorMapper.describe(e));

@@ -5,6 +5,7 @@ import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
 import 'package:postfolio/features/customers/data/supabase_customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
@@ -131,5 +132,10 @@ CustomerRepository customerRepository(Ref ref) {
     ref.onDispose(repo.dispose);
     return repo;
   }
-  return SupabaseCustomerRepository(ref.watch(supabaseClientProvider));
+  final repo = SupabaseCustomerRepository(
+    ref.watch(supabaseClientProvider),
+    effectiveAgentId: ref.watch(effectiveAgentIdProvider),
+  );
+  ref.onDispose(repo.dispose);
+  return repo;
 }

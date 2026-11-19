@@ -15,6 +15,8 @@ import 'package:postfolio/core/services/app_error_reporter.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
+import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
+import 'package:postfolio/features/admin/presentation/widgets/acting_as_banner.dart';
 import 'package:postfolio/firebase_options.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -156,7 +158,9 @@ class PostfolioApp extends ConsumerWidget {
             final scheme = Theme.of(context).colorScheme;
             return SkeletonizerConfig(
               data: AppTheme.skeletonizerConfig(scheme),
-              child: child ?? const SizedBox.shrink(),
+              child: _ActingAsShellFrame(
+                child: child ?? const SizedBox.shrink(),
+              ),
             );
           },
           locale: TranslationProvider.of(context).flutterLocale,
@@ -168,6 +172,36 @@ class PostfolioApp extends ConsumerWidget {
           supportedLocales: AppLocaleUtils.supportedLocales,
         );
       },
+    );
+  }
+}
+
+/// Pins [ActingAsBanner] above the root navigator whenever the admin is viewing or editing
+/// another agent's account, removing top safe-area padding from the navigator below so app
+/// bars do not double-pad under the banner. Keeps the widget-tree topology invariant across
+/// [isActingAs] toggles so the router subtree is never unmounted/remounted.
+class _ActingAsShellFrame extends ConsumerWidget {
+  const _ActingAsShellFrame({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isActingAs = ref.watch(
+      actingAsControllerProvider.select((state) => state.isActingAs),
+    );
+
+    return Column(
+      children: [
+        const ActingAsBanner(),
+        Expanded(
+          child: MediaQuery.removePadding(
+            context: context,
+            removeTop: isActingAs,
+            child: child,
+          ),
+        ),
+      ],
     );
   }
 }
