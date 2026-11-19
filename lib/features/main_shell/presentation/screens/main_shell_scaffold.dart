@@ -6,6 +6,7 @@ import 'package:postfolio/core/widgets/common/demo_banner.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/widgets/expressive/app_navigation.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/routing/app_router.dart';
@@ -37,6 +38,8 @@ class MainShellScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDemoMode = ref.watch(demoModeProvider);
+    // Accounts two or more months behind, from the one-row-per-account summary cache.
+    final arrears = ref.watch(globalAgentFloatProvider.select((float) => float.arrearsAccounts));
 
     final destinations = [
       AppDestination(
@@ -50,6 +53,8 @@ class MainShellScaffold extends ConsumerWidget {
       AppDestination(
         icon: HugeIcons.strokeRoundedTransaction,
         label: t.nav.recurringDeposits,
+        badgeCount: arrears > 0 ? arrears : null,
+        badgeSemanticLabel: arrears > 0 ? t.nav.recurringDepositsInArrears(n: arrears) : null,
       ),
       AppDestination(
         icon: HugeIcons.strokeRoundedUserMultiple,

@@ -145,6 +145,10 @@ nav:
   dashboard: "Dashboard"
   oneTimeDeposits: "One-Time"
   recurringDeposits: "Recurring"
+  # What a screen reader says for the Recurring destination while its badge shows.
+  recurringDepositsInArrears:
+    one: "Recurring, 1 account in arrears"
+    other: "Recurring, ${n} accounts in arrears"
   customers: "Customers"
 
 customers:

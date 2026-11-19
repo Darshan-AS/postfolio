@@ -7,10 +7,26 @@ import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 /// A top-level destination of the app.
 class AppDestination {
-  const AppDestination({required this.icon, required this.label});
+  const AppDestination({
+    required this.icon,
+    required this.label,
+    this.badgeCount,
+    this.badgeSemanticLabel,
+  }) : assert(
+         (badgeCount == null) == (badgeSemanticLabel == null),
+         'A badge is a bare number: say what it counts',
+       );
 
   final AppIconData icon;
   final String label;
+
+  /// A count shown on the icon: things waiting behind this destination. Null for none.
+  final int? badgeCount;
+
+  /// What a screen reader says for the destination while the badge shows, in place of
+  /// [label]: the name and what the number counts. The community badge has no words of
+  /// its own in a destination, so without this the count would be for the eyes only.
+  final String? badgeSemanticLabel;
 }
 
 /// Icon labels in navigation chrome stop growing at this text scale, as in the official
@@ -48,6 +64,8 @@ class AppNavigationBar extends StatelessWidget {
                 emphasized: true,
               ),
               label: destination.label,
+              badgeCount: destination.badgeCount,
+              semanticLabel: destination.badgeSemanticLabel,
             ),
         ],
       ),
@@ -105,6 +123,8 @@ class AppNavigationRail extends StatelessWidget {
                       emphasized: true,
                     ),
                     label: destination.label,
+                    badgeCount: destination.badgeCount,
+                    semanticLabel: destination.badgeSemanticLabel,
                   ),
               ],
             ),

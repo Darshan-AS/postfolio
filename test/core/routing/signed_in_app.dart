@@ -129,12 +129,15 @@ typedef AppRouter = ({
 ///
 /// [customers], [oneTimeDeposits] and [recurringDeposits] replace the repositories: with
 /// other records, or with one that answers late. The lists of deposits are empty otherwise.
+/// [ledger] replaces the empty ledger of the recurring deposits, and [today] the date.
 /// [disableAnimations] is the device's "remove animations" setting.
 Future<AppRouter> pumpSignedInApp(
   WidgetTester tester, {
   CustomerRepository? customers,
   OneTimeDepositRepository? oneTimeDeposits,
   FakeRecurringDepositRepository? recurringDeposits,
+  FakeRDLedgerRepository? ledger,
+  DateTime? today,
   bool disableAnimations = false,
 }) async {
   await LocaleSettings.setLocale(AppLocale.en);
@@ -149,11 +152,11 @@ Future<AppRouter> pumpSignedInApp(
     ),
   );
   final rdRepo = recurringDeposits ?? FakeRecurringDepositRepository(deposits: const []);
-  final ledgerRepo = FakeRDLedgerRepository();
+  final ledgerRepo = ledger ?? FakeRDLedgerRepository();
   final container = ProviderContainer(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
-      clockProvider.overrideWithValue(() => DateTime(2026, 4, 20)),
+      clockProvider.overrideWithValue(() => today ?? DateTime(2026, 4, 20)),
       authRepositoryProvider.overrideWithValue(authRepo),
       customerRepositoryProvider.overrideWithValue(
         customers ??

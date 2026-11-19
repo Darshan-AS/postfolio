@@ -482,6 +482,64 @@ void main() {
       AppDestination(icon: HugeIcons.strokeRoundedUserMultiple, label: 'Customers'),
     ];
 
+    const withBadge = [
+      AppDestination(icon: HugeIcons.strokeRoundedDashboardSquare01, label: 'Dashboard'),
+      AppDestination(
+        icon: HugeIcons.strokeRoundedTransaction,
+        label: 'Recurring',
+        badgeCount: 3,
+        badgeSemanticLabel: 'Recurring, 3 accounts in arrears',
+      ),
+    ];
+
+    /// The bar on a phone and the rail on a tablet say the same of a badge.
+    for (final (name, width, build) in <(String, double, Widget Function())>[
+      (
+        'bar',
+        360,
+        () => Scaffold(
+          bottomNavigationBar: AppNavigationBar(
+            destinations: withBadge,
+            selectedIndex: 0,
+            onSelected: (_) {},
+          ),
+        ),
+      ),
+      (
+        'rail',
+        800,
+        () => Scaffold(
+          body: Row(
+            children: [
+              AppNavigationRail(destinations: withBadge, selectedIndex: 0, onSelected: (_) {}),
+              const Expanded(child: SizedBox()),
+            ],
+          ),
+        ),
+      ),
+    ]) {
+      testWidgets('a badge on the $name shows its count and says what it counts', (
+        tester,
+      ) async {
+        final semantics = tester.ensureSemantics();
+        tester.view.physicalSize = Size(width, 800) * 2;
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(MaterialApp(theme: AppTheme.lightTheme, home: build()));
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(tester.takeException(), isNull);
+        expect(find.text('3'), findsOneWidget);
+        // One node for the destination, named with what the number counts.
+        expect(find.bySemanticsLabel('Recurring, 3 accounts in arrears'), findsOneWidget);
+        expect(find.bySemanticsLabel('Recurring'), findsNothing);
+        expect(find.bySemanticsLabel(RegExp('notification')), findsNothing);
+        // A destination with no badge keeps its plain name.
+        expect(find.bySemanticsLabel('Dashboard'), findsOneWidget);
+        semantics.dispose();
+      });
+    }
+
     testWidgets('bar labels stop growing at 1.3x text; selecting reports the index', (
       tester,
     ) async {
