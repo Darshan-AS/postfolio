@@ -93,9 +93,10 @@ jobs:
           cache: true
 
       - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         with:
-          version: latest
+          # Pinned to match the local CLI and avoid GitHub API rate limits on `latest`.
+          version: v2.117.0
 
       - name: Start Local Supabase Stack (Clean Migration + Seed Replay)
         run: supabase start -x studio,vector
