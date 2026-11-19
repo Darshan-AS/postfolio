@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/widgets/common/demo_banner.dart';
+import 'package:postfolio/core/widgets/common/local_backend_banner.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/widgets/expressive/app_navigation.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
@@ -38,6 +39,8 @@ class MainShellScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDemoMode = ref.watch(demoModeProvider);
+    final hasTopBanner =
+        isDemoMode || ref.watch(localBackendBannerVisibleProvider);
     // Accounts two or more months behind, from the one-row-per-account summary cache.
     final arrears = ref.watch(
       globalAgentFloatProvider.select((float) => float.arrearsAccounts),
@@ -72,7 +75,7 @@ class MainShellScaffold extends ConsumerWidget {
     // inset consumption, causing "Double Inset" layout bugs.
     Widget shellContent = Builder(
       builder: (innerContext) {
-        if (isDemoMode) {
+        if (hasTopBanner) {
           return MediaQuery.removePadding(
             context: innerContext,
             removeTop: true,
@@ -91,6 +94,7 @@ class MainShellScaffold extends ConsumerWidget {
             body: Column(
               children: [
                 const DemoBanner(),
+                const LocalBackendBanner(),
                 Expanded(
                   child: Row(
                     children: [
@@ -130,6 +134,7 @@ class MainShellScaffold extends ConsumerWidget {
           body: Column(
             children: [
               const DemoBanner(),
+              const LocalBackendBanner(),
               Expanded(child: shellContent),
             ],
           ),
