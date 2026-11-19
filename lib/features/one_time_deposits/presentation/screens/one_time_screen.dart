@@ -29,6 +29,7 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final depositsState = ref.watch(filteredOneTimeDepositsProvider);
     final criteria = ref.watch(oneTimeListCriteriaProvider);
+    final fab = useAppExtendedFabController(resetOn: criteria);
 
     int statusModifications = 0;
     if (!criteria.statusFilters.contains(DepositStatus.active)) {
@@ -160,24 +161,28 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
           ),
           AppSpacings.gapMd,
           Expanded(
-            child: EntityListBody<OneTimeDeposit>(
-              state: depositsState,
-              emptyMessage: t.oneTimeDeposits.noDepositsFound,
-              hasActiveFilters:
-                  criteria.searchQuery.isNotEmpty || activeFilterCount > 0,
-              onClearFilters: () =>
-                  ref.read(oneTimeListCriteriaProvider.notifier).clearAll(),
-              onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
-              onRefresh: () => ref.refresh(oneTimeDepositsControllerProvider.future),
-              itemBuilder: (context, deposit, position) =>
-                  OneTimeDepositCard(deposit: deposit, position: position),
-              skeletonBuilder: (position) =>
-                  OneTimeDepositCard.skeleton(position: position),
+            child: AppExtendedFabScrollArea(
+              controller: fab,
+              child: EntityListBody<OneTimeDeposit>(
+                state: depositsState,
+                emptyMessage: t.oneTimeDeposits.noDepositsFound,
+                hasActiveFilters:
+                    criteria.searchQuery.isNotEmpty || activeFilterCount > 0,
+                onClearFilters: () =>
+                    ref.read(oneTimeListCriteriaProvider.notifier).clearAll(),
+                onRetry: () => ref.invalidate(oneTimeDepositsControllerProvider),
+                onRefresh: () => ref.refresh(oneTimeDepositsControllerProvider.future),
+                itemBuilder: (context, deposit, position) =>
+                    OneTimeDepositCard(deposit: deposit, position: position),
+                skeletonBuilder: (position) =>
+                    OneTimeDepositCard.skeleton(position: position),
+              ),
             ),
           ),
         ],
       ),
       floatingActionButton: AppExtendedFab(
+        controller: fab,
         label: t.oneTimeDeposits.newDeposit,
         icon: HugeIcons.strokeRoundedAdd01,
         onPressed: () => const OneTimeDepositCreateRoute().push(context),

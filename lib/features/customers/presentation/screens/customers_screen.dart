@@ -25,6 +25,7 @@ class CustomersScreen extends HookConsumerWidget {
     // 1. Watch the derived filtered provider state
     final customersState = ref.watch(filteredCustomersProvider);
     final criteria = ref.watch(customerListCriteriaProvider);
+    final fab = useAppExtendedFabController(resetOn: criteria);
 
     return Scaffold(
       appBar: ShellAppBar(title: t.nav.customers),
@@ -87,25 +88,29 @@ class CustomersScreen extends HookConsumerWidget {
           ),
           AppSpacings.gapMd,
           Expanded(
-            child: EntityListBody<Customer>(
-              state: customersState,
-              emptyMessage: t.customers.noCustomersFound,
-              hasActiveFilters: criteria.searchQuery.isNotEmpty,
-              onClearFilters: () =>
-                  ref.read(customerListCriteriaProvider.notifier).clearAll(),
-              onRetry: () => ref.invalidate(customersControllerProvider),
-              onRefresh: () async {
-                ref.invalidate(customersControllerProvider);
-                await ref.read(customersControllerProvider.future);
-              },
-              itemBuilder: (context, customer, position) =>
-                  CustomerCard(customer: customer, position: position),
-              skeletonBuilder: (position) => CustomerCard.skeleton(position: position),
+            child: AppExtendedFabScrollArea(
+              controller: fab,
+              child: EntityListBody<Customer>(
+                state: customersState,
+                emptyMessage: t.customers.noCustomersFound,
+                hasActiveFilters: criteria.searchQuery.isNotEmpty,
+                onClearFilters: () =>
+                    ref.read(customerListCriteriaProvider.notifier).clearAll(),
+                onRetry: () => ref.invalidate(customersControllerProvider),
+                onRefresh: () async {
+                  ref.invalidate(customersControllerProvider);
+                  await ref.read(customersControllerProvider.future);
+                },
+                itemBuilder: (context, customer, position) =>
+                    CustomerCard(customer: customer, position: position),
+                skeletonBuilder: (position) => CustomerCard.skeleton(position: position),
+              ),
             ),
           ),
         ],
       ),
       floatingActionButton: AppExtendedFab(
+        controller: fab,
         label: t.customers.newCustomer,
         icon: HugeIcons.strokeRoundedAdd01,
         onPressed: () => const CustomerCreateRoute().push(context),

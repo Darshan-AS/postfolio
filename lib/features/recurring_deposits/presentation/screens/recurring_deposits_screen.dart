@@ -65,6 +65,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     final viewMode = ref.watch(rDViewModeControllerProvider);
     final depositsState = ref.watch(filteredRecurringDepositsProvider);
     final criteria = ref.watch(recurringListCriteriaProvider);
+    final fab = useAppExtendedFabController(resetOn: criteria);
 
     int statusModifications = 0;
     if (!criteria.statusFilters.contains(DepositStatus.active)) {
@@ -111,10 +112,12 @@ class RecurringDepositsScreen extends HookConsumerWidget {
               depositsState,
               criteria,
               activeFilterCount,
+              fab,
             )
           : const RDMonthlyOperationsView(),
       floatingActionButton: showFab
           ? AppExtendedFab(
+              controller: fab,
               label: t.recurringDeposits.newDeposit,
               icon: HugeIcons.strokeRoundedAdd01,
               onPressed: () => const RecurringDepositCreateRoute().push(context),
@@ -129,6 +132,7 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     AsyncValue<List<RecurringDeposit>> depositsState,
     RDSearchCriteria criteria,
     int activeFilterCount,
+    AppExtendedFabController fab,
   ) {
     return Column(
       children: [
@@ -240,20 +244,23 @@ class RecurringDepositsScreen extends HookConsumerWidget {
           ),
           AppSpacings.gapMd,
           Expanded(
-            child: EntityListBody<RecurringDeposit>(
-              state: depositsState,
-              emptyMessage: t.recurringDeposits.noDepositsFound,
-              hasActiveFilters:
-                  criteria.searchQuery.isNotEmpty || activeFilterCount > 0,
-              onClearFilters: () =>
-                  ref.read(recurringListCriteriaProvider.notifier).clearAll(),
-              onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
-              onRefresh: () =>
-                  ref.refresh(recurringDepositsControllerProvider.future),
-              itemBuilder: (context, deposit, position) =>
-                  RecurringDepositCard(deposit: deposit, position: position),
-              skeletonBuilder: (position) =>
-                  RecurringDepositCard.skeleton(position: position),
+            child: AppExtendedFabScrollArea(
+              controller: fab,
+              child: EntityListBody<RecurringDeposit>(
+                state: depositsState,
+                emptyMessage: t.recurringDeposits.noDepositsFound,
+                hasActiveFilters:
+                    criteria.searchQuery.isNotEmpty || activeFilterCount > 0,
+                onClearFilters: () =>
+                    ref.read(recurringListCriteriaProvider.notifier).clearAll(),
+                onRetry: () => ref.invalidate(recurringDepositsControllerProvider),
+                onRefresh: () =>
+                    ref.refresh(recurringDepositsControllerProvider.future),
+                itemBuilder: (context, deposit, position) =>
+                    RecurringDepositCard(deposit: deposit, position: position),
+                skeletonBuilder: (position) =>
+                    RecurringDepositCard.skeleton(position: position),
+              ),
             ),
           ),
         ],

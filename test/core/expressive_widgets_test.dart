@@ -1,6 +1,7 @@
 import 'dart:ui' show Tristate;
 
 import 'package:flutter/rendering.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
@@ -364,6 +365,112 @@ void main() {
       await tester.tap(find.text('New Customer'));
       await tester.pump(const Duration(milliseconds: 400));
       expect(presses, 1);
+    });
+
+    /// A list of [rows] rows under the button, joined to it as on the list screens. With
+    /// no rows it is a message that does not scroll, as when a search finds nothing.
+    Widget listUnderFab({
+      required int rows,
+      String query = '',
+      bool disableAnimations = false,
+    }) => HookBuilder(
+      builder: (context) {
+        final fab = useAppExtendedFabController(resetOn: query);
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(disableAnimations: disableAnimations),
+          child: Scaffold(
+            body: AppExtendedFabScrollArea(
+              controller: fab,
+              child: rows == 0
+                  ? const Center(child: Text('No results'))
+                  : ListView.builder(
+                      itemCount: rows,
+                      itemBuilder: (context, index) => ListTile(title: Text('Row $index')),
+                    ),
+            ),
+            floatingActionButton: AppExtendedFab(
+              controller: fab,
+              label: 'New Customer',
+              icon: HugeIcons.strokeRoundedAdd01,
+              onPressed: () {},
+            ),
+          ),
+        );
+      },
+    );
+
+    double fabWidth(WidgetTester tester) => tester.getSize(find.byType(AppExtendedFab)).width;
+
+    Future<void> scroll(WidgetTester tester, double dy) async {
+      await tester.drag(find.byType(ListView), Offset(0, dy));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+    }
+
+    testWidgets('gives up its label while the list is scrolled down, and takes it back', (
+      tester,
+    ) async {
+      await pumpOnPhone(tester, listUnderFab(rows: 40));
+      final withLabel = fabWidth(tester);
+      expect(withLabel, greaterThan(100));
+
+      await scroll(tester, -300);
+      // The icon alone: as wide as it is tall.
+      expect(fabWidth(tester), tester.getSize(find.byType(AppExtendedFab)).height);
+
+      // A little way up is enough; the top need not be reached.
+      await scroll(tester, 60);
+      expect(fabWidth(tester), moreOrLessEquals(withLabel, epsilon: 0.5));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('takes its label back when a search changes what the list shows', (
+      tester,
+    ) async {
+      await pumpOnPhone(tester, listUnderFab(rows: 40));
+      final withLabel = fabWidth(tester);
+      await scroll(tester, -300);
+      expect(fabWidth(tester), lessThan(withLabel));
+
+      // The search finds nothing: there is no list left to scroll the label back with.
+      await tester.pumpWidget(
+        MaterialApp(theme: AppTheme.lightTheme, home: listUnderFab(rows: 0, query: 'zz')),
+      );
+      await tester.pumpAndSettle();
+      expect(fabWidth(tester), moreOrLessEquals(withLabel, epsilon: 0.5));
+    });
+
+    testWidgets('keeps its label on a device set to remove animations', (tester) async {
+      await pumpOnPhone(tester, listUnderFab(rows: 40, disableAnimations: true));
+      final withLabel = fabWidth(tester);
+      await scroll(tester, -300);
+      expect(fabWidth(tester), moreOrLessEquals(withLabel, epsilon: 0.5));
+    });
+
+    testWidgets('a screen reader gets the whole label once, shown or not', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpOnPhone(tester, listUnderFab(rows: 40));
+
+      void expectOneWholeLabel() {
+        expect(
+          tester.getSemantics(find.bySemanticsLabel('New Customer')),
+          matchesSemantics(
+            label: 'New Customer',
+            isButton: true,
+            hasEnabledState: true,
+            isEnabled: true,
+            hasTapAction: true,
+          ),
+        );
+        // The community widget announces "New" (its first word) beside the label.
+        expect(find.bySemanticsLabel(RegExp(r'^New$')), findsNothing);
+        expect(find.bySemanticsLabel(RegExp(r'New\s+New')), findsNothing);
+      }
+
+      expectOneWholeLabel();
+      await scroll(tester, -300);
+      expectOneWholeLabel();
+      semantics.dispose();
     });
   });
 
