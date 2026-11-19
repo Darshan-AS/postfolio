@@ -20,6 +20,7 @@ import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_batch_bar.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_month_progress.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_month_switcher.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operation_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operations_view.dart';
@@ -247,6 +248,34 @@ void main() {
       await tester.pump();
       expect(selectionMarks(), findsWidgets);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('switching to a settled month shows its statement without the arrival', (
+      tester,
+    ) async {
+      await pumpHub(tester, disableAnimations: false);
+      final bar = find.byKey(const ValueKey('bar'));
+      final statement = find.byKey(const ValueKey('settled'));
+      expect(statement, findsOneWidget);
+
+      // May 2026 is still to come: nothing of it is settled.
+      await tester.tap(find.byTooltip(ops.nextMonth));
+      await settle(tester);
+      expect(bar, findsOneWidget);
+      expect(statement, findsNothing);
+
+      // Back to April. Whenever its statement is on screen, the bar it would replace in an
+      // arrival is not.
+      await tester.tap(find.byTooltip(ops.previousMonth));
+      var seen = false;
+      for (var frame = 0; frame < 30; frame++) {
+        await tester.pump(const Duration(milliseconds: 20));
+        if (statement.evaluate().isNotEmpty) {
+          seen = true;
+          expect(bar, findsNothing, reason: 'frame $frame');
+        }
+      }
+      expect(seen, isTrue);
     });
 
     testWidgets(
@@ -571,9 +600,24 @@ void main() {
       // A 40dp pill sits 4dp inside its 48dp touch target.
       const touchPadding = (kMinInteractiveDimension - AppDimensions.buttonHeightSm) / 2;
 
-      expect(tiles.top - switcher.bottom, AppDimensions.paddingMd);
+      // The month's statement (April 2026 is settled here) is a block of its own.
+      final progress = tester.getRect(find.byKey(const ValueKey('settled')));
+      expect(progress.top - switcher.bottom, AppDimensions.paddingMd);
+      expect(tiles.top - progress.bottom, AppDimensions.paddingMd);
       expect(search.top - tiles.bottom, AppDimensions.paddingMd);
       expect(dueWindow.top + touchPadding - search.bottom, AppDimensions.paddingMd);
+    });
+
+    testWidgets('with no progress block the tiles are 12dp under the switcher', (tester) async {
+      await pumpHub(tester);
+      // March 2026 is past and settled: it has nothing to say.
+      await tester.tap(find.byTooltip(ops.previousMonth));
+      await settle(tester);
+      expect(find.byType(RDHubMonthProgress), findsOneWidget);
+      expect(tester.getSize(find.byType(RDHubMonthProgress)).height, 0);
+
+      final switcher = tester.getRect(find.byType(RDMonthSwitcher));
+      expect(tilesRect(tester).top - switcher.bottom, AppDimensions.paddingMd);
     });
 
     testWidgets('a tile\'s text starts on the edge a row\'s avatar and pill start on', (

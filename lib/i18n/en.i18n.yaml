@@ -294,6 +294,11 @@ recurringDeposits:
     allSettledFor: "All settled for ${month}."
     noFilterResults: "No accounts match."
     undo: "Undo"
+    progress:
+      settledOf: "${settled} of ${total} settled"
+      semantics: "${settled} of ${total} accounts settled for ${month}"
+      settledTitle: "${month} is settled"
+      settledBody: "Every installment due this month is collected and deposited"
     kpis:
       toCollect: "To collect"
       inHand: "In hand"

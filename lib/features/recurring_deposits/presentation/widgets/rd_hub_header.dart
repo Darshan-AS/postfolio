@@ -15,6 +15,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/controllers/r
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_layout.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_month_progress.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_month_switcher.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_po_visit_sheet.dart';
@@ -36,6 +37,9 @@ class RDHubHeader extends ConsumerWidget {
     final isLoading = ref.watch(
       monthlyOperationItemsProvider.select((a) => a.isLoading),
     );
+    final progress = ref.watch(
+      monthlyOperationsKpiProvider.select((k) => (settled: k.settledCount, total: k.totalCount)),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -49,8 +53,19 @@ class RDHubHeader extends ConsumerWidget {
           onResetToCurrent: monthNotifier.resetToCurrentMonth,
           onPickMonth: monthNotifier.setMonth,
         ),
-        // 12dp between the Hub's blocks: switcher, tiles, search, due window, rows.
+        // 12dp between the Hub's blocks: switcher, progress, tiles, search, due window, rows.
         AppSpacings.gapMd,
+        // One per month: the statement arrives with a motion when a month becomes settled,
+        // not when a settled month is switched to. Not while the month loads, when the
+        // tiles are placeholders too and the figures may still be the last month's.
+        if (!isLoading)
+          RDHubMonthProgress(
+            key: ValueKey(month),
+            month: month,
+            settled: progress.settled,
+            total: progress.total,
+            isPast: month.isBefore(now.toMonthStart()),
+          ),
         Skeletonizer(enabled: isLoading, child: const _KpiGrid()),
         AppSpacings.gapSm,
       ],
