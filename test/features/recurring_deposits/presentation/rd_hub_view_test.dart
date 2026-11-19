@@ -9,6 +9,7 @@ import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_financial_colors.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
@@ -121,6 +122,12 @@ void main() {
     return container;
   }
 
+  /// The selection marks on screen. In selection mode a row's avatar turns over into one;
+  /// the copies the flip keeps laid out to hold its size are not counted.
+  Finder selectionMarks() => find
+      .byWidgetPredicate((w) => w is Semantics && w.properties.checked != null)
+      .hitTestable();
+
   group('Monthly Hub controls', () {
     testWidgets(
       'due-window group, group-by and select toggles drive the Hub state',
@@ -164,15 +171,83 @@ void main() {
         await tester.tap(find.byTooltip(ops.toolbar.selectMode));
         await settle(tester);
         expect(container.read(rDHubSelectionProvider).isSelectionMode, isTrue);
-        expect(find.byType(Checkbox), findsWidgets);
+        expect(selectionMarks(), findsWidgets);
 
         await tester.tap(find.byTooltip(ops.toolbar.exitSelectMode));
         await settle(tester);
         expect(container.read(rDHubSelectionProvider).isSelectionMode, isFalse);
-        expect(find.byType(Checkbox), findsNothing);
+        expect(selectionMarks(), findsNothing);
         expect(tester.takeException(), isNull);
       },
     );
+
+    testWidgets('in selection mode a row\'s avatar is its selection mark: a checkbox to a '
+        'screen reader, ticked by a tap on the row', (tester) async {
+      final semantics = tester.ensureSemantics();
+      final container = await pumpHub(tester);
+      final label = ops.card.selectRow(name: oneAccount);
+      expect(selectionMarks(), findsNothing);
+      expect(find.bySemanticsLabel(label), findsNothing);
+
+      await tester.tap(find.byTooltip(ops.toolbar.selectMode));
+      await settle(tester);
+
+      SemanticsNode mark() => tester.getSemantics(find.bySemanticsLabel(label));
+      expect(
+        mark(),
+        matchesSemantics(
+          label: label,
+          hasCheckedState: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          hasTapAction: true,
+        ),
+      );
+
+      await tester.tap(find.text(oneAccount));
+      await settle(tester);
+      expect(container.read(rDHubSelectionProvider).count, 1);
+      expect(
+        mark(),
+        matchesSemantics(
+          label: label,
+          hasCheckedState: true,
+          isChecked: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          hasTapAction: true,
+        ),
+      );
+
+      // The mark itself can be acted on, as the checkbox it replaces could.
+      mark().owner!.performAction(mark().id, SemanticsAction.tap);
+      await settle(tester);
+      expect(container.read(rDHubSelectionProvider).count, 0);
+      expect(tester.takeException(), isNull);
+      semantics.dispose();
+    });
+
+    testWidgets('the avatar takes time to turn over', (tester) async {
+      await pumpHub(tester, disableAnimations: false);
+      await tester.tap(find.byTooltip(ops.toolbar.selectMode));
+      await tester.pump();
+      // A quarter of the way over, the avatar is still the face that shows.
+      await tester.pump(AppMotion.effectsDuration ~/ 4);
+      expect(selectionMarks(), findsNothing);
+      await tester.pump(AppMotion.effectsDuration);
+      expect(selectionMarks(), findsWidgets);
+    });
+
+    testWidgets('on a device that removes animations the mark is there in the next frame', (
+      tester,
+    ) async {
+      await pumpHub(tester);
+      await tester.tap(find.byTooltip(ops.toolbar.selectMode));
+      await tester.pump();
+      await tester.pump();
+      expect(selectionMarks(), findsWidgets);
+      expect(tester.takeException(), isNull);
+    });
 
     testWidgets(
       'a header tile filters the list and turns into a filled tile while selected',

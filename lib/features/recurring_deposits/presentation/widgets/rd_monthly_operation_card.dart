@@ -5,10 +5,12 @@ import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_financial_colors.dart';
+import 'package:postfolio/core/theme/app_surfaces.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/expressive/app_selection_flip.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
@@ -265,26 +267,33 @@ class RDMonthlyOperationCard extends StatelessWidget {
           ? null
           : status.accent(scheme, financial: financial),
       isSelected: isSelected,
-      leading: isSelectionMode
-          ? SizedBox.square(
-              dimension: AppDimensions.avatarMd,
-              child: Center(
-                child: Checkbox(
-                  value: isSelected,
-                  onChanged: onSelect,
-                  semanticLabel: selectSemanticLabel,
-                ),
-              ),
-            )
-          : _InstallmentAvatar(
-              installmentNumber: item.installmentNumber,
-              status: status,
-              // The scheme's shape, as on the Accounts list. The status is the avatar's
-              // colour and the pill; eight shapes for eight statuses, three of them the
-              // shapes of other schemes, was a second code nobody could learn.
-              shape: deposit.schemeType.avatarShape,
-              visual: visual,
-            ),
+      // In selection mode the avatar turns over into the row's selection mark, and that
+      // mark turns over again when the row is selected.
+      leading: AppSelectionFlip(
+        selected: isSelectionMode,
+        selectedChild: Semantics(
+          container: true,
+          checked: isSelected,
+          enabled: onSelect != null,
+          label: selectSemanticLabel,
+          onTap: onSelect == null ? null : () => onSelect!(!isSelected),
+          excludeSemantics: true,
+          child: AppSelectionFlip(
+            selected: isSelected,
+            selectedChild: _SelectionMark(shape: deposit.schemeType.avatarShape, isSelected: true),
+            child: _SelectionMark(shape: deposit.schemeType.avatarShape, isSelected: false),
+          ),
+        ),
+        child: _InstallmentAvatar(
+          installmentNumber: item.installmentNumber,
+          status: status,
+          // The scheme's shape, as on the Accounts list. The status is the avatar's
+          // colour and the pill; eight shapes for eight statuses, three of them the
+          // shapes of other schemes, was a second code nobody could learn.
+          shape: deposit.schemeType.avatarShape,
+          visual: visual,
+        ),
+      ),
       title: titleByAccount
           ? _identityOf(deposit)
           : deposit.customerName ?? t.recurringDeposits.unnamedCustomer,
@@ -407,6 +416,30 @@ class RDMonthlyOperationCard extends StatelessWidget {
       ],
       onTap: isSelectionMode ? () => onSelect?.call(!isSelected) : onTap,
       onLongPress: onLongPress,
+    );
+  }
+}
+
+/// What stands in the avatar's place in selection mode: the scheme's shape, empty until the
+/// row is selected and then filled with a tick.
+class _SelectionMark extends StatelessWidget {
+  const _SelectionMark({required this.shape, required this.isSelected});
+
+  final AppAvatarShape shape;
+  final bool isSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return AppShapeAvatar(
+      size: AppDimensions.avatarMd,
+      shape: shape,
+      backgroundColor: isSelected ? scheme.primary : scheme.inset,
+      foregroundColor: isSelected ? scheme.onPrimary : scheme.onSurfaceVariant,
+      child: AppIcon(
+        isSelected ? HugeIcons.strokeRoundedTick02 : HugeIcons.strokeRoundedCircle,
+        size: AppDimensions.iconMd,
+      ),
     );
   }
 }
