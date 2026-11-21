@@ -7,10 +7,21 @@ on:
   workflow_dispatch:
     inputs:
       deploy_live:
-        description: 'Deploy to Firebase App Distribution & Live Hosting'
+        description: 'Deploy to Google Play Store & Live Web Hosting'
         required: false
         default: false
         type: boolean
+      play_track:
+        description: 'Google Play track override (defaults to PLAY_STORE_TRACK variable or alpha)'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - internal
+          - alpha
+          - beta
+          - production
 
 # REQUIRED: Give the GITHUB_TOKEN write access to create releases on tag pushes
 permissions:
@@ -74,27 +85,47 @@ jobs:
           flutter test --exclude-tags integration --concurrency "$(nproc)"
 
       - name: Configure Android Signing Keystore
+        id: signing
         # Prefers production UPLOAD_KEYSTORE_BASE64 + KEY_PROPERTIES when configured in GitHub Secrets;
         # falls back cleanly to legacy KEYSTORE_BASE64 so existing tester SHA-1 workflows never break.
         env:
           UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
           KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
           if [ -n "$UPLOAD_KEYSTORE_BASE64" ] && [ -n "$KEY_PROPERTIES" ]; then
             echo "$UPLOAD_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
             printf '%s\n' "$KEY_PROPERTIES" > android/key.properties
+            echo "has_upload_keystore=true" >> "$GITHUB_OUTPUT"
           else
             echo "$KEYSTORE_BASE64" | base64 --decode > android/app/debug.keystore
+            echo "has_upload_keystore=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "has_play_credentials=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_play_credentials=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build Universal APK (for Firebase)
-        run: flutter build apk --flavor prod --release
+      - name: Build Android App Bundle (for Google Play)
+        run: flutter build appbundle --flavor prod --release
+
+      - name: Upload Signed App Bundle Artifact
+        if: steps.signing.outputs.has_upload_keystore == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: postfolio-prod-aab
+          path: |
+            build/app/outputs/bundle/prodRelease/app-prod-release.aab
+            build/app/outputs/mapping/prodRelease/mapping.txt
+          retention-days: 14
 
       - name: Build Split APKs (for GitHub Release)
         run: flutter build apk --flavor prod --split-per-abi --release
 
       - name: Build Web Release (Wasm + JS Fallback)
+        if: vars.SKIP_WEB_DEPLOY != 'true'
         run: flutter build web --wasm
 
       - name: Extract Release Notes
@@ -104,17 +135,26 @@ jobs:
       - name: Write Release Notes to File
         env:
           CHANGELOG: ${{ steps.release_notes.outputs.release_notes }}
-        run: echo "$CHANGELOG" > release-notes.txt
+        run: |
+          printf '%s\n' "$CHANGELOG" > release-notes.txt
+          mkdir -p whatsnew
+          # Google Play limits per-locale "What's new" notes to 500 characters.
+          printf '%s\n' "$CHANGELOG" | head -c 500 > whatsnew/whatsnew-en-US
 
-      - name: Upload to Firebase App Distribution
-        if: startsWith(github.ref, 'refs/tags/v') || inputs.deploy_live == true
-        uses: wzieba/Firebase-Distribution-Github-Action@v1
+      - name: Upload to Google Play
+        if: >-
+          (startsWith(github.ref, 'refs/tags/v') || inputs.deploy_live == true)
+          && steps.signing.outputs.has_upload_keystore == 'true'
+          && steps.signing.outputs.has_play_credentials == 'true'
+        uses: r0adkll/upload-google-play@v1
         with:
-          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIAL_FILE_CONTENT }}
-          groups: testers
-          file: build/app/outputs/flutter-apk/app-prod-release.apk
-          releaseNotesFile: release-notes.txt
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: dev.darshanas.postfolio
+          releaseFiles: build/app/outputs/bundle/prodRelease/app-prod-release.aab
+          mappingFile: build/app/outputs/mapping/prodRelease/mapping.txt
+          tracks: ${{ inputs.play_track || vars.PLAY_STORE_TRACK || 'alpha' }}
+          status: ${{ vars.PLAY_STORE_RELEASE_STATUS || 'completed' }}
+          whatsNewDirectory: whatsnew
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -126,7 +166,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to Firebase Hosting
-        if: startsWith(github.ref, 'refs/tags/v') || inputs.deploy_live == true
+        if: (startsWith(github.ref, 'refs/tags/v') || inputs.deploy_live == true) && vars.SKIP_WEB_DEPLOY != 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}

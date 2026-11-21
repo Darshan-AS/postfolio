@@ -3,17 +3,13 @@
 Place all required assets for the Google Play Store here before uploading.
 
 ## 🖼️ Store Graphics
-- [ ] **App Icon**: 512 x 512 px (PNG or WEBP, max 1 MB).
-- [ ] **Feature Graphic**: 1024 x 500 px (PNG or WEBP, max 1 MB).
-- [ ] **Phone Screenshots**: At least 2-8 screenshots (16:9 or 9:16, max 8 MB each).
-- [ ] **7-inch Tablet Screenshots**: At least 2-8 screenshots.
-- [ ] **10-inch Tablet Screenshots**: At least 2-8 screenshots.
+- [x] **App Icon**: `docs/store_assets/icon_512.png` (512 × 512 px PNG, 114 KB).
+- [x] **Feature Graphic**: `docs/store_assets/feature_graphic_1024x500.png` (1024 × 500 px PNG, 467 KB).
+- [x] **Phone Screenshots**: `docs/store_assets/phone_screenshots/` — 5 exact `1080×1920` (9:16) PNGs captured from latest `main` in Demo Mode (`01_dashboard.png`, `02_recurring_accounts.png`, `03_rd_monthly_hub.png`, `04_one_time_deposits.png`, `05_customers.png`).
+- [ ] **7-inch / 10-inch Tablet Screenshots**: Optional (not required for initial launch).
 
 ## 📝 Metadata
-- [ ] **App Name**: Postfolio (Max 30 characters).
-- [ ] **Short Description**: A portfolio and financial tracking application for Post Office Agents. (Max 80 characters).
-- [ ] **Full Description**: (See `docs/product_requirements.md` for inspiration).
-- [ ] **Category**: Finance.
+- [x] **Copy & URLs**: See `docs/store_assets/listing_metadata.md` (App Name, Short Description, Full Description, Category `Finance`, Website `https://postfolio.darshanas.dev`).
 
 ## ⚖️ Legal
-- [ ] **Privacy Policy**: (Required for all apps). See `docs/legal/privacy_policy.md` (Placeholder created).
+- [x] **Privacy Policy**: `docs/legal/privacy_policy.md` and hosted static page `web/privacy-policy.html` (`https://postfolio.darshanas.dev/privacy-policy.html`).
