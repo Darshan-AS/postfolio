@@ -93,8 +93,10 @@ To build the production version (`.aab`) for the Play Store, you need the signin
 
 ### C. Verify the Release Build
 ```bash
-flutter build appbundle
+flutter build appbundle --flavor prod --release --dart-define-from-file=config/prod.json
 ```
+
+For full Google Play Console setup (Internal/Closed Testing, Play App Signing SHA-1 for Google Sign-In, CI automation, and the 12-tester / 14-day Production path), see [`docs/play_store_setup.md`](play_store_setup.md).
 
 ### D. Release order when a migration is included
 `release.yml` does not run migrations, and pushing a `v*` tag deploys the web build at once. When a release contains a new file under `supabase/migrations/`, do these in order:

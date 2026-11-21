@@ -227,6 +227,12 @@
 - [ ] **P5: Database Fuzzy Search Indexes**: Enable `pg_trgm` extension and create GIN trigram indexes on text search targets (e.g. `idx_customers_name_trgm` on `customers(name)`) to avoid CPU-intensive sequential table scans.
 
 ## 📦 Release & Publication (Play Store)
+- [x] **Play Store Build, CI & Migration Guide (`docs/play_store_setup.md`)**: Enabled `ndk.debugSymbolLevel = "SYMBOL_TABLE"` in `android/app/build.gradle.kts`, added `.aab` build + signed artifact upload + guarded `r0adkll/upload-google-play@v1` step to `.github/workflows/release.yml`, and documented the full Internal → Closed (12 testers / 14 days) → Production setup.
+- [x] **Owner: Upload Keystore & GitHub Secrets**: Verified existing `upload-keystore.jks` matches Play Console, backed up to Bitwarden, and added `UPLOAD_KEYSTORE_BASE64` + `KEY_PROPERTIES` to GitHub Secrets.
+- [x] **Owner: Play App Signing SHA-1/SHA-256, Internal Testers & CI Service Account**: Registered Play App Signing fingerprints in Firebase, added Internal Testing testers in Play Console, created `github-play-deployer` service account with Play Console permissions, and set `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` secret + `PLAY_STORE_RELEASE_STATUS=draft` variable.
+- [ ] **Owner: Finish Play Console Dashboard Setup**: Host Privacy Policy URL (`web/privacy-policy.html` + email in `docs/legal/privacy_policy.md`), complete App Content declarations & Store Listing, then switch `PLAY_STORE_RELEASE_STATUS` from `draft` to `completed` once published.
+- [ ] **Owner: Closed Testing → Production (12 testers / 14 days)**: Run a Closed Test (`alpha`) with 12+ testers continuously opted in for 14 days, then apply for Production access.
+- [x] **Owner: Retire Firebase App Distribution**: Removed the universal APK build and Firebase App Distribution upload step from `.github/workflows/release.yml`; all Play Store releases now default to Closed Testing (`alpha`).
 - [ ] **Native Splash Screen**: Implement using `flutter_native_splash`. (Skipped for initial internal testing)
 - [ ] **Firebase Production**: Configure production project, update `google-services.json`, and enable **App Check** (Security Hardening).
 
