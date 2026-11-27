@@ -1,3 +1,4 @@
+opt_out_usage
 default_platform(:android)
 
 def parse_bool(value, default:)
@@ -17,7 +18,7 @@ platform :android do
     json_key = ENV.fetch("SUPPLY_JSON_KEY", "")
     UI.user_error!("SUPPLY_JSON_KEY environment variable is required") if json_key.empty?
 
-    metadata_path = options[:metadata_path] || "./fastlane/metadata"
+    metadata_path = options[:metadata_path] || "./fastlane/metadata/android"
     upload_metadata = parse_bool(options[:upload_metadata], default: true)
     upload_images = parse_bool(options[:upload_images], default: true)
     validate_only = parse_bool(options[:validate_only], default: true)
