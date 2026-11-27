@@ -44,23 +44,47 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Configure Google Play Service Account
-        env:
-          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
-        run: |
-          if [ -z "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" ]; then
-            echo "::error::GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret is not configured."
-            exit 1
-          fi
-          printf '%s\n' "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/play-service-account.json"
-          chmod 600 "$RUNNER_TEMP/play-service-account.json"
-
       - name: Set up Ruby & Fastlane
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
           bundler-cache: true
           working-directory: android
+
+      - name: Configure Google Play Service Account
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          ruby -rjson -rbase64 -e '
+            raw = ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"].to_s.strip
+            if raw.empty?
+              warn "::error::GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret is empty."
+              exit 1
+            end
+
+            parsed = nil
+            begin
+              parsed = JSON.parse(raw)
+            rescue JSON::ParserError
+              begin
+                decoded = Base64.decode64(raw)
+                parsed = JSON.parse(decoded)
+              rescue JSON::ParserError => e
+                warn "::error::GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is neither valid JSON nor base64-encoded JSON (length=#{raw.bytesize}, starts_with_brace=#{raw.start_with?("{")}, error=#{e.class}). Re-paste the raw service account JSON file contents into the GitHub Secret."
+                exit 1
+              end
+            end
+
+            required_keys = %w[type client_email private_key]
+            unless parsed.is_a?(Hash) && required_keys.all? { |k| parsed[k].is_a?(String) && !parsed[k].empty? }
+              warn "::error::GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is missing required service account fields (type, client_email, private_key)."
+              exit 1
+            end
+
+            out_path = File.join(ENV.fetch("RUNNER_TEMP"), "play-service-account.json")
+            File.write(out_path, JSON.generate(parsed))
+            File.chmod(0o600, out_path)
+          '
 
       - name: Stage Fastlane Metadata & Store Graphics
         env:
@@ -83,7 +107,7 @@ jobs:
         working-directory: android
         env:
           SUPPLY_JSON_KEY: ${{ runner.temp }}/play-service-account.json
-          STAGED_METADATA_DIR: ${{ runner.temp }}/fastlane_metadata
+          STAGED_METADATA_DIR: ${{ runner.temp }}/fastlane_metadata/android
         run: |
           bundle exec fastlane android sync_store_listing \
             metadata_path:"$STAGED_METADATA_DIR" \
