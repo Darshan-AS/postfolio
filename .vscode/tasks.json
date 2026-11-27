@@ -94,6 +94,13 @@
       "command": "git ls-files -z '*.dart' | xargs -0 dart format --output=none --set-exit-if-changed && dart analyze --fatal-infos && flutter test --exclude-tags integration --concurrency \"$(getconf _NPROCESSORS_ONLN)\"",
       "group": "test",
       "problemMatcher": []
+    },
+    {
+      // Regenerates the 7 portrait (1080x1920) + 1 landscape (1920x1080) Play Store slides.
+      "label": "Store: regenerate Play Store screenshots",
+      "type": "shell",
+      "command": "flutter test tool/store_screenshots/generate_store_screenshots_test.dart --update-goldens",
+      "problemMatcher": []
     }
   ]
 }

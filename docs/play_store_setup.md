@@ -134,6 +134,7 @@ Because Google Play re-signs your `.aab` with its own **Play App Signing key**, 
      - **Edit and delete draft apps**
      - **Release apps to testing tracks**
      - **Release to production, exclude devices, and use Play App Signing**
+     - **Manage store presence** *(required for `.github/workflows/sync-store-listing.yml` to sync screenshots and store descriptions via Fastlane `supply`)*
    - Click **Apply → Invite user → Send invite** (service accounts accept automatically).
 4. **Add GitHub Secret & Optional Variables:**
    - Secret **`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`**: paste the full JSON contents of the downloaded key file.
@@ -141,6 +142,12 @@ Because Google Play re-signs your `.aab` with its own **Play App Signing key**, 
    - *(Optional)* Repository Variable **`PLAY_STORE_RELEASE_STATUS`**: defaults to `completed`. If Play Console rejects an API upload while the app is still in *Draft* state before its first review, temporarily set this variable to `draft`, then remove it once published.
 
 Once configured, pushing a release tag (`v2.4.1+24`, etc.) automatically builds the `.aab` with R8 mapping and native debug symbols and uploads it to your configured Play Store track.
+
+### Syncing Store Listing Metadata & Screenshots (`Fastlane supply`)
+Store descriptions (`android/fastlane/metadata/android/en-US/*.txt`) and screenshots (`docs/store_assets/`) are synced separately from binary releases via **Actions → Sync Google Play Store Listing** (`.github/workflows/sync-store-listing.yml`):
+1. Ensure **`Manage store presence`** is enabled on `github-play-deployer` in Play Console.
+2. Run the workflow with **`validate_only: true`** first to perform a dry-run check against the Play Developer API.
+3. Re-run with **`validate_only: false`** to upload and submit the updated store listing.
 
 > [!TIP]
 > Once all testers have moved to Play Store, you can remove the `Upload to Firebase App Distribution` step from `.github/workflows/release.yml` and retire the `FIREBASE_ANDROID_APP_ID` secret.

@@ -2,6 +2,13 @@
 
 *Note: Finished items from before the v2.4 work are in `.agents/historical_tasks_archive.md`, with the older raw task history. For a summary of early work see `.agents/historical_summary.md`; for the current state see `.agents/progress.md`.*
 
+## 📸 Play Store Marketing Screenshots & Fastlane Sync (2026-11-27)
+*Generator under `tool/store_screenshots/` and Fastlane `supply` under `android/fastlane/`; log: `.agents/session_logs/2026-11-27_session_1.md`.*
+- [x] **Flutter Marketing Screenshot Harness (`tool/store_screenshots/`)**: `screenshot_fonts.dart`, `marketing_frame.dart`, `opaque_png.dart`, and `generate_store_screenshots_test.dart` rendering signed-in `FakeDataSource.forDate` UI without Demo/Local banners or seed notes.
+- [x] **7 Portrait (`1080×1920`) + 1 Landscape (`1920×1080`) Opaque RGB PNGs**: Generated into `docs/store_assets/phone_screenshots/` and `docs/store_assets/landscape_screenshots/`, visually verified, and checked for deterministic golden repeatability.
+- [x] **Fastlane `supply` & Manual Sync Workflow**: Added `android/Gemfile`, `android/fastlane/{Appfile,Fastfile}`, `android/fastlane/metadata/android/en-US/*.txt`, `.github/workflows/sync-store-listing.yml`, `.vscode/tasks.json`, and updated `docs/store_assets/README.md` & `docs/play_store_setup.md`.
+- [ ] **Sync to Play Console**: Grant **`Manage store presence`** to `github-play-deployer` in Play Console, then run **Actions → Sync Google Play Store Listing** (`validate_only: true`, then `false`).
+
 ## 🔐 Admin Acting-As Mode (Full CRUD) — Merged into `main`
 *Branch `feat/admin-acting-as` rebased onto `main` (`fe505d0`, post PR #21) and merged (2026-11-20). Log: `.agents/session_logs/2026-11-20_session_1.md`.*
 - [x] **SQL Migration (`20261120000000_admin_acting_as.sql`) & Contract Tests**: Added `private.can_access_agent` / `private.resolve_acting_agent`, append-only `public.admin_audit_logs` (`start`, `end`, `rpc:*`, `ON UPDATE CASCADE`), `public.log_admin_acting_as_event`, `public.list_agents_for_admin`, backwards-compatible `p_agent_id UUID DEFAULT NULL` on all 6 write RPCs (with per-RPC admin audit logging and cross-agent PK-collision guard on `rd_transactions`), admin-matched `rd_*` write RLS policies, and CASE 19b/19d + CASE 22a–22f in `supabase/tests/rd_ledger_facts_rls.sql`.
