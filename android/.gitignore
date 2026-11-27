@@ -12,3 +12,8 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Fastlane generated outputs & service account credentials
+fastlane/report.xml
+fastlane/metadata/android/*/images/
+fastlane/google-play-service-account.json

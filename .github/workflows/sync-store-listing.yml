@@ -1,0 +1,97 @@
+name: Sync Google Play Store Listing
+
+on:
+  workflow_dispatch:
+    inputs:
+      locale:
+        description: 'Play Store listing locale'
+        required: true
+        default: 'en-US'
+        type: choice
+        options:
+          - en-US
+          - en-IN
+      upload_metadata:
+        description: 'Sync title, short description, and full description'
+        required: true
+        default: true
+        type: boolean
+      upload_images:
+        description: 'Sync app icon, feature graphic, and screenshots'
+        required: true
+        default: true
+        type: boolean
+      validate_only:
+        description: 'Validate with Play API without publishing changes (dry run)'
+        required: true
+        default: true
+        type: boolean
+      changes_not_sent_for_review:
+        description: 'Save changes as draft in Play Console without sending for review'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  sync-store-listing:
+    name: Sync Play Store Listing (${{ inputs.locale }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure Google Play Service Account
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::error::GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret is not configured."
+            exit 1
+          fi
+          printf '%s\n' "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/play-service-account.json"
+          chmod 600 "$RUNNER_TEMP/play-service-account.json"
+
+      - name: Set up Ruby & Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: android
+
+      - name: Stage Fastlane Metadata & Store Graphics
+        env:
+          LOCALE: ${{ inputs.locale }}
+          UPLOAD_IMAGES: ${{ inputs.upload_images }}
+        run: |
+          STAGED_LOCALE_DIR="$RUNNER_TEMP/fastlane_metadata/android/$LOCALE"
+          mkdir -p "$STAGED_LOCALE_DIR"
+          cp android/fastlane/metadata/android/en-US/*.txt "$STAGED_LOCALE_DIR/"
+
+          if [ "$UPLOAD_IMAGES" = "true" ]; then
+            mkdir -p "$STAGED_LOCALE_DIR/images/phoneScreenshots"
+            cp docs/store_assets/icon_512.png "$STAGED_LOCALE_DIR/images/icon.png"
+            cp docs/store_assets/feature_graphic_1024x500.png "$STAGED_LOCALE_DIR/images/featureGraphic.png"
+            cp docs/store_assets/phone_screenshots/*.png "$STAGED_LOCALE_DIR/images/phoneScreenshots/"
+            cp docs/store_assets/landscape_screenshots/01_overview_landscape.png "$STAGED_LOCALE_DIR/images/phoneScreenshots/08_overview_landscape.png"
+          fi
+
+      - name: Run Fastlane Supply
+        working-directory: android
+        env:
+          SUPPLY_JSON_KEY: ${{ runner.temp }}/play-service-account.json
+          STAGED_METADATA_DIR: ${{ runner.temp }}/fastlane_metadata
+        run: |
+          bundle exec fastlane android sync_store_listing \
+            metadata_path:"$STAGED_METADATA_DIR" \
+            upload_metadata:"${{ inputs.upload_metadata }}" \
+            upload_images:"${{ inputs.upload_images }}" \
+            validate_only:"${{ inputs.validate_only }}" \
+            changes_not_sent_for_review:"${{ inputs.changes_not_sent_for_review }}"
+
+      - name: Clean up Service Account Key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/play-service-account.json"

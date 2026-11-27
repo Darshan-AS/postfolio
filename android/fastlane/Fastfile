@@ -1,0 +1,43 @@
+default_platform(:android)
+
+def parse_bool(value, default:)
+  return default if value.nil?
+  return value if value == true || value == false
+
+  normalized = value.to_s.strip.downcase
+  return true if %w[true 1 yes].include?(normalized)
+  return false if %w[false 0 no].include?(normalized)
+
+  default
+end
+
+platform :android do
+  desc "Sync Play Store listing metadata and graphics without uploading a binary"
+  lane :sync_store_listing do |options|
+    json_key = ENV.fetch("SUPPLY_JSON_KEY", "")
+    UI.user_error!("SUPPLY_JSON_KEY environment variable is required") if json_key.empty?
+
+    metadata_path = options[:metadata_path] || "./fastlane/metadata"
+    upload_metadata = parse_bool(options[:upload_metadata], default: true)
+    upload_images = parse_bool(options[:upload_images], default: true)
+    validate_only = parse_bool(options[:validate_only], default: true)
+    changes_not_sent_for_review = parse_bool(
+      options[:changes_not_sent_for_review],
+      default: false
+    )
+
+    supply(
+      package_name: "dev.darshanas.postfolio",
+      json_key: json_key,
+      metadata_path: metadata_path,
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_changelogs: true,
+      skip_upload_metadata: !upload_metadata,
+      skip_upload_images: !upload_images,
+      skip_upload_screenshots: !upload_images,
+      validate_only: validate_only,
+      changes_not_sent_for_review: changes_not_sent_for_review
+    )
+  end
+end
