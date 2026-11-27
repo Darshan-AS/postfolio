@@ -18,7 +18,11 @@ platform :android do
     json_key = ENV.fetch("SUPPLY_JSON_KEY", "")
     UI.user_error!("SUPPLY_JSON_KEY environment variable is required") if json_key.empty?
 
+    package_name = "dev.darshanas.postfolio"
     metadata_path = options[:metadata_path] || "./fastlane/metadata/android"
+    preferred_track = (options[:track] || "alpha").to_s.strip
+    preferred_track = "alpha" if preferred_track.empty?
+
     upload_metadata = parse_bool(options[:upload_metadata], default: true)
     upload_images = parse_bool(options[:upload_images], default: true)
     validate_only = parse_bool(options[:validate_only], default: true)
@@ -27,10 +31,30 @@ platform :android do
       default: false
     )
 
-    supply(
-      package_name: "dev.darshanas.postfolio",
+    # Fastlane `supply` looks up an existing release on `track` even when
+    # `skip_upload_changelogs: true`. Resolve an active track + version code so
+    # metadata-only syncs work before Production has its first release.
+    resolved_track = preferred_track
+    latest_version_code = nil
+    [preferred_track, "production", "beta", "alpha", "internal"].uniq.each do |candidate|
+      codes = google_play_track_version_codes(
+        package_name: package_name,
+        track: candidate,
+        json_key: json_key
+      )
+      next if codes.nil? || codes.empty?
+
+      resolved_track = candidate
+      latest_version_code = codes.map(&:to_i).max
+      UI.message("Resolved active Play track '#{resolved_track}' (version_code=#{latest_version_code})")
+      break
+    end
+
+    supply_opts = {
+      package_name: package_name,
       json_key: json_key,
       metadata_path: metadata_path,
+      track: resolved_track,
       skip_upload_apk: true,
       skip_upload_aab: true,
       skip_upload_changelogs: true,
@@ -39,6 +63,9 @@ platform :android do
       skip_upload_screenshots: !upload_images,
       validate_only: validate_only,
       changes_not_sent_for_review: changes_not_sent_for_review
-    )
+    }
+    supply_opts[:version_code] = latest_version_code if latest_version_code
+
+    supply(**supply_opts)
   end
 end

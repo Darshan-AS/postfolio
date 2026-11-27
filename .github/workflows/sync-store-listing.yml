@@ -11,6 +11,16 @@ on:
         options:
           - en-US
           - en-IN
+      track:
+        description: 'Active Play track used for API edit lookup (store listing is app-wide)'
+        required: true
+        default: 'alpha'
+        type: choice
+        options:
+          - alpha
+          - internal
+          - beta
+          - production
       upload_metadata:
         description: 'Sync title, short description, and full description'
         required: true
@@ -111,6 +121,7 @@ jobs:
         run: |
           bundle exec fastlane android sync_store_listing \
             metadata_path:"$STAGED_METADATA_DIR" \
+            track:"${{ inputs.track }}" \
             upload_metadata:"${{ inputs.upload_metadata }}" \
             upload_images:"${{ inputs.upload_images }}" \
             validate_only:"${{ inputs.validate_only }}" \
