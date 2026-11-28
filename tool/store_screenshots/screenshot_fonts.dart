@@ -11,12 +11,7 @@ class ScreenshotFonts {
 
   static bool _loaded = false;
 
-  static const _plusJakartaFiles = <String>[
-    'PlusJakartaSans-Regular.ttf',
-    'PlusJakartaSans-Medium.ttf',
-    'PlusJakartaSans-SemiBold.ttf',
-    'PlusJakartaSans-Bold.ttf',
-  ];
+  static const _robotoFlexAsset = 'RobotoFlex-Variable.ttf';
 
   static const _robotoFiles = <String>[
     'Roboto-Light.ttf',
@@ -26,7 +21,7 @@ class ScreenshotFonts {
     'Roboto-Black.ttf',
   ];
 
-  /// Loads `PlusJakartaSans`, `Roboto`, and `MaterialIcons` into the test binding's
+  /// Loads `RobotoFlex`, `Roboto`, and `MaterialIcons` into the test binding's
   /// [FontLoader]. Safe to call multiple times.
   static Future<void> ensureLoaded() async {
     if (_loaded) return;
@@ -34,15 +29,13 @@ class ScreenshotFonts {
 
     final assetsFontsDir = _findRelativeDir('assets/fonts');
     if (assetsFontsDir != null) {
-      final jakartaLoader = FontLoader('PlusJakartaSans');
-      for (final filename in _plusJakartaFiles) {
-        final file = File('${assetsFontsDir.path}/$filename');
-        if (file.existsSync()) {
-          final bytes = await file.readAsBytes();
-          jakartaLoader.addFont(Future.value(ByteData.sublistView(bytes)));
-        }
+      final robotoFlexFile = File('${assetsFontsDir.path}/$_robotoFlexAsset');
+      if (robotoFlexFile.existsSync()) {
+        final flexLoader = FontLoader('RobotoFlex');
+        final bytes = await robotoFlexFile.readAsBytes();
+        flexLoader.addFont(Future.value(ByteData.sublistView(bytes)));
+        await flexLoader.load();
       }
-      await jakartaLoader.load();
     }
 
     final robotoDir = _findBundledFontsDir();
@@ -83,10 +76,10 @@ class ScreenshotFonts {
     }
   }
 
-  /// Applies bundled `PlusJakartaSans` (with `Roboto` fallback) to [theme].
+  /// Applies bundled `RobotoFlex` (with `Roboto` fallback) to [theme].
   static ThemeData applyTo(ThemeData theme) {
     TextStyle? patch(TextStyle? style) => style?.copyWith(
-      fontFamily: style.fontFamily ?? 'PlusJakartaSans',
+      fontFamily: style.fontFamily ?? 'RobotoFlex',
       fontFamilyFallback: const ['Roboto'],
     );
 

@@ -839,12 +839,35 @@ void main() {
 
   group('Phase 3 M3E theme, motion, and adaptive contracts', () {
     test(
-      'AppTypography wires PlusJakartaSans, optical tracking, and Switch/Checkbox themes',
+      'AppTypography wires RobotoFlex variable axes, optical tracking, and Switch/Checkbox themes',
       () {
         for (final theme in [AppTheme.lightTheme, AppTheme.darkTheme]) {
+          expect(AppTypography.fontFamily, 'RobotoFlex');
           expect(
             theme.textTheme.bodyMedium?.fontFamily,
             AppTypography.fontFamily,
+          );
+          expect(
+            theme.textTheme.bodyMedium?.fontVariations,
+            containsAll(const [
+              FontVariation('wght', 400),
+              FontVariation('opsz', 14),
+            ]),
+          );
+          expect(
+            theme.textTheme.displayLarge?.fontVariations,
+            containsAll(const [
+              FontVariation('wght', 400),
+              FontVariation('opsz', 57),
+            ]),
+          );
+          final emphasized = AppTypography.emphasized(theme.textTheme);
+          expect(
+            emphasized.titleMedium?.fontVariations,
+            containsAll(const [
+              FontVariation('wght', 600),
+              FontVariation('opsz', 16),
+            ]),
           );
           expect(theme.textTheme.displayLarge?.letterSpacing, -0.25);
           expect(theme.textTheme.headlineMedium?.letterSpacing, -0.15);
