@@ -213,22 +213,38 @@ void main() {
   });
 
   group('form fields are 16dp apart', () {
-    for (final (name, screen) in [
-      ('customer', const CustomerFormScreen() as Widget),
-      ('recurring deposit', const RecurringDepositFormScreen()),
-    ]) {
-      testWidgets(name, (tester) async {
-        await pumpScreen(tester, screen, size: const Size(360, 2400));
+    testWidgets('customer', (tester) async {
+      await pumpScreen(
+        tester,
+        const CustomerFormScreen(),
+        size: const Size(360, 2400),
+      );
 
-        final fields = [
-          for (final element in find.byType(TextFormField).evaluate())
-            tester.getRect(find.byWidget(element.widget)),
-        ]..sort((a, b) => a.top.compareTo(b.top));
-        expect(fields.length, greaterThan(3));
-        // The first two text fields of either form follow one another in a section.
-        expect(fields[1].top - fields[0].bottom, AppDimensions.paddingLg);
-      });
-    }
+      final fields = [
+        for (final element in find.byType(TextFormField).evaluate())
+          tester.getRect(find.byWidget(element.widget)),
+      ]..sort((a, b) => a.top.compareTo(b.top));
+      expect(fields.length, greaterThan(3));
+      expect(fields[1].top - fields[0].bottom, AppDimensions.paddingLg);
+    });
+
+    testWidgets('recurring deposit paired and stacked rows', (tester) async {
+      await pumpScreen(
+        tester,
+        const RecurringDepositFormScreen(),
+        size: const Size(360, 2400),
+      );
+
+      final fields = [
+        for (final element in find.byType(TextFormField).evaluate())
+          tester.getRect(find.byWidget(element.widget)),
+      ]..sort((a, b) => a.top.compareTo(b.top));
+      expect(fields.length, greaterThan(4));
+      // Serial No. & Account No. share the first row; Installment Amount then Start Date
+      // | Interest Rate sit 16dp apart inside Investment Details.
+      expect(fields[0].top, fields[1].top);
+      expect(fields[3].top - fields[2].bottom, AppDimensions.paddingLg);
+    });
   });
 
   group('a detail screen\'s blocks are 16dp apart', () {

@@ -151,11 +151,51 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 2));
       expect(tester.takeException(), isNull);
       expect(
+        find.text(t.recurringDeposits.sections.lockedFinancialTerms),
+        findsOneWidget,
+      );
+      expect(
+        find.text(t.recurringDeposits.fields.financialTermsLocked),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is AppTextField &&
+              w.labelText == t.recurringDeposits.fields.initialPaidInstallments,
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('collapses onboarding fields on create until toggled open', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1600, 2400);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(app(const RecurringDepositFormScreen()));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is AppTextField &&
+              w.labelText == t.recurringDeposits.fields.initialPaidInstallments,
+        ),
+        findsNothing,
+      );
+      await tester.tap(
+        find.text(t.recurringDeposits.fields.existingAccountDetails),
+      );
+      await tester.pumpAndSettle();
+      expect(
         await isEnabled(
           tester,
           t.recurringDeposits.fields.initialPaidInstallments,
         ),
-        isFalse,
+        isTrue,
       );
     });
   });

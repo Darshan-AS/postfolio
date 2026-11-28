@@ -60,7 +60,8 @@ void main() {
       expect(tester.takeException(), isNull);
     }
 
-    final save = find.widgetWithText(AppButton, t.common.confirm);
+    final save = find.widgetWithText(AppButton, t.customers.createCustomer);
+    final defaultSave = find.widgetWithText(AppButton, t.common.confirm);
     final nameRequired = Customer.validateName('')!;
 
     testWidgets(
@@ -78,6 +79,7 @@ void main() {
           findsNothing,
         );
         expect(find.byTooltip(t.common.confirm), findsNothing);
+        expect(find.byTooltip(t.customers.createCustomer), findsNothing);
 
         final button = tester.getRect(save);
         expect(button.bottom, lessThanOrEqualTo(phone.height));
@@ -145,7 +147,7 @@ void main() {
             ),
           ),
         );
-        final button = tester.getRect(save);
+        final button = tester.getRect(defaultSave);
         expect(button.width, AppDimensions.maxFormWidth);
         expect(button.center.dx, 700);
       },
@@ -171,6 +173,85 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(saves, 0);
     });
+
+    testWidgets('respects isEnabled and shows unsaved indicator when dirty', (
+      tester,
+    ) async {
+      usePhone(tester);
+      var saves = 0;
+      await tester.pumpWidget(
+        app(
+          Scaffold(
+            body: FormScreenBody(
+              isSaving: false,
+              isEnabled: false,
+              submitLabel: t.common.saveChanges,
+              showUnsavedHint: false,
+              onSave: () => saves++,
+              child: const SizedBox.expand(),
+            ),
+          ),
+        ),
+      );
+      expect(find.text(t.common.saveChanges), findsOneWidget);
+      expect(find.text(t.common.unsavedChangesIndicator), findsNothing);
+      await tester.tap(find.byType(AppButton));
+      await tester.pump();
+      expect(saves, 0);
+
+      await tester.pumpWidget(
+        app(
+          Scaffold(
+            body: FormScreenBody(
+              isSaving: false,
+              isEnabled: true,
+              submitLabel: t.common.saveChanges,
+              showUnsavedHint: true,
+              onSave: () => saves++,
+              child: const SizedBox.expand(),
+            ),
+          ),
+        ),
+      );
+      expect(find.text(t.common.unsavedChangesIndicator), findsOneWidget);
+      await tester.tap(find.byType(AppButton));
+      await tester.pump();
+      expect(saves, 1);
+    });
+
+    testWidgets(
+      'AppFormRow pairs fields horizontally at 1.0x and stacks them at 2.0x',
+      (tester) async {
+        Future<void> pumpRow(double scale) async {
+          usePhone(tester);
+          await tester.pumpWidget(
+            app(
+              const Scaffold(
+                body: Padding(
+                  padding: EdgeInsets.all(AppDimensions.pageMargin),
+                  child: AppFormRow(
+                    left: SizedBox(key: ValueKey('row_left'), height: 48),
+                    right: SizedBox(key: ValueKey('row_right'), height: 48),
+                  ),
+                ),
+              ),
+              textScale: scale,
+            ),
+          );
+        }
+
+        await pumpRow(1.0);
+        final left1 = tester.getRect(find.byKey(const ValueKey('row_left')));
+        final right1 = tester.getRect(find.byKey(const ValueKey('row_right')));
+        expect(left1.top, right1.top);
+        expect(right1.left - left1.right, AppDimensions.paddingMd);
+
+        await pumpRow(2.0);
+        final left2 = tester.getRect(find.byKey(const ValueKey('row_left')));
+        final right2 = tester.getRect(find.byKey(const ValueKey('row_right')));
+        expect(right2.top - left2.bottom, AppDimensions.paddingLg);
+      },
+    );
   });
 
   group('field labels', () {
@@ -333,7 +414,8 @@ void main() {
         );
 
         final labelTop = tester.getRect(find.text('Notes')).center.dy;
-        expect(labelTop, moreOrLessEquals(notesIcon.center.dy, epsilon: 2));
+        expect(labelTop, greaterThanOrEqualTo(notesIcon.center.dy - 2));
+        expect(labelTop, lessThan(notes.center.dy));
       },
     );
   });

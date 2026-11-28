@@ -8,18 +8,21 @@ import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_motion.dart';
-import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
+import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/core/widgets/feedback/unsaved_changes_pop_scope.dart';
 import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
+import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/core/widgets/layout/form_app_bar.dart';
 import 'package:postfolio/core/widgets/layout/form_screen_body.dart';
 import 'package:postfolio/features/auth/domain/auth_state.dart';
+import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/features/profile/domain/agent_profile.dart';
 import 'package:postfolio/features/profile/presentation/controllers/profile_controller.dart';
 import 'package:postfolio/features/profile/presentation/hooks/use_profile_form.dart';
+import 'package:postfolio/features/profile/presentation/widgets/agent_avatar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
 
@@ -49,20 +52,34 @@ class ProfileEditScreen extends ConsumerWidget {
       ),
       data: (profile) => _ProfileForm(
         initialProfile: AgentProfile.effectiveFrom(profile, fallbackUser),
+        fallbackUser: fallbackUser,
       ),
     );
   }
 }
 
 class _ProfileForm extends HookConsumerWidget {
-  const _ProfileForm({required this.initialProfile});
+  const _ProfileForm({required this.initialProfile, this.fallbackUser});
 
   final AgentProfile initialProfile;
+  final AuthUser? fallbackUser;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final form = useProfileForm(context, ref, initialProfile);
     final isDemoMode = ref.watch(demoModeProvider);
+    final scheme = Theme.of(context).colorScheme;
+    final stacked = AppDimensions.isLargeText(context);
+    final avatarInitial = initialProfile.resolveInitial(
+      fallbackUser: fallbackUser,
+    );
+    final photoUrl = isDemoMode ? null : fallbackUser?.photoUrl;
+    final email = initialProfile.email?.trim() ?? '';
+    final displayName = initialProfile.name?.trim() ?? '';
+    final accountSubtitle = [
+      if (email.isNotEmpty) email,
+      t.settings.profileFields.emailManagedByGoogle,
+    ].join(t.format.bulletSeparator);
 
     return UnsavedChangesPopScope(
       isDirty: form.isDirty && !form.isSaving.value,
@@ -70,6 +87,9 @@ class _ProfileForm extends HookConsumerWidget {
         appBar: FormAppBar(title: t.settings.editProfile),
         body: FormScreenBody(
           isSaving: form.isSaving.value,
+          submitLabel: t.common.saveChanges,
+          isEnabled: form.isDirty,
+          showUnsavedHint: form.isDirty,
           onSave: form.save,
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
@@ -88,6 +108,23 @@ class _ProfileForm extends HookConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      EntityListTile(
+                        leading: AppShapeAvatar(
+                          size: AppDimensions.avatarMd,
+                          shape: AppAvatarShape.cookie9,
+                          backgroundColor: scheme.primaryContainer,
+                          foregroundColor: scheme.onPrimaryContainer,
+                          child: AgentAvatarPhoto(
+                            initial: avatarInitial,
+                            photoUrl: photoUrl,
+                          ),
+                        ),
+                        title: displayName.isNotEmpty
+                            ? displayName
+                            : avatarInitial,
+                        subtitle: Text(accountSubtitle),
+                      ),
+                      AppSpacings.gapLg,
                       FormSection(
                         title: t.settings.profileFields.personalSection,
                         children: [
@@ -102,20 +139,6 @@ class _ProfileForm extends HookConsumerWidget {
                             validator: AgentProfile.validateName,
                             textCapitalization: TextCapitalization.words,
                             textInputAction: TextInputAction.next,
-                          ),
-                          AppSpacings.gapLg,
-                          AppTextField(
-                            controller: form.emailController,
-                            labelText: t.settings.profileFields.email,
-                            prefixIcon: const AppIcon(
-                              HugeIcons.strokeRoundedMail01,
-                              size: AppDimensions.iconMd,
-                            ),
-                            readOnly: true,
-                            enabled: false,
-                          ),
-                          FormFieldSupportingText(
-                            t.settings.profileFields.emailManagedByGoogle,
                           ),
                           AppSpacings.gapLg,
                           AppTextField(
@@ -162,14 +185,14 @@ class _ProfileForm extends HookConsumerWidget {
                       FormSection(
                         title: t.settings.profileFields.agencySection,
                         children: [
-                          Text(
-                            t.settings.profileFields.agencyType,
-                            style: Theme.of(context).textTheme.labelLarge,
-                          ),
-                          AppSpacings.gapXs,
-                          AppButtonGroup<AgencyType>.multi(
+                          AppSegmentedButtonField<AgencyType>.multi(
                             key: const ValueKey('profile_agency_types_group'),
                             selected: form.selectedAgencyTypes.value,
+                            labelText: t.settings.profileFields.agencyType,
+                            prefixIcon: const AppIcon(
+                              HugeIcons.strokeRoundedLayers01,
+                              size: AppDimensions.iconMd,
+                            ),
                             onToggled: form.toggleAgencyType,
                             segments: [
                               AppSegment(
@@ -256,35 +279,40 @@ class _ProfileForm extends HookConsumerWidget {
                       FormSection(
                         title: t.settings.profileFields.kycSection,
                         children: [
-                          AppTextField(
-                            controller: form.panController,
-                            labelText: t.settings.profileFields.panNumber,
-                            prefixIcon: const AppIcon(
-                              HugeIcons.strokeRoundedCreditCard,
-                              size: AppDimensions.iconMd,
+                          AppFormRow(
+                            left: AppTextField(
+                              controller: form.panController,
+                              labelText: t.settings.profileFields.panNumber,
+                              prefixIcon: stacked
+                                  ? const AppIcon(
+                                      HugeIcons.strokeRoundedCreditCard,
+                                      size: AppDimensions.iconMd,
+                                    )
+                                  : null,
+                              inputFormatters: const [UpperCaseTextFormatter()],
+                              validator: AgentProfile.validatePan,
+                              textCapitalization: TextCapitalization.characters,
+                              textInputAction: TextInputAction.next,
                             ),
-                            inputFormatters: const [UpperCaseTextFormatter()],
-                            validator: AgentProfile.validatePan,
-                            textCapitalization: TextCapitalization.characters,
-                            textInputAction: TextInputAction.next,
-                          ),
-                          AppSpacings.gapLg,
-                          AppTextField(
-                            controller: form.aadhaarController,
-                            labelText: t.settings.profileFields.aadhaarNumber,
-                            prefixIcon: const AppIcon(
-                              HugeIcons.strokeRoundedId,
-                              size: AppDimensions.iconMd,
+                            right: AppTextField(
+                              controller: form.aadhaarController,
+                              labelText: t.settings.profileFields.aadhaarNumber,
+                              prefixIcon: stacked
+                                  ? const AppIcon(
+                                      HugeIcons.strokeRoundedId,
+                                      size: AppDimensions.iconMd,
+                                    )
+                                  : null,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(
+                                  AppConstants.aadhaarLength,
+                                ),
+                              ],
+                              validator: AgentProfile.validateAadhaar,
+                              textInputAction: TextInputAction.next,
                             ),
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(
-                                AppConstants.aadhaarLength,
-                              ),
-                            ],
-                            validator: AgentProfile.validateAadhaar,
-                            textInputAction: TextInputAction.next,
                           ),
                           AppSpacings.gapLg,
                           AppTextField(

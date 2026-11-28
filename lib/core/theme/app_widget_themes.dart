@@ -99,26 +99,34 @@ class AppWidgetThemes {
   ) => TextButtonThemeData(style: _pillStyle(emphasized));
 
   static InputDecorationTheme inputDecorationTheme(ColorScheme colorScheme) {
-    OutlineInputBorder border(
-      Color color, [
-      double width = AppDimensions.borderSm,
-    ]) => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppShapes.large),
-      borderSide: BorderSide(color: color, width: width),
-    );
+    UnderlineInputBorder border(Color color, [double width = 0]) =>
+        UnderlineInputBorder(
+          borderRadius: width == 0
+              ? BorderRadius.circular(AppShapes.large)
+              : const BorderRadius.vertical(
+                  top: Radius.circular(AppShapes.large),
+                ),
+          borderSide: width == 0
+              ? BorderSide.none
+              : BorderSide(color: color, width: width),
+        );
 
     return InputDecorationTheme(
       filled: true,
-      fillColor: colorScheme.inset,
+      fillColor: WidgetStateColor.resolveWith(
+        (states) => states.contains(WidgetState.disabled)
+            ? colorScheme.inset.withValues(alpha: AppDimensions.opacityDisabled)
+            : colorScheme.inset,
+      ),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.paddingLg,
-        vertical: AppDimensions.paddingLg,
+        vertical: AppDimensions.paddingMd,
       ),
-      border: border(colorScheme.outlineVariant),
-      enabledBorder: border(colorScheme.outlineVariant),
-      disabledBorder: border(colorScheme.outlineVariant.withValues(alpha: 0.5)),
+      border: border(Colors.transparent),
+      enabledBorder: border(Colors.transparent),
+      disabledBorder: border(Colors.transparent),
       focusedBorder: border(colorScheme.primary, AppDimensions.borderMd),
-      errorBorder: border(colorScheme.error),
+      errorBorder: border(colorScheme.error, AppDimensions.borderSm),
       focusedErrorBorder: border(colorScheme.error, AppDimensions.borderMd),
     );
   }

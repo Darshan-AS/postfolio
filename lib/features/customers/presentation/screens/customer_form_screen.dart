@@ -6,12 +6,14 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
+import 'package:postfolio/core/extensions/string_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/domain/nominees_input_section.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/feedback/unsaved_changes_pop_scope.dart';
 import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
+import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/core/widgets/layout/form_app_bar.dart';
 import 'package:postfolio/core/widgets/layout/form_screen_body.dart';
 
@@ -75,6 +77,14 @@ class _CustomerForm extends HookConsumerWidget {
       ].join('\u0000'),
     );
 
+    final editCustomer = existingCustomer;
+    final editSubtitle = editCustomer == null
+        ? null
+        : (editCustomer.cifNumber != null &&
+              editCustomer.cifNumber!.trim().isNotEmpty)
+        ? '${t.customers.fields.cif}: ${editCustomer.cifNumber!.trim()}'
+        : editCustomer.phone?.toPhoneFormat();
+
     return UnsavedChangesPopScope(
       isDirty: isDirty && !state.isSaving.value,
       child: Scaffold(
@@ -85,6 +95,11 @@ class _CustomerForm extends HookConsumerWidget {
         ),
         body: FormScreenBody(
           isSaving: state.isSaving.value,
+          submitLabel: state.isUpdating
+              ? t.common.saveChanges
+              : t.customers.createCustomer,
+          isEnabled: !state.isUpdating || isDirty,
+          showUnsavedHint: state.isUpdating && isDirty,
           onSave: () => state.save(context),
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
@@ -103,6 +118,22 @@ class _CustomerForm extends HookConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      if (editCustomer != null) ...[
+                        EntityListTile(
+                          leadingText: editCustomer.name.isNotEmpty
+                              ? editCustomer.name[0].toUpperCase()
+                              : '?',
+                          leadingShape: AppAvatarShape.forPerson(
+                            editCustomer.name,
+                          ),
+                          title: editCustomer.name,
+                          subtitle:
+                              editSubtitle != null && editSubtitle.isNotEmpty
+                              ? Text(editSubtitle)
+                              : null,
+                        ),
+                        AppSpacings.gapLg,
+                      ],
                       _buildPersonalInfo(
                         nameController: state.nameController,
                         phoneController: state.phoneController,
@@ -114,6 +145,7 @@ class _CustomerForm extends HookConsumerWidget {
                       ),
                       AppSpacings.gapLg,
                       _buildIdentityDocuments(
+                        context,
                         cifNumberController: state.cifNumberController,
                         aadhaarNumberController: state.aadhaarNumberController,
                         panNumberController: state.panNumberController,
@@ -214,11 +246,13 @@ Widget _buildPersonalInfo({
   );
 }
 
-Widget _buildIdentityDocuments({
+Widget _buildIdentityDocuments(
+  BuildContext context, {
   required TextEditingController cifNumberController,
   required TextEditingController aadhaarNumberController,
   required TextEditingController panNumberController,
 }) {
+  final stacked = AppDimensions.isLargeText(context);
   return FormSection(
     title: t.customers.sections.identityDocuments,
     children: [
@@ -233,33 +267,38 @@ Widget _buildIdentityDocuments({
         textInputAction: TextInputAction.next,
       ),
       AppSpacings.gapLg,
-      AppTextField(
-        controller: aadhaarNumberController,
-        labelText: t.customers.fields.aadhaarNumber,
-        prefixIcon: const AppIcon(
-          HugeIcons.strokeRoundedId,
-          size: AppDimensions.iconMd,
+      AppFormRow(
+        left: AppTextField(
+          controller: aadhaarNumberController,
+          labelText: t.customers.fields.aadhaarNumber,
+          prefixIcon: stacked
+              ? const AppIcon(
+                  HugeIcons.strokeRoundedId,
+                  size: AppDimensions.iconMd,
+                )
+              : null,
+          validator: Customer.validateAadhaar,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(AppConstants.aadhaarLength),
+          ],
+          textInputAction: TextInputAction.next,
         ),
-        validator: Customer.validateAadhaar,
-        keyboardType: TextInputType.number,
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(AppConstants.aadhaarLength),
-        ],
-        textInputAction: TextInputAction.next,
-      ),
-      AppSpacings.gapLg,
-      AppTextField(
-        controller: panNumberController,
-        labelText: t.customers.fields.panNumber,
-        prefixIcon: const AppIcon(
-          HugeIcons.strokeRoundedCreditCard,
-          size: AppDimensions.iconMd,
+        right: AppTextField(
+          controller: panNumberController,
+          labelText: t.customers.fields.panNumber,
+          prefixIcon: stacked
+              ? const AppIcon(
+                  HugeIcons.strokeRoundedCreditCard,
+                  size: AppDimensions.iconMd,
+                )
+              : null,
+          validator: Customer.validatePan,
+          textCapitalization: TextCapitalization.characters,
+          inputFormatters: const [UpperCaseTextFormatter()],
+          textInputAction: TextInputAction.next,
         ),
-        validator: Customer.validatePan,
-        textCapitalization: TextCapitalization.characters,
-        inputFormatters: const [UpperCaseTextFormatter()],
-        textInputAction: TextInputAction.next,
       ),
     ],
   );

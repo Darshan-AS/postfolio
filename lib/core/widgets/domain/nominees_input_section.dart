@@ -221,6 +221,9 @@ class _NomineeItemForm extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final state = useNomineeFormState(nominee: nominee, onChanged: onChanged);
+    final stacked = AppDimensions.isLargeText(context);
+    final isOtherRelationship =
+        state.relationshipState.value == NomineeRelationship.other;
 
     return AppGroupTile(
       position: AppGroupPosition.middle,
@@ -240,23 +243,37 @@ class _NomineeItemForm extends HookWidget {
               onChanged: state.notifyChange,
             ),
             AppSpacings.gapLg,
-            _buildRelationshipField(
-              relationshipState: state.relationshipState,
-              onChanged: state.notifyChange,
-            ),
-            if (state.relationshipState.value == NomineeRelationship.other) ...[
+            if (isOtherRelationship) ...[
+              _buildRelationshipField(
+                relationshipState: state.relationshipState,
+                onChanged: state.notifyChange,
+                showIcon: true,
+              ),
               AppSpacings.gapLg,
               _buildCustomRelationshipField(
                 customRelationshipController:
                     state.customRelationshipController,
                 onChanged: state.notifyChange,
               ),
-            ],
-            AppSpacings.gapLg,
-            _buildPercentageField(
-              percentageController: state.percentageController,
-              onChanged: state.notifyChange,
-            ),
+              AppSpacings.gapLg,
+              _buildPercentageField(
+                percentageController: state.percentageController,
+                onChanged: state.notifyChange,
+                showIcon: true,
+              ),
+            ] else
+              AppFormRow(
+                left: _buildRelationshipField(
+                  relationshipState: state.relationshipState,
+                  onChanged: state.notifyChange,
+                  showIcon: stacked,
+                ),
+                right: _buildPercentageField(
+                  percentageController: state.percentageController,
+                  onChanged: state.notifyChange,
+                  showIcon: stacked,
+                ),
+              ),
           ],
         ),
       ),
@@ -313,6 +330,7 @@ Widget _buildNameField({
 Widget _buildRelationshipField({
   required ValueNotifier<NomineeRelationship> relationshipState,
   required VoidCallback onChanged,
+  bool showIcon = true,
 }) {
   return AppDropdownField<NomineeRelationship>(
     value: relationshipState.value,
@@ -335,10 +353,12 @@ Widget _buildRelationshipField({
         onChanged();
       }
     },
-    prefixIcon: const AppIcon(
-      HugeIcons.strokeRoundedUserMultiple,
-      size: AppDimensions.iconMd,
-    ),
+    prefixIcon: showIcon
+        ? const AppIcon(
+            HugeIcons.strokeRoundedUserMultiple,
+            size: AppDimensions.iconMd,
+          )
+        : null,
   );
 }
 
@@ -364,14 +384,17 @@ Widget _buildCustomRelationshipField({
 Widget _buildPercentageField({
   required TextEditingController percentageController,
   required VoidCallback onChanged,
+  bool showIcon = true,
 }) {
   return AppTextField(
     controller: percentageController,
     labelText: t.nominees.percentage,
-    prefixIcon: const AppIcon(
-      HugeIcons.strokeRoundedPercent,
-      size: AppDimensions.iconMd,
-    ),
+    prefixIcon: showIcon
+        ? const AppIcon(
+            HugeIcons.strokeRoundedPercent,
+            size: AppDimensions.iconMd,
+          )
+        : null,
     isRequired: true,
     keyboardType: const TextInputType.numberWithOptions(decimal: true),
     validator: (val) => Nominee.validatePercentage(double.tryParse(val ?? '')),

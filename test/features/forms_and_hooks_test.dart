@@ -192,7 +192,7 @@ void main() {
         );
 
         // Tap Save -> invalid CIF, Aadhaar, PAN must surface inline errors
-        await tester.tap(find.text(t.common.confirm));
+        await tester.tap(find.text(t.customers.createCustomer));
         await tester.pumpAndSettle();
 
         expect(find.text(t.errors.invalidCif), findsOneWidget);

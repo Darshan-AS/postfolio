@@ -43,6 +43,9 @@ class AppTextField extends StatelessWidget {
   final int? maxLines;
   final int? minLines;
   final Widget? suffixIcon;
+  final String? suffixText;
+  final TextStyle? style;
+  final TextStyle? prefixStyle;
   final void Function(String)? onChanged;
   final List<TextInputFormatter>? inputFormatters;
 
@@ -64,6 +67,9 @@ class AppTextField extends StatelessWidget {
     this.maxLines = 1,
     this.minLines,
     this.suffixIcon,
+    this.suffixText,
+    this.style,
+    this.prefixStyle,
     this.onChanged,
     this.inputFormatters,
   });
@@ -75,15 +81,21 @@ class AppTextField extends StatelessWidget {
       isRequired: isRequired,
       builder: (context, label) => TextFormField(
         controller: controller,
-        decoration: AppInputDecoration.m3(
-          context,
-          labelText: label,
-          hintText: hintText,
-          prefixIcon: prefixIcon,
-          prefixText: prefixText,
-          isRequired: isRequired,
-          restingLines: minLines ?? maxLines ?? 1,
-        ).copyWith(suffixIcon: suffixIcon),
+        style: style,
+        decoration:
+            AppInputDecoration.m3(
+              context,
+              labelText: label,
+              hintText: hintText,
+              prefixIcon: prefixIcon,
+              prefixText: prefixText,
+              isRequired: isRequired,
+              restingLines: minLines ?? maxLines ?? 1,
+            ).copyWith(
+              suffixIcon: suffixIcon,
+              suffixText: suffixText,
+              prefixStyle: prefixStyle,
+            ),
         validator: validator,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
@@ -162,6 +174,7 @@ class AppDateField extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onClear;
   final AppIconData prefixIcon;
+  final bool showPrefixIcon;
   final bool isRequired;
   final bool enabled;
 
@@ -172,6 +185,7 @@ class AppDateField extends StatelessWidget {
     required this.onTap,
     this.onClear,
     this.prefixIcon = HugeIcons.strokeRoundedCalendar01,
+    this.showPrefixIcon = true,
     this.isRequired = false,
     this.enabled = true,
   });
@@ -183,7 +197,9 @@ class AppDateField extends StatelessWidget {
       builder: (context, _) => AppTextField(
         controller: controller,
         labelText: labelText,
-        prefixIcon: AppIcon(prefixIcon, size: AppDimensions.iconMd),
+        prefixIcon: showPrefixIcon
+            ? AppIcon(prefixIcon, size: AppDimensions.iconMd)
+            : null,
         readOnly: true,
         onTap: enabled ? onTap : null,
         isRequired: isRequired,
@@ -203,30 +219,48 @@ class AppDateField extends StatelessWidget {
   }
 }
 
-/// A labelled single-choice field drawn as a connected button group ([AppButtonGroup]).
+/// A labelled single- or multi-choice field drawn as a connected button group
+/// ([AppButtonGroup]).
 class AppSegmentedButtonField<T> extends StatelessWidget {
-  final T value;
+  final T? _selectedValue;
+  final Set<T>? _selectedValues;
   final String labelText;
   final Widget? prefixIcon;
   final List<AppSegment<T>> segments;
-  final void Function(T) onChanged;
+  final void Function(T) _onPressed;
   final bool isRequired;
   final bool enabled;
 
   const AppSegmentedButtonField({
     super.key,
-    required this.value,
+    required T value,
     required this.labelText,
     required this.segments,
-    required this.onChanged,
+    required void Function(T) onChanged,
     this.prefixIcon,
     this.isRequired = false,
     this.enabled = true,
-  });
+  }) : _selectedValue = value,
+       _selectedValues = null,
+       _onPressed = onChanged;
+
+  const AppSegmentedButtonField.multi({
+    super.key,
+    required Set<T> selected,
+    required this.labelText,
+    required this.segments,
+    required void Function(T) onToggled,
+    this.prefixIcon,
+    this.isRequired = false,
+    this.enabled = true,
+  }) : _selectedValue = null,
+       _selectedValues = selected,
+       _onPressed = onToggled;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final multiSelected = _selectedValues;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -267,12 +301,57 @@ class AppSegmentedButtonField<T> extends StatelessWidget {
             ],
           ),
         ),
-        AppButtonGroup<T>(
-          segments: segments,
-          selected: value,
-          enabled: enabled,
-          onChanged: onChanged,
-        ),
+        multiSelected != null
+            ? AppButtonGroup<T>.multi(
+                segments: segments,
+                selected: multiSelected,
+                enabled: enabled,
+                onToggled: _onPressed,
+              )
+            : AppButtonGroup<T>(
+                segments: segments,
+                selected: _selectedValue as T,
+                enabled: enabled,
+                onChanged: _onPressed,
+              ),
+      ],
+    );
+  }
+}
+
+/// Pairs two form fields side by side, collapsing cleanly to a column above [AppDimensions.largeTextScale].
+class AppFormRow extends StatelessWidget {
+  final Widget left;
+  final Widget right;
+  final double spacing;
+  final double stackedSpacing;
+
+  const AppFormRow({
+    super.key,
+    required this.left,
+    required this.right,
+    this.spacing = AppDimensions.paddingMd,
+    this.stackedSpacing = AppDimensions.paddingLg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (AppDimensions.isLargeText(context)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          left,
+          SizedBox(height: stackedSpacing),
+          right,
+        ],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: left),
+        SizedBox(width: spacing),
+        Expanded(child: right),
       ],
     );
   }

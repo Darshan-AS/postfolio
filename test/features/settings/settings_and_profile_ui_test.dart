@@ -721,7 +721,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text(t.common.confirm));
+        await tester.tap(find.text(t.common.saveChanges));
         await tester.pumpAndSettle();
 
         expect(find.byType(ProfileEditScreen), findsNothing);
@@ -766,7 +766,7 @@ void main() {
 
         expect(find.text(t.settings.profileFields.sasSection), findsOneWidget);
 
-        await tester.tap(find.text(t.common.confirm));
+        await tester.tap(find.text(t.common.saveChanges));
         await tester.pumpAndSettle();
 
         final saved = env.container.read(profileControllerProvider).value!;
@@ -819,7 +819,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text(t.settings.profileFields.sasSection), findsNothing);
 
-        await tester.tap(find.text(t.common.confirm));
+        await tester.tap(find.text(t.common.saveChanges));
         await tester.pumpAndSettle();
 
         final saved = env.container.read(profileControllerProvider).value!;
@@ -875,7 +875,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text(t.common.confirm));
+        await tester.tap(find.text(t.common.saveChanges));
         await tester.pumpAndSettle();
 
         expect(find.text(t.errors.invalidPhone), findsOneWidget);
@@ -906,7 +906,7 @@ void main() {
         await tester.tap(clearDobBtn);
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text(t.common.confirm));
+        await tester.tap(find.text(t.common.saveChanges));
         await tester.pumpAndSettle();
 
         final saved = env.container.read(profileControllerProvider).value!;

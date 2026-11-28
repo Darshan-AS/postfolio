@@ -183,7 +183,7 @@ void main() {
           _fieldLabeled(t.customers.fields.phoneNumber),
           '9988776655',
         );
-        await tester.tap(find.text(t.common.confirm));
+        await tester.tap(find.text(t.customers.createCustomer));
         await tester.pumpAndSettle();
         expect(find.textContaining('Customer save blocked'), findsOneWidget);
         ScaffoldMessenger.of(
@@ -219,7 +219,7 @@ void main() {
         );
         await tester.tap(find.byTooltip(t.common.clear));
         await tester.pumpAndSettle();
-        await tester.tap(find.text(t.common.confirm));
+        await tester.tap(find.text(t.common.saveChanges));
         await tester.pumpAndSettle();
         expect(find.text('Go Target'), findsOneWidget);
         await tester.pumpWidget(const SizedBox.shrink());
@@ -268,7 +268,7 @@ void main() {
           _fieldLabeled(t.oneTimeDeposits.fields.principalAmount),
           '100000',
         );
-        await tester.tap(find.text(t.common.confirm));
+        await tester.tap(find.text(t.oneTimeDeposits.createDeposit));
         await tester.pumpAndSettle();
         expect(
           find.text(t.oneTimeDeposits.selectCustomerPrompt),
@@ -294,7 +294,7 @@ void main() {
           _fieldLabeled(t.oneTimeDeposits.fields.principalAmount),
           '50000',
         );
-        await tester.tap(find.text(t.common.confirm));
+        await tester.tap(find.text(t.oneTimeDeposits.createDeposit));
         await tester.pumpAndSettle();
         expect(find.textContaining('Deposit save blocked'), findsOneWidget);
         ScaffoldMessenger.of(
@@ -317,7 +317,7 @@ void main() {
           _fieldLabeled(t.oneTimeDeposits.fields.principalAmount),
           '50000',
         );
-        await tester.tap(find.text(t.common.confirm));
+        await tester.tap(find.text(t.oneTimeDeposits.createDeposit));
         await tester.pumpAndSettle();
         expect(find.text('Go Target'), findsOneWidget);
         await tester.pumpWidget(const SizedBox.shrink());

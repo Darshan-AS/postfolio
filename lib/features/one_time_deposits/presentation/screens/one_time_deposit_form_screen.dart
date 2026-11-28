@@ -4,15 +4,19 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/customers/presentation/widgets/customer_selection_field.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
 import 'package:postfolio/core/widgets/domain/nominees_input_section.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/feedback/unsaved_changes_pop_scope.dart';
 import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
+import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/core/widgets/layout/form_app_bar.dart';
 import 'package:postfolio/core/widgets/layout/form_screen_body.dart';
 import 'package:postfolio/core/widgets/forms/app_duration_input.dart';
@@ -91,6 +95,13 @@ class _OneTimeDepositForm extends HookConsumerWidget {
       ].join('\u0000'),
     );
 
+    final editDeposit = existingDeposit;
+    final editCustomerName = editDeposit == null
+        ? null
+        : (editDeposit.customerName?.isNotEmpty ?? false)
+        ? editDeposit.customerName!
+        : ref.watch(customerByIdProvider(editDeposit.customerId)).value?.name;
+
     return UnsavedChangesPopScope(
       isDirty: isDirty && !state.isSaving.value,
       child: Scaffold(
@@ -101,6 +112,11 @@ class _OneTimeDepositForm extends HookConsumerWidget {
         ),
         body: FormScreenBody(
           isSaving: state.isSaving.value,
+          submitLabel: state.isUpdating
+              ? t.common.saveChanges
+              : t.oneTimeDeposits.createDeposit,
+          isEnabled: !state.isUpdating || isDirty,
+          showUnsavedHint: state.isUpdating && isDirty,
           onSave: state.save,
           child: Form(
             key: state.formKey,
@@ -119,6 +135,25 @@ class _OneTimeDepositForm extends HookConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      if (editDeposit != null) ...[
+                        EntityListTile(
+                          leadingText: editDeposit.schemeType.shortName,
+                          leadingSubtext: editDeposit.schemeTermLabel,
+                          leadingShape: editDeposit.schemeType.avatarShape,
+                          title:
+                              editCustomerName ??
+                              editDeposit.schemeType.displayName,
+                          subtitle: Text(
+                            [
+                              if (editDeposit.accountNo?.trim().isNotEmpty ??
+                                  false)
+                                editDeposit.accountNo!.trim(),
+                              editDeposit.status.displayName,
+                            ].join(t.format.bulletSeparator),
+                          ),
+                        ),
+                        AppSpacings.gapLg,
+                      ],
                       _buildAccountInformation(
                         selectedCustomerId: state.selectedCustomerId,
                         accountNoController: state.accountNoController,
@@ -216,6 +251,10 @@ Widget _buildInvestmentDetails(
   required InvestmentProjection projection,
   required OneTimeDepositFormState state,
 }) {
+  final scheme = Theme.of(context).colorScheme;
+  final emphasized = AppTypography.emphasizedOf(context);
+  final stacked = AppDimensions.isLargeText(context);
+
   return FormSection(
     title: t.oneTimeDeposits.sections.investmentDetails,
     children: [
@@ -223,7 +262,7 @@ Widget _buildInvestmentDetails(
         value: selectedScheme.value,
         labelText: t.oneTimeDeposits.fields.schemeType,
         segments: OneTimeSchemeType.values
-            .map((scheme) => AppSegment(value: scheme, label: scheme.shortName))
+            .map((s) => AppSegment(value: s, label: s.shortName))
             .toList(),
         onChanged: state.onSchemeChanged,
         prefixIcon: const AppIcon(
@@ -236,10 +275,9 @@ Widget _buildInvestmentDetails(
       AppTextField(
         controller: principalAmountController,
         labelText: t.oneTimeDeposits.fields.principalAmount,
-        prefixIcon: const AppIcon(
-          HugeIcons.strokeRoundedCoins01,
-          size: AppDimensions.iconMd,
-        ),
+        prefixText: '${t.format.currencySymbol} ',
+        style: emphasized.headlineMedium?.copyWith(color: scheme.onSurface),
+        prefixStyle: emphasized.titleLarge?.copyWith(color: scheme.primary),
         isRequired: true,
         keyboardType: TextInputType.number,
         inputFormatters: [state.amountFormatter],
@@ -262,21 +300,43 @@ Widget _buildInvestmentDetails(
           isEcho: true,
         ),
       AppSpacings.gapLg,
-      AppDateField(
-        controller: startDateController,
-        labelText: t.oneTimeDeposits.fields.startDate,
-        isRequired: true,
-        onTap: () async {
-          final picked = await showDatePicker(
-            context: context,
-            initialDate: startDate.value,
-            firstDate: DateTime(AppConstants.firstStartYear),
-            lastDate: DateTime(AppConstants.lastDatePickerYear),
-          );
-          if (picked != null && context.mounted) {
-            state.onStartDateChanged(picked);
-          }
-        },
+      AppFormRow(
+        left: AppDateField(
+          controller: startDateController,
+          labelText: t.oneTimeDeposits.fields.startDate,
+          isRequired: true,
+          showPrefixIcon: stacked,
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: startDate.value,
+              firstDate: DateTime(AppConstants.firstStartYear),
+              lastDate: DateTime(AppConstants.lastDatePickerYear),
+            );
+            if (picked != null && context.mounted) {
+              state.onStartDateChanged(picked);
+            }
+          },
+        ),
+        right: AppTextField(
+          controller: interestRateController,
+          labelText: t.oneTimeDeposits.fields.interestRate,
+          suffixText: '%',
+          prefixIcon: stacked
+              ? const AppIcon(
+                  HugeIcons.strokeRoundedPercent,
+                  size: AppDimensions.iconMd,
+                )
+              : null,
+          isRequired: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onChanged: state.onInterestRateChanged,
+          validator: (val) => OneTimeDeposit.validateInterestRate(
+            double.tryParse(val ?? ''),
+            t.oneTimeDeposits.fields.interestRate,
+          ),
+          textInputAction: TextInputAction.next,
+        ),
       ),
       AppSpacings.gapLg,
       AppDurationInput(
@@ -288,23 +348,6 @@ Widget _buildInvestmentDetails(
             ? projection.note
             : null,
         onChanged: state.onDurationChanged,
-      ),
-      AppSpacings.gapLg,
-      AppTextField(
-        controller: interestRateController,
-        labelText: t.oneTimeDeposits.fields.interestRate,
-        prefixIcon: const AppIcon(
-          HugeIcons.strokeRoundedPercent,
-          size: AppDimensions.iconMd,
-        ),
-        isRequired: true,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        onChanged: state.onInterestRateChanged,
-        validator: (val) => OneTimeDeposit.validateInterestRate(
-          double.tryParse(val ?? ''),
-          t.oneTimeDeposits.fields.interestRate,
-        ),
-        textInputAction: TextInputAction.next,
       ),
     ],
   );

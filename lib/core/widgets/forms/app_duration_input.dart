@@ -55,7 +55,7 @@ class AppDurationInput extends HookWidget {
     switch (tenureInputType) {
       case TenureInputType.singleFixed:
       case TenureInputType.fixedOptions:
-        return _buildFixedTenure(context, yearsController);
+        return _buildFixedTenure(context);
       case TenureInputType.derived:
         return _buildDerivedTenure(
           context,
@@ -65,24 +65,37 @@ class AppDurationInput extends HookWidget {
     }
   }
 
-  Widget _buildFixedTenure(
-    BuildContext context,
-    TextEditingController yearsController,
-  ) {
+  Widget _buildFixedTenure(BuildContext context) {
     final allowedYears = allowedTenuresInYears;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
-    // For schemes like MIS/NSC which only have a single valid tenure (e.g., 5 years)
+    // For schemes like MIS/NSC/RD which only have a single valid tenure (e.g., 5 years)
     if (allowedYears.length == 1) {
-      return AppTextField(
-        controller: yearsController,
-        labelText: t.common.duration.termYears,
-        prefixIcon: const AppIcon(
-          HugeIcons.strokeRoundedCalendar01,
-          size: AppDimensions.iconMd,
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingXs,
+          vertical: AppDimensions.paddingXs,
         ),
-        isRequired: true,
-        readOnly: true,
-        enabled: enabled,
+        child: Row(
+          children: [
+            AppIcon(
+              HugeIcons.strokeRoundedCalendar01,
+              size: AppDimensions.iconSm,
+              color: scheme.onSurfaceVariant,
+            ),
+            AppSpacings.gapSm,
+            Flexible(
+              child: Text(
+                '${t.common.duration.termYears}: '
+                '${t.common.duration.yearAbbreviation(n: allowedYears.first)}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -150,19 +163,6 @@ class AppDurationInput extends HookWidget {
       },
     );
 
-    if (stacked) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [yearsField, AppSpacings.gapLg, monthsField],
-      );
-    }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: yearsField),
-        AppSpacings.gapMd,
-        Expanded(child: monthsField),
-      ],
-    );
+    return AppFormRow(left: yearsField, right: monthsField);
   }
 }
