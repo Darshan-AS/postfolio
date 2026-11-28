@@ -11,7 +11,7 @@ All Google Play Store assets are tracked here and generated deterministically fr
   3. `03_rd_passbook.png` — RD Passbook & Ledger (`Clark Kent` `#7` schedule + `LEDGER AUDIT` callout; Bottom-Bleed, Soft Ice, top caption)
   4. `04_dashboard.png` — Portfolio Overview (`Dashboard` KPIs & Deposits Over Time chart; Bottom-Bleed, Soft Ice, bottom caption)
   5. `05_monthly_hub.png` — RD Monthly Hub (`Nov 2026` totals + `CASH IN HAND` callout; Bottom-Bleed, Royal Blue, top caption)
-  6. `06_po_visit_planner.png` — Batch PO Visit Planner (`Post Office visit` sheet with ₹20k cash lot splits; Bottom-Bleed, Royal Blue, bottom caption)
+  6. `06_rd_transactions_po_deposits.png` — RD Transactions & PO Deposits (`Clark Kent` Payments & PO Deposits tabs with receipts; Bottom-Bleed, Royal Blue, bottom caption)
   7. `07_collect_payment_dark.png` — 1-Tap Collect Payment Sheet (`Arthur Curry`, Dark theme; Bottom-Bleed, Midnight, top caption)
   8. `08_otd_projection_accessible.png` — OTD Projections & High-Contrast Mode (`Bruce Wayne` MIS `AppTheme.accessibleLightTheme`; Bottom-Bleed, Midnight, bottom caption)
 - [x] **7-Inch Tablet Screenshots (`docs/store_assets/tablet_7_screenshots/`)**: 4 framed landscape slides (`960 × 600` viewport → `1920 × 1080` px, opaque 24-bit RGB PNG, `hasAlpha: no`):

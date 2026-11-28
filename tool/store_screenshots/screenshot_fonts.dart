@@ -11,6 +11,13 @@ class ScreenshotFonts {
 
   static bool _loaded = false;
 
+  static const _plusJakartaFiles = <String>[
+    'PlusJakartaSans-Regular.ttf',
+    'PlusJakartaSans-Medium.ttf',
+    'PlusJakartaSans-SemiBold.ttf',
+    'PlusJakartaSans-Bold.ttf',
+  ];
+
   static const _robotoFiles = <String>[
     'Roboto-Light.ttf',
     'Roboto-Regular.ttf',
@@ -19,11 +26,24 @@ class ScreenshotFonts {
     'Roboto-Black.ttf',
   ];
 
-  /// Loads `Roboto` and `MaterialIcons` into the test binding's [FontLoader].
-  /// Safe to call multiple times.
+  /// Loads `PlusJakartaSans`, `Roboto`, and `MaterialIcons` into the test binding's
+  /// [FontLoader]. Safe to call multiple times.
   static Future<void> ensureLoaded() async {
     if (_loaded) return;
     _loaded = true;
+
+    final assetsFontsDir = _findRelativeDir('assets/fonts');
+    if (assetsFontsDir != null) {
+      final jakartaLoader = FontLoader('PlusJakartaSans');
+      for (final filename in _plusJakartaFiles) {
+        final file = File('${assetsFontsDir.path}/$filename');
+        if (file.existsSync()) {
+          final bytes = await file.readAsBytes();
+          jakartaLoader.addFont(Future.value(ByteData.sublistView(bytes)));
+        }
+      }
+      await jakartaLoader.load();
+    }
 
     final robotoDir = _findBundledFontsDir();
     if (robotoDir == null) {
@@ -63,9 +83,12 @@ class ScreenshotFonts {
     }
   }
 
-  /// Applies bundled `Roboto` to every style in [theme].
+  /// Applies bundled `PlusJakartaSans` (with `Roboto` fallback) to [theme].
   static ThemeData applyTo(ThemeData theme) {
-    TextStyle? patch(TextStyle? style) => style?.copyWith(fontFamily: 'Roboto');
+    TextStyle? patch(TextStyle? style) => style?.copyWith(
+      fontFamily: style.fontFamily ?? 'PlusJakartaSans',
+      fontFamilyFallback: const ['Roboto'],
+    );
 
     TextTheme patchTheme(TextTheme t) => t.copyWith(
       displayLarge: patch(t.displayLarge),
@@ -91,12 +114,13 @@ class ScreenshotFonts {
     );
   }
 
-  static Directory? _findBundledFontsDir() {
+  static Directory? _findBundledFontsDir() =>
+      _findRelativeDir('tool/store_screenshots/fonts');
+
+  static Directory? _findRelativeDir(String relativePath) {
     var cursor = Directory.current;
     for (var i = 0; i < 6; i++) {
-      final candidate = Directory(
-        '${cursor.path}/tool/store_screenshots/fonts',
-      );
+      final candidate = Directory('${cursor.path}/$relativePath');
       if (candidate.existsSync()) return candidate;
       final parent = cursor.parent;
       if (parent.path == cursor.path) break;

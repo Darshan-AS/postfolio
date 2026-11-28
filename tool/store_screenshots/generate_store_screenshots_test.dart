@@ -551,28 +551,28 @@ void main() {
         route: '/rd?view=hub',
         badge: 'RD MONTHLY HUB',
         headline: 'Every RD due,\nat a glance',
-        subtitle: 'Settled, in-hand, overdue & fronted accounts',
+        subtitle: 'To collect, in hand, paid to PO & from pocket',
         slideIndex: 4,
         captionPlacement: CaptionPlacement.top,
         callout: const FloatingMetricCallout(
           eyebrow: 'CASH IN HAND',
-          value: '₹33,000 ready',
-          detail: '6 accounts · 2 PO cash lots',
+          value: '₹29,500 ready',
+          detail: '4 accounts ready for Post Office',
         ),
         outputFile: '05_monthly_hub.png',
       );
     });
 
-    testWidgets('06_po_visit_planner', (tester) async {
+    testWidgets('06_rd_transactions_po_deposits', (tester) async {
       await _pumpPortraitSlide(
         tester,
-        route: '/recurring-deposits/demo-rd-clark?tab=transactions',
+        route: '/rd/demo-rd-clark?tab=transactions',
         badge: 'PASSBOOK & PO DEPOSITS',
         headline: 'Every customer payment\n& PO visit in sync',
         subtitle: 'Track installments, cash vs digital & PO deposit receipts',
         slideIndex: 5,
         captionPlacement: CaptionPlacement.bottom,
-        outputFile: '06_po_visit_planner.png',
+        outputFile: '06_rd_transactions_po_deposits.png',
       );
     });
 

@@ -11,7 +11,7 @@ Postfolio is a fast, modern portfolio and monthly ledger companion built for Pos
 
 KEY FEATURES
 • Customer Portfolio Directory: Keep customer details, nominee allocations, savings accounts, and linked deposits organized in one searchable place.
-• Recurring Deposit (RD) Monthly Hub: See every account due this month at a glance — track what is settled, collected in hand, overdue, or fronted — and plan Post Office deposit visits in batches.
+• Recurring Deposit (RD) Monthly Hub: See every account due this month at a glance — track what is settled, collected in hand, overdue, or paid from pocket — and record Post Office deposits cleanly.
 • RD Passbook & Ledger: Record customer payments, track Post Office deposits and default fees, and inspect month-by-month installment history.
 • One-Time Deposits & Projections: Track Time Deposit (TD), Monthly Income Scheme (MIS), National Savings Certificate (NSC), and Kisan Vikas Patra (KVP) accounts with automatic maturity and payout projections.
 • Portfolio Dashboard: View active holdings, scheme-wise breakdowns, and upcoming maturities in one clean overview.

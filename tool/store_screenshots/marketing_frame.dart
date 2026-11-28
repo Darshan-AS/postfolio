@@ -239,7 +239,7 @@ class LandscapeMarketingSlide extends StatelessWidget {
                       ),
                       const SizedBox(height: 9),
                       const Text(
-                        'Track RD collections, plan Post Office lots,\nand project TD, MIS, NSC & KVP maturities.',
+                        'Track RD collections, record Post Office deposits,\nand project TD, MIS, NSC & KVP maturities.',
                         style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 11.5,
@@ -254,7 +254,7 @@ class LandscapeMarketingSlide extends StatelessWidget {
                         runSpacing: 7,
                         children: [
                           _FeatureChip(label: 'RD Monthly Hub'),
-                          _FeatureChip(label: 'PO Lot Planner'),
+                          _FeatureChip(label: 'Passbook & Ledger'),
                           _FeatureChip(label: 'Light & Dark'),
                         ],
                       ),
@@ -723,7 +723,7 @@ class FeatureGraphicBanner extends StatelessWidget {
                           runSpacing: 6,
                           children: [
                             _FeatureChip(label: 'RD Monthly Hub'),
-                            _FeatureChip(label: 'PO Lot Planner'),
+                            _FeatureChip(label: 'Passbook & Ledger'),
                             _FeatureChip(label: 'TD · MIS · NSC · KVP'),
                           ],
                         ),
