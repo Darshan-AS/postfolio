@@ -9,7 +9,11 @@ runs:
     - name: Read the Pinned Flutter Version
       id: sdk
       shell: bash
-      run: echo "flutter=$(jq -er .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+      run: |
+        # Assign first: `echo "$(jq ...)"` would mask a jq failure (echo exits 0) under
+        # set -e, writing an empty flutter= and silently unpinning the SDK.
+        version="$(jq -er .flutter .fvmrc)"
+        echo "flutter=$version" >> "$GITHUB_OUTPUT"
 
     - name: Set up Flutter
       uses: subosito/flutter-action@v2

@@ -5,6 +5,9 @@ on:
     branches:
       - main
   pull_request:
+  # Lets a main commit get a green run on demand (e.g. after a [skip ci] push) so the
+  # release promotion gate has something to match.
+  workflow_dispatch:
 
 permissions:
   contents: read

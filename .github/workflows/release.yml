@@ -23,9 +23,12 @@ on:
           - beta
           - production
 
-# REQUIRED: Give the GITHUB_TOKEN write access to create releases on tag pushes
+# REQUIRED: Give the GITHUB_TOKEN write access to create releases on tag pushes.
+# `actions: read` lets the promotion gate query this commit's CI run; a top-level
+# block zeroes every scope it omits, so it must be listed explicitly.
 permissions:
   contents: write
+  actions: read
 
 jobs:
   build-and-release:
@@ -44,11 +47,15 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
+          # branch=main (head branch) excludes pull_request runs, which record the PR source
+          # branch as head_branch while testing a synthetic merge commit — head_sha alone
+          # would let an unmerged branch commit pass. It still matches both push and manual
+          # (workflow_dispatch) CI runs on main, so a re-run can satisfy the gate on demand.
           runs="$(gh api \
-            "repos/${REPO}/actions/workflows/ci.yml/runs?head_sha=${SHA}&status=success" \
+            "repos/${REPO}/actions/workflows/ci.yml/runs?head_sha=${SHA}&branch=main&status=success" \
             --jq '.total_count')"
           if [ "${runs:-0}" -lt 1 ]; then
-            echo "::error::No successful CI run found for ${SHA}. Releases promote an already-validated commit — merge to main, let CI pass, then tag that commit."
+            echo "::error::No successful push-to-main CI run found for ${SHA}. Releases promote an already-validated commit — merge to main and let CI pass (or re-run this job once an in-progress main CI run finishes), then tag that commit."
             exit 1
           fi
           echo "Found ${runs} successful CI run(s) for ${SHA} — promoting."
