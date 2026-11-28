@@ -5,6 +5,7 @@ import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
@@ -15,9 +16,10 @@ import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_deposit_sheet.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_capsule.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_status_pill.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -36,14 +38,34 @@ Future<void> showRDMonthInspectorSheet(
     builder: (sheetContext) => RDMonthInspectorSheet(
       rdId: rdId,
       installmentNo: installmentNo,
-      onCollect: (amount) {
+      onCollect: (amount) {},
+      onCollectFromSheet: (req) async {
         Navigator.of(sheetContext).pop();
         if (!context.mounted) return;
-        showRDLogPaymentSheet(context, rdId: rdId, initialAmount: amount);
+        final outcome = await showRDLogPaymentSheet(
+          context,
+          rdId: rdId,
+          initialAmount: req.amount,
+          showDepositFromPocketShortcut: req.canDepositFromPocket,
+        );
+        if (outcome == RDLogPaymentOutcome.depositFromPocket &&
+            context.mounted) {
+          await showRDDepositSheet(
+            context,
+            rdId: rdId,
+            initialCount: req.fromPocketCount,
+          );
+        }
       },
     ),
   );
 }
+
+typedef RDInspectorCollectRequest = ({
+  double amount,
+  bool canDepositFromPocket,
+  int fromPocketCount,
+});
 
 /// Body of the month inspector: the month's money rows as a group of tonal tiles, plus the
 /// month's actions.
@@ -51,12 +73,14 @@ class RDMonthInspectorSheet extends ConsumerWidget {
   final String rdId;
   final int installmentNo;
   final ValueChanged<double> onCollect;
+  final ValueChanged<RDInspectorCollectRequest>? onCollectFromSheet;
 
   const RDMonthInspectorSheet({
     super.key,
     required this.rdId,
     required this.installmentNo,
     required this.onCollect,
+    this.onCollectFromSheet,
   });
 
   @override
@@ -75,7 +99,20 @@ class RDMonthInspectorSheet extends ConsumerWidget {
               nextDueNo: projection.summary.nextDueNo,
               now: now,
               isBusy: isBusy,
-              onCollect: onCollect,
+              onCollect: () {
+                if (onCollectFromSheet != null) {
+                  onCollectFromSheet!((
+                    amount:
+                        projection.collectPrefillAmount ??
+                        inst.outstandingAmount,
+                    canDepositFromPocket:
+                        projection.canDepositFromPocket && !isBusy,
+                    fromPocketCount: projection.poReadiness.readyCount + 1,
+                  ));
+                } else {
+                  onCollect(inst.outstandingAmount);
+                }
+              },
             );
     }
 
@@ -116,7 +153,7 @@ class _InspectorBody extends ConsumerWidget {
   final int? nextDueNo;
   final DateTime now;
   final bool isBusy;
-  final ValueChanged<double> onCollect;
+  final VoidCallback onCollect;
 
   const _InspectorBody({
     required this.rdId,
@@ -182,11 +219,12 @@ class _InspectorBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final financial = AppFinancialColors.of(context);
     final inspector = t.recurringDeposits.ledger.inspector;
     final passbook = t.recurringDeposits.ledger.passbook;
     final inst = installment;
     final status = inst.displayStatusAt(now);
-    final visual = status.visualOf(context);
+    final visual = status.visual(scheme, financial: financial);
     final isBaseline = inst.isOpeningBaseline;
 
     final isOpen = !isBaseline && inst.outstandingAmount > 0;
@@ -209,26 +247,23 @@ class _InspectorBody extends ConsumerWidget {
           value: inst.lateFee.toRupeeFormat(),
           trailing: inst.customerFeeDue > 0
               ? passbook.owes(amount: inst.customerFeeDue.toRupeeFormat())
-              : t.common.notProvided,
+              : null,
         ),
       if (inst.poLateFee > 0)
         _MetricRow(
           label: inspector.poFee,
           value: inst.poLateFee.toRupeeFormat(),
-          trailing: t.common.notProvided,
         ),
       if (inst.agentDelayCost > 0)
         _MetricRow(
           label: inspector.agentDelay,
           value: inst.agentDelayCost.toRupeeFormat(),
-          trailing: t.common.notProvided,
           valueColor: scheme.error,
         ),
       if (inst.absorbedFee > 0)
         _MetricRow(
           label: inspector.absorbed,
           value: inst.absorbedFee.toRupeeFormat(),
-          trailing: t.common.notProvided,
         ),
       _MetricRow(
         label: inspector.paid,
@@ -238,16 +273,14 @@ class _InspectorBody extends ConsumerWidget {
             : inspector.paid,
         trailingColor: inst.outstandingAmount > 0
             ? visual.foreground
-            : scheme.primary,
+            : financial.settled.onContainer,
       ),
       // No "deposited on" row when there is no date — the status chip already says so.
       if (depositedOn != null)
         _MetricRow(
           label: inspector.depositedOn,
           value: depositedOn.toAppFormat(),
-          trailing: inst.poBatchId != null
-              ? inspector.poVisitBadge
-              : t.common.notProvided,
+          trailing: inst.poBatchId != null ? inspector.poVisitBadge : null,
         ),
     ];
 
@@ -258,10 +291,10 @@ class _InspectorBody extends ConsumerWidget {
           icon: HugeIcons.strokeRoundedCoins01,
           size: AppButtonSize.medium,
           expand: true,
-          onPressed: isBusy ? null : () => onCollect(inst.outstandingAmount),
+          onPressed: isBusy ? null : onCollect,
         ),
       if (canAbsorbFee)
-        AppButton.outlined(
+        AppButton.tonal(
           label: inspector.absorbRemainingFee(
             amount: inst.absorbableFee.toRupeeFormat(),
           ),
@@ -282,7 +315,7 @@ class _InspectorBody extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Title and status share a line when they fit; the pill drops below otherwise.
+        // Title and status share a line when they fit; the track drops below otherwise.
         Wrap(
           alignment: WrapAlignment.spaceBetween,
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -296,7 +329,7 @@ class _InspectorBody extends ConsumerWidget {
               ),
               style: AppTypography.emphasizedOf(context).titleLarge,
             ),
-            RDStatusPill(visual: visual),
+            RDHubStageCapsule(track: inst.stepTrackAt(now)),
           ],
         ),
         AppSpacings.gapLg,
@@ -329,14 +362,14 @@ class _InspectorBody extends ConsumerWidget {
 class _MetricRow extends StatelessWidget {
   final String label;
   final String value;
-  final String trailing;
+  final String? trailing;
   final Color? valueColor;
   final Color? trailingColor;
 
   const _MetricRow({
     required this.label,
     required this.value,
-    required this.trailing,
+    this.trailing,
     this.valueColor,
     this.trailingColor,
   });
@@ -379,20 +412,22 @@ class _MetricRow extends StatelessWidget {
                   ),
                 ),
               ),
-              AppSpacings.gapSm,
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: Text(
-                    trailing,
-                    maxLines: 1,
-                    style: emphasized.labelLarge?.copyWith(
-                      color: trailingColor ?? scheme.onSurfaceVariant,
+              if (trailing != null) ...[
+                AppSpacings.gapSm,
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: Text(
+                      trailing!,
+                      maxLines: 1,
+                      style: emphasized.labelLarge?.copyWith(
+                        color: trailingColor ?? scheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ],

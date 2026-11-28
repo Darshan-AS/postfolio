@@ -18,6 +18,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projectio
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_deposit_sheet.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_month_inspector_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_passbook_next_due_line.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_passbook_po_strip.dart';
@@ -97,8 +98,8 @@ class RDInstallmentsSection extends HookConsumerWidget {
             ),
             child: Row(
               children: [
-                HugeIcon(
-                  icon: HugeIcons.strokeRoundedCalendar01,
+                AppIcon(
+                  HugeIcons.strokeRoundedCalendar01,
                   size: AppDimensions.iconMd,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -116,8 +117,8 @@ class RDInstallmentsSection extends HookConsumerWidget {
                       ? Duration.zero
                       : AppMotion.spatialFastDuration,
                   curve: AppMotion.spatialFastCurve,
-                  child: HugeIcon(
-                    icon: HugeIcons.strokeRoundedArrowDown01,
+                  child: AppIcon(
+                    HugeIcons.strokeRoundedArrowDown01,
                     size: AppDimensions.iconMd,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -167,19 +168,35 @@ class _Passbook extends StatelessWidget {
           nextDue: nextDue,
           now: now,
           isBusy: isBusy,
-          onCollect: () => showRDLogPaymentSheet(
-            context,
-            rdId: rdId,
-            initialAmount: projection.collectPrefillAmount,
-          ),
+          hasReadyForPo: readiness.hasReady,
+          collectAmount: projection.collectPrefillAmount,
+          position: AppGroupPosition.first,
+          onCollect: () async {
+            final outcome = await showRDLogPaymentSheet(
+              context,
+              rdId: rdId,
+              initialAmount: projection.collectPrefillAmount,
+              showDepositFromPocketShortcut:
+                  projection.canDepositFromPocket && !isBusy,
+            );
+            if (outcome == RDLogPaymentOutcome.depositFromPocket &&
+                context.mounted) {
+              await showRDDepositSheet(
+                context,
+                rdId: rdId,
+                initialCount: readiness.readyCount + 1,
+              );
+            }
+          },
         ),
-        AppSpacings.gapSm,
+        const SizedBox(height: AppShapes.groupGap),
         RDPassbookPoStrip(
           rdId: rdId,
           readiness: readiness,
           latestPoDeposit: latestPoDeposit,
           canDepositFromPocket: projection.canDepositFromPocket,
           isBusy: isBusy,
+          position: AppGroupPosition.last,
         ),
         AppSpacings.gapLg,
         DetailSectionTitle(ledger.installmentsTitle),

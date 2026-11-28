@@ -4,10 +4,13 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/theme/app_shapes.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_surfaces.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/expressive/app_group.dart';
+import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
@@ -15,10 +18,11 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_deposit_sheet.dart';
 import 'package:postfolio/i18n/strings.g.dart';
-import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 
-/// Post Office strip of the passbook: a raised tile reading "Ready to deposit: N months ·
-/// ₹X" with **Deposit** and an overflow for "Deposit from pocket" / "Undo last PO deposit".
+/// Post Office strip of the passbook: a grouped row showing months collected in hand
+/// (`In hand · N months` + `₹X ready for Post Office`) with tonal **Deposit**, or a
+/// calm `Nothing collected to deposit yet` line when nothing is ready, plus the overflow
+/// menu for "Deposit from pocket" and "Undo last PO deposit".
 ///
 /// Deposits are sequential, so the strip only ever offers "the next N"; it never lets
 /// the agent pick months.
@@ -32,6 +36,9 @@ class RDPassbookPoStrip extends ConsumerWidget {
   final bool canDepositFromPocket;
   final bool isBusy;
 
+  /// Where this row sits inside the top passbook action group.
+  final AppGroupPosition position;
+
   const RDPassbookPoStrip({
     super.key,
     required this.rdId,
@@ -39,6 +46,7 @@ class RDPassbookPoStrip extends ConsumerWidget {
     required this.latestPoDeposit,
     required this.canDepositFromPocket,
     required this.isBusy,
+    this.position = AppGroupPosition.single,
   });
 
   Future<void> _undoLatest(BuildContext context, WidgetRef ref) async {
@@ -56,8 +64,8 @@ class RDPassbookPoStrip extends ConsumerWidget {
         amount: latest.amount.toRupeeFormat(),
       ),
       confirmText: passbook.undoLastDeposit,
-      confirmBackgroundColor: scheme.errorContainer,
-      confirmForegroundColor: scheme.onErrorContainer,
+      confirmBackgroundColor: scheme.error,
+      confirmForegroundColor: scheme.onError,
     );
     if (confirmed != true || !context.mounted) return;
 
@@ -80,59 +88,74 @@ class RDPassbookPoStrip extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final emphasized = AppTypography.emphasizedOf(context);
     final passbook = t.recurringDeposits.ledger.passbook;
     final hasReady = readiness.hasReady;
     final canUndo = latestPoDeposit != null;
     final stacked =
         MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
 
-    final label = !hasReady
-        ? passbook.nothingReady
-        : readiness.readyFee > 0
-        ? passbook.readyToDepositWithFee(
-            n: readiness.readyCount,
-            amount: readiness.readyAmount.toRupeeFormat(),
-            fee: readiness.readyFee.toRupeeFormat(),
-          )
-        : passbook.readyToDeposit(
-            n: readiness.readyCount,
-            amount: readiness.readyAmount.toRupeeFormat(),
-          );
-
-    // The tile stays on the raised tone either way; months waiting for the Post Office
-    // are signalled by the tinted icon, the heavier label and the enabled button.
-    final leading = HugeIcon(
-      icon: HugeIcons.strokeRoundedBuilding03,
+    final leading = AppIcon(
+      HugeIcons.strokeRoundedBuilding03,
       size: AppDimensions.iconMd,
-      color: hasReady ? scheme.primary : scheme.onSurfaceVariant,
+      color: hasReady
+          ? AppFinancialColors.of(context).inHand.accent
+          : scheme.onSurfaceVariant,
     );
-    final labelText = Text(
-      label,
-      style: hasReady
-          ? AppTypography.emphasizedOf(
-              context,
-            ).bodyMedium?.copyWith(color: scheme.onSurface)
-          : theme.textTheme.bodyMedium?.copyWith(
+
+    final Widget labelContent = hasReady
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                passbook.inHandTitle(n: readiness.readyCount),
+                style: emphasized.labelLarge?.copyWith(color: scheme.onSurface),
+              ),
+              AppSpacings.gapXxs,
+              Text(
+                readiness.readyFee > 0
+                    ? passbook.inHandSubtitleWithFee(
+                        amount: readiness.readyAmount.toRupeeFormat(),
+                        fee: readiness.readyFee.toRupeeFormat(),
+                      )
+                    : passbook.inHandSubtitle(
+                        amount: readiness.readyAmount.toRupeeFormat(),
+                      ),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          )
+        : Text(
+            passbook.nothingReady,
+            style: theme.textTheme.bodyMedium?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
-    );
-    final deposit = AppButton.tonal(
-      label: passbook.deposit,
-      expand: stacked,
-      onPressed: isBusy || !hasReady
-          ? null
-          : () => showRDDepositSheet(
-              context,
-              rdId: rdId,
-              initialCount: readiness.readyCount,
-            ),
-    );
+          );
+
+    final Widget? deposit = hasReady
+        ? AppButton.tonal(
+            label: passbook.deposit,
+            size: stacked ? AppButtonSize.medium : AppButtonSize.small,
+            expand: stacked,
+            onPressed: isBusy
+                ? null
+                : () => showRDDepositSheet(
+                    context,
+                    rdId: rdId,
+                    initialCount: readiness.readyCount,
+                  ),
+          )
+        : null;
+
     final menu = AppMenu(
       entries: [
         AppMenuEntry(
           label: passbook.depositFromPocket,
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedWallet02,
+          icon: const AppIcon(
+            HugeIcons.strokeRoundedWallet02,
             size: AppDimensions.iconSm,
           ),
           onPressed: canDepositFromPocket
@@ -145,8 +168,8 @@ class RDPassbookPoStrip extends ConsumerWidget {
         ),
         AppMenuEntry(
           label: passbook.undoLastDeposit,
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedArrowTurnBackward,
+          icon: const AppIcon(
+            HugeIcons.strokeRoundedArrowTurnBackward,
             size: AppDimensions.iconSm,
           ),
           isDestructive: true,
@@ -154,7 +177,6 @@ class RDPassbookPoStrip extends ConsumerWidget {
         ),
       ],
       anchorBuilder: (context, open) => IconButton(
-        padding: EdgeInsets.zero,
         style: IconButton.styleFrom(
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           minimumSize: const Size(
@@ -167,8 +189,8 @@ class RDPassbookPoStrip extends ConsumerWidget {
           ),
           padding: EdgeInsets.zero,
         ),
-        icon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedMoreVertical,
+        icon: const AppIcon(
+          HugeIcons.strokeRoundedMoreVertical,
           size: AppDimensions.iconMd,
         ),
         tooltip: t.common.moreOptions,
@@ -176,10 +198,9 @@ class RDPassbookPoStrip extends ConsumerWidget {
       ),
     );
 
-    return Material(
+    return AppGroupTile(
+      position: position,
       color: scheme.raised,
-      shape: AppShapes.rounded(AppShapes.groupOuter),
-      clipBehavior: Clip.antiAlias,
       child: Padding(
         // The overflow button brings its own inset, so the trailing edge needs little.
         padding: const EdgeInsetsDirectional.only(
@@ -188,7 +209,7 @@ class RDPassbookPoStrip extends ConsumerWidget {
           bottom: AppDimensions.paddingSm,
           end: AppDimensions.paddingXs,
         ),
-        child: stacked
+        child: stacked && deposit != null
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
@@ -201,7 +222,7 @@ class RDPassbookPoStrip extends ConsumerWidget {
                       children: [
                         leading,
                         AppSpacings.gapMd,
-                        Expanded(child: labelText),
+                        Expanded(child: labelContent),
                       ],
                     ),
                   ),
@@ -218,9 +239,8 @@ class RDPassbookPoStrip extends ConsumerWidget {
                 children: [
                   leading,
                   AppSpacings.gapMd,
-                  Expanded(child: labelText),
-                  AppSpacings.gapSm,
-                  deposit,
+                  Expanded(child: labelContent),
+                  if (deposit != null) ...[AppSpacings.gapSm, deposit],
                   menu,
                 ],
               ),

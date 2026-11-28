@@ -10,7 +10,16 @@
 - [x] **Focused Settings & About/Legal (`SettingsScreen`, `settings_tiles.dart`, `LoginScreen`, `AppInfo`, `release-manager`)**: Extracted compile-time safe `SettingsGroup`/`SettingsRow`/`SettingsSwitchRow` (with `MergeSemantics`)/`StartTabOptionTile`, focused `SettingsScreen` on Appearance, Preferences & Privacy, Support email, Privacy Policy, Licenses, copyable `AppInfo.displayVersion` synced with `pubspec.yaml`, and non-government disclaimer; updated `.agents/skills/release-manager/SKILL.md`.
 - [x] **Verification**: `dart format --output=none --set-exit-if-changed lib test tool` (`346` files, `0` changed), `dart analyze --fatal-infos` (`0` issues), **544/544** fast tests pass, coverage **81.6% total** (domain & core 84.3%, controllers & providers 86.2%, data & repositories 71.4%, presentation UI & routing 81.4%), `supabase db reset`, and **23/23** SQL contract assertions pass.
 - [ ] **Hosted Migration Before Client Release**: Run `supabase db push` on hosted Supabase before shipping a client referencing the new `agent_profiles` columns.
-- [ ] **Phase 2 / Deferred by Owner**: In-app account & data deletion flow, regional language selector, local reminders/notifications, Biometric App Lock, offline banner, CSV/JSON portfolio export, in-app updates, and new-agent onboarding.
+
+### Phase 2 — Security, Compliance, Data Ownership & Polish (Planned)
+- [ ] **In-App Account & Data Deletion (Play Store Production Requirement)**: Danger-zone flow in Profile/Settings with confirmation/re-auth and server-side deletion (Supabase Edge Function / RPC deleting `auth.users` + cascading agent data) or verified deletion request.
+- [ ] **Biometric App Lock & Privacy Shield**: Fingerprint / Face ID / device PIN lock on resume + optional Android `FLAG_SECURE` / app-switcher blur, hidden cleanly on Web (`kIsWeb`).
+- [ ] **Offline / Connectivity Banner**: Non-intrusive connectivity banner matching `DemoBanner` / `LocalBackendBanner` when network drops.
+- [ ] **Portfolio Data Export (CSV / JSON)**: Export customers, deposits, and RD ledger for agent backup / portability.
+- [ ] **Android In-App Updates**: Play Core flexible/immediate update prompt on Android.
+- [ ] **Local Reminders / Notifications**: Local maturity and monthly RD collection reminders.
+- [ ] **Regional Language Selector**: Expand Slang (`lib/i18n/`) to regional languages (e.g., Kannada, Hindi) with an in-app locale picker in Settings.
+- [ ] **New-Agent Onboarding**: Lightweight first-run walkthrough / profile setup for brand-new accounts.
 
 ## 📒 Monthly Hub Flipbook UX Redesign (2026-11-28 — Implemented & Verified)
 *Anchored to the agent's handwritten monthly flipbook workflow; log: `.agents/session_logs/2026-11-28_session_3.md`.*
@@ -44,6 +53,10 @@
   - Renamed internal `fronted*`/`front*` identifiers across `lib/`, `test/`, and `en.i18n.yaml` (`AppFinancialColors.receivable`, `RDInstallmentDisplayStatus.paidFromPocket`, `isPaidFromPocket`, `RDMonthlyFilter.receivable`, `canDepositFromPocket`, `fromPocketCount`, etc.).
   - Fixed muted step-chip full-opacity `onSurfaceVariant` + scaled icons (`rd_hub_capsule.dart`), selected `To collect` overdue badge contrast (`rd_hub_header.dart`), `RDLogPaymentOutcome` sheet return + `PopScope` confirmation (`rd_payment_bottom_sheets.dart`, `rd_hub_list.dart`), `collectedPendingPo` TalkBack semantics, and `.skeleton()` 2-step footer + `isLargeText` stacking (`rd_monthly_operation_card.dart`).
   - Refactored `RDMonthlyOperationItem` to `@freezed` with sealed `RDHubStepTrack` / `RDHubRowCaption`, shared `readyForPoAmount`/`receivableAmount`, `RDLedgerRules.arrearsAlertThresholdMonths`, `RDViewMode.queryValue`, `EntityHero.rdHub`, explicit `avatarColors`, and `AppIcon`; removed `prepareLogPayment` and 5 dead Slang keys; added unit, 2.0x capsule, Collect-shortcut, end-to-end Hub->Detail Hero, and 4-theme WCAG AA contrast tests (**504/504** fast tests, `0` analyze issues, **80.7%** hand-written coverage).
+
+- [x] **RD Detail / Passbook / Transactions Alignment (2026-11-28 — Part 1 & Part 2 Completed & Verified)**:
+  - **Part 1 (Universal Fixes)**: Shared `rd_step_track.dart` (`RDInstallment.stepTrackAt`), uniform-tonal `Due Today`, `AppFinancialColors` locked across passbook/accordion/PO strip/inspector/PO visits, fixed false `"All installments settled"` banner (`allCollected` Amber) + `totalOwedNote` + `showDepositFromPocketShortcut`, Inspector `RDHubStageCapsule` + nullable `_MetricRow.trailing` + `AppButton.tonal` absorb CTA, filled `RDTransactionsSection` Collect CTA, `AppIcon`, destructive confirm tokens, and `Inst N` copy.
+  - **Part 2 (`1A / 2A / 3A / 4A`)**: Unified 2-row Passbook top card (`AppGroupTile` `first`/`last` + plain `Collect` + Amber `In hand` PO row omitting disabled `Deposit` when `!hasReady`); `RDInstallmentTile` 2-step `RDHubStageCapsule` + `4dp` clipped left status stripe + `toDayMonthFormat()` due dates; neutral `#<serial>` Detail header avatar retained (`3A`); `RDTransactionsSection` `AppButtonGroup<RDTransactionsTab>` (`Payments (N)` | `PO Deposits (N)`) + `RDLedgerProjection.poVisitEntries` year-grouped visits (`Inst X`/`Inst X–Y`, Purple `from pocket` pill, `Undo` on latest only); verified with **552/552** fast tests, `0` analyze issues, and **81.8%** hand-written coverage (`.agents/session_logs/2026-11-28_session_5.md`).
 
 ## 🎨 App Icon Redesign — Pocket Flipbook (`1C Baseline`) (2026-11-28)
 *Replaced placeholder folded-ribbon `P` mark with safe-zone-normalized Pocket Flipbook icon across all platforms and store graphics; log: `.agents/session_logs/2026-11-28_session_2.md`.*
@@ -142,7 +155,7 @@
 - [ ] Owner: smoke-test the released web build and the release APK on a device; testers update from 2.3.1.
 - [ ] After release: move to Flutter 3.50 (import `GlobalCupertinoLocalizations` from `cupertino_ui`) and raise the pin; configure the backup workflow secrets, run it once and rehearse a restore. *(Supabase CLI pin in `ci.yml` done on `chore/dev-experience`.)*
 
-## 🎨 Material 3 Expressive Redesign (Approved 2026-11-15 — Done on the branch, awaiting owner review)
+## 🎨 Material 3 Expressive Redesign (Merged into `main`, PR #20)
 *Branch `feat/m3-expressive-ui`. Started on `refactor/v2.4-stabilization`; rebased onto `main` on 2026-11-16, after PR #18 (v2.4.0+23) was merged. Research and log in `.agents/session_logs/2026-11-15_session_1.md`.*
 - [x] **M0 (Package scouting)**: Compare official `material_ui` (1.11.0, 2026-11-09) with community M3 Expressive packages.
 - [x] **Owner decision (2026-11-15)**: hybrid. `material_ui` 1.11.0 is the base; `material_3_expressive` 1.2.1 supplies the Expressive components the official package lacks, behind wrappers. The whole app moves to the Expressive look, not a few widgets.
@@ -229,14 +242,14 @@
   - To do, with new strings: labelled fee and fronting controls on the visit sheet; what the "6" in "5 / 6" on the dashboard is; a "Plan visit" button in place of the "In hand" tile's second job; the monthly payout as the headline of a Monthly Income Scheme deposit.
   - To do, with a hook change: grouping the amount typed on the collect sheet (the payment hook parses the field's text).
   - Fields without an outline at rest: needs the filled-field layout with the label inside, which changes every field's height.
-  - Hub toolbar: the group and select toggles inside the search pill. The select toggle is the only visible way into selection, and grouping has no other place to go.
-  - Shell: theme and sign-out into one account menu; the "+" on a customer's screen as add buttons on the deposit sections.
+  - Hub toolbar: resolved in Monthly Hub Flipbook UX Redesign (2026-11-28) — grouping was removed and selection was unwired.
+  - Shell: theme & sign-out moved into Profile/Settings via `AgentAvatarButton` (Phase 1, 2026-11-28); remaining: the "+" on a customer's screen as add buttons on the deposit sections.
   - Palette: less chroma in the neutrals (one line in the theme; look at it on a device first).
-  - Product: the Hub as its own destination; a dashboard that says what to do; masking Aadhaar.
+  - Product: masking Aadhaar/PAN is done (`maskSensitiveIds`, Phase 1, 2026-11-28); remaining: the Hub as its own destination; a dashboard that says what to do.
 - [ ] **Motion that needs our own code** (asked 2026-11-17; the owner wants it from packages only, so none is built; details in part 2, section 5 of `.agents/session_logs/2026-11-17_session_1.md`):
   - A transition between the four destinations (fade through). Needs a container for `go_router`'s `navigatorContainerBuilder` that keeps every tab alive, about 30 to 50 lines.
   - Predictive back and a spring on sheets. Means moving every sheet to the community `M3EBottomSheet` and passing each sheet's unsaved-input guard to it.
-  - Container transform from a row to its screen. Not built. The package versions push routes outside `go_router`, and a page transition of our own was tried on 2026-11-18 and dropped (it threw on a back swipe, and it was all our own code). The owner chose the framework's `Hero` on the parts a row and its screen share instead (M17). Branch `spike/hero-morph`, the whole-screen morph of 2026-11-17, is superseded and can be deleted.
+  - Container transform from a row to its screen. Not built. The package versions push routes outside `go_router`, and a page transition of our own was tried on 2026-11-18 and dropped (it threw on a back swipe, and it was all our own code). The owner chose the framework's `Hero` on the parts a row and its screen share instead (M17). Branch `spike/hero-morph`, the whole-screen morph of 2026-11-17, was superseded and deleted (2026-11-19).
 - [ ] **Parts that travel: look at them on a device** (M17). Built for the customers list, the two deposit lists and a customer's deposit rows. The owner has seen films drawn by the test binding; the profile build is on the owner's Pixel 11 since 2026-11-18, and the customers list ran once on the emulator.
   - To judge there: the flight when a back swipe is let go (built on 2026-11-18, run only in the test binding); on the way back the parts pass over the rows above their own; at 2.0x text a phone number changes between two lines and one; whether live page transitions cost frames on a slow phone.
   - Left out, with the reason in part 2 of `.agents/session_logs/2026-11-18_session_1.md`: the Hub's rows and the customer link on a deposit's screen. Neither shows what the head shows.
@@ -249,7 +262,7 @@
   - Owner, 2026-11-18: no split button of our own. It comes from the package or not at all.
 - [ ] **`material_ui` Expressive coverage**: when the official package ships an Expressive button group, FAB menu, navigation bar or loading indicator, move that `App*` wrapper onto it and drop the community widget.
 
-## 🧰 Development experience (2026-11-16, rebased on `main` 2026-11-19 — done on branch, awaiting owner review)
+## 🧰 Development experience (Merged into `main`, PR #21, 2026-11-19)
 *Branch `chore/dev-experience`, rebased onto `main` (`d097a9e`, PR #20 merged). Logs in `.agents/session_logs/2026-11-16_session_3.md` and `.agents/session_logs/2026-11-19_session_2.md`.*
 - [x] Format all 246 tracked hand-written Dart files; CI fails on an unformatted one.
 - [x] Pin the Flutter version once (`.fvmrc`); pin Supabase CLI (`v2.117.0` on `supabase/setup-cli@v3`) in `ci.yml`; run fast tests in parallel in both `ci.yml` and `release.yml`; drop removed `--delete-conflicting-outputs`.
@@ -294,10 +307,10 @@
 - [x] **Play Store Build, CI & Migration Guide (`docs/play_store_setup.md`)**: Enabled `ndk.debugSymbolLevel = "SYMBOL_TABLE"` in `android/app/build.gradle.kts`, added `.aab` build + signed artifact upload + guarded `r0adkll/upload-google-play@v1` step to `.github/workflows/release.yml`, and documented the full Internal → Closed (12 testers / 14 days) → Production setup.
 - [x] **Owner: Upload Keystore & GitHub Secrets**: Verified existing `upload-keystore.jks` matches Play Console, backed up to Bitwarden, and added `UPLOAD_KEYSTORE_BASE64` + `KEY_PROPERTIES` to GitHub Secrets.
 - [x] **Owner: Play App Signing SHA-1/SHA-256, Internal Testers & CI Service Account**: Registered Play App Signing fingerprints in Firebase, added Internal Testing testers in Play Console, created `github-play-deployer` service account with Play Console permissions, and set `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` secret + `PLAY_STORE_RELEASE_STATUS=draft` variable.
-- [ ] **Owner: Finish Play Console Dashboard Setup**: Host Privacy Policy URL (`web/privacy-policy.html` + email in `docs/legal/privacy_policy.md`), complete App Content declarations & Store Listing, then switch `PLAY_STORE_RELEASE_STATUS` from `draft` to `completed` once published.
+- [x] **Owner: Finish Play Console Dashboard Setup**: Hosted Privacy Policy URL (`web/privacy-policy.html` + email in `docs/legal/privacy_policy.md`), completed App Content declarations & Store Listing (live on Closed Testing - Alpha `23 (2.4.0)`), and removed `PLAY_STORE_RELEASE_STATUS` draft override.
 - [ ] **Owner: Closed Testing → Production (12 testers / 14 days)**: Run a Closed Test (`alpha`) with 12+ testers continuously opted in for 14 days, then apply for Production access.
 - [x] **Owner: Retire Firebase App Distribution**: Removed the universal APK build and Firebase App Distribution upload step from `.github/workflows/release.yml`; all Play Store releases now default to Closed Testing (`alpha`).
-- [ ] **Native Splash Screen**: Implement using `flutter_native_splash`. (Skipped for initial internal testing)
+- [x] **Native Splash Screen**: Implemented Android 12+ Light/Dark native splash (`values-v31`, `values-night-v31`, `drawable-xxhdpi/splash_logo.png`, `launch_background.xml`) on 2026-11-28 (iOS `LaunchScreen.storyboard` remains optional if custom art is desired later).
 - [ ] **Firebase Production**: Configure production project, update `google-services.json`, and enable **App Check** (Security Hardening).
 
 ## 🧮 Domain Math & Business Logic
@@ -331,17 +344,17 @@
 - [ ] **Firebase App Check**: Configure with Play Integrity/App Attest and local Debug Tokens.
 - [ ] **Firebase Remote Config**: Integrate for dynamic rates, version enforcement, and feature flags.
 - [ ] **Analytics & Tracing**: Add Firebase Analytics wrapper, `GoRouter` observer, and custom Performance traces.
-- [ ] **Native Integration**: Integrate `share_plus` (reports), `flutter_native_splash` (splash screen), and Local App Lock (Biometrics/PIN).
+- [ ] **Native Integration**: Integrate `share_plus` (reports). *(Android 12+ native splash screen completed on 2026-11-28; Local App Lock / Biometrics tracked in Phase 2.)*
 - [ ] **Value Objects**: Explore migrating `termYears`/`termMonths` into a custom Domain-Driven Value Object.
 - [ ] **Database Casing and Constraint Alignment**: Revisit database columns and serialization enums in a future phase to standardize all tables on Postgres snake_case enums paired with strict database-level `CHECK` constraints (currently using default camelCase to maintain parity with legacy enums).
 
 ## 📱 Future Epics
 ### Epic: Responsive Architecture
 - [ ] Add `flutter_adaptive_scaffold`.
-- [ ] Implement adaptive navigation (BottomNavigationBar vs NavigationRail).
+- [x] Implement adaptive navigation (BottomNavigationBar vs NavigationRail). *(`MainShellScaffold`)*
 - [ ] Create Master-Detail layouts for large screens.
-- [ ] Conditionally render `BottomSheet` as `AlertDialog`/Side Panel on large screens.
+- [x] Conditionally render `BottomSheet` as `AlertDialog`/Side Panel on large screens. *(`AppAdaptiveSheet`)*
 
 ### Epic: Agent Profile
-- [ ] Build `Agent` domain model and mapping logic to rich business profile.
-- [ ] Build `AgentProfileRepository` and `AgentProfileController`.
+- [x] Build `Agent` domain model and mapping logic to rich business profile. *(`lib/features/profile/domain/agent_profile.dart`, Phase 1)*
+- [x] Build `AgentProfileRepository` and `AgentProfileController`. *(`lib/features/profile/data/profile_repository.dart` & `profile_controller.dart`, Phase 1)*

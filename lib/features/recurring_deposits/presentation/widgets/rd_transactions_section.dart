@@ -5,12 +5,14 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_surfaces.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
@@ -27,8 +29,11 @@ import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-/// Payment history tab: receipts grouped by month with projected allocation chips, then the
-/// Post Office visits of the account.
+/// Sub-tabs inside [RDTransactionsSection]: customer receipts or Post Office visits.
+enum RDTransactionsTab { payments, poDeposits }
+
+/// Payment history tab: segmented between customer receipts grouped by year (with
+/// projected allocation chips) and Post Office deposit visits grouped by year.
 class RDTransactionsSection extends HookConsumerWidget {
   final RecurringDeposit deposit;
   final bool isEmbeddedTab;
@@ -45,18 +50,52 @@ class RDTransactionsSection extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isExpanded = useState(false);
+    final activeSubTab = useState(RDTransactionsTab.payments);
     final theme = Theme.of(context);
     final emphasized = AppTypography.emphasizedOf(context);
     final isBusy = ref.watch(rDLedgerControllerProvider).isLoading;
+    final txCount = ref.watch(
+      rdTransactionsStreamProvider(
+        deposit.id,
+      ).select((async) => async.value?.length ?? 0),
+    );
+    final visitCount = ref.watch(
+      rdLedgerFactsProvider(
+        deposit.id,
+      ).select((async) => async.value?.poDeposits.length ?? 0),
+    );
     final ledger = t.recurringDeposits.ledger;
+    final passbook = ledger.passbook;
 
     Widget history() => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _RDTransactionsContent(rdId: deposit.id, isBusy: isBusy),
-        AppSpacings.gapLg,
-        _RDPoVisitsList(rdId: deposit.id, isBusy: isBusy),
+        AppButtonGroup<RDTransactionsTab>(
+          segments: [
+            AppSegment(
+              value: RDTransactionsTab.payments,
+              label: passbook.paymentsSegment(count: txCount.toString()),
+            ),
+            AppSegment(
+              value: RDTransactionsTab.poDeposits,
+              label: passbook.poDepositsSegment(count: visitCount.toString()),
+            ),
+          ],
+          selected: activeSubTab.value,
+          onChanged: (next) => activeSubTab.value = next,
+        ),
+        AppSpacings.gapSm,
+        switch (activeSubTab.value) {
+          RDTransactionsTab.payments => _RDTransactionsContent(
+            rdId: deposit.id,
+            isBusy: isBusy,
+          ),
+          RDTransactionsTab.poDeposits => _RDPoVisitsList(
+            rdId: deposit.id,
+            isBusy: isBusy,
+          ),
+        },
       ],
     );
 
@@ -78,9 +117,8 @@ class RDTransactionsSection extends HookConsumerWidget {
               runSpacing: AppDimensions.paddingSm,
               children: [
                 Text(ledger.transactionsTitle, style: emphasized.titleLarge),
-                AppButton.tonal(
-                  label: ledger.passbook.collect,
-                  icon: HugeIcons.strokeRoundedCoins01,
+                AppButton(
+                  label: passbook.collect,
                   onPressed: isBusy
                       ? null
                       : () => showRDLogPaymentSheet(context, rdId: deposit.id),
@@ -107,8 +145,8 @@ class RDTransactionsSection extends HookConsumerWidget {
             padding: const EdgeInsets.all(AppDimensions.paddingLg),
             child: Row(
               children: [
-                HugeIcon(
-                  icon: HugeIcons.strokeRoundedInvoice01,
+                AppIcon(
+                  HugeIcons.strokeRoundedInvoice01,
                   size: AppDimensions.iconMd,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -126,8 +164,8 @@ class RDTransactionsSection extends HookConsumerWidget {
                       ? Duration.zero
                       : AppMotion.spatialFastDuration,
                   curve: AppMotion.spatialFastCurve,
-                  child: HugeIcon(
-                    icon: HugeIcons.strokeRoundedArrowDown01,
+                  child: AppIcon(
+                    HugeIcons.strokeRoundedArrowDown01,
                     size: AppDimensions.iconMd,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -227,7 +265,6 @@ class _TransactionList extends StatelessWidget {
             AppSpacings.gapLg,
             AppButton(
               label: ledger.passbook.collect,
-              icon: HugeIcons.strokeRoundedCoins01,
               onPressed: isBusy
                   ? null
                   : () => showRDLogPaymentSheet(context, rdId: rdId),
@@ -307,8 +344,8 @@ class RDTransactionTile extends ConsumerWidget {
         date: tx.paidDate.toAppFormat(),
       ),
       confirmText: t.common.delete,
-      confirmBackgroundColor: scheme.errorContainer,
-      confirmForegroundColor: scheme.onErrorContainer,
+      confirmBackgroundColor: scheme.error,
+      confirmForegroundColor: scheme.onError,
     );
     if (confirmed != true || !context.mounted) return;
 
@@ -420,8 +457,8 @@ class RDTransactionTile extends ConsumerWidget {
               entries: [
                 AppMenuEntry(
                   label: ledger.actions.editPayment,
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedEdit02,
+                  icon: const AppIcon(
+                    HugeIcons.strokeRoundedEdit02,
                     size: AppDimensions.iconSm,
                   ),
                   onPressed: () => showRDEditPaymentSheet(
@@ -432,8 +469,8 @@ class RDTransactionTile extends ConsumerWidget {
                 ),
                 AppMenuEntry(
                   label: ledger.actions.deletePayment,
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedDelete02,
+                  icon: const AppIcon(
+                    HugeIcons.strokeRoundedDelete02,
                     size: AppDimensions.iconSm,
                   ),
                   isDestructive: true,
@@ -454,8 +491,8 @@ class RDTransactionTile extends ConsumerWidget {
                   ),
                   padding: EdgeInsets.zero,
                 ),
-                icon: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedMoreVertical,
+                icon: const AppIcon(
+                  HugeIcons.strokeRoundedMoreVertical,
                   size: AppDimensions.iconMd,
                 ),
                 tooltip: t.common.moreOptions,
@@ -482,8 +519,8 @@ class RDTransactionTile extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(
                 horizontal: AppDimensions.paddingLg,
               ),
-              child: HugeIcon(
-                icon: HugeIcons.strokeRoundedDelete02,
+              child: AppIcon(
+                HugeIcons.strokeRoundedDelete02,
                 size: AppDimensions.iconMd,
                 color: scheme.onErrorContainer,
               ),
@@ -567,8 +604,8 @@ class _RDPoVisitsList extends ConsumerWidget {
         amount: latest.amount.toRupeeFormat(),
       ),
       confirmText: passbook.undoLastDeposit,
-      confirmBackgroundColor: scheme.errorContainer,
-      confirmForegroundColor: scheme.onErrorContainer,
+      confirmBackgroundColor: scheme.error,
+      confirmForegroundColor: scheme.onError,
     );
     if (confirmed != true || !context.mounted) return;
 
@@ -587,14 +624,23 @@ class _RDPoVisitsList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final emphasized = AppTypography.emphasizedOf(context);
+    final financial = AppFinancialColors.of(context);
     final passbook = t.recurringDeposits.ledger.passbook;
     final factsAsync = ref.watch(rdLedgerFactsProvider(rdId));
+    final projectionAsync = ref.watch(rdLedgerProjectionProvider(rdId));
 
-    final visits = switch (factsAsync) {
-      AsyncData(:final value) => value.poDepositsInOrder,
-      AsyncLoading(:final value?) => value.poDepositsInOrder,
+    final entries = switch ((factsAsync, projectionAsync)) {
+      (AsyncData(value: final facts), AsyncData(value: final projection)) =>
+        projection.poVisitEntries(facts.poDeposits),
+      (AsyncLoading(value: final facts?), AsyncData(value: final projection)) ||
+      (AsyncData(value: final facts), AsyncLoading(value: final projection?)) ||
+      (
+        AsyncLoading(value: final facts?),
+        AsyncLoading(value: final projection?),
+      ) => projection.poVisitEntries(facts.poDeposits),
       // Facts errors already surface in the passbook/transactions list; stay quiet here.
-      AsyncError() || AsyncLoading() => const <RDPoDeposit>[],
+      _ => const <RDPoVisitEntry>[],
     };
 
     // Only the latest visit can be undone. At large text sizes its button moves under the
@@ -607,73 +653,149 @@ class _RDPoVisitsList extends ConsumerWidget {
       onPressed: isBusy ? null : () => _undoLatest(context, ref, visit),
     );
 
+    if (entries.isEmpty) {
+      return AppGroupTile(
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.paddingLg),
+          child: Text(
+            passbook.noPoVisits,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final groups = <({int year, List<RDPoVisitEntry> items})>[];
+    for (final entry in entries) {
+      final year = entry.deposit.depositedOn.year;
+      if (groups.isEmpty || groups.last.year != year) {
+        groups.add((year: year, items: <RDPoVisitEntry>[]));
+      }
+      groups.last.items.add(entry);
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        DetailSectionTitle(passbook.poVisitsTitle),
-        if (visits.isEmpty)
-          AppGroupTile(
-            child: Padding(
-              padding: const EdgeInsets.all(AppDimensions.paddingLg),
-              child: Text(
-                passbook.noPoVisits,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          )
-        else
-          for (final (i, visit) in visits.indexed) ...[
+        for (final (g, group) in groups.indexed) ...[
+          if (g > 0) AppSpacings.gapSm,
+          DetailSectionTitle(group.year.toString()),
+          for (final (i, entry) in group.items.indexed) ...[
             if (i > 0) const SizedBox(height: AppShapes.groupGap),
-            AppGroupTile(
-              position: AppGroupPosition.at(i, visits.length),
-              child: Padding(
-                // The undo button brings its own trailing inset.
-                padding: EdgeInsetsDirectional.only(
-                  start: AppDimensions.paddingLg,
-                  end: i == visits.length - 1 && !stacked
-                      ? AppDimensions.paddingSm
-                      : AppDimensions.paddingLg,
-                  top: AppDimensions.paddingMd,
-                  bottom: AppDimensions.paddingMd,
-                ),
-                child: Row(
-                  children: [
-                    HugeIcon(
-                      icon: HugeIcons.strokeRoundedCheckmarkBadge01,
-                      size: AppDimensions.iconMd,
-                      color: scheme.primary,
+            Builder(
+              builder: (context) {
+                final visit = entry.deposit;
+                final hasFromPocket = entry.unpaidFromPocketCount > 0;
+                final monthsLabel =
+                    entry.startInstallmentNo == entry.endInstallmentNo
+                    ? passbook.poDepositInstSingle(
+                        month: entry.startInstallmentNo.toString(),
+                      )
+                    : passbook.poDepositInstRange(
+                        start: entry.startInstallmentNo.toString(),
+                        end: entry.endInstallmentNo.toString(),
+                      );
+                final meta = visit.feePaid > 0
+                    ? passbook.poDepositMetaWithFee(
+                        date: visit.depositedOn.toAppFormat(),
+                        months: monthsLabel,
+                        fee: visit.feePaid.toRupeeFormat(),
+                      )
+                    : passbook.poDepositMeta(
+                        date: visit.depositedOn.toAppFormat(),
+                        months: monthsLabel,
+                      );
+                final badgeColors = hasFromPocket
+                    ? financial.receivable
+                    : financial.settled;
+
+                return AppGroupTile(
+                  position: AppGroupPosition.at(i, group.items.length),
+                  child: Padding(
+                    // The undo button brings its own trailing inset.
+                    padding: EdgeInsetsDirectional.only(
+                      start: AppDimensions.paddingLg,
+                      end: entry.isLatest && !stacked
+                          ? AppDimensions.paddingSm
+                          : AppDimensions.paddingLg,
+                      top: AppDimensions.paddingMd,
+                      bottom: AppDimensions.paddingMd,
                     ),
-                    AppSpacings.gapMd,
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            passbook.poVisit(
-                              date: visit.depositedOn.toAppFormat(),
-                              count: visit.installmentCount.toString(),
-                              amount: visit.amount.toRupeeFormat(),
-                              fee: visit.feePaid.toRupeeFormat(),
-                            ),
-                            style: theme.textTheme.bodyMedium,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        AppShapeAvatar(
+                          size: AppDimensions.avatarMd,
+                          shape: AppAvatarShape.neutral,
+                          backgroundColor: badgeColors.container,
+                          foregroundColor: badgeColors.onContainer,
+                          child: const AppIcon(
+                            HugeIcons.strokeRoundedBuilding03,
+                            size: AppDimensions.iconMd,
                           ),
-                          if (i == visits.length - 1 && stacked) undo(visit),
+                        ),
+                        AppSpacings.gapMd,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                passbook.poDepositTitle(
+                                  amount: visit.amount.toRupeeFormat(),
+                                ),
+                                style: emphasized.titleMedium,
+                              ),
+                              AppSpacings.gapXxs,
+                              Text(
+                                meta,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                              if (hasFromPocket) ...[
+                                AppSpacings.gapSm,
+                                Wrap(
+                                  spacing: AppDimensions.paddingXs,
+                                  runSpacing: AppDimensions.paddingXs,
+                                  children: [
+                                    _AllocationChip(
+                                      label: entry.unpaidFromPocketCount == 1
+                                          ? passbook.poDepositFromPocketSingle
+                                          : passbook.poDepositFromPocketCount(
+                                              count: entry.unpaidFromPocketCount
+                                                  .toString(),
+                                            ),
+                                      backgroundColor:
+                                          financial.receivable.container,
+                                      foregroundColor:
+                                          financial.receivable.onContainer,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                              if (entry.isLatest && stacked) ...[
+                                AppSpacings.gapXs,
+                                undo(visit),
+                              ],
+                            ],
+                          ),
+                        ),
+                        if (entry.isLatest && !stacked) ...[
+                          AppSpacings.gapSm,
+                          undo(visit),
                         ],
-                      ),
+                      ],
                     ),
-                    if (i == visits.length - 1 && !stacked) ...[
-                      AppSpacings.gapSm,
-                      undo(visit),
-                    ],
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
           ],
+        ],
       ],
     );
   }

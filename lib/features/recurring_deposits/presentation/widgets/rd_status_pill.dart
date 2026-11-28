@@ -5,11 +5,8 @@ import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 
-/// The status of an installment month as a pill: the status icon and label on the status
-/// colours of [visual].
-///
-/// A status whose container colour is the plain surface ("due today") carries an outline
-/// colour in its [RDStatusVisual]; the pill draws it so the badge still has an edge.
+/// The status of an installment month as a uniform tonal pill: the status icon and label on
+/// the status colours of [visual].
 class RDStatusPill extends StatelessWidget {
   const RDStatusPill({super.key, required this.visual});
 
@@ -17,13 +14,9 @@ class RDStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final outline = visual.outline;
-
     return Material(
       color: visual.background,
-      shape: outline == null
-          ? AppShapes.pill
-          : StadiumBorder(side: BorderSide(color: outline)),
+      shape: AppShapes.pill,
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingSm,

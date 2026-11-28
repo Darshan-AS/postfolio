@@ -9,8 +9,10 @@ import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
 import 'package:postfolio/core/widgets/domain/nominees_detail_section.dart';
 import 'package:postfolio/core/widgets/domain/wealth_accumulation_grid.dart';
@@ -119,8 +121,8 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
           // seal icon in the app bar.
           menuActions: [
             EntityAction(
-              icon: HugeIcon(
-                icon: deposit.status == DepositStatus.active
+              icon: AppIcon(
+                deposit.status == DepositStatus.active
                     ? HugeIcons.strokeRoundedCheckmarkBadge01
                     : HugeIcons.strokeRoundedArrowTurnBackward,
                 size: AppDimensions.iconSm,
@@ -293,8 +295,8 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                     title: t.recurringDeposits.sections.investmentDetails,
                     children: [
                       DetailItem(
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedCalendar01,
+                        icon: const AppIcon(
+                          HugeIcons.strokeRoundedCalendar01,
                           size: AppDimensions.iconMd,
                         ),
                         label: t.recurringDeposits.fields.termYears,
@@ -310,16 +312,16 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                     title: t.recurringDeposits.sections.timeline,
                     children: [
                       DetailItem(
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedCalendar02,
+                        icon: const AppIcon(
+                          HugeIcons.strokeRoundedCalendar02,
                           size: AppDimensions.iconMd,
                         ),
                         label: t.recurringDeposits.fields.startDate,
                         value: deposit.startDate.toAppFormat(),
                       ),
                       DetailItem(
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedCalendar03,
+                        icon: const AppIcon(
+                          HugeIcons.strokeRoundedCalendar03,
                           size: AppDimensions.iconMd,
                         ),
                         label: t.recurringDeposits.fields.maturityDate,
@@ -334,8 +336,8 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                       if (deposit.accountNo != null &&
                           deposit.accountNo!.isNotEmpty) ...[
                         DetailItem(
-                          icon: const HugeIcon(
-                            icon: HugeIcons.strokeRoundedTicket01,
+                          icon: const AppIcon(
+                            HugeIcons.strokeRoundedTicket01,
                             size: AppDimensions.iconMd,
                           ),
                           label: t.recurringDeposits.fields.accountNo,
@@ -344,8 +346,8 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                         ),
                       ],
                       DetailItem(
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedTag01,
+                        icon: const AppIcon(
+                          HugeIcons.strokeRoundedTag01,
                           size: AppDimensions.iconMd,
                         ),
                         label: t.recurringDeposits.fields.serialNo,
@@ -353,8 +355,8 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                         copyValue: deposit.serialNo,
                       ),
                       DetailItem(
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedUser,
+                        icon: const AppIcon(
+                          HugeIcons.strokeRoundedUser,
                           size: AppDimensions.iconMd,
                         ),
                         label: t.recurringDeposits.fields.customerId,
@@ -379,9 +381,9 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
   }
 }
 
-/// Header subtitle: "Collected through #N" / "At PO #M" (+ "k months from pocket" when the PO
-/// is ahead of the customer), the money the customer owes / has in credit / the agent has
-/// paid from pocket, and a collected-through progress bar.
+/// Header subtitle: "Collected through Inst N" / "At PO Inst M" (+ "k months from pocket" when
+/// the PO is ahead of the customer), the money the customer owes / has in credit / the agent
+/// has paid from pocket, and a collected-through progress bar.
 class _LedgerProgress extends StatelessWidget {
   final AsyncValue<RDLedgerProjection> projectionAsync;
   final int totalMonths;
@@ -395,6 +397,7 @@ class _LedgerProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final financial = AppFinancialColors.of(context);
     final tabs = t.recurringDeposits.detailTabs;
     final projection = projectionAsync.value;
     final isFirstLoad = projectionAsync.isLoading && projection == null;
@@ -433,9 +436,10 @@ class _LedgerProgress extends StatelessWidget {
       if (receivable > 0)
         (
           text: tabs.receivable(amount: receivable.toRupeeFormat()),
-          color: scheme.secondary,
+          color: financial.receivable.onContainer,
         ),
-      if (isSettled) (text: tabs.allSettled, color: scheme.primary),
+      if (isSettled)
+        (text: tabs.allSettled, color: financial.settled.onContainer),
     ];
 
     final emphasized = AppTypography.emphasizedOf(context);
@@ -466,7 +470,9 @@ class _LedgerProgress extends StatelessWidget {
             if (fromPocketMonths > 0)
               Text(
                 tabs.monthsFromPocket(n: fromPocketMonths),
-                style: emphasized.bodySmall?.copyWith(color: scheme.secondary),
+                style: emphasized.bodySmall?.copyWith(
+                  color: financial.receivable.onContainer,
+                ),
               ),
           ],
         ),

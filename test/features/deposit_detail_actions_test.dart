@@ -250,7 +250,7 @@ void main() {
       final pills = tester.widgetList<Text>(
         find.descendant(
           of: find.byType(RDTransactionTile),
-          matching: find.textContaining(RegExp(r'^#\d+ ')),
+          matching: find.textContaining(RegExp(r'^Inst \d+ ')),
         ),
       );
       expect(pills, isNotEmpty);

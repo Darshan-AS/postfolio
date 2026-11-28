@@ -4,6 +4,7 @@ import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/core/utils/timestamp_converter.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_rules.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_step_track.dart';
 
 part 'rd_installment_model.freezed.dart';
 part 'rd_installment_model.g.dart';
@@ -143,5 +144,45 @@ sealed class RDInstallment with _$RDInstallment {
     if (isOverdueAt(evaluationDate)) return RDInstallmentDisplayStatus.overdue;
     if (isDueOn(evaluationDate)) return RDInstallmentDisplayStatus.dueToday;
     return RDInstallmentDisplayStatus.upcoming;
+  }
+
+  /// Single-month 2-step track (`Baseline` or `Customer | PO`) matching the Monthly Hub.
+  RDHubStepTrack stepTrackAt(DateTime evaluationDate) {
+    final status = displayStatusAt(evaluationDate);
+    return switch (status) {
+      RDInstallmentDisplayStatus.baseline => const RDHubBaselineTrack(),
+      RDInstallmentDisplayStatus.overdue => RDHubTwoStepTrack(
+        customer: RDCustomerOverdue(
+          months: defaultedMonthsAt(evaluationDate) < 1
+              ? 1
+              : defaultedMonthsAt(evaluationDate),
+        ),
+        po: RDPoStep.pending,
+      ),
+      RDInstallmentDisplayStatus.dueToday => const RDHubTwoStepTrack(
+        customer: RDCustomerDueToday(),
+        po: RDPoStep.pending,
+      ),
+      RDInstallmentDisplayStatus.upcoming => const RDHubTwoStepTrack(
+        customer: RDCustomerUpcoming(),
+        po: RDPoStep.pending,
+      ),
+      RDInstallmentDisplayStatus.partiallyPaid => const RDHubTwoStepTrack(
+        customer: RDCustomerPartial(),
+        po: RDPoStep.pending,
+      ),
+      RDInstallmentDisplayStatus.paidFromPocket => const RDHubTwoStepTrack(
+        customer: RDCustomerReceivable(),
+        po: RDPoStep.deposited,
+      ),
+      RDInstallmentDisplayStatus.collectedPendingPo => const RDHubTwoStepTrack(
+        customer: RDCustomerPaid(),
+        po: RDPoStep.pending,
+      ),
+      RDInstallmentDisplayStatus.settled => const RDHubTwoStepTrack(
+        customer: RDCustomerPaid(),
+        po: RDPoStep.deposited,
+      ),
+    };
   }
 }

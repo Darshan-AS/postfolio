@@ -1,9 +1,22 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 
 part 'rd_ledger_projection.freezed.dart';
+
+/// Projected metadata for one Post Office deposit visit: the installment range it
+/// covered sequentially, how many covered months are still owed from the agent's
+/// pocket, and whether it is the most recent visit (eligible for undo).
+typedef RDPoVisitEntry = ({
+  RDPoDeposit deposit,
+  int startInstallmentNo,
+  int endInstallmentNo,
+  int unpaidFromPocketCount,
+  bool isLatest,
+});
 
 /// How much of one customer payment went to one month.
 /// `installmentNo == 0` means "repaid the opening receivable"; a slice with
@@ -111,6 +124,49 @@ sealed class RDLedgerProjection with _$RDLedgerProjection {
   }
 
   bool get canDepositFromPocket => nextFromPocketInstallment != null;
+
+  /// Projects [poDeposits] into display entries ordered newest-first, mapping each
+  /// sequential visit to the exact installment range `[startInstallmentNo..endInstallmentNo]`
+  /// after opening-baseline months and counting covered months still owed from pocket.
+  List<RDPoVisitEntry> poVisitEntries(List<RDPoDeposit> poDeposits) {
+    if (poDeposits.isEmpty) return const <RDPoVisitEntry>[];
+    final ordered = [...poDeposits]..sort(RDLedgerFacts.comparePoDeposits);
+
+    var depositedThrough = installments
+        .where((i) => i.isOpeningBaseline)
+        .length;
+    final entries = <RDPoVisitEntry>[];
+    for (var i = 0; i < ordered.length; i++) {
+      final ev = ordered[i];
+      final remaining = installments.length - depositedThrough;
+      if (remaining <= 0 || ev.installmentCount <= 0) continue;
+      final coveredCount = ev.installmentCount > remaining
+          ? remaining
+          : ev.installmentCount;
+
+      final start = depositedThrough + 1;
+      final end = depositedThrough + coveredCount;
+      depositedThrough = end;
+
+      var unpaidFromPocketCount = 0;
+      for (var no = start; no <= end; no++) {
+        final inst = byNo(no);
+        if (inst != null && inst.isPaidFromPocket) {
+          unpaidFromPocketCount++;
+        }
+      }
+
+      entries.add((
+        deposit: ev,
+        startInstallmentNo: start,
+        endInstallmentNo: end,
+        unpaidFromPocketCount: unpaidFromPocketCount,
+        isLatest: i == ordered.length - 1,
+      ));
+    }
+
+    return entries.reversed.toList(growable: false);
+  }
 
   /// Groups payments by calendar month, newest month (and newest payment) first.
   static List<({DateTime month, List<RDTransaction> items})>

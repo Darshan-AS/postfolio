@@ -2,9 +2,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
@@ -130,6 +132,7 @@ class _YearSection extends HookWidget {
 
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final settledColor = AppFinancialColors.of(context).settled.onContainer;
     final ledger = t.recurringDeposits.ledger;
     final localizations = MaterialLocalizations.of(context);
     final installments = bucket.months;
@@ -161,13 +164,13 @@ class _YearSection extends HookWidget {
               ),
               child: Row(
                 children: [
-                  HugeIcon(
-                    icon: isYearSettled
+                  AppIcon(
+                    isYearSettled
                         ? HugeIcons.strokeRoundedCheckmarkBadge01
                         : HugeIcons.strokeRoundedCalendar03,
                     size: AppDimensions.iconMd,
                     color: isYearSettled
-                        ? scheme.primary
+                        ? settledColor
                         : scheme.onSurfaceVariant,
                   ),
                   AppSpacings.gapMd,
@@ -181,7 +184,7 @@ class _YearSection extends HookWidget {
                       style: AppTypography.emphasizedOf(context).titleSmall
                           ?.copyWith(
                             color: isYearSettled
-                                ? scheme.primary
+                                ? settledColor
                                 : scheme.onSurface,
                           ),
                     ),
@@ -193,8 +196,8 @@ class _YearSection extends HookWidget {
                         ? Duration.zero
                         : AppMotion.spatialFastDuration,
                     curve: AppMotion.spatialFastCurve,
-                    child: HugeIcon(
-                      icon: HugeIcons.strokeRoundedArrowDown01,
+                    child: AppIcon(
+                      HugeIcons.strokeRoundedArrowDown01,
                       size: AppDimensions.iconMd,
                       color: scheme.onSurfaceVariant,
                     ),

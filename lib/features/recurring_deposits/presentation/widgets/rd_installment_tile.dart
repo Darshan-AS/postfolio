@@ -2,16 +2,18 @@ import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_capsule.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_status_pill.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
-/// One passbook line: `#N · <month>` with the money on the same row, then the due date
-/// with the status pill, and captions underneath. Purely declarative — every number comes
-/// from the projected [installment].
+/// One passbook line: `Inst N · <month>` with the money on the same row, then the due date
+/// with the 2-step `RDHubStageCapsule`, and captions underneath, plus a 4dp left accent bar
+/// for active financial states. Purely declarative — every number comes from [installment].
 ///
 /// The line is a grouped tile: pass its [position] within the year so the months of a year
 /// read as one container.
@@ -45,13 +47,28 @@ class RDInstallmentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final financial = AppFinancialColors.of(context);
     final emphasized = AppTypography.emphasizedOf(context);
     final passbook = t.recurringDeposits.ledger.passbook;
     final inst = installment;
     final status = inst.displayStatusAt(now);
-    final visual = status.visualOf(context);
+    final visual = status.visual(scheme, financial: financial);
     final stacked =
         MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
+
+    final Color? leftAccent = switch (status) {
+      RDInstallmentDisplayStatus.overdue ||
+      RDInstallmentDisplayStatus.settled ||
+      RDInstallmentDisplayStatus.collectedPendingPo ||
+      RDInstallmentDisplayStatus.partiallyPaid ||
+      RDInstallmentDisplayStatus.paidFromPocket => status.accent(
+        scheme,
+        financial: financial,
+      ),
+      RDInstallmentDisplayStatus.baseline ||
+      RDInstallmentDisplayStatus.dueToday ||
+      RDInstallmentDisplayStatus.upcoming => null,
+    };
 
     final String amountLabel;
     final Color amountColor;
@@ -65,7 +82,9 @@ class RDInstallmentTile extends StatelessWidget {
       amountColor = visual.foreground;
     } else if (inst.isCustomerSettled) {
       amountLabel = passbook.amountPaid(amount: inst.dueAmount.toRupeeFormat());
-      amountColor = scheme.onSurface;
+      amountColor = status == RDInstallmentDisplayStatus.settled
+          ? visual.foreground
+          : scheme.onSurface;
     } else if (inst.isPartiallyPaid) {
       amountLabel = passbook.amountPartial(
         paid: inst.customerPaidAmount.toRupeeFormat(),
@@ -77,12 +96,16 @@ class RDInstallmentTile extends StatelessWidget {
         amount: inst.dueAmount.toRupeeFormat(),
         fee: inst.customerFeeDue.toRupeeFormat(),
       );
-      amountColor = status.isCustomerPending
+      amountColor = status == RDInstallmentDisplayStatus.overdue
           ? visual.foreground
           : scheme.onSurface;
     } else {
       amountLabel = inst.dueAmount.toRupeeFormat();
-      amountColor = scheme.onSurface;
+      amountColor = switch (status) {
+        RDInstallmentDisplayStatus.overdue => visual.foreground,
+        RDInstallmentDisplayStatus.upcoming => scheme.onSurfaceVariant,
+        _ => scheme.onSurface,
+      };
     }
 
     final captions = <String>[
@@ -112,68 +135,82 @@ class RDInstallmentTile extends StatelessWidget {
       ),
     );
     final due = Text(
-      passbook.dueOn(date: inst.dueDate.toAppFormat()),
+      passbook.dueOn(date: inst.dueDate.toDayMonthFormat()),
       style: theme.textTheme.bodySmall?.copyWith(
         color: scheme.onSurfaceVariant,
       ),
     );
-    final pill = RDStatusPill(visual: visual);
+    final capsule = RDHubStageCapsule(track: inst.stepTrackAt(now));
 
     return AppGroupTile(
       position: position,
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingLg,
-          vertical: AppDimensions.paddingMd,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (stacked) ...[
-              month,
-              amount,
-            ] else
-              LayoutBuilder(
-                builder: (context, rowConstraints) {
-                  final maxAmountWidth = rowConstraints.maxWidth.isFinite
-                      ? rowConstraints.maxWidth * _amountMaxWidthFraction
-                      : double.infinity;
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(child: month),
-                      AppSpacings.gapSm,
-                      ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: maxAmountWidth),
-                        child: amount,
-                      ),
-                    ],
-                  );
-                },
-              ),
-            AppSpacings.gapXs,
-            // Due date at the start, status at the end; the pill drops to the next line
-            // when the two do not fit side by side.
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: AppDimensions.paddingSm,
-              runSpacing: AppDimensions.paddingXs,
-              children: [due, pill],
+      child: Stack(
+        children: [
+          if (leftAccent != null)
+            PositionedDirectional(
+              start: 0,
+              top: 0,
+              bottom: 0,
+              width: AppDimensions.borderLg,
+              child: ColoredBox(color: leftAccent),
             ),
-            for (final caption in captions) ...[
-              AppSpacings.gapXs,
-              Text(
-                caption,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingLg,
+              vertical: AppDimensions.paddingMd,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (stacked) ...[
+                  month,
+                  amount,
+                ] else
+                  LayoutBuilder(
+                    builder: (context, rowConstraints) {
+                      final maxAmountWidth = rowConstraints.maxWidth.isFinite
+                          ? rowConstraints.maxWidth * _amountMaxWidthFraction
+                          : double.infinity;
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(child: month),
+                          AppSpacings.gapSm,
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: maxAmountWidth,
+                            ),
+                            child: amount,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                AppSpacings.gapXs,
+                // Due date at the start, 2-step capsule at the end; the capsule drops to
+                // the next line when the two do not fit side by side.
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: AppDimensions.paddingSm,
+                  runSpacing: AppDimensions.paddingXs,
+                  children: [due, capsule],
                 ),
-              ),
-            ],
-          ],
-        ),
+                for (final caption in captions) ...[
+                  AppSpacings.gapXs,
+                  Text(
+                    caption,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

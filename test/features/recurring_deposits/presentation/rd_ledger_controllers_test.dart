@@ -1132,6 +1132,58 @@ void main() {
 
         // Value equality via @freezed
         expect(overdue3.copyWith(), equals(overdue3));
+
+        // Single-month RDInstallment.stepTrackAt(now) matches all 8 statuses.
+        expect(base.installment.stepTrackAt(now), const RDHubBaselineTrack());
+        expect(
+          settled.installment.stepTrackAt(now),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerPaid(),
+            po: RDPoStep.deposited,
+          ),
+        );
+        expect(
+          inHand.installment.stepTrackAt(now),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerPaid(),
+            po: RDPoStep.pending,
+          ),
+        );
+        expect(
+          pocket.installment.stepTrackAt(now),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerReceivable(),
+            po: RDPoStep.deposited,
+          ),
+        );
+        expect(
+          partial.installment.stepTrackAt(now),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerPartial(),
+            po: RDPoStep.pending,
+          ),
+        );
+        expect(
+          due.installment.stepTrackAt(apr30),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerDueToday(),
+            po: RDPoStep.pending,
+          ),
+        );
+        expect(
+          upcoming.installment.stepTrackAt(now),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerUpcoming(),
+            po: RDPoStep.pending,
+          ),
+        );
+        expect(
+          overdue1.installment.stepTrackAt(now),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerOverdue(months: 1),
+            po: RDPoStep.pending,
+          ),
+        );
       },
     );
 
@@ -1743,6 +1795,88 @@ void main() {
           await v.planner.undoVisit(batchId),
           isA<Success<void, String>>(),
         );
+      },
+    );
+  });
+
+  group('RDLedgerProjection.poVisitEntries', () {
+    test(
+      'orders visits newest-first after opening baseline and flags from-pocket & latest',
+      () async {
+        final rd = _deposit(
+          'rd-visits',
+          start: DateTime(2025, 11, 5),
+          initialPaid: 2,
+        );
+        final visits = [
+          RDPoDeposit(
+            id: 'po-1',
+            rdId: rd.id,
+            depositedOn: DateTime(2026, 2, 18),
+            installmentCount: 1,
+            feePaid: 0,
+            amount: 1000,
+          ),
+          RDPoDeposit(
+            id: 'po-2',
+            rdId: rd.id,
+            depositedOn: DateTime(2026, 4, 18),
+            installmentCount: 2,
+            feePaid: 20,
+            amount: 2020,
+          ),
+        ];
+        final ledger = FakeRDLedgerRepository(
+          transactions: {
+            rd.id: [
+              RDTransaction(
+                id: 'tx-1',
+                rdId: rd.id,
+                amount: 2000,
+                paidDate: DateTime(2026, 1, 10),
+                paymentMode: RDPaymentMode.cash,
+              ),
+            ],
+          },
+          poDeposits: {rd.id: visits},
+        );
+        addTearDown(ledger.dispose);
+
+        final container = ProviderContainer(
+          overrides: [
+            clockProvider.overrideWithValue(() => _today),
+            recurringDepositRepositoryProvider.overrideWithValue(
+              FakeRecurringDepositRepository(deposits: [rd]),
+            ),
+            rdLedgerRepositoryProvider.overrideWithValue(ledger),
+          ],
+        );
+        addTearDown(container.dispose);
+        _keep(container, rd.id);
+        final sub = container.listen(
+          rdLedgerProjectionProvider(rd.id),
+          (_, _) {},
+        );
+        addTearDown(sub.close);
+
+        await container.read(recurringDepositByIdProvider(rd.id).future);
+        final projection = await container.read(
+          rdLedgerProjectionProvider(rd.id).future,
+        );
+        final entries = projection.poVisitEntries(visits);
+
+        expect(entries, hasLength(2));
+        expect(entries.first.deposit.id, 'po-2');
+        expect(entries.first.startInstallmentNo, 4);
+        expect(entries.first.endInstallmentNo, 5);
+        expect(entries.first.unpaidFromPocketCount, 1);
+        expect(entries.first.isLatest, isTrue);
+
+        expect(entries.last.deposit.id, 'po-1');
+        expect(entries.last.startInstallmentNo, 3);
+        expect(entries.last.endInstallmentNo, 3);
+        expect(entries.last.unpaidFromPocketCount, 0);
+        expect(entries.last.isLatest, isFalse);
       },
     );
   });

@@ -13,9 +13,6 @@ typedef RDStatusVisual = ({
   Color foreground,
   Color background,
 
-  /// Drawn as a border when set (used to separate "due today" from "upcoming").
-  Color? outline,
-
   /// Label weight hint for pills.
   bool emphasized,
   List<List<dynamic>> icon,
@@ -36,7 +33,6 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
       RDInstallmentDisplayStatus.baseline => (
         foreground: scheme.onSurfaceVariant,
         background: scheme.surfaceContainerHigh,
-        outline: null,
         emphasized: false,
         icon: HugeIcons.strokeRoundedLockKey,
         label: s.baseline,
@@ -44,7 +40,6 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
       RDInstallmentDisplayStatus.settled => (
         foreground: palette.settled.onContainer,
         background: palette.settled.container,
-        outline: null,
         emphasized: false,
         icon: HugeIcons.strokeRoundedCheckmarkBadge01,
         label: s.settled,
@@ -52,7 +47,6 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
       RDInstallmentDisplayStatus.collectedPendingPo => (
         foreground: palette.inHand.onContainer,
         background: palette.inHand.container,
-        outline: null,
         emphasized: false,
         icon: HugeIcons.strokeRoundedCoins01,
         label: s.collectedPendingPo,
@@ -60,7 +54,6 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
       RDInstallmentDisplayStatus.partiallyPaid => (
         foreground: palette.partial.onContainer,
         background: palette.partial.container,
-        outline: null,
         emphasized: false,
         icon: HugeIcons.strokeRoundedChartRing,
         label: s.partiallyPaid,
@@ -68,7 +61,6 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
       RDInstallmentDisplayStatus.paidFromPocket => (
         foreground: palette.receivable.onContainer,
         background: palette.receivable.container,
-        outline: null,
         emphasized: false,
         icon: HugeIcons.strokeRoundedWallet02,
         label: s.paidFromPocket,
@@ -76,15 +68,13 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
       RDInstallmentDisplayStatus.overdue => (
         foreground: palette.overdue.onContainer,
         background: palette.overdue.container,
-        outline: null,
         emphasized: true,
         icon: HugeIcons.strokeRoundedAlert01,
         label: s.overdue,
       ),
       RDInstallmentDisplayStatus.dueToday => (
-        foreground: scheme.primary,
-        background: scheme.surface,
-        outline: scheme.primary,
+        foreground: scheme.onPrimaryContainer,
+        background: scheme.primaryContainer,
         emphasized: true,
         icon: HugeIcons.strokeRoundedTimer02,
         label: s.dueToday,
@@ -95,7 +85,6 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
       RDInstallmentDisplayStatus.upcoming => (
         foreground: scheme.onSurfaceVariant,
         background: scheme.surfaceDim,
-        outline: null,
         emphasized: false,
         icon: HugeIcons.strokeRoundedCalendar02,
         label: s.upcoming,
