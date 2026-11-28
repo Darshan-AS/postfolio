@@ -7,6 +7,7 @@ import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/services/storage_service.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
@@ -145,7 +146,8 @@ void main() {
         );
 
         // The model decides whether it has matured; the header only words and colours it.
-        final urgency = deposit.maturityUrgency;
+        final today = DateTime(2026, 4, 20);
+        final urgency = deposit.maturityUrgencyAt(today);
         final date = deposit.maturityDate.toAppFormat();
         final header = find.byType(EntityDetailHeader);
         final line = find.descendant(
@@ -158,10 +160,12 @@ void main() {
         );
         expect(line, findsOneWidget);
 
-        final scheme = AppTheme.lightTheme.colorScheme;
+        final lineContext = tester.element(line);
+        final scheme = Theme.of(lineContext).colorScheme;
+        final financial = AppFinancialColors.of(lineContext);
         expect(tester.widget<Text>(line).style?.color, switch (urgency) {
-          MaturityUrgency.matured => scheme.error,
-          MaturityUrgency.maturingSoon => scheme.tertiary,
+          MaturityUrgency.matured => financial.overdue.onContainer,
+          MaturityUrgency.maturingSoon => financial.warning.onContainer,
           _ => scheme.onSurfaceVariant,
         });
 

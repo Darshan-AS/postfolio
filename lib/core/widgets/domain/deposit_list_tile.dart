@@ -6,6 +6,7 @@ import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
@@ -91,17 +92,18 @@ class DepositListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final financial = AppFinancialColors.of(context);
     final emphasized = AppTypography.emphasizedOf(context);
 
     final needsAttention =
         urgency == MaturityUrgency.maturingSoon ||
         urgency == MaturityUrgency.matured;
     final attentionColor = urgency == MaturityUrgency.matured
-        ? scheme.error
-        : scheme.tertiary;
+        ? financial.overdue.onContainer
+        : financial.warning.onContainer;
     final Color? indicatorColor = switch (urgency) {
-      MaturityUrgency.matured => scheme.error,
-      MaturityUrgency.maturingSoon => scheme.tertiary,
+      MaturityUrgency.matured => financial.overdue.accent,
+      MaturityUrgency.maturingSoon => financial.warning.accent,
       _ => null,
     };
 

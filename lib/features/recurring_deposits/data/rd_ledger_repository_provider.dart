@@ -1,4 +1,5 @@
 import 'package:postfolio/core/mocks/demo_data_source_provider.dart';
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
@@ -21,6 +22,7 @@ RDLedgerRepository rdLedgerRepository(Ref ref) {
       transactions: source.rdTransactions,
       poDeposits: source.rdPoDeposits,
       absorptions: source.rdFeeAbsorptions,
+      clock: ref.read(clockProvider),
     );
     ref.onDispose(repo.dispose);
     return repo;

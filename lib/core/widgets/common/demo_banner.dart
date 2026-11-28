@@ -29,37 +29,40 @@ class DemoBanner extends ConsumerWidget {
       value: theme.brightness == Brightness.dark
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,
-      child: SafeArea(
-        bottom: false,
-        child: MaterialBanner(
-          leading: HugeIcon(
-            icon: HugeIcons.strokeRoundedInformationCircle,
-            size: AppDimensions.iconMd,
-            color: scheme.onTertiaryContainer,
-          ),
-          content: Text(
-            t.common.demoModeActive,
-            style: AppTypography.emphasizedOf(
-              context,
-            ).bodyMedium?.copyWith(color: scheme.onTertiaryContainer),
-          ),
-          actions: [
-            AppButton.text(
-              key: const ValueKey('reset_demo_data_button'),
-              label: t.common.reset,
-              onPressed: () {
-                ref.read(demoSessionEpochProvider.notifier).reset();
-                AppFeedback.showSuccess(context, t.common.demoDataReset);
-              },
+      child: Material(
+        color: scheme.tertiaryContainer,
+        child: SafeArea(
+          bottom: false,
+          child: MaterialBanner(
+            leading: HugeIcon(
+              icon: HugeIcons.strokeRoundedInformationCircle,
+              size: AppDimensions.iconMd,
+              color: scheme.onTertiaryContainer,
             ),
-            AppButton.text(
-              key: const ValueKey('exit_demo_mode_button'),
-              label: t.common.exitDemoMode,
-              onPressed: () {
-                ref.read(demoModeProvider.notifier).disable();
-              },
+            content: Text(
+              t.common.demoModeActive,
+              style: AppTypography.emphasizedOf(
+                context,
+              ).bodyMedium?.copyWith(color: scheme.onTertiaryContainer),
             ),
-          ],
+            actions: [
+              AppButton.text(
+                key: const ValueKey('reset_demo_data_button'),
+                label: t.common.reset,
+                onPressed: () {
+                  ref.read(demoSessionEpochProvider.notifier).reset();
+                  AppFeedback.showSuccess(context, t.common.demoDataReset);
+                },
+              ),
+              AppButton.text(
+                key: const ValueKey('exit_demo_mode_button'),
+                label: t.common.exitDemoMode,
+                onPressed: () {
+                  ref.read(demoModeProvider.notifier).disable();
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -24,6 +24,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_deposit_sheet.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/widgets/expressive/app_menu.dart';
@@ -54,6 +55,7 @@ class RDTransactionsSection extends HookConsumerWidget {
     final theme = Theme.of(context);
     final emphasized = AppTypography.emphasizedOf(context);
     final isBusy = ref.watch(rDLedgerControllerProvider).isLoading;
+    final projection = ref.watch(rdLedgerProjectionProvider(deposit.id)).value;
     final txCount = ref.watch(
       rdTransactionsStreamProvider(
         deposit.id,
@@ -66,6 +68,23 @@ class RDTransactionsSection extends HookConsumerWidget {
     );
     final ledger = t.recurringDeposits.ledger;
     final passbook = ledger.passbook;
+
+    Future<void> handleCollect() async {
+      final outcome = await showRDLogPaymentSheet(
+        context,
+        rdId: deposit.id,
+        initialAmount: projection?.collectPrefillAmount,
+        showDepositFromPocketShortcut:
+            (projection?.canDepositFromPocket ?? false) && !isBusy,
+      );
+      if (outcome == RDLogPaymentOutcome.depositFromPocket && context.mounted) {
+        await showRDDepositSheet(
+          context,
+          rdId: deposit.id,
+          initialCount: (projection?.poReadiness.readyCount ?? 0) + 1,
+        );
+      }
+    }
 
     Widget history() => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -90,6 +109,7 @@ class RDTransactionsSection extends HookConsumerWidget {
           RDTransactionsTab.payments => _RDTransactionsContent(
             rdId: deposit.id,
             isBusy: isBusy,
+            onCollect: handleCollect,
           ),
           RDTransactionsTab.poDeposits => _RDPoVisitsList(
             rdId: deposit.id,
@@ -119,9 +139,7 @@ class RDTransactionsSection extends HookConsumerWidget {
                 Text(ledger.transactionsTitle, style: emphasized.titleLarge),
                 AppButton(
                   label: passbook.collect,
-                  onPressed: isBusy
-                      ? null
-                      : () => showRDLogPaymentSheet(context, rdId: deposit.id),
+                  onPressed: isBusy ? null : handleCollect,
                 ),
               ],
             ),
@@ -183,8 +201,13 @@ class RDTransactionsSection extends HookConsumerWidget {
 class _RDTransactionsContent extends ConsumerWidget {
   final String rdId;
   final bool isBusy;
+  final VoidCallback onCollect;
 
-  const _RDTransactionsContent({required this.rdId, required this.isBusy});
+  const _RDTransactionsContent({
+    required this.rdId,
+    required this.isBusy,
+    required this.onCollect,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -201,12 +224,14 @@ class _RDTransactionsContent extends ConsumerWidget {
         transactions: value,
         allocationsByTx: allocationsByTx,
         isBusy: isBusy,
+        onCollect: onCollect,
       ),
       AsyncLoading(:final value?) => _TransactionList(
         rdId: rdId,
         transactions: value,
         allocationsByTx: allocationsByTx,
         isBusy: isBusy,
+        onCollect: onCollect,
       ),
       AsyncError(:final error) => ErrorStateView(
         message: error.toString(),
@@ -222,12 +247,14 @@ class _TransactionList extends StatelessWidget {
   final List<RDTransaction> transactions;
   final Map<String, List<RDAllocationSlice>> allocationsByTx;
   final bool isBusy;
+  final VoidCallback onCollect;
 
   const _TransactionList({
     required this.rdId,
     required this.transactions,
     required this.allocationsByTx,
     required this.isBusy,
+    required this.onCollect,
   });
 
   /// Twice the avatar of a list row: the badge is the only thing in the empty list.
@@ -265,9 +292,7 @@ class _TransactionList extends StatelessWidget {
             AppSpacings.gapLg,
             AppButton(
               label: ledger.passbook.collect,
-              onPressed: isBusy
-                  ? null
-                  : () => showRDLogPaymentSheet(context, rdId: rdId),
+              onPressed: isBusy ? null : onCollect,
             ),
           ],
         ),
@@ -333,7 +358,6 @@ class RDTransactionTile extends ConsumerWidget {
 
   Future<void> _confirmAndDelete(BuildContext context, WidgetRef ref) async {
     final ledger = t.recurringDeposits.ledger;
-    final scheme = Theme.of(context).colorScheme;
     final tx = transaction;
 
     final confirmed = await AppDialogs.confirmAction(
@@ -344,8 +368,7 @@ class RDTransactionTile extends ConsumerWidget {
         date: tx.paidDate.toAppFormat(),
       ),
       confirmText: t.common.delete,
-      confirmBackgroundColor: scheme.error,
-      confirmForegroundColor: scheme.onError,
+      isDestructive: true,
     );
     if (confirmed != true || !context.mounted) return;
 
@@ -593,7 +616,6 @@ class _RDPoVisitsList extends ConsumerWidget {
     RDPoDeposit latest,
   ) async {
     final passbook = t.recurringDeposits.ledger.passbook;
-    final scheme = Theme.of(context).colorScheme;
 
     final confirmed = await AppDialogs.confirmAction(
       context,
@@ -604,8 +626,7 @@ class _RDPoVisitsList extends ConsumerWidget {
         amount: latest.amount.toRupeeFormat(),
       ),
       confirmText: passbook.undoLastDeposit,
-      confirmBackgroundColor: scheme.error,
-      confirmForegroundColor: scheme.onError,
+      isDestructive: true,
     );
     if (confirmed != true || !context.mounted) return;
 

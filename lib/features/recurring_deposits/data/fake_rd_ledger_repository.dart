@@ -20,7 +20,9 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
     Map<String, List<RDPoDeposit>>? poDeposits,
     Map<String, List<RDFeeAbsorption>>? absorptions,
     this.failWith,
-  }) : _transactions = {
+    DateTime Function()? clock,
+  }) : _clock = clock,
+       _transactions = {
          for (final e in (transactions ?? {}).entries) e.key: [...e.value],
        },
        _poDeposits = {
@@ -29,6 +31,8 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
        _absorptions = {
          for (final e in (absorptions ?? {}).entries) e.key: [...e.value],
        };
+
+  final DateTime Function()? _clock;
 
   /// When set, every write fails with this message and stores nothing.
   String? failWith;
@@ -169,7 +173,7 @@ class FakeRDLedgerRepository implements RDLedgerRepository {
     }
     applyChangeCallCount++;
 
-    final now = DateTime.now();
+    final now = (_clock ?? DateTime.now)();
     final txTouched = <String>{};
     final poTouched = <String>{};
     final absorptionTouched = <String>{};

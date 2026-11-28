@@ -5,6 +5,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
@@ -35,6 +36,7 @@ _buildHarness({
   List<Customer> customers = const [],
   List<OneTimeDeposit> otds = const [],
   List<RecurringDeposit> rds = const [],
+  DateTime Function()? clock,
 }) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
@@ -50,6 +52,7 @@ _buildHarness({
 
   final container = ProviderContainer(
     overrides: [
+      if (clock != null) clockProvider.overrideWithValue(clock),
       sharedPreferencesProvider.overrideWithValue(prefs),
       customerRepositoryProvider.overrideWithValue(customerRepo),
       oneTimeDepositRepositoryProvider.overrideWithValue(otdRepo),
@@ -258,6 +261,67 @@ void main() {
 
         final list = await c.read(filteredRecurringDepositsProvider.future);
         expect(list.map((d) => d.serialNo), ['1', '2', '10']);
+      },
+    );
+
+    test(
+      'OTD and RD urgencyFilters use clockProvider instead of wall-clock DateTime.now()',
+      () async {
+        final otdMaturing2025 = OneTimeDeposit(
+          id: 'otd-2025',
+          accountNo: '4001',
+          principalAmount: 10000,
+          customerId: 'c1',
+          customerName: 'Arjun',
+          schemeType: OneTimeSchemeType.timeDeposit,
+          interestRate: 7.0,
+          termYears: 1,
+          termMonths: 0,
+          startDate: DateTime(2024, 2, 1),
+        ); // matures 2025-02-01
+
+        final rdMaturing2025 = RecurringDeposit(
+          id: 'rd-2025',
+          serialNo: '1',
+          accountNo: '5001',
+          customerId: 'c1',
+          customerName: 'Arjun',
+          schemeType: RecurringSchemeType.recurringDeposit,
+          installmentAmount: 1000,
+          interestRate: 6.7,
+          termYears: 1,
+          termMonths: 0,
+          startDate: DateTime(2024, 2, 1),
+        ); // matures 2025-02-01
+
+        // Clock on 2025-01-15: both are maturingSoon (17 days left), not matured.
+        final hBefore = await _buildHarness(
+          otds: [otdMaturing2025],
+          rds: [rdMaturing2025],
+          clock: () => DateTime(2025, 1, 15),
+        );
+        hBefore.container.listen(filteredOneTimeDepositsProvider, (_, _) {});
+        hBefore.container.listen(filteredRecurringDepositsProvider, (_, _) {});
+
+        hBefore.container
+            .read(oneTimeListCriteriaProvider.notifier)
+            .toggleUrgencyFilter(MaturityUrgency.maturingSoon);
+        hBefore.container
+            .read(recurringListCriteriaProvider.notifier)
+            .toggleUrgencyFilter(MaturityUrgency.maturingSoon);
+
+        expect(
+          (await hBefore.container.read(
+            filteredOneTimeDepositsProvider.future,
+          )).map((d) => d.id),
+          ['otd-2025'],
+        );
+        expect(
+          (await hBefore.container.read(
+            filteredRecurringDepositsProvider.future,
+          )).map((d) => d.id),
+          ['rd-2025'],
+        );
       },
     );
   });

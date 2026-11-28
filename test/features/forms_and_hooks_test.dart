@@ -718,6 +718,64 @@ void main() {
           expect(deleteCalled, isTrue);
         },
       );
+
+      testWidgets(
+        'RDDepositSheet confirms before discarding modified counter fee override',
+        (tester) async {
+          final ledger = t.recurringDeposits.ledger;
+          final ledgerRepo = FakeRDLedgerRepository(
+            transactions: {
+              rd.id: [
+                RDTransaction(
+                  id: 'tx-1',
+                  rdId: rd.id,
+                  amount: 1030,
+                  paidDate: DateTime(2026, 4, 18),
+                  paymentMode: RDPaymentMode.cash,
+                ),
+              ],
+            },
+          );
+          final container = makeContainer(ledgerRepo);
+          addTearDown(container.dispose);
+
+          await tester.pumpWidget(
+            UncontrolledProviderScope(
+              container: container,
+              child: MaterialApp(
+                theme: AppTheme.lightTheme,
+                home: Builder(
+                  builder: (context) => Scaffold(
+                    body: ElevatedButton(
+                      onPressed: () => showRDDepositSheet(
+                        context,
+                        rdId: rd.id,
+                        initialCount: 1,
+                      ),
+                      child: const Text('Open Deposit Sheet'),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.text('Open Deposit Sheet'));
+          await tester.pumpAndSettle();
+
+          // Enter a counter fee override so draft becomes dirty.
+          await tester.enterText(find.byType(TextField).last, '15');
+          await tester.pumpAndSettle();
+
+          // Attempt close: PopScope intercepts with destructive discard dialog.
+          await tester.tap(find.byTooltip(t.common.close));
+          await tester.pumpAndSettle();
+          expect(find.text(ledger.discardChangesTitle), findsOneWidget);
+
+          await tester.tap(find.text(ledger.discard));
+          await tester.pumpAndSettle();
+          expect(find.text(ledger.depositSubmit(n: '1')), findsNothing);
+        },
+      );
     },
   );
 }

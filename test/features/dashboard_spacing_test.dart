@@ -10,9 +10,11 @@ import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
+import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
 import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
+import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:postfolio/features/dashboard/presentation/widgets/dashboard_chart_section.dart';
 import 'package:postfolio/features/dashboard/presentation/widgets/dashboard_metrics_row.dart';
@@ -214,4 +216,102 @@ void main() {
       expect(badgeRect.top - tile.top, AppDimensions.paddingLg);
     },
   );
+
+  testWidgets(
+    'hides Active OTDs by Scheme heading when OTD portfolio is empty',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final authRepo = FakeAuthRepository(
+        initialUser: const AuthUser(
+          id: 'agent-1',
+          email: 'agent@postfolio.dev',
+        ),
+      );
+      addTearDown(authRepo.dispose);
+
+      final emptyContainer = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          clockProvider.overrideWithValue(() => DateTime(2026, 4, 20)),
+          authRepositoryProvider.overrideWithValue(authRepo),
+          customerRepositoryProvider.overrideWithValue(
+            FakeCustomerRepository(customers: source.customers),
+          ),
+          oneTimeDepositRepositoryProvider.overrideWithValue(
+            FakeOneTimeDepositRepository(deposits: const []),
+          ),
+          recurringDepositRepositoryProvider.overrideWithValue(
+            FakeRecurringDepositRepository(deposits: source.recurringDeposits),
+          ),
+          rdLedgerRepositoryProvider.overrideWithValue(
+            FakeRDLedgerRepository(
+              transactions: source.rdTransactions,
+              poDeposits: source.rdPoDeposits,
+            ),
+          ),
+        ],
+      );
+      addTearDown(emptyContainer.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: emptyContainer,
+          child: MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: const DashboardScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(t.dashboard.overview), findsOneWidget);
+      expect(find.text(t.dashboard.activeOtdsByScheme), findsNothing);
+      expect(find.byType(DashboardSchemeBreakdown), findsNothing);
+    },
+  );
+
+  testWidgets('surfaces ErrorStateView on blocking provider failure', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final authRepo = FakeAuthRepository(
+      initialUser: const AuthUser(id: 'agent-1', email: 'agent@postfolio.dev'),
+    );
+    addTearDown(authRepo.dispose);
+
+    final errorContainer = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        clockProvider.overrideWithValue(() => DateTime(2026, 4, 20)),
+        authRepositoryProvider.overrideWithValue(authRepo),
+        customersControllerProvider.overrideWithBuild(
+          (_, _) => Stream.error('Network error'),
+        ),
+        oneTimeDepositRepositoryProvider.overrideWithValue(
+          FakeOneTimeDepositRepository(deposits: const []),
+        ),
+        recurringDepositRepositoryProvider.overrideWithValue(
+          FakeRecurringDepositRepository(deposits: const []),
+        ),
+        rdLedgerRepositoryProvider.overrideWithValue(FakeRDLedgerRepository()),
+      ],
+    );
+    addTearDown(errorContainer.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: errorContainer,
+        child: MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: const DashboardScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ErrorStateView), findsOneWidget);
+    expect(find.textContaining('Network error'), findsOneWidget);
+  });
 }

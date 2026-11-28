@@ -10,12 +10,15 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/env/env.dart';
 import 'package:postfolio/core/providers/app_preferences_provider.dart';
+import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/providers/theme_provider.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/services/app_error_reporter.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
+import 'package:postfolio/core/widgets/common/demo_banner.dart';
+import 'package:postfolio/core/widgets/common/local_backend_banner.dart';
 import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
 import 'package:postfolio/features/admin/presentation/widgets/acting_as_banner.dart';
 import 'package:postfolio/firebase_options.dart';
@@ -159,9 +162,7 @@ class PostfolioApp extends ConsumerWidget {
             final scheme = Theme.of(context).colorScheme;
             return SkeletonizerConfig(
               data: AppTheme.skeletonizerConfig(scheme),
-              child: _ActingAsShellFrame(
-                child: child ?? const SizedBox.shrink(),
-              ),
+              child: _AppBannerFrame(child: child ?? const SizedBox.shrink()),
             );
           },
           locale: TranslationProvider.of(context).flutterLocale,
@@ -177,12 +178,12 @@ class PostfolioApp extends ConsumerWidget {
   }
 }
 
-/// Pins [ActingAsBanner] above the root navigator whenever the admin is viewing or editing
-/// another agent's account, removing top safe-area padding from the navigator below so app
-/// bars do not double-pad under the banner. Keeps the widget-tree topology invariant across
-/// [isActingAs] toggles so the router subtree is never unmounted/remounted.
-class _ActingAsShellFrame extends ConsumerWidget {
-  const _ActingAsShellFrame({required this.child});
+/// Pins environment/mode banners ([ActingAsBanner], [DemoBanner], [LocalBackendBanner]) above
+/// the root navigator so they stay visible on pushed detail, form, profile, and settings
+/// routes, removing redundant top safe-area padding below each visible banner while keeping
+/// the router subtree topology invariant.
+class _AppBannerFrame extends ConsumerWidget {
+  const _AppBannerFrame({required this.child});
 
   final Widget child;
 
@@ -191,14 +192,25 @@ class _ActingAsShellFrame extends ConsumerWidget {
     final isActingAs = ref.watch(
       actingAsControllerProvider.select((state) => state.isActingAs),
     );
+    final isDemoMode = ref.watch(demoModeProvider);
+    final showLocalBanner = ref.watch(localBackendBannerVisibleProvider);
+    final hasAnyBanner = isActingAs || isDemoMode || showLocalBanner;
 
     return Column(
       children: [
         const ActingAsBanner(),
+        MediaQuery.removePadding(
+          context: context,
+          removeTop: isActingAs,
+          child: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [DemoBanner(), LocalBackendBanner()],
+          ),
+        ),
         Expanded(
           child: MediaQuery.removePadding(
             context: context,
-            removeTop: isActingAs,
+            removeTop: hasAnyBanner,
             child: child,
           ),
         ),

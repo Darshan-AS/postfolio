@@ -2,10 +2,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:postfolio/core/widgets/common/demo_banner.dart';
-import 'package:postfolio/core/widgets/common/local_backend_banner.dart';
-import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/widgets/expressive/app_navigation.dart';
+import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/profile/presentation/widgets/agent_avatar.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -38,9 +36,6 @@ class MainShellScaffold extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDemoMode = ref.watch(demoModeProvider);
-    final hasTopBanner =
-        isDemoMode || ref.watch(localBackendBannerVisibleProvider);
     // Accounts two or more months behind, from the one-row-per-account summary cache.
     final arrears = ref.watch(
       globalAgentFloatProvider.select((float) => float.arrearsAccounts),
@@ -69,64 +64,43 @@ class MainShellScaffold extends ConsumerWidget {
       ),
     ];
 
-    // Use a Builder so that any MediaQuery modifications grab the data
-    // from INSIDE the Scaffold, after the Scaffold has already handled
-    // the keyboard viewInsets. Using the outer context bypasses the Scaffold's
-    // inset consumption, causing "Double Inset" layout bugs.
-    Widget shellContent = Builder(
-      builder: (innerContext) {
-        if (hasTopBanner) {
-          return MediaQuery.removePadding(
-            context: innerContext,
-            removeTop: true,
-            child: navigationShell,
-          );
-        }
-        return navigationShell;
-      },
-    );
-
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth >= AppDimensions.breakpointTablet) {
-          // Tablet / Desktop layout
+          // Tablet / Desktop layout: rail carries Settings + Avatar, so ShellAppBar omits it.
           return Scaffold(
-            body: Column(
+            body: Row(
               children: [
-                const DemoBanner(),
-                const LocalBackendBanner(),
-                Expanded(
-                  child: Row(
-                    children: [
-                      AppNavigationRail(
-                        destinations: destinations,
-                        selectedIndex: navigationShell.currentIndex,
-                        onSelected: (index) => _goBranch(context, index),
-                        trailing: Padding(
-                          padding: const EdgeInsets.only(
-                            bottom: AppDimensions.paddingLg,
+                AppNavigationRail(
+                  destinations: destinations,
+                  selectedIndex: navigationShell.currentIndex,
+                  onSelected: (index) => _goBranch(context, index),
+                  trailing: Padding(
+                    padding: const EdgeInsets.only(
+                      bottom: AppDimensions.paddingLg,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          key: const ValueKey('rail_settings_button'),
+                          tooltip: t.settings.title,
+                          icon: const HugeIcon(
+                            icon: HugeIcons.strokeRoundedSettings01,
+                            size: AppDimensions.iconMd,
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                key: const ValueKey('rail_settings_button'),
-                                tooltip: t.settings.title,
-                                icon: const HugeIcon(
-                                  icon: HugeIcons.strokeRoundedSettings01,
-                                  size: AppDimensions.iconMd,
-                                ),
-                                onPressed: () =>
-                                    const SettingsRoute().push(context),
-                              ),
-                              AppSpacings.gapSm,
-                              const AgentAvatarButton(),
-                            ],
-                          ),
+                          onPressed: () => const SettingsRoute().push(context),
                         ),
-                      ),
-                      Expanded(child: shellContent),
-                    ],
+                        AppSpacings.gapSm,
+                        const AgentAvatarButton(),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ShellLayoutScope(
+                    hasRail: true,
+                    child: navigationShell,
                   ),
                 ),
               ],
@@ -136,13 +110,7 @@ class MainShellScaffold extends ConsumerWidget {
 
         // Mobile layout
         return Scaffold(
-          body: Column(
-            children: [
-              const DemoBanner(),
-              const LocalBackendBanner(),
-              Expanded(child: shellContent),
-            ],
-          ),
+          body: navigationShell,
           bottomNavigationBar: AppNavigationBar(
             destinations: destinations,
             selectedIndex: navigationShell.currentIndex,

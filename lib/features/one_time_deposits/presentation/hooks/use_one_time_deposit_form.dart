@@ -7,6 +7,7 @@ import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/models/postal_scheme_terms.dart';
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/core/services/projection_calculator.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -88,7 +89,7 @@ OneTimeDepositFormState useOneTimeDepositForm({
   );
 
   final initialScheme = deposit?.schemeType ?? OneTimeSchemeType.timeDeposit;
-  final initialStartDate = deposit?.startDate ?? DateTime.now();
+  final initialStartDate = deposit?.startDate ?? ref.read(clockProvider)();
   final initialTerms = postalRateService.resolveOneTimeSchemeTerms(
     schemeType: initialScheme,
     startDate: initialStartDate,

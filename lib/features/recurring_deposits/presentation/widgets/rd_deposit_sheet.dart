@@ -14,6 +14,7 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
 import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
+import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
@@ -134,35 +135,53 @@ class _DepositForm extends HookConsumerWidget {
       );
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        RDSheetHeader(
-          title: title,
-          subtitle: deposit == null ? null : rdAccountIdentity(deposit),
-          onClose: () => Navigator.of(context).maybePop(false),
-        ),
-        Flexible(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.pageMargin,
-              vertical: AppDimensions.paddingSm,
-            ),
-            child: body,
+    Future<void> handlePopAttempt(bool didPop, bool? _) async {
+      if (didPop) return;
+      final discard = await AppDialogs.confirmAction(
+        context,
+        title: ledger.discardChangesTitle,
+        content: ledger.discardChangesContent,
+        confirmText: ledger.discard,
+        isDestructive: true,
+      );
+      if (discard == true && context.mounted) {
+        Navigator.of(context).pop(false);
+      }
+    }
+
+    return PopScope<bool>(
+      canPop: !draft.isDirty || draft.isSubmitting,
+      onPopInvokedWithResult: handlePopAttempt,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          RDSheetHeader(
+            title: title,
+            subtitle: deposit == null ? null : rdAccountIdentity(deposit),
+            onClose: () => Navigator.of(context).maybePop(false),
           ),
-        ),
-        RDSheetFooter(
-          children: [
-            RDSheetPrimaryAction(
-              label: ledger.depositSubmit(n: count),
-              icon: HugeIcons.strokeRoundedBuilding03,
-              isLoading: draft.isSubmitting,
-              onPressed: draft.canSubmit ? handleSubmit : null,
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.pageMargin,
+                vertical: AppDimensions.paddingSm,
+              ),
+              child: body,
             ),
-          ],
-        ),
-      ],
+          ),
+          RDSheetFooter(
+            children: [
+              RDSheetPrimaryAction(
+                label: ledger.depositSubmit(n: count),
+                icon: HugeIcons.strokeRoundedBuilding03,
+                isLoading: draft.isSubmitting,
+                onPressed: draft.canSubmit ? handleSubmit : null,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

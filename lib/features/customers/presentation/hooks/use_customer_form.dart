@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/models/nominee.dart';
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
@@ -85,11 +86,12 @@ CustomerFormState useCustomerForm({
   final isSaving = useState(false);
 
   Future<void> selectDate(BuildContext context) async {
+    final today = ref.read(currentDateProvider);
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate.value ?? DateTime.now(),
+      initialDate: selectedDate.value ?? today,
       firstDate: DateTime(AppConstants.firstDatePickerYear),
-      lastDate: DateTime.now(),
+      lastDate: today,
     );
     if (picked != null && picked != selectedDate.value) {
       selectedDate.value = picked;

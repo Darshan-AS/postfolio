@@ -2,6 +2,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
+import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
 import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
@@ -21,14 +22,25 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final customersState = ref.watch(customersControllerProvider);
+    final otdsState = ref.watch(oneTimeDepositsControllerProvider);
+    final rdsState = ref.watch(recurringDepositsControllerProvider);
+
     final metrics = ref.watch(dashboardMetricsDataProvider);
     final isInitialLoading =
-        (ref.watch(customersControllerProvider).isLoading &&
-            !ref.watch(customersControllerProvider).hasValue) ||
-        (ref.watch(oneTimeDepositsControllerProvider).isLoading &&
-            !ref.watch(oneTimeDepositsControllerProvider).hasValue) ||
-        (ref.watch(recurringDepositsControllerProvider).isLoading &&
-            !ref.watch(recurringDepositsControllerProvider).hasValue);
+        (customersState.isLoading && !customersState.hasValue) ||
+        (otdsState.isLoading && !otdsState.hasValue) ||
+        (rdsState.isLoading && !rdsState.hasValue);
+
+    final hasBlockingError =
+        !isInitialLoading &&
+        ((customersState.hasError && !customersState.hasValue) ||
+            (otdsState.hasError && !otdsState.hasValue) ||
+            (rdsState.hasError && !rdsState.hasValue));
+    final firstError =
+        customersState.error ?? otdsState.error ?? rdsState.error;
+
+    final hasSchemes = metrics.totalOtdsByScheme.values.any((c) => c > 0);
 
     Future<void> refreshAll() async {
       ref.invalidate(isAdminProvider);
@@ -51,39 +63,51 @@ class DashboardScreen extends ConsumerWidget {
     return Scaffold(
       appBar: ShellAppBar(title: t.nav.dashboard),
       body: SafeArea(
-        child: AppRefreshIndicator(
-          onRefresh: refreshAll,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.only(bottom: AppDimensions.paddingLg),
-            child: Skeletonizer(
-              enabled: isInitialLoading,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: pageInsets,
+        child: hasBlockingError
+            ? ErrorStateView(
+                message: firstError.toString(),
+                onRetry: refreshAll,
+              )
+            : AppRefreshIndicator(
+                onRefresh: refreshAll,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(
+                    bottom: AppDimensions.paddingLg,
+                  ),
+                  child: Skeletonizer(
+                    enabled: isInitialLoading,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        DetailSectionTitle(t.dashboard.overview),
-                        DashboardMetricsRow(metrics: metrics),
-                        AppSpacings.gapLg,
-                        DetailSectionTitle(t.dashboard.activeOtdsByScheme),
+                        Padding(
+                          padding: pageInsets,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              DetailSectionTitle(t.dashboard.overview),
+                              DashboardMetricsRow(metrics: metrics),
+                              if (isInitialLoading || hasSchemes) ...[
+                                AppSpacings.gapLg,
+                                DetailSectionTitle(
+                                  t.dashboard.activeOtdsByScheme,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        if (isInitialLoading || hasSchemes)
+                          DashboardSchemeBreakdown(metrics: metrics),
+                        AppSpacings.gapXl,
+                        const Padding(
+                          padding: pageInsets,
+                          child: DashboardChartSection(),
+                        ),
                       ],
                     ),
                   ),
-                  DashboardSchemeBreakdown(metrics: metrics),
-                  AppSpacings.gapXl,
-                  const Padding(
-                    padding: pageInsets,
-                    child: DashboardChartSection(),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ),
       ),
     );
   }

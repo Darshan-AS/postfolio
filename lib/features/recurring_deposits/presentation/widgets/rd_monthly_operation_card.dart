@@ -188,7 +188,7 @@ class RDMonthlyOperationCard extends StatelessWidget {
 
     final money = item.headlineMoneyAt(now);
     final moneyColor = switch (money.tone) {
-      RDHeadlineMoneyTone.overdue => scheme.error,
+      RDHeadlineMoneyTone.overdue => financial.overdue.onContainer,
       RDHeadlineMoneyTone.neutral => scheme.onSurface,
       RDHeadlineMoneyTone.settled => financial.settled.onContainer,
       RDHeadlineMoneyTone.muted => scheme.onSurfaceVariant,
@@ -385,11 +385,12 @@ class _IdentityLine extends StatelessWidget {
 
   (String, TextStyle?) _dueText(BuildContext context) {
     final theme = Theme.of(context);
+    final financial = AppFinancialColors.of(context);
     final emphasized = AppTypography.emphasizedOf(context);
     final card = t.recurringDeposits.monthlyOperations.card;
     final due = card.due(date: installment.dueDate.toDayMonthFormat());
     final alert = emphasized.bodySmall?.copyWith(
-      color: theme.colorScheme.error,
+      color: financial.overdue.onContainer,
     );
 
     if (status == RDInstallmentDisplayStatus.overdue) {

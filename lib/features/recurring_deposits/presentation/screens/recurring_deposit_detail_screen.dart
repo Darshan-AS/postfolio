@@ -6,7 +6,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
+import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_financial_colors.dart';
@@ -74,6 +76,7 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
       initialTab ?? GoRouter.maybeOf(context)?.state.uri.queryParameters['tab'],
     );
     final activeTab = useState(tabFromRoute ?? RDDetailTab.info);
+    final today = ref.watch(currentDateProvider);
     final projectionAsync = ref.watch(rdLedgerProjectionProvider(depositId));
 
     final record = ref.watch(recurringDepositByIdProvider(depositId));
@@ -230,6 +233,8 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
             badge: StatusBadge(
               status: deposit.status.displayName,
               depositStatus: deposit.status,
+              urgency: deposit.maturityUrgencyAt(today),
+              relativeTimeText: deposit.maturityRelativeTimeAt(today),
             ),
           ),
           body: [
@@ -426,7 +431,7 @@ class _LedgerProgress extends StatelessWidget {
                   fee: feeDue.toRupeeFormat(),
                 )
               : tabs.owes(amount: owed.toRupeeFormat()),
-          color: scheme.error,
+          color: financial.overdue.onContainer,
         ),
       if (credit > 0)
         (

@@ -335,9 +335,10 @@ void main() {
                     as Success<OneTimeDeposit, String>)
                 .value;
         expect(td5.schemeTermLabel, '5Y');
-        expect(td5.maturityUrgency, MaturityUrgency.matured);
+        final now = DateTime(2026, 4, 20);
+        expect(td5.maturityUrgencyAt(now), MaturityUrgency.matured);
         expect(
-          td5.copyWith(status: DepositStatus.closed).maturityUrgency,
+          td5.copyWith(status: DepositStatus.closed).maturityUrgencyAt(now),
           MaturityUrgency.closed,
         );
       },

@@ -5,7 +5,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -40,6 +42,7 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final today = ref.watch(currentDateProvider);
     final record = ref.watch(oneTimeDepositByIdProvider(depositId));
 
     return AsyncSingleEntityBuilder<OneTimeDeposit>(
@@ -166,12 +169,14 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 ),
                 // The date the screen is most often opened for; it was only in the
                 // Timeline group, half a screen down.
-                _MaturityLine(deposit: deposit),
+                _MaturityLine(deposit: deposit, now: today),
               ],
             ),
             badge: StatusBadge(
               status: deposit.status.displayName,
               depositStatus: deposit.status,
+              urgency: deposit.maturityUrgencyAt(today),
+              relativeTimeText: deposit.maturityRelativeTimeAt(today),
             ),
           ),
           body: [
@@ -305,20 +310,23 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
 /// maturity or past it.
 class _MaturityLine extends StatelessWidget {
   final OneTimeDeposit deposit;
+  final DateTime now;
 
-  const _MaturityLine({required this.deposit});
+  const _MaturityLine({required this.deposit, required this.now});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final financial = AppFinancialColors.of(context);
     final isActive = deposit.status == DepositStatus.active;
-    final urgency = deposit.maturityUrgency;
+    final urgency = deposit.maturityUrgencyAt(now);
     final date = deposit.maturityDate.toAppFormat();
 
     final color = switch (urgency) {
-      MaturityUrgency.matured when isActive => scheme.error,
-      MaturityUrgency.maturingSoon when isActive => scheme.tertiary,
+      MaturityUrgency.matured when isActive => financial.overdue.onContainer,
+      MaturityUrgency.maturingSoon when isActive =>
+        financial.warning.onContainer,
       _ => scheme.onSurfaceVariant,
     };
     return Text(

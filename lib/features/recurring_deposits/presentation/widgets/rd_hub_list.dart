@@ -227,14 +227,12 @@ class _RDHubRow extends ConsumerWidget {
     }
 
     Future<void> onUndoLatestDeposit() async {
-      final scheme = Theme.of(context).colorScheme;
       final confirmed = await AppDialogs.confirmAction(
         context,
         title: card.undoLatestDepositConfirmTitle,
         content: card.undoLatestDepositConfirmMessage,
         confirmText: t.common.confirm,
-        confirmBackgroundColor: scheme.error,
-        confirmForegroundColor: scheme.onError,
+        isDestructive: true,
       );
       if (confirmed != true || !context.mounted) return;
       await undoLatest();

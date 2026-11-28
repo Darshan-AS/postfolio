@@ -212,6 +212,7 @@ class _PaymentForm extends HookConsumerWidget {
             ? ledger.discardChangesContent
             : ledger.discardAmountContent,
         confirmText: ledger.discard,
+        isDestructive: true,
       );
       if (discard == true && context.mounted) {
         Navigator.of(context).pop(RDLogPaymentOutcome.dismissed);
@@ -225,6 +226,7 @@ class _PaymentForm extends HookConsumerWidget {
           title: ledger.discardChangesTitle,
           content: ledger.discardAmountContent,
           confirmText: ledger.discard,
+          isDestructive: true,
         );
         if (discard != true || !context.mounted) return;
       }
@@ -653,7 +655,6 @@ class _PreviewMonthRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final emphasized = AppTypography.emphasizedOf(context);
     final strings = t.recurringDeposits.ledger.preview;
     final after = month.after;
@@ -705,7 +706,7 @@ class _PreviewMonthRow extends StatelessWidget {
                 Text(
                   strings.monthFee(fee: after.customerFeeDue.toRupeeFormat()),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.error,
+                    color: AppFinancialColors.of(context).overdue.onContainer,
                   ),
                 ),
               Text(

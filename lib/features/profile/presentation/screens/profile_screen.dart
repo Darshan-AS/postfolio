@@ -478,14 +478,12 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
-    final scheme = Theme.of(context).colorScheme;
     final confirmed = await AppDialogs.confirmAction(
       context,
       title: t.settings.signOutConfirmTitle,
       content: t.settings.signOutConfirmContent,
       confirmText: t.auth.signOut,
-      confirmBackgroundColor: scheme.errorContainer,
-      confirmForegroundColor: scheme.onErrorContainer,
+      isDestructive: true,
       icon: HugeIcons.strokeRoundedLogout01,
     );
     if (confirmed == true) {

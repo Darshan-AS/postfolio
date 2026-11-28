@@ -41,11 +41,15 @@ class AppDialogs {
     required String title,
     required String content,
     String? confirmText,
+    bool isDestructive = false,
     Color? confirmBackgroundColor,
     Color? confirmForegroundColor,
     List<List<dynamic>>? icon,
   }) {
     final theme = Theme.of(context);
+    final resolvedIconColor = isDestructive
+        ? theme.colorScheme.error
+        : theme.colorScheme.primary;
 
     return AppDialog.show<bool>(
       context,
@@ -53,7 +57,7 @@ class AppDialogs {
           ? HugeIcon(
               icon: icon,
               size: AppDimensions.iconLg,
-              color: theme.colorScheme.primary,
+              color: resolvedIconColor,
             )
           : null,
       title: title,
@@ -65,8 +69,9 @@ class AppDialogs {
         ),
         AppButton.tonal(
           label: confirmText ?? t.common.ok,
-          backgroundColor: confirmBackgroundColor,
-          foregroundColor: confirmForegroundColor,
+          isDestructive: isDestructive,
+          backgroundColor: isDestructive ? null : confirmBackgroundColor,
+          foregroundColor: isDestructive ? null : confirmForegroundColor,
           onPressed: () => Navigator.of(ctx).pop(true),
         ),
       ],

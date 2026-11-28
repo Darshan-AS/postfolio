@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
@@ -12,6 +13,8 @@ import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/common/demo_banner.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
@@ -313,6 +316,71 @@ void main() {
         await tester.pumpAndSettle();
         expect(container.read(demoModeProvider), isFalse);
         expect(find.byType(MaterialBanner), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'ShellLayoutScope(hasRail: true) omits duplicate ShellAppBar avatar',
+      (tester) async {
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: MaterialApp(
+              home: ShellLayoutScope(
+                hasRail: true,
+                child: Scaffold(
+                  appBar: ShellAppBar(title: 'Dashboard'),
+                  body: SizedBox.shrink(),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(
+          find.byKey(const ValueKey('shell_account_avatar_button')),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'AppDialogs.confirmAction marks destructive icon with scheme.error and tonal button isDestructive',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () => AppDialogs.confirmAction(
+                    context,
+                    title: 'Sign Out',
+                    content: 'Confirm sign out?',
+                    confirmText: 'Leave',
+                    isDestructive: true,
+                    icon: HugeIcons.strokeRoundedLogout01,
+                  ),
+                  child: const Text('Open Confirm'),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('Open Confirm'));
+        await tester.pumpAndSettle();
+
+        final iconWidget = tester.widget<HugeIcon>(find.byType(HugeIcon));
+        expect(iconWidget.color, AppTheme.lightTheme.colorScheme.error);
+
+        final confirmButton = tester.widget<AppButton>(
+          find.ancestor(
+            of: find.text('Leave'),
+            matching: find.byType(AppButton),
+          ),
+        );
+        expect(confirmButton.variant, AppButtonVariant.tonal);
+        expect(confirmButton.isDestructive, isTrue);
       },
     );
   });

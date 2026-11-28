@@ -29,14 +29,12 @@ class UnsavedChangesPopScope extends StatelessWidget {
       canPop: !isDirty,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        final scheme = Theme.of(context).colorScheme;
         final discard = await AppDialogs.confirmAction(
           context,
           title: t.common.unsavedChanges.title,
           content: t.common.unsavedChanges.content,
           confirmText: t.common.unsavedChanges.discard,
-          confirmBackgroundColor: scheme.errorContainer,
-          confirmForegroundColor: scheme.onErrorContainer,
+          isDestructive: true,
         );
         if (discard == true && context.mounted) {
           Navigator.of(context).pop(result);

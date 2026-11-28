@@ -53,7 +53,6 @@ class RDPassbookPoStrip extends ConsumerWidget {
     final passbook = t.recurringDeposits.ledger.passbook;
     final latest = latestPoDeposit;
     if (latest == null) return;
-    final scheme = Theme.of(context).colorScheme;
 
     final confirmed = await AppDialogs.confirmAction(
       context,
@@ -64,8 +63,7 @@ class RDPassbookPoStrip extends ConsumerWidget {
         amount: latest.amount.toRupeeFormat(),
       ),
       confirmText: passbook.undoLastDeposit,
-      confirmBackgroundColor: scheme.error,
-      confirmForegroundColor: scheme.onError,
+      isDestructive: true,
     );
     if (confirmed != true || !context.mounted) return;
 

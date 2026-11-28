@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
@@ -54,6 +55,7 @@ class OneTimeDepositCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final today = ref.watch(currentDateProvider);
     final accountNo = deposit.accountNo ?? t.common.notProvided;
     final customerName = deposit.customerName ?? '';
 
@@ -61,8 +63,8 @@ class OneTimeDepositCard extends ConsumerWidget {
       deposit: deposit,
       title: titleByAccount || customerName.isEmpty ? accountNo : customerName,
       subtitle: titleByAccount ? '' : accountNo,
-      urgency: deposit.maturityUrgency,
-      relativeTimeText: deposit.maturityRelativeTime,
+      urgency: deposit.maturityUrgencyAt(today),
+      relativeTimeText: deposit.maturityRelativeTimeAt(today),
       position: position,
       heroTag: EntityHero.tagFrom(heroOrigin, deposit.id),
       titleIsAccount: titleByAccount,

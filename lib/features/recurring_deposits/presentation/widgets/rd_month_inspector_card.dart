@@ -258,7 +258,7 @@ class _InspectorBody extends ConsumerWidget {
         _MetricRow(
           label: inspector.agentDelay,
           value: inst.agentDelayCost.toRupeeFormat(),
-          valueColor: scheme.error,
+          valueColor: financial.overdue.onContainer,
         ),
       if (inst.absorbedFee > 0)
         _MetricRow(

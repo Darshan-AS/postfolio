@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/services/postal_rate_service.dart';
 import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.dart';
@@ -151,8 +152,11 @@ Future<UnmodifiableListView<OneTimeDeposit>> filteredOneTimeDeposits(
   }
 
   if (criteria.urgencyFilters.isNotEmpty) {
+    final today = ref.watch(currentDateProvider);
     result = result
-        .where((d) => criteria.urgencyFilters.contains(d.maturityUrgency))
+        .where(
+          (d) => criteria.urgencyFilters.contains(d.maturityUrgencyAt(today)),
+        )
         .toList();
   }
 

@@ -32,6 +32,7 @@ class DepositDraftState {
     required this.firstDate,
     required this.lastDate,
     required this.isSubmitting,
+    this.isDirty = false,
     required this.setCount,
     required this.setFeeOverride,
     required this.submit,
@@ -70,6 +71,7 @@ class DepositDraftState {
   final DateTime firstDate;
   final DateTime lastDate;
   final bool isSubmitting;
+  final bool isDirty;
 
   final void Function(int value) setCount;
   final void Function(double? value) setFeeOverride;
@@ -194,6 +196,17 @@ DepositDraftState useDepositDraft(
 
   Future<Result<void, String>> undo() => ledger.undoLatestPoDeposit(rdId);
 
+  final defaultRequested = initialCount ?? (readyCount > 0 ? readyCount : 1);
+  final defaultCount = remaining == 0
+      ? 0
+      : defaultRequested.clamp(1, remaining);
+  final isDirty =
+      factsValue != null &&
+      projectionValue != null &&
+      (feeOverrideState.value != null ||
+          depositedOn.value != today ||
+          count != defaultCount);
+
   return DepositDraftState(
     rdId: rdId,
     facts: facts,
@@ -210,6 +223,7 @@ DepositDraftState useDepositDraft(
     firstDate: firstDate,
     lastDate: today,
     isSubmitting: isSubmitting,
+    isDirty: isDirty,
     setCount: setCount,
     setFeeOverride: setFeeOverride,
     submit: submit,
