@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Scaled & shifted Pocket Flipbook inside 66/108dp safe zone above staging badge -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.80"
+        android:scaleY="0.80"
+        android:translateY="-4.5">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M41,25h26a4,4 0 0,1 4,4v4h-34v-4a4,4 0 0,1 4,-4z" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M37,35h34v25c-4.5,6.5 -8.5,18 -16,23h-14a4,4 0 0,1 -4,-4z M44.5,40h19a2.5,2.5 0 0,1 2.5,2.5v8.5a2.5,2.5 0 0,1 -2.5,2.5h-19a2.5,2.5 0 0,1 -2.5,-2.5v-8.5a2.5,2.5 0 0,1 2.5,-2.5z M45.5,43.2h15a1.2,1.2 0 0,1 0,2.4h-15a1.2,1.2 0 0,1 0,-2.4z M45.5,47.8h11a1.2,1.2 0 0,1 0,2.4h-11a1.2,1.2 0 0,1 0,-2.4z" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M62.5,65.2h3.0a1.0,1.0 0 0,1 0,2.0h-3.0a1.0,1.0 0 0,1 0,-2.0z M68.2,64.8a1.4,1.4 0 1,1 -0.01,0z M59.8,71.0h5.7a1.0,1.0 0 0,1 0,2.0h-5.7a1.0,1.0 0 0,1 0,-2.0z M68.2,70.6a1.4,1.4 0 1,1 -0.01,0z M57.0,76.8h8.5a1.0,1.0 0 0,1 0,2.0h-8.5a1.0,1.0 0 0,1 0,-2.0z M68.2,76.4a1.4,1.4 0 1,1 -0.01,0z" />
+    </group>
+    <!-- Solid monochrome staging pill strictly inside 66/108dp safe zone -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M43,75h22a2.5,2.5 0 0,1 0,5h-22a2.5,2.5 0 0,1 0,-5z" />
+</vector>

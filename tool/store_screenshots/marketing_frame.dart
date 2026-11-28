@@ -200,28 +200,17 @@ class LandscapeMarketingSlide extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: const Color(0x55FFFFFF),
-                                width: 1.2,
+                          const _BrandAppIconBadge(
+                            size: 42,
+                            radius: 10,
+                            borderWidth: 1.2,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x48041133),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
                               ),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x40000000),
-                                  blurRadius: 12,
-                                  offset: Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: Image.asset(
-                              'assets/branding/app_icon.png',
-                              fit: BoxFit.cover,
-                            ),
+                            ],
                           ),
                           const SizedBox(width: 10),
                           const Text(
@@ -688,28 +677,17 @@ class FeatureGraphicBanner extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 82,
-                    height: 82,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: const Color(0x66FFFFFF),
-                        width: 1.5,
+                  const _BrandAppIconBadge(
+                    size: 82,
+                    radius: 20,
+                    borderWidth: 1.5,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x52041133),
+                        blurRadius: 20,
+                        offset: Offset(0, 8),
                       ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x48041133),
-                          blurRadius: 18,
-                          offset: Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Image.asset(
-                      'assets/branding/app_icon.png',
-                      fit: BoxFit.cover,
-                    ),
+                    ],
                   ),
                   const SizedBox(width: 22),
                   const Expanded(
@@ -756,6 +734,52 @@ class FeatureGraphicBanner extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BrandAppIconBadge extends StatelessWidget {
+  const _BrandAppIconBadge({
+    required this.size,
+    required this.radius,
+    required this.borderWidth,
+    required this.boxShadow,
+  });
+
+  final double size;
+  final double radius;
+  final double borderWidth;
+  final List<BoxShadow> boxShadow;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderRadius = BorderRadius.circular(radius);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: boxShadow,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: DecoratedBox(
+            position: DecorationPosition.foreground,
+            decoration: BoxDecoration(
+              borderRadius: borderRadius,
+              border: Border.all(
+                color: const Color(0x4DFFFFFF),
+                width: borderWidth,
+              ),
+            ),
+            child: Image.asset(
+              'assets/branding/app_icon.png',
+              fit: BoxFit.cover,
+            ),
+          ),
         ),
       ),
     );
