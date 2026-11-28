@@ -3,41 +3,46 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Loads real `Roboto` and `MaterialIcons` fonts bundled with the Flutter SDK
-/// so golden-test store screenshots render crisp typography instead of Ahem
-/// fallback blocks, plus a macOS fallback font when available for `₹` (U+20B9).
+/// Loads pinned `Roboto` v3.016 fonts (which include `₹` U+20B9 natively) from
+/// `tool/store_screenshots/fonts/` and `MaterialIcons` from the Flutter SDK so
+/// golden-test store screenshots render identically across macOS and Linux CI.
 class ScreenshotFonts {
   ScreenshotFonts._();
 
   static bool _loaded = false;
-  static bool _hasRupeeFallback = false;
 
   static const _robotoFiles = <String>[
-    'Roboto-Thin.ttf',
     'Roboto-Light.ttf',
     'Roboto-Regular.ttf',
     'Roboto-Medium.ttf',
     'Roboto-Bold.ttf',
     'Roboto-Black.ttf',
-    'Roboto-Italic.ttf',
-    'Roboto-LightItalic.ttf',
-    'Roboto-MediumItalic.ttf',
-    'Roboto-BoldItalic.ttf',
-    'Roboto-BlackItalic.ttf',
-    'Roboto-ThinItalic.ttf',
   ];
 
-  static const _fallbackFontPaths = <String>[
-    '/System/Library/Fonts/Supplemental/Arial.ttf',
-    '/System/Library/Fonts/Supplemental/NotoSansKannada-Regular.ttf',
-    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-  ];
-
-  /// Loads `Roboto`, `MaterialIcons`, and an optional fallback font into the
-  /// test binding's [FontLoader]. Safe to call multiple times.
+  /// Loads `Roboto` and `MaterialIcons` into the test binding's [FontLoader].
+  /// Safe to call multiple times.
   static Future<void> ensureLoaded() async {
     if (_loaded) return;
     _loaded = true;
+
+    final robotoDir = _findBundledFontsDir();
+    if (robotoDir == null) {
+      throw StateError(
+        'Could not locate tool/store_screenshots/fonts. '
+        'Run `flutter test` from the repository root.',
+      );
+    }
+
+    final robotoLoader = FontLoader('Roboto');
+    for (final filename in _robotoFiles) {
+      final file = File('${robotoDir.path}/$filename');
+      if (!file.existsSync()) {
+        throw StateError('Missing bundled font: ${file.path}');
+      }
+      final bytes = await file.readAsBytes();
+      robotoLoader.addFont(Future.value(ByteData.sublistView(bytes)));
+    }
+    await robotoLoader.load();
 
     final materialFontsDir = _findMaterialFontsDir();
     if (materialFontsDir == null) {
@@ -46,16 +51,6 @@ class ScreenshotFonts {
         'Run via `flutter test` or set FLUTTER_ROOT.',
       );
     }
-
-    final robotoLoader = FontLoader('Roboto');
-    for (final filename in _robotoFiles) {
-      final file = File('${materialFontsDir.path}/$filename');
-      if (file.existsSync()) {
-        final bytes = await file.readAsBytes();
-        robotoLoader.addFont(Future.value(ByteData.sublistView(bytes)));
-      }
-    }
-    await robotoLoader.load();
 
     final iconsFile = File(
       '${materialFontsDir.path}/MaterialIcons-Regular.otf',
@@ -66,27 +61,11 @@ class ScreenshotFonts {
       iconsLoader.addFont(Future.value(ByteData.sublistView(bytes)));
       await iconsLoader.load();
     }
-
-    // Load a system sans-serif fallback containing U+20B9 (Indian Rupee Sign)
-    // in case the bundled 2017 Roboto TTF lacks the glyph.
-    for (final path in _fallbackFontPaths) {
-      final file = File(path);
-      if (file.existsSync()) {
-        final bytes = await file.readAsBytes();
-        final fallbackLoader = FontLoader('ScreenshotFallback');
-        fallbackLoader.addFont(Future.value(ByteData.sublistView(bytes)));
-        await fallbackLoader.load();
-        _hasRupeeFallback = true;
-        break;
-      }
-    }
   }
 
-  /// Applies `Roboto` (and fallback for symbols like `₹`) to every style in [theme].
+  /// Applies bundled `Roboto` to every style in [theme].
   static ThemeData applyTo(ThemeData theme) {
-    final fallback = _hasRupeeFallback ? const ['ScreenshotFallback'] : null;
-    TextStyle? patch(TextStyle? style) =>
-        style?.copyWith(fontFamily: 'Roboto', fontFamilyFallback: fallback);
+    TextStyle? patch(TextStyle? style) => style?.copyWith(fontFamily: 'Roboto');
 
     TextTheme patchTheme(TextTheme t) => t.copyWith(
       displayLarge: patch(t.displayLarge),
@@ -112,6 +91,20 @@ class ScreenshotFonts {
     );
   }
 
+  static Directory? _findBundledFontsDir() {
+    var cursor = Directory.current;
+    for (var i = 0; i < 6; i++) {
+      final candidate = Directory(
+        '${cursor.path}/tool/store_screenshots/fonts',
+      );
+      if (candidate.existsSync()) return candidate;
+      final parent = cursor.parent;
+      if (parent.path == cursor.path) break;
+      cursor = parent;
+    }
+    return null;
+  }
+
   static Directory? _findMaterialFontsDir() {
     final candidates = <Directory>[];
     final envRoot = Platform.environment['FLUTTER_ROOT'];
@@ -126,8 +119,6 @@ class ScreenshotFonts {
       if (parent.path == cursor.path) break;
       cursor = parent;
     }
-
-    candidates.add(Directory('/Users/darshanas/flutter'));
 
     for (final root in candidates) {
       final dir = Directory('${root.path}/bin/cache/artifacts/material_fonts');

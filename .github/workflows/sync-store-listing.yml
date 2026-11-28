@@ -106,11 +106,15 @@ jobs:
           cp android/fastlane/metadata/android/en-US/*.txt "$STAGED_LOCALE_DIR/"
 
           if [ "$UPLOAD_IMAGES" = "true" ]; then
-            mkdir -p "$STAGED_LOCALE_DIR/images/phoneScreenshots"
+            mkdir -p \
+              "$STAGED_LOCALE_DIR/images/phoneScreenshots" \
+              "$STAGED_LOCALE_DIR/images/sevenInchScreenshots" \
+              "$STAGED_LOCALE_DIR/images/tenInchScreenshots"
             cp docs/store_assets/icon_512.png "$STAGED_LOCALE_DIR/images/icon.png"
             cp docs/store_assets/feature_graphic_1024x500.png "$STAGED_LOCALE_DIR/images/featureGraphic.png"
             cp docs/store_assets/phone_screenshots/*.png "$STAGED_LOCALE_DIR/images/phoneScreenshots/"
-            cp docs/store_assets/landscape_screenshots/01_overview_landscape.png "$STAGED_LOCALE_DIR/images/phoneScreenshots/08_overview_landscape.png"
+            cp docs/store_assets/tablet_7_screenshots/*.png "$STAGED_LOCALE_DIR/images/sevenInchScreenshots/"
+            cp docs/store_assets/tablet_10_screenshots/*.png "$STAGED_LOCALE_DIR/images/tenInchScreenshots/"
           fi
 
       - name: Run Fastlane Supply
