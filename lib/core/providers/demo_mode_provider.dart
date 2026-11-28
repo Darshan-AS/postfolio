@@ -26,3 +26,13 @@ class DemoMode extends _$DemoMode {
     state = false;
   }
 }
+
+/// Incremented by the Demo Banner's Reset action to rebuild [demoDataSourceProvider]
+/// and advance [activeSessionKeyProvider], discarding in-memory demo edits.
+@Riverpod(keepAlive: true)
+class DemoSessionEpoch extends _$DemoSessionEpoch {
+  @override
+  int build() => 0;
+
+  void reset() => state++;
+}

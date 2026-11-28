@@ -6,6 +6,7 @@ import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 class DemoBanner extends ConsumerWidget {
@@ -43,6 +44,14 @@ class DemoBanner extends ConsumerWidget {
             ).bodyMedium?.copyWith(color: scheme.onTertiaryContainer),
           ),
           actions: [
+            AppButton.text(
+              key: const ValueKey('reset_demo_data_button'),
+              label: t.common.reset,
+              onPressed: () {
+                ref.read(demoSessionEpochProvider.notifier).reset();
+                AppFeedback.showSuccess(context, t.common.demoDataReset);
+              },
+            ),
             AppButton.text(
               key: const ValueKey('exit_demo_mode_button'),
               label: t.common.exitDemoMode,

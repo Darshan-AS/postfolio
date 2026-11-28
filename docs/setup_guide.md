@@ -254,20 +254,22 @@ Because we use **Google Play App Signing**, you can recover:
 
 ### Local seed data
 
-`supabase/seed.sql` runs on every `supabase db reset`. It creates one agent, `agent@postfolio.com` / `password123`, with 21 customers, 20 recurring deposits and 11 one-time deposits.
+`supabase/seed.sql` runs on every `supabase db reset`. It creates three local agents:
 
-- **One customer, one situation.** Each customer is there to show one thing in the app, and the customer's Notes field says what. Their first names run A to U in this order, followed by a customer whose name is written in Kannada.
+- **Primary Admin Agent**: `agent@postfolio.com` / `password123` (Jim Gordon, granted `'admin'` in `public.user_roles`), with 22 DC Universe customers, 21 recurring deposits (`0200010001`–`0200010021`), 17 one-time deposits (`0300020001`–`0300020017`), and 1 savings account (`0100030017`), mirrored 1-to-1 by Demo Mode's `FakeDataSource`.
+- **Secondary Agents (for Admin Acting-As)**: `lucius@postfolio.com` / `password123` (Lucius Fox: 3 customers, 2 RDs, 2 OTDs) and `perry@postfolio.com` / `password123` (Perry White: 2 customers, 1 RD, 2 OTDs).
+
+- **One customer, one situation.** Each customer on the primary agent's book showcases a real workflow or edge case with natural in-character notes:
 
   | # | Customers | What they show |
   | :--- | :--- | :--- |
-  | 1–11 | Asha to Kavita | The Monthly Hub this month: settled; in hand in cash, by UPI, and enough cash for two Post Office lots; part paid; not yet paid; one and three months in arrears; fronted by the agent; three installments paid at once with default fees; a fee the agent bore |
-  | 12–16 | Lalit to Prakash | Account lifecycle: opened this month; brought into the app with 36 installments paid and an opening receivable; maturing soon; matured and still open; closed |
-  | 17–21 | Ramesh to the Kannada name | Customer shape: a household with two recurring deposits, every one-time scheme and a savings account; a customer with only a name; a name too long for one line; a customer with no account; a name in Kannada script |
+  | 1–13 | Alfred Pennyworth to John Constantine | Monthly Hub & ledger intermediate states: in hand cash (`Alfred`) and large cash split into two PO lots (`Diana`), in hand via UPI (`Clark`) and bank transfer (`Edward`), part-paid (`Barbara`), part-paid with prior arrears (`Jason`), advance-paid 2 months ahead (`Barry`), household with 2 RDs (`Bruce`), 1 and 3–4 months in arrears (`Arthur`, `Harvey`), fronted (`Hal`), 3 installments caught up at once (`Harleen`), and an absorbed default fee (`John Constantine`) |
+  | 14–22 | Kara Zor-El to Victor Stone | Account lifecycle & customer shapes: opened this month (`Kara`), long >50-char name (`Koriand'r`), 36 baseline installments + ₹10,000 opening receivable (`Lex`), due month-end (`Lois`), maturing soon in 20 days (`Oliver`, plus `Diana` MIS at 15d and `Edward` KVP at 25d), matured and still open (`Oswald`), closed (`Pamela`), minimal KYC name-only (`Selina`), and zero accounts (`Victor`) |
 
 - **Dates follow the day of the reset.** Every date is counted back from that day in India time, so "this month", "overdue" and "maturing soon" are true on that day, and nothing is dated after it. The data ages as days pass: after a month end, this month's rows become last month's. Run `supabase db reset` to refresh it.
-- **Signing in.** A build that runs against the local stack (`config/local.json`) shows **Sign in as seeded agent** on the login screen. If you sign in with Google instead, the first such sign-in takes over the seed data (the `trigger_seed_adoption` trigger), and the seeded agent is left with none. To hand the data to a particular account by hand:
+- **Signing in.** A build that runs against the local stack (`config/local.json`) shows **Sign in as seeded agent** on the login screen (signing in as Jim Gordon, with Admin Acting-As ready). If you sign in with Google instead, the first such sign-in takes over the primary seed portfolio (the `trigger_seed_adoption` trigger) and receives the `'admin'` role so Lucius Fox and Perry White remain accessible via Switch Account. To hand the data to a particular account by hand:
   `docker exec supabase_db_postfolio psql -U postgres -d postgres -c "SELECT public.adopt_seed_data('you@example.com');"`
-- **It is checked.** `test/supabase_seed_scenarios_test.dart` reads the seed through the app's repositories and ledger projection and asserts each situation above. Change the seed and that test together. The test is skipped when the seeded agent owns no customers.
+- **It is checked.** `test/supabase_seed_scenarios_test.dart` reads the seed through the app's repositories and ledger projection and asserts each situation above (plus Admin Acting-As listing). Change the seed and that test together. The test is skipped when the seeded agent owns no customers.
 - **Enum columns** (`scheme_type`, `status`, `relationship`, `payment_mode`) must hold the app's serialised names (`recurringDeposit`, `monthlyIncomeScheme`, `Son`, `bankTransfer`, …). A CHECK constraint refuses anything else.
 - **Reseeding without the Supabase CLI**: wipe, then seed. The seed file does not update rows that exist.
   ```

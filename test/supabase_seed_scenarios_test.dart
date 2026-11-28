@@ -8,6 +8,7 @@ import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/models/base_deposit.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/features/admin/data/admin_repository.dart';
 import 'package:postfolio/features/auth/domain/local_seed_agent.dart';
 import 'package:postfolio/features/customers/data/supabase_customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
@@ -29,6 +30,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Checks `supabase/seed.sql` against the LOCAL Supabase stack: each seeded customer is
 /// there to show one situation, and this reads the data the way the app does (repositories,
 /// then [RDLedgerProjector]) and asserts that the situation is what the app would show.
+/// Also verifies that the primary seeded agent has admin access to Lucius Fox & Perry White.
 /// Change the seed and this file together.
 ///
 /// The seed counts every date back from the day of the reset. This test projects the ledger
@@ -130,7 +132,7 @@ void main() {
   Customer customer(String name) =>
       customers.singleWhere((c) => c.name == name);
 
-  /// The recurring deposit with that serial number; the seed numbers them 1 to 20.
+  /// The recurring deposit with that serial number; the seed numbers them 1 to 21.
   RecurringDeposit rd(int serial, String holder) {
     final deposit = rds.singleWhere((d) => d.serialNo == '$serial');
     expect(deposit.customerName, holder, reason: 'holder of serial $serial');
@@ -176,16 +178,17 @@ void main() {
 
   group('the whole seed', () {
     seedTest(
-      '21 customers, 20 recurring deposits numbered 1 to 20, 11 one-time '
-      'deposits',
+      '22 customers, 21 recurring deposits numbered 1 to 21, 17 one-time '
+      'deposits, natural notes',
       () {
-        expect(customers, hasLength(21));
+        expect(customers, hasLength(22));
         expect([for (final d in rds) int.parse(d.serialNo!)]..sort(), [
-          for (var n = 1; n <= 20; n++) n,
+          for (var n = 1; n <= 21; n++) n,
         ]);
-        expect(otds, hasLength(11));
+        expect(otds, hasLength(17));
         for (final c in customers) {
-          expect(c.notes, startsWith('Seed '), reason: c.name);
+          expect(c.notes, isNotNull, reason: c.name);
+          expect(c.notes!.startsWith('Seed '), isFalse, reason: c.name);
         }
       },
     );
@@ -214,77 +217,24 @@ void main() {
     });
   });
 
-  group('Monthly Hub: this month', () {
-    seedTest('1 Asha Kulkarni: settled, nothing owed', () {
-      final d = rd(1, 'Asha Kulkarni');
-      final summary = ledger(d).summary;
-      expect(statusOf(installment(d)), RDInstallmentDisplayStatus.settled);
-      expect(summary.depositedThroughNo, thisMonthNo(d));
-      expect(summary.arrearsCount, 0);
-      expect(summary.owedByCustomer, 0);
-    });
+  group('Monthly Hub & ledger intermediate states', () {
+    seedTest(
+      '1 Alfred Pennyworth: 5,000 in hand in cash, ready to deposit',
+      () {
+        final d = rd(1, 'Alfred Pennyworth');
+        final p = ledger(d);
+        expect(
+          statusOf(installment(d)),
+          RDInstallmentDisplayStatus.collectedPendingPo,
+        );
+        expect(p.poReadiness.readyCount, 1);
+        expect(p.summary.cashInHandCash, 5000);
+        expect(p.summary.cashInHandDigital, 0);
+      },
+    );
 
-    seedTest('2 Bharat Shetty: 5,000 in hand in cash, ready to deposit', () {
-      final d = rd(2, 'Bharat Shetty');
-      final p = ledger(d);
-      expect(
-        statusOf(installment(d)),
-        RDInstallmentDisplayStatus.collectedPendingPo,
-      );
-      expect(p.poReadiness.readyCount, 1);
-      expect(p.summary.cashInHandCash, 5000);
-      expect(p.summary.cashInHandDigital, 0);
-    });
-
-    seedTest('3 Chitra Nair: 3,000 in hand by UPI', () {
-      final d = rd(3, 'Chitra Nair');
-      final p = ledger(d);
-      expect(
-        statusOf(installment(d)),
-        RDInstallmentDisplayStatus.collectedPendingPo,
-      );
-      expect(p.summary.cashInHandDigital, 3000);
-      expect(p.summary.cashInHandCash, 0);
-    });
-
-    seedTest('4 Dinesh Agarwal: 18,000 in hand in cash, and with Bharat more '
-        'than one cash lot', () {
-      final d = rd(4, 'Dinesh Agarwal');
-      final p = ledger(d);
-      expect(
-        statusOf(installment(d)),
-        RDInstallmentDisplayStatus.collectedPendingPo,
-      );
-      expect(p.summary.cashInHandCash, 18000);
-      expect(
-        p.summary.cashInHandCash +
-            ledger(rd(2, 'Bharat Shetty')).summary.cashInHandCash,
-        greaterThan(kPoCashLotLimit),
-      );
-    });
-
-    seedTest('5 Esha Fernandes: part paid, 1,500 of 4,000 still owed', () {
-      final d = rd(5, 'Esha Fernandes');
-      final inst = installment(d);
-      expect(statusOf(inst), RDInstallmentDisplayStatus.partiallyPaid);
-      expect(inst.customerPaidAmount, 2500);
-      expect(inst.outstandingAmount, 1500);
-      expect(ledger(d).summary.cashInHandCash, 2500);
-    });
-
-    seedTest('6 Farhan Qureshi: paid through last month, this month not yet '
-        'paid and not late', () {
-      final d = rd(6, 'Farhan Qureshi');
-      final inst = installment(d);
-      final summary = ledger(d).summary;
-      expect(statusOf(inst), unpaidOn(inst.dueDate));
-      expect(statusOf(inst), isNot(RDInstallmentDisplayStatus.overdue));
-      expect(summary.paidThroughNo, thisMonthNo(d) - 1);
-      expect(summary.arrearsCount, 0);
-    });
-
-    seedTest('7 Gauri Deshpande: last month overdue with a 25 rupee fee', () {
-      final d = rd(7, 'Gauri Deshpande');
+    seedTest('2 Arthur Curry: last month overdue with a 25 rupee fee', () {
+      final d = rd(2, 'Arthur Curry');
       final lastMonth = installment(d, monthsAgo: 1);
       final thisMonth = installment(d);
       final late = today.day > 15;
@@ -295,139 +245,30 @@ void main() {
       expect(ledger(d).summary.feeDue, late ? 50 : 25);
     });
 
-    seedTest('8 Harish Gowda: three months in arrears, 90 rupees of fees', () {
-      final d = rd(8, 'Harish Gowda');
-      final late = today.day > 15;
-      for (final monthsAgo in [1, 2, 3]) {
-        expect(
-          statusOf(installment(d, monthsAgo: monthsAgo)),
-          RDInstallmentDisplayStatus.overdue,
-          reason: '$monthsAgo month(s) ago',
-        );
-      }
-      expect(installment(d, monthsAgo: 3).lateFee, 45);
-      expect(installment(d, monthsAgo: 2).lateFee, 30);
-      expect(installment(d, monthsAgo: 1).lateFee, 15);
-      expect(ledger(d).summary.arrearsCount, late ? 4 : 3);
-      expect(ledger(d).summary.feeDue, late ? 105 : 90);
-    });
-
-    seedTest('9 Indira Menon: fronted by the agent, 2,000 receivable', () {
-      final d = rd(9, 'Indira Menon');
-      final summary = ledger(d).summary;
-      expect(
-        statusOf(installment(d)),
-        RDInstallmentDisplayStatus.frontedByAgent,
-      );
-      expect(summary.receivable, 2000);
-      expect(summary.owedByCustomer, 2000);
-      expect(summary.cashInHandCash, 0);
-    });
-
-    seedTest('10 Jayant Bhat: three installments and 30 rupees of fees paid at '
-        'once, one visit', () {
-      final d = rd(10, 'Jayant Bhat');
-      final summary = ledger(d).summary;
-      for (final monthsAgo in [0, 1, 2]) {
-        expect(
-          statusOf(installment(d, monthsAgo: monthsAgo)),
-          RDInstallmentDisplayStatus.settled,
-          reason: '$monthsAgo month(s) ago',
-        );
-      }
-      expect(installment(d, monthsAgo: 2).lateFee, 20);
-      expect(installment(d, monthsAgo: 1).lateFee, 10);
-      expect(installment(d).lateFee, 0);
-      expect(
-        facts[d.id]!.poDeposits.map((po) => po.installmentCount),
-        contains(3),
-      );
-      expect(summary.depositedThroughNo, thisMonthNo(d));
-      expect(summary.arrearsCount, 0);
-      expect(summary.owedByCustomer, 0);
-      expect(summary.customerCredit, 0);
-    });
-
-    seedTest('11 Kavita Joshi: a 50 rupee fee the agent bore, settled now', () {
-      final d = rd(11, 'Kavita Joshi');
-      final summary = ledger(d).summary;
-      final lateMonth = installment(d, monthsAgo: 3);
-      expect(statusOf(installment(d)), RDInstallmentDisplayStatus.settled);
-      expect(statusOf(lateMonth), RDInstallmentDisplayStatus.settled);
-      expect(lateMonth.poLateFee, 50);
-      expect(lateMonth.absorbedFee, 50);
-      expect(summary.absorbedTotal, 50);
-      expect(summary.owedByCustomer, 0);
-      expect(summary.arrearsCount, 0);
-    });
-  });
-
-  group('account lifecycle', () {
-    seedTest(
-      '12 Lalit Saxena: opened this month, first installment settled',
-      () {
-        final d = rd(12, 'Lalit Saxena');
-        expect(thisMonthNo(d), 1);
-        expect(d.initialPaidInstallments, 0);
-        expect(statusOf(installment(d)), RDInstallmentDisplayStatus.settled);
-      },
-    );
-
-    seedTest('13 Meera Iyer: 36 installments before the app, 10,000 opening '
-        'receivable', () {
-      final d = rd(13, 'Meera Iyer');
-      final summary = ledger(d).summary;
+    seedTest('3 Barbara Gordon: part paid, 1,500 of 4,000 still owed', () {
+      final d = rd(3, 'Barbara Gordon');
       final inst = installment(d);
-      expect(d.initialPaidInstallments, 36);
-      expect(thisMonthNo(d), 37);
-      expect(
-        statusOf(installment(d, monthsAgo: 1)),
-        RDInstallmentDisplayStatus.baseline,
-      );
-      expect(statusOf(inst), unpaidOn(inst.dueDate));
-      expect(summary.openingReceivableLeft, 10000);
-      expect(summary.owedByCustomer, 10000);
+      expect(statusOf(inst), RDInstallmentDisplayStatus.partiallyPaid);
+      expect(inst.customerPaidAmount, 2500);
+      expect(inst.outstandingAmount, 1500);
+      expect(ledger(d).summary.cashInHandCash, 2500);
     });
 
-    seedTest('14 Naveen Pillai: both accounts maturing soon', () {
-      final c = customer('Naveen Pillai');
-      expect(
-        rd(14, c.name).maturityUrgencyAt(today),
-        MaturityUrgency.maturingSoon,
-      );
-      final td = otdsOf(c).single;
-      expect(td.schemeType, OneTimeSchemeType.timeDeposit);
-      expect(td.maturityUrgencyAt(today), MaturityUrgency.maturingSoon);
+    seedTest('4 Barry Allen: advance paid 2 months ahead via UPI', () {
+      final d = rd(4, 'Barry Allen');
+      final summary = ledger(d).summary;
+      expect(statusOf(installment(d)), RDInstallmentDisplayStatus.settled);
+      expect(summary.depositedThroughNo, thisMonthNo(d) + 2);
+      expect(summary.paidThroughNo, thisMonthNo(d) + 2);
+      expect(summary.arrearsCount, 0);
+      expect(summary.owedByCustomer, 0);
     });
 
-    seedTest('15 Omana Kurup: both accounts matured and still open', () {
-      final c = customer('Omana Kurup');
-      final d = rd(15, c.name);
-      expect(d.status, DepositStatus.active);
-      expect(d.maturityUrgencyAt(today), MaturityUrgency.matured);
-      final nsc = otdsOf(c).single;
-      expect(nsc.schemeType, OneTimeSchemeType.nationalSavingsCertificate);
-      expect(nsc.status, DepositStatus.active);
-      expect(nsc.maturityUrgencyAt(today), MaturityUrgency.matured);
-    });
-
-    seedTest('16 Prakash Rao: both accounts closed', () {
-      final c = customer('Prakash Rao');
-      final d = rd(16, c.name);
-      expect(d.status, DepositStatus.closed);
-      expect(d.maturityUrgencyAt(today), MaturityUrgency.closed);
-      final td = otdsOf(c).single;
-      expect(td.status, DepositStatus.closed);
-      expect(td.maturityUrgencyAt(today), MaturityUrgency.closed);
-    });
-  });
-
-  group('customer shape', () {
-    seedTest('17 Ramesh Hegde: two recurring deposits, every one-time scheme, '
+    seedTest('5 Bruce Wayne: two recurring deposits, every one-time scheme, '
         'four financial years', () {
-      final c = customer('Ramesh Hegde');
-      final settled = rd(17, c.name);
-      final unpaid = rd(18, c.name);
+      final c = customer('Bruce Wayne');
+      final settled = rd(5, c.name);
+      final unpaid = rd(6, c.name);
       expect(
         statusOf(installment(settled)),
         RDInstallmentDisplayStatus.settled,
@@ -443,7 +284,7 @@ void main() {
           for (final d in held)
             if (d.schemeType == OneTimeSchemeType.timeDeposit) d.termYears,
         },
-        {1, 2, 3, 5},
+        {2, 5},
       );
       expect({
         for (final d in held) d.schemeType,
@@ -466,9 +307,234 @@ void main() {
       );
     });
 
-    seedTest('18 Sunita Thomas: only a name, and one 1,000 rupee Time '
-        'Deposit', () {
-      final c = customer('Sunita Thomas');
+    seedTest('6 Clark Kent: 0 baseline, absorbed fee, and UPI in hand', () {
+      final d = rd(7, 'Clark Kent');
+      final p = ledger(d);
+      expect(d.initialPaidInstallments, 0);
+      expect(
+        statusOf(installment(d)),
+        RDInstallmentDisplayStatus.collectedPendingPo,
+      );
+      expect(p.summary.absorbedTotal, 30);
+      expect(p.summary.cashInHandDigital, 3000);
+      expect(p.poReadiness.readyCount, 1);
+    });
+
+    seedTest('7 Diana Prince: 18,000 in hand in cash (>20,000 with Alfred) '
+        'and maturing soon MIS', () {
+      final c = customer('Diana Prince');
+      final d = rd(8, c.name);
+      final p = ledger(d);
+      expect(
+        statusOf(installment(d)),
+        RDInstallmentDisplayStatus.collectedPendingPo,
+      );
+      expect(p.summary.cashInHandCash, 18000);
+      expect(
+        p.summary.cashInHandCash +
+            ledger(rd(1, 'Alfred Pennyworth')).summary.cashInHandCash,
+        greaterThan(kPoCashLotLimit),
+      );
+      expect(
+        otdsOf(c).single.maturityUrgencyAt(today),
+        MaturityUrgency.maturingSoon,
+      );
+    });
+
+    seedTest('8 Edward Nygma: 3,500 in hand via bank transfer and maturing '
+        'soon KVP', () {
+      final c = customer('Edward Nygma');
+      final d = rd(9, c.name);
+      final p = ledger(d);
+      expect(
+        statusOf(installment(d)),
+        RDInstallmentDisplayStatus.collectedPendingPo,
+      );
+      expect(p.summary.cashInHandDigital, 3500);
+      expect(p.summary.cashInHandCash, 0);
+      final kvp = otdsOf(c).single;
+      expect(kvp.schemeType, OneTimeSchemeType.kisanVikasPatra);
+      expect(kvp.maturityUrgencyAt(today), MaturityUrgency.maturingSoon);
+    });
+
+    seedTest('9 Hal Jordan: fronted by the agent (2,000 receivable) and '
+        'active NSC', () {
+      final c = customer('Hal Jordan');
+      final d = rd(10, c.name);
+      final summary = ledger(d).summary;
+      expect(
+        statusOf(installment(d)),
+        RDInstallmentDisplayStatus.frontedByAgent,
+      );
+      expect(summary.receivable, 2000);
+      expect(summary.owedByCustomer, 2000);
+      expect(summary.cashInHandCash, 0);
+      expect(
+        otdsOf(c).single.schemeType,
+        OneTimeSchemeType.nationalSavingsCertificate,
+      );
+    });
+
+    seedTest('10 Harleen Quinzel: three installments and 30 rupees of fees '
+        'paid at once, one visit', () {
+      final d = rd(11, 'Harleen Quinzel');
+      final summary = ledger(d).summary;
+      for (final monthsAgo in [0, 1, 2]) {
+        expect(
+          statusOf(installment(d, monthsAgo: monthsAgo)),
+          RDInstallmentDisplayStatus.settled,
+          reason: '$monthsAgo month(s) ago',
+        );
+      }
+      expect(installment(d, monthsAgo: 2).lateFee, 20);
+      expect(installment(d, monthsAgo: 1).lateFee, 10);
+      expect(installment(d).lateFee, 0);
+      expect(
+        facts[d.id]!.poDeposits.map((po) => po.installmentCount),
+        contains(3),
+      );
+      expect(summary.depositedThroughNo, thisMonthNo(d));
+      expect(summary.arrearsCount, 0);
+      expect(summary.owedByCustomer, 0);
+      expect(summary.customerCredit, 0);
+    });
+
+    seedTest('11 Harvey Dent: three to four months in arrears', () {
+      final d = rd(12, 'Harvey Dent');
+      final late = today.day > 15;
+      for (final monthsAgo in [1, 2, 3]) {
+        expect(
+          statusOf(installment(d, monthsAgo: monthsAgo)),
+          RDInstallmentDisplayStatus.overdue,
+          reason: '$monthsAgo month(s) ago',
+        );
+      }
+      expect(installment(d, monthsAgo: 3).lateFee, 45);
+      expect(installment(d, monthsAgo: 2).lateFee, 30);
+      expect(installment(d, monthsAgo: 1).lateFee, 15);
+      expect(ledger(d).summary.arrearsCount, late ? 4 : 3);
+      expect(ledger(d).summary.feeDue, late ? 105 : 90);
+    });
+
+    seedTest('12 Jason Todd: part-paid against prior month arrears', () {
+      final d = rd(13, 'Jason Todd');
+      final prior = installment(d, monthsAgo: 1);
+      final late = today.day > 15;
+      expect(statusOf(prior), RDInstallmentDisplayStatus.partiallyPaid);
+      expect(prior.customerPaidAmount, 1000);
+      expect(prior.outstandingAmount, 1020);
+      expect(ledger(d).summary.cashInHandCash, 1000);
+      expect(ledger(d).summary.arrearsCount, late ? 2 : 1);
+    });
+
+    seedTest(
+      '13 John Constantine: 50 rupee fee the agent bore, settled now',
+      () {
+        final d = rd(14, 'John Constantine');
+        final summary = ledger(d).summary;
+        final lateMonth = installment(d, monthsAgo: 3);
+        expect(statusOf(installment(d)), RDInstallmentDisplayStatus.settled);
+        expect(statusOf(lateMonth), RDInstallmentDisplayStatus.settled);
+        expect(lateMonth.poLateFee, 50);
+        expect(lateMonth.absorbedFee, 50);
+        expect(summary.absorbedTotal, 50);
+        expect(summary.owedByCustomer, 0);
+        expect(summary.arrearsCount, 0);
+      },
+    );
+  });
+
+  group('account lifecycle & customer shapes', () {
+    seedTest('14 Kara Zor-El: opened this month, first installment settled, '
+        'plus 1Y TD', () {
+      final c = customer('Kara Zor-El');
+      final d = rd(15, c.name);
+      expect(thisMonthNo(d), 1);
+      expect(d.initialPaidInstallments, 0);
+      expect(statusOf(installment(d)), RDInstallmentDisplayStatus.settled);
+      expect(otdsOf(c).single.schemeType, OneTimeSchemeType.timeDeposit);
+    });
+
+    seedTest("15 Koriand'r …: a name of more than 50 characters, not yet paid "
+        'this month', () {
+      final c = customers.singleWhere((c) => c.name.startsWith("Koriand'r"));
+      expect(c.name.length, greaterThan(50));
+      final inst = installment(rd(16, c.name));
+      expect(statusOf(inst), unpaidOn(inst.dueDate));
+      expect(statusOf(inst), isNot(RDInstallmentDisplayStatus.overdue));
+    });
+
+    seedTest('16 Lex Luthor: 36 installments before the app, 10,000 opening '
+        'receivable, plus MIS and 3Y TD', () {
+      final c = customer('Lex Luthor');
+      final d = rd(17, c.name);
+      final summary = ledger(d).summary;
+      final inst = installment(d);
+      expect(d.initialPaidInstallments, 36);
+      expect(thisMonthNo(d), 37);
+      expect(
+        statusOf(installment(d, monthsAgo: 1)),
+        RDInstallmentDisplayStatus.baseline,
+      );
+      expect(statusOf(inst), unpaidOn(inst.dueDate));
+      expect(summary.openingReceivableLeft, 10000);
+      expect(summary.owedByCustomer, 10000);
+      expect(otdsOf(c), hasLength(2));
+    });
+
+    seedTest('17 Lois Lane: paid through last month, this month unpaid and '
+        'not late, plus 5Y NSC', () {
+      final c = customer('Lois Lane');
+      final d = rd(18, c.name);
+      final inst = installment(d);
+      final summary = ledger(d).summary;
+      expect(statusOf(inst), unpaidOn(inst.dueDate));
+      expect(statusOf(inst), isNot(RDInstallmentDisplayStatus.overdue));
+      expect(summary.paidThroughNo, thisMonthNo(d) - 1);
+      expect(summary.arrearsCount, 0);
+      expect(
+        otdsOf(c).single.schemeType,
+        OneTimeSchemeType.nationalSavingsCertificate,
+      );
+    });
+
+    seedTest('18 Oliver Queen: both accounts maturing soon', () {
+      final c = customer('Oliver Queen');
+      expect(
+        rd(19, c.name).maturityUrgencyAt(today),
+        MaturityUrgency.maturingSoon,
+      );
+      final td = otdsOf(c).single;
+      expect(td.schemeType, OneTimeSchemeType.timeDeposit);
+      expect(td.maturityUrgencyAt(today), MaturityUrgency.maturingSoon);
+    });
+
+    seedTest('19 Oswald Cobblepot: both accounts matured and still open', () {
+      final c = customer('Oswald Cobblepot');
+      final d = rd(20, c.name);
+      expect(d.status, DepositStatus.active);
+      expect(d.maturityUrgencyAt(today), MaturityUrgency.matured);
+      final nsc = otdsOf(c).single;
+      expect(nsc.schemeType, OneTimeSchemeType.nationalSavingsCertificate);
+      expect(nsc.status, DepositStatus.active);
+      expect(nsc.maturityUrgencyAt(today), MaturityUrgency.matured);
+    });
+
+    seedTest('20 Pamela Isley: RD, TD, and MIS all closed', () {
+      final c = customer('Pamela Isley');
+      final d = rd(21, c.name);
+      expect(d.status, DepositStatus.closed);
+      expect(d.maturityUrgencyAt(today), MaturityUrgency.closed);
+      final closedOtds = otdsOf(c);
+      expect(closedOtds, hasLength(2));
+      for (final otd in closedOtds) {
+        expect(otd.status, DepositStatus.closed);
+        expect(otd.maturityUrgencyAt(today), MaturityUrgency.closed);
+      }
+    });
+
+    seedTest('21 Selina Kyle: only a name, and one 1,000 rupee KVP', () {
+      final c = customer('Selina Kyle');
       expect([
         c.phone,
         c.email,
@@ -478,39 +544,21 @@ void main() {
         c.panNumber,
         c.dateOfBirth,
       ], everyElement(isNull));
+      expect(otdsOf(c).single.schemeType, OneTimeSchemeType.kisanVikasPatra);
       expect(otdsOf(c).single.principalAmount, 1000);
       expect(rds.where((d) => d.customerId == c.id), isEmpty);
     });
 
-    seedTest('19 Tejaswini …: a name of more than 50 characters, not yet paid '
-        'this month', () {
-      final c = customers.singleWhere((c) => c.name.startsWith('Tejaswini'));
-      expect(c.name.length, greaterThan(50));
-      final inst = installment(rd(19, c.name));
-      expect(statusOf(inst), unpaidOn(inst.dueDate));
-      expect(statusOf(inst), isNot(RDInstallmentDisplayStatus.overdue));
-    });
-
-    seedTest('20 Uma Bose: no account of any kind', () {
-      final c = customer('Uma Bose');
+    seedTest('22 Victor Stone: no account of any kind', () {
+      final c = customer('Victor Stone');
       expect(rds.where((d) => d.customerId == c.id), isEmpty);
       expect(otdsOf(c), isEmpty);
-    });
-
-    seedTest('21 a name in Kannada script, recurring deposit settled', () {
-      final c = customers.singleWhere(
-        (c) => RegExp(r'[\u0C80-\u0CFF]').hasMatch(c.name),
-      );
-      expect(
-        statusOf(installment(rd(20, c.name))),
-        RDInstallmentDisplayStatus.settled,
-      );
     });
   });
 
   // The lists above leave out what only a detail screen loads.
   group('details', () {
-    test('17 Ramesh Hegde: a savings account whose three nominees add up to '
+    test('5 Bruce Wayne: a savings account whose three nominees add up to '
         '100%', () async {
       if (skipReason != null) {
         markTestSkipped(skipReason!);
@@ -519,34 +567,58 @@ void main() {
       final detail = ok(
         await SupabaseCustomerRepository(
           client,
-        ).watchCustomerById(customer('Ramesh Hegde').id).first,
+        ).watchCustomerById(customer('Bruce Wayne').id).first,
       );
       final nominees = detail.savingsAccount!.nominees;
       expect(nominees, hasLength(3));
       expect(Nominee.validateNominees(nominees), isNull);
     });
 
-    test('18 and 20: no savings account, and a Time Deposit with no '
-        'nominee', () async {
+    test('21 and 22: no savings account, and a KVP with no nominee', () async {
       if (skipReason != null) {
         markTestSkipped(skipReason!);
         return;
       }
       final repo = SupabaseCustomerRepository(client);
-      for (final name in ['Sunita Thomas', 'Uma Bose']) {
+      for (final name in ['Selina Kyle', 'Victor Stone']) {
         final detail = ok(
           await repo.watchCustomerById(customer(name).id).first,
         );
         expect(detail.savingsAccount, isNull, reason: name);
       }
-      final td = ok(
+      final kvp = ok(
         await SupabaseOneTimeDepositRepository(client)
-            .watchOneTimeDepositById(
-              otdsOf(customer('Sunita Thomas')).single.id,
-            )
+            .watchOneTimeDepositById(otdsOf(customer('Selina Kyle')).single.id)
             .first,
       );
-      expect(td.nominees, isEmpty);
+      expect(kvp.nominees, isEmpty);
+    });
+  });
+
+  group('Admin Acting-As local seed readiness', () {
+    test('primary seeded agent is admin and can inspect Lucius Fox and '
+        'Perry White portfolios', () async {
+      if (skipReason != null) {
+        markTestSkipped(skipReason!);
+        return;
+      }
+      final adminRepo = SupabaseAdminRepository(client);
+      expect(ok(await adminRepo.isCurrentUserAdmin()), isTrue);
+      final agents = ok(await adminRepo.listAgents());
+      final names = {for (final a in agents) a.name};
+      expect(names, containsAll(['Jim Gordon', 'Lucius Fox', 'Perry White']));
+
+      final lucius = agents.singleWhere((a) => a.name == 'Lucius Fox');
+      final luciusCustomers = ok(
+        await SupabaseCustomerRepository(
+          client,
+          effectiveAgentId: lucius.id,
+        ).watchCustomers().first,
+      );
+      expect(
+        luciusCustomers.map((c) => c.name),
+        containsAll(['Kate Kane', 'Luke Fox', 'Renee Montoya']),
+      );
     });
   });
 }

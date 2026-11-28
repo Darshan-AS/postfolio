@@ -12,9 +12,10 @@ import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_m
 
 /// Deterministic, zero-dependency in-memory portfolio for Demo Mode and offline UI tests.
 ///
-/// Mirrors `supabase/seed.sql` 1-to-1: 21 customers (one situation each, A–U plus Kannada),
-/// 20 recurring deposits, 11 one-time deposits, 1 savings account, 36 nominees, and causally
-/// ordered RD ledger facts (payments, PO visits, and a fee absorption).
+/// Mirrors `supabase/seed.sql` 1-to-1 for the primary agent: 22 DC Universe customers,
+/// 21 recurring deposits, 17 one-time deposits (TD 1Y/2Y/3Y/5Y, MIS, NSC, KVP),
+/// 1 savings account, 38 nominees, and causally ordered RD ledger facts (payments across
+/// cash/UPI/bank transfer, PO visits, and fee absorptions).
 ///
 /// Every date is computed relative to [referenceDate] so "this month", "overdue", and
 /// "maturing soon" hold on any calendar day without dating anything in the future.
@@ -32,7 +33,7 @@ class FakeDataSource {
   /// Deterministic portfolio anchored at [defaultReferenceDate] for unit and widget tests.
   factory FakeDataSource() => _defaultInstance;
 
-  /// Builds the full 21-customer portfolio with every date computed relative to [today].
+  /// Builds the full 22-customer portfolio with every date computed relative to [today].
   FakeDataSource.forDate(DateTime today)
     : referenceDate = DateTime(today.year, today.month, today.day) {
     _buildPortfolio();
@@ -269,785 +270,921 @@ class FakeDataSource {
     }
 
     // -------------------------------------------------------------------------
-    // 1–11. Monthly Hub: what this month looks like
+    // 1–13. Monthly Hub & Ledger Intermediate States (alphabetically front-loaded)
     // -------------------------------------------------------------------------
 
-    // 1. Settled: paid on time and deposited every month, this month included.
+    // 1. In hand (cash): collected this month, ready to deposit at the PO.
     addCustomer(
-      'asha',
-      'Asha Kulkarni',
-      'Seed 1. Recurring deposit paid on time and deposited every month, this month too. Monthly Hub: Settled.',
+      'alfred',
+      'Alfred Pennyworth',
+      'Collects household cash on the 3rd; prefers receipt slip for Wayne Manor records.',
       phone: '9845012301',
-      address: '14, Car Street, Sirsi 581401',
-      dob: DateTime(1978, 3, 12),
+      address: '1007 Mountain Drive, Bristol, Gotham 400001',
+      dob: DateTime(1958, 4, 2),
       cif: '100200301',
       aadhaar: '412398760011',
-      pan: 'AKUPK1234A',
-      email: 'asha.kulkarni@example.com',
+      pan: 'APENP1234A',
+      email: 'alfred.pennyworth@wayne.example',
     );
     addRd(
-      'asha',
+      'alfred',
       1,
-      2000,
-      _dt(14, 10),
-      11,
-      nominees: const [
-        Nominee(
-          name: 'Vinod Kulkarni',
-          relationship: NomineeRelationship.husband,
-          percentage: 100,
-        ),
-      ],
-    );
-    onTime('asha', 3, 0);
-
-    // 2. In hand, cash: collected this month, not yet deposited.
-    addCustomer(
-      'bharat',
-      'Bharat Shetty',
-      'Seed 2. This month collected in cash, not yet deposited. Monthly Hub: In hand, with a Deposit button.',
-      phone: '9845012302',
-      address: '7, Bunder Road, Kundapura 576201',
-      dob: DateTime(1969, 11, 2),
-      cif: '100200302',
-      aadhaar: '412398760022',
-      pan: 'BSHPS2345B',
-    );
-    addRd(
-      'bharat',
-      2,
       5000,
       _dt(9, 5),
       7,
       nominees: const [
         Nominee(
-          name: 'Sharada Shetty',
-          relationship: NomineeRelationship.wife,
+          name: 'Julia Pennyworth',
+          relationship: NomineeRelationship.daughter,
           percentage: 100,
         ),
       ],
     );
-    onTime('bharat', 2, 1);
-    collect('bharat', _dt(0, 3), 5000);
+    onTime('alfred', 2, 1);
+    collect('alfred', _dt(0, 3), 5000);
 
-    // 3. In hand, UPI: collected this month by UPI, not yet deposited.
+    // 2. One month in arrears: last month unpaid with default fee.
     addCustomer(
-      'chitra',
-      'Chitra Nair',
-      'Seed 3. This month collected by UPI, not yet deposited. Post Office visit sheet: UPI total.',
-      phone: '9845012303',
-      address: '22, Temple Road, Udupi 576101',
-      dob: DateTime(1985, 7, 19),
-      cif: '100200303',
-      aadhaar: '412398760033',
-      pan: 'CNAPN3456C',
+      'arthur',
+      'Arthur Curry',
+      'Frequently offshore near Amnesty Bay; remind via call when an installment slips past the 15th.',
+      phone: '9845012302',
+      address: 'Lighthouse Point, Amnesty Bay 576201',
+      dob: DateTime(1982, 1, 29),
+      cif: '100200302',
+      aadhaar: '412398760022',
+      pan: 'ACURC2345B',
     );
     addRd(
-      'chitra',
-      3,
-      3000,
-      _dt(22, 12),
-      20,
-      nominees: const [
-        Nominee(
-          name: 'Gopalan Nair',
-          relationship: NomineeRelationship.father,
-          percentage: 100,
-        ),
-      ],
-    );
-    onTime('chitra', 2, 1, mode: RDPaymentMode.upi);
-    collect('chitra', _dt(0, 4), 3000, mode: RDPaymentMode.upi);
-
-    // 4. In hand, large cash: with customer 2 the cash passes ₹20,000 (two cash lots).
-    addCustomer(
-      'dinesh',
-      'Dinesh Agarwal',
-      'Seed 4. 18,000 rupees collected in cash this month. With Bharat Shetty the cash in hand passes 20,000, so the visit sheet shows two cash lots.',
-      phone: '9845012304',
-      address: '3, Market Road, Hubballi 580020',
-      dob: DateTime(1972, 1, 25),
-      cif: '100200304',
-      aadhaar: '412398760044',
-      pan: 'DAGPA4567D',
-    );
-    addRd(
-      'dinesh',
-      4,
-      18000,
-      _dt(5, 8),
-      3,
-      nominees: const [
-        Nominee(
-          name: 'Rekha Agarwal',
-          relationship: NomineeRelationship.wife,
-          percentage: 60,
-        ),
-        Nominee(
-          name: 'Mohit Agarwal',
-          relationship: NomineeRelationship.son,
-          percentage: 40,
-        ),
-      ],
-    );
-    onTime('dinesh', 2, 1);
-    collect('dinesh', _dt(0, 2), 18000);
-
-    // 5. Part paid: ₹2,500 of ₹4,000 received this month; due at month end.
-    addCustomer(
-      'esha',
-      'Esha Fernandes',
-      "Seed 5. 2,500 of this month's 4,000 rupees received. Monthly Hub: part paid, 1,500 still owed.",
-      phone: '9845012305',
-      address: '9, Church Lane, Mangaluru 575001',
-      dob: DateTime(1990, 5, 30),
-      cif: '100200305',
-      aadhaar: '412398760055',
-      pan: 'EFEPF5678E',
-    );
-    addRd(
-      'esha',
-      5,
-      4000,
-      _dt(30, 20),
-      28,
-      nominees: const [
-        Nominee(
-          name: 'Maria Fernandes',
-          relationship: NomineeRelationship.mother,
-          percentage: 100,
-        ),
-      ],
-    );
-    onTime('esha', 2, 1);
-    collect('esha', _dt(0, 2), 2500);
-
-    // 6. To collect: up to date through last month, nothing yet this month.
-    addCustomer(
-      'farhan',
-      'Farhan Qureshi',
-      'Seed 6. Up to date through last month, nothing paid this month. Due at month end: upcoming, then due today on the last day.',
-      phone: '9845012306',
-      address: '41, Fort Road, Bidar 585401',
-      dob: DateTime(1981, 9, 8),
-      cif: '100200306',
-      aadhaar: '412398760066',
-      pan: 'FQUPQ6789F',
-    );
-    addRd(
-      'farhan',
-      6,
-      1000,
-      _dt(17, 25),
-      15,
-      nominees: const [
-        Nominee(
-          name: 'Ayesha Qureshi',
-          relationship: NomineeRelationship.wife,
-          percentage: 100,
-        ),
-      ],
-    );
-    onTime('farhan', 2, 1);
-
-    // 7. One month in arrears: last month unpaid with default fee.
-    addCustomer(
-      'gauri',
-      'Gauri Deshpande',
-      'Seed 7. Last month unpaid. The Monthly Hub row carries one month of arrears and its default fee; this month goes overdue after the 15th.',
-      phone: '9845012307',
-      address: '18, Station Road, Dharwad 580001',
-      dob: DateTime(1976, 12, 14),
-      cif: '100200307',
-      aadhaar: '412398760077',
-      pan: 'GDEPD7890G',
-    );
-    addRd(
-      'gauri',
-      7,
+      'arthur',
+      2,
       2500,
       _dt(11, 7),
       8,
       nominees: const [
         Nominee(
-          name: 'Sameer Deshpande',
-          relationship: NomineeRelationship.son,
-          percentage: 100,
-        ),
-      ],
-    );
-    onTime('gauri', 3, 2);
-
-    // 8. Three months in arrears: nothing paid or deposited for three months.
-    addCustomer(
-      'harish',
-      'Harish Gowda',
-      'Seed 8. Nothing paid or deposited for three months. Monthly Hub: Arrears tile and the Overdue filter.',
-      phone: '9845012308',
-      address: '5, Sugar Factory Road, Mandya 571401',
-      dob: DateTime(1965, 4, 3),
-      cif: '100200308',
-      aadhaar: '412398760088',
-      pan: 'HGOPG8901H',
-    );
-    addRd(
-      'harish',
-      8,
-      1500,
-      _dt(26, 3),
-      22,
-      nominees: const [
-        Nominee(
-          name: 'Lakshmi Gowda',
+          name: 'Mera Curry',
           relationship: NomineeRelationship.wife,
           percentage: 100,
         ),
       ],
     );
-    onTime('harish', 4, 4);
+    onTime('arthur', 3, 2);
 
-    // 9. Fronted: deposited from agent's pocket; customer has not paid.
+    // 3. Part paid: ₹2,500 of ₹4,000 received this month; due at month end.
     addCustomer(
-      'indira',
-      'Indira Menon',
-      "Seed 9. This month deposited from the agent's pocket; the customer has not paid. Monthly Hub: Fronted filter and the Receivable tile.",
-      phone: '9845012309',
-      address: '12, Lake View Road, Shivamogga 577201',
-      dob: DateTime(1958, 8, 21),
-      cif: '100200309',
-      aadhaar: '412398760099',
-      pan: 'IMEPM9012I',
+      'barbara',
+      'Barbara Gordon',
+      'Splits monthly RD in two parts around Burnside library payroll.',
+      phone: '9845012303',
+      address: '42 Clock Tower Lane, Burnside, Gotham 575001',
+      dob: DateTime(1991, 9, 23),
+      cif: '100200303',
+      aadhaar: '412398760033',
+      pan: 'BGORG3456C',
     );
     addRd(
-      'indira',
-      9,
-      2000,
-      _dt(40, 14),
-      38,
-      nominees: const [
-        Nominee(
-          name: 'Suresh Menon',
-          relationship: NomineeRelationship.son,
-          percentage: 50,
-        ),
-        Nominee(
-          name: 'Latha Menon',
-          relationship: NomineeRelationship.daughter,
-          percentage: 50,
-        ),
-      ],
-    );
-    onTime('indira', 2, 1);
-    deposit('indira', _dt(0, 2));
-
-    // 10. Caught up: two months missed, then three installments + ₹30 fees paid & deposited.
-    addCustomer(
-      'jayant',
-      'Jayant Bhat',
-      'Seed 10. Missed two months, then paid three installments and 30 rupees of default fees at once this month. One Post Office visit deposited all three.',
-      phone: '9845012310',
-      address: '27, Hampankatta, Mangaluru 575001',
-      dob: DateTime(1983, 2, 17),
-      cif: '100200310',
-      aadhaar: '412398760110',
-      pan: 'JBHPB0123J',
-    );
-    addRd(
-      'jayant',
-      10,
-      1000,
-      _dt(8, 10),
-      5,
-      nominees: const [
-        Nominee(
-          name: 'Vidya Bhat',
-          relationship: NomineeRelationship.wife,
-          percentage: 100,
-        ),
-      ],
-    );
-    onTime('jayant', 3, 3);
-    collect('jayant', _dt(0, 2), 3030);
-    deposit('jayant', _dt(0, 3), count: 3, fee: 30);
-
-    // 11. Fee absorbed by the agent: paid a day late 3 months ago; agent bore ₹50 fee.
-    addCustomer(
-      'kavita',
-      'Kavita Joshi',
-      'Seed 11. Paid one day late three months ago; the Post Office charged a 50 rupee default fee and the agent bore it. Settled now.',
-      phone: '9845012311',
-      address: '8, College Road, Belagavi 590001',
-      dob: DateTime(1987, 10, 9),
-      cif: '100200311',
-      aadhaar: '412398760121',
-      pan: 'KJOPJ1234K',
-    );
-    addRd(
-      'kavita',
-      11,
-      5000,
-      _dt(18, 9),
-      14,
-      nominees: const [
-        Nominee(
-          name: 'Anand Joshi',
-          relationship: NomineeRelationship.husband,
-          percentage: 100,
-        ),
-      ],
-    );
-    onTime('kavita', 4, 4);
-    collect('kavita', _dt(3, 16), 5000, mode: RDPaymentMode.upi);
-    deposit('kavita', _dt(3, 18), count: 1, fee: 50);
-    absorb('kavita', _dt(3, 18), 50, 'Customer was travelling; one day late');
-    onTime('kavita', 2, 0);
-
-    // -------------------------------------------------------------------------
-    // 12–16. Account lifecycle
-    // -------------------------------------------------------------------------
-
-    // 12. Brand new: opened on the 1st of this month, first installment paid & deposited.
-    addCustomer(
-      'lalit',
-      'Lalit Saxena',
-      'Seed 12. Recurring deposit opened on the 1st of this month, first installment paid. No history yet.',
-      phone: '9845012312',
-      address: '33, MG Road, Bengaluru 560001',
-      dob: DateTime(1995, 6, 27),
-      cif: '100200312',
-      aadhaar: '412398760132',
-      pan: 'LSAPS2345L',
-    );
-    addRd(
-      'lalit',
-      12,
-      500,
-      _dt(0, 1),
-      0,
-      nominees: const [
-        Nominee(
-          name: 'Neha Saxena',
-          relationship: NomineeRelationship.sister,
-          percentage: 100,
-        ),
-      ],
-    );
-    collect('lalit', _dt(0, 1), 500);
-    deposit('lalit', _dt(0, 1));
-
-    // 13. Brought into the app late: 36 installments already paid, ₹10,000 opening receivable.
-    addCustomer(
-      'meera',
-      'Meera Iyer',
-      'Seed 13. Three-year-old account entered with 36 installments already paid and an opening receivable of 10,000 rupees.',
-      phone: '9845012313',
-      address: '6, Sampige Road, Bengaluru 560003',
-      dob: DateTime(1971, 1, 15),
-      cif: '100200313',
-      aadhaar: '412398760143',
-      pan: 'MIYPI3456M',
-    );
-    addRd(
-      'meera',
-      13,
-      10000,
-      _dt(36, 20),
-      36,
-      openingReceivable: 10000,
-      nominees: const [
-        Nominee(
-          name: 'Krishnan Iyer',
-          relationship: NomineeRelationship.husband,
-          percentage: 100,
-        ),
-      ],
-    );
-
-    // 14. Maturing soon: RD and 1Y TD, both 20 days from maturity.
-    addCustomer(
-      'naveen',
-      'Naveen Pillai',
-      'Seed 14. A recurring deposit and a one-year Time Deposit that both mature in 20 days: "maturing soon".',
-      phone: '9845012314',
-      address: '19, Beach Road, Karwar 581301',
-      dob: DateTime(1962, 7, 4),
-      cif: '100200314',
-      aadhaar: '412398760154',
-      pan: 'NPIPP4567N',
-    );
-    final in20Days = _addDays(20);
-    const deepaNominee = [
-      Nominee(
-        name: 'Deepa Pillai',
-        relationship: NomineeRelationship.daughter,
-        percentage: 100,
-      ),
-    ];
-    addRd(
-      'naveen',
-      14,
-      1000,
-      _subtractMonths(in20Days, 60),
-      60,
-      rate: 5.8,
-      nominees: deepaNominee,
-    );
-    addOtd(
-      'naveen-td',
-      'naveen',
-      OneTimeSchemeType.timeDeposit,
-      1,
-      50000,
-      6.9,
-      1,
-      0,
-      _subtractMonths(in20Days, 12),
-      nominees: deepaNominee,
-    );
-
-    // 15. Matured, still open: RD and NSC, both 40 days past maturity.
-    addCustomer(
-      'omana',
-      'Omana Kurup',
-      'Seed 15. A recurring deposit and a National Savings Certificate, both 40 days past maturity and still open: "matured".',
-      phone: '9845012315',
-      address: '2, Kadri Hills, Mangaluru 575002',
-      dob: DateTime(1955, 12, 30),
-      cif: '100200315',
-      aadhaar: '412398760165',
-      pan: 'OKUPK5678O',
-    );
-    final ago40Days = _addDays(-40);
-    const rajanNominee = [
-      Nominee(
-        name: 'Rajan Kurup',
-        relationship: NomineeRelationship.son,
-        percentage: 100,
-      ),
-    ];
-    addRd(
-      'omana',
-      15,
-      2000,
-      _subtractMonths(ago40Days, 60),
-      60,
-      rate: 5.8,
-      nominees: rajanNominee,
-    );
-    addOtd(
-      'omana-nsc',
-      'omana',
-      OneTimeSchemeType.nationalSavingsCertificate,
-      2,
-      25000,
-      6.8,
-      5,
-      0,
-      _subtractMonths(ago40Days, 60),
-      nominees: rajanNominee,
-    );
-
-    // 16. Closed: RD and 2Y TD, both closed.
-    addCustomer(
-      'prakash',
-      'Prakash Rao',
-      'Seed 16. A recurring deposit and a two-year Time Deposit, both closed. Lists show the Closed badge; the Monthly Hub leaves the account out.',
-      phone: '9845012316',
-      address: '11, Rajajinagar 2nd Block, Bengaluru 560010',
-      dob: DateTime(1968, 5, 22),
-      cif: '100200316',
-      aadhaar: '412398760176',
-      pan: 'PRAPR6789P',
-    );
-    const sudhaNominee = [
-      Nominee(
-        name: 'Sudha Rao',
-        relationship: NomineeRelationship.wife,
-        percentage: 100,
-      ),
-    ];
-    addRd(
-      'prakash',
-      16,
-      3000,
-      _dt(66, 10),
-      60,
-      status: DepositStatus.closed,
-      rate: 5.8,
-      nominees: sudhaNominee,
-    );
-    addOtd(
-      'prakash-td',
-      'prakash',
-      OneTimeSchemeType.timeDeposit,
+      'barbara',
       3,
-      100000,
-      7.0,
-      2,
-      0,
-      _dt(27, 14),
-      status: DepositStatus.closed,
-      nominees: sudhaNominee,
+      4000,
+      _dt(30, 20),
+      28,
+      nominees: const [
+        Nominee(
+          name: 'James Gordon',
+          relationship: NomineeRelationship.father,
+          percentage: 100,
+        ),
+      ],
     );
+    onTime('barbara', 2, 1);
+    collect('barbara', _dt(0, 2), 2500);
 
-    // -------------------------------------------------------------------------
-    // 17–21. Customer shape
-    // -------------------------------------------------------------------------
-
-    // 17. Household with many accounts: 2 RDs, every OTD scheme, SB with 3 nominees.
+    // 4. Advance paid (+2 months ahead): settled through thisMonth + 2 via UPI.
     addCustomer(
-      'ramesh',
-      'Ramesh Hegde',
-      'Seed 17. Many accounts: two recurring deposits, Time Deposits of 1, 2, 3 and 5 years, a Monthly Income Scheme at the 9,00,000 limit, a National Savings Certificate, a Kisan Vikas Patra and a savings account with three nominees. Opened across four financial years.',
-      phone: '9845012317',
-      address: '45, Yellapur Road, Sirsi 581402',
-      dob: DateTime(1960, 2, 11),
-      cif: '100200317',
-      aadhaar: '412398760187',
-      pan: 'RHEPH7890R',
-      email: 'ramesh.hegde@example.com',
+      'barry',
+      'Barry Allen',
+      'Always pays two months ahead via UPI so he never misses a due date during CCPD lab shifts.',
+      phone: '9845012304',
+      address: '112 Speedway Ave, Central City 581401',
+      dob: DateTime(1992, 3, 14),
+      cif: '100200304',
+      aadhaar: '412398760044',
+      pan: 'BALLA4567D',
+      email: 'barry.allen@ccpd.example',
+    );
+    addRd(
+      'barry',
+      4,
+      2000,
+      _dt(14, 10),
+      11,
+      nominees: const [
+        Nominee(
+          name: 'Iris West-Allen',
+          relationship: NomineeRelationship.wife,
+          percentage: 100,
+        ),
+      ],
+    );
+    onTime('barry', 3, 1, mode: RDPaymentMode.upi);
+    collect('barry', _dt(0, 1), 6000, mode: RDPaymentMode.upi);
+    deposit('barry', _dt(0, 2), count: 3);
+
+    // 5. Household with many accounts: 2 RDs (settled + due month-end), all 4 OTD schemes
+    //    across 4+ financial years, and Savings Bank with 3 nominees.
+    addCustomer(
+      'bruce',
+      'Bruce Wayne',
+      'Multi-scheme family portfolio across Wayne Manor; quarterly review with Alfred.',
+      phone: '9845012305',
+      address: 'Wayne Manor, 1007 Mountain Drive, Gotham 581402',
+      dob: DateTime(1978, 2, 19),
+      cif: '100200305',
+      aadhaar: '412398760055',
+      pan: 'BWAYW5678E',
+      email: 'bruce.wayne@wayne.example',
       savingsAccount: const SavingsAccount(
         accountNumber: '0100030017',
         nominees: [
           Nominee(
-            name: 'Shanta Hegde',
-            relationship: NomineeRelationship.wife,
+            name: 'Dick Grayson',
+            relationship: NomineeRelationship.son,
             percentage: 33.34,
           ),
           Nominee(
-            name: 'Arun Hegde',
+            name: 'Damian Wayne',
             relationship: NomineeRelationship.son,
             percentage: 33.33,
           ),
           Nominee(
-            name: 'Anita Hegde',
+            name: 'Cassandra Cain',
             relationship: NomineeRelationship.daughter,
             percentage: 33.33,
           ),
         ],
       ),
     );
-    const shantaNominee = [
+    const dickNominee = [
       Nominee(
-        name: 'Shanta Hegde',
-        relationship: NomineeRelationship.wife,
-        percentage: 100,
-      ),
-    ];
-    const arunNominee = [
-      Nominee(
-        name: 'Arun Hegde',
+        name: 'Dick Grayson',
         relationship: NomineeRelationship.son,
         percentage: 100,
       ),
     ];
-    const anitaNominee = [
+    const damianNominee = [
       Nominee(
-        name: 'Anita Hegde',
+        name: 'Damian Wayne',
+        relationship: NomineeRelationship.son,
+        percentage: 100,
+      ),
+    ];
+    const cassandraNominee = [
+      Nominee(
+        name: 'Cassandra Cain',
         relationship: NomineeRelationship.daughter,
         percentage: 100,
       ),
     ];
     addRd(
-      'ramesh-a',
-      17,
+      'bruce-a',
+      5,
       5000,
       _dt(20, 10),
       18,
-      customerKey: 'ramesh',
-      nominees: shantaNominee,
+      customerKey: 'bruce',
+      nominees: dickNominee,
     );
-    onTime('ramesh-a', 2, 0);
+    onTime('bruce-a', 2, 0);
     addRd(
-      'ramesh-b',
-      18,
+      'bruce-b',
+      6,
       1500,
       _dt(7, 22),
       5,
-      customerKey: 'ramesh',
-      nominees: arunNominee,
+      customerKey: 'bruce',
+      nominees: damianNominee,
     );
-    onTime('ramesh-b', 2, 1);
+    onTime('bruce-b', 2, 1);
     addOtd(
-      'ramesh-td1',
-      'ramesh',
+      'bruce-td2',
+      'bruce',
       OneTimeSchemeType.timeDeposit,
-      4,
-      200000,
-      6.9,
       1,
-      0,
-      _dt(2, 12),
-      nominees: shantaNominee,
-    );
-    addOtd(
-      'ramesh-td2',
-      'ramesh',
-      OneTimeSchemeType.timeDeposit,
-      5,
-      150000,
+      200000,
       7.0,
       2,
       0,
       _dt(14, 12),
-      nominees: shantaNominee,
+      nominees: dickNominee,
     );
     addOtd(
-      'ramesh-td3',
-      'ramesh',
+      'bruce-td5',
+      'bruce',
       OneTimeSchemeType.timeDeposit,
-      6,
-      300000,
-      7.1,
-      3,
-      0,
-      _dt(26, 12),
-      nominees: arunNominee,
-    );
-    addOtd(
-      'ramesh-td5',
-      'ramesh',
-      OneTimeSchemeType.timeDeposit,
-      7,
+      2,
       500000,
       7.5,
       5,
       0,
       _dt(38, 12),
-      nominees: anitaNominee,
+      nominees: cassandraNominee,
     );
     addOtd(
-      'ramesh-mis',
-      'ramesh',
+      'bruce-mis',
+      'bruce',
       OneTimeSchemeType.monthlyIncomeScheme,
-      8,
+      3,
       900000,
       7.4,
       5,
       0,
       _dt(30, 6),
-      nominees: shantaNominee,
+      nominees: dickNominee,
     );
     addOtd(
-      'ramesh-nsc',
-      'ramesh',
+      'bruce-nsc',
+      'bruce',
       OneTimeSchemeType.nationalSavingsCertificate,
-      9,
-      100000,
+      4,
+      150000,
       7.7,
       5,
       0,
       _dt(18, 21),
       nominees: const [
         Nominee(
-          name: 'Arun Hegde',
+          name: 'Damian Wayne',
           relationship: NomineeRelationship.son,
           percentage: 50,
         ),
         Nominee(
-          name: 'Anita Hegde',
+          name: 'Cassandra Cain',
           relationship: NomineeRelationship.daughter,
           percentage: 50,
         ),
       ],
     );
     addOtd(
-      'ramesh-kvp',
-      'ramesh',
+      'bruce-kvp',
+      'bruce',
       OneTimeSchemeType.kisanVikasPatra,
-      10,
-      50000,
+      5,
+      100000,
       7.5,
       9,
       7,
       _dt(8, 3),
-      nominees: shantaNominee,
+      nominees: dickNominee,
     );
 
-    // 18. Name only: every other field empty; one ₹1,000 TD with no nominee.
+    // 6. Rich Year-1 passbook showcase (0 baseline): settled history + absorbed fee
+    //    3 months ago + UPI collected this month ready for PO deposit.
     addCustomer(
-      'sunita',
-      'Sunita Thomas',
-      'Seed 18. Only a name is known: every other field is empty. One Time Deposit of 1,000 rupees with no nominee.',
-    );
-    addOtd(
-      'sunita-td',
-      'sunita',
-      OneTimeSchemeType.timeDeposit,
-      11,
-      1000,
-      6.9,
-      1,
-      0,
-      _dt(2, 12),
-    );
-
-    // 19. Long name (>50 chars): not yet paid this month, so it sits beside Collect on Hub.
-    addCustomer(
-      'tejaswini',
-      'Tejaswini Venkata Subrahmanya Lakshminarasimha Chintalapati',
-      'Seed 19. A name too long for one line, at 360dp and at large text. Not yet paid this month, so the Monthly Hub shows it beside a Collect button.',
-      phone: '9845012319',
-      address:
-          'Flat 1204, Tower C, Prestige Lakeside Habitat, Whitefield-Sarjapur Road, Varthur, Bengaluru 560087',
-      dob: DateTime(1992, 11, 18),
-      cif: '100200319',
-      aadhaar: '412398760209',
-      pan: 'TCHPC9012T',
+      'clark',
+      'Clark Kent',
+      'Daily Planet reporter; transfers every month via UPI and checks his passbook closely.',
+      phone: '9845012306',
+      address: '344 Clinton Street, Apt 3B, Metropolis 576101',
+      dob: DateTime(1984, 2, 29),
+      cif: '100200306',
+      aadhaar: '412398760066',
+      pan: 'CKEPK6789F',
+      email: 'clark.kent@planet.example',
     );
     addRd(
-      'tejaswini',
-      19,
-      500,
-      _dt(6, 18),
-      4,
+      'clark',
+      7,
+      3000,
+      _dt(7, 10),
+      0,
       nominees: const [
         Nominee(
-          name: 'Venkata Ramana Chintalapati',
+          name: 'Lois Lane',
+          relationship: NomineeRelationship.wife,
+          percentage: 100,
+        ),
+      ],
+    );
+    onTime('clark', 7, 4, mode: RDPaymentMode.upi);
+    collect('clark', _dt(3, 16), 3000, mode: RDPaymentMode.upi);
+    deposit('clark', _dt(3, 18), count: 1, fee: 30);
+    absorb('clark', _dt(3, 18), 30, 'Smallville storm delay; fee covered');
+    onTime('clark', 2, 1, mode: RDPaymentMode.upi);
+    collect('clark', _dt(0, 4), 3000, mode: RDPaymentMode.upi);
+
+    // 7. Large cash in hand (with Alfred > ₹20,000 → two PO cash lots) + maturing-soon MIS.
+    addCustomer(
+      'diana',
+      'Diana Prince',
+      'Curator at Themyscira Antiquities Wing; brings large cash installments in person.',
+      phone: '9845012307',
+      address: '7 Embassy Row, Gateway City 580020',
+      dob: DateTime(1975, 3, 22),
+      cif: '100200307',
+      aadhaar: '412398760077',
+      pan: 'DPRPP7890G',
+      email: 'diana.prince@themyscira.example',
+    );
+    addRd(
+      'diana',
+      8,
+      18000,
+      _dt(5, 8),
+      3,
+      nominees: const [
+        Nominee(
+          name: 'Hippolyta',
+          relationship: NomineeRelationship.mother,
+          percentage: 60,
+        ),
+        Nominee(
+          name: 'Donna Troy',
+          relationship: NomineeRelationship.sister,
+          percentage: 40,
+        ),
+      ],
+    );
+    onTime('diana', 2, 1);
+    collect('diana', _dt(0, 2), 18000);
+    final in15Days = _addDays(15);
+    addOtd(
+      'diana-mis',
+      'diana',
+      OneTimeSchemeType.monthlyIncomeScheme,
+      6,
+      450000,
+      6.6,
+      5,
+      0,
+      _subtractMonths(in15Days, 60),
+      nominees: const [
+        Nominee(
+          name: 'Hippolyta',
+          relationship: NomineeRelationship.mother,
+          percentage: 100,
+        ),
+      ],
+    );
+
+    // 8. In hand via bankTransfer + maturing-soon KVP (25 days).
+    addCustomer(
+      'edward',
+      'Edward Nygma',
+      'Sends exact installments via bank transfer; tracks maturity dates to the day.',
+      phone: '9845012308',
+      address: '1404 Riddle Arcade, Midtown Gotham 580001',
+      dob: DateTime(1983, 6, 15),
+      cif: '100200308',
+      aadhaar: '412398760088',
+      pan: 'ENYPN8901H',
+    );
+    addRd(
+      'edward',
+      9,
+      3500,
+      _dt(16, 12),
+      14,
+      nominees: const [
+        Nominee(
+          name: 'Kristen Kringle',
+          relationship: NomineeRelationship.wife,
+          percentage: 100,
+        ),
+      ],
+    );
+    onTime('edward', 2, 1, mode: RDPaymentMode.bankTransfer);
+    collect('edward', _dt(0, 4), 3500, mode: RDPaymentMode.bankTransfer);
+    final in25Days = _addDays(25);
+    addOtd(
+      'edward-kvp',
+      'edward',
+      OneTimeSchemeType.kisanVikasPatra,
+      7,
+      100000,
+      7.5,
+      9,
+      7,
+      _subtractMonths(in25Days, 115),
+      nominees: const [
+        Nominee(
+          name: 'Kristen Kringle',
+          relationship: NomineeRelationship.wife,
+          percentage: 100,
+        ),
+      ],
+    );
+
+    // 9. Fronted by agent (₹2,000 receivable) + active NSC.
+    addCustomer(
+      'hal',
+      'Hal Jordan',
+      'Test pilot at Ferris Aircraft; agent fronts RD when he is away on sector duty.',
+      phone: '9845012309',
+      address: 'Hangar 7, Coast City 577201',
+      dob: DateTime(1981, 2, 20),
+      cif: '100200309',
+      aadhaar: '412398760099',
+      pan: 'HJOPJ9012I',
+    );
+    addRd(
+      'hal',
+      10,
+      2000,
+      _dt(40, 14),
+      38,
+      nominees: const [
+        Nominee(
+          name: 'Carol Ferris',
+          relationship: NomineeRelationship.wife,
+          percentage: 50,
+        ),
+        Nominee(
+          name: 'Jim Jordan',
+          relationship: NomineeRelationship.brother,
+          percentage: 50,
+        ),
+      ],
+    );
+    onTime('hal', 2, 1);
+    deposit('hal', _dt(0, 2));
+    addOtd(
+      'hal-nsc',
+      'hal',
+      OneTimeSchemeType.nationalSavingsCertificate,
+      8,
+      75000,
+      7.7,
+      5,
+      0,
+      _dt(51, 15),
+      nominees: const [
+        Nominee(
+          name: 'Carol Ferris',
+          relationship: NomineeRelationship.wife,
+          percentage: 100,
+        ),
+      ],
+    );
+
+    // 10. Caught up: 2 months missed, then 3 installments + ₹30 fees paid & deposited at once.
+    addCustomer(
+      'harleen',
+      'Harleen Quinzel',
+      'Cleared three missed months plus default fees in one visit this month.',
+      phone: '9845012310',
+      address: '19 Amusement Mile, Gotham 575001',
+      dob: DateTime(1990, 7, 20),
+      cif: '100200310',
+      aadhaar: '412398760110',
+      pan: 'HQUPQ0123J',
+    );
+    addRd(
+      'harleen',
+      11,
+      1000,
+      _dt(8, 10),
+      5,
+      nominees: const [
+        Nominee(
+          name: 'Pamela Isley',
+          relationship: NomineeRelationship.sister,
+          percentage: 100,
+        ),
+      ],
+    );
+    onTime('harleen', 3, 3);
+    collect('harleen', _dt(0, 2), 3030);
+    deposit('harleen', _dt(0, 3), count: 3, fee: 30);
+
+    // 11. Three to four months in arrears (near 4-default discontinuation threshold).
+    addCustomer(
+      'harvey',
+      'Harvey Dent',
+      'Three to four months overdue; follow up urgently before RD discontinuation threshold.',
+      phone: '9845012311',
+      address: '50 Courthouse Square, Gotham 571401',
+      dob: DateTime(1977, 11, 11),
+      cif: '100200311',
+      aadhaar: '412398760121',
+      pan: 'HDEPD1234K',
+    );
+    addRd(
+      'harvey',
+      12,
+      1500,
+      _dt(26, 3),
+      22,
+      nominees: const [
+        Nominee(
+          name: 'Gilda Dent',
+          relationship: NomineeRelationship.wife,
+          percentage: 100,
+        ),
+      ],
+    );
+    onTime('harvey', 4, 4);
+
+    // 12. Part-paid + prior arrears: last month overdue, ₹1,000 paid toward ₹2,020 due.
+    addCustomer(
+      'jason',
+      'Jason Todd',
+      'Made a partial cash payment toward last month arrears; balance still due.',
+      phone: '9845012312',
+      address: '88 Crime Alley, Park Row, Gotham 585401',
+      dob: DateTime(1994, 8, 16),
+      cif: '100200312',
+      aadhaar: '412398760132',
+      pan: 'JTOPT2345L',
+    );
+    addRd(
+      'jason',
+      13,
+      2000,
+      _dt(15, 10),
+      12,
+      nominees: const [
+        Nominee(
+          name: 'Bruce Wayne',
           relationship: NomineeRelationship.father,
           percentage: 100,
         ),
       ],
     );
-    onTime('tejaswini', 2, 1);
+    onTime('jason', 3, 2);
+    collect('jason', _dt(0, 3), 1000);
 
-    // 20. No account at all: empty sections, and deleting is allowed.
+    // 13. Absorbed fee on an older account: late 3 months ago; agent bore ₹50 fee; settled now.
     addCustomer(
-      'uma',
-      'Uma Bose',
-      'Seed 20. A customer with no account: empty sections on the detail screen, and deleting is allowed.',
-      phone: '9845012320',
-      address: '16, Residency Road, Bengaluru 560025',
-      dob: DateTime(1999, 9, 9),
-    );
-
-    // 21. Kannada script: fonts, avatar initial, sorting, search; RD settled this month.
-    addCustomer(
-      'vijayalakshmi',
-      'ವಿಜಯಲಕ್ಷ್ಮಿ ಗೌಡ',
-      'Seed 21. A name written in Kannada (Vijayalakshmi Gowda): fonts, the avatar initial, sorting and search on non-Latin text. Recurring deposit settled this month.',
-      phone: '9845012321',
-      address: '30, ರಥಬೀದಿ, ಮೈಸೂರು 570001',
-      dob: DateTime(1980, 4, 14),
-      cif: '100200321',
-      aadhaar: '412398760221',
-      pan: 'VGOPG1234V',
+      'constantine',
+      'John Constantine',
+      'Late transfer three months ago from London; agent absorbed the 50 rupee counter fee.',
+      phone: '9845012313',
+      address: '13 Mucous Membrane Lane, Gotham 590001',
+      dob: DateTime(1976, 5, 10),
+      cif: '100200313',
+      aadhaar: '412398760143',
+      pan: 'JCOPC3456M',
     );
     addRd(
-      'vijayalakshmi',
-      20,
-      1000,
-      _dt(10, 6),
-      8,
+      'constantine',
+      14,
+      5000,
+      _dt(18, 9),
+      14,
       nominees: const [
         Nominee(
-          name: 'ಮಂಜುನಾಥ ಗೌಡ',
-          relationship: NomineeRelationship.husband,
+          name: 'Chas Chandler',
+          relationship: NomineeRelationship.brother,
           percentage: 100,
         ),
       ],
     );
-    onTime('vijayalakshmi', 2, 0, mode: RDPaymentMode.upi);
+    onTime('constantine', 4, 4);
+    collect('constantine', _dt(3, 16), 5000, mode: RDPaymentMode.upi);
+    deposit('constantine', _dt(3, 18), count: 1, fee: 50);
+    absorb(
+      'constantine',
+      _dt(3, 18),
+      50,
+      'Late transfer from London; fee absorbed',
+    );
+    onTime('constantine', 2, 0);
+
+    // -------------------------------------------------------------------------
+    // 14–22. Account Lifecycle & Customer Shape Scenarios
+    // -------------------------------------------------------------------------
+
+    // 14. Brand new RD opened on the 1st of this month + active 1Y Time Deposit.
+    addCustomer(
+      'kara',
+      'Kara Zor-El',
+      'Newly opened RD on the 1st of this month alongside a 1-year Time Deposit.',
+      phone: '9845012314',
+      address: '14 Midvale Terrace, National City 560001',
+      dob: DateTime(1995, 9, 22),
+      cif: '100200314',
+      aadhaar: '412398760154',
+      pan: 'KZOPZ4567N',
+    );
+    addRd(
+      'kara',
+      15,
+      500,
+      _dt(0, 1),
+      0,
+      nominees: const [
+        Nominee(
+          name: 'Alex Danvers',
+          relationship: NomineeRelationship.sister,
+          percentage: 100,
+        ),
+      ],
+    );
+    collect('kara', _dt(0, 1), 500);
+    deposit('kara', _dt(0, 1));
+    addOtd(
+      'kara-td1',
+      'kara',
+      OneTimeSchemeType.timeDeposit,
+      9,
+      100000,
+      6.9,
+      1,
+      0,
+      _dt(4, 10),
+      nominees: const [
+        Nominee(
+          name: 'Alex Danvers',
+          relationship: NomineeRelationship.sister,
+          percentage: 100,
+        ),
+      ],
+    );
+
+    // 15. Long name (>50 chars) + unpaid this month (due month-end).
+    addCustomer(
+      'koriandr',
+      "Koriand'r of Tamaran, Royal Sovereign of the Vega System",
+      'Titans Tower portfolio; prefers month-end reminder for her recurring deposit.',
+      phone: '9845012315',
+      address: 'Titans Tower, Jump City Bay 560087',
+      dob: DateTime(1993, 4, 18),
+      cif: '100200315',
+      aadhaar: '412398760165',
+      pan: 'KTAPK5678O',
+    );
+    addRd(
+      'koriandr',
+      16,
+      500,
+      _dt(6, 18),
+      4,
+      nominees: const [
+        Nominee(
+          name: "Komand'r of Tamaran",
+          relationship: NomineeRelationship.sister,
+          percentage: 100,
+        ),
+      ],
+    );
+    onTime('koriandr', 2, 1);
+
+    // 16. Brought into app late: 36 baseline installments + ₹10,000 opening receivable,
+    //     plus active MIS and 3Y TD.
+    addCustomer(
+      'lex',
+      'Lex Luthor',
+      'Transferred 3-year RD into Postfolio with 10,000 opening receivable plus corporate deposits.',
+      phone: '9845012316',
+      address: 'LexCorp Tower, 1000 Main Street, Metropolis 560003',
+      dob: DateTime(1973, 1, 15),
+      cif: '100200316',
+      aadhaar: '412398760176',
+      pan: 'LLUPL6789P',
+    );
+    const lenaNominee = [
+      Nominee(
+        name: 'Lena Luthor',
+        relationship: NomineeRelationship.sister,
+        percentage: 100,
+      ),
+    ];
+    addRd(
+      'lex',
+      17,
+      10000,
+      _dt(36, 20),
+      36,
+      openingReceivable: 10000,
+      nominees: lenaNominee,
+    );
+    addOtd(
+      'lex-mis',
+      'lex',
+      OneTimeSchemeType.monthlyIncomeScheme,
+      10,
+      600000,
+      7.4,
+      5,
+      0,
+      _dt(55, 5),
+      nominees: lenaNominee,
+    );
+    addOtd(
+      'lex-td3',
+      'lex',
+      OneTimeSchemeType.timeDeposit,
+      11,
+      300000,
+      7.1,
+      3,
+      0,
+      _dt(26, 12),
+      nominees: lenaNominee,
+    );
+
+    // 17. To collect (due month-end, up to date through last month) + active 5Y NSC.
+    addCustomer(
+      'lois',
+      'Lois Lane',
+      'Pays at month-end after Daily Planet column deadline; up to date through last month.',
+      phone: '9845012317',
+      address: '344 Clinton Street, Apt 3B, Metropolis 585401',
+      dob: DateTime(1985, 8, 17),
+      cif: '100200317',
+      aadhaar: '412398760187',
+      pan: 'LLAPL7890Q',
+    );
+    const clarkNominee = [
+      Nominee(
+        name: 'Clark Kent',
+        relationship: NomineeRelationship.husband,
+        percentage: 100,
+      ),
+    ];
+    addRd('lois', 18, 1000, _dt(17, 25), 15, nominees: clarkNominee);
+    onTime('lois', 2, 1);
+    addOtd(
+      'lois-nsc',
+      'lois',
+      OneTimeSchemeType.nationalSavingsCertificate,
+      12,
+      125000,
+      7.7,
+      5,
+      0,
+      _dt(10, 14),
+      nominees: clarkNominee,
+    );
+
+    // 18. Maturing soon: RD and 1Y TD, both 20 days from maturity.
+    addCustomer(
+      'oliver',
+      'Oliver Queen',
+      'Both RD and 1-year Time Deposit mature in 20 days; prepare renewal forms.',
+      phone: '9845012318',
+      address: 'Queen Consolidated Plaza, Star City 581301',
+      dob: DateTime(1979, 5, 16),
+      cif: '100200318',
+      aadhaar: '412398760198',
+      pan: 'OQUPO8901R',
+    );
+    final in20Days = _addDays(20);
+    const dinahNominee = [
+      Nominee(
+        name: 'Dinah Lance',
+        relationship: NomineeRelationship.wife,
+        percentage: 100,
+      ),
+    ];
+    addRd(
+      'oliver',
+      19,
+      1000,
+      _subtractMonths(in20Days, 60),
+      60,
+      rate: 5.8,
+      nominees: dinahNominee,
+    );
+    addOtd(
+      'oliver-td1',
+      'oliver',
+      OneTimeSchemeType.timeDeposit,
+      13,
+      50000,
+      6.9,
+      1,
+      0,
+      _subtractMonths(in20Days, 12),
+      nominees: dinahNominee,
+    );
+
+    // 19. Matured, still open: RD and NSC, both 40 days past maturity.
+    addCustomer(
+      'oswald',
+      'Oswald Cobblepot',
+      'Matured RD and NSC still open past maturity; pending payout instructions from Iceberg Lounge.',
+      phone: '9845012319',
+      address: 'The Iceberg Lounge, Pier 14, Gotham 575002',
+      dob: DateTime(1961, 12, 30),
+      cif: '100200319',
+      aadhaar: '412398760209',
+      pan: 'OCOPC9012S',
+    );
+    final ago40Days = _addDays(-40);
+    const estherNominee = [
+      Nominee(
+        name: 'Esther Cobblepot',
+        relationship: NomineeRelationship.mother,
+        percentage: 100,
+      ),
+    ];
+    addRd(
+      'oswald',
+      20,
+      2000,
+      _subtractMonths(ago40Days, 60),
+      60,
+      rate: 5.8,
+      nominees: estherNominee,
+    );
+    addOtd(
+      'oswald-nsc',
+      'oswald',
+      OneTimeSchemeType.nationalSavingsCertificate,
+      14,
+      25000,
+      6.8,
+      5,
+      0,
+      _subtractMonths(ago40Days, 60),
+      nominees: estherNominee,
+    );
+
+    // 20. Closed: RD, 2Y TD, and 5Y MIS all closed.
+    addCustomer(
+      'pamela',
+      'Pamela Isley',
+      'Closed her matured RD, 2-year TD, and 5-year MIS after relocating to Robinson Park Conservatory.',
+      phone: '9845012320',
+      address: 'Greenhouse 4, Robinson Park, Gotham 560010',
+      dob: DateTime(1980, 5, 22),
+      cif: '100200320',
+      aadhaar: '412398760220',
+      pan: 'PISPI0123T',
+    );
+    const harleenNominee = [
+      Nominee(
+        name: 'Harleen Quinzel',
+        relationship: NomineeRelationship.sister,
+        percentage: 100,
+      ),
+    ];
+    addRd(
+      'pamela',
+      21,
+      3000,
+      _dt(66, 10),
+      60,
+      status: DepositStatus.closed,
+      rate: 5.8,
+      nominees: harleenNominee,
+    );
+    addOtd(
+      'pamela-td2',
+      'pamela',
+      OneTimeSchemeType.timeDeposit,
+      15,
+      100000,
+      7.0,
+      2,
+      0,
+      _dt(27, 14),
+      status: DepositStatus.closed,
+      nominees: harleenNominee,
+    );
+    addOtd(
+      'pamela-mis',
+      'pamela',
+      OneTimeSchemeType.monthlyIncomeScheme,
+      16,
+      300000,
+      6.6,
+      5,
+      0,
+      _dt(64, 8),
+      status: DepositStatus.closed,
+      nominees: harleenNominee,
+    );
+
+    // 21. Name only: every optional KYC field empty; one ₹1,000 KVP with no nominee.
+    addCustomer(
+      'selina',
+      'Selina Kyle',
+      'Minimal profile — prefers privacy; small KVP with no nominee listed.',
+    );
+    addOtd(
+      'selina-kvp',
+      'selina',
+      OneTimeSchemeType.kisanVikasPatra,
+      17,
+      1000,
+      7.5,
+      9,
+      7,
+      _dt(102, 5),
+    );
+
+    // 22. No account at all: empty sections, and deleting is allowed.
+    addCustomer(
+      'victor',
+      'Victor Stone',
+      'Newly onboarded at S.T.A.R. Labs; no deposits linked yet.',
+      phone: '9845012322',
+      address: 'S.T.A.R. Labs Campus, Metropolis 560025',
+      dob: DateTime(1997, 6, 29),
+    );
 
     customers = List.unmodifiable(customerList);
     oneTimeDeposits = List.unmodifiable(otdList);

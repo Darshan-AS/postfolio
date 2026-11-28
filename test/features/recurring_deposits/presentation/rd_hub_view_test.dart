@@ -41,8 +41,8 @@ void main() {
   final ops = t.recurringDeposits.monthlyOperations;
 
   /// The customer with two recurring deposits in [FakeDataSource], and one with a single RD.
-  const twoAccounts = 'Ramesh Hegde';
-  const oneAccount = 'Asha Kulkarni';
+  const twoAccounts = 'Bruce Wayne';
+  const oneAccount = 'Alfred Pennyworth';
 
   Future<void> settle(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 250));
@@ -256,7 +256,7 @@ void main() {
     testWidgets(
       'switching to a settled month shows its statement without the arrival',
       (tester) async {
-        // June 2026 is fully settled; July 2026 has Harish Gowda unpaid.
+        // June 2026 is fully settled; July 2026 has Harvey Dent unpaid.
         await pumpHub(
           tester,
           disableAnimations: false,
@@ -337,7 +337,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(RDHubBatchBar), findsNothing);
 
-        // The customer with two accounts (Ramesh Hegde): Select All ticks both.
+        // The customer with two accounts (Bruce Wayne): Select All ticks both.
         final selectAll = find.text(ops.customerGroup.selectGroup);
         await tester.ensureVisible(selectAll);
         await tester.pumpAndSettle();
@@ -347,12 +347,12 @@ void main() {
         expect(container.read(rDHubSelectionProvider).isSelectionMode, isTrue);
         expect(container.read(rDHubSelectionProvider).count, 2);
 
-        // Also select Bharat Shetty (in hand, ready to deposit) so the batch bar shows a
+        // Also select Alfred Pennyworth (in hand, ready to deposit) so the batch bar shows a
         // ready-to-deposit count and its Deposit action button.
-        final bharat = find.text('Bharat Shetty');
-        await tester.ensureVisible(bharat);
+        final alfred = find.text('Alfred Pennyworth');
+        await tester.ensureVisible(alfred);
         await tester.pumpAndSettle();
-        await tester.tap(bharat);
+        await tester.tap(alfred);
         await tester.pumpAndSettle();
 
         final selection = container.read(rDHubSelectionProvider);
@@ -641,6 +641,13 @@ void main() {
         final withButton = <double>[];
         final withoutButton = <double>[];
         for (final element in find.byType(RDMonthlyOperationCard).evaluate()) {
+          final widget = element.widget as RDMonthlyOperationCard;
+          // Exclude the >50-char wrapping stress-test name so 2-line title height
+          // does not mask the 8dp button touch-padding check on normal rows.
+          if (widget.item.deposit.customerName?.startsWith("Koriand'r") ??
+              false) {
+            continue;
+          }
           final card = find.byWidget(element.widget);
           final pill = tester.getRect(
             find.descendant(of: card, matching: find.byType(RDStatusPill)),

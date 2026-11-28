@@ -78,6 +78,7 @@ common:
   moreOptions: "More options"
   noResults: "No results found"
   demoModeActive: "Demo Mode Active. Data is not saved to the cloud."
+  demoDataReset: "Demo data reset"
   localBackendActive: "Local Supabase (seed data)"
 
 sorting:

@@ -36,7 +36,7 @@ void main() {
   Future<void> pumpScreen(
     WidgetTester tester,
     Widget screen, {
-    Size size = const Size(360, 2400),
+    Size size = const Size(360, 2800),
     DateTime? now,
   }) async {
     tester.view.physicalSize = size * 2;

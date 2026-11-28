@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
+import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/providers/theme_provider.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_financial_colors.dart';
@@ -14,6 +15,7 @@ import 'package:postfolio/core/widgets/common/demo_banner.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/layout/shell_app_bar.dart';
+import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_status_theme.dart';
 import 'package:postfolio/i18n/strings.g.dart';
@@ -232,6 +234,32 @@ void main() {
         await tester.tap(find.text(t.common.theme.dark));
         await tester.pumpAndSettle();
         expect(container.read(themeModeProvider), AppThemeMode.dark);
+
+        // Reset Demo Mode data from DemoBanner and verify repository resets cleanly.
+        expect(container.read(activeSessionKeyProvider), 'demo');
+        final repoSub = container.listen(customerRepositoryProvider, (_, _) {});
+        addTearDown(repoSub.close);
+        final deleteFuture = container
+            .read(customerRepositoryProvider)
+            .deleteCustomer('demo-cust-victor');
+        await tester.pump(const Duration(milliseconds: 600));
+        await deleteFuture;
+        final afterDelete = await tester.runAsync(
+          () =>
+              container.read(customerRepositoryProvider).watchCustomers().first,
+        );
+        expect((afterDelete as Success).value, hasLength(21));
+
+        await tester.tap(find.byKey(const ValueKey('reset_demo_data_button')));
+        await tester.pumpAndSettle();
+        expect(container.read(demoSessionEpochProvider), 1);
+        expect(container.read(activeSessionKeyProvider), 'demo:1');
+        expect(find.text(t.common.demoDataReset), findsOneWidget);
+        final afterReset = await tester.runAsync(
+          () =>
+              container.read(customerRepositoryProvider).watchCustomers().first,
+        );
+        expect((afterReset as Success).value, hasLength(22));
 
         // Exit Demo Mode from DemoBanner.
         expect(container.read(demoModeProvider), isTrue);
