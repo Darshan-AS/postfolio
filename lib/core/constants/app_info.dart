@@ -1,6 +1,6 @@
 abstract final class AppInfo {
-  static const String version = '2.4.0';
-  static const String buildNumber = '23';
+  static const String version = '3.0.0';
+  static const String buildNumber = '24';
   static const String fullVersion = '$version+$buildNumber';
   static const String displayVersion = 'v$version ($buildNumber)';
 

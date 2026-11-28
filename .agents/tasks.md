@@ -2,6 +2,12 @@
 
 *Note: Finished items from before the v2.4 work are in `.agents/historical_tasks_archive.md`, with the older raw task history. For a summary of early work see `.agents/historical_summary.md`; for the current state see `.agents/progress.md`.*
 
+## 🚀 Production Release `v3.0.0+24` (Play Store Launch — 2026-11-28)
+*Prepared via `release-manager` skill; log: `.agents/session_logs/2026-11-28_session_10.md`.*
+- [x] **Hosted Supabase Backups & Migration**: Backed up linked production schema (`full_backup_2026_11_28_pre_v2_5_0.sql`, `72K`) and data (`full_backup_2026_11_28_pre_v3_0_0_data.sql`, `1.5M`), ran `supabase db push` applying `20261128000000_agent_profile_fields.sql`, and verified all `10/10` migrations in parity across local and remote.
+- [x] **Version Bump & Release Notes (`pubspec.yaml`, `app_info.dart`, `CHANGELOG.md`)**: Bumped `2.4.0+23` -> `3.0.0+24` and documented the full changelog since `v2.4.0+23` (Material 3 Expressive redesign, `Roboto Flex`, Pocket Flipbook branding, Monthly Hub & RD Passbook, Agent Profile & Settings, redesigned Create/Edit forms, and Admin Acting-As).
+- [ ] **Local Builds, CI Gate, Tag `v3.0.0+24` & Play Store Rollout**: Verify fast tests + local `.aab` + Wasm builds, push `main`, wait for green CI promotion gate, push `v3.0.0+24` tag to upload to Google Play, and sync refreshed Play Store screenshots & metadata via `sync-store-listing.yml`.
+
 ## 🔤 Material 3 Expressive Reference Typography — `Roboto Flex` (2026-11-28)
 *Replaced static `PlusJakartaSans` with Google's official Material 3 Expressive reference variable font; log: `.agents/session_logs/2026-11-28_session_9.md`.*
 - [x] **Subsetted Variable Font Asset (`assets/fonts/RobotoFlex-Variable.ttf`, `pubspec.yaml`, `OFL.txt`)**: Fetched official Google Fonts `RobotoFlex` variable TTF and subsetted via `pyftsubset` (`912,728 bytes`, down from `1,745 KB`) covering Latin + Extended-A, punctuation, currency (`₹` `U+20B9` verified), arrows, math, `rvrn`/`kern`/`liga`/`locl`/`pnum`, all 13 variable axes (`opsz`, `wght`, `GRAD`, `slnt`, `wdth`, parametric axes), and verified tabular default figures (`hmtx` uniform width `1156` across `'0'..'9'`); removed old `PlusJakartaSans-*.ttf` assets.
@@ -30,7 +36,7 @@
 - [x] **App Preferences, PII Masking & Haptics (`AppPreferencesNotifier`, `StorageService`, `DetailItem`, `AppFeedback`)**: Added persisted `useDynamicColor`, `startTab` (`AppStartTab` picker sheet + `AppRoutes.rdHubLocation` routing), `hapticsEnabled` (read cleanly via `ProviderScope.containerOf` without global static state), `maskSensitiveIds` (tap-to-reveal eye toggle on Aadhaar/PAN across `CustomerDetailScreen` and `ProfileScreen` while keeping copy unmasked), and `clearListCriteria()` reset.
 - [x] **Focused Settings & About/Legal (`SettingsScreen`, `settings_tiles.dart`, `LoginScreen`, `AppInfo`, `release-manager`)**: Extracted compile-time safe `SettingsGroup`/`SettingsRow`/`SettingsSwitchRow` (with `MergeSemantics`)/`StartTabOptionTile`, focused `SettingsScreen` on Appearance, Preferences & Privacy, Support email, Privacy Policy, Licenses, copyable `AppInfo.displayVersion` synced with `pubspec.yaml`, and non-government disclaimer; updated `.agents/skills/release-manager/SKILL.md`.
 - [x] **Verification**: `dart format --output=none --set-exit-if-changed lib test tool` (`346` files, `0` changed), `dart analyze --fatal-infos` (`0` issues), **544/544** fast tests pass, coverage **81.6% total** (domain & core 84.3%, controllers & providers 86.2%, data & repositories 71.4%, presentation UI & routing 81.4%), `supabase db reset`, and **23/23** SQL contract assertions pass.
-- [ ] **Hosted Migration Before Client Release**: Run `supabase db push` on hosted Supabase before shipping a client referencing the new `agent_profiles` columns.
+- [x] **Hosted Migration Before Client Release**: Applied `20261128000000_agent_profile_fields.sql` to hosted Supabase prior to `v3.0.0+24` release (verified all `10/10` migrations synced).
 
 ### Phase 2 — Security, Compliance, Data Ownership & Polish (Planned)
 - [ ] **In-App Account & Data Deletion (Play Store Production Requirement)**: Danger-zone flow in Profile/Settings with confirmation/re-auth and server-side deletion (Supabase Edge Function / RPC deleting `auth.users` + cascading agent data) or verified deletion request.

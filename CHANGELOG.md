@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0+24] - 2026-11-28
+
+Complete Material 3 Expressive redesign, official Roboto Flex typography, Pocket Flipbook icon, Monthly Hub & RD Passbook overhaul, Agent Profile & Settings, and redesigned Create/Edit forms.
+
+### Added
+- **Material 3 Expressive Design System**: Tonal container hierarchy (`page` → `raised` → `inset`), grouped row seams (`AppGroup`), official expressive buttons and split/segmented controls (`M3ETheme`), custom Material shape avatars (`EntityAvatar`), cross-screen Hero morphing, predictive back gestures, spring-driven physics, and expandable navigation rail on desktop/tablet (`>= 840dp`).
+- **Official Roboto Flex Reference Typography**: Variable font (`wght` + per-role `opsz`) with optical tracking and tabular numerals across all 15 baseline and emphasized type scales.
+- **Pocket Flipbook App Icon & Splash**: Unified top-bound flipbook brand mark with Android adaptive & Material You monochrome icons, Android 12+ Light/Dark splash screens, iOS 18 dark/tinted icons, desktop/web PWA icons, and refreshed Play Store graphics.
+- **Monthly Hub Flipbook Redesign**: Serial-first `Accounts ⇄ Monthly Hub` workflow with 4 non-overlapping tap-to-filter KPIs (`To collect` + overdue badge, `In hand`, `Paid to PO`, `Receivable`), compact 2-step `Customer | PO` chips, `1–15` / `16–EOM` due-window chips, `Overdue first` / `Serial #` / `Name` sorting, and `Not paid yet? Deposit from pocket` inside the Collect sheet.
+- **Agent Profile, Preferences & Privacy**: Dedicated Agent Profile (display name, DOP Agent ID, linked branch, multi-select `MPKBY` / `SAS` schemes with separate license expiry badges, KYC, and commission SB account) plus Settings for theme, wallpaper dynamic colors, default start tab, optional Aadhaar/PAN masking with tap-to-reveal, haptic feedback toggle, and privacy/licensing info.
+- **Admin Acting-As & Demo Reset**: Admin switch-account mode with audit logging and DC Universe Demo Mode with a 1-tap `Reset` banner action.
+
+### Changed
+- **RD Passbook & Transactions Parity**: Unified top Passbook Next Due + In-Hand PO rows, added `4dp` clipped left status stripes and 2-step chips on every installment row, split Transactions into `Payments` and `PO Deposits` (`Inst X–Y` visit receipts with latest-visit `Undo`), and switched detail opening tabs to `Account Info` + pull-to-refresh.
+- **Redesigned Forms & Edit Screens**: Borderless rounded tonal `inset` inputs with clean inside-pill labels, `EntityListTile` Edit Context headers, Hero currency fields, responsive 2-column field pairs, compact read-only `Locked Financial Terms` cards for active RDs, collapsible onboarding balance fields on Create RD, and contextual dirty-aware `Create` / `Save Changes` footer buttons.
+- **Distribution & Quality**: Added `.aab` upload for Google Play Store alongside automated CI coverage gates (`87/83/75/83/83`), Wasm build verification, and `360×800 @ 2.0x` accessibility invariants.
+
+### Fixed
+- **Clock Determinism & Financial Colors**: Eliminated `DateTime.now()` calls from widgets in favor of injected clock providers, locked all financial/urgency badges onto WCAG 2.1 AA `AppFinancialColors`, and unified destructive confirmation dialogs.
+- **Form & Sheet Edge Cases**: Added dirty `PopScope` guards on `RDDepositSheet` and `RecurringDepositFormScreen` tenure changes, fixed `CustomerSelectionField` sheet search/overflow at `2.0x` text scale, and preserved header Hero continuity across detail/profile routes.
+
+### Notes
+- **Hosted Supabase Migrations**: Requires `20261120000000_admin_acting_as.sql` and `20261128000000_agent_profile_fields.sql` (applied to hosted production before tagging `v3.0.0+24`).
+
 ## [2.4.0+23] - 2026-11-16
 
 ### Added
