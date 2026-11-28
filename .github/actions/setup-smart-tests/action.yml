@@ -1,0 +1,22 @@
+name: Set up Smart Tests CLI
+description: >-
+  Install Python 3.13 and the CloudBees Smart Tests CLI (v2), then verify
+  connectivity. Requires SMART_TESTS_TOKEN in the environment; callers should
+  gate this on the token being present.
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Install Smart Tests CLI
+      shell: bash
+      run: pip install "smart-tests-cli>=2.6"
+
+    - name: Verify Connectivity
+      shell: bash
+      # `|| true` so a misconfigured token never fails CI — recording steps degrade gracefully.
+      run: smart-tests verify || true

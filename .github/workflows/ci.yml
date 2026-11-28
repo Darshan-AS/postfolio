@@ -12,6 +12,11 @@ on:
 permissions:
   contents: read
 
+
+env:
+  SMART_TESTS_TOKEN: ${{ secrets.SMART_TESTS_TOKEN }}
+  SMART_TESTS_BUILD: run-${{ github.run_id }}
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -25,6 +30,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          # Full history so `smart-tests record build` can collect commit data.
+          fetch-depth: 0
 
       - name: Set up Flutter & Dependencies
         uses: ./.github/actions/setup-flutter
@@ -49,10 +57,50 @@ jobs:
       - name: Run Strict Static Analysis
         run: dart analyze --fatal-infos
 
+      - name: Set up Smart Tests CLI
+        if: env.SMART_TESTS_TOKEN != ''
+        continue-on-error: true
+        uses: ./.github/actions/setup-smart-tests
+
+      - name: Record Smart Tests Build & Session (Unit/Widget)
+        if: env.SMART_TESTS_TOKEN != ''
+        continue-on-error: true
+        run: |
+          smart-tests record build --build "$SMART_TESTS_BUILD" --source .
+          smart-tests record session \
+            --build "$SMART_TESTS_BUILD" \
+            --test-suite unit-widget \
+            --observation > smart-tests-session.txt
+
+      - name: Request Smart Tests Subset (Observation — Full Suite)
+        if: env.SMART_TESTS_TOKEN != ''
+        continue-on-error: true
+        # Observation mode returns the full suite; the list still trains the model and the
+        # dashboard records what a real subset would have selected/saved.
+        run: |
+          smart-tests subset \
+            --session @smart-tests-session.txt \
+            --target 25% \
+            flutter $(find test -name '*_test.dart' -not -name 'supabase_*_test.dart' | sort) \
+            > smart-tests-subset.txt
+
       - name: Run Fast Unit, Controller & Widget Tests With Coverage
         # dart_test.yaml runs one test file at a time, for the integration suites that share a
         # Supabase stack. These tests share nothing, so their files run side by side.
-        run: flutter test --exclude-tags integration --concurrency "$(nproc)" --coverage
+        # SUBSET is the observation full-suite list when Smart Tests is active, else empty
+        # (flutter then runs everything, minus the integration tag).
+        run: |
+          SUBSET="$([ -f smart-tests-subset.txt ] && cat smart-tests-subset.txt || true)"
+          flutter test $SUBSET \
+            --exclude-tags integration --concurrency "$(nproc)" --coverage \
+            --file-reporter "json:smart-tests-report.json"
+
+      - name: Record Smart Tests Results (Unit/Widget)
+        if: always() && env.SMART_TESTS_TOKEN != ''
+        continue-on-error: true
+        run: |
+          [ -f smart-tests-report.json ] || { echo "No report to record"; exit 0; }
+          smart-tests record tests --session @smart-tests-session.txt flutter smart-tests-report.json
 
       - name: Enforce DDD Layer & Total Coverage Ratchet
         run: dart run tool/check_coverage.dart --min-domain=87 --min-controllers=83 --min-data=75 --min-ui=83 --min-total=83
@@ -68,6 +116,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          # Full history so `smart-tests record build` can collect commit data.
+          fetch-depth: 0
 
       - name: Set up Flutter & Dependencies
         uses: ./.github/actions/setup-flutter
@@ -98,5 +149,42 @@ jobs:
           dart run slang
           dart run build_runner build
 
+      - name: Set up Smart Tests CLI
+        if: env.SMART_TESTS_TOKEN != ''
+        continue-on-error: true
+        uses: ./.github/actions/setup-smart-tests
+
+      - name: Record Smart Tests Build & Session (Integration/E2E)
+        if: env.SMART_TESTS_TOKEN != ''
+        continue-on-error: true
+        # Same build name as the unit/widget job = one logical build; this re-asserts it,
+        # then attaches this suite's own session.
+        run: |
+          smart-tests record build --build "$SMART_TESTS_BUILD" --source .
+          smart-tests record session \
+            --build "$SMART_TESTS_BUILD" \
+            --test-suite integration-e2e \
+            --observation > smart-tests-session.txt
+
+      - name: Request Smart Tests Subset (Observation — Full Suite)
+        if: env.SMART_TESTS_TOKEN != ''
+        continue-on-error: true
+        run: |
+          smart-tests subset \
+            --session @smart-tests-session.txt \
+            --target 25% \
+            flutter $(find test -maxdepth 1 -name 'supabase_*_test.dart' | sort) \
+            > smart-tests-subset.txt
+
       - name: Run Dart Supabase Integration & E2E Suites
-        run: flutter test --tags integration
+        run: |
+          SUBSET="$([ -f smart-tests-subset.txt ] && cat smart-tests-subset.txt || true)"
+          flutter test $SUBSET --tags integration \
+            --file-reporter "json:smart-tests-report.json"
+
+      - name: Record Smart Tests Results (Integration/E2E)
+        if: always() && env.SMART_TESTS_TOKEN != ''
+        continue-on-error: true
+        run: |
+          [ -f smart-tests-report.json ] || { echo "No report to record"; exit 0; }
+          smart-tests record tests --session @smart-tests-session.txt flutter smart-tests-report.json
