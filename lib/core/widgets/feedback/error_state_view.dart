@@ -1,8 +1,8 @@
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
@@ -108,14 +108,14 @@ class _StateMessage extends StatelessWidget {
             : column
                   .animate()
                   .fade(
-                    duration: AppAnimations.slow,
-                    curve: AppAnimations.defaultCurve,
+                    duration: AppMotion.effectsSlowDuration,
+                    curve: AppMotion.effectsSlowCurve,
                   )
                   .scale(
                     begin: const Offset(0.9, 0.9),
                     end: const Offset(1, 1),
-                    duration: AppAnimations.slow,
-                    curve: AppAnimations.bounceCurve,
+                    duration: AppMotion.spatialDuration,
+                    curve: AppMotion.spatialCurve,
                   ),
       ),
     );

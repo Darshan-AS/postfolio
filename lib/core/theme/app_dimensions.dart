@@ -3,8 +3,10 @@ import 'package:material_ui/material_ui.dart';
 class AppDimensions {
   // Breakpoints & Constrained Widths
   static const double breakpointTablet = 600.0;
+  static const double breakpointExpanded = 840.0;
   static const double maxLoginWidth = 420.0;
   static const double maxFormWidth = 720.0;
+  static const double maxContentWidth = 1280.0;
 
   // Components
   static const double chartHeight = 250.0;
@@ -68,7 +70,7 @@ class AppDimensions {
   static const double borderLg = 4.0;
   static const double dividerThickness = 1.0;
   static const double dividerHeight = 1.0;
-  static const double bottomSheetHandleWidth = 40.0;
+  static const double bottomSheetHandleWidth = 32.0;
   static const double bottomSheetHandleHeight = 4.0;
 
   // Typography metrics

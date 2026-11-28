@@ -75,6 +75,8 @@ class MainShellScaffold extends ConsumerWidget {
                 AppNavigationRail(
                   destinations: destinations,
                   selectedIndex: navigationShell.currentIndex,
+                  expandable:
+                      constraints.maxWidth >= AppDimensions.breakpointExpanded,
                   onSelected: (index) => _goBranch(context, index),
                   trailing: Padding(
                     padding: const EdgeInsets.only(

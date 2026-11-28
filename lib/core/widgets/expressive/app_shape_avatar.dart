@@ -79,6 +79,7 @@ class AppShapeAvatar extends StatelessWidget {
     super.key,
     required this.child,
     this.shape = AppAvatarShape.cookie9,
+    this.customShape,
     this.size = defaultSize,
     this.backgroundColor,
     this.foregroundColor,
@@ -93,6 +94,9 @@ class AppShapeAvatar extends StatelessWidget {
 
   final Widget child;
   final AppAvatarShape shape;
+
+  /// Explicit interpolated shape border (used during Hero morphing between distinct shapes).
+  final ShapeBorder? customShape;
   final double size;
 
   /// Defaults to `primaryContainer`.
@@ -135,9 +139,12 @@ class AppShapeAvatar extends StatelessWidget {
     );
 
     final from = opensFrom;
+    final overrideShape = customShape;
     return SizedBox.square(
       dimension: size,
-      child: from == null || MediaQuery.disableAnimationsOf(context)
+      child: overrideShape != null
+          ? surface(overrideShape, content, frameByFrame: true)
+          : from == null || MediaQuery.disableAnimationsOf(context)
           ? surface(border, content)
           : TweenAnimationBuilder<ShapeBorder?>(
               tween: ShapeBorderTween(

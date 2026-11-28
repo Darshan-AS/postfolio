@@ -13,11 +13,17 @@ class SpringCurve extends Curve {
   final SpringDescription spring;
   final Duration duration;
 
+  static final Expando<SpringSimulation> _simulations =
+      Expando<SpringSimulation>();
+
+  SpringSimulation get _simulation =>
+      _simulations[this] ??= SpringSimulation(spring, 0, 1, 0);
+
   @override
   double transformInternal(double t) {
     final seconds =
         t * duration.inMicroseconds / Duration.microsecondsPerSecond;
-    return SpringSimulation(spring, 0, 1, 0).x(seconds);
+    return _simulation.x(seconds);
   }
 }
 
@@ -31,11 +37,17 @@ abstract final class AppMotion {
   static const SpringDescription spatialFast = Springs.expressiveFastSpatial;
   static const SpringDescription effects = Springs.expressiveDefaultEffects;
   static const SpringDescription effectsFast = Springs.expressiveFastEffects;
+  static const SpringDescription effectsSlow = Springs.expressiveSlowEffects;
 
   static const Duration spatialDuration = Duration(milliseconds: 500);
   static const Duration spatialFastDuration = Duration(milliseconds: 350);
   static const Duration effectsDuration = Duration(milliseconds: 200);
   static const Duration effectsFastDuration = Duration(milliseconds: 150);
+  static const Duration effectsSlowDuration = Duration(milliseconds: 300);
+
+  static const Duration debounce = Duration(milliseconds: 300);
+  static const Duration stagger = Duration(milliseconds: 50);
+  static const double slideOffset = 0.1;
 
   /// For position, size and scale. Overshoots: do not use for opacity or radii.
   static const Curve spatialCurve = SpringCurve(
@@ -55,6 +67,10 @@ abstract final class AppMotion {
   static const Curve effectsFastCurve = SpringCurve(
     effectsFast,
     duration: effectsFastDuration,
+  );
+  static const Curve effectsSlowCurve = SpringCurve(
+    effectsSlow,
+    duration: effectsSlowDuration,
   );
 
   /// The last stretch of a screen's transition. By then the parts that travel to the

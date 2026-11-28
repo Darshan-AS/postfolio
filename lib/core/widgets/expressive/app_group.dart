@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_surfaces.dart';
 
@@ -46,6 +47,8 @@ class _AppGroupTileState extends State<AppGroupTile> {
     final interactive = widget.onTap != null || widget.onLongPress != null;
     final shape = _pressed
         ? AppShapes.rounded(AppShapes.pressed)
+        : widget.selected
+        ? AppShapes.rounded(AppShapes.large)
         : AppShapes.group(widget.position);
 
     return Material(
@@ -53,6 +56,9 @@ class _AppGroupTileState extends State<AppGroupTile> {
           ? scheme.secondaryContainer
           : widget.color ?? scheme.raised,
       shape: shape,
+      animationDuration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : AppMotion.effectsDuration,
       clipBehavior: Clip.antiAlias,
       child: interactive
           ? InkWell(

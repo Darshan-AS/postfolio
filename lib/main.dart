@@ -16,6 +16,7 @@ import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/services/app_error_reporter.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/widgets/expressive/app_expressive_theme.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:postfolio/core/widgets/common/demo_banner.dart';
 import 'package:postfolio/core/widgets/common/local_backend_banner.dart';
@@ -160,9 +161,11 @@ class PostfolioApp extends ConsumerWidget {
           routerConfig: goRouter,
           builder: (context, child) {
             final scheme = Theme.of(context).colorScheme;
-            return SkeletonizerConfig(
-              data: AppTheme.skeletonizerConfig(scheme),
-              child: _AppBannerFrame(child: child ?? const SizedBox.shrink()),
+            return AppExpressiveTheme(
+              child: SkeletonizerConfig(
+                data: AppTheme.skeletonizerConfig(scheme),
+                child: _AppBannerFrame(child: child ?? const SizedBox.shrink()),
+              ),
             );
           },
           locale: TranslationProvider.of(context).flutterLocale,

@@ -141,18 +141,21 @@ class AppFabMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return M3EFabMenu(
-      size: M3EFabSize.regular,
-      icon: AppIcon(icon, size: AppDimensions.iconMd),
-      closeIcon: AppIcon(closeIcon, size: AppDimensions.iconMd),
-      items: [
-        for (final action in actions)
-          M3EFabMenuItem(
-            label: action.label,
-            icon: AppIcon(action.icon, size: AppDimensions.iconMd),
-            onPressed: action.onPressed,
-          ),
-      ],
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: AppDimensions.largeTextScale,
+      child: M3EFabMenu(
+        size: M3EFabSize.regular,
+        icon: AppIcon(icon, size: AppDimensions.iconMd),
+        closeIcon: AppIcon(closeIcon, size: AppDimensions.iconMd),
+        items: [
+          for (final action in actions)
+            M3EFabMenuItem(
+              label: action.label,
+              icon: AppIcon(action.icon, size: AppDimensions.iconMd),
+              onPressed: action.onPressed,
+            ),
+        ],
+      ),
     );
   }
 }

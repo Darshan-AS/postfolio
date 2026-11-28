@@ -7,20 +7,23 @@ import 'package:material_ui/material_ui.dart';
 /// the default [ThemeData.textTheme]; the emphasized set is reached through
 /// [AppTypography.emphasizedOf].
 abstract final class AppTypography {
+  static const String fontFamily = 'PlusJakartaSans';
   static const List<FontFeature> _tabular = [FontFeature.tabularFigures()];
 
   /// Amounts line up in columns throughout the app, so every role uses tabular figures.
+  /// Large display and headline roles tighten letter-spacing subtly per M3 Expressive
+  /// optical tracking guidance.
   static TextTheme withTabularFigures(TextTheme base) {
-    TextStyle? tabular(TextStyle? style) =>
-        style?.copyWith(fontFeatures: _tabular);
+    TextStyle? tabular(TextStyle? style, {double? letterSpacing}) =>
+        style?.copyWith(fontFeatures: _tabular, letterSpacing: letterSpacing);
 
     return base.copyWith(
-      displayLarge: tabular(base.displayLarge),
-      displayMedium: tabular(base.displayMedium),
-      displaySmall: tabular(base.displaySmall),
-      headlineLarge: tabular(base.headlineLarge),
-      headlineMedium: tabular(base.headlineMedium),
-      headlineSmall: tabular(base.headlineSmall),
+      displayLarge: tabular(base.displayLarge, letterSpacing: -0.25),
+      displayMedium: tabular(base.displayMedium, letterSpacing: -0.25),
+      displaySmall: tabular(base.displaySmall, letterSpacing: -0.25),
+      headlineLarge: tabular(base.headlineLarge, letterSpacing: -0.15),
+      headlineMedium: tabular(base.headlineMedium, letterSpacing: -0.15),
+      headlineSmall: tabular(base.headlineSmall, letterSpacing: -0.15),
       titleLarge: tabular(base.titleLarge),
       titleMedium: tabular(base.titleMedium),
       titleSmall: tabular(base.titleSmall),

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
@@ -103,7 +103,7 @@ class AppSearchBar extends HookWidget {
       void listener() {
         if (syncingExternalRef.value) return;
         debounceTimer.value?.cancel();
-        debounceTimer.value = Timer(AppAnimations.debounce, () {
+        debounceTimer.value = Timer(AppMotion.debounce, () {
           onChanged(controller.text);
         });
       }

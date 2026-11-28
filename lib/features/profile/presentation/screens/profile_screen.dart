@@ -11,8 +11,8 @@ import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/services/intent_service.dart';
-import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
@@ -310,16 +310,16 @@ class ProfileScreen extends ConsumerWidget {
     final animatedSections = disableAnimations
         ? sections
         : sections
-              .animate(interval: AppAnimations.stagger)
+              .animate(interval: AppMotion.stagger)
               .fade(
-                duration: AppAnimations.medium,
-                curve: AppAnimations.defaultCurve,
+                duration: AppMotion.effectsDuration,
+                curve: AppMotion.effectsCurve,
               )
               .slideY(
-                begin: AppAnimations.slideOffset,
+                begin: AppMotion.slideOffset,
                 end: 0,
-                duration: AppAnimations.medium,
-                curve: AppAnimations.spatialCurve,
+                duration: AppMotion.spatialFastDuration,
+                curve: AppMotion.spatialFastCurve,
               );
 
     return Scaffold(

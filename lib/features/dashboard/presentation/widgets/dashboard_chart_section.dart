@@ -9,8 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
-import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_surfaces.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
@@ -131,8 +131,8 @@ class DashboardChartSection extends HookConsumerWidget {
               drillUp
             else
               AnimatedSize(
-                duration: AppAnimations.medium,
-                curve: AppAnimations.defaultCurve,
+                duration: AppMotion.effectsSlowDuration,
+                curve: AppMotion.effectsSlowCurve,
                 alignment: AlignmentDirectional.topStart,
                 child: drillUp,
               ),
@@ -414,9 +414,9 @@ class DashboardChartSection extends HookConsumerWidget {
           );
         }),
       ),
-      duration: animate ? AppAnimations.medium : Duration.zero,
+      duration: animate ? AppMotion.effectsSlowDuration : Duration.zero,
       // Bars grow on the effects curve: it never overshoots the axis maximum.
-      curve: AppAnimations.defaultCurve,
+      curve: AppMotion.effectsSlowCurve,
     );
 
     return ClipRect(

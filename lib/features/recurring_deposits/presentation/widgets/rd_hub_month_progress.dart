@@ -67,15 +67,19 @@ class RDHubMonthProgress extends StatelessWidget {
       child: MediaQuery.disableAnimationsOf(context)
           ? content
           : AnimatedSize(
-              duration: AppMotion.spatialDuration,
-              curve: AppMotion.effectsCurve,
+              duration: AppMotion.effectsSlowDuration,
+              curve: AppMotion.effectsSlowCurve,
               alignment: Alignment.topCenter,
               child: AnimatedSwitcher(
                 duration: AppMotion.spatialDuration,
                 transitionBuilder: (child, animation) => FadeTransition(
                   opacity: CurvedAnimation(
                     parent: animation,
-                    curve: AppMotion.effectsCurve,
+                    curve: const Interval(
+                      0,
+                      0.4,
+                      curve: AppMotion.effectsCurve,
+                    ),
                   ),
                   child: ScaleTransition(
                     scale: Tween<double>(begin: _entranceScale, end: 1).animate(

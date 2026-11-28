@@ -80,12 +80,14 @@ class AppNavigationRail extends StatelessWidget {
     required this.destinations,
     required this.selectedIndex,
     required this.onSelected,
+    this.expandable = false,
     this.trailing,
   });
 
   final List<AppDestination> destinations;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+  final bool expandable;
 
   /// Pinned to the bottom of the rail (e.g. sign out).
   final Widget? trailing;
@@ -107,7 +109,9 @@ class AppNavigationRail extends StatelessWidget {
           ),
         ),
         child: M3ENavigationRail(
-          type: M3ENavigationRailType.alwaysCollapse,
+          type: expandable
+              ? M3ENavigationRailType.collapsed
+              : M3ENavigationRailType.alwaysCollapse,
           selectedIndex: selectedIndex,
           onDestinationSelected: onSelected,
           trailing: trailing,

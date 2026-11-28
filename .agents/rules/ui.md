@@ -8,7 +8,7 @@
   - Only files under `lib/core/widgets/expressive/` may import `package:material_3_expressive`. Screens and feature widgets never name an `M3E*` class. `test/core/expressive_import_boundary_test.dart` enforces this.
   - When `material_ui` ships a component's Expressive variant, move that wrapper onto the official widget.
   - `MaterialApp` and `ThemeData` stay the single source of theme. Do not use `M3EMaterialApp`; the community widgets derive their colours from `Theme.of(context)`.
-- **Responsive Architecture**: Use `flutter_adaptive_scaffold` for structural layouts. Avoid `flutter_screenutil` (prohibited).
+- **Responsive Architecture**: Use `LayoutBuilder` with `AppDimensions` breakpoints (`breakpointTablet = 600`, `breakpointExpanded = 840`) to adapt between `AppNavigationBar`, `AppNavigationRail`, and constrained widths (`maxFormWidth`, `maxContentWidth`). Avoid `flutter_screenutil` (prohibited).
 
 ## 2. Standardized Formatting
 Use centralized Dart extensions in `lib/core/extensions/`:

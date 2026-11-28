@@ -10,8 +10,8 @@ import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/services/storage_service.dart';
-import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/features/admin/data/admin_repository.dart';
 import 'package:postfolio/features/admin/domain/acting_as_state.dart';
@@ -395,7 +395,7 @@ void main() {
         // Search by agency code.
         await tester.enterText(find.byType(SearchBar), 'AG-2088');
         await tester.pump(
-          AppAnimations.debounce + const Duration(milliseconds: 50),
+          AppMotion.debounce + const Duration(milliseconds: 50),
         );
         await tester.pumpAndSettle();
 
@@ -405,7 +405,7 @@ void main() {
         // Search with no matches -> no-results empty state + clear filters.
         await tester.enterText(find.byType(SearchBar), 'nonexistent-xyz');
         await tester.pump(
-          AppAnimations.debounce + const Duration(milliseconds: 50),
+          AppMotion.debounce + const Duration(milliseconds: 50),
         );
         await tester.pumpAndSettle();
         expect(find.text(t.common.noResults), findsOneWidget);

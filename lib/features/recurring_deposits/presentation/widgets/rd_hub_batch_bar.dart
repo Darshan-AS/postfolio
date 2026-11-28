@@ -3,8 +3,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
-import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
@@ -158,14 +158,14 @@ class RDHubBatchBar extends ConsumerWidget {
             : bar
                   .animate()
                   .fade(
-                    duration: AppAnimations.fast,
-                    curve: AppAnimations.defaultCurve,
+                    duration: AppMotion.effectsFastDuration,
+                    curve: AppMotion.effectsFastCurve,
                   )
                   .slideY(
                     begin: 1,
                     end: 0,
-                    duration: AppAnimations.medium,
-                    curve: AppAnimations.spatialCurve,
+                    duration: AppMotion.spatialFastDuration,
+                    curve: AppMotion.spatialFastCurve,
                   ),
       ),
     );

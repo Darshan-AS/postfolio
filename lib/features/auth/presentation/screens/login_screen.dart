@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/constants/app_info.dart';
 import 'package:postfolio/core/services/intent_service.dart';
-import 'package:postfolio/core/theme/app_animations.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
@@ -75,12 +75,15 @@ class LoginScreen extends ConsumerWidget {
                     children: disableAnimations
                         ? heroItems
                         : heroItems
-                              .animate(interval: AppAnimations.stagger)
-                              .fadeIn(duration: AppAnimations.medium)
+                              .animate(interval: AppMotion.stagger)
+                              .fadeIn(
+                                duration: AppMotion.effectsDuration,
+                                curve: AppMotion.effectsCurve,
+                              )
                               .slideY(
-                                begin: AppAnimations.slideOffset,
-                                curve: AppAnimations.defaultCurve,
-                                duration: AppAnimations.medium,
+                                begin: AppMotion.slideOffset,
+                                curve: AppMotion.spatialFastCurve,
+                                duration: AppMotion.spatialFastDuration,
                               ),
                   ),
                   AppSpacings.gapXxl,

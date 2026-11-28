@@ -34,9 +34,9 @@ class AnimatedFigure extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: ValueKey(of),
       tween: Tween<double>(end: value),
-      duration: AppMotion.spatialFastDuration,
+      duration: AppMotion.effectsSlowDuration,
       // A figure never passes its new value on the way.
-      curve: AppMotion.effectsCurve,
+      curve: AppMotion.effectsSlowCurve,
       builder: (context, shown, _) => Text(
         format(shown == value ? value : shown.roundToDouble()),
         style: style,

@@ -6,10 +6,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
+import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
+import 'package:postfolio/core/widgets/expressive/app_expressive_theme.dart';
 import 'package:postfolio/core/widgets/expressive/app_fab.dart';
+import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
 import 'package:postfolio/core/widgets/expressive/app_navigation.dart';
 
@@ -828,6 +833,106 @@ void main() {
           tester.getSize(find.byType(AppLoadingIndicator)).shortestSide,
           greaterThanOrEqualTo(AppLoadingIndicator.inlineSize),
         );
+      },
+    );
+  });
+
+  group('Phase 3 M3E theme, motion, and adaptive contracts', () {
+    test(
+      'AppTypography wires PlusJakartaSans, optical tracking, and Switch/Checkbox themes',
+      () {
+        for (final theme in [AppTheme.lightTheme, AppTheme.darkTheme]) {
+          expect(
+            theme.textTheme.bodyMedium?.fontFamily,
+            AppTypography.fontFamily,
+          );
+          expect(theme.textTheme.displayLarge?.letterSpacing, -0.25);
+          expect(theme.textTheme.headlineMedium?.letterSpacing, -0.15);
+          expect(
+            theme.textTheme.bodyMedium?.fontFeatures,
+            contains(const FontFeature.tabularFigures()),
+          );
+          expect(theme.switchTheme.thumbColor, isNotNull);
+          expect(
+            theme.checkboxTheme.shape,
+            AppShapes.rounded(AppShapes.extraSmall),
+          );
+        }
+        expect(AppDimensions.bottomSheetHandleWidth, 32.0);
+      },
+    );
+
+    test(
+      'SpringCurve stays bounded on effects curves and deterministically evaluates endpoints',
+      () {
+        for (final curve in [
+          AppMotion.effectsCurve,
+          AppMotion.effectsFastCurve,
+          AppMotion.effectsSlowCurve,
+        ]) {
+          expect(curve.transform(0.0), closeTo(0.0, 0.001));
+          expect(curve.transform(1.0), closeTo(1.0, 0.001));
+          for (var i = 1; i < 10; i++) {
+            final sample = curve.transform(i / 10);
+            expect(sample, inInclusiveRange(0.0, 1.0));
+          }
+        }
+      },
+    );
+
+    testWidgets(
+      'AppGroupTile morphs selected shape, AppExpressiveTheme mounts M3ETheme, and expandable rail renders without overflow',
+      (tester) async {
+        tester.view.physicalSize = const Size(1280, 800) * 2;
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: AppExpressiveTheme(
+              child: Scaffold(
+                body: Row(
+                  children: [
+                    AppNavigationRail(
+                      expandable: true,
+                      destinations: const [
+                        AppDestination(
+                          icon: HugeIcons.strokeRoundedDashboardSquare01,
+                          label: 'Dashboard',
+                        ),
+                        AppDestination(
+                          icon: HugeIcons.strokeRoundedUserMultiple,
+                          label: 'Customers',
+                        ),
+                      ],
+                      selectedIndex: 0,
+                      onSelected: (_) {},
+                    ),
+                    const Expanded(
+                      child: AppGroupTile(
+                        position: AppGroupPosition.middle,
+                        selected: true,
+                        child: SizedBox(height: 48),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+
+        final tileMaterial = tester.widget<Material>(
+          find.descendant(
+            of: find.byType(AppGroupTile),
+            matching: find.byType(Material),
+          ),
+        );
+        expect(tileMaterial.shape, AppShapes.rounded(AppShapes.large));
+        expect(tileMaterial.animationDuration, AppMotion.effectsDuration);
       },
     );
   });

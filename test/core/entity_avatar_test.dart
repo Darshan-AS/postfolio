@@ -100,4 +100,35 @@ void main() {
     expect(sizeOf(tester), AppDimensions.avatarLg);
     expect(styleOf(tester, 'TD').fontSize, emphasized.displaySmall!.fontSize);
   });
+
+  testWidgets(
+    'interpolates custom ShapeBorder when row and head shapes differ',
+    (tester) async {
+      const row = EntityAvatar(text: 'R', shape: AppAvatarShape.circle);
+      const head = EntityAvatar(
+        text: 'R',
+        shape: AppAvatarShape.cookie9,
+        prominence: 1,
+      );
+
+      await pumpAvatar(tester, EntityAvatar.between(row, head, 0.5));
+      final shapeAvatar = tester.widget<AppShapeAvatar>(
+        find.byType(AppShapeAvatar),
+      );
+      expect(shapeAvatar.customShape, isNotNull);
+
+      await pumpAvatar(
+        tester,
+        EntityAvatar.between(
+          const EntityAvatar(text: 'R', shape: AppAvatarShape.cookie9),
+          head,
+          0.5,
+        ),
+      );
+      final sameShapeAvatar = tester.widget<AppShapeAvatar>(
+        find.byType(AppShapeAvatar),
+      );
+      expect(sameShapeAvatar.customShape, isNull);
+    },
+  );
 }

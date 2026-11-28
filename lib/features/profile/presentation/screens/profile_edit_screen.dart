@@ -407,8 +407,8 @@ class _AnimatedFormSection extends StatelessWidget {
     final content = visible ? child : const SizedBox.shrink();
     if (MediaQuery.disableAnimationsOf(context)) return content;
     return AnimatedSize(
-      duration: AppMotion.spatialFastDuration,
-      curve: AppMotion.effectsCurve,
+      duration: AppMotion.effectsSlowDuration,
+      curve: AppMotion.effectsSlowCurve,
       alignment: Alignment.topCenter,
       clipBehavior: Clip.hardEdge,
       child: content,

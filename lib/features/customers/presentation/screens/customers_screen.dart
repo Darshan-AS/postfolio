@@ -31,85 +31,94 @@ class CustomersScreen extends HookConsumerWidget {
     return Scaffold(
       appBar: ShellAppBar(title: t.nav.customers),
       // 2. Handle the AsyncValue UI states smoothly
-      body: Column(
-        children: [
-          AppSpacings.gapSm,
-          AppSearchBar(
-            query: criteria.searchQuery,
-            hintText: t.customers.searchHint,
-            onChanged: (val) => ref
-                .read(customerListCriteriaProvider.notifier)
-                .updateSearch(val),
-            trailing: [
-              IconButton(
-                tooltip: t.sorting.title,
-                icon: Badge(
-                  isLabelVisible:
-                      criteria.sortField != CustomerSortField.name ||
-                      criteria.sortDirection != SortDirection.asc,
-                  smallSize: AppDimensions.badgeSizeSm,
-                  child: const AppIcon(
-                    HugeIcons.strokeRoundedSorting01,
-                    size: AppDimensions.iconMd,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: AppDimensions.maxContentWidth,
+          ),
+          child: Column(
+            children: [
+              AppSpacings.gapSm,
+              AppSearchBar(
+                query: criteria.searchQuery,
+                hintText: t.customers.searchHint,
+                onChanged: (val) => ref
+                    .read(customerListCriteriaProvider.notifier)
+                    .updateSearch(val),
+                trailing: [
+                  IconButton(
+                    tooltip: t.sorting.title,
+                    icon: Badge(
+                      isLabelVisible:
+                          criteria.sortField != CustomerSortField.name ||
+                          criteria.sortDirection != SortDirection.asc,
+                      smallSize: AppDimensions.badgeSizeSm,
+                      child: const AppIcon(
+                        HugeIcons.strokeRoundedSorting01,
+                        size: AppDimensions.iconMd,
+                      ),
+                    ),
+                    onPressed: () {
+                      AppSortBottomSheet.show(
+                        context: context,
+                        builder: (context) => Consumer(
+                          builder: (context, ref, _) {
+                            final criteria = ref.watch(
+                              customerListCriteriaProvider,
+                            );
+                            return AppSortBottomSheet<CustomerSortField>(
+                              title: t.sorting.title,
+                              fields: CustomerSortField.values,
+                              selectedField: criteria.sortField,
+                              selectedDirection: criteria.sortDirection,
+                              fieldLabelBuilder: (f) => f.label,
+                              directionLabelBuilder: (f, d) =>
+                                  f.directionLabel(d),
+                              onSelected: (field, direction) {
+                                ref
+                                    .read(customerListCriteriaProvider.notifier)
+                                    .updateSortField(field);
+                                ref
+                                    .read(customerListCriteriaProvider.notifier)
+                                    .updateSortDirection(direction);
+                              },
+                              onReset: () => ref
+                                  .read(customerListCriteriaProvider.notifier)
+                                  .clearSort(),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              AppSpacings.gapMd,
+              Expanded(
+                child: AppExtendedFabScrollArea(
+                  controller: fab,
+                  child: EntityListBody<Customer>(
+                    state: customersState,
+                    emptyMessage: t.customers.noCustomersFound,
+                    hasActiveFilters: criteria.searchQuery.isNotEmpty,
+                    onClearFilters: () => ref
+                        .read(customerListCriteriaProvider.notifier)
+                        .clearAll(),
+                    onRetry: () => ref.invalidate(customersControllerProvider),
+                    onRefresh: () async {
+                      ref.invalidate(customersControllerProvider);
+                      await ref.read(customersControllerProvider.future);
+                    },
+                    itemBuilder: (context, customer, position) =>
+                        CustomerCard(customer: customer, position: position),
+                    skeletonBuilder: (position) =>
+                        CustomerCard.skeleton(position: position),
                   ),
                 ),
-                onPressed: () {
-                  AppSortBottomSheet.show(
-                    context: context,
-                    builder: (context) => Consumer(
-                      builder: (context, ref, _) {
-                        final criteria = ref.watch(
-                          customerListCriteriaProvider,
-                        );
-                        return AppSortBottomSheet<CustomerSortField>(
-                          title: t.sorting.title,
-                          fields: CustomerSortField.values,
-                          selectedField: criteria.sortField,
-                          selectedDirection: criteria.sortDirection,
-                          fieldLabelBuilder: (f) => f.label,
-                          directionLabelBuilder: (f, d) => f.directionLabel(d),
-                          onSelected: (field, direction) {
-                            ref
-                                .read(customerListCriteriaProvider.notifier)
-                                .updateSortField(field);
-                            ref
-                                .read(customerListCriteriaProvider.notifier)
-                                .updateSortDirection(direction);
-                          },
-                          onReset: () => ref
-                              .read(customerListCriteriaProvider.notifier)
-                              .clearSort(),
-                        );
-                      },
-                    ),
-                  );
-                },
               ),
             ],
           ),
-          AppSpacings.gapMd,
-          Expanded(
-            child: AppExtendedFabScrollArea(
-              controller: fab,
-              child: EntityListBody<Customer>(
-                state: customersState,
-                emptyMessage: t.customers.noCustomersFound,
-                hasActiveFilters: criteria.searchQuery.isNotEmpty,
-                onClearFilters: () =>
-                    ref.read(customerListCriteriaProvider.notifier).clearAll(),
-                onRetry: () => ref.invalidate(customersControllerProvider),
-                onRefresh: () async {
-                  ref.invalidate(customersControllerProvider);
-                  await ref.read(customersControllerProvider.future);
-                },
-                itemBuilder: (context, customer, position) =>
-                    CustomerCard(customer: customer, position: position),
-                skeletonBuilder: (position) =>
-                    CustomerCard.skeleton(position: position),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
       floatingActionButton: AppExtendedFab(
         controller: fab,

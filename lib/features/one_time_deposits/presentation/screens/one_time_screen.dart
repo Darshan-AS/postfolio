@@ -47,142 +47,166 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
 
     return Scaffold(
       appBar: ShellAppBar(title: t.oneTimeDeposits.title),
-      body: Column(
-        children: [
-          AppSpacings.gapSm,
-          AppSearchBar(
-            query: criteria.searchQuery,
-            hintText: t.oneTimeDeposits.searchHint,
-            onChanged: (val) => ref
-                .read(oneTimeListCriteriaProvider.notifier)
-                .updateSearch(val),
-            trailing: [
-              IconButton(
-                tooltip: t.sorting.title,
-                icon: Badge(
-                  isLabelVisible:
-                      criteria.sortField != OTDSortField.maturityDate ||
-                      criteria.sortDirection != SortDirection.asc,
-                  smallSize: AppDimensions.badgeSizeSm,
-                  child: const AppIcon(
-                    HugeIcons.strokeRoundedSorting01,
-                    size: AppDimensions.iconMd,
-                  ),
-                ),
-                onPressed: () {
-                  AppSortBottomSheet.show(
-                    context: context,
-                    builder: (context) => Consumer(
-                      builder: (context, ref, _) {
-                        final criteria = ref.watch(oneTimeListCriteriaProvider);
-                        return AppSortBottomSheet<OTDSortField>(
-                          title: t.sorting.title,
-                          fields: OTDSortField.values,
-                          selectedField: criteria.sortField,
-                          selectedDirection: criteria.sortDirection,
-                          fieldLabelBuilder: (f) => f.label,
-                          directionLabelBuilder: (f, d) => f.directionLabel(d),
-                          onSelected: (field, direction) {
-                            ref
-                                .read(oneTimeListCriteriaProvider.notifier)
-                                .updateSortField(field);
-                            ref
-                                .read(oneTimeListCriteriaProvider.notifier)
-                                .updateSortDirection(direction);
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: AppDimensions.maxContentWidth,
+          ),
+          child: Column(
+            children: [
+              AppSpacings.gapSm,
+              AppSearchBar(
+                query: criteria.searchQuery,
+                hintText: t.oneTimeDeposits.searchHint,
+                onChanged: (val) => ref
+                    .read(oneTimeListCriteriaProvider.notifier)
+                    .updateSearch(val),
+                trailing: [
+                  IconButton(
+                    tooltip: t.sorting.title,
+                    icon: Badge(
+                      isLabelVisible:
+                          criteria.sortField != OTDSortField.maturityDate ||
+                          criteria.sortDirection != SortDirection.asc,
+                      smallSize: AppDimensions.badgeSizeSm,
+                      child: const AppIcon(
+                        HugeIcons.strokeRoundedSorting01,
+                        size: AppDimensions.iconMd,
+                      ),
+                    ),
+                    onPressed: () {
+                      AppSortBottomSheet.show(
+                        context: context,
+                        builder: (context) => Consumer(
+                          builder: (context, ref, _) {
+                            final criteria = ref.watch(
+                              oneTimeListCriteriaProvider,
+                            );
+                            return AppSortBottomSheet<OTDSortField>(
+                              title: t.sorting.title,
+                              fields: OTDSortField.values,
+                              selectedField: criteria.sortField,
+                              selectedDirection: criteria.sortDirection,
+                              fieldLabelBuilder: (f) => f.label,
+                              directionLabelBuilder: (f, d) =>
+                                  f.directionLabel(d),
+                              onSelected: (field, direction) {
+                                ref
+                                    .read(oneTimeListCriteriaProvider.notifier)
+                                    .updateSortField(field);
+                                ref
+                                    .read(oneTimeListCriteriaProvider.notifier)
+                                    .updateSortDirection(direction);
+                              },
+                              onReset: () => ref
+                                  .read(oneTimeListCriteriaProvider.notifier)
+                                  .clearSort(),
+                            );
                           },
-                          onReset: () => ref
-                              .read(oneTimeListCriteriaProvider.notifier)
-                              .clearSort(),
-                        );
-                      },
+                        ),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    tooltip: t.filters.title,
+                    icon: Badge(
+                      isLabelVisible: activeFilterCount > 0,
+                      label: Text('$activeFilterCount'),
+                      child: const AppIcon(
+                        HugeIcons.strokeRoundedFilter,
+                        size: AppDimensions.iconMd,
+                      ),
                     ),
-                  );
-                },
+                    onPressed: () {
+                      AppFilterBottomSheet.show(
+                        context: context,
+                        builder: (context) => Consumer(
+                          builder: (context, ref, child) {
+                            final criteria = ref.watch(
+                              oneTimeListCriteriaProvider,
+                            );
+                            return AppFilterBottomSheet(
+                              title: t.filters.title,
+                              onClearAll: () => ref
+                                  .read(oneTimeListCriteriaProvider.notifier)
+                                  .clearFilters(),
+                              filterSections: [
+                                AppFilterSection<MaturityUrgency>(
+                                  title: t.filters.sections.urgency,
+                                  options: const [
+                                    MaturityUrgency.matured,
+                                    MaturityUrgency.maturingSoon,
+                                  ],
+                                  selectedOptions: criteria.urgencyFilters,
+                                  labelBuilder: (urgency) =>
+                                      urgency.displayName,
+                                  onSelected: (urgency) => ref
+                                      .read(
+                                        oneTimeListCriteriaProvider.notifier,
+                                      )
+                                      .toggleUrgencyFilter(urgency),
+                                ),
+                                AppFilterSection<DepositStatus>(
+                                  title: t.filters.sections.status,
+                                  options: DepositStatus.values,
+                                  selectedOptions: criteria.statusFilters,
+                                  labelBuilder: (status) => status.displayName,
+                                  onSelected: (status) => ref
+                                      .read(
+                                        oneTimeListCriteriaProvider.notifier,
+                                      )
+                                      .toggleStatusFilter(status),
+                                ),
+                                AppFilterSection<OneTimeSchemeType>(
+                                  title: t.filters.sections.scheme,
+                                  options: OneTimeSchemeType.values,
+                                  selectedOptions: criteria.schemeFilters,
+                                  labelBuilder: (type) => type.shortName,
+                                  onSelected: (type) => ref
+                                      .read(
+                                        oneTimeListCriteriaProvider.notifier,
+                                      )
+                                      .toggleSchemeFilter(type),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-              IconButton(
-                tooltip: t.filters.title,
-                icon: Badge(
-                  isLabelVisible: activeFilterCount > 0,
-                  label: Text('$activeFilterCount'),
-                  child: const AppIcon(
-                    HugeIcons.strokeRoundedFilter,
-                    size: AppDimensions.iconMd,
+              AppSpacings.gapMd,
+              Expanded(
+                child: AppExtendedFabScrollArea(
+                  controller: fab,
+                  child: EntityListBody<OneTimeDeposit>(
+                    state: depositsState,
+                    emptyMessage: t.oneTimeDeposits.noDepositsFound,
+                    hasActiveFilters:
+                        criteria.searchQuery.isNotEmpty ||
+                        activeFilterCount > 0,
+                    onClearFilters: () => ref
+                        .read(oneTimeListCriteriaProvider.notifier)
+                        .clearAll(),
+                    onRetry: () =>
+                        ref.invalidate(oneTimeDepositsControllerProvider),
+                    onRefresh: () =>
+                        ref.refresh(oneTimeDepositsControllerProvider.future),
+                    itemBuilder: (context, deposit, position) =>
+                        OneTimeDepositCard(
+                          deposit: deposit,
+                          position: position,
+                        ),
+                    skeletonBuilder: (position) =>
+                        OneTimeDepositCard.skeleton(position: position),
                   ),
                 ),
-                onPressed: () {
-                  AppFilterBottomSheet.show(
-                    context: context,
-                    builder: (context) => Consumer(
-                      builder: (context, ref, child) {
-                        final criteria = ref.watch(oneTimeListCriteriaProvider);
-                        return AppFilterBottomSheet(
-                          title: t.filters.title,
-                          onClearAll: () => ref
-                              .read(oneTimeListCriteriaProvider.notifier)
-                              .clearFilters(),
-                          filterSections: [
-                            AppFilterSection<MaturityUrgency>(
-                              title: t.filters.sections.urgency,
-                              options: const [
-                                MaturityUrgency.matured,
-                                MaturityUrgency.maturingSoon,
-                              ],
-                              selectedOptions: criteria.urgencyFilters,
-                              labelBuilder: (urgency) => urgency.displayName,
-                              onSelected: (urgency) => ref
-                                  .read(oneTimeListCriteriaProvider.notifier)
-                                  .toggleUrgencyFilter(urgency),
-                            ),
-                            AppFilterSection<DepositStatus>(
-                              title: t.filters.sections.status,
-                              options: DepositStatus.values,
-                              selectedOptions: criteria.statusFilters,
-                              labelBuilder: (status) => status.displayName,
-                              onSelected: (status) => ref
-                                  .read(oneTimeListCriteriaProvider.notifier)
-                                  .toggleStatusFilter(status),
-                            ),
-                            AppFilterSection<OneTimeSchemeType>(
-                              title: t.filters.sections.scheme,
-                              options: OneTimeSchemeType.values,
-                              selectedOptions: criteria.schemeFilters,
-                              labelBuilder: (type) => type.shortName,
-                              onSelected: (type) => ref
-                                  .read(oneTimeListCriteriaProvider.notifier)
-                                  .toggleSchemeFilter(type),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  );
-                },
               ),
             ],
           ),
-          AppSpacings.gapMd,
-          Expanded(
-            child: AppExtendedFabScrollArea(
-              controller: fab,
-              child: EntityListBody<OneTimeDeposit>(
-                state: depositsState,
-                emptyMessage: t.oneTimeDeposits.noDepositsFound,
-                hasActiveFilters:
-                    criteria.searchQuery.isNotEmpty || activeFilterCount > 0,
-                onClearFilters: () =>
-                    ref.read(oneTimeListCriteriaProvider.notifier).clearAll(),
-                onRetry: () =>
-                    ref.invalidate(oneTimeDepositsControllerProvider),
-                onRefresh: () =>
-                    ref.refresh(oneTimeDepositsControllerProvider.future),
-                itemBuilder: (context, deposit, position) =>
-                    OneTimeDepositCard(deposit: deposit, position: position),
-                skeletonBuilder: (position) =>
-                    OneTimeDepositCard.skeleton(position: position),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
       floatingActionButton: AppExtendedFab(
         controller: fab,

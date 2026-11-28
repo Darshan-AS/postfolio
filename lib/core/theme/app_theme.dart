@@ -73,7 +73,11 @@ class AppTheme {
     ColorScheme colorScheme, {
     AppFinancialColors? financialColors,
   }) {
-    final base = ThemeData(useMaterial3: true, colorScheme: colorScheme);
+    final base = ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      fontFamily: AppTypography.fontFamily,
+    );
     final effectiveFinancial =
         financialColors ??
         AppFinancialColors.forBrightness(colorScheme.brightness);
@@ -95,7 +99,6 @@ class AppTheme {
       floatingActionButtonTheme: AppWidgetThemes.floatingActionButtonTheme(
         colorScheme,
       ),
-      cardTheme: AppWidgetThemes.cardTheme(colorScheme),
       elevatedButtonTheme: AppWidgetThemes.elevatedButtonTheme(
         colorScheme,
         emphasized,
@@ -109,10 +112,6 @@ class AppTheme {
         emphasized,
       ),
       textButtonTheme: AppWidgetThemes.textButtonTheme(colorScheme, emphasized),
-      segmentedButtonTheme: AppWidgetThemes.segmentedButtonTheme(
-        colorScheme,
-        emphasized,
-      ),
       inputDecorationTheme: AppWidgetThemes.inputDecorationTheme(colorScheme),
       iconButtonTheme: AppWidgetThemes.iconButtonTheme(colorScheme),
       searchBarTheme: AppWidgetThemes.searchBarTheme(
@@ -120,7 +119,6 @@ class AppTheme {
         sizedTextTheme,
       ),
       chipTheme: AppWidgetThemes.chipTheme(colorScheme, emphasized),
-      expansionTileTheme: AppWidgetThemes.expansionTileTheme(colorScheme),
       snackBarTheme: AppWidgetThemes.snackBarTheme(colorScheme),
       dialogTheme: AppWidgetThemes.dialogTheme(colorScheme, emphasized),
       bottomSheetTheme: AppWidgetThemes.bottomSheetTheme(colorScheme),
@@ -131,7 +129,8 @@ class AppTheme {
       ),
       datePickerTheme: AppWidgetThemes.datePickerTheme(colorScheme),
       bannerTheme: AppWidgetThemes.bannerTheme(colorScheme),
-      radioTheme: AppWidgetThemes.radioTheme(colorScheme),
+      switchTheme: AppWidgetThemes.switchTheme(colorScheme),
+      checkboxTheme: AppWidgetThemes.checkboxTheme(colorScheme),
     );
   }
 

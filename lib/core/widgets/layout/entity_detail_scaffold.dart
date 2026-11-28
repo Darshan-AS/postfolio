@@ -3,8 +3,8 @@ import 'package:hugeicons/hugeicons.dart';
 
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
@@ -176,16 +176,16 @@ class EntityDetailScaffold extends StatelessWidget {
     final animatedItems = disableAnimations
         ? items
         : items
-              .animate(interval: AppAnimations.stagger)
+              .animate(interval: AppMotion.stagger)
               .fade(
-                duration: AppAnimations.medium,
-                curve: AppAnimations.defaultCurve,
+                duration: AppMotion.effectsDuration,
+                curve: AppMotion.effectsCurve,
               )
               .slideY(
-                begin: AppAnimations.slideOffset,
+                begin: AppMotion.slideOffset,
                 end: 0,
-                duration: AppAnimations.medium,
-                curve: AppAnimations.spatialCurve,
+                duration: AppMotion.spatialFastDuration,
+                curve: AppMotion.spatialFastCurve,
               );
 
     final onRefresh = this.onRefresh;

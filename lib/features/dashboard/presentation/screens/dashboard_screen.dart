@@ -75,35 +75,42 @@ class DashboardScreen extends ConsumerWidget {
                   padding: const EdgeInsets.only(
                     bottom: AppDimensions.paddingLg,
                   ),
-                  child: Skeletonizer(
-                    enabled: isInitialLoading,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Padding(
-                          padding: pageInsets,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              DetailSectionTitle(t.dashboard.overview),
-                              DashboardMetricsRow(metrics: metrics),
-                              if (isInitialLoading || hasSchemes) ...[
-                                AppSpacings.gapLg,
-                                DetailSectionTitle(
-                                  t.dashboard.activeOtdsByScheme,
-                                ),
-                              ],
-                            ],
-                          ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: AppDimensions.maxContentWidth,
+                      ),
+                      child: Skeletonizer(
+                        enabled: isInitialLoading,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Padding(
+                              padding: pageInsets,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  DetailSectionTitle(t.dashboard.overview),
+                                  DashboardMetricsRow(metrics: metrics),
+                                  if (isInitialLoading || hasSchemes) ...[
+                                    AppSpacings.gapLg,
+                                    DetailSectionTitle(
+                                      t.dashboard.activeOtdsByScheme,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            if (isInitialLoading || hasSchemes)
+                              DashboardSchemeBreakdown(metrics: metrics),
+                            AppSpacings.gapXl,
+                            const Padding(
+                              padding: pageInsets,
+                              child: DashboardChartSection(),
+                            ),
+                          ],
                         ),
-                        if (isInitialLoading || hasSchemes)
-                          DashboardSchemeBreakdown(metrics: metrics),
-                        AppSpacings.gapXl,
-                        const Padding(
-                          padding: pageInsets,
-                          child: DashboardChartSection(),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),

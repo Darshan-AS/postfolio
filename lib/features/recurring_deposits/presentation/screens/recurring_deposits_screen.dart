@@ -112,16 +112,23 @@ class RecurringDepositsScreen extends HookConsumerWidget {
           ],
         ),
       ),
-      body: viewMode == RDViewMode.accounts
-          ? _buildAccountsView(
-              context,
-              ref,
-              depositsState,
-              criteria,
-              activeFilterCount,
-              fab,
-            )
-          : const RDMonthlyOperationsView(),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: AppDimensions.maxContentWidth,
+          ),
+          child: viewMode == RDViewMode.accounts
+              ? _buildAccountsView(
+                  context,
+                  ref,
+                  depositsState,
+                  criteria,
+                  activeFilterCount,
+                  fab,
+                )
+              : const RDMonthlyOperationsView(),
+        ),
+      ),
       floatingActionButton: showFab
           ? AppExtendedFab(
               controller: fab,

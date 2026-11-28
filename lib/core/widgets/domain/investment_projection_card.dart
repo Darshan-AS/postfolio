@@ -3,8 +3,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
-import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_surfaces.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
@@ -44,15 +44,15 @@ class InvestmentProjectionCard extends StatelessWidget {
     Widget fadeIn(Widget child, {bool slide = false}) {
       if (disableAnimations) return child;
       final faded = child.animate().fade(
-        duration: AppAnimations.medium,
-        curve: AppAnimations.defaultCurve,
+        duration: AppMotion.effectsDuration,
+        curve: AppMotion.effectsCurve,
       );
       return slide
           ? faded.slideY(
-              begin: AppAnimations.slideOffset,
+              begin: AppMotion.slideOffset,
               end: 0,
-              duration: AppAnimations.medium,
-              curve: AppAnimations.spatialCurve,
+              duration: AppMotion.spatialFastDuration,
+              curve: AppMotion.spatialFastCurve,
             )
           : faded;
     }
@@ -183,14 +183,14 @@ class InvestmentProjectionCard extends StatelessWidget {
         : card
               .animate()
               .fade(
-                duration: AppAnimations.medium,
-                curve: AppAnimations.defaultCurve,
+                duration: AppMotion.effectsDuration,
+                curve: AppMotion.effectsCurve,
               )
               .slideY(
-                begin: AppAnimations.slideOffset / 2,
+                begin: AppMotion.slideOffset / 2,
                 end: 0,
-                duration: AppAnimations.medium,
-                curve: AppAnimations.spatialCurve,
+                duration: AppMotion.spatialFastDuration,
+                curve: AppMotion.spatialFastCurve,
               );
   }
 }

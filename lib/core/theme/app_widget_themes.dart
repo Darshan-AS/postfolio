@@ -52,14 +52,6 @@ class AppWidgetThemes {
     shape: AppShapes.rounded(AppShapes.large),
   );
 
-  static CardThemeData cardTheme(ColorScheme colorScheme) => CardThemeData(
-    color: colorScheme.raised,
-    surfaceTintColor: Colors.transparent,
-    elevation: 0,
-    clipBehavior: Clip.antiAlias,
-    shape: AppShapes.rounded(AppShapes.groupOuter),
-  );
-
   /// Shared by the official text-style buttons: a pill that pulls its corners in while
   /// pressed, with an emphasized label.
   static ButtonStyle _pillStyle(TextTheme emphasized) => ButtonStyle(
@@ -105,24 +97,6 @@ class AppWidgetThemes {
     ColorScheme colorScheme,
     TextTheme emphasized,
   ) => TextButtonThemeData(style: _pillStyle(emphasized));
-
-  static SegmentedButtonThemeData segmentedButtonTheme(
-    ColorScheme colorScheme,
-    TextTheme emphasized,
-  ) => SegmentedButtonThemeData(
-    style: ButtonStyle(
-      textStyle: WidgetStatePropertyAll(emphasized.labelLarge),
-      side: WidgetStatePropertyAll(
-        BorderSide(color: colorScheme.outlineVariant),
-      ),
-      backgroundColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
-          return colorScheme.secondaryContainer;
-        }
-        return Colors.transparent;
-      }),
-    ),
-  );
 
   static InputDecorationTheme inputDecorationTheme(ColorScheme colorScheme) {
     OutlineInputBorder border(
@@ -211,18 +185,6 @@ class AppWidgetThemes {
     checkmarkColor: colorScheme.onSecondary,
   );
 
-  static ExpansionTileThemeData expansionTileTheme(ColorScheme colorScheme) =>
-      ExpansionTileThemeData(
-        backgroundColor: Colors.transparent,
-        collapsedBackgroundColor: Colors.transparent,
-        textColor: colorScheme.onSurface,
-        collapsedTextColor: colorScheme.onSurface,
-        iconColor: colorScheme.primary,
-        collapsedIconColor: colorScheme.onSurfaceVariant,
-        shape: const Border(),
-        collapsedShape: const Border(),
-      );
-
   static SnackBarThemeData snackBarTheme(ColorScheme colorScheme) =>
       SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
@@ -303,15 +265,43 @@ class AppWidgetThemes {
         elevation: 0,
       );
 
-  static RadioThemeData radioTheme(ColorScheme colorScheme) => RadioThemeData(
-    fillColor: WidgetStateProperty.resolveWith((states) {
-      if (states.contains(WidgetState.selected)) {
-        return colorScheme.primary;
-      }
-      if (states.contains(WidgetState.disabled)) {
-        return colorScheme.onSurface.withValues(alpha: 0.38);
-      }
-      return colorScheme.onSurfaceVariant;
-    }),
-  );
+  static SwitchThemeData switchTheme(ColorScheme colorScheme) =>
+      SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return states.contains(WidgetState.selected)
+                ? colorScheme.surface
+                : colorScheme.onSurface.withValues(alpha: 0.38);
+          }
+          if (states.contains(WidgetState.selected)) {
+            return colorScheme.onPrimary;
+          }
+          return colorScheme.outline;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return colorScheme.onSurface.withValues(alpha: 0.12);
+          }
+          if (states.contains(WidgetState.selected)) return colorScheme.primary;
+          return colorScheme.surfaceContainerHighest;
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.transparent;
+          return colorScheme.outline;
+        }),
+      );
+
+  static CheckboxThemeData checkboxTheme(ColorScheme colorScheme) =>
+      CheckboxThemeData(
+        shape: AppShapes.rounded(AppShapes.extraSmall),
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return colorScheme.onSurface.withValues(alpha: 0.38);
+          }
+          if (states.contains(WidgetState.selected)) return colorScheme.primary;
+          return Colors.transparent;
+        }),
+        checkColor: WidgetStatePropertyAll(colorScheme.onPrimary),
+        side: BorderSide(color: colorScheme.onSurfaceVariant, width: 2),
+      );
 }
