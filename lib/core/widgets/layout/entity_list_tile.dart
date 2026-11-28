@@ -9,6 +9,7 @@ import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 export 'package:postfolio/core/widgets/expressive/app_group.dart'
     show AppGroupPosition;
@@ -38,8 +39,8 @@ class EntityAction {
   }) {
     return EntityAction(
       label: t.common.edit,
-      icon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedEdit02,
+      icon: const AppIcon(
+        HugeIcons.strokeRoundedEdit02,
         size: AppDimensions.iconMd,
       ),
       onTap: onTap,
@@ -50,8 +51,8 @@ class EntityAction {
   factory EntityAction.delete({required VoidCallback onTap}) {
     return EntityAction(
       label: t.common.delete,
-      icon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedDelete02,
+      icon: const AppIcon(
+        HugeIcons.strokeRoundedDelete02,
         size: AppDimensions.iconMd,
       ),
       onTap: onTap,
@@ -235,8 +236,8 @@ class EntityListTile extends StatelessWidget {
                       ],
                       anchorBuilder: (context, open) => IconButton(
                         padding: EdgeInsets.zero,
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedMoreVertical,
+                        icon: const AppIcon(
+                          HugeIcons.strokeRoundedMoreVertical,
                           size: AppDimensions.iconMd,
                         ),
                         iconSize: AppDimensions.iconMd,

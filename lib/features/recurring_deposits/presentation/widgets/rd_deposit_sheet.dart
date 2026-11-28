@@ -22,6 +22,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_dep
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_sheet_parts.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_account_identity.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 /// Opens the "Deposit next N installments at the Post Office on `date`" sheet.
 /// Resolves `true` when a deposit event was recorded.
@@ -255,8 +256,8 @@ class _DepositBody extends HookWidget {
                 suffixIcon: draft.feeOverride != null
                     ? IconButton(
                         tooltip: t.common.clear,
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedCancel01,
+                        icon: const AppIcon(
+                          HugeIcons.strokeRoundedCancel01,
                           size: AppDimensions.iconSm,
                         ),
                         onPressed: () {
@@ -309,8 +310,8 @@ class _DepositBody extends HookWidget {
                     children: [
                       // The agent's own money: the receivable colour, as on the Hub and the
                       // passbook. Red is for what is overdue.
-                      HugeIcon(
-                        icon: HugeIcons.strokeRoundedWallet02,
+                      AppIcon(
+                        HugeIcons.strokeRoundedWallet02,
                         size: AppDimensions.iconSm,
                         color: AppFinancialColors.of(
                           context,
@@ -366,8 +367,8 @@ class _CountStepper extends StatelessWidget {
               onPressed: draft.canDecrement
                   ? () => draft.setCount(draft.count - 1)
                   : null,
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedMinusSign,
+              icon: const AppIcon(
+                HugeIcons.strokeRoundedMinusSign,
                 size: AppDimensions.iconMd,
               ),
             ),
@@ -397,8 +398,8 @@ class _CountStepper extends StatelessWidget {
               onPressed: draft.canIncrement
                   ? () => draft.setCount(draft.count + 1)
                   : null,
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedPlusSign,
+              icon: const AppIcon(
+                HugeIcons.strokeRoundedPlusSign,
                 size: AppDimensions.iconMd,
               ),
             ),

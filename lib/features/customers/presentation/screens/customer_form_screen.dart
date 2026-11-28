@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:hugeicons/hugeicons.dart';
 
@@ -16,6 +17,7 @@ import 'package:postfolio/core/widgets/layout/form_screen_body.dart';
 
 import 'package:postfolio/features/customers/presentation/hooks/use_customer_form.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class CustomerFormScreen extends ConsumerWidget {
   final String? customerId;
@@ -108,6 +110,7 @@ class _CustomerForm extends HookConsumerWidget {
                         dateOfBirthController: state.dateOfBirthController,
                         addressController: state.addressController,
                         onSelectDate: () => state.selectDate(context),
+                        onClearDate: state.clearDate,
                       ),
                       AppSpacings.gapLg,
                       _buildIdentityDocuments(
@@ -149,6 +152,7 @@ Widget _buildPersonalInfo({
   required TextEditingController dateOfBirthController,
   required TextEditingController addressController,
   required VoidCallback onSelectDate,
+  required VoidCallback onClearDate,
 }) {
   return FormSection(
     title: t.customers.sections.personalInfo,
@@ -156,20 +160,21 @@ Widget _buildPersonalInfo({
       AppTextField(
         controller: nameController,
         labelText: t.customers.fields.fullName,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedUser,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedUser,
           size: AppDimensions.iconMd,
         ),
         isRequired: true,
         validator: Customer.validateName,
+        textCapitalization: TextCapitalization.words,
         textInputAction: TextInputAction.next,
       ),
       AppSpacings.gapLg,
       AppTextField(
         controller: phoneController,
         labelText: t.customers.fields.phoneNumber,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedCall02,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedCall02,
           size: AppDimensions.iconMd,
         ),
         validator: Customer.validatePhone,
@@ -180,8 +185,8 @@ Widget _buildPersonalInfo({
       AppTextField(
         controller: emailController,
         labelText: t.customers.fields.emailAddress,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedMail01,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedMail01,
           size: AppDimensions.iconMd,
         ),
         validator: Customer.validateEmail,
@@ -193,13 +198,14 @@ Widget _buildPersonalInfo({
         controller: dateOfBirthController,
         labelText: t.customers.fields.dateOfBirth,
         onTap: onSelectDate,
+        onClear: onClearDate,
       ),
       AppSpacings.gapLg,
       AppTextField(
         controller: addressController,
         labelText: t.customers.fields.homeAddress,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedHome01,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedHome01,
           size: AppDimensions.iconMd,
         ),
         maxLines: AppConstants.addressMaxLines,
@@ -219,8 +225,8 @@ Widget _buildIdentityDocuments({
       AppTextField(
         controller: cifNumberController,
         labelText: t.customers.fields.cif,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedTicket01,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedTicket01,
           size: AppDimensions.iconMd,
         ),
         validator: Customer.validateCif,
@@ -230,20 +236,24 @@ Widget _buildIdentityDocuments({
       AppTextField(
         controller: aadhaarNumberController,
         labelText: t.customers.fields.aadhaarNumber,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedId,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedId,
           size: AppDimensions.iconMd,
         ),
         validator: Customer.validateAadhaar,
         keyboardType: TextInputType.number,
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(AppConstants.aadhaarLength),
+        ],
         textInputAction: TextInputAction.next,
       ),
       AppSpacings.gapLg,
       AppTextField(
         controller: panNumberController,
         labelText: t.customers.fields.panNumber,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedCreditCard,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedCreditCard,
           size: AppDimensions.iconMd,
         ),
         validator: Customer.validatePan,
@@ -265,8 +275,8 @@ Widget _buildSavingsBank({
       AppTextField(
         controller: savingsAccountNumberController,
         labelText: t.customers.fields.sbAccountNumber,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedBank,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedBank,
           size: AppDimensions.iconMd,
         ),
         validator: (val) =>
@@ -284,14 +294,14 @@ Widget _buildNotes({required TextEditingController notesController}) {
       AppTextField(
         controller: notesController,
         labelText: t.customers.fields.notes,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedNote01,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedNote01,
           size: AppDimensions.iconMd,
         ),
         keyboardType: TextInputType.multiline,
         textInputAction: TextInputAction.newline,
-        minLines: 3,
-        maxLines: null,
+        minLines: AppConstants.notesMinLines,
+        maxLines: AppConstants.notesMaxLines,
       ),
     ],
   );

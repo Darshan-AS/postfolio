@@ -29,6 +29,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_in
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_sheet_parts.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_account_identity.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 /// Single source of truth for the payment-mode glyphs and short labels used across the sheets.
 extension RDPaymentModeIcon on RDPaymentMode {
@@ -133,16 +134,13 @@ class _PaymentForm extends HookConsumerWidget {
       if (month == null) {
         return ledger.collectedNoMonth(amount: amount, customer: who);
       }
-      final rawLocale = LocaleSettings.currentLocale.languageTag;
-      String locale = 'en_US';
-      try {
-        if (DateFormat.localeExists(rawLocale)) locale = rawLocale;
-      } catch (_) {}
       return ledger.collected(
         amount: amount,
         customer: who,
         month: month.installmentNo.toString(),
-        monthName: DateFormat.MMM(locale).format(month.installmentDate),
+        monthName: DateFormat.MMM(
+          resolvedDateLocale(),
+        ).format(month.installmentDate),
       );
     }
 
@@ -472,34 +470,56 @@ class _AbsorbFeeTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final ledger = t.recurringDeposits.ledger;
+    final isChecked = draft.absorbFeeChecked.value;
+    void toggle([bool? next]) =>
+        draft.absorbFeeChecked.value = next ?? !isChecked;
+
     return AppGroupTile(
       position: AppGroupPosition.last,
       // Padding and gap put the checkbox under the date row's icon and the text under its
       // text.
-      child: ListTileTheme.merge(
-        horizontalTitleGap: AppDimensions.paddingXs,
-        child: CheckboxListTile(
-          value: draft.absorbFeeChecked.value,
-          onChanged: (v) => draft.absorbFeeChecked.value = v ?? false,
-          controlAffinity: ListTileControlAffinity.leading,
-          contentPadding: const EdgeInsetsDirectional.only(
-            start: AppDimensions.paddingSm,
-            end: AppDimensions.paddingLg,
-          ),
-          title: Text(
-            ledger.absorbFee(amount: draft.absorbableFee.toRupeeFormat()),
-            style: AppTypography.emphasizedOf(context).bodyMedium,
-          ),
-          subtitle: Text(
-            ledger.absorbFeeHint,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+      child: MergeSemantics(
+        child: InkWell(
+          onTap: toggle,
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(
+              AppDimensions.paddingSm,
+              AppDimensions.paddingMd,
+              AppDimensions.paddingLg,
+              AppDimensions.paddingMd,
             ),
-          ),
-          secondary: HugeIcon(
-            icon: HugeIcons.strokeRoundedWallet02,
-            size: AppDimensions.iconMd,
-            color: theme.colorScheme.secondary,
+            child: Row(
+              children: [
+                Checkbox(value: isChecked, onChanged: toggle),
+                AppSpacings.gapXs,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        ledger.absorbFee(
+                          amount: draft.absorbableFee.toRupeeFormat(),
+                        ),
+                        style: AppTypography.emphasizedOf(context).bodyMedium,
+                      ),
+                      Text(
+                        ledger.absorbFeeHint,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                AppSpacings.gapMd,
+                AppIcon(
+                  HugeIcons.strokeRoundedWallet02,
+                  size: AppDimensions.iconMd,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -549,8 +569,8 @@ class RDAllocationPreviewCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              HugeIcon(
-                icon: HugeIcons.strokeRoundedActivity01,
+              AppIcon(
+                HugeIcons.strokeRoundedActivity01,
                 size: AppDimensions.iconSm,
                 color: scheme.primary,
               ),
@@ -584,8 +604,8 @@ class RDAllocationPreviewCard extends StatelessWidget {
               AppSpacings.gapSm,
               Row(
                 children: [
-                  HugeIcon(
-                    icon: HugeIcons.strokeRoundedStar,
+                  AppIcon(
+                    HugeIcons.strokeRoundedStar,
                     size: AppDimensions.iconSm,
                     color: scheme.primary,
                   ),
@@ -675,8 +695,8 @@ class _PreviewMonthRow extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              HugeIcon(
-                icon: visual.icon,
+              AppIcon(
+                visual.icon,
                 size: AppDimensions.iconXs,
                 color: visual.foreground,
               ),

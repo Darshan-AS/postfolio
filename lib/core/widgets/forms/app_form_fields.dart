@@ -5,8 +5,10 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_surfaces.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 export 'package:postfolio/core/widgets/expressive/app_button_group.dart'
     show AppSegment;
@@ -141,8 +143,8 @@ class AppDropdownField<T> extends StatelessWidget {
           color: theme.colorScheme.onSurface,
         ),
         // The same chevron as the customer picker, in place of the Material arrow glyph.
-        icon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedArrowDown01,
+        icon: const AppIcon(
+          HugeIcons.strokeRoundedArrowDown01,
           size: AppDimensions.iconMd,
         ),
         borderRadius: BorderRadius.circular(AppShapes.large),
@@ -158,6 +160,8 @@ class AppDateField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
   final VoidCallback onTap;
+  final VoidCallback? onClear;
+  final AppIconData prefixIcon;
   final bool isRequired;
   final bool enabled;
 
@@ -166,23 +170,35 @@ class AppDateField extends StatelessWidget {
     required this.controller,
     required this.labelText,
     required this.onTap,
+    this.onClear,
+    this.prefixIcon = HugeIcons.strokeRoundedCalendar01,
     this.isRequired = false,
     this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return AppTextField(
-      controller: controller,
-      labelText: labelText,
-      prefixIcon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedCalendar01,
-        size: AppDimensions.iconMd,
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) => AppTextField(
+        controller: controller,
+        labelText: labelText,
+        prefixIcon: AppIcon(prefixIcon, size: AppDimensions.iconMd),
+        readOnly: true,
+        onTap: enabled ? onTap : null,
+        isRequired: isRequired,
+        enabled: enabled,
+        suffixIcon: enabled && onClear != null && controller.text.isNotEmpty
+            ? IconButton(
+                tooltip: t.common.clear,
+                icon: const AppIcon(
+                  HugeIcons.strokeRoundedCancel01,
+                  size: AppDimensions.iconSm,
+                ),
+                onPressed: onClear,
+              )
+            : null,
       ),
-      readOnly: true,
-      onTap: enabled ? onTap : null,
-      isRequired: isRequired,
-      enabled: enabled,
     );
   }
 }

@@ -19,6 +19,7 @@ class EntityAvatar extends StatelessWidget {
     required this.text,
     this.subtext,
     this.shape = AppAvatarShape.cookie9,
+    this.opensFrom,
     this.backgroundColor,
     this.foregroundColor,
     this.prominence = 0,
@@ -29,6 +30,7 @@ class EntityAvatar extends StatelessWidget {
   /// A smaller line under [text], e.g. a deposit's term under its scheme.
   final String? subtext;
   final AppAvatarShape shape;
+  final AppAvatarShape? opensFrom;
 
   /// Defaults to `primaryContainer`.
   final Color? backgroundColor;
@@ -83,6 +85,7 @@ class EntityAvatar extends StatelessWidget {
     return AppShapeAvatar(
       size: _dimension(AppDimensions.avatarMd, AppDimensions.avatarLg),
       shape: shape,
+      opensFrom: opensFrom,
       backgroundColor: backgroundColor,
       foregroundColor: foreground,
       child: Padding(

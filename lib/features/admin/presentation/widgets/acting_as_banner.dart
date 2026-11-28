@@ -10,6 +10,7 @@ import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/features/admin/domain/acting_as_state.dart';
 import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 /// Persistent top banner displayed while an admin is acting as another agent.
 /// Mounted in [MaterialApp.router]'s builder so it stays pinned across tabs,
@@ -67,8 +68,8 @@ class ActingAsBanner extends ConsumerWidget {
               end: AppDimensions.paddingLg,
               bottom: AppDimensions.paddingNone,
             ),
-            leading: HugeIcon(
-              icon: HugeIcons.strokeRoundedUserSwitch,
+            leading: AppIcon(
+              HugeIcons.strokeRoundedUserSwitch,
               size: AppDimensions.iconMd,
               color: foregroundColor,
             ),

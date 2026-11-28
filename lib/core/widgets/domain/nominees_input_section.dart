@@ -17,6 +17,7 @@ import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:uuid/uuid.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class NomineesInputSection extends HookWidget {
   final List<Nominee> nominees;
@@ -238,20 +239,20 @@ class _NomineeItemForm extends HookWidget {
               nameController: state.nameController,
               onChanged: state.notifyChange,
             ),
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             _buildRelationshipField(
               relationshipState: state.relationshipState,
               onChanged: state.notifyChange,
             ),
             if (state.relationshipState.value == NomineeRelationship.other) ...[
-              AppSpacings.gapMd,
+              AppSpacings.gapLg,
               _buildCustomRelationshipField(
                 customRelationshipController:
                     state.customRelationshipController,
                 onChanged: state.notifyChange,
               ),
             ],
-            AppSpacings.gapMd,
+            AppSpacings.gapLg,
             _buildPercentageField(
               percentageController: state.percentageController,
               onChanged: state.notifyChange,
@@ -280,8 +281,8 @@ Widget _buildNomineeHeader(
       IconButton(
         key: ValueKey('delete_nominee_$index'),
         tooltip: t.nominees.deleteNominee,
-        icon: HugeIcon(
-          icon: HugeIcons.strokeRoundedDelete02,
+        icon: AppIcon(
+          HugeIcons.strokeRoundedDelete02,
           size: AppDimensions.iconMd,
           color: Theme.of(context).colorScheme.error,
         ),
@@ -298,8 +299,8 @@ Widget _buildNameField({
   return AppTextField(
     controller: nameController,
     labelText: t.nominees.name,
-    prefixIcon: const HugeIcon(
-      icon: HugeIcons.strokeRoundedUser,
+    prefixIcon: const AppIcon(
+      HugeIcons.strokeRoundedUser,
       size: AppDimensions.iconMd,
     ),
     isRequired: true,
@@ -334,8 +335,8 @@ Widget _buildRelationshipField({
         onChanged();
       }
     },
-    prefixIcon: const HugeIcon(
-      icon: HugeIcons.strokeRoundedUserMultiple,
+    prefixIcon: const AppIcon(
+      HugeIcons.strokeRoundedUserMultiple,
       size: AppDimensions.iconMd,
     ),
   );
@@ -348,8 +349,8 @@ Widget _buildCustomRelationshipField({
   return AppTextField(
     controller: customRelationshipController,
     labelText: t.nominees.customRelationship,
-    prefixIcon: const HugeIcon(
-      icon: HugeIcons.strokeRoundedUserMultiple,
+    prefixIcon: const AppIcon(
+      HugeIcons.strokeRoundedUserMultiple,
       size: AppDimensions.iconMd,
     ),
     isRequired: true,
@@ -367,8 +368,8 @@ Widget _buildPercentageField({
   return AppTextField(
     controller: percentageController,
     labelText: t.nominees.percentage,
-    prefixIcon: const HugeIcon(
-      icon: HugeIcons.strokeRoundedPercent,
+    prefixIcon: const AppIcon(
+      HugeIcons.strokeRoundedPercent,
       size: AppDimensions.iconMd,
     ),
     isRequired: true,

@@ -26,6 +26,7 @@ import 'package:postfolio/features/one_time_deposits/presentation/controllers/on
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/features/settings/presentation/widgets/settings_tiles.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -246,8 +247,8 @@ class SettingsScreen extends ConsumerWidget {
                         trailing: IconButton(
                           key: const ValueKey('settings_copy_version_button'),
                           tooltip: t.common.copy,
-                          icon: HugeIcon(
-                            icon: HugeIcons.strokeRoundedCopy01,
+                          icon: AppIcon(
+                            HugeIcons.strokeRoundedCopy01,
                             size: AppDimensions.iconSm,
                             color: scheme.primary,
                           ),

@@ -44,10 +44,6 @@ class RDPassbookNextDueLine extends StatelessWidget {
     this.position = AppGroupPosition.single,
   });
 
-  /// Above this text scale the amount and the Collect button no longer fit side by side,
-  /// so the button moves under the amount and takes the full width.
-  static const double _stackAboveTextScale = AppDimensions.largeTextScale;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -117,8 +113,7 @@ class RDPassbookNextDueLine extends StatelessWidget {
             status == RDInstallmentDisplayStatus.paidFromPocket
         ? visual.foreground
         : scheme.onSurface;
-    final stacked =
-        MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
+    final stacked = AppDimensions.isLargeText(context);
     final displayAmount = collectAmount ?? inst.outstandingAmount;
     final showsMultiMonthTotal =
         collectAmount != null &&

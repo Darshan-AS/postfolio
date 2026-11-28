@@ -59,9 +59,6 @@ class ProjectionSummary extends StatelessWidget {
   /// A sentence under the result amount.
   final String? resultDescription;
 
-  /// Above this text scale an input row puts its amount under the label.
-  static const double _stackAboveTextScale = AppDimensions.largeTextScale;
-
   /// Share of an input row the amount may take before it is scaled down.
   static const double _amountMaxShare = 0.6;
 
@@ -71,8 +68,7 @@ class ProjectionSummary extends StatelessWidget {
 
     // When any row carries a sign, every row keeps the slot so the labels line up.
     final hasSigns = resultSign != null || lines.any((l) => l.sign != null);
-    final stacked =
-        MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
+    final stacked = AppDimensions.isLargeText(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,

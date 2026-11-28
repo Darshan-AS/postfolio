@@ -24,6 +24,7 @@ import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operations_view.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class RecurringDepositsScreen extends HookConsumerWidget {
   const RecurringDepositsScreen({
@@ -158,8 +159,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
                     criteria.sortField != RDSortField.serialNo ||
                     criteria.sortDirection != SortDirection.asc,
                 smallSize: AppDimensions.badgeSizeSm,
-                child: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedSorting01,
+                child: const AppIcon(
+                  HugeIcons.strokeRoundedSorting01,
                   size: AppDimensions.iconMd,
                 ),
               ),
@@ -198,8 +199,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
               icon: Badge(
                 isLabelVisible: activeFilterCount > 0,
                 label: Text('$activeFilterCount'),
-                child: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedFilter,
+                child: const AppIcon(
+                  HugeIcons.strokeRoundedFilter,
                   size: AppDimensions.iconMd,
                 ),
               ),

@@ -288,7 +288,6 @@ class _InspectorBody extends ConsumerWidget {
       if (canCollect)
         AppButton(
           label: passbook.collect,
-          icon: HugeIcons.strokeRoundedCoins01,
           size: AppButtonSize.medium,
           expand: true,
           onPressed: isBusy ? null : onCollect,

@@ -4,7 +4,7 @@ import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
 
 /// Emphasis of an [AppButton], highest first.
-enum AppButtonVariant { filled, tonal, elevated, outlined, text }
+enum AppButtonVariant { filled, tonal, outlined, text }
 
 /// Material 3 Expressive button sizes (container height in dp).
 enum AppButtonSize {
@@ -147,7 +147,6 @@ class AppButton extends StatelessWidget {
   M3EButtonStyle get _style => switch (variant) {
     AppButtonVariant.filled => M3EButtonStyle.filled,
     AppButtonVariant.tonal => M3EButtonStyle.tonal,
-    AppButtonVariant.elevated => M3EButtonStyle.elevated,
     AppButtonVariant.outlined => M3EButtonStyle.outlined,
     AppButtonVariant.text => M3EButtonStyle.text,
   };
@@ -186,7 +185,6 @@ class AppButton extends StatelessWidget {
         background: scheme.errorContainer,
         foreground: scheme.onErrorContainer,
       ),
-      AppButtonVariant.elevated ||
       AppButtonVariant.outlined ||
       AppButtonVariant.text => (background: null, foreground: scheme.error),
     };

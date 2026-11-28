@@ -12,6 +12,7 @@ import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/models/investment_projection.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/feedback/async_entity_builder.dart';
 import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
@@ -27,6 +28,7 @@ import 'package:postfolio/core/widgets/domain/wealth_accumulation_grid.dart';
 import 'package:postfolio/core/widgets/domain/income_generation_grid.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class OneTimeDepositDetailScreen extends ConsumerWidget {
   final String depositId;
@@ -76,8 +78,8 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
           // seal icon in the app bar.
           menuActions: [
             EntityAction(
-              icon: HugeIcon(
-                icon: deposit.status == DepositStatus.active
+              icon: AppIcon(
+                deposit.status == DepositStatus.active
                     ? HugeIcons.strokeRoundedCheckmarkBadge01
                     : HugeIcons.strokeRoundedArrowTurnBackward,
                 size: AppDimensions.iconSm,
@@ -170,6 +172,14 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 // The date the screen is most often opened for; it was only in the
                 // Timeline group, half a screen down.
                 _MaturityLine(deposit: deposit, now: today),
+                AppButton.text(
+                  label: t.customers.customerDetails,
+                  icon: HugeIcons.strokeRoundedUser,
+                  size: AppButtonSize.extraSmall,
+                  flushStart: true,
+                  onPressed: () =>
+                      CustomerDetailRoute(deposit.customerId).push(context),
+                ),
               ],
             ),
             badge: StatusBadge(
@@ -190,8 +200,10 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (note != null && note.isNotEmpty)
+                    if (note != null && note.isNotEmpty) ...[
                       KvpMultiplierBanner(doublesInText: note),
+                      AppSpacings.gapLg,
+                    ],
                     WealthAccumulationGrid(
                       totalInvested: totalInvested,
                       projectedInterest: totalInterestEarned,
@@ -220,8 +232,8 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               title: t.oneTimeDeposits.sections.investmentDetails,
               children: [
                 DetailItem(
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedCalendar01,
+                  icon: const AppIcon(
+                    HugeIcons.strokeRoundedCalendar01,
                     size: AppDimensions.iconMd,
                   ),
                   label: t.oneTimeDeposits.fields.termYears,
@@ -231,8 +243,8 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   ),
                 ),
                 DetailItem(
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedPercent,
+                  icon: const AppIcon(
+                    HugeIcons.strokeRoundedPercent,
                     size: AppDimensions.iconMd,
                   ),
                   label: t.oneTimeDeposits.fields.interestRate,
@@ -245,16 +257,16 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
               title: t.oneTimeDeposits.sections.timeline,
               children: [
                 DetailItem(
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedCalendar02,
+                  icon: const AppIcon(
+                    HugeIcons.strokeRoundedCalendar02,
                     size: AppDimensions.iconMd,
                   ),
                   label: t.oneTimeDeposits.fields.depositDate,
                   value: deposit.startDate.toAppFormat(),
                 ),
                 DetailItem(
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedCalendar03,
+                  icon: const AppIcon(
+                    HugeIcons.strokeRoundedCalendar03,
                     size: AppDimensions.iconMd,
                   ),
                   label: t.oneTimeDeposits.fields.maturityDate,
@@ -269,8 +281,8 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 if (deposit.accountNo != null &&
                     deposit.accountNo!.isNotEmpty) ...[
                   DetailItem(
-                    icon: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedTicket01,
+                    icon: const AppIcon(
+                      HugeIcons.strokeRoundedTicket01,
                       size: AppDimensions.iconMd,
                     ),
                     label: t.oneTimeDeposits.fields.accountNo,
@@ -279,8 +291,8 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                   ),
                 ],
                 DetailItem(
-                  icon: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedUser,
+                  icon: const AppIcon(
+                    HugeIcons.strokeRoundedUser,
                     size: AppDimensions.iconMd,
                   ),
                   label: t.oneTimeDeposits.fields.customerId,
@@ -296,9 +308,10 @@ class OneTimeDepositDetailScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            AppSpacings.gapLg,
-            if (deposit.nominees.isNotEmpty)
+            if (deposit.nominees.isNotEmpty) ...[
+              AppSpacings.gapLg,
               NomineesDetailSection(nominees: deposit.nominees),
+            ],
           ],
         );
       },

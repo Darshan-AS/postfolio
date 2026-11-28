@@ -187,7 +187,7 @@ class _MetricTile extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           AppShapeAvatar(
-            shape: AppAvatarShape.cookie9,
+            shape: AppAvatarShape.neutral,
             backgroundColor: accentColor,
             foregroundColor: onAccentColor,
             child: AppIcon(icon, size: AppDimensions.iconMd),

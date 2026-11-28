@@ -19,6 +19,7 @@ import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
 import 'package:postfolio/features/dashboard/providers/dashboard_provider.dart';
 
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 enum ChartAggregation { count, amount }
 
@@ -193,12 +194,23 @@ class DashboardChartSection extends HookConsumerWidget {
                 height: AppDimensions.chartHeight,
                 child: chartData.isEmpty
                     ? Center(
-                        child: Text(
-                          t.dashboard.noDataForFilter,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          textAlign: TextAlign.center,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AppIcon(
+                              HugeIcons.strokeRoundedAnalytics01,
+                              size: AppDimensions.iconLg,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            AppSpacings.gapSm,
+                            Text(
+                              t.dashboard.noDataForFilter,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
                       )
                     : _buildBarChart(

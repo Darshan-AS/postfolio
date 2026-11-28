@@ -5,6 +5,7 @@ import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 /// Header shared by the sort and filter sheets: title, a "clear" action and close.
 class AppSheetHeader extends StatelessWidget {
@@ -41,8 +42,8 @@ class AppSheetHeader extends StatelessWidget {
           IconButton(
             tooltip: t.common.close,
             onPressed: () => Navigator.of(context).pop(),
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedCancel01,
+            icon: const AppIcon(
+              HugeIcons.strokeRoundedCancel01,
               size: AppDimensions.iconMd,
             ),
           ),

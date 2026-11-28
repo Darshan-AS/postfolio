@@ -7,6 +7,7 @@ import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 /// The hint for a search pill [barWidth] wide: [hint] when it fits on one line, and the
 /// short "Search..." otherwise. A hint cannot wrap, and a cut one ("Search by accou…") says
@@ -138,8 +139,8 @@ class AppSearchBar extends HookWidget {
                   barWidth: constraints.maxWidth,
                   trailingButtons: trailing?.length ?? 0,
                 ),
-                leading: HugeIcon(
-                  icon: HugeIcons.strokeRoundedSearch01,
+                leading: AppIcon(
+                  HugeIcons.strokeRoundedSearch01,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   size: AppDimensions.iconMd,
                 ),
@@ -152,8 +153,8 @@ class AppSearchBar extends HookWidget {
                         controller.clear();
                         onChanged('');
                       },
-                      icon: HugeIcon(
-                        icon: HugeIcons.strokeRoundedCancel01,
+                      icon: AppIcon(
+                        HugeIcons.strokeRoundedCancel01,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         size: AppDimensions.iconMd,
                       ),

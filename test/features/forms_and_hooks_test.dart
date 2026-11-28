@@ -778,4 +778,108 @@ void main() {
       );
     },
   );
+
+  group('Phase 2 CustomerSelectionField & AppDateField parity', () {
+    testWidgets(
+      'CustomerSelectionField sheet filters via AppSearchBar, shows localized CIF & noResults empty state, and selects customer',
+      (tester) async {
+        const alice = Customer(
+          id: 'c-1',
+          name: 'Alice Fernandes',
+          phone: '9876500001',
+          cifNumber: 'CIF-1001',
+        );
+        const bob = Customer(
+          id: 'c-2',
+          name: 'Bob Kulkarni',
+          phone: '9876500002',
+          cifNumber: 'CIF-2002',
+        );
+        Customer? picked;
+
+        final container = ProviderContainer(
+          overrides: [
+            customerRepositoryProvider.overrideWithValue(
+              FakeCustomerRepository(customers: const [alice, bob]),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              theme: AppTheme.lightTheme,
+              home: Scaffold(
+                body: CustomerSelectionField(
+                  onCustomerSelected: (c) => picked = c,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text(t.customers.selectCustomer));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AppSearchBar), findsOneWidget);
+        expect(find.text('Alice Fernandes'), findsOneWidget);
+        expect(
+          find.textContaining('${t.customers.fields.cif}: CIF-1001'),
+          findsOneWidget,
+        );
+
+        await tester.enterText(find.byType(SearchBar), 'no-match-xyz');
+        await tester.pump(const Duration(milliseconds: 350));
+        await tester.pumpAndSettle();
+
+        expect(find.text(t.common.noResults), findsOneWidget);
+        await tester.tap(find.text(t.common.clearFilters));
+        await tester.pumpAndSettle();
+        expect(find.text('Bob Kulkarni'), findsOneWidget);
+
+        await tester.tap(find.text('Bob Kulkarni'));
+        await tester.pumpAndSettle();
+        expect(picked?.id, 'c-2');
+      },
+    );
+
+    testWidgets('AppDateField renders clear action and calls onClear', (
+      tester,
+    ) async {
+      var cleared = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: Scaffold(
+            body: HookBuilder(
+              builder: (context) {
+                final controller = useTextEditingController(
+                  text: '20 Nov 1990',
+                );
+                return AppDateField(
+                  controller: controller,
+                  labelText: t.customers.fields.dateOfBirth,
+                  onTap: () {},
+                  onClear: () {
+                    cleared = true;
+                    controller.clear();
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      final clearBtn = find.byTooltip(t.common.clear);
+      expect(clearBtn, findsOneWidget);
+      await tester.tap(clearBtn);
+      await tester.pumpAndSettle();
+      expect(cleared, isTrue);
+      expect(find.byTooltip(t.common.clear), findsNothing);
+    });
+  });
 }

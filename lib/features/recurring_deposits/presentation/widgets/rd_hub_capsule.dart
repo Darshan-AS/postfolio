@@ -95,8 +95,8 @@ class RDHubStageCapsule extends StatelessWidget {
           ),
         };
 
-        const rOuter = Radius.circular(AppDimensions.radiusXl);
-        const rInner = Radius.circular(AppDimensions.radiusSm);
+        const rOuter = Radius.circular(AppShapes.large);
+        const rInner = Radius.circular(AppShapes.extraSmall);
 
         return ExcludeSemantics(
           child: Row(

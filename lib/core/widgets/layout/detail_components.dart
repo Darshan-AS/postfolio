@@ -13,6 +13,7 @@ import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 /// The heading above a group of rows on a detail screen.
 class DetailSectionTitle extends StatelessWidget {
@@ -191,8 +192,8 @@ class _DetailItemState extends State<DetailItem> {
               IconButton(
                 key: ValueKey('toggle_mask_${widget.label}'),
                 tooltip: _revealed ? t.common.hide : t.common.show,
-                icon: HugeIcon(
-                  icon: _revealed
+                icon: AppIcon(
+                  _revealed
                       ? HugeIcons.strokeRoundedViewOffSlash
                       : HugeIcons.strokeRoundedView,
                   size: AppDimensions.iconSm,
@@ -204,8 +205,8 @@ class _DetailItemState extends State<DetailItem> {
               IconButton(
                 key: ValueKey('copy_${widget.label}'),
                 tooltip: t.common.copy,
-                icon: HugeIcon(
-                  icon: HugeIcons.strokeRoundedCopy01,
+                icon: AppIcon(
+                  HugeIcons.strokeRoundedCopy01,
                   size: AppDimensions.iconSm,
                   color: Theme.of(context).colorScheme.primary,
                 ),
@@ -216,8 +217,8 @@ class _DetailItemState extends State<DetailItem> {
               ),
             ?widget.trailing,
             if (widget.onTap != null && widget.trailing == null)
-              HugeIcon(
-                icon: HugeIcons.strokeRoundedArrowRight01,
+              AppIcon(
+                HugeIcons.strokeRoundedArrowRight01,
                 size: AppDimensions.iconMd,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -437,53 +438,45 @@ class KvpMultiplierBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppDimensions.paddingXxl),
-      padding: const EdgeInsets.all(AppDimensions.paddingLg),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primaryContainer,
-            theme.colorScheme.tertiaryContainer,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppShapes.extraLarge),
-      ),
-      child: Row(
-        children: [
-          AppShapeAvatar(
-            shape: AppAvatarShape.sunny,
-            backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.6),
-            foregroundColor: theme.colorScheme.onPrimaryContainer,
-            child: const HugeIcon(
-              icon: HugeIcons.strokeRoundedRocket01,
-              size: AppDimensions.iconMd,
+    final scheme = theme.colorScheme;
+    return Material(
+      color: scheme.tertiaryContainer,
+      shape: AppShapes.rounded(AppShapes.large),
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimensions.paddingLg),
+        child: Row(
+          children: [
+            AppShapeAvatar(
+              shape: AppAvatarShape.sunny,
+              backgroundColor: scheme.surface.withValues(alpha: 0.6),
+              foregroundColor: scheme.onTertiaryContainer,
+              child: const AppIcon(
+                HugeIcons.strokeRoundedRocket01,
+                size: AppDimensions.iconMd,
+              ),
             ),
-          ),
-          AppSpacings.gapLg,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  t.common.moneyMultiplier,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer.withValues(
-                      alpha: 0.8,
+            AppSpacings.gapLg,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t.common.moneyMultiplier,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: scheme.onTertiaryContainer.withValues(alpha: 0.8),
                     ),
                   ),
-                ),
-                Text(
-                  doublesInText,
-                  style: AppTypography.emphasizedOf(context).titleLarge
-                      ?.copyWith(color: theme.colorScheme.onPrimaryContainer),
-                ),
-              ],
+                  Text(
+                    doublesInText,
+                    style: AppTypography.emphasizedOf(
+                      context,
+                    ).titleLarge?.copyWith(color: scheme.onTertiaryContainer),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -76,7 +76,6 @@ class AppButtonGroup<T> extends StatelessWidget {
   /// its content, such as in an app bar.
   final bool expand;
 
-  static const double _stackAboveTextScale = AppDimensions.largeTextScale;
   static const double _iconSize = 20;
 
   /// Width share of a segment: its label length plus a constant for padding and icon.
@@ -91,10 +90,7 @@ class AppButtonGroup<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasLabels = segments.any((s) => s.label != null);
     // Stacking exists to give labels room; icon-only and content-hugging groups stay in a row.
-    final stacked =
-        hasLabels &&
-        expand &&
-        MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
+    final stacked = hasLabels && expand && AppDimensions.isLargeText(context);
 
     Widget segment(int index) {
       final item = segments[index];

@@ -23,6 +23,7 @@ import 'package:postfolio/core/widgets/domain/investment_projection_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/hooks/use_recurring_deposit_form.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class RecurringDepositFormScreen extends ConsumerWidget {
   final String? depositId;
@@ -195,8 +196,8 @@ Widget _buildAccountInformation({
       AppTextField(
         controller: serialNoController,
         labelText: t.recurringDeposits.fields.serialNo,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedTag01,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedTag01,
           size: AppDimensions.iconMd,
         ),
         textInputAction: TextInputAction.next,
@@ -205,8 +206,8 @@ Widget _buildAccountInformation({
       AppTextField(
         controller: accountNoController,
         labelText: t.recurringDeposits.fields.accountNo,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedTicket01,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedTicket01,
           size: AppDimensions.iconMd,
         ),
         validator: RecurringDeposit.validateAccountNo,
@@ -224,8 +225,8 @@ Widget _buildAccountInformation({
         onChanged: (status) {
           selectedStatus.value = status;
         },
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedActivity01,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedActivity01,
           size: AppDimensions.iconMd,
         ),
       ),
@@ -258,8 +259,8 @@ Widget _buildInvestmentDetails(
             padding: const EdgeInsets.all(AppDimensions.paddingMd),
             child: Row(
               children: [
-                HugeIcon(
-                  icon: HugeIcons.strokeRoundedLockKey,
+                AppIcon(
+                  HugeIcons.strokeRoundedLockKey,
                   color: scheme.onSecondaryContainer,
                   size: AppDimensions.iconMd,
                 ),
@@ -282,8 +283,8 @@ Widget _buildInvestmentDetails(
         controller: installmentAmountController,
         labelText: t.recurringDeposits.fields.installmentAmount,
         enabled: !state.isFinancialTermsLocked,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedCoins01,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedCoins01,
           size: AppDimensions.iconMd,
         ),
         isRequired: true,
@@ -342,8 +343,8 @@ Widget _buildInvestmentDetails(
         controller: interestRateController,
         labelText: t.recurringDeposits.fields.interestRate,
         enabled: !state.isFinancialTermsLocked,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedPercent,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedPercent,
           size: AppDimensions.iconMd,
         ),
         isRequired: true,
@@ -359,8 +360,8 @@ Widget _buildInvestmentDetails(
         controller: state.initialPaidInstallmentsController,
         labelText: t.recurringDeposits.fields.initialPaidInstallments,
         enabled: !state.isFinancialTermsLocked,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedCheckmarkCircle02,
           size: AppDimensions.iconMd,
         ),
         keyboardType: TextInputType.number,
@@ -379,8 +380,8 @@ Widget _buildInvestmentDetails(
         controller: state.openingReceivableController,
         labelText: t.recurringDeposits.fields.openingReceivable,
         enabled: !state.isFinancialTermsLocked,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedWallet02,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedWallet02,
           size: AppDimensions.iconMd,
         ),
         keyboardType: const TextInputType.numberWithOptions(decimal: true),

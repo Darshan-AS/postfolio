@@ -356,8 +356,9 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
                           size: AppDimensions.iconMd,
                         ),
                         label: t.recurringDeposits.fields.serialNo,
-                        value: deposit.serialNo ?? t.common.notProvided,
+                        value: deposit.serialNo,
                         copyValue: deposit.serialNo,
+                        hideIfNull: true,
                       ),
                       DetailItem(
                         icon: const AppIcon(

@@ -3,7 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
-import '../../../../i18n/strings.g.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/extensions/string_extension.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
@@ -14,6 +14,7 @@ import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class _CustomerCardView extends StatelessWidget {
   final String name;
@@ -65,8 +66,8 @@ class _CustomerCardView extends StatelessWidget {
         if (hasPhone && onPhoneTapped != null)
           EntityAction(
             label: t.customers.actions.call,
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedCall02,
+            icon: const AppIcon(
+              HugeIcons.strokeRoundedCall02,
               size: AppDimensions.iconMd,
             ),
             onTap: onPhoneTapped!,
@@ -77,8 +78,8 @@ class _CustomerCardView extends StatelessWidget {
         if (hasPhone && onWhatsAppTapped != null)
           EntityAction(
             label: t.customers.actions.whatsapp,
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedWhatsapp,
+            icon: const AppIcon(
+              HugeIcons.strokeRoundedWhatsapp,
               size: AppDimensions.iconMd,
             ),
             onTap: onWhatsAppTapped!,

@@ -8,6 +8,7 @@ import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class DemoBanner extends ConsumerWidget {
   const DemoBanner({super.key});
@@ -34,8 +35,8 @@ class DemoBanner extends ConsumerWidget {
         child: SafeArea(
           bottom: false,
           child: MaterialBanner(
-            leading: HugeIcon(
-              icon: HugeIcons.strokeRoundedInformationCircle,
+            leading: AppIcon(
+              HugeIcons.strokeRoundedInformationCircle,
               size: AppDimensions.iconMd,
               color: scheme.onTertiaryContainer,
             ),

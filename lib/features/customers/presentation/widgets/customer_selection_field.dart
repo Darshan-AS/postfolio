@@ -7,14 +7,16 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
-import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
 import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_sheet_header.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
+import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class CustomerSelectionField extends HookConsumerWidget {
   final Customer? initialCustomer;
@@ -71,8 +73,8 @@ class CustomerSelectionField extends HookConsumerWidget {
           decoration: AppInputDecoration.m3(
             context,
             labelText: label,
-            prefixIcon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedUser,
+            prefixIcon: const AppIcon(
+              HugeIcons.strokeRoundedUser,
               size: AppDimensions.iconMd,
             ),
             errorText: errorText,
@@ -103,8 +105,8 @@ class CustomerSelectionField extends HookConsumerWidget {
                 ),
               ],
               AppSpacings.gapXs,
-              const HugeIcon(
-                icon: HugeIcons.strokeRoundedArrowDown01,
+              const AppIcon(
+                HugeIcons.strokeRoundedArrowDown01,
                 size: AppDimensions.iconMd,
               ),
             ],
@@ -118,67 +120,80 @@ class CustomerSelectionField extends HookConsumerWidget {
 class _CustomerSelectionSheet extends HookConsumerWidget {
   const _CustomerSelectionSheet();
 
+  static const int _skeletonRowCount = 5;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final searchQuery = useState('');
     final state = ref.watch(customersControllerProvider);
     final maxHeight = MediaQuery.sizeOf(context).height * 0.78;
 
+    void clearSearch() => searchQuery.value = '';
+
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxHeight),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimensions.pageMargin,
-              AppDimensions.paddingSm,
-              AppDimensions.paddingSm,
-              0,
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.pageMargin,
+                AppDimensions.paddingSm,
+                AppDimensions.pageMargin,
+                0,
+              ),
+              child: AppSheetHeader(title: t.customers.selectCustomer),
             ),
-            child: AppSheetHeader(title: t.customers.selectCustomer),
-          ),
-          _buildSearchBar(context, searchQuery),
-          Expanded(
-            child: switch (state) {
-              AsyncData(:final value) => _buildDataState(
-                context,
-                value,
-                searchQuery.value,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.pageMargin,
+                AppDimensions.paddingSm,
+                AppDimensions.pageMargin,
+                AppDimensions.paddingMd,
               ),
-              AsyncError(:final error) => _buildErrorState(
-                ref,
-                error.toString(),
+              child: AppSearchBar(
+                query: searchQuery.value,
+                hintText: t.customers.searchHint,
+                onChanged: (value) => searchQuery.value = value,
               ),
-              _ => const Center(child: AppLoadingIndicator()),
-            },
-          ),
-        ],
+            ),
+            Expanded(
+              child: switch (state) {
+                AsyncData(:final value) => _buildDataState(
+                  context,
+                  value,
+                  searchQuery.value.trim().toLowerCase(),
+                  onClearSearch: clearSearch,
+                ),
+                AsyncError(:final error) => _buildErrorState(
+                  ref,
+                  error.toString(),
+                ),
+                _ => _buildLoadingState(),
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSearchBar(
-    BuildContext context,
-    ValueNotifier<String> searchQuery,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.pageMargin,
-        AppDimensions.paddingSm,
-        AppDimensions.pageMargin,
-        AppDimensions.paddingMd,
-      ),
-      child: TextField(
-        decoration: AppInputDecoration.m3(
-          context,
-          hintText: t.customers.searchHint,
-          prefixIcon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedSearch01,
-            size: AppDimensions.iconMd,
-          ),
+  Widget _buildLoadingState() {
+    final dummy = Customer.dummy;
+    return Skeletonizer(
+      enabled: true,
+      child: AppGroupListView(
+        itemCount: _skeletonRowCount,
+        bottomPadding: AppDimensions.paddingLg,
+        itemBuilder: (context, index, position) => EntityListTile(
+          position: position,
+          leadingText: dummy.name.substring(0, 1).toUpperCase(),
+          leadingShape: AppAvatarShape.forPerson(dummy.name),
+          title: dummy.name,
+          subtitle: Text(dummy.phone ?? dummy.name),
         ),
-        onChanged: (value) => searchQuery.value = value.toLowerCase(),
       ),
     );
   }
@@ -186,12 +201,26 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
   Widget _buildDataState(
     BuildContext context,
     List<Customer> customers,
-    String query,
-  ) {
+    String query, {
+    required VoidCallback onClearSearch,
+  }) {
     final filtered = _filterCustomers(customers, query);
 
     if (filtered.isEmpty) {
-      return Center(child: Text(t.customers.noCustomersFound));
+      final isSearching = query.isNotEmpty;
+      return SingleChildScrollView(
+        child: EmptyStateView(
+          message: isSearching
+              ? t.common.noResults
+              : t.customers.noCustomersFound,
+          icon: isSearching
+              ? HugeIcons.strokeRoundedSearchRemove
+              : HugeIcons.strokeRoundedUserMultiple,
+          actionLabel: isSearching ? t.common.clearFilters : null,
+          actionIcon: isSearching ? HugeIcons.strokeRoundedFilterRemove : null,
+          onAction: isSearching ? onClearSearch : null,
+        ),
+      );
     }
 
     return _buildCustomerList(filtered);
@@ -216,7 +245,7 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
         final subtitleParts = <String>[
           if (customer.cifNumber != null &&
               customer.cifNumber!.trim().isNotEmpty)
-            'CIF: ${customer.cifNumber}',
+            '${t.customers.fields.cif}: ${customer.cifNumber}',
           if (customer.phone != null && customer.phone!.trim().isNotEmpty)
             customer.phone!.toPhoneFormat(),
         ];

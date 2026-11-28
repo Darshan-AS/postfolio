@@ -9,6 +9,7 @@ import 'package:postfolio/features/profile/presentation/widgets/agent_avatar.dar
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/routing/app_router.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class MainShellScaffold extends ConsumerWidget {
   const MainShellScaffold({super.key, required this.navigationShell});
@@ -85,8 +86,8 @@ class MainShellScaffold extends ConsumerWidget {
                         IconButton(
                           key: const ValueKey('rail_settings_button'),
                           tooltip: t.settings.title,
-                          icon: const HugeIcon(
-                            icon: HugeIcons.strokeRoundedSettings01,
+                          icon: const AppIcon(
+                            HugeIcons.strokeRoundedSettings01,
                             size: AppDimensions.iconMd,
                           ),
                           onPressed: () => const SettingsRoute().push(context),

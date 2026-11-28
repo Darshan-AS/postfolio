@@ -16,6 +16,7 @@ import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/features/customers/domain/customer_search_criteria.dart';
 import 'package:postfolio/core/widgets/feedback/app_sort_bottom_sheet.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class CustomersScreen extends HookConsumerWidget {
   const CustomersScreen({super.key});
@@ -47,8 +48,8 @@ class CustomersScreen extends HookConsumerWidget {
                       criteria.sortField != CustomerSortField.name ||
                       criteria.sortDirection != SortDirection.asc,
                   smallSize: AppDimensions.badgeSizeSm,
-                  child: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedSorting01,
+                  child: const AppIcon(
+                    HugeIcons.strokeRoundedSorting01,
                     size: AppDimensions.iconMd,
                   ),
                 ),

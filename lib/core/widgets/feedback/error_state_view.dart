@@ -18,27 +18,33 @@ class _StateMessage extends StatelessWidget {
     required this.icon,
     required this.shape,
     required this.message,
+    this.subtitle,
     required this.badgeColor,
     required this.iconColor,
     this.actionLabel,
     this.actionIcon,
+    this.isPrimaryAction = false,
     this.onAction,
   });
 
   final AppIconData icon;
   final AppAvatarShape shape;
   final String message;
+  final String? subtitle;
   final Color badgeColor;
   final Color iconColor;
   final String? actionLabel;
   final AppIconData? actionIcon;
+  final bool isPrimaryAction;
   final VoidCallback? onAction;
 
-  static const double _badgeSize = 96;
+  static const double _badgeSize = AppDimensions.avatarMd * 2;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final hasSubtitle = subtitle != null && subtitle!.isNotEmpty;
     final column = Column(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
@@ -57,17 +63,39 @@ class _StateMessage extends StatelessWidget {
         Text(
           message,
           textAlign: TextAlign.center,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          style:
+              (hasSubtitle
+                      ? theme.textTheme.titleMedium
+                      : theme.textTheme.bodyLarge)
+                  ?.copyWith(
+                    color: hasSubtitle
+                        ? scheme.onSurface
+                        : scheme.onSurfaceVariant,
+                  ),
         ),
-        if (onAction != null && actionLabel != null) ...[
-          AppSpacings.gapLg,
-          AppButton.tonal(
-            label: actionLabel!,
-            icon: actionIcon,
-            onPressed: onAction,
+        if (hasSubtitle) ...[
+          AppSpacings.gapXs,
+          Text(
+            subtitle!,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
           ),
+        ],
+        if (actionLabel != null) ...[
+          AppSpacings.gapLg,
+          isPrimaryAction
+              ? AppButton(
+                  label: actionLabel!,
+                  icon: actionIcon,
+                  onPressed: onAction,
+                )
+              : AppButton.tonal(
+                  label: actionLabel!,
+                  icon: actionIcon,
+                  onPressed: onAction,
+                ),
         ],
       ],
     );
@@ -100,16 +128,20 @@ class EmptyStateView extends StatelessWidget {
   const EmptyStateView({
     super.key,
     required this.message,
+    this.subtitle,
     this.icon = HugeIcons.strokeRoundedInbox,
     this.actionLabel,
     this.actionIcon,
+    this.isPrimaryAction = false,
     this.onAction,
   });
 
   final String message;
+  final String? subtitle;
   final AppIconData icon;
   final String? actionLabel;
   final AppIconData? actionIcon;
+  final bool isPrimaryAction;
   final VoidCallback? onAction;
 
   @override
@@ -119,10 +151,12 @@ class EmptyStateView extends StatelessWidget {
       icon: icon,
       shape: AppAvatarShape.cookie12,
       message: message,
+      subtitle: subtitle,
       badgeColor: scheme.secondaryContainer,
       iconColor: scheme.onSecondaryContainer,
       actionLabel: actionLabel,
       actionIcon: actionIcon,
+      isPrimaryAction: isPrimaryAction,
       onAction: onAction,
     );
   }

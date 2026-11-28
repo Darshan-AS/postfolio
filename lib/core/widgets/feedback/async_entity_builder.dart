@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
+import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -46,7 +47,7 @@ class AsyncEntityBuilder<T> extends StatelessWidget {
       final errorView = ErrorStateView(message: notFoundMessage);
       return wrapWithScaffold
           ? Scaffold(
-              appBar: AppBar(title: Text(t.common.error)),
+              appBar: AppBar(title: AppBarTitle(t.common.error)),
               body: errorView,
             )
           : errorView;
@@ -61,7 +62,7 @@ class AsyncEntityBuilder<T> extends StatelessWidget {
     const loadingView = Center(child: AppLoadingIndicator());
     return wrapWithScaffold
         ? Scaffold(
-            appBar: AppBar(title: Text(t.common.loading)),
+            appBar: AppBar(title: AppBarTitle(t.common.loading)),
             body: loadingView,
           )
         : loadingView;
@@ -71,7 +72,7 @@ class AsyncEntityBuilder<T> extends StatelessWidget {
     final errorView = ErrorStateView(message: error, onRetry: onRetry);
     return wrapWithScaffold
         ? Scaffold(
-            appBar: AppBar(title: Text(t.common.error)),
+            appBar: AppBar(title: AppBarTitle(t.common.error)),
             body: errorView,
           )
         : errorView;
@@ -124,7 +125,7 @@ class AsyncSingleEntityBuilder<T> extends StatelessWidget {
     const loadingView = Center(child: AppLoadingIndicator());
     return wrapWithScaffold
         ? Scaffold(
-            appBar: AppBar(title: Text(t.common.loading)),
+            appBar: AppBar(title: AppBarTitle(t.common.loading)),
             body: loadingView,
           )
         : loadingView;
@@ -134,7 +135,7 @@ class AsyncSingleEntityBuilder<T> extends StatelessWidget {
     final errorView = ErrorStateView(message: error, onRetry: onRetry);
     return wrapWithScaffold
         ? Scaffold(
-            appBar: AppBar(title: Text(t.common.error)),
+            appBar: AppBar(title: AppBarTitle(t.common.error)),
             body: errorView,
           )
         : errorView;

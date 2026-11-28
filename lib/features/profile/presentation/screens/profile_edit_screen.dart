@@ -21,6 +21,7 @@ import 'package:postfolio/features/profile/domain/agent_profile.dart';
 import 'package:postfolio/features/profile/presentation/controllers/profile_controller.dart';
 import 'package:postfolio/features/profile/presentation/hooks/use_profile_form.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class ProfileEditScreen extends ConsumerWidget {
   const ProfileEditScreen({super.key});
@@ -93,8 +94,8 @@ class _ProfileForm extends HookConsumerWidget {
                           AppTextField(
                             controller: form.nameController,
                             labelText: t.settings.profileFields.displayName,
-                            prefixIcon: const HugeIcon(
-                              icon: HugeIcons.strokeRoundedUser,
+                            prefixIcon: const AppIcon(
+                              HugeIcons.strokeRoundedUser,
                               size: AppDimensions.iconMd,
                             ),
                             isRequired: true,
@@ -106,8 +107,8 @@ class _ProfileForm extends HookConsumerWidget {
                           AppTextField(
                             controller: form.emailController,
                             labelText: t.settings.profileFields.email,
-                            prefixIcon: const HugeIcon(
-                              icon: HugeIcons.strokeRoundedMail01,
+                            prefixIcon: const AppIcon(
+                              HugeIcons.strokeRoundedMail01,
                               size: AppDimensions.iconMd,
                             ),
                             readOnly: true,
@@ -120,8 +121,8 @@ class _ProfileForm extends HookConsumerWidget {
                           AppTextField(
                             controller: form.phoneController,
                             labelText: t.settings.profileFields.phone,
-                            prefixIcon: const HugeIcon(
-                              icon: HugeIcons.strokeRoundedCall02,
+                            prefixIcon: const AppIcon(
+                              HugeIcons.strokeRoundedCall02,
                               size: AppDimensions.iconMd,
                             ),
                             validator: AgentProfile.validatePhone,
@@ -129,12 +130,10 @@ class _ProfileForm extends HookConsumerWidget {
                             textInputAction: TextInputAction.next,
                           ),
                           AppSpacings.gapLg,
-                          _DatePickerField(
+                          AppDateField(
                             controller: form.dobController,
                             labelText: t.settings.profileFields.dateOfBirth,
-                            prefixIcon: HugeIcons.strokeRoundedCalendar01,
-                            hasValue: form.dobDate.value != null,
-                            onPick: () => form.pickDate(
+                            onTap: () => form.pickDate(
                               state: form.dobDate,
                               controller: form.dobController,
                               firstDate: DateTime(
@@ -151,8 +150,8 @@ class _ProfileForm extends HookConsumerWidget {
                           AppTextField(
                             controller: form.addressController,
                             labelText: t.settings.profileFields.address,
-                            prefixIcon: const HugeIcon(
-                              icon: HugeIcons.strokeRoundedHome01,
+                            prefixIcon: const AppIcon(
+                              HugeIcons.strokeRoundedHome01,
                               size: AppDimensions.iconMd,
                             ),
                             maxLines: AppConstants.addressMaxLines,
@@ -190,8 +189,8 @@ class _ProfileForm extends HookConsumerWidget {
                           AppTextField(
                             controller: form.agencyCodeController,
                             labelText: t.settings.profileFields.dopAgentId,
-                            prefixIcon: const HugeIcon(
-                              icon: HugeIcons.strokeRoundedTicket01,
+                            prefixIcon: const AppIcon(
+                              HugeIcons.strokeRoundedTicket01,
                               size: AppDimensions.iconMd,
                             ),
                             textCapitalization: TextCapitalization.characters,
@@ -202,8 +201,8 @@ class _ProfileForm extends HookConsumerWidget {
                             controller: form.branchController,
                             labelText:
                                 t.settings.profileFields.postOfficeBranch,
-                            prefixIcon: const HugeIcon(
-                              icon: HugeIcons.strokeRoundedBuilding03,
+                            prefixIcon: const AppIcon(
+                              HugeIcons.strokeRoundedBuilding03,
                               size: AppDimensions.iconMd,
                             ),
                             textCapitalization: TextCapitalization.words,
@@ -260,8 +259,8 @@ class _ProfileForm extends HookConsumerWidget {
                           AppTextField(
                             controller: form.panController,
                             labelText: t.settings.profileFields.panNumber,
-                            prefixIcon: const HugeIcon(
-                              icon: HugeIcons.strokeRoundedCreditCard,
+                            prefixIcon: const AppIcon(
+                              HugeIcons.strokeRoundedCreditCard,
                               size: AppDimensions.iconMd,
                             ),
                             inputFormatters: const [UpperCaseTextFormatter()],
@@ -273,8 +272,8 @@ class _ProfileForm extends HookConsumerWidget {
                           AppTextField(
                             controller: form.aadhaarController,
                             labelText: t.settings.profileFields.aadhaarNumber,
-                            prefixIcon: const HugeIcon(
-                              icon: HugeIcons.strokeRoundedId,
+                            prefixIcon: const AppIcon(
+                              HugeIcons.strokeRoundedId,
                               size: AppDimensions.iconMd,
                             ),
                             keyboardType: TextInputType.number,
@@ -292,8 +291,8 @@ class _ProfileForm extends HookConsumerWidget {
                             controller: form.commissionSbController,
                             labelText:
                                 t.settings.profileFields.commissionSbAccount,
-                            prefixIcon: const HugeIcon(
-                              icon: HugeIcons.strokeRoundedBank,
+                            prefixIcon: const AppIcon(
+                              HugeIcons.strokeRoundedBank,
                               size: AppDimensions.iconMd,
                             ),
                             keyboardType: TextInputType.number,
@@ -308,8 +307,8 @@ class _ProfileForm extends HookConsumerWidget {
                           AppTextField(
                             controller: form.notesController,
                             labelText: t.settings.profileFields.notes,
-                            prefixIcon: const HugeIcon(
-                              icon: HugeIcons.strokeRoundedNote01,
+                            prefixIcon: const AppIcon(
+                              HugeIcons.strokeRoundedNote01,
                               size: AppDimensions.iconMd,
                             ),
                             minLines: AppConstants.notesMinLines,
@@ -338,45 +337,6 @@ class _ProfileForm extends HookConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _DatePickerField extends StatelessWidget {
-  const _DatePickerField({
-    required this.controller,
-    required this.labelText,
-    required this.prefixIcon,
-    required this.hasValue,
-    required this.onPick,
-    required this.onClear,
-  });
-
-  final TextEditingController controller;
-  final String labelText;
-  final List<List<dynamic>> prefixIcon;
-  final bool hasValue;
-  final VoidCallback onPick;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppTextField(
-      controller: controller,
-      labelText: labelText,
-      prefixIcon: HugeIcon(icon: prefixIcon, size: AppDimensions.iconMd),
-      readOnly: true,
-      onTap: onPick,
-      suffixIcon: hasValue
-          ? IconButton(
-              tooltip: t.common.clear,
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedCancel01,
-                size: AppDimensions.iconSm,
-              ),
-              onPressed: onClear,
-            )
-          : null,
     );
   }
 }
@@ -414,20 +374,19 @@ class _LicenseFormSection extends StatelessWidget {
             AppTextField(
               controller: numberController,
               labelText: numberLabel,
-              prefixIcon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedId,
+              prefixIcon: const AppIcon(
+                HugeIcons.strokeRoundedId,
                 size: AppDimensions.iconMd,
               ),
               textCapitalization: TextCapitalization.characters,
               textInputAction: TextInputAction.next,
             ),
             AppSpacings.gapLg,
-            _DatePickerField(
+            AppDateField(
               controller: validController,
               labelText: validLabel,
               prefixIcon: HugeIcons.strokeRoundedCalendar03,
-              hasValue: hasValidDate,
-              onPick: onPickValid,
+              onTap: onPickValid,
               onClear: onClearValid,
             ),
           ],

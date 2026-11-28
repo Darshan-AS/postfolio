@@ -21,6 +21,7 @@ import 'package:postfolio/core/models/investment_projection.dart';
 
 import 'package:postfolio/features/one_time_deposits/presentation/hooks/use_one_time_deposit_form.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class OneTimeDepositFormScreen extends ConsumerWidget {
   final String? depositId;
@@ -175,8 +176,8 @@ Widget _buildAccountInformation({
       AppTextField(
         controller: accountNoController,
         labelText: t.oneTimeDeposits.fields.accountNo,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedTicket01,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedTicket01,
           size: AppDimensions.iconMd,
         ),
         validator: OneTimeDeposit.validateAccountNo,
@@ -194,8 +195,8 @@ Widget _buildAccountInformation({
         onChanged: (status) {
           selectedStatus.value = status;
         },
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedActivity01,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedActivity01,
           size: AppDimensions.iconMd,
         ),
       ),
@@ -225,8 +226,8 @@ Widget _buildInvestmentDetails(
             .map((scheme) => AppSegment(value: scheme, label: scheme.shortName))
             .toList(),
         onChanged: state.onSchemeChanged,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedLayers01,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedLayers01,
           size: AppDimensions.iconMd,
         ),
       ),
@@ -235,8 +236,8 @@ Widget _buildInvestmentDetails(
       AppTextField(
         controller: principalAmountController,
         labelText: t.oneTimeDeposits.fields.principalAmount,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedCoins01,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedCoins01,
           size: AppDimensions.iconMd,
         ),
         isRequired: true,
@@ -292,8 +293,8 @@ Widget _buildInvestmentDetails(
       AppTextField(
         controller: interestRateController,
         labelText: t.oneTimeDeposits.fields.interestRate,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedPercent,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedPercent,
           size: AppDimensions.iconMd,
         ),
         isRequired: true,

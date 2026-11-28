@@ -28,6 +28,7 @@ class CustomerFormState {
   final ValueNotifier<bool> isSaving;
   final bool isUpdating;
   final Future<void> Function(BuildContext context) selectDate;
+  final VoidCallback clearDate;
   final Future<void> Function(BuildContext context) save;
 
   CustomerFormState({
@@ -46,6 +47,7 @@ class CustomerFormState {
     required this.isSaving,
     required this.isUpdating,
     required this.selectDate,
+    required this.clearDate,
     required this.save,
   });
 }
@@ -99,6 +101,11 @@ CustomerFormState useCustomerForm({
     }
   }
 
+  void clearDate() {
+    selectedDate.value = null;
+    dateOfBirthController.clear();
+  }
+
   Future<void> save(BuildContext context) async {
     if (formKey.currentState!.validate()) {
       isSaving.value = true;
@@ -150,6 +157,7 @@ CustomerFormState useCustomerForm({
     isSaving: isSaving,
     isUpdating: isUpdating,
     selectDate: selectDate,
+    clearDate: clearDate,
     save: save,
   );
 }

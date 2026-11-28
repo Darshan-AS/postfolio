@@ -11,11 +11,14 @@ import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
+
+  static const double _logoSize = 76;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,9 +36,9 @@ class LoginScreen extends ConsumerWidget {
         size: AppDimensions.avatarXl,
         child: Image.asset(
           'assets/branding/app_logo_mark.png',
-          width: 76,
-          height: 76,
-          semanticLabel: 'Postfolio',
+          width: _logoSize,
+          height: _logoSize,
+          semanticLabel: t.appTitle,
         ),
       ),
       AppSpacings.gapXl,
@@ -80,7 +83,6 @@ class LoginScreen extends ConsumerWidget {
                                 duration: AppAnimations.medium,
                               ),
                   ),
-                  AppSpacings.gapXxl,
                   AppSpacings.gapXxl,
                   // While signing in, the main button carries the loading indicator and the
                   // demo entry is unavailable, as both were while a spinner replaced them.
@@ -128,10 +130,22 @@ class LoginScreen extends ConsumerWidget {
                   ),
                   if (authState case AuthStateError(:final message)) ...[
                     AppSpacings.gapMd,
-                    Text(
-                      message,
-                      style: TextStyle(color: theme.colorScheme.error),
-                      textAlign: TextAlign.center,
+                    Material(
+                      color: theme.colorScheme.errorContainer,
+                      shape: AppShapes.rounded(AppShapes.medium),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.paddingLg,
+                          vertical: AppDimensions.paddingMd,
+                        ),
+                        child: Text(
+                          message,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onErrorContainer,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                     ),
                   ],
                   AppSpacings.gapXxl,

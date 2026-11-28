@@ -8,6 +8,7 @@ import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_sheet_header.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class AppSortBottomSheet<T> extends StatelessWidget {
   final String title;
@@ -93,8 +94,8 @@ class AppSortBottomSheet<T> extends StatelessWidget {
                             ),
                           ),
                           if (isSelected)
-                            HugeIcon(
-                              icon: HugeIcons.strokeRoundedTick02,
+                            AppIcon(
+                              HugeIcons.strokeRoundedTick02,
                               color: theme.colorScheme.onSecondaryContainer,
                               size: AppDimensions.iconMd,
                             ),

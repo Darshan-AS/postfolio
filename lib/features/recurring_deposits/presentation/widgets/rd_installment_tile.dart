@@ -36,10 +36,6 @@ class RDInstallmentTile extends StatelessWidget {
     this.position = AppGroupPosition.single,
   });
 
-  /// Above this text scale the month and its amount no longer fit side by side, so every
-  /// part of the line gets a row of its own.
-  static const double _stackAboveTextScale = AppDimensions.largeTextScale;
-
   /// Share of the row the amount may take before it starts to shrink.
   static const double _amountMaxWidthFraction = 0.6;
 
@@ -53,8 +49,7 @@ class RDInstallmentTile extends StatelessWidget {
     final inst = installment;
     final status = inst.displayStatusAt(now);
     final visual = status.visual(scheme, financial: financial);
-    final stacked =
-        MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
+    final stacked = AppDimensions.isLargeText(context);
 
     final Color? leftAccent = switch (status) {
       RDInstallmentDisplayStatus.overdue ||

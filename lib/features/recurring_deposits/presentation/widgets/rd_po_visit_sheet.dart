@@ -21,6 +21,7 @@ import 'package:postfolio/features/recurring_deposits/presentation/controllers/r
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_sheet_parts.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 /// Opens the Post Office visit planner bound to `rDPoVisitPlannerProvider`.
 Future<void> showRDPoVisitPlanner(BuildContext context) =>
@@ -325,8 +326,8 @@ class _TotalsBlock extends StatelessWidget {
             Row(
               children: [
                 // The agent's own money takes the receivable colour, not the overdue red.
-                HugeIcon(
-                  icon: HugeIcons.strokeRoundedWallet02,
+                AppIcon(
+                  HugeIcons.strokeRoundedWallet02,
                   size: AppDimensions.iconSm,
                   color: AppFinancialColors.of(context).receivable.onContainer,
                 ),
@@ -371,8 +372,8 @@ class _CashLotsWarning extends StatelessWidget {
         children: [
           Row(
             children: [
-              HugeIcon(
-                icon: HugeIcons.strokeRoundedAlert02,
+              AppIcon(
+                HugeIcons.strokeRoundedAlert02,
                 size: AppDimensions.iconSm,
                 color: warning.onContainer,
               ),
@@ -504,8 +505,8 @@ class _VisitLineTile extends HookWidget {
         IconButton(
           key: ValueKey('visit_fee_override_${line.rdId}'),
           tooltip: visit.counterFeeOverride,
-          icon: HugeIcon(
-            icon: HugeIcons.strokeRoundedPercent,
+          icon: AppIcon(
+            HugeIcons.strokeRoundedPercent,
             size: AppDimensions.iconMd,
             color: line.feeOverride != null
                 ? scheme.primary
@@ -666,8 +667,8 @@ class _VisitLineTile extends HookWidget {
                         suffixIcon: line.feeOverride != null
                             ? IconButton(
                                 tooltip: t.common.clear,
-                                icon: const HugeIcon(
-                                  icon: HugeIcons.strokeRoundedCancel01,
+                                icon: const AppIcon(
+                                  HugeIcons.strokeRoundedCancel01,
                                   size: AppDimensions.iconSm,
                                 ),
                                 onPressed: () {

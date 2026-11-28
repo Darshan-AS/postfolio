@@ -78,10 +78,6 @@ class RDPassbookPoStrip extends ConsumerWidget {
     );
   }
 
-  /// Above this text scale the label needs the full width, so the actions move to a row of
-  /// their own below it.
-  static const double _stackAboveTextScale = AppDimensions.largeTextScale;
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -90,8 +86,7 @@ class RDPassbookPoStrip extends ConsumerWidget {
     final passbook = t.recurringDeposits.ledger.passbook;
     final hasReady = readiness.hasReady;
     final canUndo = latestPoDeposit != null;
-    final stacked =
-        MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
+    final stacked = AppDimensions.isLargeText(context);
 
     final leading = AppIcon(
       HugeIcons.strokeRoundedBuilding03,

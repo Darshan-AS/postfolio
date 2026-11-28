@@ -12,6 +12,7 @@ import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 /// The avatar shape that stands for each scheme, so a scheme is recognisable by outline as
 /// well as by its short code.
@@ -145,8 +146,8 @@ class DepositListTile extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  HugeIcon(
-                    icon: HugeIcons.strokeRoundedTimer02,
+                  AppIcon(
+                    HugeIcons.strokeRoundedTimer02,
                     size: AppDimensions.iconSm,
                     color: attentionColor,
                   ),
@@ -187,8 +188,8 @@ class DepositListTile extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                HugeIcon(
-                  icon: HugeIcons.strokeRoundedCalendar01,
+                AppIcon(
+                  HugeIcons.strokeRoundedCalendar01,
                   size: AppDimensions.iconSm,
                   color: scheme.onSurfaceVariant,
                 ),
@@ -221,8 +222,8 @@ class DepositListTile extends StatelessWidget {
           if (status == DepositStatus.active)
             EntityAction(
               label: t.common.closeDeposit,
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedCheckmarkBadge01,
+              icon: const AppIcon(
+                HugeIcons.strokeRoundedCheckmarkBadge01,
                 size: AppDimensions.iconMd,
               ),
               onTap: onToggleStatus!,
@@ -230,8 +231,8 @@ class DepositListTile extends StatelessWidget {
           else if (status == DepositStatus.closed)
             EntityAction(
               label: t.common.reopenDeposit,
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedArrowTurnBackward,
+              icon: const AppIcon(
+                HugeIcons.strokeRoundedArrowTurnBackward,
                 size: AppDimensions.iconMd,
               ),
               onTap: onToggleStatus!,

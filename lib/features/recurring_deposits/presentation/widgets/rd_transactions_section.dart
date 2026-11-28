@@ -257,45 +257,17 @@ class _TransactionList extends StatelessWidget {
     required this.onCollect,
   });
 
-  /// Twice the avatar of a list row: the badge is the only thing in the empty list.
-  static const double _emptyBadgeSize = AppDimensions.avatarMd * 2;
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final ledger = t.recurringDeposits.ledger;
 
     if (transactions.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(AppDimensions.paddingXl),
-        child: Column(
-          children: [
-            AppShapeAvatar(
-              size: _emptyBadgeSize,
-              shape: AppAvatarShape.cookie12,
-              backgroundColor: scheme.secondaryContainer,
-              foregroundColor: scheme.onSecondaryContainer,
-              child: const AppIcon(
-                HugeIcons.strokeRoundedInvoice01,
-                size: AppDimensions.iconXl - AppDimensions.paddingSm,
-              ),
-            ),
-            AppSpacings.gapLg,
-            Text(
-              ledger.noPayments,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            AppSpacings.gapLg,
-            AppButton(
-              label: ledger.passbook.collect,
-              onPressed: isBusy ? null : onCollect,
-            ),
-          ],
-        ),
+      return EmptyStateView(
+        icon: HugeIcons.strokeRoundedInvoice01,
+        message: ledger.noPayments,
+        actionLabel: ledger.passbook.collect,
+        isPrimaryAction: true,
+        onAction: isBusy ? null : onCollect,
       );
     }
 
@@ -607,9 +579,6 @@ class _RDPoVisitsList extends ConsumerWidget {
 
   const _RDPoVisitsList({required this.rdId, required this.isBusy});
 
-  /// Above this text scale a visit and its Undo button no longer fit side by side.
-  static const double _stackAboveTextScale = AppDimensions.largeTextScale;
-
   Future<void> _undoLatest(
     BuildContext context,
     WidgetRef ref,
@@ -666,8 +635,7 @@ class _RDPoVisitsList extends ConsumerWidget {
 
     // Only the latest visit can be undone. At large text sizes its button moves under the
     // text, which then keeps the full width of the row.
-    final stacked =
-        MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
+    final stacked = AppDimensions.isLargeText(context);
 
     Widget undo(RDPoDeposit visit) => AppButton.text(
       label: t.recurringDeposits.ledger.actions.undo,
@@ -675,16 +643,9 @@ class _RDPoVisitsList extends ConsumerWidget {
     );
 
     if (entries.isEmpty) {
-      return AppGroupTile(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingLg),
-          child: Text(
-            passbook.noPoVisits,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ),
+      return EmptyStateView(
+        icon: HugeIcons.strokeRoundedBuilding03,
+        message: passbook.noPoVisits,
       );
     }
 
@@ -845,6 +806,7 @@ class _TransactionsSkeleton extends StatelessWidget {
                 children: [
                   const AppShapeAvatar(
                     size: AppDimensions.avatarMd,
+                    shape: AppAvatarShape.neutral,
                     child: SizedBox.shrink(),
                   ),
                   AppSpacings.gapLg,

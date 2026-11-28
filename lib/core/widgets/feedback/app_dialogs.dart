@@ -4,6 +4,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_dialog.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class AppDialogs {
   static Future<bool?> confirmDelete(
@@ -15,8 +16,8 @@ class AppDialogs {
 
     return AppDialog.show<bool>(
       context,
-      icon: HugeIcon(
-        icon: HugeIcons.strokeRoundedAlert02,
+      icon: AppIcon(
+        HugeIcons.strokeRoundedAlert02,
         size: AppDimensions.iconLg,
         color: theme.colorScheme.error,
       ),
@@ -54,11 +55,7 @@ class AppDialogs {
     return AppDialog.show<bool>(
       context,
       icon: icon != null
-          ? HugeIcon(
-              icon: icon,
-              size: AppDimensions.iconLg,
-              color: resolvedIconColor,
-            )
+          ? AppIcon(icon, size: AppDimensions.iconLg, color: resolvedIconColor)
           : null,
       title: title,
       content: Text(content),
@@ -87,8 +84,8 @@ class AppDialogs {
 
     return AppDialog.show<void>(
       context,
-      icon: HugeIcon(
-        icon: HugeIcons.strokeRoundedAlertCircle,
+      icon: AppIcon(
+        HugeIcons.strokeRoundedAlertCircle,
         size: AppDimensions.iconLg,
         color: theme.colorScheme.error,
       ),

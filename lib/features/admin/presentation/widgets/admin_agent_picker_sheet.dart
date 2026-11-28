@@ -20,6 +20,7 @@ import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 /// Adaptive sheet (bottom sheet on mobile, dialog on desktop) letting an admin search
 /// and choose an agent portfolio to view or act as.
@@ -174,13 +175,14 @@ class AdminAgentPickerSheet extends HookConsumerWidget {
     }
 
     if (filtered.isEmpty) {
+      final isSearching = normalizedQuery.isNotEmpty;
       return SingleChildScrollView(
         child: EmptyStateView(
-          message: t.admin.noOtherAgents,
+          message: isSearching ? t.common.noResults : t.admin.noOtherAgents,
           icon: HugeIcons.strokeRoundedSearchRemove,
-          actionLabel: t.common.clearFilters,
-          actionIcon: HugeIcons.strokeRoundedFilterRemove,
-          onAction: onClearSearch,
+          actionLabel: isSearching ? t.common.clearFilters : null,
+          actionIcon: isSearching ? HugeIcons.strokeRoundedFilterRemove : null,
+          onAction: isSearching ? onClearSearch : null,
         ),
       );
     }
@@ -281,7 +283,7 @@ class _AgentRow extends StatelessWidget {
                 children: [
                   AppShapeAvatar(
                     size: AppDimensions.avatarMd,
-                    shape: AppAvatarShape.forPerson(label),
+                    shape: AppAvatarShape.cookie9,
                     backgroundColor: isActive
                         ? scheme.primary
                         : scheme.primaryContainer,
@@ -328,8 +330,8 @@ class _AgentRow extends StatelessWidget {
                   ],
                   if (isActive) ...[
                     AppSpacings.gapSm,
-                    HugeIcon(
-                      icon: HugeIcons.strokeRoundedTick02,
+                    AppIcon(
+                      HugeIcons.strokeRoundedTick02,
                       size: AppDimensions.iconMd,
                       color: scheme.onSecondaryContainer,
                     ),

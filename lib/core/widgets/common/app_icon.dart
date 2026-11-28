@@ -1,5 +1,6 @@
 import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:postfolio/core/theme/app_dimensions.dart';
 
 /// The type of a `HugeIcons.*` constant.
 ///
@@ -15,7 +16,7 @@ class AppIcon extends StatelessWidget {
   const AppIcon(
     this.icon, {
     super.key,
-    this.size = 24,
+    this.size = AppDimensions.iconMd,
     this.color,
     this.emphasized = false,
   });

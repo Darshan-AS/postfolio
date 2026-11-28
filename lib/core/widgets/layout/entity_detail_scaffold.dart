@@ -17,6 +17,7 @@ import 'package:postfolio/core/widgets/expressive/app_menu.dart';
 import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
 import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 export 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart'
     show AppAvatarShape;
@@ -116,8 +117,8 @@ class EntityDetailScaffold extends StatelessWidget {
             foregroundColor: theme.colorScheme.onSecondaryContainer,
           ),
           tooltip: t.common.edit,
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedEdit02,
+          icon: const AppIcon(
+            HugeIcons.strokeRoundedEdit02,
             size: AppDimensions.iconMd,
           ),
           onPressed: onEdit,
@@ -132,8 +133,8 @@ class EntityDetailScaffold extends StatelessWidget {
               ),
             AppMenuEntry(
               label: t.common.delete,
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedDelete02,
+              icon: const AppIcon(
+                HugeIcons.strokeRoundedDelete02,
                 size: AppDimensions.iconSm,
               ),
               isDestructive: true,
@@ -143,8 +144,8 @@ class EntityDetailScaffold extends StatelessWidget {
           anchorBuilder: (context, open) => IconButton(
             key: const ValueKey('entity_detail_more_button'),
             tooltip: t.common.moreOptions,
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedMoreVertical,
+            icon: const AppIcon(
+              HugeIcons.strokeRoundedMoreVertical,
               size: AppDimensions.iconMd,
             ),
             onPressed: open,
@@ -343,6 +344,7 @@ class EntityDetailHeader extends StatelessWidget {
         text: text,
         subtext: avatarSubtext,
         shape: avatarShape,
+        opensFrom: avatarOpensFrom,
         backgroundColor: avatarBackgroundColor,
         foregroundColor: avatarForegroundColor,
         prominence: 1,

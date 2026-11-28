@@ -8,6 +8,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_surfaces.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
+import 'package:postfolio/core/widgets/common/animated_figure.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 /// The live projection under a deposit form: a tonal hero card whose figures follow the
@@ -25,13 +26,6 @@ class InvestmentProjectionCard extends StatelessWidget {
   /// also the tile's own padding, so labels and amounts line up down both edges.
   static const double _tileInset = AppDimensions.paddingSm;
   static const double _rowInset = AppDimensions.paddingLg;
-
-  /// Above this text scale a label and its amount no longer fit side by side on a phone,
-  /// so the amount moves to its own line under the label.
-  static const double _stackAboveTextScale = AppDimensions.largeTextScale;
-
-  static bool _stacksRows(BuildContext context) =>
-      MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +211,7 @@ class _ProjectionTotalTile extends StatelessWidget {
     final scheme = theme.colorScheme;
     final inline =
         MediaQuery.sizeOf(context).width >= AppDimensions.breakpointTablet &&
-        !InvestmentProjectionCard._stacksRows(context);
+        !AppDimensions.isLargeText(context);
 
     final labelText = Text(
       label,
@@ -229,8 +223,9 @@ class _ProjectionTotalTile extends StatelessWidget {
     final amount = FittedBox(
       fit: BoxFit.scaleDown,
       alignment: AlignmentDirectional.centerEnd,
-      child: _AnimatedAmount(
+      child: AnimatedFigure(
         value: value,
+        format: (v) => v.toRupeeFormat(),
         style: AppTypography.emphasizedOf(
           context,
         ).headlineMedium?.copyWith(color: scheme.onSurface),
@@ -264,32 +259,6 @@ class _ProjectionTotalTile extends StatelessWidget {
   }
 }
 
-/// A rupee amount that counts to [value] when it changes, or shows it at once when
-/// animations are disabled.
-class _AnimatedAmount extends StatelessWidget {
-  final double value;
-  final TextStyle? style;
-  final String prefix;
-
-  const _AnimatedAmount({required this.value, this.style, this.prefix = ''});
-
-  @override
-  Widget build(BuildContext context) {
-    if (MediaQuery.disableAnimationsOf(context)) {
-      return Text('$prefix${value.toRupeeFormat()}', maxLines: 1, style: style);
-    }
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0, end: value),
-      duration: AppAnimations.slow,
-      // An effects curve: a spatial one would overshoot and show a figure above the result.
-      curve: AppAnimations.defaultCurve,
-      builder: (context, val, child) {
-        return Text('$prefix${val.toRupeeFormat()}', maxLines: 1, style: style);
-      },
-    );
-  }
-}
-
 class _AnimatedStatRow extends StatelessWidget {
   final String label;
   final double value;
@@ -310,10 +279,10 @@ class _AnimatedStatRow extends StatelessWidget {
     return _ProjectionKeyValueRow(
       label: label,
       labelColor: labelColor,
-      valueChild: _AnimatedAmount(
+      valueChild: AnimatedFigure(
         value: value,
+        format: (v) => '$prefix${v.toRupeeFormat()}',
         style: valueStyle,
-        prefix: prefix,
       ),
     );
   }
@@ -339,7 +308,7 @@ class _ProjectionKeyValueRow extends StatelessWidget {
       ).textTheme.bodyMedium?.copyWith(color: labelColor),
     );
 
-    if (InvestmentProjectionCard._stacksRows(context)) {
+    if (AppDimensions.isLargeText(context)) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

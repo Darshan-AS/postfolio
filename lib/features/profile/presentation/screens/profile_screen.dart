@@ -13,10 +13,8 @@ import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/services/intent_service.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
-import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
 import 'package:postfolio/core/widgets/feedback/app_dialogs.dart';
 import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
@@ -36,6 +34,7 @@ import 'package:postfolio/features/profile/presentation/widgets/agent_avatar.dar
 import 'package:postfolio/features/profile/presentation/widgets/profile_cards.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key, this.openedFrom});
@@ -93,9 +92,26 @@ class ProfileScreen extends ConsumerWidget {
         ? t.settings.profileFields.roleDemo
         : (isAdmin ? t.settings.profileFields.roleAdmin : null);
     final isLoading = profileAsync.isLoading && !profileAsync.hasValue;
+    final viewProfile = isLoading
+        ? AgentProfile(
+            id: effective.id,
+            name: displayName,
+            phone: phone,
+            email: email,
+            agencyCode: effective.agencyCode ?? 'DOP123456',
+            postOfficeBranch: effective.postOfficeBranch ?? 'Head Post Office',
+            agencyTypes: effective.agencyTypes.isNotEmpty
+                ? effective.agencyTypes
+                : const [AgencyType.mpkby],
+            mpkbyLicenseNo: effective.mpkbyLicenseNo ?? 'MPKBY-0000',
+            mpkbyValidUntil: effective.mpkbyValidUntil ?? today,
+            panNumber: effective.panNumber ?? 'ABCDE1234F',
+          )
+        : effective;
+    final hasPhoto = photoUrl != null && photoUrl.isNotEmpty;
 
     final heroSubtitleText =
-        effective.agencySummaryLabel ??
+        viewProfile.agencySummaryLabel ??
         (email != null && email.isNotEmpty && email != displayName
             ? email
             : null);
@@ -104,13 +120,16 @@ class ProfileScreen extends ConsumerWidget {
       heroTag: heroTag,
       avatarShape: AppAvatarShape.cookie9,
       avatarOpensFrom: heroTag == null ? AppAvatarShape.circle : null,
-      avatarChild: AgentAvatarPhoto(
-        initial: initial,
-        photoUrl: photoUrl,
-        textStyle: AppTypography.emphasizedOf(
-          context,
-        ).titleLarge?.copyWith(color: scheme.onPrimaryContainer),
-      ),
+      avatarText: hasPhoto ? null : initial,
+      avatarChild: hasPhoto
+          ? AgentAvatarPhoto(
+              initial: initial,
+              photoUrl: photoUrl,
+              textStyle: AppTypography.emphasizedOf(
+                context,
+              ).titleLarge?.copyWith(color: scheme.onPrimaryContainer),
+            )
+          : null,
       title: displayName,
       subtitle: heroSubtitleText == null
           ? null
@@ -121,12 +140,12 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
       badge: roleBadge != null ? ProfilePill(label: roleBadge) : null,
-      footer: effective.agencyTypes.isNotEmpty
+      footer: viewProfile.agencyTypes.isNotEmpty
           ? Wrap(
               spacing: AppDimensions.paddingXs,
               runSpacing: AppDimensions.paddingXs,
               children: [
-                for (final type in effective.agencyTypes)
+                for (final type in viewProfile.agencyTypes)
                   ProfilePill(
                     label: type.displayName,
                     backgroundColor: scheme.tertiaryContainer,
@@ -180,8 +199,8 @@ class ProfileScreen extends ConsumerWidget {
           title: t.settings.profileFields.contactSection,
           children: [
             DetailItem(
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedCall02,
+              icon: const AppIcon(
+                HugeIcons.strokeRoundedCall02,
                 size: AppDimensions.iconMd,
               ),
               label: t.settings.profileFields.phone,
@@ -190,8 +209,8 @@ class ProfileScreen extends ConsumerWidget {
               hideIfNull: true,
             ),
             DetailItem(
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedMail01,
+              icon: const AppIcon(
+                HugeIcons.strokeRoundedMail01,
                 size: AppDimensions.iconMd,
               ),
               label: t.settings.profileFields.email,
@@ -200,8 +219,8 @@ class ProfileScreen extends ConsumerWidget {
               hideIfNull: true,
             ),
             DetailItem(
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedLocation01,
+              icon: const AppIcon(
+                HugeIcons.strokeRoundedLocation01,
                 size: AppDimensions.iconMd,
               ),
               label: t.settings.profileFields.address,
@@ -216,8 +235,8 @@ class ProfileScreen extends ConsumerWidget {
                   : null,
             ),
             DetailItem(
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedCalendar01,
+              icon: const AppIcon(
+                HugeIcons.strokeRoundedCalendar01,
                 size: AppDimensions.iconMd,
               ),
               label: t.settings.profileFields.dateOfBirth,
@@ -228,40 +247,40 @@ class ProfileScreen extends ConsumerWidget {
         ),
         AppSpacings.gapLg,
       ],
-      if (effective.hasSharedAgencyDetails) ...[
+      if (viewProfile.hasSharedAgencyDetails) ...[
         DetailSection(
           title: t.settings.profileFields.agencySection,
           children: [
             DetailItem(
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedTicket01,
+              icon: const AppIcon(
+                HugeIcons.strokeRoundedTicket01,
                 size: AppDimensions.iconMd,
               ),
               label: t.settings.profileFields.dopAgentId,
-              value: effective.agencyCode?.trim(),
-              copyValue: effective.agencyCode?.trim(),
+              value: viewProfile.agencyCode?.trim(),
+              copyValue: viewProfile.agencyCode?.trim(),
               hideIfNull: true,
             ),
             DetailItem(
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedBuilding03,
+              icon: const AppIcon(
+                HugeIcons.strokeRoundedBuilding03,
                 size: AppDimensions.iconMd,
               ),
               label: t.settings.profileFields.postOfficeBranch,
-              value: effective.postOfficeBranch?.trim(),
-              copyValue: effective.postOfficeBranch?.trim(),
+              value: viewProfile.postOfficeBranch?.trim(),
+              copyValue: viewProfile.postOfficeBranch?.trim(),
               hideIfNull: true,
             ),
           ],
         ),
         AppSpacings.gapLg,
       ],
-      if (effective.hasLicenses) ...[
-        _buildLicensesSection(effective, today),
+      if (viewProfile.hasLicenses) ...[
+        _buildLicensesSection(viewProfile, today),
         AppSpacings.gapLg,
       ],
-      if (effective.hasKycOrCommissionDetails) ...[
-        _buildKycSection(effective, maskSensitiveIds: maskSensitiveIds),
+      if (viewProfile.hasKycOrCommissionDetails) ...[
+        _buildKycSection(viewProfile, maskSensitiveIds: maskSensitiveIds),
         AppSpacings.gapLg,
       ],
       if (hasNotes) ...[
@@ -374,8 +393,8 @@ class ProfileScreen extends ConsumerWidget {
           foregroundColor: scheme.onSecondaryContainer,
         ),
         tooltip: t.settings.editProfile,
-        icon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedEdit02,
+        icon: const AppIcon(
+          HugeIcons.strokeRoundedEdit02,
           size: AppDimensions.iconMd,
         ),
         onPressed: () => const ProfileEditRoute().push(context),
@@ -383,8 +402,8 @@ class ProfileScreen extends ConsumerWidget {
       IconButton(
         key: const ValueKey('profile_settings_button'),
         tooltip: t.settings.title,
-        icon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedSettings01,
+        icon: const AppIcon(
+          HugeIcons.strokeRoundedSettings01,
           size: AppDimensions.iconMd,
         ),
         onPressed: () => const SettingsRoute().push(context),
@@ -413,18 +432,9 @@ class ProfileScreen extends ConsumerWidget {
         ),
     ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        DetailSectionTitle(t.settings.profileFields.licensesSection),
-        for (var i = 0; i < tiles.length; i++) ...[
-          if (i > 0) const SizedBox(height: AppShapes.groupGap),
-          AppGroupTile(
-            position: AppGroupPosition.at(i, tiles.length),
-            child: tiles[i],
-          ),
-        ],
-      ],
+    return DetailSection(
+      title: t.settings.profileFields.licensesSection,
+      children: tiles,
     );
   }
 
@@ -440,8 +450,8 @@ class ProfileScreen extends ConsumerWidget {
       title: t.settings.profileFields.kycSection,
       children: [
         DetailItem(
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedCreditCard,
+          icon: const AppIcon(
+            HugeIcons.strokeRoundedCreditCard,
             size: AppDimensions.iconMd,
           ),
           label: t.settings.profileFields.panNumber,
@@ -452,8 +462,8 @@ class ProfileScreen extends ConsumerWidget {
           hideIfNull: true,
         ),
         DetailItem(
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedId,
+          icon: const AppIcon(
+            HugeIcons.strokeRoundedId,
             size: AppDimensions.iconMd,
           ),
           label: t.settings.profileFields.aadhaarNumber,
@@ -464,8 +474,8 @@ class ProfileScreen extends ConsumerWidget {
           hideIfNull: true,
         ),
         DetailItem(
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedBank,
+          icon: const AppIcon(
+            HugeIcons.strokeRoundedBank,
             size: AppDimensions.iconMd,
           ),
           label: t.settings.profileFields.commissionSbAccount,

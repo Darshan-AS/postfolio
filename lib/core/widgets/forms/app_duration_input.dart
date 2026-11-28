@@ -4,6 +4,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/forms/app_form_fields.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -15,9 +16,6 @@ class AppDurationInput extends HookWidget {
   final String? derivedString;
   final void Function(int years, int months) onChanged;
   final bool enabled;
-
-  /// Above this text scale the years and months fields stack instead of sharing a row.
-  static const double _stackAboveTextScale = 1.2;
 
   const AppDurationInput({
     super.key,
@@ -78,8 +76,8 @@ class AppDurationInput extends HookWidget {
       return AppTextField(
         controller: yearsController,
         labelText: t.common.duration.termYears,
-        prefixIcon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedCalendar01,
+        prefixIcon: const AppIcon(
+          HugeIcons.strokeRoundedCalendar01,
           size: AppDimensions.iconMd,
         ),
         isRequired: true,
@@ -93,8 +91,8 @@ class AppDurationInput extends HookWidget {
       value: selectedYears,
       labelText: t.common.duration.termYears,
       isRequired: true,
-      prefixIcon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedCalendar01,
+      prefixIcon: const AppIcon(
+        HugeIcons.strokeRoundedCalendar01,
         size: AppDimensions.iconMd,
       ),
       segments: allowedYears.map((year) {
@@ -117,10 +115,9 @@ class AppDurationInput extends HookWidget {
   }) {
     // Side by side, each field is too narrow for its label next to a leading icon, so the
     // icons are shown only when the fields are stacked (large text).
-    final stacked =
-        MediaQuery.textScalerOf(context).scale(1) > _stackAboveTextScale;
-    const calendarIcon = HugeIcon(
-      icon: HugeIcons.strokeRoundedCalendar01,
+    final stacked = AppDimensions.isLargeText(context);
+    const calendarIcon = AppIcon(
+      HugeIcons.strokeRoundedCalendar01,
       size: AppDimensions.iconMd,
     );
 

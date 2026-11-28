@@ -5,6 +5,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 typedef SettingsTileBuilder = Widget Function(AppGroupPosition position);
 
@@ -74,8 +75,8 @@ class SettingsRow extends StatelessWidget {
             ),
             child: Row(
               children: [
-                HugeIcon(
-                  icon: icon,
+                AppIcon(
+                  icon,
                   size: AppDimensions.iconMd,
                   color: scheme.onSurfaceVariant,
                 ),
@@ -104,8 +105,8 @@ class SettingsRow extends StatelessWidget {
                 if (trailing != null) ...[AppSpacings.gapSm, trailing!],
                 if (showChevron && trailing == null) ...[
                   AppSpacings.gapSm,
-                  HugeIcon(
-                    icon: HugeIcons.strokeRoundedArrowRight01,
+                  AppIcon(
+                    HugeIcons.strokeRoundedArrowRight01,
                     size: AppDimensions.iconMd,
                     color: scheme.onSurfaceVariant,
                   ),
@@ -162,8 +163,8 @@ class SettingsSwitchRow extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  HugeIcon(
-                    icon: icon,
+                  AppIcon(
+                    icon,
                     size: AppDimensions.iconMd,
                     color: enabled
                         ? scheme.onSurfaceVariant
@@ -246,8 +247,8 @@ class StartTabOptionTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            HugeIcon(
-              icon: _icon,
+            AppIcon(
+              _icon,
               size: AppDimensions.iconMd,
               color: selected
                   ? scheme.onSecondaryContainer
@@ -265,8 +266,8 @@ class StartTabOptionTile extends StatelessWidget {
               ),
             ),
             if (selected)
-              HugeIcon(
-                icon: HugeIcons.strokeRoundedTick02,
+              AppIcon(
+                HugeIcons.strokeRoundedTick02,
                 size: AppDimensions.iconMd,
                 color: scheme.onSecondaryContainer,
               ),

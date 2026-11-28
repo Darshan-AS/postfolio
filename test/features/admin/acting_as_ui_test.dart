@@ -402,13 +402,13 @@ void main() {
         expect(find.text(targetAgentB.displayLabel), findsOneWidget);
         expect(find.text(targetAgentA.displayLabel), findsNothing);
 
-        // Search with no matches -> empty state + clear filters.
+        // Search with no matches -> no-results empty state + clear filters.
         await tester.enterText(find.byType(SearchBar), 'nonexistent-xyz');
         await tester.pump(
           AppAnimations.debounce + const Duration(milliseconds: 50),
         );
         await tester.pumpAndSettle();
-        expect(find.text(t.admin.noOtherAgents), findsOneWidget);
+        expect(find.text(t.common.noResults), findsOneWidget);
 
         await tester.tap(find.text(t.common.clearFilters));
         await tester.pumpAndSettle();

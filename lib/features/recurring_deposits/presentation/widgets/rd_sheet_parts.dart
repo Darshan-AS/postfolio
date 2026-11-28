@@ -100,8 +100,8 @@ class RDSheetHeader extends StatelessWidget {
           AppSpacings.gapSm,
           IconButton(
             tooltip: t.common.close,
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedCancel01,
+            icon: const AppIcon(
+              HugeIcons.strokeRoundedCancel01,
               size: AppDimensions.iconMd,
             ),
             onPressed: onClose,

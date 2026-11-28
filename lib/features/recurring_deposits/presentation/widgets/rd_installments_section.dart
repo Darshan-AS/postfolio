@@ -6,12 +6,9 @@ import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_motion.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
-import 'package:postfolio/core/theme/app_surfaces.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
-import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
-import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
@@ -222,52 +219,18 @@ class _EmptyPassbook extends StatelessWidget {
 
   const _EmptyPassbook({required this.rdId, required this.isBusy});
 
-  /// Twice the avatar of a list row: the badge is the only thing on the page.
-  static const double _badgeSize = AppDimensions.avatarMd * 2;
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final ledger = t.recurringDeposits.ledger;
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingXl),
-      child: Column(
-        children: [
-          AppShapeAvatar(
-            size: _badgeSize,
-            shape: AppAvatarShape.cookie12,
-            backgroundColor: scheme.secondaryContainer,
-            foregroundColor: scheme.onSecondaryContainer,
-            child: const AppIcon(
-              HugeIcons.strokeRoundedCalendar03,
-              size: AppDimensions.iconXl - AppDimensions.paddingSm,
-            ),
-          ),
-          AppSpacings.gapLg,
-          Text(
-            ledger.schedule.emptyTitle,
-            style: AppTypography.emphasizedOf(context).titleMedium,
-            textAlign: TextAlign.center,
-          ),
-          AppSpacings.gapXs,
-          Text(
-            ledger.schedule.emptyHint,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          AppSpacings.gapLg,
-          AppButton(
-            label: ledger.passbook.collect,
-            icon: HugeIcons.strokeRoundedCoins01,
-            onPressed: isBusy
-                ? null
-                : () => showRDLogPaymentSheet(context, rdId: rdId),
-          ),
-        ],
-      ),
+    return EmptyStateView(
+      icon: HugeIcons.strokeRoundedCalendar03,
+      message: ledger.schedule.emptyTitle,
+      subtitle: ledger.schedule.emptyHint,
+      actionLabel: ledger.passbook.collect,
+      isPrimaryAction: true,
+      onAction: isBusy
+          ? null
+          : () => showRDLogPaymentSheet(context, rdId: rdId),
     );
   }
 }
@@ -281,49 +244,45 @@ class _PassbookSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final ledger = t.recurringDeposits.ledger;
-
-    Widget card({required double radius, required Widget child}) => Material(
-      color: scheme.raised,
-      shape: AppShapes.rounded(radius),
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.paddingLg),
-        child: child,
-      ),
-    );
 
     return Skeletonizer(
       enabled: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          card(
-            radius: AppShapes.extraLarge,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  ledger.passbook.nextDue,
-                  style: theme.textTheme.labelLarge,
-                ),
-                AppSpacings.gapXs,
-                Text(
-                  ledger.installmentsTitle,
-                  style: theme.textTheme.titleMedium,
-                ),
-                AppSpacings.gapMd,
-                Text(
-                  ledger.passbook.collect,
-                  style: theme.textTheme.headlineMedium,
-                ),
-              ],
+          AppGroupTile(
+            position: AppGroupPosition.first,
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.paddingLg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    ledger.passbook.nextDue,
+                    style: theme.textTheme.labelLarge,
+                  ),
+                  AppSpacings.gapXs,
+                  Text(
+                    ledger.installmentsTitle,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  AppSpacings.gapMd,
+                  Text(
+                    ledger.passbook.collect,
+                    style: theme.textTheme.headlineMedium,
+                  ),
+                ],
+              ),
             ),
           ),
-          AppSpacings.gapSm,
-          card(
-            radius: AppShapes.groupOuter,
-            child: Text(ledger.passbook.nothingReady),
+          const SizedBox(height: AppShapes.groupGap),
+          AppGroupTile(
+            position: AppGroupPosition.last,
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.paddingLg),
+              child: Text(ledger.passbook.nothingReady),
+            ),
           ),
           AppSpacings.gapLg,
           AppGroup(

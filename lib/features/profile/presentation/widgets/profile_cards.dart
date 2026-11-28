@@ -12,6 +12,7 @@ import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/features/admin/domain/acting_as_state.dart';
 import 'package:postfolio/features/profile/domain/agent_profile.dart';
 import 'package:postfolio/i18n/strings.g.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class AdminSwitchCard extends StatelessWidget {
   const AdminSwitchCard({
@@ -63,8 +64,8 @@ class AdminSwitchCard extends StatelessWidget {
                 size: AppDimensions.iconXl,
                 backgroundColor: avatarBg,
                 foregroundColor: avatarFg,
-                child: const HugeIcon(
-                  icon: HugeIcons.strokeRoundedUserSwitch,
+                child: const AppIcon(
+                  HugeIcons.strokeRoundedUserSwitch,
                   size: AppDimensions.iconMd,
                 ),
               ),
@@ -91,8 +92,8 @@ class AdminSwitchCard extends StatelessWidget {
                 ),
               ),
               AppSpacings.gapSm,
-              HugeIcon(
-                icon: HugeIcons.strokeRoundedArrowRight01,
+              AppIcon(
+                HugeIcons.strokeRoundedArrowRight01,
                 size: AppDimensions.iconMd,
                 color: onContainerColor,
               ),
@@ -140,17 +141,22 @@ class ProfileLicenseTile extends StatelessWidget {
     final hasLicenseNo = licenseNo != null && licenseNo!.isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingLg),
+      padding: EdgeInsetsDirectional.only(
+        start: AppDimensions.paddingLg,
+        top: AppDimensions.paddingLg,
+        bottom: AppDimensions.paddingLg,
+        end: hasLicenseNo ? AppDimensions.paddingXs : AppDimensions.paddingLg,
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           AppShapeAvatar(
             shape: AppAvatarShape.neutral,
             size: AppDimensions.iconXl,
             backgroundColor: palette?.container ?? scheme.primaryContainer,
             foregroundColor: palette?.onContainer ?? scheme.onPrimaryContainer,
-            child: const HugeIcon(
-              icon: HugeIcons.strokeRoundedId,
+            child: const AppIcon(
+              HugeIcons.strokeRoundedId,
               size: AppDimensions.iconMd,
             ),
           ),
@@ -171,28 +177,7 @@ class ProfileLicenseTile extends StatelessWidget {
                 ),
                 if (hasLicenseNo) ...[
                   AppSpacings.gapXs,
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(licenseNo!, style: emphasized.bodyLarge),
-                      ),
-                      IconButton(
-                        tooltip: t.common.copy,
-                        icon: HugeIcon(
-                          icon: HugeIcons.strokeRoundedCopy01,
-                          size: AppDimensions.iconSm,
-                          color: scheme.primary,
-                        ),
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: licenseNo!));
-                          AppFeedback.showSuccess(
-                            context,
-                            t.common.copiedToClipboard,
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                  Text(licenseNo!, style: emphasized.bodyLarge),
                 ],
                 if (validUntil != null && daysRemaining != null) ...[
                   AppSpacings.gapXs,
@@ -206,6 +191,19 @@ class ProfileLicenseTile extends StatelessWidget {
               ],
             ),
           ),
+          if (hasLicenseNo)
+            IconButton(
+              tooltip: t.common.copy,
+              icon: AppIcon(
+                HugeIcons.strokeRoundedCopy01,
+                size: AppDimensions.iconSm,
+                color: scheme.primary,
+              ),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: licenseNo!));
+                AppFeedback.showSuccess(context, t.common.copiedToClipboard);
+              },
+            ),
         ],
       ),
     );

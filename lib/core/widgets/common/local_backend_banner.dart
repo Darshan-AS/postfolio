@@ -8,6 +8,7 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 part 'local_backend_banner.g.dart';
 
@@ -62,8 +63,8 @@ class LocalBackendBanner extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  HugeIcon(
-                    icon: HugeIcons.strokeRoundedDatabase,
+                  AppIcon(
+                    HugeIcons.strokeRoundedDatabase,
                     size: AppDimensions.iconSm,
                     color: scheme.onSecondaryContainer,
                   ),

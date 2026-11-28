@@ -12,6 +12,7 @@ import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_detail_scaffold.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
+import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/screens/customer_detail_screen.dart';
 import 'package:postfolio/features/customers/presentation/screens/customers_screen.dart';
@@ -79,6 +80,10 @@ void main() {
 
   /// The title of the first section under the head.
   Finder section() => find.text(t.customers.sections.personalInfo);
+
+  CustomerRepository customersWithPersonalInfo() => FakeCustomerRepository(
+    customers: [rameshRao.copyWith(address: '12 MG Road')],
+  );
 
   Future<void> openFromRow(WidgetTester tester) async {
     await tester.tap(find.text(name));
@@ -172,7 +177,7 @@ void main() {
   });
 
   testWidgets('the rest of the head keeps out of their way', (tester) async {
-    await pumpSignedInApp(tester);
+    await pumpSignedInApp(tester, customers: customersWithPersonalInfo());
 
     // On the way in, the email line, the actions and the sections under the head are not
     // drawn: the name and the avatar pass through their places.
@@ -240,7 +245,10 @@ void main() {
     testWidgets(
       'while it is dragged the screen shrinks whole and nothing travels',
       (tester) async {
-        final router = await pumpSignedInApp(tester);
+        final router = await pumpSignedInApp(
+          tester,
+          customers: customersWithPersonalInfo(),
+        );
         await openAndDrag(tester, 0.6);
 
         // Both screens are in view with their own copies: the row's and the screen's.
@@ -296,7 +304,10 @@ void main() {
     testWidgets(
       'when it is dragged back to the edge nothing travels and the screen stays',
       (tester) async {
-        final router = await pumpSignedInApp(tester);
+        final router = await pumpSignedInApp(
+          tester,
+          customers: customersWithPersonalInfo(),
+        );
         await openAndDrag(tester, 0.5);
 
         await send(tester, 'cancelBackGesture');

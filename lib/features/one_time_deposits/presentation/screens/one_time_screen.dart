@@ -21,6 +21,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/maturity_urgency.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 class OneTimeDepositsScreen extends HookConsumerWidget {
   const OneTimeDepositsScreen({super.key});
@@ -63,8 +64,8 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                       criteria.sortField != OTDSortField.maturityDate ||
                       criteria.sortDirection != SortDirection.asc,
                   smallSize: AppDimensions.badgeSizeSm,
-                  child: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedSorting01,
+                  child: const AppIcon(
+                    HugeIcons.strokeRoundedSorting01,
                     size: AppDimensions.iconMd,
                   ),
                 ),
@@ -103,8 +104,8 @@ class OneTimeDepositsScreen extends HookConsumerWidget {
                 icon: Badge(
                   isLabelVisible: activeFilterCount > 0,
                   label: Text('$activeFilterCount'),
-                  child: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedFilter,
+                  child: const AppIcon(
+                    HugeIcons.strokeRoundedFilter,
                     size: AppDimensions.iconMd,
                   ),
                 ),

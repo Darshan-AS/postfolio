@@ -29,6 +29,7 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 
 import 'package:postfolio/core/extensions/string_extension.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
+import 'package:postfolio/core/widgets/common/app_icon.dart';
 
 /// The origin of a deposit's row on its customer's screen (`EntityHero.tagFrom`).
 const String _underCustomer = 'customer';
@@ -98,45 +99,53 @@ class CustomerDetailScreen extends ConsumerWidget {
             heroTag: heroTag,
             avatarText: customer.name.isNotEmpty
                 ? customer.name[0].toUpperCase()
-                : t.common.notProvided,
+                : '?',
             avatarShape: AppAvatarShape.forPerson(customer.name),
             title: customer.name,
             // A number or an address broken across two lines reads as two things, so each
             // stays on one line and shrinks when it has to.
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: AlignmentDirectional.centerStart,
-                  // Around the text itself: a line of text changes style on its way.
-                  child: EntityHero(
-                    tag: heroTag,
-                    part: EntityHeroPart.subtitle,
-                    child: Text(
-                      customer.phone?.toPhoneFormat() ?? t.common.notProvided,
-                      maxLines: 1,
-                      softWrap: false,
-                      style: textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    customer.email ?? t.common.notProvided,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            subtitle:
+                (customer.phone?.trim().isNotEmpty ?? false) ||
+                    (customer.email?.trim().isNotEmpty ?? false)
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (customer.phone != null &&
+                          customer.phone!.trim().isNotEmpty)
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          // Around the text itself: a line of text changes style on its way.
+                          child: EntityHero(
+                            tag: heroTag,
+                            part: EntityHeroPart.subtitle,
+                            child: Text(
+                              customer.phone!.toPhoneFormat(),
+                              maxLines: 1,
+                              softWrap: false,
+                              style: textTheme.bodyLarge?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (customer.email != null &&
+                          customer.email!.trim().isNotEmpty)
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            customer.email!,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                    ],
+                  )
+                : null,
             bottomActions: [
               if (customer.phone != null && customer.phone!.isNotEmpty) ...[
                 AppButton(
@@ -184,33 +193,37 @@ class CustomerDetailScreen extends ConsumerWidget {
             ],
           ),
           body: [
-            _buildPersonalInfo(context, ref, customer),
+            if ((customer.address != null &&
+                    customer.address!.trim().isNotEmpty) ||
+                customer.dateOfBirth != null) ...[
+              _buildPersonalInfo(context, ref, customer),
+              AppSpacings.gapLg,
+            ],
             if (customer.cifNumber != null ||
                 customer.aadhaarNumber != null ||
                 customer.panNumber != null) ...[
-              AppSpacings.gapLg,
               _buildIdentityDocuments(
                 customer,
                 maskSensitiveIds: maskSensitiveIds,
               ),
+              AppSpacings.gapLg,
             ],
             if (customer.savingsAccount != null) ...[
-              AppSpacings.gapLg,
               _buildSavingsBank(customer),
+              AppSpacings.gapLg,
             ],
             if (customer.savingsAccount != null &&
                 customer.savingsAccount!.nominees.isNotEmpty) ...[
-              AppSpacings.gapLg,
               NomineesDetailSection(
                 nominees: customer.savingsAccount!.nominees,
               ),
+              AppSpacings.gapLg,
             ],
             if (customer.notes != null &&
                 customer.notes!.trim().isNotEmpty) ...[
-              AppSpacings.gapLg,
               _buildNotes(customer),
+              AppSpacings.gapLg,
             ],
-            AppSpacings.gapLg,
             _CustomerDepositsSection(customerId: customerId),
           ],
         );
@@ -228,12 +241,13 @@ Widget _buildPersonalInfo(
       customer.address != null && customer.address!.trim().isNotEmpty;
   final items = <Widget>[
     DetailItem(
-      icon: const HugeIcon(
-        icon: HugeIcons.strokeRoundedLocation01,
+      icon: const AppIcon(
+        HugeIcons.strokeRoundedLocation01,
         size: AppDimensions.iconMd,
       ),
       label: t.customers.fields.homeAddress,
-      value: customer.address ?? t.common.notProvided,
+      value: customer.address,
+      hideIfNull: true,
       onTap: hasAddress
           ? () => ref
                 .read(intentServiceProvider)
@@ -242,8 +256,8 @@ Widget _buildPersonalInfo(
     ),
     if (customer.dateOfBirth != null)
       DetailItem(
-        icon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedCalendar01,
+        icon: const AppIcon(
+          HugeIcons.strokeRoundedCalendar01,
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.dateOfBirth,
@@ -299,8 +313,8 @@ Widget _buildIdentityDocuments(
   final items = <Widget>[
     if (customer.cifNumber != null && customer.cifNumber!.isNotEmpty)
       DetailItem(
-        icon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedTicket01,
+        icon: const AppIcon(
+          HugeIcons.strokeRoundedTicket01,
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.cif,
@@ -310,8 +324,8 @@ Widget _buildIdentityDocuments(
       ),
     if (customer.aadhaarNumber != null && customer.aadhaarNumber!.isNotEmpty)
       DetailItem(
-        icon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedId,
+        icon: const AppIcon(
+          HugeIcons.strokeRoundedId,
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.aadhaarNumber,
@@ -323,8 +337,8 @@ Widget _buildIdentityDocuments(
       ),
     if (customer.panNumber != null && customer.panNumber!.isNotEmpty)
       DetailItem(
-        icon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedCreditCard,
+        icon: const AppIcon(
+          HugeIcons.strokeRoundedCreditCard,
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.panNumber,
@@ -348,13 +362,14 @@ Widget _buildSavingsBank(Customer customer) {
     title: t.customers.sections.savingsBank,
     children: [
       DetailItem(
-        icon: const HugeIcon(
-          icon: HugeIcons.strokeRoundedBank,
+        icon: const AppIcon(
+          HugeIcons.strokeRoundedBank,
           size: AppDimensions.iconMd,
         ),
         label: t.customers.fields.sbAccountNumber,
-        value: sbAccountNo ?? t.common.notProvided,
+        value: sbAccountNo,
         copyValue: sbAccountNo,
+        hideIfNull: true,
       ),
     ],
   );
@@ -488,6 +503,7 @@ class _DepositCategorySection<T> extends HookWidget {
               icon: showClosed.value
                   ? HugeIcons.strokeRoundedArrowUp01
                   : HugeIcons.strokeRoundedArrowDown01,
+              flushStart: true,
               onPressed: () => showClosed.value = !showClosed.value,
             ),
           ),
