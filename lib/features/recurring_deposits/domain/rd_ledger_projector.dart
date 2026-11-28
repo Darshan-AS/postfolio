@@ -9,6 +9,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.d
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 /// The ledger brain: a pure, deterministic fold from facts to a passbook.
 ///
@@ -72,9 +73,7 @@ final class RDLedgerProjector {
       final covered = <int>[];
       for (var k = 0; k < ev.installmentCount; k++) {
         if (depositedThrough >= n) {
-          warnings.add(
-            'PO deposit ${ev.id} exceeds the schedule; extra installments ignored',
-          );
+          warnings.add(t.errors.ledgerPoDepositExceedsSchedule(id: ev.id));
           break;
         }
         depositedThrough++;
@@ -420,20 +419,23 @@ final class RDLedgerProjector {
     for (final stored in facts.poDeposits) {
       if (stored.id == id) return Success(stored);
     }
-    if (count <= 0) return const Failure('Nothing to deposit.');
+    if (count <= 0) return Failure(t.errors.ledgerNothingToDeposit);
     if (feeOverride != null && Money.toPaise(feeOverride) < 0) {
-      return const Failure('Counter fee cannot be negative.');
+      return Failure(t.errors.ledgerNegativeCounterFee);
     }
     final remaining = facts.deposit.totalMonths - facts.depositedThroughNo;
     if (count > remaining) {
-      return Failure('Only $remaining installment(s) remain on this account.');
+      return Failure(
+        t.errors.ledgerRemainingInstallmentsExceeded(remaining: remaining),
+      );
     }
     final day = depositedOn.toDateOnly();
     final latest = facts.latestPoDeposit;
     if (latest != null && day.isBefore(latest.depositedOn.toDateOnly())) {
       return Failure(
-        'Deposit date cannot be before the last recorded visit '
-        '(${latest.depositedOn.toDateOnlyString()}).',
+        t.errors.ledgerDepositDateBeforeLastVisit(
+          date: latest.depositedOn.toDateOnlyString(),
+        ),
       );
     }
     final quote = quoteNextDeposit(

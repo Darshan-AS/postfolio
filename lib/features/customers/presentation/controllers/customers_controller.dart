@@ -1,6 +1,6 @@
 import 'dart:collection';
 
-import 'package:postfolio/features/customers/domain/customer_search_criteria.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
 import 'package:postfolio/core/models/nominee.dart';
 import 'package:postfolio/core/providers/session_provider.dart';
@@ -8,10 +8,22 @@ import 'package:postfolio/core/services/storage_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
+import 'package:postfolio/features/customers/domain/customer_search_criteria.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
+import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
+import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
+import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:uuid/uuid.dart';
 
 part 'customers_controller.g.dart';
+
+typedef CustomerDepositsSummary = ({
+  List<OneTimeDeposit> activeOneTime,
+  List<OneTimeDeposit> closedOneTime,
+  List<RecurringDeposit> activeRecurring,
+  List<RecurringDeposit> closedRecurring,
+});
 
 @riverpod
 class CustomerListCriteria extends _$CustomerListCriteria {
@@ -203,4 +215,42 @@ Stream<Customer> customerById(Ref ref, String id) {
       Failure(error: final error) => throw Exception(error),
     };
   });
+}
+
+@riverpod
+CustomerDepositsSummary customerDeposits(Ref ref, String customerId) {
+  final otds =
+      ref
+          .watch(oneTimeDepositsControllerProvider)
+          .value
+          ?.where((d) => d.customerId == customerId)
+          .toList() ??
+      const <OneTimeDeposit>[];
+  final rds =
+      ref
+          .watch(recurringDepositsControllerProvider)
+          .value
+          ?.where((d) => d.customerId == customerId)
+          .toList() ??
+      const <RecurringDeposit>[];
+
+  final activeOneTime =
+      otds.where((d) => d.status == DepositStatus.active).toList()
+        ..sort(OneTimeDeposit.defaultCompare);
+  final closedOneTime =
+      otds.where((d) => d.status == DepositStatus.closed).toList()
+        ..sort(OneTimeDeposit.defaultCompare);
+  final activeRecurring =
+      rds.where((d) => d.status == DepositStatus.active).toList()
+        ..sort(RecurringDeposit.defaultCompare);
+  final closedRecurring =
+      rds.where((d) => d.status == DepositStatus.closed).toList()
+        ..sort(RecurringDeposit.defaultCompare);
+
+  return (
+    activeOneTime: List.unmodifiable(activeOneTime),
+    closedOneTime: List.unmodifiable(closedOneTime),
+    activeRecurring: List.unmodifiable(activeRecurring),
+    closedRecurring: List.unmodifiable(closedRecurring),
+  );
 }

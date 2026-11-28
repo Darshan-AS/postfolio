@@ -45,3 +45,24 @@ String? activeSessionKey(Ref ref) {
     return null;
   }
 }
+
+/// Agent id whose portfolio is currently read and written (active Acting-As target when set,
+/// otherwise the signed-in user). Lives in `core/providers/` so repositories never import a
+/// presentation controller.
+@riverpod
+String? effectiveAgentId(Ref ref) {
+  final targetId = ref.watch(
+    actingAsControllerProvider.select((state) => state.targetAgentId),
+  );
+  if (targetId != null) return targetId;
+
+  try {
+    final authState = ref.watch(authControllerProvider);
+    return switch (authState) {
+      AuthStateAuthenticated(:final user) => user.id,
+      _ => null,
+    };
+  } catch (_) {
+    return null;
+  }
+}

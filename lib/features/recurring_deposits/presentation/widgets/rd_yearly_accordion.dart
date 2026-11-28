@@ -8,18 +8,10 @@ import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projection.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_tile.dart';
 import 'package:postfolio/i18n/strings.g.dart';
-
-/// One schedule year, bucketed once per projection.
-typedef _YearBucket = ({
-  int yearIndex,
-  List<RDInstallment> months,
-  int settledCount,
-  bool isSettled,
-});
 
 /// Passbook month list: one group per schedule year in chronological order. A group is a
 /// header row and, while the year is open, its months as grouped tiles below it.
@@ -46,39 +38,13 @@ class RDYearlyAccordion extends HookWidget {
 
   static const int _monthsPerYear = 12;
 
-  static List<_YearBucket> _bucket(
-    List<RDInstallment> installments,
-    DateTime now,
-  ) {
-    final numYears = (installments.length / _monthsPerYear).ceil();
-    final buckets = <_YearBucket>[];
-    for (var y = 0; y < numYears; y++) {
-      final months = installments.sublist(
-        y * _monthsPerYear,
-        ((y + 1) * _monthsPerYear).clamp(0, installments.length),
-      );
-      final settledCount = months.where((inst) {
-        final status = inst.displayStatusAt(now);
-        return status == RDInstallmentDisplayStatus.settled ||
-            status == RDInstallmentDisplayStatus.baseline;
-      }).length;
-      buckets.add((
-        yearIndex: y,
-        months: months,
-        settledCount: settledCount,
-        isSettled: settledCount == months.length,
-      ));
-    }
-    return List.unmodifiable(buckets);
-  }
-
   @override
   Widget build(BuildContext context) {
     // Bucketing walks every month; do it once per projection / clock tick, not per frame.
-    final years = useMemoized(() => _bucket(installments, now), [
-      installments,
-      now,
-    ]);
+    final years = useMemoized(
+      () => RDLedgerProjection.yearlyBucketsAt(installments, now),
+      [installments, now],
+    );
     final numYears = years.length;
     // With nothing due, the final year (where the last activity sits) is the "current" one.
     final currentYearIndex = nextDueNo == null
@@ -107,7 +73,7 @@ class RDYearlyAccordion extends HookWidget {
 
 /// A year of the schedule: the header row toggles the month rows below it.
 class _YearSection extends HookWidget {
-  final _YearBucket bucket;
+  final RDScheduleYearBucket bucket;
   final DateTime now;
   final bool initiallyExpanded;
   final ValueChanged<RDInstallment> onTapMonth;

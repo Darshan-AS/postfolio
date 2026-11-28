@@ -160,7 +160,7 @@ void main() {
         expect(decoded.id, 'a-1');
         expect(decoded.agencyCode, '  AG-42  ');
         expect(decoded.displayLabel, 'Asha Rao');
-        expect(decoded.supportingLabel, 'asha@example.com • AG-42');
+        expect(decoded.supportingLabel, 'asha@example.com · AG-42');
         expect(decoded.toJson()['agency_code'], '  AG-42  ');
 
         const emailFallback = AgentProfile(
@@ -387,23 +387,21 @@ void main() {
         (_, next) => keyChanges.add(next),
         fireImmediately: true,
       );
-      c.listen(rDHubSelectionProvider, (_, _) {});
       c.listen(rDHubFiltersProvider, (_, _) {});
+      c.listen(rDHubMonthProvider, (_, _) {});
 
       expect(keyChanges, ['auth:admin-1']);
 
-      // Switch to agent B -> new session key resets Hub selection/filters.
-      c.read(rDHubSelectionProvider.notifier).selectAll(['inst-1']);
+      // Switch to agent B -> new session key resets Hub filters & month.
       c.read(rDHubFiltersProvider.notifier).setSearchQuery('old-query');
+      c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 1, 1));
       await c.read(actingAsControllerProvider.notifier).startActingAs(agentB);
       await Future<void>.delayed(Duration.zero);
       expect(c.read(activeSessionKeyProvider), 'auth:admin-1:as:agent-b');
       expect(keyChanges, ['auth:admin-1', 'auth:admin-1:as:agent-b']);
-      expect(c.read(rDHubSelectionProvider).count, 0);
       expect(c.read(rDHubFiltersProvider).searchQuery, isEmpty);
 
       // Accumulate state under agent B, then switch to agent C -> new key resets session state.
-      c.read(rDHubSelectionProvider.notifier).selectAll(['inst-b1']);
       c.read(rDHubFiltersProvider.notifier).setSearchQuery('bhavna-query');
 
       await c.read(actingAsControllerProvider.notifier).startActingAs(agentC);
@@ -413,7 +411,6 @@ void main() {
         'auth:admin-1:as:agent-b',
         'auth:admin-1:as:agent-c',
       ]);
-      expect(c.read(rDHubSelectionProvider).count, 0);
       expect(c.read(rDHubFiltersProvider).searchQuery, isEmpty);
 
       // Stop acting as -> returns to admin's own session key.

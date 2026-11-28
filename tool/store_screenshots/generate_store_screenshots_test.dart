@@ -27,10 +27,8 @@ import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_reposi
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/screens/recurring_deposits_screen.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_po_visit_sheet.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skeletonizer/skeletonizer.dart' show SkeletonizerConfig;
@@ -568,20 +566,13 @@ void main() {
     testWidgets('06_po_visit_planner', (tester) async {
       await _pumpPortraitSlide(
         tester,
-        route: '/rd?view=hub',
-        badge: 'BATCH PO VISITS',
-        headline: 'Plan Post Office\ndeposit lots easily',
-        subtitle: 'Cash & UPI totals, counter fees & ₹20k lot splits',
+        route: '/recurring-deposits/demo-rd-clark?tab=transactions',
+        badge: 'PASSBOOK & PO DEPOSITS',
+        headline: 'Every customer payment\n& PO visit in sync',
+        subtitle: 'Track installments, cash vs digital & PO deposit receipts',
         slideIndex: 5,
         captionPlacement: CaptionPlacement.bottom,
         outputFile: '06_po_visit_planner.png',
-        afterRouteSettled: (container) async {
-          container.read(rDPoVisitPlannerProvider.notifier).start();
-          final context = tester.element(find.byType(RecurringDepositsScreen));
-          // Open the modal bottom sheet without awaiting dismissal.
-          // ignore: unawaited_futures
-          showRDPoVisitPlanner(context);
-        },
       );
     });
 

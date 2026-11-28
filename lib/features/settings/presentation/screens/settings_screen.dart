@@ -10,7 +10,6 @@ import 'package:postfolio/core/env/env.dart';
 import 'package:postfolio/core/providers/app_preferences_provider.dart';
 import 'package:postfolio/core/providers/theme_provider.dart';
 import 'package:postfolio/core/services/intent_service.dart';
-import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
@@ -21,9 +20,7 @@ import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/core/widgets/feedback/app_sheet_header.dart';
 import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
-import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
-import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
+import 'package:postfolio/features/settings/presentation/controllers/settings_controller.dart';
 import 'package:postfolio/features/settings/presentation/widgets/settings_tiles.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
@@ -165,11 +162,8 @@ class SettingsScreen extends ConsumerWidget {
                         subtitle: t.settings.resetFiltersSubtitle,
                         onTap: () async {
                           await ref
-                              .read(storageServiceProvider)
-                              .clearListCriteria();
-                          ref.invalidate(customerListCriteriaProvider);
-                          ref.invalidate(oneTimeListCriteriaProvider);
-                          ref.invalidate(recurringListCriteriaProvider);
+                              .read(settingsControllerProvider.notifier)
+                              .resetAllListCriteria();
                           if (context.mounted) {
                             AppFeedback.showSuccess(
                               context,
@@ -242,7 +236,7 @@ class SettingsScreen extends ConsumerWidget {
                         icon: HugeIcons.strokeRoundedTag01,
                         title: t.settings.appVersion,
                         subtitle: Env.isLocalBackend
-                            ? '${AppInfo.displayVersion} • ${t.settings.localBackendTag}'
+                            ? '${AppInfo.displayVersion}${t.format.bulletSeparator}${t.settings.localBackendTag}'
                             : AppInfo.displayVersion,
                         trailing: IconButton(
                           key: const ValueKey('settings_copy_version_button'),

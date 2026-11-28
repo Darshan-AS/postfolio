@@ -16,7 +16,6 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_mode
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -104,9 +103,7 @@ void _keepHub(ProviderContainer c) {
   c.listen(filteredMonthlyOperationsProvider, (_, _) {});
   c.listen(monthlyOperationsKpiProvider, (_, _) {});
   c.listen(globalAgentFloatProvider, (_, _) {});
-  c.listen(batchSelectionSummaryProvider, (_, _) {});
   c.listen(rdIdsMissingSummaryProvider, (_, _) {});
-  c.listen(rDHubSelectionProvider, (_, _) {});
   c.listen(rDHubFiltersProvider, (_, _) {});
 }
 
@@ -615,168 +612,42 @@ void main() {
       );
     });
 
-    test(
-      'selection unions and only exits via clear; batch summary splits collected vs pocket',
-      () async {
-        final h = _harness(
-          deposits: [
-            _deposit('rd1'),
-            _deposit('rd2', customer: 'c2'),
-          ],
-          transactions: {
-            'rd1': [_tx('rd1', 't', 4000, DateTime(2026, 1, 12))],
-          },
-        );
-        final c = h.container;
-        _keepHub(c);
-        c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
-        await c
-            .read(rDMonthlyOperationsActionsProvider.notifier)
-            .ensureSummaries();
-        await _settle();
-        final items = await c.read(monthlyOperationItemsProvider.future);
-        final ids = items.map((i) => i.installment.id).toList();
+    test('filters: search by name, status, and due window', () async {
+      final h = _harness(
+        deposits: [
+          _deposit('rd1'),
+          _deposit('rd2', customer: 'c2', start: DateTime(2026, 1, 20)),
+        ],
+      );
+      final c = h.container;
+      _keepHub(c);
+      c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
+      await c.read(monthlyOperationItemsProvider.future);
 
-        final sel = c.read(rDHubSelectionProvider.notifier);
-        sel.toggle(ids[0]);
-        sel.selectAll([ids[1]]);
-        expect(
-          c.read(rDHubSelectionProvider).count,
-          2,
-          reason: 'selectAll is a union',
-        );
-        sel.toggle(ids[0]);
-        sel.toggle(ids[1]);
-        expect(
-          c.read(rDHubSelectionProvider).isSelectionMode,
-          isTrue,
-          reason: 'un-ticking the last row must not exit selection mode',
-        );
-        sel.selectAll(ids);
+      final f = c.read(rDHubFiltersProvider.notifier);
+      f.setSearchQuery('c2');
+      expect(
+        (await c.read(
+          filteredMonthlyOperationsProvider.future,
+        )).single.deposit.id,
+        'rd2',
+      );
+      f.clear();
+      f.toggleDueWindow(RDDueWindowFilter.secondHalf);
+      expect(
+        (await c.read(
+          filteredMonthlyOperationsProvider.future,
+        )).single.deposit.id,
+        'rd2',
+        reason: 'start on the 20th → due at end of month',
+      );
+      f.clear();
+      f.setStatus(RDMonthlyFilter.settled);
+      expect(await c.read(filteredMonthlyOperationsProvider.future), isEmpty);
 
-        final batch = c.read(batchSelectionSummaryProvider);
-        expect(batch.count, 2);
-        expect(batch.depositable.map((i) => i.deposit.id), [
-          'rd1',
-        ], reason: 'rd2 has nothing collected');
-        expect(batch.readyInstallments, 4);
-      },
-    );
-
-    test(
-      'PO visit planner quotes the counter amount, groups cash lots, records one batch and undoes it',
-      () async {
-        final h = _harness(
-          deposits: [
-            _deposit('rd1'),
-            _deposit('rd2', customer: 'c2'),
-          ],
-          transactions: {
-            'rd1': [_tx('rd1', 't', 4000, DateTime(2026, 1, 12))],
-            'rd2': [
-              RDTransaction(
-                id: 'u',
-                rdId: 'rd2',
-                paidDate: DateTime(2026, 1, 12),
-                amount: 1000,
-                paymentMode: RDPaymentMode.upi,
-              ),
-            ],
-          },
-        );
-        final c = h.container;
-        _keepHub(c);
-        c.listen(rDPoVisitPlannerProvider, (_, _) {});
-        c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
-        await c
-            .read(rDMonthlyOperationsActionsProvider.notifier)
-            .ensureSummaries();
-        await _settle();
-        await c.read(monthlyOperationItemsProvider.future);
-
-        final planner = c.read(rDPoVisitPlannerProvider.notifier);
-        planner.start();
-        var plan = c.read(rDPoVisitPlannerProvider);
-        expect(plan.lines.map((l) => l.rdId), ['rd1', 'rd2']);
-        expect(plan.accountCount, 2);
-        expect(plan.installmentCount, 5);
-        // rd1: #1..#4 paid on time; depositing on 20 Apr → fees 30+20+10+10 = 70 → 4070 (all cash).
-        // rd2: #1 paid on time (UPI); deposited 20 Apr → fee 30 → 1030 (digital).
-        expect(plan.totalAmount, 5100);
-        expect(plan.totalFee, 100);
-        expect(plan.totalCash, 4070);
-        expect(plan.totalDigital, 1030);
-        expect(plan.totalFromPocket, 0);
-        expect(plan.cashLots.single.cashAmount, 4070);
-
-        // Pay one extra month for rd2 (#2, due 15 Feb, 2 months late → 20) from pocket.
-        planner.setFromPocketCount('rd2', 1);
-        plan = c.read(rDPoVisitPlannerProvider);
-        final rd2 = plan.lines.firstWhere((l) => l.rdId == 'rd2');
-        expect(rd2.count, 2);
-        expect(rd2.fromPocket, 1020);
-        expect(plan.totalFromPocket, 1020);
-
-        // Excluding an account removes it from the visit.
-        planner.toggleIncluded('rd1');
-        expect(c.read(rDPoVisitPlannerProvider).accountCount, 1);
-        planner.toggleIncluded('rd1');
-
-        final r = await planner.record();
-        expect(r, isA<Success<String, String>>());
-        final batchId = (r as Success<String, String>).value;
-        expect(h.ledger.poDepositsOf('rd1').single.batchId, batchId);
-        expect(h.ledger.poDepositsOf('rd1').single.installmentCount, 4);
-        expect(h.ledger.poDepositsOf('rd1').single.amount, 4070);
-        expect(h.ledger.poDepositsOf('rd2').single.installmentCount, 2);
-
-        expect(await planner.undoVisit(batchId), isA<Success<void, String>>());
-        expect(h.ledger.poDepositsOf('rd1'), isEmpty);
-        expect(h.ledger.poDepositsOf('rd2'), isEmpty);
-      },
-    );
-
-    test(
-      'filters: search by name, status, and due window; month change clears selection',
-      () async {
-        final h = _harness(
-          deposits: [
-            _deposit('rd1'),
-            _deposit('rd2', customer: 'c2', start: DateTime(2026, 1, 20)),
-          ],
-        );
-        final c = h.container;
-        _keepHub(c);
-        c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
-        await c.read(monthlyOperationItemsProvider.future);
-
-        final f = c.read(rDHubFiltersProvider.notifier);
-        f.setSearchQuery('c2');
-        expect(
-          (await c.read(
-            filteredMonthlyOperationsProvider.future,
-          )).single.deposit.id,
-          'rd2',
-        );
-        f.clear();
-        f.toggleDueWindow(RDDueWindowFilter.secondHalf);
-        expect(
-          (await c.read(
-            filteredMonthlyOperationsProvider.future,
-          )).single.deposit.id,
-          'rd2',
-          reason: 'start on the 20th → due at end of month',
-        );
-        f.clear();
-        f.setStatus(RDMonthlyFilter.settled);
-        expect(await c.read(filteredMonthlyOperationsProvider.future), isEmpty);
-
-        c.read(rDHubSelectionProvider.notifier).toggle('x');
-        c.read(rDHubMonthProvider.notifier).nextMonth();
-        expect(c.read(rDHubSelectionProvider).count, 0);
-        expect(c.read(rDHubMonthProvider), DateTime(2026, 5, 1));
-      },
-    );
+      c.read(rDHubMonthProvider.notifier).nextMonth();
+      expect(c.read(rDHubMonthProvider), DateTime(2026, 5, 1));
+    });
 
     test(
       'default serialNo sort keeps fixed order when overdue; overdueFirst ranks multi-month arrears ahead of 1-month overdue; customerName sorts cleanly',
@@ -1246,14 +1117,16 @@ void main() {
     );
 
     test(
-      'PO visit planner supports counter fee override, preserves edits on includeUnready, and validates batches atomically',
+      'depositBatchToPo validates upfront, writes batch atomically, and undoBatch reverts it',
       () async {
         final h = _harness(
-          deposits: [_deposit('rd1'), _deposit('rd2')],
+          deposits: [
+            _deposit('rd1'),
+            _deposit('rd2', customer: 'c2'),
+          ],
           transactions: {
             'rd1': [_tx('rd1', 't1', 2000, DateTime(2026, 1, 10))],
           },
-          // rd2 already has a PO deposit on 20 Apr, so a backdated 18 Apr batch must fail upfront!
           poDeposits: {
             'rd2': [
               RDPoDeposit(
@@ -1269,136 +1142,35 @@ void main() {
         );
         final c = h.container;
         _keepHub(c);
-        c.listen(rDPoVisitPlannerProvider, (_, _) {});
-        c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
-        await c
-            .read(rDMonthlyOperationsActionsProvider.notifier)
-            .ensureSummaries();
-        await _settle();
-        await c.read(monthlyOperationItemsProvider.future);
+        final n = c.read(rDLedgerControllerProvider.notifier);
 
-        final planner = c.read(rDPoVisitPlannerProvider.notifier);
-        planner.start();
-        // Override counter fee on rd1 (#1 & #2 late on 20 Apr -> formula ₹50, counter waived to ₹0).
-        planner.setFeeOverride('rd1', 0);
-        expect(c.read(rDPoVisitPlannerProvider).totalFee, 0);
-        expect(c.read(rDPoVisitPlannerProvider).totalAmount, 2000);
-        expect(
-          c.read(rDPoVisitPlannerProvider).cashLots.single.cashAmount,
-          2000,
-        );
-
-        // Showing unready accounts keeps rd1's ₹0 fee override intact.
-        planner.setIncludeUnready(true);
-        final rd1Line = c
-            .read(rDPoVisitPlannerProvider)
-            .lines
-            .firstWhere((l) => l.rdId == 'rd1');
-        expect(rd1Line.feeOverride, 0);
-        expect(rd1Line.amount, 2000);
-
-        // Deposit 1 month from pocket on rd2 and set visit date to 18 Apr (before rd2's existing 20 Apr PO visit).
-        // All-or-nothing upfront validation must reject BEFORE writing rd1!
-        planner.setFromPocketCount('rd2', 1);
-        planner.setDate(DateTime(2026, 4, 18));
-        final rejected = await planner.record();
-        expect(rejected, isA<Failure<String, String>>());
-        expect(
-          h.ledger.poDepositsOf('rd1'),
-          isEmpty,
-          reason: 'atomic batch: rd1 not written when rd2 fails',
-        );
-      },
-    );
-
-    test(
-      'PO visit stays within the accounts it was opened for when "include unready" is toggled',
-      () async {
-        // rd1 and rd2 have collected money (ready); rd3 and rd4 have nothing collected (unready).
-        final h = _harness(
-          deposits: [
-            _deposit('rd1'),
-            _deposit('rd2', customer: 'c2'),
-            _deposit('rd3', customer: 'c3'),
-            _deposit('rd4', customer: 'c4'),
+        // Backdated batch before rd2's existing 20 Apr PO visit fails upfront without writing rd1.
+        final rejected = await n.depositBatchToPo(
+          lines: [
+            (rdId: 'rd1', count: 2, feeOverride: 0.0),
+            (rdId: 'rd2', count: 1, feeOverride: null),
           ],
-          transactions: {
-            'rd1': [_tx('rd1', 't1', 2000, DateTime(2026, 1, 10))],
-            'rd2': [_tx('rd2', 't2', 1000, DateTime(2026, 1, 10))],
-          },
+          depositedOn: DateTime(2026, 4, 18),
         );
-        final c = h.container;
-        _keepHub(c);
-        c.listen(rDPoVisitPlannerProvider, (_, _) {});
-        c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
-        await c
-            .read(rDMonthlyOperationsActionsProvider.notifier)
-            .ensureSummaries();
-        await _settle();
-        final items = await c.read(monthlyOperationItemsProvider.future);
-        final picked = [
-          for (final i in items)
-            if (i.deposit.id == 'rd1' || i.deposit.id == 'rd3') i,
-        ];
+        expect(rejected, isA<Failure<String, String>>());
+        expect(h.ledger.poDepositsOf('rd1'), isEmpty);
 
-        // The agent ticked rd1 (ready) and rd3 (unready) in the Hub and opened the planner.
-        final planner = c.read(rDPoVisitPlannerProvider.notifier);
-        planner.start(items: picked);
-        List<String> lineIds() => [
-          for (final l in c.read(rDPoVisitPlannerProvider).lines) l.rdId,
-        ];
-        expect(
-          lineIds(),
-          ['rd1'],
-          reason:
-              'only the ready account of the selection is listed by default',
+        // Valid atomic batch across both accounts records and undoes cleanly.
+        final saved = await n.depositBatchToPo(
+          lines: [
+            (rdId: 'rd1', count: 2, feeOverride: 0.0),
+            (rdId: 'rd2', count: 1, feeOverride: null),
+          ],
+          depositedOn: DateTime(2026, 4, 21),
         );
+        expect(saved, isA<Success<String, String>>());
+        final batchId = (saved as Success<String, String>).value;
+        expect(h.ledger.poDepositsOf('rd1').single.feePaid, 0);
+        expect(h.ledger.poDepositsOf('rd2'), hasLength(2));
 
-        planner.setIncludeUnready(true);
-        expect(
-          lineIds(),
-          ['rd1', 'rd3'],
-          reason:
-              'unready accounts come from the selection, never from the rest of the Hub',
-        );
-        expect(c.read(rDPoVisitPlannerProvider).includeUnready, isTrue);
-
-        planner.setIncludeUnready(false);
-        expect(
-          lineIds(),
-          ['rd1'],
-          reason:
-              'toggling back must not leave rd2 (never selected) in the visit',
-        );
-
-        // An unready account the agent chose to pay from pocket stays in the visit when the rest are hidden.
-        planner.setIncludeUnready(true);
-        planner.setFromPocketCount('rd3', 1);
-        planner.setIncludeUnready(false);
-        expect(lineIds(), [
-          'rd1',
-          'rd3',
-        ], reason: 'hiding unready accounts must not drop a from-pocket line');
-
-        final r = await planner.record();
-        expect(r, isA<Success<String, String>>());
-        expect(h.ledger.poDepositsOf('rd1'), hasLength(1));
-        expect(h.ledger.poDepositsOf('rd3').single.installmentCount, 1);
-        expect(
-          h.ledger.poDepositsOf('rd2'),
-          isEmpty,
-          reason: 'rd2 was ready but never selected',
-        );
-        expect(
-          h.ledger.poDepositsOf('rd4'),
-          isEmpty,
-          reason: 'rd4 was never selected',
-        );
-
-        // Opened from the Hub header (no selection) the scope is every account in the Hub.
-        planner.start();
-        planner.setIncludeUnready(true);
-        expect(lineIds().toSet(), {'rd1', 'rd2', 'rd3', 'rd4'});
+        expect(await n.undoBatch(batchId), isA<Success<void, String>>());
+        expect(h.ledger.poDepositsOf('rd1'), isEmpty);
+        expect(h.ledger.poDepositsOf('rd2'), hasLength(1));
       },
     );
 
@@ -1631,170 +1403,6 @@ void main() {
           'rd1',
           'rd2',
         ], reason: 'an edit must never create a new account');
-      },
-    );
-  });
-
-  group('PO visit write path', () {
-    // rd1 has two collected months and rd2 one, all paid on time; the visit is on 20 Apr.
-    Future<
-      ({
-        ProviderContainer c,
-        FakeRDLedgerRepository ledger,
-        RDPoVisitPlanner planner,
-      })
-    >
-    openVisit() async {
-      final h = _harness(
-        deposits: [
-          _deposit('rd1'),
-          _deposit('rd2', customer: 'c2'),
-        ],
-        transactions: {
-          'rd1': [_tx('rd1', 't1', 2000, DateTime(2026, 1, 10))],
-          'rd2': [_tx('rd2', 't2', 1000, DateTime(2026, 1, 10))],
-        },
-        retryFailedProviders: false,
-      );
-      // A real round trip is long enough for unlistened fact providers to be torn down.
-      h.ledger.writeLatency = const Duration(milliseconds: 30);
-      final c = h.container;
-      _keepHub(c);
-      c.listen(rDPoVisitPlannerProvider, (_, _) {});
-      c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
-      await c
-          .read(rDMonthlyOperationsActionsProvider.notifier)
-          .ensureSummaries();
-      await _settle();
-      await c.read(monthlyOperationItemsProvider.future);
-      final planner = c.read(rDPoVisitPlannerProvider.notifier)..start();
-      return (c: c, ledger: h.ledger, planner: planner);
-    }
-
-    test(
-      'a saved visit is reported as saved even if nothing can be read afterwards',
-      () async {
-        final v = await openVisit();
-        v.ledger.onChangeApplied = () => v.ledger.failReadsWith = 'offline';
-
-        final r = await v.planner.record();
-
-        expect(
-          r,
-          isA<Success<String, String>>(),
-          reason:
-              'the visit and its summaries are one write; nothing is read after it',
-        );
-        expect(v.ledger.poDepositsOf('rd1').single.installmentCount, 2);
-        expect(v.ledger.poDepositsOf('rd2').single.installmentCount, 1);
-        expect(
-          v.ledger.summaryOf('rd1')!.depositedThroughNo,
-          2,
-          reason:
-              'summaries are projected from the facts already in hand, with no further reads',
-        );
-        expect(v.ledger.summaryOf('rd2')!.depositedThroughNo, 1);
-      },
-    );
-
-    test('a visit and its summaries are stored together or not at all', () async {
-      final v = await openVisit();
-      v.ledger.failSummaryWith = 'summary rejected';
-
-      expect(await v.planner.record(), isA<Failure<String, String>>());
-      expect(
-        v.ledger.poDepositsOf('rd1'),
-        isEmpty,
-        reason:
-            'deposits must not be stored while the Hub still shows them as pending',
-      );
-      expect(v.ledger.poDepositsOf('rd2'), isEmpty);
-
-      v.ledger.failSummaryWith = null;
-      expect(await v.planner.record(), isA<Success<String, String>>());
-      expect(v.ledger.poDepositsOf('rd1'), hasLength(1));
-      expect(v.ledger.summaryOf('rd1')!.depositedThroughNo, 2);
-    });
-
-    test(
-      'retrying a visit whose first attempt was saved but reported as failed deposits nothing twice',
-      () async {
-        final v = await openVisit();
-        v.ledger.failApplyAfterCommitOnce = 'response lost';
-
-        expect(await v.planner.record(), isA<Failure<String, String>>());
-        final retry = await v.planner.record();
-
-        expect(retry, isA<Success<String, String>>());
-        expect(
-          v.ledger.poDepositsOf('rd1'),
-          hasLength(1),
-          reason: 'the retry must not deposit months 3 and 4',
-        );
-        expect(v.ledger.poDepositsOf('rd2'), hasLength(1));
-        expect(v.ledger.summaryOf('rd1')!.depositedThroughNo, 2);
-        expect(v.ledger.summaryOf('rd2')!.depositedThroughNo, 1);
-        final batchId = (retry as Success<String, String>).value;
-        expect(
-          v.ledger.poDepositsOf('rd1').single.batchId,
-          batchId,
-          reason: 'the returned id must undo the visit that was actually saved',
-        );
-      },
-    );
-
-    test(
-      'a visit is one batch read and one write, however many accounts it covers',
-      () async {
-        final v = await openVisit();
-        final streamsBefore = v.ledger.streamOpenCount;
-        final batchReadsBefore = v.ledger.batchFactFetchCount;
-        final writesBefore = v.ledger.applyChangeCallCount;
-
-        expect(await v.planner.record(), isA<Success<String, String>>());
-
-        expect(
-          v.ledger.streamOpenCount,
-          streamsBefore,
-          reason: 'no per-account fact streams',
-        );
-        expect(v.ledger.batchFactFetchCount, batchReadsBefore + 1);
-        expect(v.ledger.applyChangeCallCount, writesBefore + 1);
-      },
-    );
-
-    test(
-      'undoing a visit removes it and rewrites the summaries, or changes nothing',
-      () async {
-        final v = await openVisit();
-        final batchId =
-            (await v.planner.record() as Success<String, String>).value;
-
-        // The visit cannot be checked while offline, so nothing is deleted.
-        v.ledger.failReadsWith = 'offline';
-        expect(
-          await v.planner.undoVisit(batchId),
-          isA<Failure<void, String>>(),
-        );
-        expect(v.ledger.poDepositsOf('rd1'), hasLength(1));
-        expect(v.ledger.poDepositsOf('rd2'), hasLength(1));
-        expect(v.ledger.summaryOf('rd1')!.depositedThroughNo, 2);
-
-        v.ledger.failReadsWith = null;
-        expect(
-          await v.planner.undoVisit(batchId),
-          isA<Success<void, String>>(),
-        );
-        expect(v.ledger.poDepositsOf('rd1'), isEmpty);
-        expect(v.ledger.poDepositsOf('rd2'), isEmpty);
-        expect(v.ledger.summaryOf('rd1')!.depositedThroughNo, 0);
-        expect(v.ledger.summaryOf('rd2')!.depositedThroughNo, 0);
-
-        // Undoing it again (a retry after a lost response) is a success, not an error.
-        expect(
-          await v.planner.undoVisit(batchId),
-          isA<Success<void, String>>(),
-        );
       },
     );
   });

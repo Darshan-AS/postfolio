@@ -8,30 +8,13 @@ void main() {
     () {
       final passbook = t.recurringDeposits.ledger.passbook;
 
-      expect(
-        passbook.readyToDeposit(n: 1, amount: '₹5,000'),
-        contains('1 month ·'),
-      );
-      expect(
-        passbook.readyToDeposit(n: 1, amount: '₹5,000'),
-        isNot(contains('months')),
-      );
-      expect(
-        passbook.readyToDeposit(n: 3, amount: '₹15,000'),
-        contains('3 months ·'),
-      );
+      expect(passbook.inHandTitle(n: 1), contains('1 month'));
+      expect(passbook.inHandTitle(n: 1), isNot(contains('months')));
+      expect(passbook.inHandTitle(n: 3), contains('3 months'));
 
       expect(
-        passbook.readyToDepositWithFee(n: 1, amount: '₹5,050', fee: '₹50'),
-        allOf(
-          contains('1 month ·'),
-          isNot(contains('months')),
-          contains('₹50 fee'),
-        ),
-      );
-      expect(
-        passbook.readyToDepositWithFee(n: 2, amount: '₹10,100', fee: '₹100'),
-        contains('2 months ·'),
+        passbook.inHandSubtitleWithFee(amount: '₹5,050', fee: '₹50'),
+        allOf(contains('₹5,050'), contains('₹50 fee')),
       );
     },
   );

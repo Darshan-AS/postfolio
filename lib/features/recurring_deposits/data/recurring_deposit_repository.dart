@@ -4,13 +4,14 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/mocks/demo_data_source_provider.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
+import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
 import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
 import 'package:postfolio/features/recurring_deposits/data/supabase_recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -62,7 +63,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     Result<RecurringDeposit, String> lookup(List<RecurringDeposit> list) {
       final d = list.where((d) => d.id == id).firstOrNull;
       return d == null
-          ? const Failure('Recurring Deposit not found')
+          ? Failure(t.errors.recurringDepositNotFound)
           : Success(d);
     }
 
@@ -105,7 +106,7 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
     DepositStatus status,
   ) async {
     final index = _deposits.indexWhere((d) => d.id == id);
-    if (index == -1) return const Failure('Recurring Deposit not found');
+    if (index == -1) return Failure(t.errors.recurringDepositNotFound);
     _deposits[index] = _deposits[index].copyWith(status: status);
     _emit();
     return const Success(null);
@@ -114,14 +115,12 @@ class FakeRecurringDepositRepository implements RecurringDepositRepository {
   @override
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {
     if (hasLedgerActivity(id)) {
-      return const Failure(
-        'Cannot delete this record while linked accounts or transactions exist.',
-      );
+      return Failure(t.errors.linkedRecordsDeleteBlocked);
     }
     final before = _deposits.length;
     _deposits.removeWhere((d) => d.id == id);
     if (_deposits.length == before) {
-      return const Failure('Recurring Deposit not found');
+      return Failure(t.errors.recurringDepositNotFound);
     }
     _emit();
     return const Success(null);

@@ -259,7 +259,7 @@ class _CustomerSelectionSheet extends HookConsumerWidget {
           subtitle: subtitleParts.isEmpty
               ? null
               : Text(
-                  subtitleParts.join(' • '),
+                  subtitleParts.join(t.format.bulletSeparator),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),

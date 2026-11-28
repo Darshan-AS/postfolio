@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_facts.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
@@ -6,6 +7,14 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 
 part 'rd_ledger_projection.freezed.dart';
+
+/// One 12-month schedule year with its settled count for Passbook grouping.
+typedef RDScheduleYearBucket = ({
+  int yearIndex,
+  List<RDInstallment> months,
+  int settledCount,
+  bool isSettled,
+});
 
 /// Projected metadata for one Post Office deposit visit: the installment range it
 /// covered sequentially, how many covered months are still owed from the agent's
@@ -182,5 +191,33 @@ sealed class RDLedgerProjection with _$RDLedgerProjection {
       groups.last.items.add(tx);
     }
     return List.unmodifiable(groups);
+  }
+
+  /// Splits [installments] into sequential 12-month schedule years evaluated at [now].
+  static List<RDScheduleYearBucket> yearlyBucketsAt(
+    List<RDInstallment> installments,
+    DateTime now,
+  ) {
+    const monthsPerYear = 12;
+    final numYears = (installments.length / monthsPerYear).ceil();
+    final buckets = <RDScheduleYearBucket>[];
+    for (var y = 0; y < numYears; y++) {
+      final months = installments.sublist(
+        y * monthsPerYear,
+        ((y + 1) * monthsPerYear).clamp(0, installments.length),
+      );
+      final settledCount = months.where((inst) {
+        final status = inst.displayStatusAt(now);
+        return status == RDInstallmentDisplayStatus.settled ||
+            status == RDInstallmentDisplayStatus.baseline;
+      }).length;
+      buckets.add((
+        yearIndex: y,
+        months: months,
+        settledCount: settledCount,
+        isSettled: settledCount == months.length,
+      ));
+    }
+    return List.unmodifiable(buckets);
   }
 }

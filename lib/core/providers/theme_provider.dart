@@ -16,12 +16,4 @@ class ThemeModeNotifier extends _$ThemeModeNotifier {
     state = mode;
     ref.read(storageServiceProvider).setThemeMode(mode);
   }
-
-  void toggleAccessibleTheme() {
-    final newMode = state == AppThemeMode.accessibleSystem
-        ? AppThemeMode.system
-        : AppThemeMode.accessibleSystem;
-    state = newMode;
-    ref.read(storageServiceProvider).setThemeMode(newMode);
-  }
 }

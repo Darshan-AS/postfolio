@@ -1,6 +1,8 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hooks_riverpod/misc.dart' show ProviderException;
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:postfolio/features/admin/data/admin_repository.dart';
 import 'package:postfolio/features/admin/domain/acting_as_state.dart';
 import 'package:postfolio/features/profile/domain/agent_profile.dart';
@@ -49,8 +51,11 @@ Future<bool> isAdmin(Ref ref) async {
       Success(:final value) => value,
       Failure() => false,
     };
-  } catch (_) {
-    // Fail closed if Supabase or auth providers are not initialized.
+  } on ProviderException catch (_) {
+    // Fail closed when Supabase/auth providers are intentionally unmounted in unit tests.
+    return false;
+  } catch (e, st) {
+    SupabaseErrorMapper.onUnexpected?.call(e, st);
     return false;
   }
 }
@@ -144,25 +149,18 @@ class ActingAsController extends _$ActingAsController {
   }) async {
     if (!ref.mounted) return;
     try {
-      await ref
+      final result = await ref
           .read(adminRepositoryProvider)
           .logActingAsEvent(targetAgentId: targetAgentId, action: action);
-    } catch (_) {
+      if (result case Failure(:final error)) {
+        SupabaseErrorMapper.onUnexpected?.call(
+          StateError(error),
+          StackTrace.current,
+        );
+      }
+    } catch (e, st) {
       // Audit logging is non-blocking so session transitions and exit never fail.
+      SupabaseErrorMapper.onUnexpected?.call(e, st);
     }
-  }
-}
-
-@riverpod
-String? effectiveAgentId(Ref ref) {
-  final targetId = ref.watch(
-    actingAsControllerProvider.select((state) => state.targetAgentId),
-  );
-  if (targetId != null) return targetId;
-
-  try {
-    return ref.watch(authControllerProvider.select(_authenticatedUserId));
-  } catch (_) {
-    return null;
   }
 }

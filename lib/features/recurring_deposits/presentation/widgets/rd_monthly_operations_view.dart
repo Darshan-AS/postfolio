@@ -1,7 +1,9 @@
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/widgets/expressive/app_refresh_indicator.dart';
+import 'package:postfolio/core/widgets/feedback/app_feedback.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_header.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_hub_list.dart';
@@ -29,9 +31,12 @@ class RDMonthlyOperationsView extends HookConsumerWidget {
     }, const []);
 
     Future<void> onRefresh() async {
-      await ref
+      final result = await ref
           .read(rDMonthlyOperationsActionsProvider.notifier)
           .ensureSummaries(rebuildAll: true);
+      if (result case Failure(:final error) when context.mounted) {
+        AppFeedback.showError(context, error);
+      }
       ref.invalidate(monthlyOperationItemsProvider);
     }
 

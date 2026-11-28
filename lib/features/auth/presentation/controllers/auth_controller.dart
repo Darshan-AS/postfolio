@@ -5,6 +5,7 @@ import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/domain/local_seed_agent.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'auth_controller.g.dart';
@@ -65,11 +66,7 @@ class AuthController extends _$AuthController {
   /// unless this build talks to the local Supabase stack.
   Future<Result<void, String>> signInAsSeededAgent() {
     if (!ref.read(seededAgentSignInAvailableProvider)) {
-      return Future.value(
-        const Failure(
-          'The seeded agent exists only in the local Supabase stack.',
-        ),
-      );
+      return Future.value(Failure(t.errors.seededAgentLocalOnly));
     }
     return _signIn(
       () => ref

@@ -25,7 +25,6 @@ import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_rep
 import 'package:postfolio/features/recurring_deposits/domain/rd_search_criteria.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -34,7 +33,7 @@ void main() {
 
   group('Session scoping (activeSessionKeyProvider)', () {
     test(
-      'signing out or switching users resets Hub selection, filters, and PO visit planner state',
+      'signing out or switching users resets Hub filters and activeSessionKey',
       () async {
         SharedPreferences.setMockInitialValues({});
         final prefs = await SharedPreferences.getInstance();
@@ -64,31 +63,19 @@ void main() {
         });
 
         container.listen(authControllerProvider, (_, _) {});
-        container.listen(rDHubSelectionProvider, (_, _) {});
         container.listen(rDHubFiltersProvider, (_, _) {});
-        container.listen(rDPoVisitPlannerProvider, (_, _) {});
 
         await Future<void>.delayed(Duration.zero);
         expect(container.read(activeSessionKeyProvider), 'auth:agent-a');
 
         // Agent A accumulates session-specific UI/operation state.
-        container.read(rDHubSelectionProvider.notifier).selectAll([
-          'inst-1',
-          'inst-2',
-        ]);
         container.read(rDHubFiltersProvider.notifier).setSearchQuery('Ramesh');
-        container
-            .read(rDPoVisitPlannerProvider.notifier)
-            .setDate(DateTime(2026, 2, 14));
-        expect(container.read(rDHubSelectionProvider).count, 2);
         expect(container.read(rDHubFiltersProvider).searchQuery, 'Ramesh');
 
         // Agent A signs out -> activeSessionKey transitions 'auth:agent-a' -> null.
         await container.read(authControllerProvider.notifier).signOut();
         await Future<void>.delayed(Duration.zero);
         expect(container.read(activeSessionKeyProvider), isNull);
-        expect(container.read(rDHubSelectionProvider).count, 0);
-        expect(container.read(rDHubSelectionProvider).isSelectionMode, isFalse);
         expect(container.read(rDHubFiltersProvider).searchQuery, isEmpty);
 
         // Toggling Demo Mode transitions null -> 'demo'.

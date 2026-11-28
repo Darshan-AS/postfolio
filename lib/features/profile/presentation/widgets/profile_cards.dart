@@ -182,7 +182,7 @@ class ProfileLicenseTile extends StatelessWidget {
                 if (validUntil != null && daysRemaining != null) ...[
                   AppSpacings.gapXs,
                   Text(
-                    '${t.settings.licenseValidUntil(date: validUntil!.toAppFormat())} • ${_formatRelativeDays(daysRemaining)}',
+                    '${t.settings.licenseValidUntil(date: validUntil!.toAppFormat())}${t.format.bulletSeparator}${AgentProfile.licenseRelativeDaysLabel(daysRemaining)}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -207,16 +207,6 @@ class ProfileLicenseTile extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  static String _formatRelativeDays(int daysRemaining) {
-    if (daysRemaining == 0) return t.settings.licenseExpiresToday;
-    if (daysRemaining == 1) return t.settings.licenseDayLeft;
-    if (daysRemaining > 1) {
-      return t.settings.licenseDaysLeft(count: daysRemaining);
-    }
-    if (daysRemaining == -1) return t.settings.licenseExpiredDayAgo;
-    return t.settings.licenseExpiredDaysAgo(count: -daysRemaining);
   }
 }
 

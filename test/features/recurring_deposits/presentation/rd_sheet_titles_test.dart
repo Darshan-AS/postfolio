@@ -34,7 +34,7 @@ void main() {
     termMonths: 0,
     startDate: DateTime(2026, 1, 5),
   );
-  const identity = 'Sl 12 • A/c …6655';
+  const identity = 'Sl 12 · A/c …6655';
 
   test('the identity line is the serial and the end of the account number', () {
     expect(rdAccountIdentity(rd), identity);
@@ -42,7 +42,7 @@ void main() {
     expect(rdAccountIdentity(rd.copyWith(serialNo: '')), 'A/c …6655');
     expect(
       rdAccountIdentity(rd.copyWith(accountNo: '123')),
-      'Sl 12 • A/c …123',
+      'Sl 12 · A/c …123',
     );
   });
 

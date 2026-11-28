@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:postfolio/core/constants/supabase_constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Rate-limited, deduplicated client crash reporter for Web (where Firebase Crashlytics
@@ -29,7 +30,7 @@ class AppErrorReporter {
           }) async {
             if (client.auth.currentSession == null) return;
             await client.rpc(
-              'log_client_error',
+              SupabaseRpcs.logClientError,
               params: {
                 'p_platform': platform,
                 'p_error': error,

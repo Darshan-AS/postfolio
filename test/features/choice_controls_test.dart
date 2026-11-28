@@ -19,7 +19,7 @@ import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/dashboard/presentation/screens/dashboard_screen.dart';
-import 'package:postfolio/features/dashboard/providers/dashboard_provider.dart';
+import 'package:postfolio/features/dashboard/presentation/controllers/dashboard_controller.dart';
 import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';

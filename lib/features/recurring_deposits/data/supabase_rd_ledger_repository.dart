@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:postfolio/core/constants/supabase_constants.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/utils/row_decoder.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
@@ -29,10 +30,10 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
   final _localSummaryWrites =
       StreamController<List<RDLedgerSummary>>.broadcast();
 
-  static const _transactions = 'rd_transactions';
-  static const _poDeposits = 'rd_po_deposits';
-  static const _feeAbsorptions = 'rd_fee_absorptions';
-  static const _summaries = 'rd_ledger_summary';
+  static const _transactions = SupabaseTables.rdTransactions;
+  static const _poDeposits = SupabaseTables.rdPoDeposits;
+  static const _feeAbsorptions = SupabaseTables.rdFeeAbsorptions;
+  static const _summaries = SupabaseTables.rdLedgerSummary;
 
   String get _agentId {
     final override = _effectiveAgentId;
@@ -280,7 +281,7 @@ class SupabaseRDLedgerRepository implements RDLedgerRepository {
     }
     return _guard(() async {
       await _client.rpc<dynamic>(
-        'apply_rd_ledger_change',
+        SupabaseRpcs.applyRdLedgerChange,
         params: {
           'p_upsert_transactions': [
             for (final tx in change.upsertTransactions) _transactionRow(tx),

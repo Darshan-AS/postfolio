@@ -5,7 +5,7 @@ import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
-import 'package:postfolio/features/dashboard/providers/dashboard_provider.dart';
+import 'package:postfolio/features/dashboard/presentation/controllers/dashboard_controller.dart';
 
 import 'package:postfolio/i18n/strings.g.dart';
 

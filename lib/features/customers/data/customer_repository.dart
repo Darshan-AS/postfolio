@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:postfolio/core/mocks/demo_data_source_provider.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
+import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
 import 'package:postfolio/features/customers/data/supabase_customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'customer_repository.g.dart';
@@ -55,7 +56,7 @@ class FakeCustomerRepository implements CustomerRepository {
     if (customer != null) {
       yield Success(customer);
     } else {
-      yield const Failure('Customer not found');
+      yield Failure(t.errors.customerNotFound);
     }
 
     yield* _controller.stream.map((result) {
@@ -65,7 +66,7 @@ class FakeCustomerRepository implements CustomerRepository {
           if (c != null) {
             return Success<Customer, String>(c);
           }
-          return const Failure<Customer, String>('Customer not found');
+          return Failure<Customer, String>(t.errors.customerNotFound);
         }(),
         Failure(error: final error) => Failure(error),
       };
@@ -89,16 +90,14 @@ class FakeCustomerRepository implements CustomerRepository {
       _emit();
       return const Success(null);
     }
-    return const Failure('Customer not found');
+    return Failure(t.errors.customerNotFound);
   }
 
   @override
   Future<Result<void, String>> deleteCustomer(String id) async {
     if (delay > Duration.zero) await Future.delayed(delay);
     if (hasLinkedDeposits?.call(id) ?? false) {
-      return const Failure(
-        'Cannot delete this record while linked accounts or transactions exist.',
-      );
+      return Failure(t.errors.linkedRecordsDeleteBlocked);
     }
     final initialLength = _customers.length;
     _customers.removeWhere((u) => u.id == id);
@@ -106,7 +105,7 @@ class FakeCustomerRepository implements CustomerRepository {
       _emit();
       return const Success(null);
     }
-    return const Failure('Customer not found');
+    return Failure(t.errors.customerNotFound);
   }
 
   void dispose() {

@@ -85,8 +85,8 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     final activeFilterCount =
         statusModifications + criteria.urgencyFilters.length;
 
-    // The "New Deposit" FAB belongs to the Accounts view only; the Hub has its own
-    // batch bar (see RDHubBatchBar) and must never be covered by a FAB.
+    // The "New Deposit" FAB belongs to the Accounts list only; the Monthly Hub handles
+    // payments per card and must stay clear of a floating button.
     final showFab = viewMode == RDViewMode.accounts;
 
     return Scaffold(

@@ -127,7 +127,7 @@ void main() {
         mpkbyLicenseNo: 'MPKBY-42',
         panNumber: 'ABCDE1234F',
       );
-      expect(full.agencySummaryLabel, 'DOP-01 • Jayanagar HPO');
+      expect(full.agencySummaryLabel, 'DOP-01 · Jayanagar HPO');
       expect(full.hasMpkby, isTrue);
       expect(full.hasSas, isTrue);
       expect(full.hasSharedAgencyDetails, isTrue);

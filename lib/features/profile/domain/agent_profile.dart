@@ -168,7 +168,7 @@ sealed class AgentProfile with _$AgentProfile {
       if (trimmedCode != null && trimmedCode.isNotEmpty) trimmedCode,
     ];
     if (parts.isEmpty) return null;
-    return parts.join(' • ');
+    return parts.join(t.format.bulletSeparator);
   }
 
   String? get agencySummaryLabel {
@@ -177,7 +177,18 @@ sealed class AgentProfile with _$AgentProfile {
       if (_hasText(postOfficeBranch)) postOfficeBranch!.trim(),
     ];
     if (parts.isEmpty) return null;
-    return parts.join(' • ');
+    return parts.join(t.format.bulletSeparator);
+  }
+
+  /// Human-readable countdown label for [daysRemaining] until a license's expiry date.
+  static String licenseRelativeDaysLabel(int daysRemaining) {
+    if (daysRemaining == 0) return t.settings.licenseExpiresToday;
+    if (daysRemaining == 1) return t.settings.licenseDayLeft;
+    if (daysRemaining > 1) {
+      return t.settings.licenseDaysLeft(count: daysRemaining);
+    }
+    if (daysRemaining == -1) return t.settings.licenseExpiredDayAgo;
+    return t.settings.licenseExpiredDaysAgo(count: -daysRemaining);
   }
 
   bool get hasMpkby => agencyTypes.contains(AgencyType.mpkby);

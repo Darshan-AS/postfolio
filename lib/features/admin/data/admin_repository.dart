@@ -1,3 +1,4 @@
+import 'package:postfolio/core/constants/supabase_constants.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
@@ -29,7 +30,7 @@ class SupabaseAdminRepository implements AdminRepository {
   @override
   Future<Result<bool, String>> isCurrentUserAdmin() async {
     try {
-      final Object? result = await _client.rpc<dynamic>('is_admin');
+      final Object? result = await _client.rpc<dynamic>(SupabaseRpcs.isAdmin);
       return Success(result == true);
     } catch (e, st) {
       return Failure(SupabaseErrorMapper.describe(e, stackTrace: st));
@@ -39,7 +40,9 @@ class SupabaseAdminRepository implements AdminRepository {
   @override
   Future<Result<List<AgentProfile>, String>> listAgents() async {
     try {
-      final Object? raw = await _client.rpc<dynamic>('list_agents_for_admin');
+      final Object? raw = await _client.rpc<dynamic>(
+        SupabaseRpcs.listAgentsForAdmin,
+      );
       if (raw is! List) {
         return Failure(
           SupabaseErrorMapper.describe(
@@ -73,7 +76,7 @@ class SupabaseAdminRepository implements AdminRepository {
   }) async {
     try {
       await _client.rpc<dynamic>(
-        'log_admin_acting_as_event',
+        SupabaseRpcs.logAdminActingAsEvent,
         params: {
           'p_target_agent_id': targetAgentId,
           'p_action': action.wireValue,

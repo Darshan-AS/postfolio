@@ -262,7 +262,7 @@ void main() {
         expect(header.avatarOpensFrom, isNull);
 
         expect(find.text('Agent One'), findsOneWidget);
-        expect(find.text('DOP-101 • Jayanagar HPO'), findsOneWidget);
+        expect(find.text('DOP-101 · Jayanagar HPO'), findsOneWidget);
         expect(find.text('10 MG Road, Bengaluru'), findsOneWidget);
         expect(find.text('DOP-101'), findsOneWidget);
         expect(

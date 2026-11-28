@@ -22,7 +22,6 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projectio
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projector.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Verifies that Demo Mode's [FakeDataSource] mirrors all 22 DC scenarios from
@@ -181,7 +180,7 @@ void main() {
     expect(diana.summary.cashInHandCash, 18000);
     expect(
       alfred.summary.cashInHandCash + diana.summary.cashInHandCash,
-      greaterThan(kPoCashLotLimit),
+      greaterThan(20000),
     );
     expect(
       otdsOf(dianaCust).single.maturityUrgencyAt(today),

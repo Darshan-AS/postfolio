@@ -10,7 +10,7 @@ import 'package:postfolio/features/customers/presentation/controllers/customers_
 import 'package:postfolio/features/dashboard/presentation/widgets/dashboard_chart_section.dart';
 import 'package:postfolio/features/dashboard/presentation/widgets/dashboard_metrics_row.dart';
 import 'package:postfolio/features/dashboard/presentation/widgets/dashboard_scheme_breakdown.dart';
-import 'package:postfolio/features/dashboard/providers/dashboard_provider.dart';
+import 'package:postfolio/features/dashboard/presentation/controllers/dashboard_controller.dart';
 import 'package:postfolio/features/one_time_deposits/presentation/controllers/one_time_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';

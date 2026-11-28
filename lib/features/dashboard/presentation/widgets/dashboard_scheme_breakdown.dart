@@ -6,7 +6,7 @@ import 'package:postfolio/core/theme/app_surfaces.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/domain/deposit_list_tile.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
-import 'package:postfolio/features/dashboard/providers/dashboard_provider.dart';
+import 'package:postfolio/features/dashboard/presentation/controllers/dashboard_controller.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 /// A strip of pills, one per one-time scheme that has deposits: the scheme's avatar (the same

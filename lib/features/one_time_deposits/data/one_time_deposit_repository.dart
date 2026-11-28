@@ -4,11 +4,12 @@ import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/mocks/demo_data_source_provider.dart';
 import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
+import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/providers/supabase_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
-import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
 import 'package:postfolio/features/one_time_deposits/data/supabase_one_time_deposit_repository.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -61,7 +62,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
     if (deposit != null) {
       yield Success(deposit);
     } else {
-      yield const Failure('One Time Deposit not found');
+      yield Failure(t.errors.oneTimeDepositNotFound);
     }
 
     yield* _controller.stream.map((result) {
@@ -71,8 +72,8 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
           if (d != null) {
             return Success<OneTimeDeposit, String>(d);
           }
-          return const Failure<OneTimeDeposit, String>(
-            'One Time Deposit not found',
+          return Failure<OneTimeDeposit, String>(
+            t.errors.oneTimeDepositNotFound,
           );
         }(),
         Failure(error: final error) => Failure(error),
@@ -104,7 +105,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       _emit();
       return const Success(null);
     }
-    return const Failure('One Time Deposit not found');
+    return Failure(t.errors.oneTimeDepositNotFound);
   }
 
   @override
@@ -119,7 +120,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       _emit();
       return const Success(null);
     }
-    return const Failure('One Time Deposit not found');
+    return Failure(t.errors.oneTimeDepositNotFound);
   }
 
   @override
@@ -131,7 +132,7 @@ class FakeOneTimeDepositRepository implements OneTimeDepositRepository {
       _emit();
       return const Success(null);
     }
-    return const Failure('One Time Deposit not found');
+    return Failure(t.errors.oneTimeDepositNotFound);
   }
 
   void dispose() {

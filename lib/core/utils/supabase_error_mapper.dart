@@ -1,4 +1,5 @@
 import 'package:postfolio/core/utils/row_decoder.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Translates raw Supabase / PostgREST / GoTrue exceptions into concise, user-safe
@@ -8,8 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// specific mapping is handed to [onUnexpected] (crash reporting) with its original cause.
 abstract final class SupabaseErrorMapper {
   /// Message for stored data this version of the app cannot decode.
-  static const String unreadableDataMessage =
-      'Some saved data could not be read by this version of the app. Update the app and try again.';
+  static String get unreadableDataMessage => t.errors.unreadableData;
 
   /// Sink for errors that had no specific user message (decode failures, unknown database
   /// codes, network and programming errors). Set once at startup; `null` in tests and demo.
@@ -17,14 +17,14 @@ abstract final class SupabaseErrorMapper {
 
   static String describe(
     Object error, {
-    String fallback =
-        'Something went wrong while talking to the server. Please try again.',
+    String? fallback,
     StackTrace? stackTrace,
   }) {
+    final resolvedFallback = fallback ?? t.errors.serverGeneric;
     if (error is PostgrestException) {
       return _describePostgrest(
         error,
-        fallback: fallback,
+        fallback: resolvedFallback,
         stackTrace: stackTrace,
       );
     }
@@ -39,7 +39,7 @@ abstract final class SupabaseErrorMapper {
       final id = error.rowId;
       if (id == null || id.isEmpty) return unreadableDataMessage;
       final reference = id.length > 8 ? id.substring(0, 8) : id;
-      return '$unreadableDataMessage (record $reference)';
+      return t.errors.unreadableDataRecord(reference: reference);
     }
     // Decoder errors raised outside `decodeRows` (e.g. the Realtime `.stream()` path).
     if (error is ArgumentError ||
@@ -49,7 +49,7 @@ abstract final class SupabaseErrorMapper {
       return unreadableDataMessage;
     }
     _report(error, stackTrace);
-    return fallback;
+    return resolvedFallback;
   }
 
   static void _report(Object error, StackTrace? stackTrace) {
@@ -71,21 +71,21 @@ abstract final class SupabaseErrorMapper {
     switch (e.code) {
       case '23505':
         if (details.contains('email')) {
-          return 'An agent profile with this email already exists.';
+          return t.errors.duplicateEmail;
         }
-        return 'This entry has already been recorded.';
+        return t.errors.duplicateEntry;
       case '23503':
-        return 'This record cannot be deleted while linked accounts or ledger entries exist.';
+        return t.errors.foreignKeyDeleteBlocked;
       case '23514':
-        return 'The entry does not satisfy the validation rules.';
+        return t.errors.validationFailed;
       case '42501':
         if (msg.contains('Unauthenticated')) {
-          return 'Your session has expired. Please sign in again.';
+          return t.errors.sessionExpired;
         }
-        return 'You do not have permission to modify this record.';
+        return t.errors.permissionDenied;
       case 'P0002':
       case 'PGRST116':
-        return 'The requested record could not be found.';
+        return t.errors.recordNotFound;
     }
     _report(e, stackTrace);
     return fallback;
@@ -94,11 +94,11 @@ abstract final class SupabaseErrorMapper {
   static String _describeAuth(AuthException e) {
     final lower = e.message.toLowerCase();
     if (lower.contains('invalid login credentials')) {
-      return 'Invalid email or password.';
+      return t.errors.invalidCredentials;
     }
     if (lower.contains('network') || lower.contains('socket')) {
-      return 'Network error during authentication. Check your connection and try again.';
+      return t.errors.authNetworkError;
     }
-    return 'Authentication failed. Please try signing in again.';
+    return t.errors.authFailed;
   }
 }

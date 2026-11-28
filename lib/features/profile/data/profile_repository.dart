@@ -1,3 +1,4 @@
+import 'package:postfolio/core/constants/supabase_constants.dart';
 import 'package:postfolio/core/enums/agency_type.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/providers/demo_mode_provider.dart';
@@ -31,7 +32,7 @@ class SupabaseProfileRepository implements ProfileRepository {
   Future<Result<AgentProfile?, String>> fetchProfile(String userId) async {
     try {
       final row = await _client
-          .from('agent_profiles')
+          .from(SupabaseTables.agentProfiles)
           .select(_columns)
           .eq('id', userId)
           .maybeSingle();
@@ -48,7 +49,7 @@ class SupabaseProfileRepository implements ProfileRepository {
   ) async {
     try {
       final row = await _client
-          .from('agent_profiles')
+          .from(SupabaseTables.agentProfiles)
           .update(profile.toUpdatePayload())
           .eq('id', profile.id)
           .select(_columns)

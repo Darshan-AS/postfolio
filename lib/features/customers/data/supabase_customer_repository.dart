@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:postfolio/core/constants/supabase_constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:postfolio/core/utils/supabase_paginated_query.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 class SupabaseCustomerRepository implements CustomerRepository {
   final SupabaseClient _supabaseClient;
@@ -42,13 +44,13 @@ class SupabaseCustomerRepository implements CustomerRepository {
     return SupabasePaginatedQuery.watchPaginatedCollection<Customer>(
       client: _supabaseClient,
       channelPrefix: 'customers-list',
-      table: 'customers',
+      table: SupabaseTables.customers,
       filterColumn: 'agent_id',
       filterValue: agentId,
       localMutations: _localMutations.stream,
       fetchAll: () => SupabasePaginatedQuery.fetchAllPages<Customer>(
         fetchPage: (from, to) => _supabaseClient
-            .from('customers')
+            .from(SupabaseTables.customers)
             .select()
             .eq('agent_id', agentId)
             .order('name', ascending: true)
@@ -62,21 +64,21 @@ class SupabaseCustomerRepository implements CustomerRepository {
   @override
   Stream<Result<Customer, String>> watchCustomerById(String id) {
     return _supabaseClient
-        .from('customers')
+        .from(SupabaseTables.customers)
         .stream(primaryKey: ['id'])
         .eq('id', id)
         .asyncMap((_) async {
           try {
             final data = await _supabaseClient
-                .from('customer_details_view')
+                .from(SupabaseTables.customerDetailsView)
                 .select()
                 .eq('id', id)
                 .maybeSingle();
             if (data == null) {
-              return const Failure<Customer, String>('Customer not found');
+              return Failure<Customer, String>(t.errors.customerNotFound);
             }
             if (data['agent_id'] != _agentId) {
-              return const Failure<Customer, String>('Unauthorized');
+              return Failure<Customer, String>(t.errors.unauthorized);
             }
             return Success(Customer.fromJson(data));
           } catch (e) {
@@ -102,7 +104,7 @@ class SupabaseCustomerRepository implements CustomerRepository {
       // A customer who still owns an OTD/RD is refused by the database (23503) and nothing
       // is removed.
       await _supabaseClient.rpc<dynamic>(
-        'delete_customer',
+        SupabaseRpcs.deleteCustomer,
         params: {'p_id': id, if (_isActingAsOther) 'p_agent_id': _agentId},
       );
       if (!_localMutations.isClosed) _localMutations.add(null);
@@ -115,7 +117,7 @@ class SupabaseCustomerRepository implements CustomerRepository {
   Future<Result<void, String>> _saveCustomer(Customer customer) async {
     try {
       await _supabaseClient.rpc<dynamic>(
-        'save_customer_with_sb_account',
+        SupabaseRpcs.saveCustomerWithSbAccount,
         params: {
           'p_id': customer.id,
           'p_name': customer.name,

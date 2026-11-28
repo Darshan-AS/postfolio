@@ -27,13 +27,9 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dar
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_deposit_sheet.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_month_inspector_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_po_visit_sheet.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
 Finder fieldLabeled(String label) => find.ancestor(
@@ -426,7 +422,7 @@ void main() {
       );
 
       testWidgets(
-        'RDDepositSheet & RDPoVisitSheet expose counter-fee override inputs and persist exact feePaid',
+        'RDDepositSheet exposes counter-fee override input and persists exact feePaid',
         (tester) async {
           final ledgerRepo = FakeRDLedgerRepository(
             transactions: {
@@ -451,26 +447,13 @@ void main() {
                 theme: AppTheme.lightTheme,
                 home: Builder(
                   builder: (context) => Scaffold(
-                    body: Column(
-                      children: [
-                        ElevatedButton(
-                          onPressed: () => showRDDepositSheet(
-                            context,
-                            rdId: rd.id,
-                            initialCount: 1,
-                          ),
-                          child: const Text('Open Deposit Sheet'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            container
-                                .read(rDPoVisitPlannerProvider.notifier)
-                                .start();
-                            showRDPoVisitPlanner(context);
-                          },
-                          child: const Text('Open Visit Sheet'),
-                        ),
-                      ],
+                    body: ElevatedButton(
+                      onPressed: () => showRDDepositSheet(
+                        context,
+                        rdId: rd.id,
+                        initialCount: 1,
+                      ),
+                      child: const Text('Open Deposit Sheet'),
                     ),
                   ),
                 ),
@@ -479,7 +462,7 @@ void main() {
           );
           await tester.pumpAndSettle();
 
-          // 1. Single-account RDDepositSheet: override statutory ₹30 fee to ₹0 (Sunday/holiday waiver)
+          // Override statutory ₹30 fee to ₹0 (Sunday/holiday waiver)
           await tester.tap(find.text('Open Deposit Sheet'));
           await tester.pumpAndSettle();
 
@@ -503,38 +486,6 @@ void main() {
           expect(singleEvents, hasLength(1));
           expect(singleEvents.first.feePaid, 0.0);
           expect(singleEvents.first.amount, 1000.0);
-
-          // 2. Multi-account RDPoVisitSheet: collect month #2 via RDLedgerController, warm Hub items, open planner, override fee to ₹15
-          await container
-              .read(rDLedgerControllerProvider.notifier)
-              .recordPayment((
-                rdId: rd.id,
-                transactionId: 'tx-2',
-                amount: 1020,
-                paidDate: DateTime(2026, 4, 19),
-                paymentMode: RDPaymentMode.cash,
-              ));
-          container.listen(monthlyOperationItemsProvider, (_, _) {});
-          await container.read(monthlyOperationItemsProvider.future);
-          await tester.pumpAndSettle();
-
-          await tester.tap(find.text('Open Visit Sheet'));
-          await tester.pumpAndSettle();
-
-          final visitFeeToggle = find.byKey(
-            ValueKey('visit_fee_override_${rd.id}'),
-          );
-          expect(visitFeeToggle, findsOneWidget);
-          await tester.tap(visitFeeToggle);
-          await tester.pumpAndSettle();
-
-          final visitFeeInput = find.byKey(
-            ValueKey('visit_fee_input_${rd.id}'),
-          );
-          await tester.enterText(visitFeeInput, '15');
-          await tester.pumpAndSettle();
-
-          expect(container.read(rDPoVisitPlannerProvider).totalFee, 15.0);
         },
       );
 

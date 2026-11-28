@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:postfolio/core/constants/supabase_constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
@@ -7,6 +8,7 @@ import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_rep
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:postfolio/core/utils/supabase_paginated_query.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   final SupabaseClient _supabaseClient;
@@ -51,7 +53,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
     return SupabasePaginatedQuery.watchPaginatedCollection<RecurringDeposit>(
       client: _supabaseClient,
       channelPrefix: 'rd-list',
-      table: 'account_identities',
+      table: SupabaseTables.accountIdentities,
       filterColumn: 'agent_id',
       filterValue: agentId,
       localMutations: _localMutations.stream,
@@ -63,7 +65,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
       },
       fetchAll: () => SupabasePaginatedQuery.fetchAllPages<RecurringDeposit>(
         fetchPage: (from, to) => _supabaseClient
-            .from('recurring_deposit_details_view')
+            .from(SupabaseTables.recurringDepositDetailsView)
             .select(_listColumns)
             .eq('agent_id', agentId)
             .order('id', ascending: true)
@@ -78,23 +80,23 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
     String id,
   ) {
     return _supabaseClient
-        .from('account_identities')
+        .from(SupabaseTables.accountIdentities)
         .stream(primaryKey: ['id'])
         .eq('id', id)
         .asyncMap((_) async {
           try {
             final data = await _supabaseClient
-                .from('recurring_deposit_details_view')
+                .from(SupabaseTables.recurringDepositDetailsView)
                 .select()
                 .eq('id', id)
                 .maybeSingle();
             if (data == null) {
-              return const Failure<RecurringDeposit, String>(
-                'Recurring Deposit not found',
+              return Failure<RecurringDeposit, String>(
+                t.errors.recurringDepositNotFound,
               );
             }
             if (data['agent_id'] != _agentId) {
-              return const Failure<RecurringDeposit, String>('Unauthorized');
+              return Failure<RecurringDeposit, String>(t.errors.unauthorized);
             }
             return Success(RecurringDeposit.fromJson(data));
           } catch (e) {
@@ -117,7 +119,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   ) async {
     try {
       await _supabaseClient.rpc<dynamic>(
-        'set_deposit_status',
+        SupabaseRpcs.setDepositStatus,
         params: {
           'p_id': id,
           'p_status': status.name,
@@ -135,7 +137,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
   Future<Result<void, String>> deleteRecurringDeposit(String id) async {
     try {
       await _supabaseClient
-          .from('account_identities')
+          .from(SupabaseTables.accountIdentities)
           .delete()
           .eq('id', id)
           .eq('agent_id', _agentId);
@@ -152,7 +154,7 @@ class SupabaseRecurringDepositRepository implements RecurringDepositRepository {
     try {
       final json = deposit.toJson();
       await _supabaseClient.rpc<dynamic>(
-        'save_recurring_deposit',
+        SupabaseRpcs.saveRecurringDeposit,
         params: {
           'p_id': deposit.id,
           'p_customer_id': deposit.customerId,

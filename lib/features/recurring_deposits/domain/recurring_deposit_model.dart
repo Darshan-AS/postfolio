@@ -72,6 +72,9 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
   /// Total tenure in months derived from termYears and termMonths.
   int get totalMonths => (termYears * 12) + termMonths;
 
+  /// Total principal committed across the full tenure.
+  double get totalScheduledAmount => installmentAmount * totalMonths;
+
   /// Default sorting logic for Recurring Deposits (ascending by serial no).
   static int defaultCompare(RecurringDeposit a, RecurringDeposit b) {
     final sA = a.serialNo ?? '';

@@ -12,7 +12,7 @@ import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/domain/customer_search_criteria.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
-import 'package:postfolio/features/dashboard/providers/dashboard_provider.dart';
+import 'package:postfolio/features/dashboard/presentation/controllers/dashboard_controller.dart';
 import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/one_time_deposits/domain/otd_search_criteria.dart';

@@ -1,7 +1,6 @@
 import 'dart:collection';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
@@ -61,7 +60,6 @@ class RDHubMonth extends _$RDHubMonth {
 
   void setMonth(DateTime month) {
     state = month.toMonthStart();
-    ref.read(rDHubSelectionProvider.notifier).clear();
   }
 
   void previousMonth() => setMonth(DateTime(state.year, state.month - 1));
@@ -118,57 +116,6 @@ class RDHubFilters extends _$RDHubFilters {
     sortField: state.sortField,
     sortDirection: state.sortDirection,
   );
-}
-
-@freezed
-sealed class RDHubSelectionState with _$RDHubSelectionState {
-  const factory RDHubSelectionState({
-    @Default(<String>{}) Set<String> installmentIds,
-    @Default(false) bool isSelectionMode,
-  }) = _RDHubSelectionState;
-
-  const RDHubSelectionState._();
-
-  bool contains(String id) => installmentIds.contains(id);
-  int get count => installmentIds.length;
-}
-
-/// Multi-select for batch PO actions.
-/// * `selectAll`/`selectGroup` **union** into the current selection.
-/// * Selection mode is left only via [exit]/[clear] — never by un-ticking the last row.
-@Riverpod(keepAlive: true)
-class RDHubSelection extends _$RDHubSelection {
-  @override
-  RDHubSelectionState build() {
-    ref.watch(activeSessionKeyProvider);
-    return const RDHubSelectionState();
-  }
-
-  void enter() => state = state.copyWith(isSelectionMode: true);
-
-  void exit() => state = const RDHubSelectionState();
-
-  void clear() => exit();
-
-  void toggle(String installmentId) {
-    final next = Set<String>.of(state.installmentIds);
-    if (!next.remove(installmentId)) next.add(installmentId);
-    state = state.copyWith(installmentIds: next, isSelectionMode: true);
-  }
-
-  void selectAll(Iterable<String> ids) => state = state.copyWith(
-    installmentIds: {...state.installmentIds, ...ids},
-    isSelectionMode: true,
-  );
-
-  void deselectAll(Iterable<String> ids) {
-    final remove = ids.toSet();
-    state = state.copyWith(
-      installmentIds: state.installmentIds
-          .where((id) => !remove.contains(id))
-          .toSet(),
-    );
-  }
 }
 
 // =============================================================================================
@@ -491,56 +438,6 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> filteredMonthlyOperations(
   return UnmodifiableListView(list);
 }
 
-/// Selected rows resolved against the current month's items.
-///
-/// A PO visit deposits the *next contiguous ready months* of each selected account; paying
-/// from pocket (depositing a month the customer has not paid) is a separate, explicit action.
-@freezed
-sealed class RDBatchSelectionSummary with _$RDBatchSelectionSummary {
-  const factory RDBatchSelectionSummary({
-    @Default(<RDMonthlyOperationItem>[]) List<RDMonthlyOperationItem> items,
-
-    /// Accounts with at least one collected-but-undeposited month.
-    @Default(<RDMonthlyOperationItem>[])
-    List<RDMonthlyOperationItem> depositable,
-
-    /// Accounts whose selected month is the latest deposited one (undo-able).
-    @Default(<RDMonthlyOperationItem>[])
-    List<RDMonthlyOperationItem> revertible,
-  }) = _RDBatchSelectionSummary;
-
-  const RDBatchSelectionSummary._();
-
-  int get count => items.length;
-  int get readyInstallments =>
-      depositable.fold(0, (s, i) => s + i.readyForPoCount);
-  double get totalAmount =>
-      items.fold(0.0, (s, i) => s + i.installment.dueAmount);
-}
-
-@riverpod
-RDBatchSelectionSummary batchSelectionSummary(Ref ref) {
-  final ids = ref.watch(rDHubSelectionProvider.select((s) => s.installmentIds));
-  final items =
-      ref.watch(monthlyOperationItemsProvider).value ??
-      const <RDMonthlyOperationItem>[];
-  final selected = <RDMonthlyOperationItem>[
-    for (final i in items)
-      if (ids.contains(i.installment.id)) i,
-  ];
-  return RDBatchSelectionSummary(
-    items: selected,
-    depositable: [
-      for (final i in selected)
-        if (i.readyForPoCount > 0) i,
-    ],
-    revertible: [
-      for (final i in selected)
-        if (i.isLatestDeposited) i,
-    ],
-  );
-}
-
 // =============================================================================================
 // Actions
 // =============================================================================================
@@ -574,14 +471,16 @@ class RDMonthlyOperationsActions extends _$RDMonthlyOperationsActions {
 
   /// Builds summaries for RDs that have none yet (first run after migration), or
   /// re-projects every visible RD in a single batch read + bulk upsert (pull-to-refresh).
-  Future<void> ensureSummaries({bool rebuildAll = false}) async {
+  Future<Result<void, String>> ensureSummaries({
+    bool rebuildAll = false,
+  }) async {
     final items = await ref.read(monthlyOperationItemsProvider.future);
     final deposits = <RecurringDeposit>[
       for (final i in items)
         if (rebuildAll || !i.hasSummary) i.deposit,
     ];
-    if (deposits.isEmpty) return;
-    await ref
+    if (deposits.isEmpty) return const Success(null);
+    return ref
         .read(rDLedgerControllerProvider.notifier)
         .rebuildSummaries(deposits);
   }

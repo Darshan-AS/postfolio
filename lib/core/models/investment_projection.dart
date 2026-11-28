@@ -34,47 +34,4 @@ sealed class InvestmentProjection with _$InvestmentProjection {
     @Default(0) int termMonths,
     String? note,
   }) = IncomeGeneration;
-
-  // Shared Getters
-  @override
-  double get totalInvested => switch (this) {
-    WealthAccumulation p => p.totalInvested,
-    IncomeGeneration p => p.totalInvested,
-  };
-
-  @override
-  double get maturityAmount => switch (this) {
-    WealthAccumulation p => p.maturityAmount,
-    IncomeGeneration p => p.maturityAmount,
-  };
-
-  @override
-  double get totalInterestEarned => switch (this) {
-    WealthAccumulation p => p.totalInterestEarned,
-    IncomeGeneration p => p.totalInterestEarned,
-  };
-
-  @override
-  DateTime get maturityDate => switch (this) {
-    WealthAccumulation p => p.maturityDate,
-    IncomeGeneration p => p.maturityDate,
-  };
-
-  @override
-  double get interestRate => switch (this) {
-    WealthAccumulation p => p.interestRate,
-    IncomeGeneration p => p.interestRate,
-  };
-
-  @override
-  int get termYears => switch (this) {
-    WealthAccumulation p => p.termYears,
-    IncomeGeneration p => p.termYears,
-  };
-
-  @override
-  int get termMonths => switch (this) {
-    WealthAccumulation p => p.termMonths,
-    IncomeGeneration p => p.termMonths,
-  };
 }

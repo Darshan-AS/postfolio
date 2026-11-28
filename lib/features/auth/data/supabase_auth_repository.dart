@@ -6,6 +6,7 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:postfolio/core/env/env.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 
 class SupabaseAuthRepository implements AuthRepository {
   final SupabaseClient _supabaseClient;
@@ -55,13 +56,13 @@ class SupabaseAuthRepository implements AuthRepository {
           redirectTo: redirectTo,
         );
         if (!success) {
-          return const Failure('Failed to initiate Google Sign In on Web.');
+          return Failure(t.errors.googleSignInWebInitFailed);
         }
         // The browser will redirect away. If we reach here on desktop/web,
         // we can just wait for the auth stream to emit the user, so we don't
         // prematurely return anything that might stop a loading indicator.
         await Future.delayed(const Duration(hours: 1));
-        return const Failure('Redirecting...');
+        return Failure(t.errors.googleSignInRedirecting);
       }
 
       // Ensure GoogleSignIn is initialized with the Web Client ID
@@ -76,7 +77,7 @@ class SupabaseAuthRepository implements AuthRepository {
       final idToken = googleAuth.idToken;
 
       if (idToken == null) {
-        return const Failure('No ID token found from Google Sign-In.');
+        return Failure(t.errors.googleSignInNoIdToken);
       }
 
       String? accessToken;
@@ -95,7 +96,7 @@ class SupabaseAuthRepository implements AuthRepository {
 
       final user = response.user;
       if (user == null) {
-        return const Failure('Sign in failed, Supabase user is null');
+        return Failure(t.errors.authNullUser);
       }
 
       return Success(
@@ -108,10 +109,7 @@ class SupabaseAuthRepository implements AuthRepository {
       );
     } catch (e) {
       return Failure(
-        SupabaseErrorMapper.describe(
-          e,
-          fallback: 'Google Sign-In could not be completed. Please try again.',
-        ),
+        SupabaseErrorMapper.describe(e, fallback: t.errors.googleSignInFailed),
       );
     }
   }
@@ -128,15 +126,12 @@ class SupabaseAuthRepository implements AuthRepository {
       );
       final user = response.user;
       if (user == null) {
-        return const Failure('Sign in failed, Supabase user is null');
+        return Failure(t.errors.authNullUser);
       }
       return Success(_mapUser(user));
     } catch (e) {
       return Failure(
-        SupabaseErrorMapper.describe(
-          e,
-          fallback: 'Could not sign in. Please try again.',
-        ),
+        SupabaseErrorMapper.describe(e, fallback: t.errors.signInFailed),
       );
     }
   }
@@ -151,10 +146,7 @@ class SupabaseAuthRepository implements AuthRepository {
       return const Success(null);
     } catch (e) {
       return Failure(
-        SupabaseErrorMapper.describe(
-          e,
-          fallback: 'Could not sign out cleanly. Please try again.',
-        ),
+        SupabaseErrorMapper.describe(e, fallback: t.errors.signOutFailed),
       );
     }
   }

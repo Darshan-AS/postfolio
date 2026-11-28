@@ -2,6 +2,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/providers/app_preferences_provider.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
@@ -22,17 +23,11 @@ import 'package:postfolio/features/one_time_deposits/presentation/controllers/on
 import 'package:postfolio/features/one_time_deposits/presentation/widgets/one_time_deposit_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/recurring_deposit_card.dart';
-import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
-import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/i18n/strings.g.dart';
-import 'package:postfolio/core/enums/deposit_status.dart';
 
 import 'package:postfolio/core/extensions/string_extension.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 import 'package:postfolio/core/widgets/common/app_icon.dart';
-
-/// The origin of a deposit's row on its customer's screen (`EntityHero.tagFrom`).
-const String _underCustomer = 'customer';
 
 class CustomerDetailScreen extends ConsumerWidget {
   final String customerId;
@@ -382,73 +377,43 @@ class _CustomerDepositsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final oneTimeDepositsAsync = ref.watch(oneTimeDepositsControllerProvider);
-    final recurringDepositsAsync = ref.watch(
-      recurringDepositsControllerProvider,
-    );
+    final summary = ref.watch(customerDepositsProvider(customerId));
+    final hasOtd =
+        summary.activeOneTime.isNotEmpty || summary.closedOneTime.isNotEmpty;
+    final hasRd =
+        summary.activeRecurring.isNotEmpty ||
+        summary.closedRecurring.isNotEmpty;
 
-    final oneTimeDeposits =
-        oneTimeDepositsAsync.value
-            ?.where((d) => d.customerId == customerId)
-            .toList() ??
-        [];
-
-    final activeOneTime =
-        oneTimeDeposits.where((d) => d.status == DepositStatus.active).toList()
-          ..sort(OneTimeDeposit.defaultCompare);
-
-    final closedOneTime =
-        oneTimeDeposits.where((d) => d.status == DepositStatus.closed).toList()
-          ..sort(OneTimeDeposit.defaultCompare);
-
-    final recurringDeposits =
-        recurringDepositsAsync.value
-            ?.where((d) => d.customerId == customerId)
-            .toList() ??
-        [];
-
-    final activeRecurring =
-        recurringDeposits
-            .where((d) => d.status == DepositStatus.active)
-            .toList()
-          ..sort(RecurringDeposit.defaultCompare);
-
-    final closedRecurring =
-        recurringDeposits
-            .where((d) => d.status == DepositStatus.closed)
-            .toList()
-          ..sort(RecurringDeposit.defaultCompare);
-
-    if (oneTimeDeposits.isEmpty && recurringDeposits.isEmpty) {
+    if (!hasOtd && !hasRd) {
       return const SizedBox.shrink();
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (oneTimeDeposits.isNotEmpty)
+        if (hasOtd)
           _DepositCategorySection(
             title: t.oneTimeDeposits.title,
-            activeDeposits: activeOneTime,
-            closedDeposits: closedOneTime,
+            activeDeposits: summary.activeOneTime,
+            closedDeposits: summary.closedOneTime,
             // Titled by account number. The customer is the screen, and the scheme is
             // on the avatar; as a title "Monthly Income Scheme" was cut beside the amount.
             itemBuilder: (deposit, position) => OneTimeDepositCard(
               deposit: deposit,
               titleByAccount: true,
-              heroOrigin: _underCustomer,
+              heroOrigin: EntityHero.customerDetail,
               position: position,
             ),
           ),
-        if (recurringDeposits.isNotEmpty)
+        if (hasRd)
           _DepositCategorySection(
             title: t.recurringDeposits.title,
-            activeDeposits: activeRecurring,
-            closedDeposits: closedRecurring,
+            activeDeposits: summary.activeRecurring,
+            closedDeposits: summary.closedRecurring,
             itemBuilder: (deposit, position) => RecurringDepositCard(
               deposit: deposit,
               titleByAccount: true,
-              heroOrigin: _underCustomer,
+              heroOrigin: EntityHero.customerDetail,
               position: position,
             ),
           ),

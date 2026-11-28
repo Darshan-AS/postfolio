@@ -24,7 +24,6 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projectio
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_projector.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
-import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_po_visit_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Checks `supabase/seed.sql` against the LOCAL Supabase stack: each seeded customer is
@@ -333,7 +332,7 @@ void main() {
       expect(
         p.summary.cashInHandCash +
             ledger(rd(1, 'Alfred Pennyworth')).summary.cashInHandCash,
-        greaterThan(kPoCashLotLimit),
+        greaterThan(20000),
       );
       expect(
         otdsOf(c).single.maturityUrgencyAt(today),

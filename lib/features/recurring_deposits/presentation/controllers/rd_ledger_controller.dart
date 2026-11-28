@@ -18,6 +18,7 @@ import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -157,7 +158,9 @@ class RDLedgerController extends _$RDLedgerController {
   /// draft again (a retry after a lost response) updates that payment instead of adding one.
   Future<Result<void, String>> recordPayment(RDPaymentDraft draft) {
     if (Money.toPaise(draft.amount) <= 0) {
-      return Future.value(const Failure('Amount must be greater than zero.'));
+      return Future.value(
+        Failure(t.errors.greaterThanZero(field: t.common.amount)),
+      );
     }
     final tx = draft.toTransaction();
     return _commitFor(
@@ -168,7 +171,9 @@ class RDLedgerController extends _$RDLedgerController {
 
   Future<Result<void, String>> updatePayment(RDTransaction tx) {
     if (Money.toPaise(tx.amount) <= 0) {
-      return Future.value(const Failure('Amount must be greater than zero.'));
+      return Future.value(
+        Failure(t.errors.greaterThanZero(field: t.common.amount)),
+      );
     }
     final normalised = tx.copyWith(paidDate: tx.paidDate.toDateOnly());
     return _commitFor(
@@ -210,7 +215,7 @@ class RDLedgerController extends _$RDLedgerController {
     String? eventId,
   }) => _exclusive(() async {
     final facts = (await _fetchFactsFor({rdId}))[rdId];
-    if (facts == null) return const Failure('This account no longer exists.');
+    if (facts == null) return Failure(t.errors.ledgerAccountMissing);
     final planned = ref
         .read(rdLedgerProjectorProvider)
         .planPoDeposit(
@@ -255,13 +260,11 @@ class RDLedgerController extends _$RDLedgerController {
     String? batchId,
   }) {
     if (lines.isEmpty) {
-      return Future.value(const Failure('Nothing to deposit.'));
+      return Future.value(Failure(t.errors.ledgerNothingToDeposit));
     }
     final rdIds = {for (final line in lines) line.rdId};
     if (rdIds.length != lines.length) {
-      return Future.value(
-        const Failure('An account appears more than once in this visit.'),
-      );
+      return Future.value(Failure(t.errors.ledgerDuplicateAccountInVisit));
     }
     return _exclusive(() async {
       final day = (depositedOn ?? ref.read(clockProvider)()).toDateOnly();
@@ -273,7 +276,7 @@ class RDLedgerController extends _$RDLedgerController {
       for (final line in lines) {
         final facts = factsByRd[line.rdId];
         if (facts == null) {
-          return const Failure('An account in this visit no longer exists.');
+          return Failure(t.errors.ledgerVisitAccountMissing);
         }
         // An account this visit already covers (an earlier attempt was saved) gets its
         // stored event back from the planner; inserting it again changes nothing.
@@ -288,7 +291,14 @@ class RDLedgerController extends _$RDLedgerController {
         switch (planned) {
           case Failure(:final error):
             final label = facts.deposit.serialNo ?? facts.deposit.accountNo;
-            return Failure(label == null ? error : 'Account $label: $error');
+            return Failure(
+              label == null
+                  ? error
+                  : t.errors.ledgerAccountErrorPrefix(
+                      label: label,
+                      error: error,
+                    ),
+            );
           case Success(value: final event):
             events.add(event);
         }
@@ -311,7 +321,7 @@ class RDLedgerController extends _$RDLedgerController {
       _commitFor(rdId, (facts) {
         final latest = facts.latestPoDeposit;
         if (latest == null) {
-          return const Failure('No Post Office deposit to undo.');
+          return Failure(t.errors.ledgerNoPoDepositToUndo);
         }
         return Success(
           RDLedgerChange(deletePoDeposits: [(rdId: rdId, eventId: latest.id)]),
@@ -399,7 +409,7 @@ class RDLedgerController extends _$RDLedgerController {
   Future<Result<void, String>> rebuildSummary(String rdId) async {
     try {
       final facts = (await _fetchFactsFor({rdId}))[rdId];
-      if (facts == null) return const Failure('This account no longer exists.');
+      if (facts == null) return Failure(t.errors.ledgerAccountMissing);
       return await ref.read(rdLedgerRepositoryProvider).upsertSummaries([
         _summaryOf(facts),
       ]);
@@ -450,7 +460,7 @@ class RDLedgerController extends _$RDLedgerController {
     Result<RDLedgerChange, String> Function(RDLedgerFacts facts) plan,
   ) => _exclusive(() async {
     final facts = (await _fetchFactsFor({rdId}))[rdId];
-    if (facts == null) return const Failure('This account no longer exists.');
+    if (facts == null) return Failure(t.errors.ledgerAccountMissing);
     switch (plan(facts)) {
       case Failure(:final error):
         return Failure(error);
@@ -480,7 +490,7 @@ class RDLedgerController extends _$RDLedgerController {
     Future<Result<T, String>> Function() operation,
   ) async {
     if (state.isLoading) {
-      return const Failure('Another ledger operation is still running.');
+      return Failure(t.errors.ledgerOperationInProgress);
     }
     state = const AsyncLoading();
     try {
@@ -498,9 +508,7 @@ class RDLedgerController extends _$RDLedgerController {
           context: ErrorDescription('while writing to the RD ledger'),
         ),
       );
-      return const Failure(
-        'The ledger could not be updated. Please try again.',
-      );
+      return Failure(t.errors.ledgerUpdateFailed);
     } finally {
       if (ref.mounted) state = const AsyncData(null);
     }
@@ -551,9 +559,7 @@ class RDLedgerController extends _$RDLedgerController {
     try {
       return pick(await ref.read(recurringDepositsControllerProvider.future));
     } catch (_) {
-      throw const RDLedgerException(
-        'Accounts could not be loaded. Check your connection and try again.',
-      );
+      throw RDLedgerException(t.errors.ledgerAccountsLoadFailed);
     } finally {
       sub.close();
     }

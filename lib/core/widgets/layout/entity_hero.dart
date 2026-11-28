@@ -49,6 +49,9 @@ class EntityHero extends StatelessWidget {
   /// The origin of a row in the Monthly Hub list (see [tagFrom]).
   static const String rdHub = 'hub';
 
+  /// The origin of a deposit row inside [CustomerDetailScreen] (see [tagFrom]).
+  static const String customerDetail = 'customer';
+
   /// The tag of the parts of the entity [id] that travel between a row and the head of
   /// the screen that row opens.
   ///
