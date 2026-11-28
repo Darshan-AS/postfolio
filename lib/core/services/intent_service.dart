@@ -41,6 +41,23 @@ class IntentService {
       mode: LaunchMode.externalApplication,
     );
   }
+
+  Future<void> launchExternalUrl(String url) async {
+    await _launchUrl(url, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> launchSupportEmail({
+    required String to,
+    required String subject,
+    String? body,
+  }) async {
+    final params = <String>[
+      'subject=${Uri.encodeComponent(subject)}',
+      if (body != null && body.isNotEmpty) 'body=${Uri.encodeComponent(body)}',
+    ];
+    final uri = Uri(scheme: 'mailto', path: to, query: params.join('&'));
+    await _launchUrl(uri.toString());
+  }
 }
 
 @riverpod

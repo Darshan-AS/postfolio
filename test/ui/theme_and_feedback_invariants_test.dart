@@ -269,13 +269,15 @@ void main() {
 
         final appBar = tester.widget<AppBar>(find.byType(AppBar));
         expect(appBar.leading, isNull);
-
-        // Open 4-mode theme selector and select Dark mode.
-        await tester.tap(
-          find.byKey(const ValueKey('theme_mode_selector_button')),
+        expect(
+          find.byKey(const ValueKey('shell_account_avatar_button')),
+          findsOneWidget,
         );
-        await tester.pumpAndSettle();
-        await tester.tap(find.text(t.common.theme.dark));
+
+        // ThemeModeNotifier persists and restores all 4 theme modes.
+        container
+            .read(themeModeProvider.notifier)
+            .setThemeMode(AppThemeMode.dark);
         await tester.pumpAndSettle();
         expect(container.read(themeModeProvider), AppThemeMode.dark);
 

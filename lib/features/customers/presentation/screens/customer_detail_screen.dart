@@ -2,6 +2,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:postfolio/core/providers/app_preferences_provider.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
@@ -51,6 +52,9 @@ class CustomerDetailScreen extends ConsumerWidget {
     final textTheme = theme.textTheme;
 
     final record = ref.watch(customerByIdProvider(customerId));
+    final maskSensitiveIds = ref.watch(
+      appPreferencesProvider.select((p) => p.maskSensitiveIds),
+    );
 
     return AsyncSingleEntityBuilder<Customer>(
       state: record,
@@ -185,7 +189,10 @@ class CustomerDetailScreen extends ConsumerWidget {
                 customer.aadhaarNumber != null ||
                 customer.panNumber != null) ...[
               AppSpacings.gapLg,
-              _buildIdentityDocuments(customer),
+              _buildIdentityDocuments(
+                customer,
+                maskSensitiveIds: maskSensitiveIds,
+              ),
             ],
             if (customer.savingsAccount != null) ...[
               AppSpacings.gapLg,
@@ -285,7 +292,10 @@ Widget _buildNotes(Customer customer) {
   );
 }
 
-Widget _buildIdentityDocuments(Customer customer) {
+Widget _buildIdentityDocuments(
+  Customer customer, {
+  bool maskSensitiveIds = false,
+}) {
   final items = <Widget>[
     if (customer.cifNumber != null && customer.cifNumber!.isNotEmpty)
       DetailItem(
@@ -306,6 +316,8 @@ Widget _buildIdentityDocuments(Customer customer) {
         ),
         label: t.customers.fields.aadhaarNumber,
         value: customer.aadhaarNumber!.toAadhaarFormat(),
+        masked: maskSensitiveIds,
+        maskedValue: customer.aadhaarNumber!.toMaskedAadhaarFormat(),
         copyValue: customer.aadhaarNumber,
         hideIfNull: true,
       ),
@@ -317,6 +329,8 @@ Widget _buildIdentityDocuments(Customer customer) {
         ),
         label: t.customers.fields.panNumber,
         value: customer.panNumber!.toPanFormat(),
+        masked: maskSensitiveIds,
+        maskedValue: customer.panNumber!.toMaskedPanFormat(),
         copyValue: customer.panNumber,
         hideIfNull: true,
       ),

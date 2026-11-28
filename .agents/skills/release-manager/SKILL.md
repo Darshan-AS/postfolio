@@ -24,7 +24,7 @@ Analyze commits and update versioning to ensure consistency.
     - **Major**: Breaking changes or significant architectural shifts.
     - **Minor**: New features (look for `Feat:` or `Add:`).
     - **Patch**: Bug fixes, UI tweaks, or refactoring (look for `Fix:`, `UI:`, `Refactor:`, `Chore:`).
-- **Step 4**: Open `pubspec.yaml` and increment the **version** (X.Y.Z) and **build number** (+N) accordingly.
+- **Step 4**: Open `pubspec.yaml` and increment the **version** (X.Y.Z) and **build number** (+N) accordingly, and update `lib/core/constants/app_info.dart` (`version` & `buildNumber`) to stay in sync (`app_info_version_test.dart` enforces this in CI).
 - **Step 5**: Draft new entries in `CHANGELOG.md` summarizing the analyzed commits in a human-readable format.
 - **Step 6**: Recommend a tag following the `v<version>+<build>` format (e.g., `v1.3.3+13`).
 - **Step 7 (docs go in the same PR)**: Write the release entry in `.agents/progress.md`, `.agents/tasks.md` and the session log in the release PR itself, alongside the version bump and changelog. Describe what the release contains and list what is still to happen after merge (database push, tag, device smoke test) as open items. Do not leave the release record for a follow-up commit.

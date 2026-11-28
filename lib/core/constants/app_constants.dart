@@ -18,9 +18,18 @@ class AppConstants {
 
   // Form & Formatting
   static const int addressMaxLines = 3;
+  static const int notesMinLines = 2;
+  static const int notesMaxLines = 4;
+  static const int maskedIdVisibleTrailingCount = 4;
+  static const String maskCharacter = 'X';
+  static const String aadhaarMaskedPrefix = 'XXXX XXXX ';
   static const int formatPhoneStandardLength = 10;
   static const int formatPhoneWithCountryCodeLength = 12;
   static const String formatPhoneCountryCode = '91';
+
+  // Assets & Routing
+  static const String appLogoMarkAsset = 'assets/branding/app_logo_mark.png';
+  static const String selfHeroId = 'self';
 
   // Currency
   static const String defaultLocale = 'en_IN';

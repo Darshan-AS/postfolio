@@ -4,7 +4,7 @@ import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/core/utils/row_decoder.dart';
 import 'package:postfolio/core/utils/supabase_error_mapper.dart';
 import 'package:postfolio/features/admin/domain/acting_as_state.dart';
-import 'package:postfolio/features/admin/domain/agent_profile.dart';
+import 'package:postfolio/features/profile/domain/agent_profile.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

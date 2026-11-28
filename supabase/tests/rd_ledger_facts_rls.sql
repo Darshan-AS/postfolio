@@ -1352,4 +1352,90 @@ BEGIN
 END $$;
 ROLLBACK;
 
-\echo '== ALL 22 SQL CONTRACT ASSERTIONS PASSED =='
+\echo '== CASE 23: agent_profiles profile metadata update, agency_types CHECK, and cross-agent RLS =='
+BEGIN;
+INSERT INTO auth.users (instance_id,id,aud,role,email,raw_user_meta_data,confirmation_token,recovery_token,email_change_token_new,email_change)
+VALUES ('00000000-0000-4000-8000-000000000000','dddddddd-0000-4000-8000-000000000002','authenticated','authenticated','other-agent@example.com','{}','','','','')
+ON CONFLICT (id) DO NOTHING;
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'owner', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+DECLARE
+  v_owner UUID := auth.uid();
+  v_caught BOOLEAN := FALSE;
+  v_phone TEXT;
+  v_address TEXT;
+  v_dob DATE;
+  v_branch TEXT;
+  v_types TEXT[];
+  v_mpkby_no TEXT;
+  v_mpkby_exp DATE;
+  v_sas_no TEXT;
+  v_sas_exp DATE;
+  v_pan TEXT;
+  v_aadhaar TEXT;
+  v_sb TEXT;
+  v_notes TEXT;
+BEGIN
+  UPDATE public.agent_profiles
+  SET name = 'Updated Agent Name',
+      agency_code = 'DOP-777',
+      phone = '9988776655',
+      address = '42 Residency Road',
+      date_of_birth = DATE '1980-05-12',
+      post_office_branch = 'Jayanagar HPO',
+      agency_types = ARRAY['mpkby', 'sas']::text[],
+      mpkby_license_no = 'MPKBY-101',
+      mpkby_valid_until = DATE '2028-03-31',
+      sas_license_no = 'SAS-202',
+      sas_valid_until = DATE '2027-09-30',
+      pan_number = 'ABCDE1234F',
+      aadhaar_number = '123456789012',
+      commission_sb_account = '0100088899',
+      notes = 'Counter 2'
+  WHERE id = v_owner;
+
+  SELECT phone, address, date_of_birth, post_office_branch, agency_types,
+         mpkby_license_no, mpkby_valid_until, sas_license_no, sas_valid_until,
+         pan_number, aadhaar_number, commission_sb_account, notes
+  INTO v_phone, v_address, v_dob, v_branch, v_types,
+       v_mpkby_no, v_mpkby_exp, v_sas_no, v_sas_exp,
+       v_pan, v_aadhaar, v_sb, v_notes
+  FROM public.agent_profiles
+  WHERE id = v_owner;
+
+  ASSERT v_phone = '9988776655' AND v_address = '42 Residency Road'
+    AND v_dob = DATE '1980-05-12' AND v_branch = 'Jayanagar HPO'
+    AND v_types = ARRAY['mpkby', 'sas']::text[] AND v_mpkby_no = 'MPKBY-101'
+    AND v_mpkby_exp = DATE '2028-03-31' AND v_sas_no = 'SAS-202'
+    AND v_sas_exp = DATE '2027-09-30' AND v_pan = 'ABCDE1234F'
+    AND v_aadhaar = '123456789012' AND v_sb = '0100088899'
+    AND v_notes = 'Counter 2',
+    'CASE 23a FAILED: owner could not update own agent_profiles metadata';
+
+  BEGIN
+    UPDATE public.agent_profiles SET agency_types = ARRAY['INVALID_TYPE']::text[] WHERE id = v_owner;
+  EXCEPTION WHEN check_violation THEN
+    v_caught := TRUE;
+  END;
+  ASSERT v_caught, 'CASE 23b FAILED: expected check_violation on invalid agency_types';
+END $$;
+
+-- 23c. Another non-admin agent cannot update owner's agent_profiles row (0 rows affected).
+SELECT set_config('test.owner_id', :'owner', true) \gset junk
+SELECT set_config('request.jwt.claims', json_build_object('sub', :'other', 'role', 'authenticated')::text, true) \gset junk
+DO $$
+DECLARE
+  v_owner UUID := current_setting('test.owner_id')::uuid;
+  v_updated INT;
+BEGIN
+  UPDATE public.agent_profiles
+  SET agency_code = 'HIJACKED'
+  WHERE id = v_owner;
+  GET DIAGNOSTICS v_updated = ROW_COUNT;
+  ASSERT v_updated = 0, 'CASE 23c FAILED: cross-agent UPDATE on agent_profiles affected rows';
+END $$;
+ROLLBACK;
+
+\echo '== ALL 23 SQL CONTRACT ASSERTIONS PASSED =='

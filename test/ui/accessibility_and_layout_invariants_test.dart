@@ -29,6 +29,9 @@ import 'package:postfolio/features/recurring_deposits/presentation/screens/recur
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_tile.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operation_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_passbook_po_strip.dart';
+import 'package:postfolio/features/profile/presentation/screens/profile_edit_screen.dart';
+import 'package:postfolio/features/profile/presentation/screens/profile_screen.dart';
+import 'package:postfolio/features/settings/presentation/screens/settings_screen.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skeletonizer/skeletonizer.dart' show SkeletonizerConfig;
@@ -92,6 +95,9 @@ void main() {
         name: 'RecurringDepositFormScreen',
         build: () => const RecurringDepositFormScreen(),
       ),
+      (name: 'ProfileScreen', build: () => const ProfileScreen()),
+      (name: 'SettingsScreen', build: () => const SettingsScreen()),
+      (name: 'ProfileEditScreen', build: () => const ProfileEditScreen()),
     ];
 
     for (final themeEntry in <({String name, ThemeData theme})>[

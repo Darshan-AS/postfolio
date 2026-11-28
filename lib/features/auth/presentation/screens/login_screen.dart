@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:postfolio/core/constants/app_info.dart';
+import 'package:postfolio/core/services/intent_service.dart';
 import 'package:postfolio/core/theme/app_animations.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/widgets/expressive/app_button.dart';
@@ -132,6 +134,24 @@ class LoginScreen extends ConsumerWidget {
                       textAlign: TextAlign.center,
                     ),
                   ],
+                  AppSpacings.gapXxl,
+                  Text(
+                    t.settings.independentDisclaimer,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  AppSpacings.gapXs,
+                  Center(
+                    child: AppButton.text(
+                      label: t.settings.privacyPolicy,
+                      size: AppButtonSize.extraSmall,
+                      onPressed: () => ref
+                          .read(intentServiceProvider)
+                          .launchExternalUrl(AppInfo.privacyPolicyUrl),
+                    ),
+                  ),
                 ],
               ),
             ),

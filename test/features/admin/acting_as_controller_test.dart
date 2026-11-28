@@ -12,7 +12,7 @@ import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/admin/data/admin_repository.dart';
 import 'package:postfolio/features/admin/domain/acting_as_state.dart';
-import 'package:postfolio/features/admin/domain/agent_profile.dart';
+import 'package:postfolio/features/profile/domain/agent_profile.dart';
 import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
 import 'package:postfolio/features/auth/domain/auth_user.dart';

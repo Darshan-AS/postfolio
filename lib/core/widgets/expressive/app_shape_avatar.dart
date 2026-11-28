@@ -55,7 +55,7 @@ enum AppAvatarShape {
     AppAvatarShape.cookie6,
     AppAvatarShape.clover8,
     AppAvatarShape.cookie7,
-    AppAvatarShape.puffy,
+    AppAvatarShape.softBurst,
   ];
 
   /// A shape for a person, chosen from their name: the same person always has the same

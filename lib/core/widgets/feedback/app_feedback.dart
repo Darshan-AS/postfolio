@@ -1,5 +1,7 @@
 import 'package:flutter/services.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:postfolio/core/providers/app_preferences_provider.dart';
 import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/utils/result.dart';
 
@@ -7,6 +9,18 @@ import 'package:postfolio/core/utils/result.dart';
 /// failure arm. Safe to call after an `await` — the messenger is resolved from [context]
 /// only if it is still mounted.
 abstract final class AppFeedback {
+  static bool _hapticsEnabledFor(BuildContext context) {
+    try {
+      return ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(appPreferencesProvider).hapticsEnabled;
+    } catch (_) {
+      // Standalone widget tests may omit ProviderScope.
+      return true;
+    }
+  }
+
   static void showResult(
     BuildContext context,
     Result<void, String> result, {
@@ -38,7 +52,9 @@ abstract final class AppFeedback {
     final messenger = ScaffoldMessenger.maybeOf(context);
     if (messenger == null) return;
     // Felt as well as read: the agent is often looking at the customer, not the phone.
-    HapticFeedback.lightImpact();
+    if (_hapticsEnabledFor(context)) {
+      HapticFeedback.lightImpact();
+    }
     final scheme = Theme.of(context).colorScheme;
     messenger.showSnackBar(
       SnackBar(

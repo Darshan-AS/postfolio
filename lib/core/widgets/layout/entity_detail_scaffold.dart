@@ -233,6 +233,7 @@ class EntityDetailHeader extends StatelessWidget {
   final Color? avatarBackgroundColor;
   final Color? avatarForegroundColor;
   final AppAvatarShape avatarShape;
+  final AppAvatarShape? avatarOpensFrom;
   final String title;
 
   /// Under the title, beside the avatar. At large text it takes the full width under the
@@ -261,6 +262,7 @@ class EntityDetailHeader extends StatelessWidget {
     this.avatarBackgroundColor,
     this.avatarForegroundColor,
     this.avatarShape = AppAvatarShape.cookie9,
+    this.avatarOpensFrom,
     required this.title,
     this.subtitle,
     this.badge,
@@ -349,6 +351,7 @@ class EntityDetailHeader extends StatelessWidget {
     return AppShapeAvatar(
       size: AppDimensions.avatarLg,
       shape: avatarShape,
+      opensFrom: avatarOpensFrom,
       backgroundColor:
           avatarBackgroundColor ?? theme.colorScheme.primaryContainer,
       foregroundColor:

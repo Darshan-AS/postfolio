@@ -1,9 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:postfolio/core/enums/agency_type.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
 import 'package:postfolio/core/models/nominee.dart';
+import 'package:postfolio/features/profile/domain/agent_profile.dart';
 import 'package:postfolio/features/one_time_deposits/domain/one_time_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
@@ -25,14 +27,15 @@ void main() {
             .toList()
           ..sort((a, b) => a.path.compareTo(b.path));
     final definition = RegExp(
-      r'ADD CONSTRAINT (\w+)\s+CHECK \(\s*\w+ IN \(([^)]*)\)\s*\)',
+      r'ADD CONSTRAINT (\w+)\s+CHECK \(\s*\w+\s+(?:IN\s*\(([^)]*)\)|<@\s*ARRAY\[([^\]]*)\](?:::text\[\])?)\s*\)',
       multiLine: true,
     );
     final token = RegExp("'([^']+)'");
     for (final file in files) {
       for (final match in definition.allMatches(file.readAsStringSync())) {
+        final body = match.group(2) ?? match.group(3)!;
         constraints[match.group(1)!] = {
-          for (final t in token.allMatches(match.group(2)!)) t.group(1)!,
+          for (final t in token.allMatches(body)) t.group(1)!,
         };
       }
     }
@@ -109,6 +112,13 @@ void main() {
               amount: 1,
               paymentMode: m,
             ).toJson()['payment_mode']
+            as String,
+    },
+    'agent_profiles_agency_types_check': () => {
+      for (final a in AgencyType.values)
+        (AgentProfile(id: 'a', agencyTypes: [a]).toJson()['agency_types']
+                    as List)
+                .first
             as String,
     },
   };

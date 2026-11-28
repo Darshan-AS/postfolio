@@ -3,7 +3,7 @@ import 'package:postfolio/core/providers/demo_mode_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/admin/data/admin_repository.dart';
 import 'package:postfolio/features/admin/domain/acting_as_state.dart';
-import 'package:postfolio/features/admin/domain/agent_profile.dart';
+import 'package:postfolio/features/profile/domain/agent_profile.dart';
 import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

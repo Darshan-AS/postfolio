@@ -21,6 +21,9 @@ import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repos
 import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
+import 'package:postfolio/features/profile/presentation/screens/profile_edit_screen.dart';
+import 'package:postfolio/features/profile/presentation/screens/profile_screen.dart';
+import 'package:postfolio/features/settings/presentation/screens/settings_screen.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -308,6 +311,59 @@ void main() {
       expect(find.byType(CustomersScreen), findsOneWidget);
       expect(router.location(), '/customers');
     });
+
+    testWidgets(
+      'predictive back pops ProfileEditScreen, SettingsScreen, and ProfileScreen cleanly',
+      (tester) async {
+        final (:router, :handlesBack) = await pumpSignedIn(tester);
+        await tester.tap(
+          find.byKey(const ValueKey('shell_account_avatar_button')),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(ProfileScreen), findsOneWidget);
+        expect(router.location(), '/profile');
+        expect(handlesBack.last, isTrue);
+
+        await tester.tap(find.byKey(const ValueKey('profile_edit_button')));
+        await tester.pumpAndSettle();
+        expect(find.byType(ProfileEditScreen), findsOneWidget);
+        expect(router.location(), '/profile/edit');
+        expect(handlesBack.last, isTrue);
+
+        await _sendBack(tester, 'startBackGesture', _swipe(0));
+        await tester.pump();
+        await _sendBack(tester, 'updateBackGestureProgress', _swipe(0.6));
+        await tester.pump();
+        expect(router.root().userGestureInProgress, isTrue);
+
+        await _sendBack(tester, 'commitBackGesture');
+        await tester.pumpAndSettle();
+        expect(find.byType(ProfileEditScreen), findsNothing);
+        expect(find.byType(ProfileScreen), findsOneWidget);
+        expect(router.location(), '/profile');
+
+        await tester.tap(find.byKey(const ValueKey('profile_settings_button')));
+        await tester.pumpAndSettle();
+        expect(find.byType(SettingsScreen), findsOneWidget);
+        expect(router.location(), '/settings');
+        expect(handlesBack.last, isTrue);
+
+        await _sendBack(tester, 'startBackGesture', _swipe(0));
+        await tester.pump();
+        await _sendBack(tester, 'commitBackGesture');
+        await tester.pumpAndSettle();
+        expect(find.byType(SettingsScreen), findsNothing);
+        expect(find.byType(ProfileScreen), findsOneWidget);
+
+        await _sendBack(tester, 'startBackGesture', _swipe(0));
+        await tester.pump();
+        await _sendBack(tester, 'commitBackGesture');
+        await tester.pumpAndSettle();
+        expect(find.byType(ProfileScreen), findsNothing);
+        expect(router.location(), '/customers');
+        expect(handlesBack.last, isFalse);
+      },
+    );
   });
 }
 

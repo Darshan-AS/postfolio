@@ -4,6 +4,7 @@ import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/timestamp_converter.dart';
 import 'package:postfolio/core/constants/app_constants.dart';
 import 'package:postfolio/core/models/nominee.dart';
+import 'package:postfolio/core/utils/identity_validators.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 
@@ -47,18 +48,8 @@ sealed class Customer with _$Customer {
 
   // --- Domain Validation Rules ---
 
-  static String? validateName(String? name) {
-    if (name == null || name.trim().isEmpty) {
-      return t.errors.requiredField(field: 'Name');
-    }
-    if (name.trim().length < AppConstants.minNameLength) {
-      return t.errors.minLength(
-        field: 'Name',
-        count: AppConstants.minNameLength,
-      );
-    }
-    return null;
-  }
+  static String? validateName(String? name) =>
+      IdentityValidators.validateRequiredName(name, fieldLabel: 'Name');
 
   static String? validateEmail(String? email) {
     if (email == null || email.trim().isEmpty) return null; // Optional field
@@ -67,41 +58,14 @@ sealed class Customer with _$Customer {
     return null;
   }
 
-  static String? validatePhone(String? phone) {
-    if (phone == null || phone.trim().isEmpty) return null; // Optional field
-    final normalized = phone.trim().replaceAll(RegExp(r'[\s\-()]'), '');
-    final regex = RegExp(
-      r'^\+?[0-9]{'
-      '${AppConstants.phoneMinLength}'
-      ','
-      '${AppConstants.phoneMaxLength}'
-      r'}$',
-    );
-    if (!regex.hasMatch(normalized)) {
-      return t.errors.invalidPhone;
-    }
-    return null;
-  }
+  static String? validatePhone(String? phone) =>
+      IdentityValidators.validateOptionalPhone(phone);
 
-  static String? validateAadhaar(String? aadhaar) {
-    if (aadhaar == null || aadhaar.trim().isEmpty) return null; // Optional
-    final cleanAadhaar = aadhaar.replaceAll(RegExp(r'\s+'), '');
-    final regex = RegExp(
-      r'^\d{'
-      '${AppConstants.aadhaarLength}'
-      r'}$',
-    );
-    if (!regex.hasMatch(cleanAadhaar)) return t.errors.invalidAadhaar;
-    return null;
-  }
+  static String? validateAadhaar(String? aadhaar) =>
+      IdentityValidators.validateOptionalAadhaar(aadhaar);
 
-  static String? validatePan(String? pan) {
-    if (pan == null || pan.trim().isEmpty) return null; // Optional
-    final cleanPan = pan.trim().toUpperCase();
-    final regex = RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$');
-    if (!regex.hasMatch(cleanPan)) return t.errors.invalidPan;
-    return null;
-  }
+  static String? validatePan(String? pan) =>
+      IdentityValidators.validateOptionalPan(pan);
 
   static String? validateCif(String? cif) {
     if (cif == null || cif.trim().isEmpty) return null; // Optional

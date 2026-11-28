@@ -5,7 +5,21 @@ extension StringFormatExtension on String {
   String toAadhaarFormat() {
     final clean = replaceAll(RegExp(r'\s+'), '');
     if (clean.length != AppConstants.aadhaarLength) return this;
-    return '${clean.substring(0, 4)} ${clean.substring(4, 8)} ${clean.substring(8, 12)}';
+    const chunk = AppConstants.maskedIdVisibleTrailingCount;
+    return '${clean.substring(0, chunk)} ${clean.substring(chunk, chunk * 2)} ${clean.substring(chunk * 2, chunk * 3)}';
+  }
+
+  /// Masks Aadhaar number keeping only the last 4 digits visible: "XXXX XXXX 1234"
+  String toMaskedAadhaarFormat() {
+    final clean = replaceAll(RegExp(r'\s+'), '');
+    const trailing = AppConstants.maskedIdVisibleTrailingCount;
+    if (clean.length == AppConstants.aadhaarLength) {
+      return '${AppConstants.aadhaarMaskedPrefix}${clean.substring(clean.length - trailing)}';
+    }
+    if (clean.length > trailing) {
+      return '${AppConstants.maskCharacter * (clean.length - trailing)}${clean.substring(clean.length - trailing)}';
+    }
+    return this;
   }
 
   /// Formats phone number consistently into "+91 XXXXX XXXXX"
@@ -34,5 +48,15 @@ extension StringFormatExtension on String {
   /// Formats PAN number by converting to uppercase
   String toPanFormat() {
     return toUpperCase();
+  }
+
+  /// Masks PAN number keeping only the last 4 characters visible: "XXXXXX123F"
+  String toMaskedPanFormat() {
+    final clean = trim().toUpperCase();
+    const trailing = AppConstants.maskedIdVisibleTrailingCount;
+    if (clean.length > trailing) {
+      return '${AppConstants.maskCharacter * (clean.length - trailing)}${clean.substring(clean.length - trailing)}';
+    }
+    return clean;
   }
 }

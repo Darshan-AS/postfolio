@@ -1,11 +1,11 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
-import 'package:postfolio/core/widgets/common/accessible_theme_toggle.dart';
 import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
+import 'package:postfolio/features/profile/presentation/widgets/agent_avatar.dart';
 
-/// App bar of the four top-level destinations: the destination's title, the theme switcher,
-/// then the screen's own actions.
+/// App bar of the four top-level destinations: the destination's title, the screen's own
+/// actions, then the trailing agent avatar (which opens Settings & Profile).
 class ShellAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final String title;
 
@@ -43,12 +43,11 @@ class ShellAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ),
       actions: [
-        const AccessibleThemeToggle(),
         ...?actions,
-        // An icon is 12dp inside its 48dp button, so 4dp here ends the last icon on the
-        // page margin, where the title starts on the other side. The detail screens' bar
-        // does the same.
-        const SizedBox(width: AppDimensions.paddingXs),
+        const AgentAvatarButton(),
+        // The 32dp avatar sits 8dp inside its 48dp button, so 8dp here ends its outer
+        // edge on the 16dp page margin, where the title starts on the other side.
+        const SizedBox(width: AppDimensions.paddingSm),
       ],
     );
   }

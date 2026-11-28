@@ -31,7 +31,10 @@ void main() {
   final name = rameshRao.name;
   final phone = rameshRao.phone!.toPhoneFormat();
 
-  Finder avatar() => find.byType(AppShapeAvatar);
+  Finder avatar() => find.descendant(
+    of: find.byType(EntityAvatar),
+    matching: find.byType(AppShapeAvatar),
+  );
 
   /// The form of the one avatar on stage: 0 as in a row, 1 as at the head of a screen.
   double avatarForm(WidgetTester tester) =>

@@ -9,6 +9,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/env/env.dart';
+import 'package:postfolio/core/providers/app_preferences_provider.dart';
 import 'package:postfolio/core/providers/theme_provider.dart';
 import 'package:postfolio/core/routing/app_router.dart';
 import 'package:postfolio/core/services/app_error_reporter.dart';
@@ -104,6 +105,7 @@ class PostfolioApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final goRouter = ref.watch(goRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final prefs = ref.watch(appPreferencesProvider);
 
     ThemeData lightTheme = AppTheme.lightTheme;
     ThemeData darkTheme = AppTheme.darkTheme;
@@ -131,13 +133,12 @@ class PostfolioApp extends ConsumerWidget {
         ThemeData effectiveLightTheme = lightTheme;
         ThemeData effectiveDarkTheme = darkTheme;
 
-        // If the user explicitly wants the accessible theme, completely ignore Monet.
-        // This ensures the strict high-contrast semantic colors remain readable
-        // and aren't ruined by a low-contrast OS dynamic palette.
+        // If the user explicitly wants the accessible theme or disables wallpaper colors,
+        // ignore Monet so strict high-contrast / brand colors stay intact.
         if (themeMode == AppThemeMode.accessibleSystem) {
           effectiveLightTheme = AppTheme.accessibleLightTheme;
           effectiveDarkTheme = AppTheme.accessibleDarkTheme;
-        } else {
+        } else if (prefs.useDynamicColor) {
           if (lightDynamic != null) {
             effectiveLightTheme = AppTheme.buildTheme(
               lightDynamic.harmonized(),

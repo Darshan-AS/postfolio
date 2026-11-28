@@ -14,7 +14,7 @@ import 'package:postfolio/core/widgets/feedback/app_adaptive_sheet.dart';
 import 'package:postfolio/core/widgets/feedback/app_sheet_header.dart';
 import 'package:postfolio/core/widgets/feedback/error_state_view.dart';
 import 'package:postfolio/core/widgets/forms/app_search_bar.dart';
-import 'package:postfolio/features/admin/domain/agent_profile.dart';
+import 'package:postfolio/features/profile/domain/agent_profile.dart';
 import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
 import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';

@@ -7,10 +7,10 @@ import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
-import 'package:postfolio/core/widgets/common/accessible_theme_toggle.dart';
 import 'package:postfolio/core/widgets/domain/wealth_accumulation_grid.dart';
 import 'package:postfolio/core/widgets/layout/app_bar_title.dart';
 import 'package:postfolio/core/widgets/layout/detail_components.dart';
+import 'package:postfolio/features/profile/presentation/widgets/agent_avatar.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
 import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
@@ -106,12 +106,12 @@ void main() {
       expect(title.left, AppDimensions.pageMargin);
 
       final lastAction = tester.getRect(
-        find.descendant(of: bar, matching: find.byType(AccessibleThemeToggle)),
+        find.descendant(of: bar, matching: find.byType(AgentAvatarButton)),
       );
-      // The icon is centred in its button.
-      final iconRight =
-          lastAction.right - (lastAction.width - AppDimensions.iconMd) / 2;
-      expect(phone.width - iconRight, AppDimensions.pageMargin);
+      // The 32dp avatar is centred in its 48dp button.
+      final avatarRight =
+          lastAction.right - (lastAction.width - AppDimensions.iconLg) / 2;
+      expect(phone.width - avatarRight, AppDimensions.pageMargin);
     },
   );
 

@@ -130,6 +130,7 @@ void main() {
         expect(AppAvatarShape.forPerson(name), shape);
         expect(schemeShapes, isNot(contains(shape)), reason: name);
         expect(shape, isNot(AppAvatarShape.neutral), reason: name);
+        expect(shape, isNot(AppAvatarShape.puffy), reason: name);
       }
     },
   );

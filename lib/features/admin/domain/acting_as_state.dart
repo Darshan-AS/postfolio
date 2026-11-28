@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:postfolio/features/admin/domain/agent_profile.dart';
+import 'package:postfolio/features/profile/domain/agent_profile.dart';
 
 part 'acting_as_state.freezed.dart';
 

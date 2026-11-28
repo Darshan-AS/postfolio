@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:postfolio/core/enums/start_tab.dart';
 import 'package:postfolio/core/providers/theme_provider.dart';
 import 'package:postfolio/core/enums/sort_direction.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
@@ -28,6 +29,10 @@ class StorageService {
 
   static const _demoModeKey = 'demo_mode_enabled';
   static const _themeModeKey = 'theme_mode';
+  static const _useDynamicColorKey = 'use_dynamic_color';
+  static const _startTabKey = 'default_start_tab';
+  static const _hapticsEnabledKey = 'haptics_enabled';
+  static const _maskSensitiveIdsKey = 'mask_sensitive_ids';
 
   static const _customerSortFieldKey = 'customer_sort_field';
   static const _customerSortDirectionKey = 'customer_sort_direction';
@@ -46,6 +51,52 @@ class StorageService {
   bool get isDemoMode => _prefs.getBool(_demoModeKey) ?? false;
 
   Future<void> setDemoMode(bool value) => _prefs.setBool(_demoModeKey, value);
+
+  // App Preferences
+  bool getUseDynamicColor() => _prefs.getBool(_useDynamicColorKey) ?? true;
+
+  Future<void> setUseDynamicColor(bool value) =>
+      _prefs.setBool(_useDynamicColorKey, value);
+
+  AppStartTab getStartTab() {
+    final tabString = _prefs.getString(_startTabKey);
+    if (tabString != null) {
+      return AppStartTab.values.firstWhere(
+        (e) => e.name == tabString,
+        orElse: () => AppStartTab.customers,
+      );
+    }
+    return AppStartTab.customers;
+  }
+
+  Future<void> setStartTab(AppStartTab tab) =>
+      _prefs.setString(_startTabKey, tab.name);
+
+  bool getHapticsEnabled() => _prefs.getBool(_hapticsEnabledKey) ?? true;
+
+  Future<void> setHapticsEnabled(bool value) =>
+      _prefs.setBool(_hapticsEnabledKey, value);
+
+  bool getMaskSensitiveIds() => _prefs.getBool(_maskSensitiveIdsKey) ?? false;
+
+  Future<void> setMaskSensitiveIds(bool value) =>
+      _prefs.setBool(_maskSensitiveIdsKey, value);
+
+  Future<void> clearListCriteria() async {
+    await Future.wait([
+      _prefs.remove(_customerSortFieldKey),
+      _prefs.remove(_customerSortDirectionKey),
+      _prefs.remove(_otdSortFieldKey),
+      _prefs.remove(_otdSortDirectionKey),
+      _prefs.remove(_otdStatusFiltersKey),
+      _prefs.remove(_otdUrgencyFiltersKey),
+      _prefs.remove(_otdSchemeFiltersKey),
+      _prefs.remove(_rdSortFieldKey),
+      _prefs.remove(_rdSortDirectionKey),
+      _prefs.remove(_rdStatusFiltersKey),
+      _prefs.remove(_rdUrgencyFiltersKey),
+    ]);
+  }
 
   // Theme
   AppThemeMode getThemeMode() {

@@ -130,9 +130,40 @@ INSERT INTO auth.identities (
 ON CONFLICT (id) DO NOTHING;
 
 -- public.agent_profiles is filled by the on_auth_user_created trigger.
-UPDATE public.agent_profiles SET agency_code = 'GCPD-001' WHERE id = '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d';
-UPDATE public.agent_profiles SET agency_code = 'WAYNE-002' WHERE id = '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71e';
-UPDATE public.agent_profiles SET agency_code = 'PLANET-003' WHERE id = '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71f';
+UPDATE public.agent_profiles
+SET agency_code = 'DOP-GTM-001',
+    phone = '9876543210',
+    address = '14 Precinct Plaza, Gotham City',
+    date_of_birth = DATE '1972-11-14',
+    post_office_branch = 'Gotham Central HPO',
+    agency_types = ARRAY['mpkby', 'sas']::text[],
+    mpkby_license_no = 'MPKBY/MH/2021/4812',
+    mpkby_valid_until = ((now() AT TIME ZONE 'Asia/Kolkata')::date + INTERVAL '140 days')::date,
+    sas_license_no = 'SAS/MH/2020/1194',
+    sas_valid_until = ((now() AT TIME ZONE 'Asia/Kolkata')::date + INTERVAL '30 days')::date,
+    pan_number = 'ABCPG1234K',
+    aadhaar_number = '482910482910',
+    commission_sb_account = '0100090042',
+    notes = 'Counter #3 window hours 10:00-13:30; SAS renewal due next month.'
+WHERE id = '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71d';
+
+UPDATE public.agent_profiles
+SET agency_code = 'WAYNE-002',
+    phone = '9876501234',
+    post_office_branch = 'Wayne Tower SO',
+    agency_types = ARRAY['sas']::text[],
+    sas_license_no = 'SAS/MH/2022/2041',
+    sas_valid_until = ((now() AT TIME ZONE 'Asia/Kolkata')::date + INTERVAL '220 days')::date
+WHERE id = '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71e';
+
+UPDATE public.agent_profiles
+SET agency_code = 'PLANET-003',
+    phone = '9876505678',
+    post_office_branch = 'Metropolis GPO',
+    agency_types = ARRAY['mpkby']::text[],
+    mpkby_license_no = 'MPKBY/MH/2023/9901',
+    mpkby_valid_until = ((now() AT TIME ZONE 'Asia/Kolkata')::date + INTERVAL '180 days')::date
+WHERE id = '8ffb99b0-9276-4dc0-9cf6-0a563fc8a71f';
 
 -- Grant admin role to the primary seeded agent so Admin Acting-As works out of the box locally.
 INSERT INTO public.user_roles (user_id, role)
@@ -708,8 +739,9 @@ DROP SCHEMA seed CASCADE;
 --
 -- "Sign in as seeded agent" on the login screen (local builds only) signs in as the primary
 -- seeded agent above (Jim Gordon). If you sign in with Google instead, the first such
--- sign-in takes over the primary seed portfolio (section 8) and receives the 'admin' role
--- so Lucius Fox and Perry White remain available under Switch Account.
+-- sign-in takes over the primary seed portfolio (section 8), inherits Jim Gordon's sample
+-- agent profile/licensing/KYC metadata (preserving your Google name and email), and receives
+-- the 'admin' role so Lucius Fox and Perry White remain available under Switch Account.
 -- To hand it to a particular account by hand:
 --   docker exec supabase_db_postfolio psql -U postgres -d postgres \
 --     -c "SELECT public.adopt_seed_data('you@example.com');"
@@ -723,6 +755,28 @@ BEGIN
   IF v_target IS NULL OR v_target = v_seed THEN
     RETURN 'Nothing to do.';
   END IF;
+  UPDATE public.agent_profiles dst
+  SET agency_code           = COALESCE(dst.agency_code, src.agency_code),
+      phone                 = COALESCE(dst.phone, src.phone),
+      address               = COALESCE(dst.address, src.address),
+      date_of_birth         = COALESCE(dst.date_of_birth, src.date_of_birth),
+      post_office_branch    = COALESCE(dst.post_office_branch, src.post_office_branch),
+      agency_types          = CASE
+                                WHEN COALESCE(cardinality(dst.agency_types), 0) = 0
+                                THEN src.agency_types
+                                ELSE dst.agency_types
+                              END,
+      mpkby_license_no      = COALESCE(dst.mpkby_license_no, src.mpkby_license_no),
+      mpkby_valid_until     = COALESCE(dst.mpkby_valid_until, src.mpkby_valid_until),
+      sas_license_no        = COALESCE(dst.sas_license_no, src.sas_license_no),
+      sas_valid_until       = COALESCE(dst.sas_valid_until, src.sas_valid_until),
+      pan_number            = COALESCE(dst.pan_number, src.pan_number),
+      aadhaar_number        = COALESCE(dst.aadhaar_number, src.aadhaar_number),
+      commission_sb_account = COALESCE(dst.commission_sb_account, src.commission_sb_account),
+      notes                 = COALESCE(dst.notes, src.notes)
+  FROM public.agent_profiles src
+  WHERE dst.id = v_target
+    AND src.id = v_seed;
   UPDATE public.customers          SET agent_id = v_target WHERE agent_id = v_seed;
   UPDATE public.account_identities SET agent_id = v_target WHERE agent_id = v_seed;
   UPDATE public.rd_transactions    SET agent_id = v_target WHERE agent_id = v_seed;

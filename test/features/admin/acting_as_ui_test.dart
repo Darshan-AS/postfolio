@@ -15,15 +15,15 @@ import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
 import 'package:postfolio/features/admin/data/admin_repository.dart';
 import 'package:postfolio/features/admin/domain/acting_as_state.dart';
-import 'package:postfolio/features/admin/domain/agent_profile.dart';
+import 'package:postfolio/features/profile/domain/agent_profile.dart';
 import 'package:postfolio/features/admin/presentation/controllers/acting_as_controller.dart';
 import 'package:postfolio/features/admin/presentation/widgets/acting_as_banner.dart';
 import 'package:postfolio/features/admin/presentation/widgets/admin_agent_picker_sheet.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
 import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
-import 'package:postfolio/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:postfolio/features/one_time_deposits/data/one_time_deposit_repository.dart';
+import 'package:postfolio/features/profile/presentation/screens/profile_screen.dart';
 import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_repository.dart';
 import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_provider.dart';
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
@@ -504,19 +504,23 @@ void main() {
 
   group('Admin Switch Account Trigger Visibility', () {
     testWidgets(
-      'mobile DashboardScreen shows Switch Account for admins and opens picker sheet',
+      'mobile ProfileScreen shows Switch Account for admins and opens picker sheet',
       (tester) async {
         final adminEnv = await createContainer(isAdmin: true, demoMode: false);
         await pumpWidgetUnderTest(
           tester,
           adminEnv.container,
-          const DashboardScreen(),
+          const ProfileScreen(),
           size: const Size(360, 800),
         );
-        final switchBtn = find.byTooltip(t.admin.switchAccount);
+        final switchBtn = find.byKey(
+          const ValueKey('admin_switch_account_button'),
+        );
         expect(switchBtn, findsOneWidget);
         expectAccessibleIconButtons(tester);
 
+        await tester.ensureVisible(switchBtn);
+        await tester.pumpAndSettle();
         await tester.tap(switchBtn);
         await tester.pumpAndSettle();
         expect(find.byType(AdminAgentPickerSheet), findsOneWidget);
@@ -524,35 +528,41 @@ void main() {
     );
 
     testWidgets(
-      'mobile DashboardScreen hides Switch Account for non-admin agents',
+      'mobile ProfileScreen hides Switch Account for non-admin agents',
       (tester) async {
         final agentEnv = await createContainer(isAdmin: false, demoMode: false);
         await pumpWidgetUnderTest(
           tester,
           agentEnv.container,
-          const DashboardScreen(),
+          const ProfileScreen(),
           size: const Size(360, 800),
         );
-        expect(find.byTooltip(t.admin.switchAccount), findsNothing);
+        expect(
+          find.byKey(const ValueKey('admin_switch_account_button')),
+          findsNothing,
+        );
       },
     );
 
     testWidgets(
-      'mobile DashboardScreen hides Switch Account for admins in Demo Mode',
+      'mobile ProfileScreen hides Switch Account for admins in Demo Mode',
       (tester) async {
         final demoEnv = await createContainer(isAdmin: true, demoMode: true);
         await pumpWidgetUnderTest(
           tester,
           demoEnv.container,
-          const DashboardScreen(),
+          const ProfileScreen(),
           size: const Size(360, 800),
         );
-        expect(find.byTooltip(t.admin.switchAccount), findsNothing);
+        expect(
+          find.byKey(const ValueKey('admin_switch_account_button')),
+          findsNothing,
+        );
       },
     );
 
     testWidgets(
-      'desktop MainShellScaffold shows Switch Account on rail for admins and opens picker dialog',
+      'desktop avatar opens ProfileScreen showing Switch Account for admins and opens picker dialog',
       (tester) async {
         final adminEnv = await createContainer(isAdmin: true, demoMode: false);
         await pumpRouterApp(
@@ -560,17 +570,21 @@ void main() {
           adminEnv.container,
           size: const Size(1280, 800),
         );
-        adminEnv.container
-            .read(goRouterProvider)
-            .go(const DashboardRoute().location);
+        await tester.tap(
+          find.byKey(const ValueKey('shell_account_avatar_button')).first,
+        );
         await tester.pumpAndSettle();
 
-        // Visible once in Navigation Rail (not duplicated in Dashboard app bar).
-        expect(find.byTooltip(t.admin.switchAccount), findsOneWidget);
+        final switchBtn = find.byKey(
+          const ValueKey('admin_switch_account_button'),
+        );
+        expect(switchBtn, findsOneWidget);
         expectAccessibleIconButtons(tester);
 
         // Tapping opens AdminAgentPickerSheet as a dialog; selecting an agent switches & routes to /dashboard.
-        await tester.tap(find.byTooltip(t.admin.switchAccount));
+        await tester.ensureVisible(switchBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(switchBtn);
         await tester.pumpAndSettle();
         expect(find.byType(AdminAgentPickerSheet), findsOneWidget);
         await tester.tap(find.text(targetAgentA.displayLabel));
@@ -580,7 +594,7 @@ void main() {
     );
 
     testWidgets(
-      'desktop MainShellScaffold hides Switch Account for non-admin agents',
+      'desktop ProfileScreen hides Switch Account for non-admin agents',
       (tester) async {
         final agentEnv = await createContainer(isAdmin: false, demoMode: false);
         await pumpRouterApp(
@@ -588,11 +602,18 @@ void main() {
           agentEnv.container,
           size: const Size(1280, 800),
         );
-        expect(find.byTooltip(t.admin.switchAccount), findsNothing);
+        await tester.tap(
+          find.byKey(const ValueKey('shell_account_avatar_button')).first,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey('admin_switch_account_button')),
+          findsNothing,
+        );
       },
     );
 
-    testWidgets('desktop MainShellScaffold hides Switch Account in Demo Mode', (
+    testWidgets('desktop ProfileScreen hides Switch Account in Demo Mode', (
       tester,
     ) async {
       final demoEnv = await createContainer(isAdmin: true, demoMode: true);
@@ -601,20 +622,30 @@ void main() {
         demoEnv.container,
         size: const Size(1280, 800),
       );
-      expect(find.byTooltip(t.admin.switchAccount), findsNothing);
+      await tester.tap(
+        find.byKey(const ValueKey('shell_account_avatar_button')).first,
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('admin_switch_account_button')),
+        findsNothing,
+      );
     });
 
     testWidgets(
-      'Dashboard pull-to-refresh re-checks isAdminProvider and reveals Switch Account',
+      'ProfileScreen pull-to-refresh re-checks isAdminProvider and reveals Switch Account',
       (tester) async {
         final env = await createContainer(isAdmin: false, demoMode: false);
         await pumpWidgetUnderTest(
           tester,
           env.container,
-          const DashboardScreen(),
+          const ProfileScreen(),
           size: const Size(360, 800),
         );
-        expect(find.byTooltip(t.admin.switchAccount), findsNothing);
+        expect(
+          find.byKey(const ValueKey('admin_switch_account_button')),
+          findsNothing,
+        );
 
         // Simulate admin role granted after initial load, then pull to refresh.
         env.adminRepo.isAdmin = true;
@@ -625,7 +656,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.byTooltip(t.admin.switchAccount), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('admin_switch_account_button')),
+          findsOneWidget,
+        );
       },
     );
   });

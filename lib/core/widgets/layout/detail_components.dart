@@ -67,11 +67,13 @@ class DetailSection extends StatelessWidget {
   }
 }
 
-class DetailItem extends StatelessWidget {
+class DetailItem extends StatefulWidget {
   final String label;
   final String? value;
   final String? copyValue;
   final bool hideIfNull;
+  final bool masked;
+  final String? maskedValue;
   final Widget? icon;
   final VoidCallback? onTap;
   final Widget? trailing;
@@ -82,6 +84,8 @@ class DetailItem extends StatelessWidget {
     this.value,
     this.copyValue,
     this.hideIfNull = false,
+    this.masked = false,
+    this.maskedValue,
     this.icon,
     this.onTap,
     this.trailing,
@@ -91,23 +95,50 @@ class DetailItem extends StatelessWidget {
   bool get isHidden => hideIfNull && (value == null || value!.isEmpty);
 
   @override
+  State<DetailItem> createState() => _DetailItemState();
+}
+
+class _DetailItemState extends State<DetailItem> {
+  bool _revealed = false;
+
+  @override
+  void didUpdateWidget(covariant DetailItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((!oldWidget.masked && widget.masked) ||
+        oldWidget.value != widget.value) {
+      _revealed = false;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (isHidden) {
+    if (widget.isHidden) {
       return const SizedBox.shrink();
     }
 
-    final displayValue = (value == null || value!.isEmpty)
+    final displayValue = (widget.value == null || widget.value!.isEmpty)
         ? t.common.notProvided
-        : value!;
-    final effectiveCopy = (copyValue != null && copyValue!.trim().isNotEmpty)
-        ? copyValue!.trim()
+        : widget.value!;
+    final isMaskedActive =
+        widget.masked &&
+        widget.maskedValue != null &&
+        widget.value != null &&
+        widget.value!.isNotEmpty;
+    final shownValue = isMaskedActive && !_revealed
+        ? widget.maskedValue!
+        : displayValue;
+    final effectiveCopy =
+        (widget.copyValue != null && widget.copyValue!.trim().isNotEmpty)
+        ? widget.copyValue!.trim()
         : null;
 
-    // A copy button ends its row 4dp from the edge: its icon is then centred where a
-    // chevron is, 28dp in. With the row's 16dp it sat 12dp further in than the chevron of
-    // the row above it.
-    final endsWithCopy =
-        effectiveCopy != null && trailing == null && onTap == null;
+    // A trailing icon button ends its row 4dp from the edge: its icon is then centred
+    // where a chevron is, 28dp in. With the row's 16dp it sat 12dp further in than the
+    // chevron of the row above it.
+    final endsWithActionButton =
+        (effectiveCopy != null || isMaskedActive) &&
+        widget.trailing == null &&
+        widget.onTap == null;
 
     Widget content = ConstrainedBox(
       // One height for every row. A row with a copy button was 72dp and its neighbours
@@ -116,20 +147,22 @@ class DetailItem extends StatelessWidget {
       child: Padding(
         padding: EdgeInsetsDirectional.only(
           start: AppDimensions.paddingLg,
-          end: endsWithCopy ? AppDimensions.paddingXs : AppDimensions.paddingLg,
+          end: endsWithActionButton
+              ? AppDimensions.paddingXs
+              : AppDimensions.paddingLg,
           top: AppDimensions.paddingMd,
           bottom: AppDimensions.paddingMd,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            if (icon != null) ...[
+            if (widget.icon != null) ...[
               IconTheme(
                 data: IconThemeData(
                   size: AppDimensions.iconMd,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
-                child: icon!,
+                child: widget.icon!,
               ),
               AppSpacings.gapMd,
             ],
@@ -138,14 +171,14 @@ class DetailItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    label,
+                    widget.label,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   AppSpacings.gapXs,
                   Text(
-                    displayValue,
+                    shownValue,
                     style: AppTypography.emphasizedOf(context).bodyLarge
                         ?.copyWith(
                           color: Theme.of(context).colorScheme.onSurface,
@@ -154,9 +187,22 @@ class DetailItem extends StatelessWidget {
                 ],
               ),
             ),
+            if (isMaskedActive)
+              IconButton(
+                key: ValueKey('toggle_mask_${widget.label}'),
+                tooltip: _revealed ? t.common.hide : t.common.show,
+                icon: HugeIcon(
+                  icon: _revealed
+                      ? HugeIcons.strokeRoundedViewOffSlash
+                      : HugeIcons.strokeRoundedView,
+                  size: AppDimensions.iconSm,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                onPressed: () => setState(() => _revealed = !_revealed),
+              ),
             if (effectiveCopy != null)
               IconButton(
-                key: ValueKey('copy_$label'),
+                key: ValueKey('copy_${widget.label}'),
                 tooltip: t.common.copy,
                 icon: HugeIcon(
                   icon: HugeIcons.strokeRoundedCopy01,
@@ -168,8 +214,8 @@ class DetailItem extends StatelessWidget {
                   AppFeedback.showSuccess(context, t.common.copiedToClipboard);
                 },
               ),
-            ?trailing,
-            if (onTap != null && trailing == null)
+            ?widget.trailing,
+            if (widget.onTap != null && widget.trailing == null)
               HugeIcon(
                 icon: HugeIcons.strokeRoundedArrowRight01,
                 size: AppDimensions.iconMd,
@@ -180,8 +226,8 @@ class DetailItem extends StatelessWidget {
       ),
     );
 
-    if (onTap != null) {
-      return InkWell(onTap: onTap, child: content);
+    if (widget.onTap != null) {
+      return InkWell(onTap: widget.onTap, child: content);
     }
 
     return content;

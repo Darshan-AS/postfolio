@@ -16,8 +16,12 @@ import 'package:postfolio/features/customers/presentation/screens/customers_scre
 import 'package:postfolio/features/auth/domain/auth_state.dart';
 import 'package:postfolio/features/auth/presentation/screens/login_screen.dart';
 import 'package:postfolio/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:postfolio/core/providers/app_preferences_provider.dart';
 import 'package:postfolio/core/routing/app_routes.dart';
 import 'package:postfolio/core/widgets/layout/entity_hero.dart';
+import 'package:postfolio/features/profile/presentation/screens/profile_edit_screen.dart';
+import 'package:postfolio/features/profile/presentation/screens/profile_screen.dart';
+import 'package:postfolio/features/settings/presentation/screens/settings_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -36,6 +40,14 @@ bool _isSafeInternalRedirect(String? target) =>
     !target.startsWith('//') &&
     !target.startsWith(AppRoutes.login);
 
+String _defaultStartLocation(Ref ref) {
+  try {
+    return ref.read(appPreferencesProvider).startTab.routeLocation;
+  } catch (_) {
+    return AppRoutes.customers;
+  }
+}
+
 @Riverpod(keepAlive: true)
 GoRouter goRouter(Ref ref) {
   final listenable = ValueNotifier<bool>(false);
@@ -44,11 +56,13 @@ GoRouter goRouter(Ref ref) {
     listenable.value = !listenable.value;
   });
 
+  final initialStartLocation = _defaultStartLocation(ref);
+
   final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     // The detail screens are pages of this navigator.
     observers: [EntityHeroBackSwipe()],
-    initialLocation: AppRoutes.customers,
+    initialLocation: initialStartLocation,
     routes: [
       GoRoute(
         path: '/',
@@ -59,7 +73,7 @@ GoRouter goRouter(Ref ref) {
               queryParameters: state.uri.queryParameters,
             ).toString();
           }
-          return AppRoutes.customers;
+          return _defaultStartLocation(ref);
         },
       ),
       ...$appRoutes,
@@ -69,6 +83,7 @@ GoRouter goRouter(Ref ref) {
       final authState = ref.read(authControllerProvider);
       final isAuth = authState is AuthStateAuthenticated;
       final isLoggingIn = state.matchedLocation == AppRoutes.login;
+      final defaultStart = _defaultStartLocation(ref);
 
       if (!isAuth && !isLoggingIn) {
         final query = state.uri.queryParameters;
@@ -77,7 +92,7 @@ GoRouter goRouter(Ref ref) {
           return Uri(path: AppRoutes.login, queryParameters: query).toString();
         }
         final requested = state.uri.toString();
-        if (requested != '/' && requested != AppRoutes.customers) {
+        if (requested != '/' && requested != defaultStart) {
           return Uri(
             path: AppRoutes.login,
             queryParameters: {'redirect': requested},
@@ -91,7 +106,7 @@ GoRouter goRouter(Ref ref) {
         if (_isSafeInternalRedirect(target)) {
           return target;
         }
-        return AppRoutes.customers;
+        return defaultStart;
       }
 
       return null;
@@ -385,4 +400,35 @@ class LoginRoute extends GoRouteData with $LoginRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       const LoginScreen();
+}
+
+@TypedGoRoute<ProfileRoute>(
+  path: AppRoutes.profile,
+  routes: [TypedGoRoute<ProfileEditRoute>(path: AppRoutes.editRoute)],
+)
+class ProfileRoute extends GoRouteData with $ProfileRoute {
+  /// Where the avatar button that opened the screen sits (`EntityHero.tagFrom`). Not part of the URL.
+  final String? $extra;
+  const ProfileRoute({this.$extra});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      ProfileScreen(openedFrom: $extra);
+}
+
+class ProfileEditRoute extends GoRouteData with $ProfileEditRoute {
+  const ProfileEditRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const ProfileEditScreen();
+}
+
+@TypedGoRoute<SettingsRoute>(path: AppRoutes.settings)
+class SettingsRoute extends GoRouteData with $SettingsRoute {
+  const SettingsRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const SettingsScreen();
 }

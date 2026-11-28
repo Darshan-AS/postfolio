@@ -5,8 +5,8 @@ import 'package:postfolio/core/mocks/fake_data_source.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/services/storage_service.dart';
 import 'package:postfolio/core/theme/app_theme.dart';
-import 'package:postfolio/core/widgets/common/accessible_theme_toggle.dart';
 import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
+import 'package:postfolio/features/profile/presentation/widgets/agent_avatar.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
 import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
@@ -122,7 +122,7 @@ void main() {
 
   for (final textScale in const [1.0, 1.3, 2.0]) {
     testWidgets(
-      'at ${textScale}x text the switch stays inside the bar, clear of the theme '
+      'at ${textScale}x text the switch stays inside the bar, clear of the avatar '
       'button',
       (tester) async {
         await pumpScreen(tester, textScale: textScale);
@@ -130,9 +130,9 @@ void main() {
 
         final bar = tester.getRect(find.byType(AppBar));
         final control = tester.getRect(viewSwitch);
-        final theme = tester.getRect(find.byType(AccessibleThemeToggle));
+        final avatar = tester.getRect(find.byType(AgentAvatarButton));
         expect(control.left, greaterThanOrEqualTo(bar.left));
-        expect(control.right, lessThanOrEqualTo(theme.left));
+        expect(control.right, lessThanOrEqualTo(avatar.left));
         expect(control.top, greaterThanOrEqualTo(bar.top));
         expect(control.bottom, lessThanOrEqualTo(bar.bottom));
       },
