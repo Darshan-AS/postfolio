@@ -28,7 +28,7 @@ class RDPassbookPoStrip extends ConsumerWidget {
   final RDPoDeposit? latestPoDeposit;
 
   /// True when the month right after the ready block is still unpaid/partial, i.e. the
-  /// agent could front it from pocket in the same visit.
+  /// agent could deposit it from pocket in the same visit.
   final bool canDepositFromPocket;
   final bool isBusy;
 

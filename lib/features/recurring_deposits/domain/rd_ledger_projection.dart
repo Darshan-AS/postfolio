@@ -43,9 +43,9 @@ sealed class RDPoReadiness with _$RDPoReadiness {
 
   bool get hasReady => readyCount > 0;
 
-  /// The month right after the ready block — the first one the agent could front from
+  /// The month right after the ready block — the first one the agent could pay from
   /// pocket in the same PO visit. `null` when every month is already deposited.
-  int? get nextFrontableInstallmentNo =>
+  int? get nextFromPocketInstallmentNo =>
       nextInstallmentNo == null ? null : nextInstallmentNo! + readyCount;
 }
 
@@ -97,20 +97,20 @@ sealed class RDLedgerProjection with _$RDLedgerProjection {
   );
 
   /// Amount the **Collect** sheet should prefill: everything owed (opening receivable,
-  /// fronted months, arrears); when nothing is owed yet, the next month's outstanding.
+  /// paid-from-pocket months, arrears); when nothing is owed yet, the next month's outstanding.
   double? get collectPrefillAmount => summary.owedByCustomer > 0
       ? summary.owedByCustomer
       : nextDue?.outstandingAmount;
 
   /// The month after the ready block, when the customer has not covered it — i.e. the
-  /// month the agent may front from pocket in the next PO visit.
-  RDInstallment? get frontableInstallment {
-    final no = poReadiness.nextFrontableInstallmentNo;
+  /// month the agent may deposit from pocket in the next PO visit.
+  RDInstallment? get nextFromPocketInstallment {
+    final no = poReadiness.nextFromPocketInstallmentNo;
     final candidate = no == null ? null : byNo(no);
     return candidate != null && !candidate.isCustomerSettled ? candidate : null;
   }
 
-  bool get canFrontFromPocket => frontableInstallment != null;
+  bool get canDepositFromPocket => nextFromPocketInstallment != null;
 
   /// Groups payments by calendar month, newest month (and newest payment) first.
   static List<({DateTime month, List<RDTransaction> items})>

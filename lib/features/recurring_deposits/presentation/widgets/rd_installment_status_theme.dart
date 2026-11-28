@@ -65,13 +65,13 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
         icon: HugeIcons.strokeRoundedChartRing,
         label: s.partiallyPaid,
       ),
-      RDInstallmentDisplayStatus.frontedByAgent => (
-        foreground: palette.fronted.onContainer,
-        background: palette.fronted.container,
+      RDInstallmentDisplayStatus.paidFromPocket => (
+        foreground: palette.receivable.onContainer,
+        background: palette.receivable.container,
         outline: null,
         emphasized: false,
         icon: HugeIcons.strokeRoundedWallet02,
-        label: s.frontedByAgent,
+        label: s.paidFromPocket,
       ),
       RDInstallmentDisplayStatus.overdue => (
         foreground: palette.overdue.onContainer,
@@ -112,11 +112,31 @@ extension RDInstallmentDisplayStatusTheme on RDInstallmentDisplayStatus {
       RDInstallmentDisplayStatus.settled => palette.settled.accent,
       RDInstallmentDisplayStatus.collectedPendingPo => palette.inHand.accent,
       RDInstallmentDisplayStatus.partiallyPaid => palette.partial.accent,
-      RDInstallmentDisplayStatus.frontedByAgent => palette.fronted.accent,
+      RDInstallmentDisplayStatus.paidFromPocket => palette.receivable.accent,
       RDInstallmentDisplayStatus.overdue => palette.overdue.accent,
       RDInstallmentDisplayStatus.dueToday => scheme.primary,
       RDInstallmentDisplayStatus.baseline => scheme.outline,
       RDInstallmentDisplayStatus.upcoming => scheme.outlineVariant,
     };
+  }
+
+  /// Explicit background and foreground colours for an account's serial avatar in the Hub.
+  ({Color background, Color foreground}) avatarColors(
+    ColorScheme scheme, {
+    AppFinancialColors? financial,
+  }) {
+    if (this == RDInstallmentDisplayStatus.dueToday) {
+      return (background: scheme.primary, foreground: scheme.onPrimary);
+    }
+    final v = visual(scheme, financial: financial);
+    return (background: v.background, foreground: v.foreground);
+  }
+
+  ({Color background, Color foreground}) avatarColorsOf(BuildContext context) {
+    final theme = Theme.of(context);
+    return avatarColors(
+      theme.colorScheme,
+      financial: AppFinancialColors.of(context),
+    );
   }
 }

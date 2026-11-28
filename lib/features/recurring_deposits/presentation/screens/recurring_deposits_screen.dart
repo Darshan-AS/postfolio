@@ -42,11 +42,11 @@ class RecurringDepositsScreen extends HookConsumerWidget {
     useEffect(() {
       if (initialView != null || initialMonth != null) {
         Future.microtask(() {
-          if (initialView == 'hub') {
+          if (initialView == RDViewMode.monthlyHub.queryValue) {
             ref
                 .read(rDViewModeControllerProvider.notifier)
                 .setMode(RDViewMode.monthlyHub);
-          } else if (initialView == 'accounts') {
+          } else if (initialView == RDViewMode.accounts.queryValue) {
             ref
                 .read(rDViewModeControllerProvider.notifier)
                 .setMode(RDViewMode.accounts);

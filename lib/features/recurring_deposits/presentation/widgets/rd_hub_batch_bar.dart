@@ -51,7 +51,7 @@ class RDHubBatchBar extends ConsumerWidget {
 
     void planVisit() {
       // The whole selection is the visit's scope; the planner lists the depositable rows and
-      // only ever offers the selected unready ones for fronting.
+      // only ever offers the selected unready ones for from-pocket deposits.
       ref.read(rDPoVisitPlannerProvider.notifier).start(items: summary.items);
       showRDPoVisitPlanner(context);
     }

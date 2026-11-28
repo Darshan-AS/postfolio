@@ -21,6 +21,11 @@ extension DateTimeFormatting on DateTime {
     return DateFormat(t.format.dateCompact, resolvedDateLocale()).format(this);
   }
 
+  /// Returns short day-and-month label e.g. "15 Oct"
+  String toDayMonthFormat() {
+    return DateFormat('d MMM', resolvedDateLocale()).format(this);
+  }
+
   /// Returns date formatted according to slang's `format.dateTime` key
   String toDateTimeFormat() {
     return DateFormat(t.format.dateTime, resolvedDateLocale()).format(this);

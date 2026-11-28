@@ -354,19 +354,24 @@ void main() {
         final hubCards = find.byType(RDMonthlyOperationCard);
         expect(hubCards, findsWidgets);
         final firstHubCard = hubCards.first;
-        final cardRect = tester.getRect(firstHubCard);
+        final menuFinder = find.descendant(
+          of: firstHubCard,
+          matching: find.byTooltip(t.common.moreOptions),
+        );
+        expect(menuFinder, findsOneWidget);
+        final menuRect = tester.getRect(menuFinder);
         final owesTexts = find.descendant(
           of: firstHubCard,
           matching: find.textContaining('₹'),
         );
         expect(owesTexts, findsWidgets);
-        // At least one money label (headline or button) reaches near the right margin.
+        // Trailing money column sits flush left of the 3-dot overflow menu.
         final headlineRect = tester.getRect(owesTexts.first);
         expect(
-          cardRect.right - headlineRect.right,
-          lessThanOrEqualTo(24.0),
+          menuRect.left - headlineRect.right,
+          lessThanOrEqualTo(20.0),
           reason:
-              'Monthly Hub money headline floated in the middle (${cardRect.right - headlineRect.right}px from right)',
+              'Monthly Hub money figure floated away from the trailing 3-dot menu (${menuRect.left - headlineRect.right}px)',
         );
 
         // 2. RD Passbook PO strip & installment tiles

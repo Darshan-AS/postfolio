@@ -48,15 +48,18 @@ class EntityAvatar extends StatelessWidget {
   );
 
   /// The avatar [t] of the way from its form in [row] to its form at [head].
-  static EntityAvatar between(EntityAvatar row, EntityAvatar head, double t) =>
-      EntityAvatar(
-        text: head.text,
-        subtext: head.subtext,
-        shape: head.shape,
-        backgroundColor: head.backgroundColor,
-        foregroundColor: head.foregroundColor,
-        prominence: lerpDouble(row.prominence, head.prominence, t)!,
-      );
+  static EntityAvatar between(
+    EntityAvatar row,
+    EntityAvatar head,
+    double t,
+  ) => EntityAvatar(
+    text: head.text,
+    subtext: head.subtext,
+    shape: head.shape,
+    backgroundColor: Color.lerp(row.backgroundColor, head.backgroundColor, t),
+    foregroundColor: Color.lerp(row.foregroundColor, head.foregroundColor, t),
+    prominence: lerpDouble(row.prominence, head.prominence, t)!,
+  );
 
   /// [row] at 0, [head] at 1, and the two blended in between.
   TextStyle? _style(TextStyle? row, TextStyle? head) => switch (prominence) {

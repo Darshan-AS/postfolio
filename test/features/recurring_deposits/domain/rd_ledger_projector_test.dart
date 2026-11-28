@@ -402,7 +402,7 @@ void main() {
     );
 
     test(
-      'depositing more than collected is a pocket advance → receivable and frontedByAgent',
+      'depositing more than collected is a pocket advance → receivable and paidFromPocket',
       () {
         final now = DateTime(2026, 3, 1);
         final p = projector.project(
@@ -419,7 +419,7 @@ void main() {
         );
         expect(
           p.byNo(2)!.displayStatusAt(now),
-          RDInstallmentDisplayStatus.frontedByAgent,
+          RDInstallmentDisplayStatus.paidFromPocket,
         );
         expect(
           p.summary.receivable,

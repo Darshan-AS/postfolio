@@ -203,7 +203,7 @@ void main() {
     final hal = rd(10, halCust.name);
     expect(
       statusOf(installment(hal)),
-      RDInstallmentDisplayStatus.frontedByAgent,
+      RDInstallmentDisplayStatus.paidFromPocket,
     );
     expect(ledger(hal).summary.receivable, 2000);
     expect(

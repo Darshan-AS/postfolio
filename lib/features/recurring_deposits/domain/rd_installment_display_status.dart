@@ -19,7 +19,7 @@ enum RDInstallmentDisplayStatus {
   partiallyPaid,
 
   /// Deposited at the PO from the agent's pocket; the customer still owes (all or part).
-  frontedByAgent,
+  paidFromPocket,
 
   /// Unpaid and past the statutory due date.
   overdue,
@@ -33,7 +33,7 @@ enum RDInstallmentDisplayStatus {
   /// Customer still owes money on this month.
   bool get isCustomerPending => switch (this) {
     baseline || settled || collectedPendingPo => false,
-    partiallyPaid || frontedByAgent || overdue || dueToday || upcoming => true,
+    partiallyPaid || paidFromPocket || overdue || dueToday || upcoming => true,
   };
 
   /// Collected money for this month is physically with the agent.
@@ -42,7 +42,7 @@ enum RDInstallmentDisplayStatus {
 
   /// Already at the Post Office.
   bool get isDeposited => switch (this) {
-    baseline || settled || frontedByAgent => true,
+    baseline || settled || paidFromPocket => true,
     collectedPendingPo ||
     partiallyPaid ||
     overdue ||

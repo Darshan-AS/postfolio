@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/extensions/string_extension.dart';
+import 'package:postfolio/core/routing/app_router.dart';
+import 'package:postfolio/core/routing/app_routes.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
 import 'package:postfolio/core/widgets/expressive/app_shape_avatar.dart';
 import 'package:postfolio/core/widgets/layout/entity_avatar.dart';
@@ -13,6 +15,11 @@ import 'package:postfolio/core/widgets/layout/entity_hero.dart';
 import 'package:postfolio/features/customers/domain/customer_model.dart';
 import 'package:postfolio/features/customers/presentation/screens/customer_detail_screen.dart';
 import 'package:postfolio/features/customers/presentation/screens/customers_screen.dart';
+import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_repository.dart';
+import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_monthly_operations_controller.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/screens/recurring_deposit_detail_screen.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operation_card.dart';
 import 'package:postfolio/i18n/strings.g.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -483,4 +490,112 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('EntityAvatar.between smoothly lerps avatar colours', (
+    tester,
+  ) async {
+    const row = EntityAvatar(
+      text: '#1',
+      backgroundColor: Color(0xFF000000),
+      foregroundColor: Color(0xFFFFFFFF),
+      prominence: 0,
+    );
+    const head = EntityAvatar(
+      text: '#1',
+      backgroundColor: Color(0xFFFFFFFF),
+      foregroundColor: Color(0xFF000000),
+      prominence: 1,
+    );
+
+    final mid = EntityAvatar.between(row, head, 0.5);
+    expect(
+      mid.backgroundColor,
+      Color.lerp(row.backgroundColor, head.backgroundColor, 0.5),
+    );
+    expect(
+      mid.foregroundColor,
+      Color.lerp(row.foregroundColor, head.foregroundColor, 0.5),
+    );
+    expect(mid.prominence, 0.5);
+  });
+
+  testWidgets(
+    'Monthly Hub row shares avatar and title Hero tags with RecurringDepositDetailScreen',
+    (tester) async {
+      final router = await pumpSignedInApp(
+        tester,
+        recurringDeposits: FakeRecurringDepositRepository(
+          deposits: [rameshRecurringDeposit],
+        ),
+        ledger: FakeRDLedgerRepository(),
+      );
+
+      final context = tester.element(find.byType(CustomersScreen));
+      RecurringDepositsRoute(
+        view: RDViewMode.monthlyHub.queryValue,
+      ).go(context);
+      await tester.pumpAndSettle();
+
+      final hubCard = find.byType(RDMonthlyOperationCard);
+      expect(hubCard, findsOneWidget);
+      final expectedTag = EntityHero.tagFrom(
+        EntityHero.rdHub,
+        rameshRecurringDeposit.id,
+      );
+      expect(
+        tester.widget<RDMonthlyOperationCard>(hubCard).heroTag,
+        expectedTag,
+      );
+
+      // Verify both avatar and title carry matching EntityHero tags on the Hub row.
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is Hero && w.tag == (expectedTag, EntityHeroPart.avatar),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is Hero && w.tag == (expectedTag, EntityHeroPart.title),
+        ),
+        findsOneWidget,
+      );
+
+      // Tapping opens RecurringDepositDetailScreen with matching Hero tags on the destination route.
+      await tester.tap(hubCard);
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 150));
+
+      expect(
+        router.location(),
+        startsWith('${AppRoutes.rd}/${rameshRecurringDeposit.id}'),
+      );
+      expect(
+        find.byType(RecurringDepositDetailScreen, skipOffstage: false),
+        findsOneWidget,
+      );
+
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byType(RecurringDepositDetailScreen),
+          matching: find.byWidgetPredicate(
+            (w) => w is Hero && w.tag == (expectedTag, EntityHeroPart.avatar),
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(RecurringDepositDetailScreen),
+          matching: find.byWidgetPredicate(
+            (w) => w is Hero && w.tag == (expectedTag, EntityHeroPart.title),
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

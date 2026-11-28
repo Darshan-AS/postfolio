@@ -178,7 +178,7 @@ class _Passbook extends StatelessWidget {
           rdId: rdId,
           readiness: readiness,
           latestPoDeposit: latestPoDeposit,
-          canDepositFromPocket: projection.canFrontFromPocket,
+          canDepositFromPocket: projection.canDepositFromPocket,
           isBusy: isBusy,
         ),
         AppSpacings.gapLg,

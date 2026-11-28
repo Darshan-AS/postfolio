@@ -6,11 +6,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:postfolio/core/extensions/date_time_extension.dart';
 import 'package:postfolio/core/extensions/double_extension.dart';
 import 'package:postfolio/core/theme/app_dimensions.dart';
+import 'package:postfolio/core/theme/app_financial_colors.dart';
 import 'package:postfolio/core/theme/app_input_decoration.dart';
 import 'package:postfolio/core/theme/app_shapes.dart';
 import 'package:postfolio/core/theme/app_typography.dart';
 import 'package:postfolio/core/utils/money.dart';
 import 'package:postfolio/core/utils/result.dart';
+import 'package:postfolio/core/widgets/expressive/app_button.dart';
 import 'package:postfolio/core/widgets/expressive/app_button_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_group.dart';
 import 'package:postfolio/core/widgets/expressive/app_loading_indicator.dart';
@@ -47,17 +49,22 @@ extension RDPaymentModeIcon on RDPaymentMode {
   };
 }
 
-/// Opens the "collect customer payment" sheet. Resolves `true` when a payment was recorded.
-Future<bool?> showRDLogPaymentSheet(
+/// Result of the collect customer payment sheet.
+enum RDLogPaymentOutcome { saved, dismissed, depositFromPocket }
+
+/// Opens the "collect customer payment" sheet.
+Future<RDLogPaymentOutcome?> showRDLogPaymentSheet(
   BuildContext context, {
   required String rdId,
   double? initialAmount,
-}) => AppAdaptiveSheet.show<bool>(
+  bool showDepositFromPocketShortcut = false,
+}) => AppAdaptiveSheet.show<RDLogPaymentOutcome>(
   context,
   builder: (_) => _PaymentForm(
     rdId: rdId,
     initialAmount: initialAmount,
     hostContext: context,
+    showDepositFromPocketShortcut: showDepositFromPocketShortcut,
   ),
 );
 
@@ -66,11 +73,19 @@ Future<bool?> showRDEditPaymentSheet(
   BuildContext context, {
   required String rdId,
   required RDTransaction transaction,
-}) => AppAdaptiveSheet.show<bool>(
-  context,
-  builder: (_) =>
-      _PaymentForm(rdId: rdId, existing: transaction, hostContext: context),
-);
+}) =>
+    AppAdaptiveSheet.show<RDLogPaymentOutcome>(
+      context,
+      builder: (_) =>
+          _PaymentForm(rdId: rdId, existing: transaction, hostContext: context),
+    ).then(
+      (outcome) => switch (outcome) {
+        RDLogPaymentOutcome.saved => true,
+        RDLogPaymentOutcome.dismissed ||
+        RDLogPaymentOutcome.depositFromPocket => false,
+        null => null,
+      },
+    );
 
 // --- Form ---------------------------------------------------------------------------------
 
@@ -80,11 +95,13 @@ class _PaymentForm extends HookConsumerWidget {
     required this.hostContext,
     this.existing,
     this.initialAmount,
+    this.showDepositFromPocketShortcut = false,
   });
 
   final String rdId;
   final RDTransaction? existing;
   final double? initialAmount;
+  final bool showDepositFromPocketShortcut;
 
   /// The caller's context — still mounted after this sheet pops, so the toast (and its
   /// Undo) outlive the sheet.
@@ -138,7 +155,7 @@ class _PaymentForm extends HookConsumerWidget {
       final outcome = await draft.submit();
       if (!context.mounted) return;
       if (outcome.payment is Success<void, String>) {
-        Navigator.of(context).pop(true);
+        Navigator.of(context).pop(RDLogPaymentOutcome.saved);
         if (!hostContext.mounted) return;
         AppFeedback.showResult(
           hostContext,
@@ -186,7 +203,7 @@ class _PaymentForm extends HookConsumerWidget {
         ? draft.isDirty
         : draft.amount > 0 && !Money.equals(draft.amount, initialAmount ?? 0.0);
 
-    Future<void> handlePopAttempt(bool didPop, bool? _) async {
+    Future<void> handlePopAttempt(bool didPop, RDLogPaymentOutcome? _) async {
       if (didPop) return;
       final discard = await AppDialogs.confirmAction(
         context,
@@ -197,8 +214,21 @@ class _PaymentForm extends HookConsumerWidget {
         confirmText: ledger.discard,
       );
       if (discard == true && context.mounted) {
-        Navigator.of(context).pop(false);
+        Navigator.of(context).pop(RDLogPaymentOutcome.dismissed);
       }
+    }
+
+    Future<void> handleDepositFromPocketShortcut() async {
+      if (hasUnsavedInput) {
+        final discard = await AppDialogs.confirmAction(
+          context,
+          title: ledger.discardChangesTitle,
+          content: ledger.discardAmountContent,
+          confirmText: ledger.discard,
+        );
+        if (discard != true || !context.mounted) return;
+      }
+      Navigator.of(context).pop(RDLogPaymentOutcome.depositFromPocket);
     }
 
     final Widget body;
@@ -222,7 +252,7 @@ class _PaymentForm extends HookConsumerWidget {
         ? ledger.collectSubmit(amount: draft.amount.toRupeeFormat())
         : ledger.recordPayment;
 
-    return PopScope<bool>(
+    return PopScope<RDLogPaymentOutcome>(
       canPop: !hasUnsavedInput,
       onPopInvokedWithResult: handlePopAttempt,
       child: Column(
@@ -232,7 +262,8 @@ class _PaymentForm extends HookConsumerWidget {
           RDSheetHeader(
             title: title,
             subtitle: deposit == null ? null : rdAccountIdentity(deposit),
-            onClose: () => Navigator.of(context).maybePop(false),
+            onClose: () =>
+                Navigator.of(context).maybePop(RDLogPaymentOutcome.dismissed),
           ),
           Flexible(
             child: SingleChildScrollView(
@@ -251,6 +282,21 @@ class _PaymentForm extends HookConsumerWidget {
                 isLoading: draft.isSubmitting,
                 onPressed: draft.canSubmit ? handleSubmit : null,
               ),
+              if (!isEditing && showDepositFromPocketShortcut) ...[
+                AppSpacings.gapXs,
+                AppButton.text(
+                  label: ledger.depositFromPocketShortcut,
+                  icon: HugeIcons.strokeRoundedWallet02,
+                  size: AppButtonSize.small,
+                  expand: true,
+                  foregroundColor: AppFinancialColors.of(
+                    context,
+                  ).receivable.onContainer,
+                  onPressed: draft.isSubmitting
+                      ? null
+                      : handleDepositFromPocketShortcut,
+                ),
+              ],
             ],
           ),
         ],

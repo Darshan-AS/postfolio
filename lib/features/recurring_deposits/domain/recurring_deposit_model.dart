@@ -36,7 +36,7 @@ sealed class RecurringDeposit with _$RecurringDeposit implements BaseDeposit {
     @Default(0) int initialPaidInstallments,
 
     /// Amount the customer already owed the agent at onboarding (months the agent had
-    /// fronted before the app existed). Repaid first out of subsequent customer payments.
+    /// paid from pocket before the app existed). Repaid first out of subsequent customer payments.
     @Default(0.0) double openingReceivable,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? createdAt,
     @TimestampConverter() @JsonKey(includeIfNull: false) DateTime? updatedAt,

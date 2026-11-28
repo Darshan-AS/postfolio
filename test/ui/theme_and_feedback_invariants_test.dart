@@ -63,7 +63,7 @@ void main() {
             'settled': financial!.settled,
             'inHand': financial.inHand,
             'partial': financial.partial,
-            'fronted': financial.fronted,
+            'receivable': financial.receivable,
             'warning': financial.warning,
             'overdue': financial.overdue,
           };
@@ -87,6 +87,13 @@ void main() {
               reason:
                   '${entry.key}.${role.key} accent contrast $accentCr < 3.0',
             );
+            final onAccentCr = wcagContrastRatio(p.accent, p.onAccent);
+            expect(
+              onAccentCr,
+              greaterThanOrEqualTo(4.5),
+              reason:
+                  '${entry.key}.${role.key} onAccent contrast $onAccentCr < 4.5',
+            );
             expect(
               containers.add(p.container),
               isTrue,
@@ -105,6 +112,43 @@ void main() {
               reason: '${entry.key}.$status contrast $cr < 4.5',
             );
           }
+
+          // Neutral muted step chip (onSurfaceVariant on surfaceContainerHighest).
+          final mutedStepCr = wcagContrastRatio(
+            theme.colorScheme.surfaceContainerHighest,
+            theme.colorScheme.onSurfaceVariant,
+          );
+          expect(
+            mutedStepCr,
+            greaterThanOrEqualTo(4.5),
+            reason: '${entry.key} muted step chip contrast $mutedStepCr < 4.5',
+          );
+
+          // Selected "To collect" overdue badge retains overdue container/onContainer.
+          final overdueBadgeCr = wcagContrastRatio(
+            financial.overdue.container,
+            financial.overdue.onContainer,
+          );
+          expect(
+            overdueBadgeCr,
+            greaterThanOrEqualTo(4.5),
+            reason:
+                '${entry.key} selected overdue badge contrast $overdueBadgeCr < 4.5',
+          );
+
+          // Due-today avatar uses primary/onPrimary explicitly.
+          final dueTodayAvatar = RDInstallmentDisplayStatus.dueToday
+              .avatarColors(theme.colorScheme, financial: financial);
+          final dueTodayAvatarCr = wcagContrastRatio(
+            dueTodayAvatar.background,
+            dueTodayAvatar.foreground,
+          );
+          expect(
+            dueTodayAvatarCr,
+            greaterThanOrEqualTo(4.5),
+            reason:
+                '${entry.key} dueToday avatar contrast $dueTodayAvatarCr < 4.5',
+          );
         },
       );
 

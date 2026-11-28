@@ -59,11 +59,11 @@ sealed class RDLedgerSummary with _$RDLedgerSummary {
     @Default(0.0) double customerCredit,
     @Default(0.0) double openingReceivableLeft,
 
-    /// Everything the customer currently owes the agent (opening receivable + fronted months
+    /// Everything the customer currently owes the agent (opening receivable + paid-from-pocket months
     /// + overdue undeposited months), net of credit.
     @Default(0.0) double owedByCustomer,
 
-    /// Money the agent has fronted at the PO and not yet recovered from the customer.
+    /// Money the agent has paid from pocket at the PO and not yet recovered from the customer.
     @Default(0.0) double receivable,
     @Default(0.0) double cashInHandCash,
     @Default(0.0) double cashInHandDigital,

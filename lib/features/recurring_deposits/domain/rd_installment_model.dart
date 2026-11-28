@@ -91,8 +91,8 @@ sealed class RDInstallment with _$RDInstallment {
 
   bool get isPoDeposited => poDepositedOn != null;
 
-  /// The agent fronted this month at the PO and the customer still owes on it.
-  bool get isFrontedByAgent =>
+  /// The agent paid this month at the PO from pocket and the customer still owes on it.
+  bool get isPaidFromPocket =>
       isPoDeposited && !isCustomerSettled && !isOpeningBaseline;
 
   /// Completely done: customer paid and PO deposited.
@@ -136,7 +136,7 @@ sealed class RDInstallment with _$RDInstallment {
     if (isPoDeposited) {
       return isCustomerSettled
           ? RDInstallmentDisplayStatus.settled
-          : RDInstallmentDisplayStatus.frontedByAgent;
+          : RDInstallmentDisplayStatus.paidFromPocket;
     }
     if (isCustomerSettled) return RDInstallmentDisplayStatus.collectedPendingPo;
     if (isPartiallyPaid) return RDInstallmentDisplayStatus.partiallyPaid;

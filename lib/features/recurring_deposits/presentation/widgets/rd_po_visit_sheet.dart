@@ -213,8 +213,8 @@ class _PoVisitPlannerSheet extends HookConsumerWidget {
                             isBusy: isBusy,
                             onToggle: () =>
                                 planner.toggleIncluded(plan.lines[index].rdId),
-                            onFront: (n) =>
-                                planner.setFronted(plan.lines[index].rdId, n),
+                            onFromPocketChanged: (n) => planner
+                                .setFromPocketCount(plan.lines[index].rdId, n),
                             onFeeOverride: (fee) => planner.setFeeOverride(
                               plan.lines[index].rdId,
                               fee,
@@ -324,11 +324,11 @@ class _TotalsBlock extends StatelessWidget {
             AppSpacings.gapXs,
             Row(
               children: [
-                // The agent's own money takes the fronted colour, not the overdue red.
+                // The agent's own money takes the receivable colour, not the overdue red.
                 HugeIcon(
                   icon: HugeIcons.strokeRoundedWallet02,
                   size: AppDimensions.iconSm,
-                  color: AppFinancialColors.of(context).fronted.onContainer,
+                  color: AppFinancialColors.of(context).receivable.onContainer,
                 ),
                 AppSpacings.gapXs,
                 Flexible(
@@ -337,7 +337,9 @@ class _TotalsBlock extends StatelessWidget {
                       amount: plan.totalFromPocket.toRupeeFormat(),
                     ),
                     style: emphasized.bodyMedium?.copyWith(
-                      color: AppFinancialColors.of(context).fronted.onContainer,
+                      color: AppFinancialColors.of(
+                        context,
+                      ).receivable.onContainer,
                     ),
                   ),
                 ),
@@ -445,7 +447,7 @@ class _VisitLineTile extends HookWidget {
     required this.position,
     required this.isBusy,
     required this.onToggle,
-    required this.onFront,
+    required this.onFromPocketChanged,
     required this.onFeeOverride,
   });
 
@@ -453,7 +455,7 @@ class _VisitLineTile extends HookWidget {
   final AppGroupPosition position;
   final bool isBusy;
   final VoidCallback onToggle;
-  final ValueChanged<int> onFront;
+  final ValueChanged<int> onFromPocketChanged;
   final ValueChanged<double?> onFeeOverride;
 
   static const int _accountTailLength = 4;
@@ -494,7 +496,7 @@ class _VisitLineTile extends HookWidget {
     final customerName =
         deposit.customerName ?? t.recurringDeposits.depositNotFound;
 
-    // Counter-fee toggle, then "front one month less" / "one more".
+    // Counter-fee toggle, then "deposit one month less from pocket" / "one more".
     final controls = Wrap(
       alignment: WrapAlignment.end,
       crossAxisAlignment: WrapCrossAlignment.center,
@@ -514,18 +516,18 @@ class _VisitLineTile extends HookWidget {
               : () => showFeeEditor.value = !showFeeEditor.value,
         ),
         AppButton.text(
-          label: visit.frontLess,
-          tooltip: visit.frontFewer,
-          onPressed: isBusy || line.frontedCount == 0
+          label: visit.fromPocketLess,
+          tooltip: visit.fromPocketFewer,
+          onPressed: isBusy || line.fromPocketCount == 0
               ? null
-              : () => onFront(line.frontedCount - 1),
+              : () => onFromPocketChanged(line.fromPocketCount - 1),
         ),
         AppButton.tonal(
-          label: visit.front,
-          tooltip: visit.frontMore,
-          onPressed: isBusy || !line.canFrontMore
+          label: visit.fromPocketAdd,
+          tooltip: visit.fromPocketMore,
+          onPressed: isBusy || !line.canAddFromPocket
               ? null
-              : () => onFront(line.frontedCount + 1),
+              : () => onFromPocketChanged(line.fromPocketCount + 1),
         ),
       ],
     );
@@ -545,7 +547,7 @@ class _VisitLineTile extends HookWidget {
           RDSheetFigure(
             visit.lineFromPocket(amount: line.fromPocket.toRupeeFormat()),
             style: emphasized.labelMedium?.copyWith(
-              color: AppFinancialColors.of(context).fronted.onContainer,
+              color: AppFinancialColors.of(context).receivable.onContainer,
             ),
           ),
       ],

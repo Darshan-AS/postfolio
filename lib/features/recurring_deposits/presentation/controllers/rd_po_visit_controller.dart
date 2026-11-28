@@ -30,14 +30,14 @@ sealed class RDPoVisitLine with _$RDPoVisitLine {
     /// Collected-but-undeposited months (what the customer has paid for).
     required int readyCount,
 
-    /// Extra months the agent chose to front from pocket (0 or more).
-    @Default(0) int frontedCount,
+    /// Extra months the agent chose to deposit from pocket (0 or more).
+    @Default(0) int fromPocketCount,
     @Default(true) bool included,
 
     /// Optional explicit fee charged at the PO counter (e.g. `0` when a holiday extended due date).
     double? feeOverride,
 
-    /// Counter quote for `readyCount + frontedCount` months on the chosen date.
+    /// Counter quote for `readyCount + fromPocketCount` months on the chosen date.
     @Default(0.0) double amount,
     @Default(0.0) double fee,
 
@@ -49,9 +49,9 @@ sealed class RDPoVisitLine with _$RDPoVisitLine {
     @Default(0.0) double digitalPortion,
   }) = _RDPoVisitLine;
 
-  int get count => readyCount + frontedCount;
+  int get count => readyCount + fromPocketCount;
   String get rdId => item.deposit.id;
-  bool get canFrontMore =>
+  bool get canAddFromPocket =>
       item.summary.depositedThroughNo + count < item.deposit.totalMonths;
 }
 
@@ -70,7 +70,7 @@ sealed class RDPoVisitPlan with _$RDPoVisitPlan {
     required DateTime depositedOn,
     @Default(<RDPoVisitLine>[]) List<RDPoVisitLine> lines,
 
-    /// Whether accounts with nothing collected are listed (so the agent can front them).
+    /// Whether accounts with nothing collected are listed (so the agent can deposit from pocket).
     @Default(false) bool includeUnready,
 
     /// The accounts this visit was opened for (the rows ticked in the Hub). `null` means the
@@ -175,8 +175,8 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
   }
 
   /// Shows or hides the unready accounts **within the visit's scope**, keeping the agent's
-  /// edits (`included`, `frontedCount`, `feeOverride`). An unready account the agent has
-  /// already fronted stays listed, so hiding the rest never drops money from the visit.
+  /// edits (`included`, `fromPocketCount`, `feeOverride`). An unready account the agent already
+  /// chose to deposit from pocket stays listed, so hiding the rest never drops money.
   void setIncludeUnready(bool value) {
     state = state.copyWith(
       includeUnready: value,
@@ -199,11 +199,11 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
   void toggleIncluded(String rdId) =>
       _update(rdId, (l) => l.copyWith(included: !l.included));
 
-  void setFronted(String rdId, int frontedCount) => _update(
+  void setFromPocketCount(String rdId, int fromPocketCount) => _update(
     rdId,
     (l) => _quote(
       l.copyWith(
-        frontedCount: frontedCount < 0 ? 0 : frontedCount,
+        fromPocketCount: fromPocketCount < 0 ? 0 : fromPocketCount,
         included: true,
       ),
     ),
@@ -279,12 +279,12 @@ class RDPoVisitPlanner extends _$RDPoVisitPlanner {
     for (final item in candidates)
       if (item.readyForPoCount > 0 ||
           includeUnready ||
-          (previous[item.deposit.id]?.frontedCount ?? 0) > 0)
+          (previous[item.deposit.id]?.fromPocketCount ?? 0) > 0)
         _quote(
           RDPoVisitLine(
             item: item,
             readyCount: item.readyForPoCount,
-            frontedCount: previous[item.deposit.id]?.frontedCount ?? 0,
+            fromPocketCount: previous[item.deposit.id]?.fromPocketCount ?? 0,
             included:
                 previous[item.deposit.id]?.included ??
                 (item.readyForPoCount > 0),

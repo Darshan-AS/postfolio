@@ -379,9 +379,9 @@ class RecurringDepositDetailScreen extends HookConsumerWidget {
   }
 }
 
-/// Header subtitle: "Collected through #N" / "At PO #M" (+ "k months fronted" when the PO
+/// Header subtitle: "Collected through #N" / "At PO #M" (+ "k months from pocket" when the PO
 /// is ahead of the customer), the money the customer owes / has in credit / the agent has
-/// fronted, and a collected-through progress bar.
+/// paid from pocket, and a collected-through progress bar.
 class _LedgerProgress extends StatelessWidget {
   final AsyncValue<RDLedgerProjection> projectionAsync;
   final int totalMonths;
@@ -401,7 +401,7 @@ class _LedgerProgress extends StatelessWidget {
     final summary = projection?.summary;
     final paidThrough = summary?.paidThroughNo ?? 0;
     final depositedThrough = summary?.depositedThroughNo ?? 0;
-    final frontedMonths = depositedThrough - paidThrough;
+    final fromPocketMonths = depositedThrough - paidThrough;
     final total = totalMonths > 0
         ? totalMonths
         : (projection?.installments.length ?? 0);
@@ -463,9 +463,9 @@ class _LedgerProgress extends StatelessWidget {
               tabs.atPo(n: depositedThrough.toString()),
               style: counterStyle,
             ),
-            if (frontedMonths > 0)
+            if (fromPocketMonths > 0)
               Text(
-                tabs.monthsFronted(n: frontedMonths),
+                tabs.monthsFromPocket(n: fromPocketMonths),
                 style: emphasized.bodySmall?.copyWith(color: scheme.secondary),
               ),
           ],

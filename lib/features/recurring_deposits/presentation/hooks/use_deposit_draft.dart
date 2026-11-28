@@ -64,7 +64,7 @@ class DepositDraftState {
   /// What the counter will charge for [count] months on [depositedOn].
   final ({double amount, double fee})? quote;
 
-  /// Portion of [quote] the customer has not paid yet — the agent fronts it.
+  /// Portion of [quote] the customer has not paid yet — deposited from the agent's pocket.
   final double fromPocket;
 
   final DateTime firstDate;
@@ -85,7 +85,7 @@ class DepositDraftState {
       isLoaded && !isSubmitting && count >= 1 && count <= remaining;
   bool get canDecrement => count > 1;
   bool get canIncrement => count < remaining;
-  bool get isFrontingFromPocket => fromPocket > 0;
+  bool get isDepositingFromPocket => fromPocket > 0;
 
   int get fromNo => depositedThroughNo + 1;
   int get toNo => depositedThroughNo + count;

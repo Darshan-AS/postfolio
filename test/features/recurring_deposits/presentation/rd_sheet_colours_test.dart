@@ -15,7 +15,7 @@ import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_m
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_deposit_sheet.dart';
 
 /// Colour roles on the ledger sheets. Red is for what is overdue. Money the agent puts in
-/// from their own pocket is "fronted", and fronted has its own colour on the Hub and the
+/// from their own pocket is a receivable, and has its own colour on the Hub and the
 /// passbook; the sheets used the error red for it.
 void main() {
   final today = DateTime(2026, 4, 20);
@@ -40,7 +40,7 @@ void main() {
     ('dark', AppTheme.darkTheme),
   ]) {
     testWidgets(
-      '$name: the from-pocket line on the deposit sheet is the fronted colour',
+      '$name: the from-pocket line on the deposit sheet is the receivable colour',
       (tester) async {
         tester.view.physicalSize = const Size(360, 800) * 2;
         tester.view.devicePixelRatio = 2.0;
@@ -93,7 +93,9 @@ void main() {
         expect(sheet, findsOneWidget);
         final context = tester.element(sheet);
         final scheme = Theme.of(context).colorScheme;
-        final fronted = AppFinancialColors.of(context).fronted.onContainer;
+        final receivable = AppFinancialColors.of(
+          context,
+        ).receivable.onContainer;
 
         final colours = [
           for (final text in tester.widgetList<Text>(
@@ -101,7 +103,7 @@ void main() {
           ))
             text.style?.color,
         ];
-        expect(colours, contains(fronted));
+        expect(colours, contains(receivable));
         expect(colours, isNot(contains(scheme.error)));
       },
     );

@@ -2,20 +2,23 @@ import 'package:material_ui/material_ui.dart';
 
 /// Semantic color tuple for a single financial or operational status.
 ///
-/// Every `(container, onContainer)` pair satisfies WCAG 2.1 AA text contrast (`>= 4.5:1`),
-/// and every `accent` satisfies WCAG 2.1 non-text contrast (`>= 3.0:1`) against `surface`.
+/// Every `(container, onContainer)` and `(accent, onAccent)` pair satisfies WCAG 2.1 AA
+/// text contrast (`>= 4.5:1`), and every `accent` satisfies WCAG 2.1 non-text contrast
+/// (`>= 3.0:1`) against `surface`.
 @immutable
 class FinancialStatusPalette {
   final Color container;
   final Color onContainer;
   final Color border;
   final Color accent;
+  final Color onAccent;
 
   const FinancialStatusPalette({
     required this.container,
     required this.onContainer,
     required this.border,
     required this.accent,
+    required this.onAccent,
   });
 
   FinancialStatusPalette copyWith({
@@ -23,11 +26,13 @@ class FinancialStatusPalette {
     Color? onContainer,
     Color? border,
     Color? accent,
+    Color? onAccent,
   }) => FinancialStatusPalette(
     container: container ?? this.container,
     onContainer: onContainer ?? this.onContainer,
     border: border ?? this.border,
     accent: accent ?? this.accent,
+    onAccent: onAccent ?? this.onAccent,
   );
 
   static FinancialStatusPalette lerp(
@@ -39,6 +44,7 @@ class FinancialStatusPalette {
     onContainer: Color.lerp(a.onContainer, b.onContainer, t)!,
     border: Color.lerp(a.border, b.border, t)!,
     accent: Color.lerp(a.accent, b.accent, t)!,
+    onAccent: Color.lerp(a.onAccent, b.onAccent, t)!,
   );
 
   @override
@@ -48,23 +54,25 @@ class FinancialStatusPalette {
           container == other.container &&
           onContainer == other.onContainer &&
           border == other.border &&
-          accent == other.accent;
+          accent == other.accent &&
+          onAccent == other.onAccent;
 
   @override
-  int get hashCode => Object.hash(container, onContainer, border, accent);
+  int get hashCode =>
+      Object.hash(container, onContainer, border, accent, onAccent);
 }
 
 /// Dedicated semantic financial status colors insulated from OS wallpaper Monet shifts.
 ///
-/// Guarantees that Settled, Cash-in-Hand, Partial, Fronted Receivable, Maturing Warning, and
-/// Overdue never share a container hue or lose WCAG 2.1 AA contrast in Light, Dark, or
-/// Color-Blind Accessible themes.
+/// Guarantees that Settled, Cash-in-Hand, Partial, Receivable (paid from pocket), Maturing
+/// Warning, and Overdue never share a container hue or lose WCAG 2.1 AA contrast in Light, Dark,
+/// or Color-Blind Accessible themes.
 @immutable
 class AppFinancialColors extends ThemeExtension<AppFinancialColors> {
   final FinancialStatusPalette settled;
   final FinancialStatusPalette inHand;
   final FinancialStatusPalette partial;
-  final FinancialStatusPalette fronted;
+  final FinancialStatusPalette receivable;
   final FinancialStatusPalette warning;
   final FinancialStatusPalette overdue;
 
@@ -72,7 +80,7 @@ class AppFinancialColors extends ThemeExtension<AppFinancialColors> {
     required this.settled,
     required this.inHand,
     required this.partial,
-    required this.fronted,
+    required this.receivable,
     required this.warning,
     required this.overdue,
   });
@@ -83,36 +91,42 @@ class AppFinancialColors extends ThemeExtension<AppFinancialColors> {
       onContainer: Color(0xFF0A4D2C),
       border: Color(0xFF66BB8A),
       accent: Color(0xFF157F4B),
+      onAccent: Color(0xFFFFFFFF),
     ),
     inHand: FinancialStatusPalette(
       container: Color(0xFFFEF0C7),
       onContainer: Color(0xFF693B00),
       border: Color(0xFFE5A93B),
       accent: Color(0xFFB36200),
+      onAccent: Color(0xFFFFFFFF),
     ),
     partial: FinancialStatusPalette(
       container: Color(0xFFE0F2FE),
       onContainer: Color(0xFF0C4A6E),
       border: Color(0xFF5AB4E8),
       accent: Color(0xFF0277BD),
+      onAccent: Color(0xFFFFFFFF),
     ),
-    fronted: FinancialStatusPalette(
+    receivable: FinancialStatusPalette(
       container: Color(0xFFEDE9FE),
       onContainer: Color(0xFF3B1D8F),
       border: Color(0xFFA78BFA),
       accent: Color(0xFF6D28D9),
+      onAccent: Color(0xFFFFFFFF),
     ),
     warning: FinancialStatusPalette(
       container: Color(0xFFFFE4D6),
       onContainer: Color(0xFF7C2D12),
       border: Color(0xFFF98F62),
       accent: Color(0xFFC2410C),
+      onAccent: Color(0xFFFFFFFF),
     ),
     overdue: FinancialStatusPalette(
       container: Color(0xFFFEE2E2),
       onContainer: Color(0xFF7F1D1D),
       border: Color(0xFFF87171),
       accent: Color(0xFFDC2626),
+      onAccent: Color(0xFFFFFFFF),
     ),
   );
 
@@ -122,36 +136,42 @@ class AppFinancialColors extends ThemeExtension<AppFinancialColors> {
       onContainer: Color(0xFFBDF2D5),
       border: Color(0xFF2E7D56),
       accent: Color(0xFF4ADE80),
+      onAccent: Color(0xFF052E16),
     ),
     inHand: FinancialStatusPalette(
       container: Color(0xFF4A2E00),
       onContainer: Color(0xFFFDE293),
       border: Color(0xFFB87914),
       accent: Color(0xFFFBBF24),
+      onAccent: Color(0xFF2B1800),
     ),
     partial: FinancialStatusPalette(
       container: Color(0xFF0C3854),
       onContainer: Color(0xFFBAE6FD),
       border: Color(0xFF2B79A8),
       accent: Color(0xFF38BDF8),
+      onAccent: Color(0xFF06253A),
     ),
-    fronted: FinancialStatusPalette(
+    receivable: FinancialStatusPalette(
       container: Color(0xFF2E1A66),
       onContainer: Color(0xFFE4D9FF),
       border: Color(0xFF7C5CE0),
       accent: Color(0xFFA78BFA),
+      onAccent: Color(0xFF1F0F4D),
     ),
     warning: FinancialStatusPalette(
       container: Color(0xFF54200B),
       onContainer: Color(0xFFFFD6C2),
       border: Color(0xFFC2582B),
       accent: Color(0xFFFB923C),
+      onAccent: Color(0xFF331100),
     ),
     overdue: FinancialStatusPalette(
       container: Color(0xFF5C1414),
       onContainer: Color(0xFFFECACA),
       border: Color(0xFFC83E3E),
       accent: Color(0xFFF87171),
+      onAccent: Color(0xFF3B0808),
     ),
   );
 
@@ -163,36 +183,42 @@ class AppFinancialColors extends ThemeExtension<AppFinancialColors> {
       onContainer: Color(0xFF003B64),
       border: Color(0xFF4BA3E3),
       accent: Color(0xFF0066AD),
+      onAccent: Color(0xFFFFFFFF),
     ),
     inHand: FinancialStatusPalette(
       container: Color(0xFFFFF3BF),
       onContainer: Color(0xFF5C4000),
       border: Color(0xFFD9A300),
       accent: Color(0xFF946300),
+      onAccent: Color(0xFFFFFFFF),
     ),
     partial: FinancialStatusPalette(
       container: Color(0xFFE6E6FA),
       onContainer: Color(0xFF28205E),
       border: Color(0xFF7B6FD6),
       accent: Color(0xFF493BA8),
+      onAccent: Color(0xFFFFFFFF),
     ),
-    fronted: FinancialStatusPalette(
+    receivable: FinancialStatusPalette(
       container: Color(0xFFF7E1F3),
       onContainer: Color(0xFF59114D),
       border: Color(0xFFC86AB6),
       accent: Color(0xFF8F247A),
+      onAccent: Color(0xFFFFFFFF),
     ),
     warning: FinancialStatusPalette(
       container: Color(0xFFFFE2CC),
       onContainer: Color(0xFF6B2900),
       border: Color(0xFFE67E33),
       accent: Color(0xFFB84A00),
+      onAccent: Color(0xFFFFFFFF),
     ),
     overdue: FinancialStatusPalette(
       container: Color(0xFFFCE4EC),
       onContainer: Color(0xFF7A0938),
       border: Color(0xFFE05288),
       accent: Color(0xFFB80F57),
+      onAccent: Color(0xFFFFFFFF),
     ),
   );
 
@@ -203,36 +229,42 @@ class AppFinancialColors extends ThemeExtension<AppFinancialColors> {
       onContainer: Color(0xFFCFE8FC),
       border: Color(0xFF3894D8),
       accent: Color(0xFF56B4E9),
+      onAccent: Color(0xFF00243D),
     ),
     inHand: FinancialStatusPalette(
       container: Color(0xFF473300),
       onContainer: Color(0xFFFFEC99),
       border: Color(0xFFC79200),
       accent: Color(0xFFF0E442),
+      onAccent: Color(0xFF2B2000),
     ),
     partial: FinancialStatusPalette(
       container: Color(0xFF261E57),
       onContainer: Color(0xFFE0DCFF),
       border: Color(0xFF7468C9),
       accent: Color(0xFFA59BFF),
+      onAccent: Color(0xFF17113B),
     ),
-    fronted: FinancialStatusPalette(
+    receivable: FinancialStatusPalette(
       container: Color(0xFF4A1040),
       onContainer: Color(0xFFF9D8F2),
       border: Color(0xFFB85CA6),
       accent: Color(0xFFCC79A7),
+      onAccent: Color(0xFF290622),
     ),
     warning: FinancialStatusPalette(
       container: Color(0xFF522100),
       onContainer: Color(0xFFFFD8BD),
       border: Color(0xFFD46A1F),
       accent: Color(0xFFE69F00),
+      onAccent: Color(0xFF2E1400),
     ),
     overdue: FinancialStatusPalette(
       container: Color(0xFF5E092C),
       onContainer: Color(0xFFFDD5E5),
       border: Color(0xFFD1477D),
       accent: Color(0xFFF472B6),
+      onAccent: Color(0xFF3D041C),
     ),
   );
 
@@ -250,14 +282,14 @@ class AppFinancialColors extends ThemeExtension<AppFinancialColors> {
     FinancialStatusPalette? settled,
     FinancialStatusPalette? inHand,
     FinancialStatusPalette? partial,
-    FinancialStatusPalette? fronted,
+    FinancialStatusPalette? receivable,
     FinancialStatusPalette? warning,
     FinancialStatusPalette? overdue,
   }) => AppFinancialColors(
     settled: settled ?? this.settled,
     inHand: inHand ?? this.inHand,
     partial: partial ?? this.partial,
-    fronted: fronted ?? this.fronted,
+    receivable: receivable ?? this.receivable,
     warning: warning ?? this.warning,
     overdue: overdue ?? this.overdue,
   );
@@ -269,7 +301,7 @@ class AppFinancialColors extends ThemeExtension<AppFinancialColors> {
       settled: FinancialStatusPalette.lerp(settled, other.settled, t),
       inHand: FinancialStatusPalette.lerp(inHand, other.inHand, t),
       partial: FinancialStatusPalette.lerp(partial, other.partial, t),
-      fronted: FinancialStatusPalette.lerp(fronted, other.fronted, t),
+      receivable: FinancialStatusPalette.lerp(receivable, other.receivable, t),
       warning: FinancialStatusPalette.lerp(warning, other.warning, t),
       overdue: FinancialStatusPalette.lerp(overdue, other.overdue, t),
     );

@@ -364,7 +364,7 @@ void main() {
       final summary = ledger(d).summary;
       expect(
         statusOf(installment(d)),
-        RDInstallmentDisplayStatus.frontedByAgent,
+        RDInstallmentDisplayStatus.paidFromPocket,
       );
       expect(summary.receivable, 2000);
       expect(summary.owedByCustomer, 2000);

@@ -316,7 +316,7 @@ void main() {
       );
       expect(after.summary.depositedThroughNo, through + 1);
       expect(
-        after.byNo(through + 1)!.isFrontedByAgent,
+        after.byNo(through + 1)!.isPaidFromPocket,
         isTrue,
         reason: '#19 is only partially paid',
       );

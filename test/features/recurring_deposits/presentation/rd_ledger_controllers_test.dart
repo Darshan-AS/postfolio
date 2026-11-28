@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
 import 'package:postfolio/core/enums/scheme_type.dart';
+import 'package:postfolio/core/enums/sort_direction.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/recurring_deposits/data/fake_rd_ledger_repository.dart';
@@ -9,6 +10,7 @@ import 'package:postfolio/features/recurring_deposits/data/rd_ledger_repository_
 import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_repository.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_installment_display_status.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_enums.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_monthly_operation_item.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_po_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_transaction_model.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
@@ -26,11 +28,13 @@ final _today = DateTime(2026, 4, 20, 10, 30); // wall-clock time on purpose
 
 RecurringDeposit _deposit(
   String id, {
+  String? serial,
   DateTime? start,
   String customer = 'c1',
   int initialPaid = 0,
 }) => RecurringDeposit(
   id: id,
+  serialNo: serial,
   customerId: customer,
   customerName: 'Customer $customer',
   schemeType: RecurringSchemeType.recurringDeposit,
@@ -228,7 +232,7 @@ void main() {
         );
         expect(
           p.byNo(2)!.displayStatusAt(_today),
-          RDInstallmentDisplayStatus.frontedByAgent,
+          RDInstallmentDisplayStatus.paidFromPocket,
         );
         expect(p.summary.receivable, 1020);
 
@@ -705,8 +709,8 @@ void main() {
         expect(plan.totalFromPocket, 0);
         expect(plan.cashLots.single.cashAmount, 4070);
 
-        // Front one extra month for rd2 (#2, due 15 Feb, 2 months late → 20) from pocket.
-        planner.setFronted('rd2', 1);
+        // Pay one extra month for rd2 (#2, due 15 Feb, 2 months late → 20) from pocket.
+        planner.setFromPocketCount('rd2', 1);
         plan = c.read(rDPoVisitPlannerProvider);
         final rd2 = plan.lines.firstWhere((l) => l.rdId == 'rd2');
         expect(rd2.count, 2);
@@ -775,9 +779,101 @@ void main() {
     );
 
     test(
-      'prepareLogPayment pre-fills everything the customer owes today',
+      'default serialNo sort keeps fixed order when overdue; overdueFirst ranks multi-month arrears ahead of 1-month overdue; customerName sorts cleanly',
       () async {
-        final h = _harness(deposits: [_deposit('rd1')]);
+        final h = _harness(
+          deposits: [
+            // rd1: Serial 1, paid through Apr -> current & up to date.
+            _deposit('rd1', serial: '1', start: DateTime(2026, 1, 20)),
+            // rd2: Serial 2, paid through Feb -> 2 months overdue in Apr (#3, #4).
+            _deposit(
+              'rd2',
+              serial: '2',
+              customer: 'c2',
+              start: DateTime(2026, 1, 5),
+            ),
+            // rd3: Serial 3, paid through Mar -> 1 month overdue in Apr (#4).
+            _deposit(
+              'rd3',
+              serial: '3',
+              customer: 'c3',
+              start: DateTime(2026, 1, 5),
+            ),
+          ],
+          transactions: {
+            'rd1': [_tx('rd1', 't1', 4000, DateTime(2026, 4, 1))],
+            'rd2': [_tx('rd2', 't2', 2000, DateTime(2026, 2, 1))],
+            'rd3': [_tx('rd3', 't3', 3000, DateTime(2026, 3, 1))],
+          },
+        );
+        final c = h.container;
+        _keepHub(c);
+        c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
+        await c.read(monthlyOperationItemsProvider.future);
+
+        // Default: Serial # ascending keeps fixed flipbook order.
+        var list = await c.read(filteredMonthlyOperationsProvider.future);
+        expect(list.map((e) => e.deposit.id).toList(), ['rd1', 'rd2', 'rd3']);
+
+        // Overdue first: 2-month arrears (rd2) before 1-month overdue (rd3) before current (rd1).
+        final f = c.read(rDHubFiltersProvider.notifier);
+        f.setSort(RDHubSortField.overdueFirst, SortDirection.asc);
+        list = await c.read(filteredMonthlyOperationsProvider.future);
+        expect(list.map((e) => e.deposit.id).toList(), ['rd2', 'rd3', 'rd1']);
+
+        // Overdue reversed: least urgent first.
+        f.setSort(RDHubSortField.overdueFirst, SortDirection.desc);
+        list = await c.read(filteredMonthlyOperationsProvider.future);
+        expect(list.map((e) => e.deposit.id).toList(), ['rd1', 'rd3', 'rd2']);
+
+        // Customer name descending: c3 -> c2 -> c1.
+        f.setSort(RDHubSortField.customerName, SortDirection.desc);
+        list = await c.read(filteredMonthlyOperationsProvider.future);
+        expect(list.map((e) => e.deposit.id).toList(), ['rd3', 'rd2', 'rd1']);
+
+        // Reset restores fixed Serial # order.
+        f.resetSort();
+        list = await c.read(filteredMonthlyOperationsProvider.future);
+        expect(list.map((e) => e.deposit.id).toList(), ['rd1', 'rd2', 'rd3']);
+      },
+    );
+
+    test(
+      'KPI tile counts match filteredMonthlyOperations across all 4 filters even when an account is both pending current month and has prior collected months',
+      () async {
+        final h = _harness(
+          deposits: [
+            // rd1: Jan..Mar paid by customer (#1..#3 collected), only #1 at PO (#2..#3 readyForPo),
+            // #4 pending customer -> matches BOTH toCollect and readyForPo!
+            _deposit('rd1', serial: '1', start: DateTime(2026, 1, 5)),
+            // rd2: Jan..Apr paid + deposited at PO -> settled.
+            _deposit('rd2', serial: '2', start: DateTime(2026, 1, 5)),
+            // rd3: #1..#4 paid from pocket at PO without customer payment -> receivable & toCollect.
+            _deposit('rd3', serial: '3', start: DateTime(2026, 1, 5)),
+          ],
+          transactions: {
+            'rd1': [_tx('rd1', 't1', 3000, DateTime(2026, 3, 5))],
+            'rd2': [_tx('rd2', 't2', 4000, DateTime(2026, 4, 5))],
+          },
+          poDeposits: {
+            'rd2': [
+              RDPoDeposit(
+                id: 'p2',
+                rdId: 'rd2',
+                depositedOn: DateTime(2026, 4, 6),
+                installmentCount: 4,
+              ),
+            ],
+            'rd3': [
+              RDPoDeposit(
+                id: 'p3',
+                rdId: 'rd3',
+                depositedOn: DateTime(2026, 4, 6),
+                installmentCount: 4,
+              ),
+            ],
+          },
+        );
         final c = h.container;
         _keepHub(c);
         c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
@@ -785,16 +881,257 @@ void main() {
             .read(rDMonthlyOperationsActionsProvider.notifier)
             .ensureSummaries();
         await _settle();
-        final item = (await c.read(
-          monthlyOperationItemsProvider.future,
-        )).single;
-        final r = await c
+        c.invalidate(monthlyOperationItemsProvider);
+        await c.read(monthlyOperationItemsProvider.future);
+        final kpi = c.read(monthlyOperationsKpiProvider);
+        final f = c.read(rDHubFiltersProvider.notifier);
+
+        Future<int> countFor(RDMonthlyFilter filter) async {
+          f.setStatus(filter);
+          return (await c.read(
+            filteredMonthlyOperationsProvider.future,
+          )).length;
+        }
+
+        expect(await countFor(RDMonthlyFilter.toCollect), kpi.toCollectCount);
+        expect(await countFor(RDMonthlyFilter.readyForPo), kpi.readyForPoCount);
+        expect(await countFor(RDMonthlyFilter.settled), kpi.settledCount);
+        expect(await countFor(RDMonthlyFilter.receivable), kpi.receivableCount);
+        expect(kpi.readyForPoCount, 1);
+      },
+    );
+
+    test(
+      'RDMonthlyOperationItem domain helpers cover all 7 step tracks, captions, money fallbacks, and value equality',
+      () async {
+        final h = _harness(
+          deposits: [
+            // baseline (#1 initialPaid = 4 -> Apr #4 is baseline)
+            _deposit(
+              'rd_base',
+              serial: '0',
+              initialPaid: 4,
+              start: DateTime(2026, 1, 5),
+            ),
+            // settled (#1..#4 paid & deposited)
+            _deposit('rd_settled', serial: '1', start: DateTime(2026, 1, 5)),
+            // collectedPendingPo (#1..#4 customer paid, #1..#3 deposited, #4 ready for PO)
+            _deposit('rd_inhand', serial: '2', start: DateTime(2026, 1, 5)),
+            // paidFromPocket (#1..#4 deposited, #1..#3 paid by customer, #4 paid from pocket)
+            _deposit('rd_pocket', serial: '3', start: DateTime(2026, 1, 5)),
+            // partiallyPaid (#1..#3 settled, #4 due 30 Apr partially paid ₹400 on 20 Apr -> 0 fee)
+            _deposit('rd_partial', serial: '4', start: DateTime(2026, 1, 25)),
+            // dueToday (#1..#3 settled, #4 due on 20th = _today.day -> Apr 20)
+            _deposit('rd_due', serial: '5', start: DateTime(2026, 1, 20)),
+            // upcoming (#1..#3 settled, #4 due 25 Apr -> upcoming on 20 Apr)
+            _deposit('rd_upcoming', serial: '6', start: DateTime(2026, 1, 25)),
+            // 1 month overdue (#1..#3 settled, #4 unpaid due 15 Apr -> 1 mo overdue on 20 Apr)
+            _deposit('rd_overdue1', serial: '7', start: DateTime(2026, 1, 5)),
+            // multi-month overdue (#1 paid, #2..#4 unpaid -> 3 mo overdue)
+            _deposit('rd_overdue3', serial: '8', start: DateTime(2026, 1, 5)),
+          ],
+          transactions: {
+            'rd_settled': [_tx('rd_settled', 't1', 4000, DateTime(2026, 1, 5))],
+            'rd_inhand': [_tx('rd_inhand', 't2', 4000, DateTime(2026, 1, 5))],
+            'rd_pocket': [_tx('rd_pocket', 't3', 3000, DateTime(2026, 1, 5))],
+            'rd_partial': [_tx('rd_partial', 't4', 3400, DateTime(2026, 1, 5))],
+            'rd_due': [_tx('rd_due', 't5', 3000, DateTime(2026, 1, 20))],
+            'rd_upcoming': [
+              _tx('rd_upcoming', 't6', 3000, DateTime(2026, 1, 25)),
+            ],
+            'rd_overdue1': [
+              _tx('rd_overdue1', 't7', 3000, DateTime(2026, 1, 5)),
+            ],
+            'rd_overdue3': [
+              _tx('rd_overdue3', 't8', 1000, DateTime(2026, 1, 5)),
+            ],
+          },
+          poDeposits: {
+            'rd_settled': [
+              RDPoDeposit(
+                id: 'p1',
+                rdId: 'rd_settled',
+                depositedOn: DateTime(2026, 4, 2),
+                installmentCount: 4,
+              ),
+            ],
+            'rd_inhand': [
+              RDPoDeposit(
+                id: 'p2',
+                rdId: 'rd_inhand',
+                depositedOn: DateTime(2026, 3, 2),
+                installmentCount: 3,
+              ),
+            ],
+            'rd_pocket': [
+              RDPoDeposit(
+                id: 'p3',
+                rdId: 'rd_pocket',
+                depositedOn: DateTime(2026, 4, 2),
+                installmentCount: 4,
+              ),
+            ],
+            'rd_partial': [
+              RDPoDeposit(
+                id: 'p4',
+                rdId: 'rd_partial',
+                depositedOn: DateTime(2026, 3, 2),
+                installmentCount: 3,
+              ),
+            ],
+            'rd_due': [
+              RDPoDeposit(
+                id: 'p5',
+                rdId: 'rd_due',
+                depositedOn: DateTime(2026, 3, 2),
+                installmentCount: 3,
+              ),
+            ],
+            'rd_upcoming': [
+              RDPoDeposit(
+                id: 'p6',
+                rdId: 'rd_upcoming',
+                depositedOn: DateTime(2026, 3, 2),
+                installmentCount: 3,
+              ),
+            ],
+            'rd_overdue1': [
+              RDPoDeposit(
+                id: 'p7',
+                rdId: 'rd_overdue1',
+                depositedOn: DateTime(2026, 3, 2),
+                installmentCount: 3,
+              ),
+            ],
+          },
+        );
+        final c = h.container;
+        _keepHub(c);
+        c.read(rDHubMonthProvider.notifier).setMonth(DateTime(2026, 4, 1));
+        await c
             .read(rDMonthlyOperationsActionsProvider.notifier)
-            .prepareLogPayment(item);
-        final prepared = (r as Success).value;
-        // #1 (3 months late: 30), #2 (2: 20), #3 (1: 10) + #4 (1: 10, due 15 Apr, now 20 Apr) = 4000 + 70
-        expect(prepared.initialAmount, 4070);
-        expect(prepared.schedule, hasLength(12));
+            .ensureSummaries();
+        await _settle();
+        c.invalidate(monthlyOperationItemsProvider);
+        final items = await c.read(monthlyOperationItemsProvider.future);
+        final byId = {for (final i in items) i.deposit.id: i};
+        final now = DateTime(2026, 4, 20);
+
+        // baseline
+        final base = byId['rd_base']!;
+        expect(base.stepTrackAt(now), const RDHubBaselineTrack());
+        expect(base.captionAt(now), isNull);
+
+        // settled
+        final settled = byId['rd_settled']!;
+        expect(settled.headlineMoneyAt(now).tone, RDHeadlineMoneyTone.settled);
+        expect(
+          settled.stepTrackAt(now),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerPaid(),
+            po: RDPoStep.deposited,
+          ),
+        );
+        expect(settled.captionAt(now), isNull);
+        expect(settled.arrearsMonthsAt(now), 0);
+
+        // collectedPendingPo
+        final inHand = byId['rd_inhand']!;
+        expect(
+          inHand.stepTrackAt(now),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerPaid(),
+            po: RDPoStep.pending,
+          ),
+        );
+        expect(inHand.readyForPoAmount, 1000);
+        expect(inHand.headlineMoneyAt(now).amount, 1000);
+        expect(inHand.captionAt(now), const RDHubReadyForPoCaption(count: 1));
+
+        // paidFromPocket
+        final pocket = byId['rd_pocket']!;
+        expect(
+          pocket.stepTrackAt(now),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerReceivable(),
+            po: RDPoStep.deposited,
+          ),
+        );
+        expect(pocket.receivableAmount, 1000);
+        expect(pocket.hasReceivable, isTrue);
+        expect(pocket.captionAt(now), const RDHubFromPocketCaption());
+
+        // partiallyPaid (#4 due Apr 30, paid 400 on Apr 20 -> 0 fee -> paid-of-due caption)
+        final partial = byId['rd_partial']!;
+        expect(
+          partial.stepTrackAt(now),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerPartial(),
+            po: RDPoStep.pending,
+          ),
+        );
+        expect(
+          partial.captionAt(now),
+          const RDHubPartialCaption(paid: 400, due: 1000),
+        );
+
+        // dueToday (start Jan 20 -> EOM Apr 30)
+        final apr30 = DateTime(2026, 4, 30);
+        final due = byId['rd_due']!;
+        expect(
+          due.stepTrackAt(apr30),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerDueToday(),
+            po: RDPoStep.pending,
+          ),
+        );
+        expect(due.captionAt(apr30), isNull);
+
+        // upcoming (rd_upcoming: due 30 Apr, evaluated on Apr 20)
+        final upcoming = byId['rd_upcoming']!;
+        expect(
+          upcoming.stepTrackAt(now),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerUpcoming(),
+            po: RDPoStep.pending,
+          ),
+        );
+        expect(upcoming.captionAt(now), isNull);
+        expect(upcoming.isFirstHalfDue, isFalse);
+
+        // 1-month overdue (due Apr 15 -> ₹10 fee accrued on Apr 20 -> pending charges caption)
+        final overdue1 = byId['rd_overdue1']!;
+        expect(overdue1.arrearsMonthsAt(now), 1);
+        expect(overdue1.isFirstHalfDue, isTrue);
+        expect(
+          overdue1.captionAt(now),
+          const RDHubPendingChargesCaption(feeDue: 10, priorOverdueCount: 0),
+        );
+        expect(
+          overdue1.stepTrackAt(now),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerOverdue(months: 1),
+            po: RDPoStep.pending,
+          ),
+        );
+
+        // 3-month overdue
+        final overdue3 = byId['rd_overdue3']!;
+        expect(overdue3.arrearsMonthsAt(now), 3);
+        expect(overdue3.oldestOverdueDueDateAt(now), DateTime(2026, 2, 15));
+        expect(overdue3.fromPocketInstallmentCount, 4);
+        expect(overdue3.headlineMoneyAt(now).tone, RDHeadlineMoneyTone.overdue);
+        expect(
+          overdue3.stepTrackAt(now),
+          const RDHubTwoStepTrack(
+            customer: RDCustomerOverdue(months: 3),
+            po: RDPoStep.pending,
+          ),
+        );
+        expect(overdue3.canDepositFromPocket, isTrue);
+
+        // Value equality via @freezed
+        expect(overdue3.copyWith(), equals(overdue3));
       },
     );
 
@@ -836,7 +1173,7 @@ void main() {
         expect(item.installment.absorbedFee, 10);
         expect(item.readyForPoCount, 1);
 
-        // Front through #3 from pocket (deposits #1 ready + #2, #3 unpaid) via the deposit sheet path.
+        // Deposit through #3 from pocket (deposits #1 ready + #2, #3 unpaid) via the deposit sheet path.
         expect(
           await c
               .read(rDLedgerControllerProvider.notifier)
@@ -848,7 +1185,7 @@ void main() {
         expect(event.installmentCount, 3);
         final p = await c.read(rdLedgerProjectionProvider('rd1').future);
         expect(p.summary.depositedThroughNo, 3);
-        expect(p.byNo(2)!.isFrontedByAgent, isTrue);
+        expect(p.byNo(2)!.isPaidFromPocket, isTrue);
         expect(
           p.summary.receivable,
           p.byNo(2)!.outstandingAmount + p.byNo(3)!.outstandingAmount,
@@ -908,9 +1245,9 @@ void main() {
         expect(rd1Line.feeOverride, 0);
         expect(rd1Line.amount, 2000);
 
-        // Front 1 month on rd2 and set visit date to 18 Apr (before rd2's existing 20 Apr PO visit).
+        // Deposit 1 month from pocket on rd2 and set visit date to 18 Apr (before rd2's existing 20 Apr PO visit).
         // All-or-nothing upfront validation must reject BEFORE writing rd1!
-        planner.setFronted('rd2', 1);
+        planner.setFromPocketCount('rd2', 1);
         planner.setDate(DateTime(2026, 4, 18));
         final rejected = await planner.record();
         expect(rejected, isA<Failure<String, String>>());
@@ -982,14 +1319,14 @@ void main() {
               'toggling back must not leave rd2 (never selected) in the visit',
         );
 
-        // An unready account the agent chose to front stays in the visit when the rest are hidden.
+        // An unready account the agent chose to pay from pocket stays in the visit when the rest are hidden.
         planner.setIncludeUnready(true);
-        planner.setFronted('rd3', 1);
+        planner.setFromPocketCount('rd3', 1);
         planner.setIncludeUnready(false);
         expect(lineIds(), [
           'rd1',
           'rd3',
-        ], reason: 'hiding unready accounts must not drop a fronted line');
+        ], reason: 'hiding unready accounts must not drop a from-pocket line');
 
         final r = await planner.record();
         expect(r, isA<Success<String, String>>());

@@ -283,19 +283,19 @@ class _DepositBody extends HookWidget {
                     color: scheme.onSurface,
                   ),
                 ),
-                if (draft.isFrontingFromPocket) ...[
+                if (draft.isDepositingFromPocket) ...[
                   AppSpacings.gapSm,
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // The agent's own money: the fronted colour, as on the Hub and the
+                      // The agent's own money: the receivable colour, as on the Hub and the
                       // passbook. Red is for what is overdue.
                       HugeIcon(
                         icon: HugeIcons.strokeRoundedWallet02,
                         size: AppDimensions.iconSm,
                         color: AppFinancialColors.of(
                           context,
-                        ).fronted.onContainer,
+                        ).receivable.onContainer,
                       ),
                       AppSpacings.gapSm,
                       Expanded(
@@ -306,7 +306,7 @@ class _DepositBody extends HookWidget {
                           style: emphasized.bodySmall?.copyWith(
                             color: AppFinancialColors.of(
                               context,
-                            ).fronted.onContainer,
+                            ).receivable.onContainer,
                           ),
                         ),
                       ),

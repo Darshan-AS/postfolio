@@ -3,28 +3,40 @@ import 'dart:collection';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:postfolio/core/enums/deposit_status.dart';
+import 'package:postfolio/core/enums/sort_direction.dart';
 import 'package:postfolio/core/providers/clock_provider.dart';
 import 'package:postfolio/core/providers/session_provider.dart';
 import 'package:postfolio/core/utils/date_only_converter.dart';
 import 'package:postfolio/core/utils/result.dart';
 import 'package:postfolio/features/customers/presentation/controllers/customers_controller.dart';
-import 'package:postfolio/features/recurring_deposits/domain/rd_installment_model.dart';
+import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_rules.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_ledger_summary.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_monthly_operation_item.dart';
 import 'package:postfolio/features/recurring_deposits/domain/rd_schedule_factory.dart';
 import 'package:postfolio/features/recurring_deposits/domain/recurring_deposit_model.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/rd_ledger_controller.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/controllers/recurring_deposits_controller.dart';
+import 'package:postfolio/i18n/strings.g.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'rd_monthly_operations_controller.freezed.dart';
 part 'rd_monthly_operations_controller.g.dart';
 
-enum RDViewMode { accounts, monthlyHub }
+enum RDViewMode {
+  accounts,
+  monthlyHub;
 
-enum RDMonthlyFilter { all, toCollect, readyForPo, settled, overdue, fronted }
+  String get queryValue => switch (this) {
+    RDViewMode.accounts => 'accounts',
+    RDViewMode.monthlyHub => 'hub',
+  };
+}
+
+enum RDMonthlyFilter { all, toCollect, readyForPo, settled, receivable }
 
 enum RDDueWindowFilter { all, firstHalf, secondHalf }
+
+enum RDHubSortField { serialNo, overdueFirst, customerName }
 
 // =============================================================================================
 // State — three small notifiers so a keystroke in search never rebuilds the month's rows.
@@ -62,7 +74,8 @@ sealed class RDHubFiltersState with _$RDHubFiltersState {
   const factory RDHubFiltersState({
     @Default(RDMonthlyFilter.all) RDMonthlyFilter status,
     @Default(RDDueWindowFilter.all) RDDueWindowFilter dueWindow,
-    @Default(true) bool groupByCustomer,
+    @Default(RDHubSortField.serialNo) RDHubSortField sortField,
+    @Default(SortDirection.asc) SortDirection sortDirection,
     @Default('') String searchQuery,
   }) = _RDHubFiltersState;
 
@@ -90,14 +103,21 @@ class RDHubFilters extends _$RDHubFilters {
     dueWindow: state.dueWindow == filter ? RDDueWindowFilter.all : filter,
   );
 
-  void toggleGroupByCustomer([bool? value]) =>
-      state = state.copyWith(groupByCustomer: value ?? !state.groupByCustomer);
+  void setSort(RDHubSortField field, SortDirection direction) =>
+      state = state.copyWith(sortField: field, sortDirection: direction);
+
+  void resetSort() => state = state.copyWith(
+    sortField: RDHubSortField.serialNo,
+    sortDirection: SortDirection.asc,
+  );
 
   void setSearchQuery(String query) =>
       state = state.copyWith(searchQuery: query);
 
-  void clear() =>
-      state = RDHubFiltersState(groupByCustomer: state.groupByCustomer);
+  void clear() => state = RDHubFiltersState(
+    sortField: state.sortField,
+    sortDirection: state.sortDirection,
+  );
 }
 
 @freezed
@@ -236,6 +256,8 @@ sealed class RDMonthlyKpiSummary with _$RDMonthlyKpiSummary {
     @Default(0) int readyForPoCount,
     @Default(0.0) double settledAmount,
     @Default(0) int settledCount,
+    @Default(0.0) double receivableAmount,
+    @Default(0) int receivableCount,
     @Default(0.0) double overdueAmount,
     @Default(0) int overdueCount,
     @Default(0) int priorArrearsAccountsCount,
@@ -255,47 +277,73 @@ RDMonthlyKpiSummary monthlyOperationsKpi(Ref ref) {
   final month = ref.watch(rDHubMonthProvider);
   final isFutureMonth = month.isAfter(now.toMonthStart());
 
-  var s = const RDMonthlyKpiSummary();
+  var toCollectAmount = 0.0;
+  var toCollectCount = 0;
+  var readyForPoAmount = 0.0;
+  var readyForPoCount = 0;
+  var settledAmount = 0.0;
+  var settledCount = 0;
+  var receivableAmount = 0.0;
+  var receivableCount = 0;
+  var overdueAmount = 0.0;
+  var overdueCount = 0;
+  var priorArrearsAccountsCount = 0;
+  var priorArrearsAmount = 0.0;
+  var firstHalfCount = 0;
+  var secondHalfCount = 0;
+
   for (final item in items) {
-    // Window counters show what is still to collect in each window, not every row.
+    // Counts and totals mirror the 4 KPI filter predicates so tile counts match row counts.
     if (item.isCustomerPending) {
-      s = s.copyWith(
-        firstHalfCount: s.firstHalfCount + (item.isFirstHalfDue ? 1 : 0),
-        secondHalfCount: s.secondHalfCount + (item.isFirstHalfDue ? 0 : 1),
-      );
+      if (item.isFirstHalfDue) {
+        firstHalfCount++;
+      } else {
+        secondHalfCount++;
+      }
+      toCollectAmount += item.totalOutstanding;
+      toCollectCount++;
+    }
+    if (item.hasReadyForPo) {
+      readyForPoAmount += item.readyForPoAmount;
+      readyForPoCount++;
     }
     if (item.isSettled) {
-      s = s.copyWith(
-        settledAmount: s.settledAmount + item.installment.dueAmount,
-        settledCount: s.settledCount + 1,
-      );
-    } else if (item.isReadyForPo) {
-      s = s.copyWith(
-        readyForPoAmount: s.readyForPoAmount + item.installment.dueAmount,
-        readyForPoCount: s.readyForPoCount + 1,
-      );
-    } else if (item.isCustomerPending) {
-      s = s.copyWith(
-        toCollectAmount: s.toCollectAmount + item.totalOutstanding,
-        toCollectCount: s.toCollectCount + 1,
-      );
+      settledAmount += item.installment.dueAmount;
+      settledCount++;
+    }
+    if (item.hasReceivable) {
+      receivableAmount += item.receivableAmount;
+      receivableCount++;
     }
     if (item.hasOverdueDebt(now)) {
-      s = s.copyWith(
-        overdueAmount:
-            s.overdueAmount +
-            (isFutureMonth ? item.priorOverdueAmount : item.totalOutstanding),
-        overdueCount: s.overdueCount + 1,
-      );
+      overdueAmount += isFutureMonth
+          ? item.priorOverdueAmount
+          : item.totalOutstanding;
+      overdueCount++;
     }
     if (item.priorOverdueCount > 0) {
-      s = s.copyWith(
-        priorArrearsAccountsCount: s.priorArrearsAccountsCount + 1,
-        priorArrearsAmount: s.priorArrearsAmount + item.priorOverdueAmount,
-      );
+      priorArrearsAccountsCount++;
+      priorArrearsAmount += item.priorOverdueAmount;
     }
   }
-  return s.copyWith(totalCount: items.length);
+
+  return RDMonthlyKpiSummary(
+    toCollectAmount: toCollectAmount,
+    toCollectCount: toCollectCount,
+    readyForPoAmount: readyForPoAmount,
+    readyForPoCount: readyForPoCount,
+    settledAmount: settledAmount,
+    settledCount: settledCount,
+    receivableAmount: receivableAmount,
+    receivableCount: receivableCount,
+    overdueAmount: overdueAmount,
+    overdueCount: overdueCount,
+    priorArrearsAccountsCount: priorArrearsAccountsCount,
+    priorArrearsAmount: priorArrearsAmount,
+    firstHalfCount: firstHalfCount,
+    secondHalfCount: secondHalfCount,
+    totalCount: items.length,
+  );
 }
 
 @freezed
@@ -308,7 +356,7 @@ sealed class RDAgentFloatSummary with _$RDAgentFloatSummary {
     @Default(0.0) double cashInHandDigital,
     @Default(0) int cashInHandAccounts,
 
-    /// Fronted at the PO and not yet recovered from customers.
+    /// Paid from pocket at the PO and not yet recovered from customers.
     @Default(0.0) double receivableAmount,
     @Default(0) int receivableAccounts,
     @Default(0.0) double absorbedFeesTotal,
@@ -333,32 +381,42 @@ RDAgentFloatSummary globalAgentFloat(Ref ref) {
     for (final d in deposits ?? const <RecurringDeposit>[]) d.id: d,
   };
 
-  var s = const RDAgentFloatSummary();
+  var cashInHandCash = 0.0;
+  var cashInHandDigital = 0.0;
+  var cashInHandAccounts = 0;
+  var receivableAmount = 0.0;
+  var receivableAccounts = 0;
+  var absorbedFeesTotal = 0.0;
+  var arrearsAccounts = 0;
+
   for (final summary in summaries.values) {
     final deposit = byId[summary.rdId];
     if (deposit == null || deposit.status == DepositStatus.closed) continue;
     if (summary.cashInHand > 0) {
-      s = s.copyWith(
-        cashInHandCash: s.cashInHandCash + summary.cashInHandCash,
-        cashInHandDigital: s.cashInHandDigital + summary.cashInHandDigital,
-        cashInHandAccounts: s.cashInHandAccounts + 1,
-      );
+      cashInHandCash += summary.cashInHandCash;
+      cashInHandDigital += summary.cashInHandDigital;
+      cashInHandAccounts++;
     }
     if (summary.receivable > 0) {
-      s = s.copyWith(
-        receivableAmount: s.receivableAmount + summary.receivable,
-        receivableAccounts: s.receivableAccounts + 1,
-      );
+      receivableAmount += summary.receivable;
+      receivableAccounts++;
     }
-    s = s.copyWith(
-      absorbedFeesTotal: s.absorbedFeesTotal + summary.absorbedTotal,
-    );
+    absorbedFeesTotal += summary.absorbedTotal;
     // Evaluate arrears as of today: the cached count is only as fresh as the last write.
-    if (summary.arrearsCountAsOf(deposit, now) >= 2) {
-      s = s.copyWith(arrearsAccounts: s.arrearsAccounts + 1);
+    if (summary.arrearsCountAsOf(deposit, now) >=
+        RDLedgerRules.standard.arrearsAlertThresholdMonths) {
+      arrearsAccounts++;
     }
   }
-  return s;
+  return RDAgentFloatSummary(
+    cashInHandCash: cashInHandCash,
+    cashInHandDigital: cashInHandDigital,
+    cashInHandAccounts: cashInHandAccounts,
+    receivableAmount: receivableAmount,
+    receivableAccounts: receivableAccounts,
+    absorbedFeesTotal: absorbedFeesTotal,
+    arrearsAccounts: arrearsAccounts,
+  );
 }
 
 @riverpod
@@ -366,20 +424,16 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> filteredMonthlyOperations(
   Ref ref,
 ) async {
   final filters = ref.watch(rDHubFiltersProvider);
-  final month = ref.watch(rDHubMonthProvider);
-  final now = ref.watch(clockProvider)().toDateOnly();
+  final now = ref.watch(currentDateProvider);
   final items = await ref.watch(monthlyOperationItemsProvider.future);
-  final isFutureMonth = month.isAfter(now.toMonthStart());
 
   Iterable<RDMonthlyOperationItem> filtered = items.where((item) {
     final matchesStatus = switch (filters.status) {
       RDMonthlyFilter.all => true,
       RDMonthlyFilter.toCollect => item.isCustomerPending,
-      RDMonthlyFilter.readyForPo => item.isReadyForPo,
+      RDMonthlyFilter.readyForPo => item.hasReadyForPo,
       RDMonthlyFilter.settled => item.isSettled,
-      RDMonthlyFilter.overdue => !isFutureMonth && item.hasOverdueDebt(now),
-      RDMonthlyFilter.fronted =>
-        item.isFrontedByAgent || item.summary.receivable > 0,
+      RDMonthlyFilter.receivable => item.hasReceivable,
     };
     if (!matchesStatus) return false;
     return switch (filters.dueWindow) {
@@ -400,66 +454,47 @@ Future<UnmodifiableListView<RDMonthlyOperationItem>> filteredMonthlyOperations(
     });
   }
 
+  final sign = filters.sortDirection == SortDirection.asc ? 1 : -1;
   final list = filtered.toList()
     ..sort((a, b) {
-      if (filters.groupByCustomer) {
-        final byName = (a.deposit.customerName ?? a.deposit.customerId)
-            .toLowerCase()
-            .compareTo(
-              (b.deposit.customerName ?? b.deposit.customerId).toLowerCase(),
-            );
-        if (byName != 0) return byName;
-        final byId = a.deposit.customerId.compareTo(b.deposit.customerId);
-        if (byId != 0) return byId;
+      int compareSerial() {
+        final cmp = RecurringDeposit.defaultCompare(a.deposit, b.deposit);
+        if (cmp != 0) return cmp * sign;
+        return a.deposit.id.compareTo(b.deposit.id) * sign;
       }
-      final aOverdue = a.isOverdue(now) && a.isCustomerPending;
-      final bOverdue = b.isOverdue(now) && b.isCustomerPending;
-      if (aOverdue != bOverdue) return aOverdue ? -1 : 1;
-      final aDebt = a.hasOverdueDebt(now);
-      final bDebt = b.hasOverdueDebt(now);
-      if (aDebt != bDebt) return aDebt ? -1 : 1;
-      if (a.priorOverdueCount != b.priorOverdueCount) {
-        return b.priorOverdueCount.compareTo(a.priorOverdueCount);
+
+      switch (filters.sortField) {
+        case RDHubSortField.serialNo:
+          return compareSerial();
+        case RDHubSortField.overdueFirst:
+          final aMonths = a.arrearsMonthsAt(now);
+          final bMonths = b.arrearsMonthsAt(now);
+          if (aMonths != bMonths) return bMonths.compareTo(aMonths) * sign;
+          if (aMonths > 0) {
+            final aOldest = a.oldestOverdueDueDateAt(now)!;
+            final bOldest = b.oldestOverdueDueDateAt(now)!;
+            final byDue = aOldest.compareTo(bOldest);
+            if (byDue != 0) return byDue * sign;
+          }
+          return compareSerial();
+        case RDHubSortField.customerName:
+          final byName = (a.deposit.customerName ?? a.deposit.customerId)
+              .toLowerCase()
+              .compareTo(
+                (b.deposit.customerName ?? b.deposit.customerId).toLowerCase(),
+              );
+          if (byName != 0) return byName * sign;
+          return compareSerial();
       }
-      return RecurringDeposit.defaultCompare(a.deposit, b.deposit);
     });
 
   return UnmodifiableListView(list);
 }
 
-/// A household block when "group by customer" is on.
-typedef RDCustomerGroup = ({
-  String customerId,
-  String customerName,
-  List<RDMonthlyOperationItem> items,
-  double monthlyTotal,
-});
-
-@riverpod
-Future<List<RDCustomerGroup>> groupedMonthlyOperations(Ref ref) async {
-  final items = await ref.watch(filteredMonthlyOperationsProvider.future);
-  final groups = <String, List<RDMonthlyOperationItem>>{};
-  for (final item in items) {
-    groups.putIfAbsent(item.deposit.customerId, () => []).add(item);
-  }
-  return [
-    for (final e in groups.entries)
-      (
-        customerId: e.key,
-        customerName: e.value.first.deposit.customerName ?? e.key,
-        items: e.value,
-        monthlyTotal: e.value.fold(
-          0.0,
-          (s, i) => s + i.installment.installmentAmount,
-        ),
-      ),
-  ];
-}
-
 /// Selected rows resolved against the current month's items.
 ///
-/// A PO visit deposits the *next contiguous ready months* of each selected account; fronting
-/// (depositing a month the customer has not paid) is a separate, explicit per-account action.
+/// A PO visit deposits the *next contiguous ready months* of each selected account; paying
+/// from pocket (depositing a month the customer has not paid) is a separate, explicit action.
 @freezed
 sealed class RDBatchSelectionSummary with _$RDBatchSelectionSummary {
   const factory RDBatchSelectionSummary({
@@ -526,33 +561,15 @@ class RDMonthlyOperationsActions extends _$RDMonthlyOperationsActions {
   Future<Result<void, String>> absorbRemainingFee(RDMonthlyOperationItem item) {
     final amount = item.installment.absorbableFee;
     if (amount <= 0) {
-      return Future.value(const Failure('Nothing to absorb on this month.'));
+      return Future.value(
+        Failure(t.recurringDeposits.monthlyOperations.card.nothingToAbsorb),
+      );
     }
     return _ledger.absorbFee(
       rdId: item.deposit.id,
       installmentNo: item.installment.installmentNo,
       amount: amount,
     );
-  }
-
-  /// Everything the payment sheet needs to open pre-filled for [item].
-  Future<Result<({List<RDInstallment> schedule, double initialAmount}), String>>
-  prepareLogPayment(RDMonthlyOperationItem item) async {
-    final provider = rdLedgerProjectionProvider(item.deposit.id);
-    final sub = ref.listen(provider, (_, _) {});
-    try {
-      final projection = await ref.read(provider.future);
-      return Success((
-        schedule: projection.installments,
-        initialAmount: projection.summary.owedByCustomer > 0
-            ? projection.summary.owedByCustomer
-            : item.installment.outstandingAmount,
-      ));
-    } on RDLedgerException catch (e) {
-      return Failure(e.message);
-    } finally {
-      sub.close();
-    }
   }
 
   /// Builds summaries for RDs that have none yet (first run after migration), or

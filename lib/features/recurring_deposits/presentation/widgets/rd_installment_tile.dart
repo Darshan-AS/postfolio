@@ -58,7 +58,7 @@ class RDInstallmentTile extends StatelessWidget {
     if (inst.isOpeningBaseline) {
       amountLabel = inst.installmentAmount.toRupeeFormat();
       amountColor = scheme.onSurfaceVariant;
-    } else if (inst.isFrontedByAgent) {
+    } else if (inst.isPaidFromPocket) {
       amountLabel = passbook.owes(
         amount: inst.outstandingAmount.toRupeeFormat(),
       );

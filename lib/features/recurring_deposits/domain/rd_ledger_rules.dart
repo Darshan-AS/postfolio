@@ -9,6 +9,7 @@ final class RDLedgerRules {
   const RDLedgerRules({
     this.dueDayCutoff = 15,
     this.defaultFeeRupeesPer100PerMonth = 1,
+    this.arrearsAlertThresholdMonths = 2,
   });
 
   /// Accounts opened on or before this day of month are due on the same day every month;
@@ -17,6 +18,9 @@ final class RDLedgerRules {
 
   /// Statutory default fee: `₹1 per ₹100 (or part thereof) per month of default`.
   final int defaultFeeRupeesPer100PerMonth;
+
+  /// Accounts with this many or more unsettled past-due months count toward the arrears alert.
+  final int arrearsAlertThresholdMonths;
 
   static const standard = RDLedgerRules();
 
