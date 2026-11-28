@@ -66,7 +66,7 @@ jobs:
         run: flutter test --exclude-tags integration --concurrency "$(nproc)" --coverage
 
       - name: Enforce DDD Layer & Total Coverage Ratchet
-        run: dart run tool/check_coverage.dart --min-domain=80 --min-controllers=80 --min-data=42 --min-ui=67 --min-total=69
+        run: dart run tool/check_coverage.dart --min-domain=87 --min-controllers=83 --min-data=75 --min-ui=83 --min-total=83
 
       - name: Verify WebAssembly (Wasm) Build
         run: flutter build web --wasm

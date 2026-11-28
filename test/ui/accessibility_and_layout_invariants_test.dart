@@ -11,6 +11,8 @@ import 'package:postfolio/core/widgets/layout/entity_list_tile.dart';
 import 'package:postfolio/features/auth/data/auth_repository.dart';
 import 'package:postfolio/features/auth/domain/auth_user.dart';
 import 'package:postfolio/features/auth/presentation/screens/login_screen.dart';
+import 'package:postfolio/features/admin/data/admin_repository.dart';
+import 'package:postfolio/features/admin/presentation/widgets/admin_agent_picker_sheet.dart';
 import 'package:postfolio/features/customers/data/customer_repository.dart';
 import 'package:postfolio/features/customers/presentation/screens/customer_detail_screen.dart';
 import 'package:postfolio/features/customers/presentation/screens/customer_form_screen.dart';
@@ -26,9 +28,13 @@ import 'package:postfolio/features/recurring_deposits/data/recurring_deposit_rep
 import 'package:postfolio/features/recurring_deposits/presentation/screens/recurring_deposit_detail_screen.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/screens/recurring_deposit_form_screen.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/screens/recurring_deposits_screen.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_deposit_sheet.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_installment_tile.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_monthly_operation_card.dart';
 import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_passbook_po_strip.dart';
+import 'package:postfolio/features/recurring_deposits/presentation/widgets/rd_payment_bottom_sheets.dart';
+import 'package:postfolio/features/profile/data/profile_repository.dart';
+import 'package:postfolio/features/profile/domain/agent_profile.dart';
 import 'package:postfolio/features/profile/presentation/screens/profile_edit_screen.dart';
 import 'package:postfolio/features/profile/presentation/screens/profile_screen.dart';
 import 'package:postfolio/features/settings/presentation/screens/settings_screen.dart';
@@ -88,17 +94,164 @@ void main() {
       ),
       (name: 'CustomerFormScreen', build: () => const CustomerFormScreen()),
       (
+        name: 'CustomerFormScreen (Edit)',
+        build: () => CustomerFormScreen(customerId: customer.id),
+      ),
+      (
         name: 'OneTimeDepositFormScreen',
         build: () => const OneTimeDepositFormScreen(),
+      ),
+      (
+        name: 'OneTimeDepositFormScreen (Edit)',
+        build: () => OneTimeDepositFormScreen(depositId: otd.id),
       ),
       (
         name: 'RecurringDepositFormScreen',
         build: () => const RecurringDepositFormScreen(),
       ),
+      (
+        name: 'RecurringDepositFormScreen (Edit)',
+        build: () => RecurringDepositFormScreen(depositId: rd.id),
+      ),
       (name: 'ProfileScreen', build: () => const ProfileScreen()),
       (name: 'SettingsScreen', build: () => const SettingsScreen()),
       (name: 'ProfileEditScreen', build: () => const ProfileEditScreen()),
     ];
+
+    final accessibleDenseScreens = <({String name, Widget Function() build})>[
+      (name: 'DashboardScreen', build: () => const DashboardScreen()),
+      (
+        name: 'RecurringDepositsScreen (Monthly Hub)',
+        build: () => const RecurringDepositsScreen(initialView: 'hub'),
+      ),
+      (
+        name: 'RecurringDepositDetailScreen (Passbook)',
+        build: () => RecurringDepositDetailScreen(
+          depositId: rd.id,
+          initialTab: 'schedule',
+        ),
+      ),
+      (name: 'ProfileScreen', build: () => const ProfileScreen()),
+      (name: 'SettingsScreen', build: () => const SettingsScreen()),
+    ];
+
+    Future<void> pumpAndVerifyAccessibleScreen(
+      WidgetTester tester, {
+      required String label,
+      required ThemeData theme,
+      required Widget childWidget,
+    }) async {
+      // 360x800 logical viewport
+      tester.view.physicalSize = const Size(720, 1600);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.reset);
+
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final authRepo = FakeAuthRepository(
+        initialUser: const AuthUser(id: 'demo_user', email: 'agent@demo.com'),
+      );
+      addTearDown(authRepo.dispose);
+
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          clockProvider.overrideWithValue(() => DateTime(2026, 4, 20)),
+          authRepositoryProvider.overrideWithValue(authRepo),
+          profileRepositoryProvider.overrideWithValue(
+            FakeProfileRepository.demo(today: DateTime(2026, 4, 20)),
+          ),
+          adminRepositoryProvider.overrideWithValue(
+            FakeAdminRepository(
+              isAdmin: true,
+              agents: const [
+                AgentProfile(
+                  id: 'demo_user',
+                  name: 'Jim Gordon',
+                  email: 'agent@demo.com',
+                  agencyCode: 'DOP-GTM-001',
+                ),
+                AgentProfile(
+                  id: 'agent-lucius',
+                  name: 'Lucius Fox',
+                  email: 'lucius@postfolio.com',
+                  agencyCode: 'DOP-GTM-002',
+                ),
+              ],
+            ),
+          ),
+          customerRepositoryProvider.overrideWithValue(
+            FakeCustomerRepository(customers: source.customers),
+          ),
+          oneTimeDepositRepositoryProvider.overrideWithValue(
+            FakeOneTimeDepositRepository(deposits: source.oneTimeDeposits),
+          ),
+          recurringDepositRepositoryProvider.overrideWithValue(
+            FakeRecurringDepositRepository(deposits: source.recurringDeposits),
+          ),
+          rdLedgerRepositoryProvider.overrideWithValue(
+            FakeRDLedgerRepository(
+              transactions: source.rdTransactions,
+              poDeposits: source.rdPoDeposits,
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: theme,
+            builder: (context, child) {
+              final mq = MediaQuery.of(context);
+              return MediaQuery(
+                data: mq.copyWith(
+                  textScaler: const TextScaler.linear(2.0),
+                  disableAnimations: true,
+                ),
+                child: SkeletonizerConfig(
+                  data: AppTheme.skeletonizerConfig(
+                    Theme.of(context).colorScheme,
+                  ),
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              );
+            },
+            home: childWidget,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 250));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(tester.takeException(), isNull);
+
+      // Verify every visible IconButton has a tooltip and >= 48x48dp hit box.
+      for (final element in find.byType(IconButton).evaluate()) {
+        final widget = element.widget as IconButton;
+        final renderBox = element.renderObject as RenderBox?;
+        if (renderBox == null || !renderBox.hasSize) continue;
+        expect(
+          widget.tooltip?.trim().isNotEmpty ?? false,
+          isTrue,
+          reason: '$label has an unlabeled IconButton without tooltip: $widget',
+        );
+        expect(
+          renderBox.size.width,
+          greaterThanOrEqualTo(AppDimensions.minTapTarget),
+          reason:
+              '$label IconButton (${widget.tooltip}) width ${renderBox.size.width} < ${AppDimensions.minTapTarget}',
+        );
+        expect(
+          renderBox.size.height,
+          greaterThanOrEqualTo(AppDimensions.minTapTarget),
+          reason:
+              '$label IconButton (${widget.tooltip}) height ${renderBox.size.height} < ${AppDimensions.minTapTarget}',
+        );
+      }
+    }
 
     for (final themeEntry in <({String name, ThemeData theme})>[
       (name: 'Light', theme: AppTheme.lightTheme),
@@ -106,107 +259,89 @@ void main() {
     ]) {
       for (final screen in screens) {
         testWidgets(
-          '${themeEntry.name} | ${screen.name}: 0 RenderFlex overflows, >=44dp tap targets, and labeled IconButtons at 360x800 @ 2.0x text',
-          (tester) async {
-            // 360x800 logical viewport
-            tester.view.physicalSize = const Size(720, 1600);
-            tester.view.devicePixelRatio = 2.0;
-            addTearDown(tester.view.reset);
-
-            SharedPreferences.setMockInitialValues({});
-            final prefs = await SharedPreferences.getInstance();
-            final authRepo = FakeAuthRepository(
-              initialUser: const AuthUser(
-                id: 'agent-1',
-                email: 'agent@postfolio.dev',
-              ),
-            );
-            addTearDown(authRepo.dispose);
-
-            final container = ProviderContainer(
-              overrides: [
-                sharedPreferencesProvider.overrideWithValue(prefs),
-                clockProvider.overrideWithValue(() => DateTime(2026, 4, 20)),
-                authRepositoryProvider.overrideWithValue(authRepo),
-                customerRepositoryProvider.overrideWithValue(
-                  FakeCustomerRepository(customers: source.customers),
-                ),
-                oneTimeDepositRepositoryProvider.overrideWithValue(
-                  FakeOneTimeDepositRepository(
-                    deposits: source.oneTimeDeposits,
-                  ),
-                ),
-                recurringDepositRepositoryProvider.overrideWithValue(
-                  FakeRecurringDepositRepository(
-                    deposits: source.recurringDeposits,
-                  ),
-                ),
-                rdLedgerRepositoryProvider.overrideWithValue(
-                  FakeRDLedgerRepository(
-                    transactions: source.rdTransactions,
-                    poDeposits: source.rdPoDeposits,
-                  ),
-                ),
-              ],
-            );
-            addTearDown(container.dispose);
-
-            await tester.pumpWidget(
-              UncontrolledProviderScope(
-                container: container,
-                child: MaterialApp(
-                  theme: themeEntry.theme,
-                  builder: (context, child) {
-                    final mq = MediaQuery.of(context);
-                    return MediaQuery(
-                      data: mq.copyWith(
-                        textScaler: const TextScaler.linear(2.0),
-                        disableAnimations: true,
-                      ),
-                      child: SkeletonizerConfig(
-                        data: AppTheme.skeletonizerConfig(
-                          Theme.of(context).colorScheme,
-                        ),
-                        child: child ?? const SizedBox.shrink(),
-                      ),
-                    );
-                  },
-                  home: screen.build(),
-                ),
-              ),
-            );
-            await tester.pump(const Duration(milliseconds: 250));
-            await tester.pump(const Duration(milliseconds: 500));
-
-            expect(tester.takeException(), isNull);
-
-            // Verify every visible IconButton has a tooltip and >= 44x44dp hit box.
-            for (final element in find.byType(IconButton).evaluate()) {
-              final widget = element.widget as IconButton;
-              final renderBox = element.renderObject as RenderBox?;
-              if (renderBox == null || !renderBox.hasSize) continue;
-              expect(
-                widget.tooltip?.trim().isNotEmpty ?? false,
-                isTrue,
-                reason:
-                    '${screen.name} has an unlabeled IconButton without tooltip: $widget',
-              );
-              expect(
-                renderBox.size.width,
-                greaterThanOrEqualTo(AppDimensions.minTapTarget),
-                reason:
-                    '${screen.name} IconButton (${widget.tooltip}) width ${renderBox.size.width} < ${AppDimensions.minTapTarget}',
-              );
-              expect(
-                renderBox.size.height,
-                greaterThanOrEqualTo(AppDimensions.minTapTarget),
-                reason:
-                    '${screen.name} IconButton (${widget.tooltip}) height ${renderBox.size.height} < ${AppDimensions.minTapTarget}',
-              );
-            }
-          },
+          '${themeEntry.name} | ${screen.name}: 0 RenderFlex overflows, >=48dp tap targets, and labeled IconButtons at 360x800 @ 2.0x text',
+          (tester) => pumpAndVerifyAccessibleScreen(
+            tester,
+            label: '${themeEntry.name} | ${screen.name}',
+            theme: themeEntry.theme,
+            childWidget: screen.build(),
+          ),
         );
       }
+    }
+
+    for (final themeEntry in <({String name, ThemeData theme})>[
+      (name: 'Accessible Light', theme: AppTheme.accessibleLightTheme),
+      (name: 'Accessible Dark', theme: AppTheme.accessibleDarkTheme),
+    ]) {
+      for (final screen in accessibleDenseScreens) {
+        testWidgets(
+          '${themeEntry.name} | ${screen.name}: 0 RenderFlex overflows and >=48dp tap targets at 360x800 @ 2.0x text',
+          (tester) => pumpAndVerifyAccessibleScreen(
+            tester,
+            label: '${themeEntry.name} | ${screen.name}',
+            theme: themeEntry.theme,
+            childWidget: screen.build(),
+          ),
+        );
+      }
+    }
+
+    for (final sheetEntry
+        in <({String name, Future<void> Function(BuildContext context) open})>[
+          (
+            name: 'RDLogPaymentSheet',
+            open: (context) {
+              // ignore: unawaited_futures
+              showRDLogPaymentSheet(
+                context,
+                rdId: rd.id,
+                showDepositFromPocketShortcut: true,
+              );
+              return Future<void>.value();
+            },
+          ),
+          (
+            name: 'RDDepositSheet',
+            open: (context) {
+              // ignore: unawaited_futures
+              showRDDepositSheet(context, rdId: rd.id, initialCount: 1);
+              return Future<void>.value();
+            },
+          ),
+          (
+            name: 'AdminAgentPickerSheet',
+            open: (context) {
+              // ignore: unawaited_futures
+              AdminAgentPickerSheet.show(context);
+              return Future<void>.value();
+            },
+          ),
+        ]) {
+      testWidgets(
+        'Modal Sheet | ${sheetEntry.name}: 0 overflows and >=48dp tap targets at 360x800 @ 2.0x text',
+        (tester) async {
+          await pumpAndVerifyAccessibleScreen(
+            tester,
+            label: sheetEntry.name,
+            theme: AppTheme.lightTheme,
+            childWidget: Builder(
+              builder: (context) => Scaffold(
+                body: Center(
+                  child: FilledButton(
+                    onPressed: () => sheetEntry.open(context),
+                    child: const Text('Open Sheet'),
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.text('Open Sheet'));
+          await tester.pump(const Duration(milliseconds: 400));
+          await tester.pump(const Duration(milliseconds: 400));
+          expect(tester.takeException(), isNull);
+        },
+      );
     }
   });
 
@@ -228,7 +363,20 @@ void main() {
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
           clockProvider.overrideWithValue(() => DateTime(2026, 4, 20)),
-          authRepositoryProvider.overrideWithValue(authRepo),
+          authRepositoryProvider.overrideWithValue(
+            FakeAuthRepository(
+              initialUser: const AuthUser(
+                id: 'demo_user',
+                email: 'agent@demo.com',
+              ),
+            ),
+          ),
+          profileRepositoryProvider.overrideWithValue(
+            FakeProfileRepository.demo(today: DateTime(2026, 4, 20)),
+          ),
+          adminRepositoryProvider.overrideWithValue(
+            FakeAdminRepository(isAdmin: true),
+          ),
           customerRepositoryProvider.overrideWithValue(
             FakeCustomerRepository(customers: source.customers),
           ),
@@ -438,6 +586,26 @@ void main() {
           reason:
               'InvestmentProjectionCard value floated in center instead of flush-right',
         );
+      },
+    );
+
+    testWidgets(
+      'Dashboard, Profile, Settings, and Customer/RD Detail screens render cleanly at 1280x800',
+      (tester) async {
+        final container = await createDesktopContainer();
+
+        for (final screen in <Widget>[
+          const DashboardScreen(),
+          const ProfileScreen(),
+          const SettingsScreen(),
+          CustomerDetailScreen(customerId: source.customers.first.id),
+          RecurringDepositDetailScreen(
+            depositId: source.recurringDeposits.first.id,
+            initialTab: 'info',
+          ),
+        ]) {
+          await pumpDesktop(tester, container, screen);
+        }
       },
     );
   });

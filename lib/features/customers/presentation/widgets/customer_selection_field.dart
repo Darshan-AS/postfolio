@@ -80,36 +80,58 @@ class CustomerSelectionField extends HookConsumerWidget {
             errorText: errorText,
             isRequired: true,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                // Wraps: a name cut with an ellipsis is not the name.
-                child: Text(
-                  displayCustomer?.name ?? t.customers.selectCustomer,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: displayCustomer == null
-                        ? Theme.of(context).hintColor
-                        : Theme.of(context).colorScheme.onSurface,
-                  ),
+          child: Builder(
+            builder: (context) {
+              final isLargeText = AppDimensions.isLargeText(context);
+              final nameText = Text(
+                displayCustomer?.name ?? t.customers.selectCustomer,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: displayCustomer == null
+                      ? Theme.of(context).hintColor
+                      : Theme.of(context).colorScheme.onSurface,
                 ),
-              ),
-              if (secondaryIdentifier != null &&
-                  secondaryIdentifier.isNotEmpty) ...[
-                AppSpacings.gapSm,
-                Text(
-                  secondaryIdentifier,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+              );
+              final secondaryText =
+                  secondaryIdentifier != null && secondaryIdentifier.isNotEmpty
+                  ? Text(
+                      secondaryIdentifier,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    )
+                  : null;
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    // Wraps: a name cut with an ellipsis is not the name.
+                    child: isLargeText
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              nameText,
+                              if (secondaryText != null) ...[
+                                AppSpacings.gapXxs,
+                                secondaryText,
+                              ],
+                            ],
+                          )
+                        : nameText,
                   ),
-                ),
-              ],
-              AppSpacings.gapXs,
-              const AppIcon(
-                HugeIcons.strokeRoundedArrowDown01,
-                size: AppDimensions.iconMd,
-              ),
-            ],
+                  if (!isLargeText && secondaryText != null) ...[
+                    AppSpacings.gapSm,
+                    secondaryText,
+                  ],
+                  AppSpacings.gapXs,
+                  const AppIcon(
+                    HugeIcons.strokeRoundedArrowDown01,
+                    size: AppDimensions.iconMd,
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
