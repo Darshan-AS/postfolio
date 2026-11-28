@@ -29,36 +29,41 @@ permissions:
 
 jobs:
   build-and-release:
-    name: Build, Verify, Release, and Distribute
+    name: Build, Release, and Distribute
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
+      # Promotion model: a release ships an already-validated commit rather than re-testing
+      # from scratch. Require that this exact commit has a green `CI Quality & Database
+      # Contract Gate` run — which it gets from the push-to-main run.
+      - name: Require a Green CI Run on This Commit (Promotion Gate)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          runs="$(gh api \
+            "repos/${REPO}/actions/workflows/ci.yml/runs?head_sha=${SHA}&status=success" \
+            --jq '.total_count')"
+          if [ "${runs:-0}" -lt 1 ]; then
+            echo "::error::No successful CI run found for ${SHA}. Releases promote an already-validated commit — merge to main, let CI pass, then tag that commit."
+            exit 1
+          fi
+          echo "Found ${runs} successful CI run(s) for ${SHA} — promoting."
+
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Set up Flutter & Dependencies
+        uses: ./.github/actions/setup-flutter
 
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-
-      - name: Read the Pinned Flutter Version
-        id: sdk
-        run: |
-          version="$(jq -er .flutter .fvmrc)"
-          echo "flutter=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          # The SDK the code is developed and tested on, pinned once in .fvmrc (as in ci.yml).
-          # An unpinned 'stable' moved to 3.50, whose new deprecations fail the gate below.
-          flutter-version: ${{ steps.sdk.outputs.flutter }}
-          cache: true
-
-      - name: Install Dependencies
-        run: flutter pub get
 
       - name: Generate Environment File
         env:
@@ -78,11 +83,6 @@ jobs:
         run: |
           dart run slang
           dart run build_runner build
-
-      - name: Run Static Analysis & Fast Test Gate
-        run: |
-          dart analyze --fatal-infos
-          flutter test --exclude-tags integration --concurrency "$(nproc)"
 
       - name: Configure Android Signing Keystore
         id: signing

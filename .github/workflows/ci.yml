@@ -17,28 +17,14 @@ jobs:
   analyze-and-unit-tests:
     name: Analyze, Unit/Widget Tests & Coverage Ratchet
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Read the Pinned Flutter Version
-        id: sdk
-        run: |
-          version="$(jq -er .flutter .fvmrc)"
-          echo "flutter=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          # The SDK the code is developed and tested on, pinned once in .fvmrc. An unpinned
-          # 'stable' moved to 3.50, whose new deprecations fail `dart analyze --fatal-infos`.
-          flutter-version: ${{ steps.sdk.outputs.flutter }}
-          cache: true
-
-      - name: Install Dependencies
-        run: flutter pub get
+      - name: Set up Flutter & Dependencies
+        uses: ./.github/actions/setup-flutter
 
       - name: Generate Local CI Environment Stub
         run: |
@@ -74,23 +60,14 @@ jobs:
   supabase-contracts-and-e2e:
     name: Supabase Migrations, SQL Contracts & E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Read the Pinned Flutter Version
-        id: sdk
-        run: |
-          version="$(jq -er .flutter .fvmrc)"
-          echo "flutter=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          flutter-version: ${{ steps.sdk.outputs.flutter }}
-          cache: true
+      - name: Set up Flutter & Dependencies
+        uses: ./.github/actions/setup-flutter
 
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v3
@@ -107,9 +84,8 @@ jobs:
             psql -v ON_ERROR_STOP=1 -U postgres -d postgres -f - \
             < supabase/tests/rd_ledger_facts_rls.sql
 
-      - name: Install Dependencies & Generate Code
+      - name: Generate CI Environment & Code
         run: |
-          flutter pub get
           cat <<'EOF' > .env
           SUPABASE_URL=http://127.0.0.1:54321
           SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
